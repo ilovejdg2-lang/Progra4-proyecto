@@ -1,0 +1,42 @@
+.about-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem 1rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.about-page__hero {
+  padding: 2rem;
+  border-radius: 24px;
+  background: #fff7f0;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+}
+
+.about-page__hero h1 {
+  margin-top: 0;
+}
+
+.about-page__section {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.about-page__card {
+  padding: 1.5rem;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid #e8d9c9;
+}
+
+.about-page__button {
+  width: fit-content;
+  padding: 0.95rem 1.6rem;
+  border: none;
+  border-radius: 999px;
+  background: #8c6f4d;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
