@@ -37,6 +37,7 @@
 .hero__title {
   margin: 0;
   font-size: clamp(3.2rem, 5vw, 5rem);
+  color:#fff;
   line-height: 0.96;
   letter-spacing: -0.04em;
 }
