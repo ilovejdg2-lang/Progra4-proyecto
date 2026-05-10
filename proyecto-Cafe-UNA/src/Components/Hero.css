@@ -1,0 +1,72 @@
+.hero {
+  display: grid;
+  place-items: center;
+  width: 100vw;
+  max-width: 100vw;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0 2rem;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  background: linear-gradient(180deg, rgba(17, 13, 9, 0.55), rgba(17, 13, 9, 0.6)),
+    url('https://scontent.fsjo10-1.fna.fbcdn.net/v/t51.82787-15/637733081_17976923300977582_2458571387577479262_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=13d280&_nc_ohc=OLg-E_it7QIQ7kNvwFvd6nS&_nc_oc=AdpyIzJaOHYjoLofG2B0pxRIS7yni6ZG0fjLWsWyXH-bgC0NLDnZTPv-CKizSo2NE-s&_nc_zt=23&_nc_ht=scontent.fsjo10-1.fna&_nc_gid=r4aQo0wOA8kiQUHhGpo1xA&_nc_ss=7b2a8&oh=00_Af6jOMLUOsnMZjELjO0NLPzCVNgLRDvATGyU78TWMC0G9w&oe=6A05D0AA');
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+  position: relative;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 7, 3, 0.42);
+}
+
+.hero > * {
+  position: relative;
+}
+
+.hero__copy {
+  display: grid;
+  gap: 1.3rem;
+  max-width: 740px;
+  text-align: left;
+}
+
+.hero__title {
+  margin: 0;
+  font-size: clamp(3.2rem, 5vw, 5rem);
+  line-height: 0.96;
+  letter-spacing: -0.04em;
+}
+
+.hero__text {
+  margin: 0;
+  max-width: 40rem;
+  font-size: 1.05rem;
+  line-height: 1.85;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@media (max-width: 1024px) {
+  .hero {
+    padding: 0 1.5rem;
+    min-height: 90vh;
+  }
+
+  .hero__title {
+    font-size: 3.4rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .hero {
+    padding: 0 1rem;
+  }
+
+  .hero__title,
+  .hero__text {
+    text-align: center;
+  }
+}
