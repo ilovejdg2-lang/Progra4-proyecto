@@ -1,0 +1,110 @@
+.products-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+}
+
+.products-page__hero {
+  padding: 1.8rem;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #fff9f3 0%, #f5e8d8 100%);
+  border: 1px solid rgba(96, 74, 49, 0.12);
+  box-shadow: 0 16px 40px rgba(33, 24, 16, 0.1);
+}
+
+.products-page__hero h1 {
+  margin-bottom: 0.4rem;
+}
+
+.products-page__hero p {
+  max-width: 62ch;
+}
+
+.products-page__grid {
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.products-page__card {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1.25rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(96, 74, 49, 0.14);
+  box-shadow: 0 12px 30px rgba(22, 18, 14, 0.09);
+}
+
+.products-page__card h2 {
+  font-size: 1.1rem;
+}
+
+.products-page__buy-button {
+  width: fit-content;
+  margin-top: 0.25rem;
+  padding: 0.7rem 1.2rem;
+  border: none;
+  border-radius: 999px;
+  background: #1f1a16;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.products-page__buy-button:hover {
+  transform: translateY(-1px);
+}
+
+.products-page__added {
+  font-size: 0.86rem;
+  color: #5e4a34;
+}
+
+.products-page__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.products-page__page-button {
+  padding: 0.6rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(92, 68, 43, 0.24);
+  background: #fff;
+  color: #3e2f21;
+  font-weight: 700;
+  cursor: pointer;
+  min-width: 2.4rem;
+}
+
+.products-page__page-button:hover:not(:disabled) {
+  background: #f3e7d7;
+}
+
+.products-page__page-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.products-page__page-button.is-active {
+  background: #2f251d;
+  color: #fff;
+  border-color: #2f251d;
+}
+
+@media (max-width: 768px) {
+  .products-page {
+    padding: 1.25rem 1rem 2.75rem;
+  }
+
+  .products-page__hero {
+    padding: 1.25rem;
+  }
+}
