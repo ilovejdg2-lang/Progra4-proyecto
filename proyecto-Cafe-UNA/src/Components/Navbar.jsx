@@ -88,6 +88,8 @@ const Navbar = () => {
                 <Link to="/" activeProps={{ style: { fontWeight: '700' } }}>Inicio</Link>
                 <Link to="/AboutUs" activeProps={{ style: { fontWeight: '700' } }}>About Us</Link>
                 <Link to="/productos" activeProps={{ style: { fontWeight: '700' } }}>Productos</Link>
+                <Link to="/voluntariado/solicitar">Voluntariado</Link>
+                
             </div>
             <div className="navbar__actions">
                 <div className="navbar__cart" onClick={handleCartClick}>
