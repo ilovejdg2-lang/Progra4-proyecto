@@ -9,6 +9,7 @@ import Home from "./Pages/Home";
 import AboutUs from "./Pages/AboutUs";
 import Login from "./Pages/Login";
 import AdminPanel from "./Pages/AdminPanel";
+import Products from "./Pages/Products";
 import Footer from "./Components/Footer";
 import Navbar from './Components/Navbar';
 
@@ -45,11 +46,17 @@ const adminPanelRoute = createRoute({
     path: "/admin",
     component: AdminPanel,
 })
+const productsRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/productos",
+    component: Products,
+})
 const routeTree= rootRoute.addChildren([
     home,
     AboutUsRoute,
     loginRoute,
-    adminPanelRoute
+    adminPanelRoute,
+    productsRoute
 ])
 export const router = createRouter({
     routeTree
