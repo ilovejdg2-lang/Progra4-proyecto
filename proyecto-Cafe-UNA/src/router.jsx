@@ -12,6 +12,8 @@ import AdminPanel from "./Pages/AdminPanel";
 import Products from "./Pages/Products";
 import Footer from "./Components/Footer";
 import Navbar from './Components/Navbar';
+import SolicitarVoluntariado from './Pages/SolicitarVoluntariado';
+//import VoluntariadoMisSolicitudes from "./Pages/VoluntariadoMisSolicitudes";
 
 const rootRoute = createRootRoute({
     component: function RootLayout() {
@@ -51,12 +53,24 @@ const productsRoute = createRoute({
     path: "/productos",
     component: Products,
 })
+const voluntariadoSolicitarRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/voluntariado/solicitar",
+    component: SolicitarVoluntariado,
+})
+/*const voluntariadoMisSolicitudesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/voluntariado/mis-solicitudes",
+    component: VoluntariadoMisSolicitudes,
+})*/
 const routeTree= rootRoute.addChildren([
     home,
     AboutUsRoute,
     loginRoute,
     adminPanelRoute,
-    productsRoute
+    productsRoute,
+    voluntariadoSolicitarRoute
+   // voluntariadoMisSolicitudesRoute
 ])
 export const router = createRouter({
     routeTree
