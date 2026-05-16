@@ -10,6 +10,7 @@ import AboutUs from "./Pages/AboutUs";
 import Login from "./Pages/Login";
 import AdminPanel from "./Pages/AdminPanel";
 import Products from "./Pages/Products";
+import Checkout from "./Pages/Checkout";
 import Footer from "./Components/Footer";
 import Navbar from './Components/Navbar';
 import SolicitarVoluntariado from './Pages/SolicitarVoluntariado';
@@ -53,6 +54,11 @@ const productsRoute = createRoute({
     path: "/productos",
     component: Products,
 })
+const checkoutRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/checkout",
+    component: Checkout,
+})
 const voluntariadoSolicitarRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/voluntariado/solicitar",
@@ -69,6 +75,7 @@ const routeTree= rootRoute.addChildren([
     loginRoute,
     adminPanelRoute,
     productsRoute,
+    checkoutRoute,
     voluntariadoSolicitarRoute
    // voluntariadoMisSolicitudesRoute
 ])
