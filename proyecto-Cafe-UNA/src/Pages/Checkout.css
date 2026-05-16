@@ -1,0 +1,136 @@
+.checkout-page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+/* Cuando estamos en checkout ocultamos la chrome (navbar + footer) */
+.hide-chrome .navbar,
+.hide-chrome footer {
+  display: none !important;
+}
+
+.checkout-page__summary {
+  background: rgba(255,255,255,0.96);
+  padding: 1.6rem;
+  border-radius: 16px;
+  border: 1px solid rgba(148,118,87,0.08);
+}
+
+.checkout-page__items {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.checkout-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid #f0e6dd;
+}
+
+.checkout-item__name {
+  font-weight: 700;
+  color: #39281b;
+}
+
+.checkout-item__meta {
+  font-size: 0.92rem;
+  color: #6b5846;
+}
+
+.checkout-item__price {
+  font-weight: 700;
+  color: #2f241a;
+}
+
+.checkout-page__totals {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #efe2d3;
+}
+
+.checkout-page__subtotal-row,
+.checkout-page__total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.checkout-page__subtotal-row {
+  color: #4a3a2d;
+}
+
+.checkout-page__total-row {
+  margin-top: 0.2rem;
+  font-weight: 800;
+  color: #2f241a;
+}
+
+.checkout-page__actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.checkout-page__pay {
+  background: #2f251d;
+  color: #fff;
+  border: none;
+  padding: 0.9rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.checkout-page__continue {
+  background: #fff8ef;
+  color: #4d3a2a;
+  border: 1px solid #d8c1a6;
+  padding: 0.9rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.checkout-page__continue:hover {
+  background: #f7e5d0;
+}
+
+.checkout-page__continue {
+  margin-left: auto;
+  margin-right: -12px;
+}
+
+.checkout-page__card {
+  padding: 2rem;
+  border-radius: 16px;
+  background: #fffdf9;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .checkout-page { padding: 1.25rem; }
+}
+
+/* Full-bleed background for Checkout when navbar/footer are hidden */
+.hide-chrome .checkout-page {
+  max-width: none;
+  width: 100vw;
+  margin: 0;
+  padding: 3rem 1.25rem;
+  background: linear-gradient(135deg, #fff9f3 0%, #f5e8d8 100%);
+}
+
+.hide-chrome .checkout-page__summary {
+  max-width: 980px;
+  margin: 0 auto;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.96);
+}
