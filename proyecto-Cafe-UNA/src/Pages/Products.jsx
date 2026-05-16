@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import './Products.css';
 
 const PRODUCTS = [
@@ -13,6 +13,7 @@ const CART_STORAGE_KEY = 'cart';
 const Products = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [lastAddedProductId, setLastAddedProductId] = useState(null);
+  const addTimerRef = useRef(null);
 
   const totalPages = Math.ceil(PRODUCTS.length / PRODUCTS_PER_PAGE);
 
@@ -49,15 +50,30 @@ const Products = () => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(parsedCart));
     window.dispatchEvent(new Event('cart-updated'));
     setLastAddedProductId(product.id);
+
+    if (addTimerRef.current) {
+      window.clearTimeout(addTimerRef.current);
+    }
+
+    addTimerRef.current = window.setTimeout(() => {
+      setLastAddedProductId(null);
+      addTimerRef.current = null;
+    }, 2100);
   };
+
+  useEffect(() => () => {
+    if (addTimerRef.current) {
+      window.clearTimeout(addTimerRef.current);
+      addTimerRef.current = null;
+    }
+  }, []);
 
   return (
     <main className="products-page">
       <section className="products-page__hero">
-        <h1>Catalogo de Cafe</h1>
+        <h1>Catálogo de Cafés</h1>
         <p>
           Explora nuestros productos y elige el grano ideal para tu rutina.
-          Selecciona la pagina para ver mas opciones.
         </p>
       </section>
 
