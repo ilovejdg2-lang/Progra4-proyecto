@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import './Navbar.css';
 
 const CART_STORAGE_KEY = 'cart';
@@ -10,8 +10,11 @@ const Navbar = () => {
     const navigate = useNavigate();
     const [showDropdown, setShowDropdown] = useState(false);
     const [showCartDropdown, setShowCartDropdown] = useState(false);
+    const [isCartClosing, setIsCartClosing] = useState(false);
     const [user, setUser] = useState(null);
     const [cartItems, setCartItems] = useState([]);
+    const cartContainerRef = useRef(null);
+    const cartCloseTimerRef = useRef(null);
 
     useEffect(() => {
         const syncNavbarState = () => {
@@ -29,8 +32,55 @@ const Navbar = () => {
         };
     }, []);
 
+    useEffect(() => () => {
+        if (cartCloseTimerRef.current) {
+            window.clearTimeout(cartCloseTimerRef.current);
+        }
+    }, []);
+
+    const closeCartPanel = useCallback(() => {
+        if (!showCartDropdown || isCartClosing) {
+            return;
+        }
+
+        setIsCartClosing(true);
+        cartCloseTimerRef.current = window.setTimeout(() => {
+            setShowCartDropdown(false);
+            setIsCartClosing(false);
+        }, 240);
+    }, [showCartDropdown, isCartClosing]);
+
+    useEffect(() => {
+        if (!showCartDropdown) {
+            return;
+        }
+
+        const handlePointerDown = (event) => {
+            if (cartContainerRef.current && !cartContainerRef.current.contains(event.target)) {
+                closeCartPanel();
+            }
+        };
+
+        const handleEscapeKey = (event) => {
+            if (event.key === 'Escape') {
+                closeCartPanel();
+            }
+        };
+
+        document.addEventListener('mousedown', handlePointerDown);
+        document.addEventListener('keydown', handleEscapeKey);
+
+        return () => {
+            document.removeEventListener('mousedown', handlePointerDown);
+            document.removeEventListener('keydown', handleEscapeKey);
+        };
+    }, [showCartDropdown, closeCartPanel]);
+
     const cartUnits = cartItems.reduce((acc, item) => acc + (item.units || 0), 0);
     const cartSubtotal = cartItems.reduce((acc, item) => acc + (item.price * (item.units || 0)), 0);
+    const VAT_RATE = 0.13;
+    const cartIva = Math.round(cartSubtotal * VAT_RATE);
+    const cartTotal = cartSubtotal + cartIva;
 
     const saveCart = (updatedCart) => {
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
@@ -46,6 +96,16 @@ const Navbar = () => {
                     : item
             ))
             .filter((item) => (item.units || 0) > 0);
+
+        saveCart(updatedCart);
+    };
+
+    const addOneUnit = (productId) => {
+        const updatedCart = cartItems.map((item) => (
+            item.id === productId
+                ? { ...item, units: (item.units || 1) + 1 }
+                : item
+        ));
 
         saveCart(updatedCart);
     };
@@ -69,7 +129,18 @@ const Navbar = () => {
     };
 
     const handleCartClick = () => {
-        setShowCartDropdown(!showCartDropdown);
+        if (showCartDropdown) {
+            closeCartPanel();
+            return;
+        }
+
+        if (cartCloseTimerRef.current) {
+            window.clearTimeout(cartCloseTimerRef.current);
+            cartCloseTimerRef.current = null;
+        }
+
+        setIsCartClosing(false);
+        setShowCartDropdown(true);
         setShowDropdown(false);
     };
 
@@ -92,7 +163,7 @@ const Navbar = () => {
                 
             </div>
             <div className="navbar__actions">
-                <div className="navbar__cart" onClick={handleCartClick}>
+                <div className="navbar__cart" ref={cartContainerRef} onClick={handleCartClick}>
                     <img
                         src="https://cdn-icons-png.flaticon.com/512/263/263142.png"
                         alt="Carrito"
@@ -100,8 +171,22 @@ const Navbar = () => {
                     />
                     <span className="cart-badge">{cartUnits}</span>
                     {showCartDropdown ? (
-                        <div className="dropdown dropdown--cart" onClick={(event) => event.stopPropagation()}>
-                            <p>Resumen del carrito</p>
+                        <div
+                            className={`dropdown dropdown--cart dropdown--cart-panel ${isCartClosing ? 'is-closing' : 'is-open'}`}
+                            onClick={(event) => event.stopPropagation()}
+                        >
+                            <div className="cart-drawer-header">
+                                <button
+                                    type="button"
+                                    className="cart-drawer__close-btn"
+                                    aria-label="Cerrar carrito"
+                                    title="Cerrar carrito"
+                                    onClick={(e) => { e.stopPropagation(); closeCartPanel(); }}
+                                >
+                                    ×
+                                </button>
+                                <p>Resumen del carrito</p>
+                            </div>
                             {cartItems.length === 0 ? (
                                 <span className="dropdown__empty">Tu carrito esta vacio.</span>
                             ) : (
@@ -110,38 +195,65 @@ const Navbar = () => {
                                         {cartItems.map((item) => (
                                             <div key={item.id} className="cart-item">
                                                 <span className="cart-item__name">{item.name}</span>
-                                                <span>{item.quantity} x {item.units}</span>
-                                                <span>{formatCRC(item.price * item.units)}</span>
-                                                <div className="cart-item__actions">
+                                                <span>{item.quantity}</span>
+                                                <div className="cart-item__controls">
                                                     <button
                                                         type="button"
-                                                        className="cart-item__button"
+                                                        className="cart-item__stepper"
                                                         onClick={() => removeOneUnit(item.id)}
+                                                        aria-label={`Quitar una unidad de ${item.name}`}
                                                     >
-                                                        Quitar 1
+                                                        -
+                                                    </button>
+                                                    <span className="cart-item__units">{item.units}</span>
+                                                    <button
+                                                        type="button"
+                                                        className="cart-item__stepper"
+                                                        onClick={() => addOneUnit(item.id)}
+                                                        aria-label={`Agregar una unidad de ${item.name}`}
+                                                    >
+                                                        +
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        className="cart-item__button cart-item__button--danger"
+                                                        className="cart-item__trash"
                                                         onClick={() => removeLineItem(item.id)}
+                                                        aria-label={`Eliminar ${item.name} del carrito`}
+                                                        title="Eliminar producto"
                                                     >
-                                                        Eliminar
+                                                        🗑
                                                     </button>
                                                 </div>
+                                                <span>{formatCRC(item.price * item.units)}</span>
                                             </div>
                                         ))}
                                     </div>
                                     <div className="cart-subtotal">
-                                        <strong>Subtotal:</strong>
-                                        <strong>{formatCRC(cartSubtotal)}</strong>
+                                        <div className="cart-subtotal-row">
+                                            <span>Subtotal:</span>
+                                            <strong>{formatCRC(cartSubtotal)}</strong>
+                                        </div>
+                                        <div className="cart-subtotal-row">
+                                            <span>IVA (13%):</span>
+                                            <strong>{formatCRC(cartIva)}</strong>
+                                        </div>
+                                        <div className="cart-total-row">
+                                            <strong>Total:</strong>
+                                            <strong>{formatCRC(cartTotal)}</strong>
+                                        </div>
                                     </div>
-                                    <button
-                                        type="button"
-                                        className="cart-clear-button"
-                                        onClick={clearCart}
-                                    >
-                                        Vaciar carrito
-                                    </button>
+                                    <div className="cart-actions-row">
+                                        <Link to="/checkout" className="cart-go-checkout" onClick={() => setShowCartDropdown(false)}>
+                                            Ir a pagar
+                                        </Link>
+                                        <button
+                                            type="button"
+                                            className="cart-clear-button"
+                                            onClick={clearCart}
+                                        >
+                                            Vaciar carrito
+                                        </button>
+                                    </div>
                                 </>
                             )}
                         </div>
