@@ -3,12 +3,18 @@ import {
     createRoute,
     createRouter,
     Outlet,
+    useRouterState,
 } from "@tanstack/react-router";
 
 import Home from "./Pages/Home";
 import AboutUs from "./Pages/AboutUs";
 import Login from "./Pages/Login";
-import AdminPanel from "./Pages/AdminPanel";
+import AdminPanel from "./Pages/Admin/Panel";
+import AdminInformacionPaginaPrincipal from "./Pages/Admin/InformacionPaginaPrincipal";
+import AdminInformacionSobreNosotros from "./Pages/Admin/InformacionSobreNosotros";
+import AdminInventarioProducto from "./Pages/Admin/InventarioProducto";
+import AdminVoluntariado from "./Pages/Admin/Voluntariado";
+import AdminUsuarios from "./Pages/Admin/Usuarios";
 import Products from "./Pages/Products";
 import Checkout from "./Pages/Checkout";
 import Footer from "./Components/Footer";
@@ -18,6 +24,15 @@ import SolicitarVoluntariado from './Pages/SolicitarVoluntariado';
 
 const rootRoute = createRootRoute({
     component: function RootLayout() {
+        const pathname = useRouterState({
+            select: (state) => state.location.pathname,
+        });
+        const isAdminRoute = pathname.startsWith("/admin");
+
+        if (isAdminRoute) {
+            return <Outlet />;
+        }
+
         return (
             <>
                 <Navbar />
@@ -49,6 +64,31 @@ const adminPanelRoute = createRoute({
     path: "/admin",
     component: AdminPanel,
 })
+const adminInformacionPaginaPrincipalRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/informacion-pagina-principal",
+    component: AdminInformacionPaginaPrincipal,
+})
+const adminSobreNosotrosRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/sobre-nosotros",
+    component: AdminInformacionSobreNosotros,
+})
+const adminProductoRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/producto",
+    component: AdminInventarioProducto,
+})
+const adminVoluntariadoRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/voluntariado",
+    component: AdminVoluntariado,
+})
+const adminUsuariosRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/usuarios",
+    component: AdminUsuarios,
+})
 const productsRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/productos",
@@ -74,6 +114,11 @@ const routeTree= rootRoute.addChildren([
     AboutUsRoute,
     loginRoute,
     adminPanelRoute,
+    adminInformacionPaginaPrincipalRoute,
+    adminSobreNosotrosRoute,
+    adminProductoRoute,
+    adminVoluntariadoRoute,
+    adminUsuariosRoute,
     productsRoute,
     checkoutRoute,
     voluntariadoSolicitarRoute
