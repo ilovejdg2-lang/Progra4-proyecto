@@ -19,8 +19,9 @@ import Products from "./Pages/Products";
 import Checkout from "./Pages/Checkout";
 import Footer from "./Components/Footer";
 import Navbar from './Components/Navbar';
-import SolicitarVoluntariado from './Pages/SolicitarVoluntariado';
+import SolicitarVoluntariado from './Components/SolicitarVoluntariado';
 //import VoluntariadoMisSolicitudes from "./Pages/VoluntariadoMisSolicitudes";
+
 
 const rootRoute = createRootRoute({
     component: function RootLayout() {
@@ -104,11 +105,7 @@ const voluntariadoSolicitarRoute = createRoute({
     path: "/voluntariado/solicitar",
     component: SolicitarVoluntariado,
 })
-/*const voluntariadoMisSolicitudesRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/voluntariado/mis-solicitudes",
-    component: VoluntariadoMisSolicitudes,
-})*/
+
 const routeTree= rootRoute.addChildren([
     home,
     AboutUsRoute,
