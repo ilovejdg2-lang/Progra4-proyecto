@@ -41,6 +41,10 @@ const GENERAL_OPEN_KEY = "admin-sidebar-general-open";
 const INVENTORY_OPEN_KEY = "admin-sidebar-inventory-open";
 
 export function AppSidebar() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  const displayName = user?.username?.includes("@") ? user?.name : user?.username || user?.name || "Usuario";
+  const displayEmail = user?.email || user?.correo || "";
+
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
@@ -190,12 +194,15 @@ export function AppSidebar() {
               type="button"
               className="flex w-full items-center justify-between rounded-md px-2 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-950"
             >
-              <span className="truncate">usuario@ejemplo.com</span>
+              <span className="truncate">{displayName}</span>
               <ChevronDown className="size-4 shrink-0" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <div className="px-2 py-1.5 text-xs text-slate-500">usuario@ejemplo.com</div>
+            <div className="px-2 py-1.5 text-xs text-slate-500">
+              <div className="truncate font-medium text-slate-700">{displayName}</div>
+              {displayEmail ? <div className="truncate">{displayEmail}</div> : null}
+            </div>
             <DropdownMenuItem onSelect={handleLogout}>
               <LogOut className="size-4" />
               <span>Cerrar sesión</span>
