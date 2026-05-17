@@ -81,6 +81,7 @@ const Navbar = () => {
     const VAT_RATE = 0.13;
     const cartIva = Math.round(cartSubtotal * VAT_RATE);
     const cartTotal = cartSubtotal + cartIva;
+    const userDisplayName = user?.username?.includes('@') ? user?.name : user?.username || user?.name;
 
     const saveCart = (updatedCart) => {
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
@@ -264,7 +265,7 @@ const Navbar = () => {
                     <img src="https://cdn-icons-png.flaticon.com/512/7531/7531708.png" alt="User Icon" className="user-icon" />
                     {showDropdown && user && (
                         <div className="dropdown">
-                        <p>{user.name}</p>
+                        <p>{userDisplayName}</p>
                         {user.role === 'admin' && (
                             <Link to="/admin" onClick={() => setShowDropdown(false)}>Panel Administrativo</Link>
                         )}
