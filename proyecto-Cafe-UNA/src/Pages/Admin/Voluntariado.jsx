@@ -286,7 +286,24 @@ const AdminVoluntariado = () => {
   };
 
   useEffect(() => {
-    cargarSolicitudes();
+    let activo = true;
+
+    obtenerSolicitudes()
+      .then((data) => {
+        if (activo) setSolicitudes(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        if (!activo) return;
+        setError("No se pudieron cargar las solicitudes de voluntariado.");
+        console.error(err);
+      })
+      .finally(() => {
+        if (activo) setCargando(false);
+      });
+
+    return () => {
+      activo = false;
+    };
   }, []);
 
   const handleActualizar = async (id, cambios) => {
