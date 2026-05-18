@@ -26,14 +26,38 @@
 .checkout-item {
   display: flex;
   align-items: center;
+  gap: 1rem;
   justify-content: space-between;
-  padding: 0.7rem 0;
-  border-bottom: 1px solid #f0e6dd;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #efe2d4;
+}
+
+.checkout-item__media {
+  flex: 0 0 auto;
+}
+
+.checkout-item__image {
+  width: 78px;
+  height: 78px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #ead9c8;
+  background: #f8f1e8;
+}
+
+.checkout-item__image--placeholder {
+  background: linear-gradient(135deg, #f8f2ea, #efe1cf);
+}
+
+.checkout-item__left {
+  flex: 1;
+  min-width: 0;
 }
 
 .checkout-item__name {
   font-weight: 700;
   color: #39281b;
+  line-height: 1.2;
 }
 
 .checkout-item__meta {
@@ -41,17 +65,49 @@
   color: #6b5846;
 }
 
+.checkout-item__prices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+
+.checkout-item__price-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  padding: 0.42rem 0.62rem;
+  border-radius: 12px;
+  background: #fbf4ea;
+  color: #6d4f35;
+  border: 1px solid #e7d4bd;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.05;
+}
+
+.checkout-item__price-pill--strong {
+  background: #f1e5d4;
+  color: #3c2d20;
+  border-color: #d8c1a6;
+}
+
 .checkout-item__price {
   font-weight: 700;
   color: #2f241a;
+  white-space: nowrap;
+  align-self: start;
+  padding-top: 0.15rem;
 }
 
 .checkout-page__totals {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.55rem;
   margin-top: 1rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid #efe2d3;
+  padding: 0.95rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #e9d7bf;
+  background: linear-gradient(180deg, #fffaf4 0%, #f8efe4 100%);
 }
 
 .checkout-page__subtotal-row,
@@ -63,11 +119,14 @@
 
 .checkout-page__subtotal-row {
   color: #4a3a2d;
+  font-size: 0.94rem;
 }
 
 .checkout-page__total-row {
   margin-top: 0.2rem;
-  font-weight: 800;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(140, 111, 77, 0.16);
+  font-weight: 900;
   color: #2f241a;
 }
 
@@ -101,11 +160,6 @@
 
 .checkout-page__continue:hover {
   background: #f7e5d0;
-}
-
-.checkout-page__continue {
-  margin-left: auto;
-  margin-right: -12px;
 }
 
 .checkout-page__card {
