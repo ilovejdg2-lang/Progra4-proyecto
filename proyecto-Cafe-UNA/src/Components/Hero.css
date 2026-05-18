@@ -8,10 +8,9 @@
   padding: 0 2rem;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
-  background: linear-gradient(180deg, rgba(17, 13, 9, 0.55), rgba(17, 13, 9, 0.6)),
-    url('https://scontent.fsjo10-1.fna.fbcdn.net/v/t51.82787-15/637733081_17976923300977582_2458571387577479262_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=13d280&_nc_ohc=OLg-E_it7QIQ7kNvwFvd6nS&_nc_oc=AdpyIzJaOHYjoLofG2B0pxRIS7yni6ZG0fjLWsWyXH-bgC0NLDnZTPv-CKizSo2NE-s&_nc_zt=23&_nc_ht=scontent.fsjo10-1.fna&_nc_gid=r4aQo0wOA8kiQUHhGpo1xA&_nc_ss=7b2a8&oh=00_Af6jOMLUOsnMZjELjO0NLPzCVNgLRDvATGyU78TWMC0G9w&oe=6A05D0AA');
   background-size: cover;
   background-position: center;
+  background-attachment: fixed;
   color: #fff;
   position: relative;
 }
@@ -21,10 +20,12 @@
   position: absolute;
   inset: 0;
   background: rgba(11, 7, 3, 0.42);
+  z-index: 1;
 }
 
 .hero > * {
   position: relative;
+  z-index: 2;
 }
 
 .hero__copy {
@@ -50,6 +51,25 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
+.hero__button {
+  width: fit-content;
+  padding: 0.95rem 1.8rem;
+  border: none;
+  border-radius: 999px;
+  background: #a7532d;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.hero__button:hover {
+  background: #8c3d1f;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
 @media (max-width: 1024px) {
   .hero {
     padding: 0 1.5rem;
@@ -58,6 +78,11 @@
 
   .hero__title {
     font-size: 3.4rem;
+  }
+
+  .hero__button {
+    padding: 0.9rem 1.6rem;
+    font-size: 0.95rem;
   }
 }
 
@@ -68,6 +93,11 @@
 
   .hero__title,
   .hero__text {
+    text-align: center;
+  }
+
+  .hero__button {
+    width: 100%;
     text-align: center;
   }
 }
