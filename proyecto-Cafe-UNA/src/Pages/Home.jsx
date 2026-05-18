@@ -55,13 +55,21 @@ const cards = [
   },
 ];
 
+const heroData = {
+  title: "Bienvenidos a Café UNA",
+  subtitle: "Disfruta del mejor café artesanal cultivado con pasión y tradición costarricense.",
+  buttonText: "Conocer más",
+  backgroundImage: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085"
+};
+
 const Home = () => {
   return (
     <main className="home-page">
-      <Hero />
+      <Hero data={heroData} />
       <section className="home-page__info">
         <div className="home-page__intro">
-          <h2> EN PROCESO</h2>
+          <h2>Bienvenido a Café UNA</h2>
+          <p>Disfruta del mejor café artesanal cultivado con pasión y tradición costarricense</p>
         </div>
       </section>
 
