@@ -4,7 +4,14 @@ import './Navbar.css';
 
 const CART_STORAGE_KEY = 'cart';
 
-const formatCRC = (amount) => `CRC ${amount.toLocaleString('es-CR')}`;
+const formatCRC = (amount) => {
+    const value = Number.isFinite(amount) ? amount : 0;
+    return `CRC ${value.toLocaleString('es-CR')}`;
+};
+
+const getQuantity = (item) => Number(item.units) || 1;
+const getUnitPriceWithoutIva = (item) => Number(item.precioNormal ?? item.priceWithoutIva ?? item.price ?? 0) || 0;
+const getUnitPriceWithIva = (item) => Number(item.precioConIVA ?? item.priceWithIva ?? item.price ?? 0) || 0;
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -76,11 +83,10 @@ const Navbar = () => {
         };
     }, [showCartDropdown, closeCartPanel]);
 
-    const cartUnits = cartItems.reduce((acc, item) => acc + (item.units || 0), 0);
-    const cartSubtotal = cartItems.reduce((acc, item) => acc + (item.price * (item.units || 0)), 0);
-    const VAT_RATE = 0.13;
-    const cartIva = Math.round(cartSubtotal * VAT_RATE);
-    const cartTotal = cartSubtotal + cartIva;
+    const cartUnits = cartItems.reduce((acc, item) => acc + (Number(item.units) || 0), 0);
+    const cartSubtotal = cartItems.reduce((acc, item) => acc + (getUnitPriceWithoutIva(item) * getQuantity(item)), 0);
+    const cartIva = cartItems.reduce((acc, item) => acc + ((getUnitPriceWithIva(item) - getUnitPriceWithoutIva(item)) * getQuantity(item)), 0);
+    const cartTotal = cartItems.reduce((acc, item) => acc + (getUnitPriceWithIva(item) * getQuantity(item)), 0);
     const userDisplayName = user?.username?.includes('@') ? user?.name : user?.username || user?.name;
 
     const saveCart = (updatedCart) => {
@@ -195,8 +201,25 @@ const Navbar = () => {
                                     <div className="cart-items">
                                         {cartItems.map((item) => (
                                             <div key={item.id} className="cart-item">
-                                                <span className="cart-item__name">{item.name}</span>
-                                                <span>{item.quantity}</span>
+                                                <div className="cart-item__media">
+                                                    {item.imagen ? (
+                                                        <img
+                                                            src={item.imagen}
+                                                            alt={item.nombre || item.name || 'Producto'}
+                                                            className="cart-item__image"
+                                                        />
+                                                    ) : (
+                                                        <div className="cart-item__image cart-item__image--placeholder" aria-hidden="true" />
+                                                    )}
+                                                </div>
+                                                <div className="cart-item__details">
+                                                    <div className="cart-item__name">{item.nombre || item.name || 'Producto'}</div>
+                                                    <div className="cart-item__prices">
+                                                        <span className="cart-item__price-pill">Sin IVA: {formatCRC(getUnitPriceWithoutIva(item))}</span>
+                                                        <span className="cart-item__price-pill cart-item__price-pill--strong">Con IVA: {formatCRC(getUnitPriceWithIva(item))}</span>
+                                                    </div>
+                                                    <div className="cart-item__meta">{item.peso || item.quantity || 'Cantidad no disponible'} x {getQuantity(item)}</div>
+                                                </div>
                                                 <div className="cart-item__controls">
                                                     <button
                                                         type="button"
@@ -225,7 +248,7 @@ const Navbar = () => {
                                                         🗑
                                                     </button>
                                                 </div>
-                                                <span>{formatCRC(item.price * item.units)}</span>
+                                                <div className="cart-item__line-total">{formatCRC(getUnitPriceWithIva(item) * getQuantity(item))}</div>
                                             </div>
                                         ))}
                                     </div>
@@ -235,7 +258,7 @@ const Navbar = () => {
                                             <strong>{formatCRC(cartSubtotal)}</strong>
                                         </div>
                                         <div className="cart-subtotal-row">
-                                            <span>IVA (13%):</span>
+                                            <span>IVA:</span>
                                             <strong>{formatCRC(cartIva)}</strong>
                                         </div>
                                         <div className="cart-total-row">
