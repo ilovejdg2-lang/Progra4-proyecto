@@ -1,54 +1,72 @@
-// Servicio para la información estática del sitio (hero, misión, visión, galería)
-// Usa la clave CRUD definida en .env para lectura y escritura:
-// - VITE_JSONBIN_API_KEY_CRUD_INFORMACION
-// - VITE_JSONBIN_BIN_ID_INFORMACION
-
+const READ_KEY = import.meta.env.VITE_JSONBIN_API_KEY_LECTURA_INFORMACION;
 const CRUD_KEY = import.meta.env.VITE_JSONBIN_API_KEY_CRUD_INFORMACION;
 const BIN_ID = import.meta.env.VITE_JSONBIN_BIN_ID_INFORMACION;
 const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+const LATEST_URL = `${BASE_URL}/latest`;
 
-const headers = {
-  'Content-Type': 'application/json',
-  'X-Access-Key': CRUD_KEY,
+const jsonHeaders = {
+  "Content-Type": "application/json",
 };
 
-// Helper: leer el bin (usa la key de lectura)
-async function leerBin() {
-  const res = await fetch(BASE_URL, { headers });
-  if (!res.ok) throw new Error(`Error al leer el bin de información: ${res.status}`);
-  const data = await res.json();
-  return data.record ?? {};
+async function crearErrorJsonBin(res, accion) {
+  let detalle;
+
+  try {
+    const data = await res.json();
+    detalle = data.message || data.error || JSON.stringify(data);
+  } catch {
+    detalle = await res.text();
+  }
+
+  return new Error(`Error al ${accion} informacion: ${res.status}${detalle ? ` - ${detalle}` : ""}`);
 }
 
-// Helper: sobreescribir el bin (usa la key CRUD)
+async function leerBin() {
+  const res = await fetch(`${LATEST_URL}?t=${Date.now()}`, {
+    cache: "no-store",
+    headers: {
+      ...jsonHeaders,
+      "X-Access-Key": READ_KEY || CRUD_KEY,
+    },
+  });
+
+  if (!res.ok) throw await crearErrorJsonBin(res, "leer");
+
+  const data = await res.json();
+  const record = data.record ?? {};
+  return record.record ?? record;
+}
+
 async function escribirBin(record) {
   const res = await fetch(BASE_URL, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify({ record }),
+    method: "PUT",
+    cache: "no-store",
+    headers: {
+      ...jsonHeaders,
+      "X-Access-Key": CRUD_KEY,
+    },
+    body: JSON.stringify(record),
   });
-  if (!res.ok) throw new Error(`Error al guardar información: ${res.status}`);
+
+  if (!res.ok) throw await crearErrorJsonBin(res, "guardar");
+
   return res.json();
 }
 
-// READ: obtener toda la información
 export async function obtenerInformacion() {
   return await leerBin();
 }
 
-// READ: obtener una sección concreta (hero, mission, vision, gallery...)
 export async function obtenerSeccion(seccion) {
   const info = await obtenerInformacion();
   return info[seccion] ?? null;
 }
 
-// UPDATE (overwrite): reemplaza toda la info
 export async function actualizarInformacion(nuevaInformacion) {
   await escribirBin(nuevaInformacion);
   return nuevaInformacion;
 }
 
-// UPDATE: actualizar una sección parcial
 export async function actualizarSeccion(seccion, cambios) {
   const info = await obtenerInformacion();
   const actualizado = { ...info, [seccion]: { ...(info[seccion] ?? {}), ...cambios } };
@@ -56,7 +74,6 @@ export async function actualizarSeccion(seccion, cambios) {
   return actualizado[seccion];
 }
 
-// GALERÍA CRUD
 export async function agregarGaleriaItem(item) {
   const info = await obtenerInformacion();
   const gallery = Array.isArray(info.gallery) ? info.gallery : [];
@@ -84,7 +101,6 @@ export async function eliminarGaleriaItem(id) {
   return true;
 }
 
-// Helper adicional: obtener el hero
 export async function obtenerHero() {
-  return await obtenerSeccion('hero');
+  return await obtenerSeccion("hero");
 }
