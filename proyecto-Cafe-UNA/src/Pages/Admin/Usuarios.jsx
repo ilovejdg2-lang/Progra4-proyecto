@@ -153,14 +153,31 @@ const AdminUsuarios = () => {
       setError(null);
       const data = await obtenerUsuarios();
       setUsuarios(data);
-    } catch (e) {
+    } catch {
       setError("No se pudieron cargar los usuarios.");
     } finally {
       setCargando(false);
     }
   }
 
-  useEffect(() => { cargar(); }, []);
+  useEffect(() => {
+    let activo = true;
+
+    obtenerUsuarios()
+      .then((data) => {
+        if (activo) setUsuarios(data);
+      })
+      .catch(() => {
+        if (activo) setError("No se pudieron cargar los usuarios.");
+      })
+      .finally(() => {
+        if (activo) setCargando(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   async function handleCrear(form) {
     try {
