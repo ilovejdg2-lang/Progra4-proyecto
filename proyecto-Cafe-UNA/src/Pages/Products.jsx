@@ -1,26 +1,46 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import './Products.css';
 
-const PRODUCTS = [
-  { id: 1, name: 'Catuai Honey', quantity: '250 g', price: 6500 },
-  { id: 2, name: 'Geisha Lavado', quantity: '340 g', price: 9800 },
-  { id: 3, name: 'Bourbon Natural', quantity: '500 g', price: 11200 },
-];
-
 const PRODUCTS_PER_PAGE = 8;
 const CART_STORAGE_KEY = 'cart';
 
 const Products = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [lastAddedProductId, setLastAddedProductId] = useState(null);
   const addTimerRef = useRef(null);
 
-  const totalPages = Math.ceil(PRODUCTS.length / PRODUCTS_PER_PAGE);
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${import.meta.env.VITE_JSONBIN_BIN_ID_PRODUCTOS}`, {
+          headers: {
+            'X-Access-Key': import.meta.env.VITE_JSONBIN_API_KEY_LECTURA_PRODUCTOS
+          }
+        });
+        if (!response.ok) {
+          throw new Error('Error al cargar los productos');
+        }
+        const data = await response.json();
+        setProducts(data.record.productos);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const totalPages = Math.ceil(products.length / PRODUCTS_PER_PAGE) || 1;
 
   const currentProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
-    return PRODUCTS.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
-  }, [currentPage]);
+    return products.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
+  }, [currentPage, products]);
 
   const goToPage = (page) => {
     if (page < 1 || page > totalPages) {
@@ -78,14 +98,26 @@ const Products = () => {
       </section>
 
       <section className="products-page__grid" aria-label="Lista de productos de cafe">
-        {currentProducts.map((product) => (
+        {loading && <p>Cargando productos...</p>}
+        {error && <p>Error: {error}</p>}
+        {!loading && !error && currentProducts.map((product) => (
           <article className="products-page__card" key={product.id}>
-            <h2>{product.name}</h2>
+            {product.imagen && (
+              <img 
+                src={product.imagen} 
+                alt={product.nombre} 
+                style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px', marginBottom: '16px' }} 
+              />
+            )}
+            <h2>{product.nombre}</h2>
             <p>
-              <strong>Cantidad:</strong> {product.quantity}
+              <strong>Cantidad:</strong> {product.peso}
             </p>
             <p>
-              <strong>Precio:</strong> CRC {product.price.toLocaleString('es-CR')}
+              <strong>Precio:</strong> CRC {product.precioNormal.toLocaleString('es-CR')}
+            </p>
+            <p style={{ fontSize: '0.85em', color: '#666', marginBottom: '12px' }}>
+              {product.descripcion}
             </p>
             <button
               type="button"
@@ -102,15 +134,6 @@ const Products = () => {
       </section>
 
       <nav className="products-page__pagination" aria-label="Paginacion de productos">
-        <button
-          type="button"
-          className="products-page__page-button"
-          onClick={() => goToPage(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          Anterior
-        </button>
-
         {Array.from({ length: totalPages }, (_, index) => {
           const pageNumber = index + 1;
           return (
@@ -127,15 +150,6 @@ const Products = () => {
             </button>
           );
         })}
-
-        <button
-          type="button"
-          className="products-page__page-button"
-          onClick={() => goToPage(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          Siguiente
-        </button>
       </nav>
     </main>
   );
