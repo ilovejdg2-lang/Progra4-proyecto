@@ -1,5 +1,7 @@
 import { Link } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
 import Hero from '../Components/Hero';
+import { obtenerInformacion } from '../services/informacionService';
 import './Home.css';
 
 const cards = [
@@ -63,13 +65,36 @@ const heroData = {
 };
 
 const Home = () => {
+  const [hero, setHero] = useState(null);
+
+  useEffect(() => {
+    let activo = true;
+
+    obtenerInformacion()
+      .then((info) => {
+        if (activo) setHero({ ...heroData, ...(info.hero ?? {}) });
+      })
+      .catch((err) => {
+        console.error("No se pudo cargar la informacion del hero.", err);
+        if (activo) setHero(heroData);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
   return (
     <main className="home-page">
-      <Hero data={heroData} />
+      {hero ? <Hero data={hero} /> : null}
       <section className="home-page__info">
         <div className="home-page__intro">
-          <h2>Bienvenido a Café UNA</h2>
-          <p>Disfruta del mejor café artesanal cultivado con pasión y tradición costarricense</p>
+          {hero ? (
+            <>
+              <h2>{hero.title}</h2>
+              <p>{hero.subtitle}</p>
+            </>
+          ) : null}
         </div>
       </section>
 
