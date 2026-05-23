@@ -29,8 +29,9 @@ const rootRoute = createRootRoute({
             select: (state) => state.location.pathname,
         });
         const isAdminRoute = pathname.startsWith("/admin");
+        const isLoginRoute = pathname === "/login";
 
-        if (isAdminRoute) {
+        if (isAdminRoute || isLoginRoute) {
             return <Outlet />;
         }
 
