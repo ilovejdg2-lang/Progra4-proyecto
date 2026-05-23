@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import './Login.css';
 
 const JSONBIN_USERS_URL = `https://api.jsonbin.io/v3/b/${import.meta.env.VITE_JSONBIN_USERS_BIN_ID_USUARIOS}/latest`;
@@ -14,24 +15,52 @@ const mapAuthenticatedUser = (user) => ({
   roles: user.roles || [],
 });
 
+const LOGO_URL = '/logo.webp';
+
+
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({ identifier: '', password: '' });
+  const [formError, setFormError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const clearFieldError = (field) => {
+    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: '' } : prev));
+    if (formError) setFormError('');
+  };
+
+  const validateForm = () => {
+    const nextErrors = { identifier: '', password: '' };
+
+    if (!identifier.trim()) {
+      nextErrors.identifier = 'Ingrese su correo o usuario.';
+    }
+
+    if (!password) {
+      nextErrors.password = 'Ingrese su contraseña.';
+    }
+
+    setFieldErrors(nextErrors);
+    return !nextErrors.identifier && !nextErrors.password;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormError('');
+
+    if (!validateForm()) {
+      return;
+    }
 
     if (
       !import.meta.env.VITE_JSONBIN_USERS_BIN_ID_USUARIOS
       || !import.meta.env.VITE_JSONBIN_ACCESS_KEY_LECTURA_USUARIOS
     ) {
-      setError('Falta configurar las variables de entorno del login.');
+      setFormError('Falta configurar las variables de entorno del login.');
       return;
     }
 
-    setError('');
     setIsLoading(true);
 
     try {
@@ -47,18 +76,18 @@ const Login = () => {
 
       const data = await response.json();
       const users = Array.isArray(data) ? data : data.record || [];
-      const normalizedUsername = username.trim().toLowerCase();
+      const normalizedIdentifier = identifier.trim().toLowerCase();
       const foundUser = users.find((user) => (
         user.estado === 'activo'
         && (
-          user.nombre?.toLowerCase() === normalizedUsername
-          || user.correo?.toLowerCase() === normalizedUsername
+          user.nombre?.toLowerCase() === normalizedIdentifier
+          || user.correo?.toLowerCase() === normalizedIdentifier
         )
         && user.passwordHash === password
       ));
 
       if (!foundUser) {
-        setError('Credenciales incorrectas');
+        setFormError('Credenciales incorrectas');
         return;
       }
 
@@ -66,7 +95,7 @@ const Login = () => {
       window.dispatchEvent(new Event('storage'));
       window.location.href = '/';
     } catch (err) {
-      setError(err.message || 'Ocurrió un error al iniciar sesión.');
+      setFormError(err.message || 'Ocurrió un error al iniciar sesión.');
     } finally {
       setIsLoading(false);
     }
@@ -74,39 +103,90 @@ const Login = () => {
 
   return (
     <div className="login-page">
+      <Link to="/" className="login-back">
+        <svg className="login-back-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path
+            d="M10 12L6 8l4-4"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        Volver
+      </Link>
+
       <div className="login-card">
-        <h2>{'Iniciar Sesi\u00f3n'}</h2>
-        <form className="login-form" onSubmit={handleSubmit}>
-          <label htmlFor="username">Usuario</label>
-          <input
-            id="username"
-            name="username"
-            type="text"
-            required
-            placeholder="Usuario"
-            autoComplete="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+        <div className="login-brand">
+          <img
+            src={LOGO_URL}
+            alt="Café UNA"
+            className="login-logo"
           />
+        </div>
 
-          <label htmlFor="password">{'Contrase\u00f1a'}</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            placeholder={'Contrase\u00f1a'}
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+        <form className="login-form" onSubmit={handleSubmit} noValidate>
+          <div className="login-field">
+            <label htmlFor="identifier">Correo o Usuario</label>
+            <input
+              id="identifier"
+              name="identifier"
+              type="text"
+              placeholder="correo o usuario"
+              autoComplete="username"
+              value={identifier}
+              onChange={(e) => {
+                setIdentifier(e.target.value);
+                clearFieldError('identifier');
+              }}
+              className={fieldErrors.identifier ? 'input-error' : ''}
+              aria-invalid={Boolean(fieldErrors.identifier)}
+              aria-describedby={fieldErrors.identifier ? 'identifier-error' : undefined}
+            />
+            {fieldErrors.identifier && (
+              <p id="identifier-error" className="login-field-error">{fieldErrors.identifier}</p>
+            )}
+          </div>
 
-          {error && <div className="login-error">{error}</div>}
+          <div className="login-field">
+            <label htmlFor="password">Contraseña</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="••••••••"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                clearFieldError('password');
+              }}
+              className={fieldErrors.password || formError ? 'input-error' : ''}
+              aria-invalid={Boolean(fieldErrors.password || formError)}
+              aria-describedby={fieldErrors.password || formError ? 'password-error' : undefined}
+            />
+            {(fieldErrors.password || formError) && (
+              <p id="password-error" className="login-field-error">
+                {fieldErrors.password || formError}
+              </p>
+            )}
+            <a href="#" className="login-forgot-link" onClick={(e) => e.preventDefault()}>
+              ¿Olvidó su contraseña?
+            </a>
+          </div>
 
           <button type="submit" className="login-button" disabled={isLoading}>
-            {isLoading ? 'Ingresando...' : 'Iniciar Sesi\u00f3n'}
+            {isLoading ? 'Ingresando...' : 'INGRESAR'}
           </button>
         </form>
+
+        <p className="login-register">
+          ¿No tiene una cuenta?
+          {' '}
+          <a href="#" className="login-register-link" onClick={(e) => e.preventDefault()}>
+            Registrarse
+          </a>
+        </p>
       </div>
     </div>
   );
