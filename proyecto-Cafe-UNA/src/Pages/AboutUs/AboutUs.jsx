@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { obtenerInformacion } from '../services/informacionService';
+import { obtenerInformacion } from '../../services/informacionService';
 import './AboutUs.css';
 
 const missionDefault = {
