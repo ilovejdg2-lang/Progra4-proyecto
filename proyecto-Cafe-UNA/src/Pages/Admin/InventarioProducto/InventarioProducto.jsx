@@ -1,12 +1,12 @@
 ﻿import { useEffect, useState } from "react";
 
-import { AdminLayout } from "./layouts/AdminLayout";
+import { AdminLayout } from "../layouts/AdminLayout";
 import {
   actualizarProducto,
   crearProducto,
   eliminarProducto,
   obtenerProductos,
-} from "../../services/productosServices";
+} from "../../../services/productosServices";
 
 const FORM_VACIO = {
   nombre: "",
@@ -281,7 +281,7 @@ const AdminInventarioProducto = () => {
           <button
             type="button"
             onClick={() => setModalCrear(true)}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+            className="rounded-full bg-amber-900 px-5 py-2 text-sm font-semibold text-amber-50 transition hover:bg-amber-800"
           >
             + Nuevo producto
           </button>

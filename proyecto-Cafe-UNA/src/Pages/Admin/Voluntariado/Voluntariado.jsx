@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Eye, Pencil, RefreshCw, Trash2, X } from "lucide-react";
 
-import { AdminLayout } from "./layouts/AdminLayout";
+import { AdminLayout } from "../layouts/AdminLayout";
 import {
   actualizarSolicitud,
   eliminarSolicitud,
   obtenerSolicitudes,
-} from "../../services/voluntariadoService";
+} from "../../../services/voluntariadoService";
 
 const ESTADOS = ["Pendiente", "En revisión", "Aprobado", "Rechazado"];
 
