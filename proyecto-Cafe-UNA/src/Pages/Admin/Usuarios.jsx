@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 ﻿import { useEffect, useState } from "react";
 import { AdminLayout } from "./layouts/AdminLayout";
+=======
+import { useEffect, useState } from "react";
+import { AdminLayout } from "../../layouts/AdminLayout";
+>>>>>>> a084ec307cbdea781d7d1484d190be3701275d4a
 import {
   obtenerUsuarios,
   crearUsuario,
@@ -123,10 +128,10 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando }) {
 
 // ─── Badge de rol ─────────────────────────────────────────────────────────────
 const colorRol = {
-  SuperAdmin: "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-300",
-  Admin:      "bg-green-100 text-green-800 ring-1 ring-green-300",
-  Cliente:    "bg-stone-100 text-stone-600 ring-1 ring-stone-300/50",
-  Usuario:    "bg-white text-stone-500 ring-1 ring-stone-200",
+  SuperAdmin: "bg-violet-100 text-violet-700",
+  Admin:      "bg-blue-100 text-blue-700",
+  Cliente:    "bg-amber-100 text-amber-700",
+  Usuario:    "bg-slate-100 text-slate-600",
 };
 
 function BadgeRol({ rol }) {
