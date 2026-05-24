@@ -6,20 +6,21 @@ import {
     useRouterState,
 } from "@tanstack/react-router";
 
-import Home from "./Pages/Home/Home";
-import AboutUs from "./Pages/AboutUs/AboutUs";
-import Login from "./Pages/Login/Login";
+import Home from "./Pages/Home";
+import AboutUs from "./Pages/AboutUs";
+import Login from "./Pages/Login";
 import AdminPanel from "./Pages/Admin/Panel";
 import AdminInformacionPaginaPrincipal from "./Pages/Admin/InformacionPaginaPrincipal";
 import AdminInformacionSobreNosotros from "./Pages/Admin/InformacionSobreNosotros";
 import AdminInventarioProducto from "./Pages/Admin/InventarioProducto";
 import AdminVoluntariado from "./Pages/Admin/Voluntariado";
 import AdminUsuarios from "./Pages/Admin/Usuarios";
-import Products from "./Pages/Products/Products";
-import Checkout from "./Pages/Products/Checkout";
-import Footer from "./Components/Footer/Footer";
-import Navbar from './Components/Navbar/Navbar';
-import SolicitarVoluntariado from './Pages/Voluntariado/SolicitarVoluntariado';
+import Products from "./Pages/Products";
+import Checkout from "./Pages/Checkout";
+import Footer from "./Components/Footer";
+import Navbar from './Components/Navbar';
+import SolicitarVoluntariado from './Pages/SolicitarVoluntariado';
+//import VoluntariadoMisSolicitudes from "./Pages/VoluntariadoMisSolicitudes";
 
 
 const rootRoute = createRootRoute({
