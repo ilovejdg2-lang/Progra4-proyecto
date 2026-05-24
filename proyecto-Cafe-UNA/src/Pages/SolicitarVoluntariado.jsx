@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { crearSolicitud } from "../../services/voluntariadoService";
+import { crearSolicitud } from "../services/voluntariadoService";
 import "./SolicitarVoluntariado.css";
 
 const tiposVoluntariado = [
