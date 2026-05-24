@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState } from "react";
 import { Image, X } from "lucide-react";
 
-import { AdminLayout } from "../../layouts/AdminLayout";
+import { AdminLayout } from "./layouts/AdminLayout";
 import { actualizarSeccion, obtenerInformacion } from "../../services/informacionService";
 
 const heroInicial = {

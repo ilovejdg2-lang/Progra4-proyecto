@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 
-import { AppSidebar } from "../Components/Admin/AppSidebar";
-import { SidebarProvider, SidebarTrigger } from "../Components/Admin/ui/Sidebar";
+import { AppSidebar } from "../../../Components/Admin/AppSidebar";
+import { SidebarProvider, SidebarTrigger } from "../../../Components/Admin/ui/Sidebar";
 
 export function AdminLayout({ children }) {
   const navigate = useNavigate();
