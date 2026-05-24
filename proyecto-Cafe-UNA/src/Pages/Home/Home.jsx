@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import Hero from '../Components/Hero';
-import { obtenerInformacion } from '../services/informacionService';
+import Hero from '../../Components/Hero/Hero';
+import { obtenerInformacion } from '../../services/informacionService';
 import './Home.css';
 
 const cards = [
