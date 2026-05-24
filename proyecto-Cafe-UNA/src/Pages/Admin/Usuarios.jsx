@@ -1,7 +1,10 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 ﻿import { useEffect, useState } from "react";
 import { AdminLayout } from "./layouts/AdminLayout";
 =======
+=======
+>>>>>>> a084ec307cbdea781d7d1484d190be3701275d4a
 import { useEffect, useState } from "react";
 import { AdminLayout } from "../../layouts/AdminLayout";
 >>>>>>> a084ec307cbdea781d7d1484d190be3701275d4a
