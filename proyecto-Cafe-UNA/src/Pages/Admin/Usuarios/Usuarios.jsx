@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
+<<<<<<< HEAD:proyecto-Cafe-UNA/src/Pages/Admin/Usuarios/Usuarios.jsx
+import { AdminLayout } from "../layouts/AdminLayout";
+=======
 import { AdminLayout } from "../../layouts/AdminLayout";
+>>>>>>> e9713895f8ce68616e520010142169c33dd96a6a:proyecto-Cafe-UNA/src/Pages/Admin/Usuarios.jsx
 import {
   obtenerUsuarios,
   crearUsuario,
   actualizarUsuario,
   toggleEstadoUsuario,
-} from "../../services/usuariosServices";
+} from "../../../services/usuariosServices";
 
 // ─── Modal reutilizable ───────────────────────────────────────────────────────
 function Modal({ titulo, onClose, children }) {
@@ -24,6 +28,24 @@ function Modal({ titulo, onClose, children }) {
         {children}
       </div>
     </div>
+  );
+}
+
+// ─── Badge de rol ─────────────────────────────────────────────────────────────
+const colorRol = {
+  Superadministrador: "border border-amber-300 bg-amber-200 text-amber-950",
+  SuperAdmin:         "border border-amber-300 bg-amber-200 text-amber-950",
+  Administración:     "border border-emerald-300 bg-emerald-100 text-emerald-900",
+  Admin:              "border border-emerald-300 bg-emerald-100 text-emerald-900",
+  Cliente:            "bg-orange-100 text-orange-700",
+  Usuario:            "bg-slate-100 text-slate-500",
+};
+
+function BadgeRol({ rol }) {
+  return (
+    <span className={`inline-block rounded-full px-3 py-0.5 text-xs font-semibold ${colorRol[rol] ?? "bg-slate-100 text-slate-500"}`}>
+      {rol}
+    </span>
   );
 }
 
@@ -89,10 +111,10 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando }) {
               key={rol}
               type="button"
               onClick={() => toggleRol(rol)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                 form.roles.includes(rol)
-                  ? "bg-slate-800 text-white"
-                  : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                  ? `${colorRol[rol] ?? "bg-slate-800 text-white"}`
+                  : "border border-slate-200 bg-white text-slate-500 hover:border-slate-300"
               }`}
             >
               {rol}
@@ -121,21 +143,6 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando }) {
   );
 }
 
-// ─── Badge de rol ─────────────────────────────────────────────────────────────
-const colorRol = {
-  SuperAdmin: "bg-violet-100 text-violet-700",
-  Admin:      "bg-blue-100 text-blue-700",
-  Cliente:    "bg-amber-100 text-amber-700",
-  Usuario:    "bg-slate-100 text-slate-600",
-};
-
-function BadgeRol({ rol }) {
-  return (
-    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${colorRol[rol] ?? "bg-slate-100 text-slate-600"}`}>
-      {rol}
-    </span>
-  );
-}
 
 // ─── Página principal ─────────────────────────────────────────────────────────
 const AdminUsuarios = () => {
@@ -249,7 +256,7 @@ const AdminUsuarios = () => {
           </div>
           <button
             onClick={() => setModalCrear(true)}
-            className="rounded-lg bg-green-100 px-4 py-2 text-sm font-medium text-green-700 transition hover:bg-green-200"
+            className="rounded-full bg-amber-900 px-5 py-2 text-sm font-semibold text-amber-50 transition hover:bg-amber-800"
           >
             Nuevo usuario +
           </button>
