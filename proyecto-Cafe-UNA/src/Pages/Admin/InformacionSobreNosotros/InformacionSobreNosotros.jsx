@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import { Eye, Image, ImagePlus, Target, Trash2, X } from "lucide-react";
 
+<<<<<<< HEAD:proyecto-Cafe-UNA/src/Pages/Admin/InformacionSobreNosotros/InformacionSobreNosotros.jsx
+import { AdminLayout } from "../layouts/AdminLayout";
+import { actualizarInformacion, actualizarSeccion, obtenerInformacion } from "../../../services/informacionService";
+=======
 import { AdminLayout } from "../../layouts/AdminLayout";
 import { actualizarInformacion, actualizarSeccion, obtenerInformacion } from "../../services/informacionService";
+>>>>>>> e9713895f8ce68616e520010142169c33dd96a6a:proyecto-Cafe-UNA/src/Pages/Admin/InformacionSobreNosotros.jsx
 
 const infoInicial = {
   hero: {},
@@ -19,15 +24,15 @@ const infoInicial = {
 
 const estilos = {
   mission: {
-    borde: "border-violet-600",
-    icono: "bg-violet-50 text-violet-700",
+    borde: "border-amber-700",
+    icono: "bg-amber-50 text-amber-700",
     etiqueta: "Mision",
     resumen: "Texto institucional de mision.",
     Icon: Target,
   },
   vision: {
-    borde: "border-blue-600",
-    icono: "bg-blue-50 text-blue-700",
+    borde: "border-amber-700",
+    icono: "bg-amber-50 text-amber-700",
     etiqueta: "Vision",
     resumen: "Texto institucional de vision.",
     Icon: Eye,
@@ -268,9 +273,9 @@ function TarjetaTexto({ tipo, data, onEditar }) {
         <button
           type="button"
           onClick={() => onEditar(tipo)}
-          className="rounded-xl border border-blue-200 px-5 py-2 text-sm font-bold text-blue-600 transition hover:bg-blue-50"
+          className="rounded-xl border border-amber-300 px-5 py-2 text-sm font-bold text-amber-800 transition hover:bg-amber-50"
         >
-          Editar -&gt;
+          Editar
         </button>
       </div>
     </article>
@@ -384,9 +389,9 @@ const AdminInformacionSobreNosotros = () => {
                 <button
                   type="button"
                   onClick={() => setEditandoGaleria(true)}
-                  className="rounded-xl border border-blue-200 px-5 py-2 text-sm font-bold text-blue-600 transition hover:bg-blue-50"
+                  className="rounded-xl border border-emerald-300 px-5 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50"
                 >
-                  Editar -&gt;
+                  Editar
                 </button>
               </div>
             </article>
