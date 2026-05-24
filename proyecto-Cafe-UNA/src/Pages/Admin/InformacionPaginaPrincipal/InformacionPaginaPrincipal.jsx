@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import { Image, X } from "lucide-react";
 
+<<<<<<< HEAD:proyecto-Cafe-UNA/src/Pages/Admin/InformacionPaginaPrincipal/InformacionPaginaPrincipal.jsx
 import { AdminLayout } from "../layouts/AdminLayout";
 import { actualizarSeccion, obtenerInformacion } from "../../../services/informacionService";
+=======
+import { AdminLayout } from "../../layouts/AdminLayout";
+import { actualizarSeccion, obtenerInformacion } from "../../services/informacionService";
+>>>>>>> e9713895f8ce68616e520010142169c33dd96a6a:proyecto-Cafe-UNA/src/Pages/Admin/InformacionPaginaPrincipal.jsx
 
 const heroInicial = {
   title: "",
