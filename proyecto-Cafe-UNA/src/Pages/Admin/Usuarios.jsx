@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from "react";
-import { AdminLayout } from "../../layouts/AdminLayout";
+import { AdminLayout } from "./layouts/AdminLayout";
 import {
   obtenerUsuarios,
   crearUsuario,

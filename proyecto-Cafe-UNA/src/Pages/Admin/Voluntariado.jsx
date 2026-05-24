@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Eye, Pencil, RefreshCw, Trash2, X } from "lucide-react";
 
-import { AdminLayout } from "../../layouts/AdminLayout";
+import { AdminLayout } from "./layouts/AdminLayout";
 import {
   actualizarSolicitud,
   eliminarSolicitud,

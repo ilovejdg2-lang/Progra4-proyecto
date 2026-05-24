@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Eye, Image, ImagePlus, Target, Trash2, X } from "lucide-react";
 
-import { AdminLayout } from "../../layouts/AdminLayout";
+import { AdminLayout } from "./layouts/AdminLayout";
 import { actualizarInformacion, actualizarSeccion, obtenerInformacion } from "../../services/informacionService";
 
 const infoInicial = {
