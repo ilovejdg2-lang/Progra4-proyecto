@@ -1,18 +1,49 @@
 /* SolicitarVoluntariado.css */
 
-* {
-  box-sizing: border-box;
+:root {
+  --verde-principal: #286f54;
+  --verde-hover: #1f5843;
+  --verde-claro: #e8f3ee;
+  --verde-badge-text: #1d5a44;
+  --fondo-pagina: #f4f7f6;
+  --borde-input: #d1d5db;
+  --texto-secundario: #6b7280;
+  --error: #c62828;
 }
 
-html {
-  scroll-behavior: smooth;
+.voluntariado-page {
+  background: var(--fondo-pagina);
+  min-height: 100vh;
+  padding: 24px 0 60px;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
 }
 
-body {
-  margin: 0;
-  font-family: "Inter", sans-serif;
-  background: #f5f5f2;
-  color: #1f1f1f;
+/* =========================
+   VOLVER AL INICIO
+========================= */
+
+.back-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 1150px;
+  width: 100%;
+  margin: 0 auto 20px;
+  padding: 0 25px;
+  color: var(--verde-principal);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.back-arrow:hover {
+  color: var(--verde-hover);
+  transform: translateX(-3px);
+}
+
+.back-arrow i {
+  font-size: 15px;
 }
 
 /* =========================
@@ -22,36 +53,39 @@ body {
 .voluntariado-section {
   width: 100%;
   max-width: 1150px;
-  margin: 80px auto;
+  margin: 0 auto;
   padding: 0 25px;
 }
 
 .voluntariado-header {
-  margin-bottom: 45px;
-  max-width: 700px;
+  margin-bottom: 36px;
+  max-width: 720px;
 }
 
-.badge {
+.badge--voluntariado {
   display: inline-block;
-  background: #e7efe5;
-  color: #355b35;
+  background: var(--verde-claro);
+  color: var(--verde-badge-text);
   padding: 8px 14px;
   border-radius: 50px;
   font-size: 13px;
   font-weight: 600;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .voluntariado-header h2 {
-  font-size: 42px;
+  font-size: clamp(28px, 4vw, 40px);
   line-height: 1.2;
-  margin-bottom: 18px;
+  margin: 0 0 14px;
+  color: #1a1a1a;
+  font-weight: 700;
 }
 
 .voluntariado-header p {
   font-size: 16px;
-  color: #666;
+  color: var(--texto-secundario);
   line-height: 1.7;
+  margin: 0;
 }
 
 /* =========================
@@ -59,11 +93,11 @@ body {
 ========================= */
 
 .formulario-card {
-  background: white;
-  border-radius: 24px;
-  padding: 50px;
-  border: 1px solid #e5e5e5;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 32px;
+  border: 1px solid #e8ecea;
+  box-shadow: 0 8px 28px rgba(40, 111, 84, 0.08);
 }
 
 /* =========================
@@ -71,18 +105,23 @@ body {
 ========================= */
 
 .tipo-postulacion {
-  margin-bottom: 40px;
+  margin-bottom: 28px;
 }
 
-.tipo-postulacion p {
+.tipo-postulacion > p {
   font-size: 15px;
   font-weight: 600;
-  margin-bottom: 18px;
+  margin: 0 0 16px;
+  color: #374151;
+}
+
+.req {
+  color: var(--error);
 }
 
 .tipo-opciones {
   display: flex;
-  gap: 35px;
+  gap: 32px;
   flex-wrap: wrap;
 }
 
@@ -91,6 +130,8 @@ body {
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  font-size: 15px;
+  color: #374151;
 }
 
 .radio-card input {
@@ -100,20 +141,30 @@ body {
 .radio-custom {
   width: 18px;
   height: 18px;
-  border: 2px solid #999;
+  border: 2px solid #9ca3af;
   border-radius: 50%;
   position: relative;
+  flex-shrink: 0;
+  transition: border-color 0.2s ease;
+}
+
+.radio-card input:checked + .radio-custom {
+  border-color: var(--verde-principal);
 }
 
 .radio-card input:checked + .radio-custom::after {
   content: "";
   width: 10px;
   height: 10px;
-  background: #111;
+  background: var(--verde-principal);
   border-radius: 50%;
   position: absolute;
   top: 2px;
   left: 2px;
+}
+
+.cantidad-grupo {
+  margin-bottom: 32px;
 }
 
 /* =========================
@@ -121,36 +172,40 @@ body {
 ========================= */
 
 .form-section {
-  margin-bottom: 50px;
+  margin-bottom: 36px;
 }
 
 .section-title {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .section-title span {
-  width: 5px;
+  width: 4px;
   height: 22px;
-  background: #111;
-  border-radius: 20px;
+  background: var(--verde-principal);
+  border-radius: 4px;
+  flex-shrink: 0;
 }
 
 .section-title h3 {
-  font-size: 15px;
-  letter-spacing: 1px;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
 }
 
 /* =========================
-   GRID
+   CAMPOS
 ========================= */
 
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
+  gap: 22px;
 }
 
 .campo {
@@ -163,38 +218,560 @@ body {
 }
 
 .campo label {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   font-size: 14px;
-  font-weight: 500;
-}
-
-.campo label span {
-  color: #c62828;
+  font-weight: 600;
+  color: #374151;
 }
 
 .campo input,
 .campo select,
-.campo textarea {
+.participantes-agregar input,
+.participante-item input {
   width: 100%;
-  border: 1px solid #d8d8d8;
-  padding: 15px;
-  border-radius: 12px;
+  border: 1px solid var(--borde-input);
+  padding: 14px 16px;
+  border-radius: 10px;
   font-size: 14px;
-  transition: 0.2s ease;
-  background: white;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: #ffffff;
+  color: #1f2937;
+  font-family: inherit;
+}
+
+.campo input::placeholder,
+.participantes-agregar input::placeholder {
+  color: #9ca3af;
 }
 
 .campo input:focus,
 .campo select:focus,
-.campo textarea:focus {
+.participantes-agregar input:focus {
   outline: none;
-  border-color: #111;
+  border-color: var(--verde-principal);
+  box-shadow: 0 0 0 3px rgba(40, 111, 84, 0.12);
 }
 
-.campo textarea {
-  min-height: 140px;
-  resize: vertical;
-  margin-top: 5px;
+.select-wrap {
+  position: relative;
+}
+
+.select-wrap select {
+  appearance: none;
+  padding-right: 42px;
+}
+
+.select-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+/* =========================
+   PARTICIPANTES GRUPAL
+========================= */
+
+.participantes-bloque {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin-bottom: 0;
+}
+
+.participantes-bloque__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  color: var(--verde-principal);
+}
+
+.participantes-bloque__header i {
+  font-size: 18px;
+}
+
+.participantes-bloque__header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.participantes-agregar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.btn-agregar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  border: none;
+  background: var(--verde-principal);
+  color: #ffffff;
+  padding: 0 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-agregar:hover {
+  background: var(--verde-hover);
+}
+
+.participantes-vacio {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto-secundario);
+  font-style: italic;
+}
+
+.participantes-nombres__hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.participantes-nombres__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.participantes-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.participante-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.participante-item input {
+  flex: 1;
+  background: #ffffff;
+}
+
+.btn-eliminar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #fecaca;
+  background: #fff5f5;
+  color: #dc2626;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.btn-eliminar:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* =========================
+   SECCIONES UNIFICADAS
+========================= */
+
+.form-secciones {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.section-card {
+  background: #ffffff;
+  border: 1px solid #e8ecea;
+  border-left: 3px solid var(--verde-principal);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+
+.section-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f4f3;
+}
+
+.section-card__icon-inline {
+  color: var(--verde-principal);
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.section-card__titles h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  letter-spacing: 0.01em;
+}
+
+.section-card__hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--texto-secundario);
+  font-weight: 400;
+}
+
+.section-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* =========================
+   TIPO VOLUNTARIADO (radio único)
+========================= */
+
+.opciones-radio-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.opcion-radio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--borde-input);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.opcion-radio input {
+  display: none;
+}
+
+.opcion-radio__indicador {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #b0b8c1;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.15s ease;
+}
+
+.opcion-radio--activa,
+.opcion-radio:has(input:checked) {
+  border-color: var(--verde-principal);
+  background: var(--verde-claro);
+}
+
+.opcion-radio--activa .opcion-radio__indicador,
+.opcion-radio:has(input:checked) .opcion-radio__indicador {
+  border-color: var(--verde-principal);
+}
+
+.opcion-radio--activa .opcion-radio__indicador::after,
+.opcion-radio:has(input:checked) .opcion-radio__indicador::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: var(--verde-principal);
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+}
+
+.tipo-otro {
+  margin-top: 4px;
+}
+
+/* =========================
+   DISPONIBILIDAD LAYOUT
+========================= */
+
+.disponibilidad-layout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.horarios-campo {
+  min-width: 0;
+}
+
+.input-fecha-simple {
+  width: 100%;
+  border: 1px solid var(--borde-input);
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1f2937;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-fecha-simple:focus {
+  outline: none;
+  border-color: var(--verde-principal);
+  box-shadow: 0 0 0 3px rgba(40, 111, 84, 0.1);
+}
+
+/* =========================
+   SUB-TARJETAS (legacy → reemplazado)
+========================= */
+
+/* =========================
+   INPUT FECHA
+========================= */
+
+.input-fecha {
+  position: relative;
+}
+
+.input-fecha input[type="date"] {
+  width: 100%;
+  border: 1px solid var(--borde-input);
+  padding: 14px 44px 14px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1f2937;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-fecha input[type="date"]:focus {
+  outline: none;
+  border-color: var(--verde-principal);
+  box-shadow: 0 0 0 3px rgba(40, 111, 84, 0.12);
+}
+
+.input-fecha__icono {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--verde-principal);
+  pointer-events: none;
+  font-size: 14px;
+}
+
+/* =========================
+   CALENDARIO
+========================= */
+
+.calendario-campo {
+  margin-top: 4px;
+}
+
+.calendario-voluntariado {
+  border: 1px solid var(--borde-input);
+  border-radius: 10px;
+  padding: 10px;
+  background: #fafcfb;
+  width: 100%;
+  max-width: 240px;
+}
+
+.calendario-voluntariado--compacto .calendario-voluntariado__nav {
+  margin-bottom: 8px;
+}
+
+.calendario-voluntariado__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.calendario-voluntariado__nav span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.calendario-voluntariado__nav button {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--borde-input);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--verde-principal);
+  cursor: pointer;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.calendario-voluntariado__nav button:hover {
+  background: var(--verde-claro);
+}
+
+.calendario-voluntariado__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendario-voluntariado__cabecera {
+  text-align: center;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+  padding: 2px 0 4px;
+}
+
+.calendario-voluntariado__dia {
+  width: 100%;
+  height: 28px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+  font-family: inherit;
+  padding: 0;
+}
+
+.calendario-voluntariado__dia:hover:not(:disabled) {
+  background: var(--verde-claro);
+  border-color: #c5e0d4;
+}
+
+.calendario-voluntariado__dia--seleccionado {
+  background: var(--verde-principal) !important;
+  color: #ffffff !important;
+  border-color: var(--verde-principal) !important;
+  font-weight: 700;
+}
+
+.calendario-voluntariado__dia--hoy:not(.calendario-voluntariado__dia--seleccionado) {
+  border-color: var(--verde-principal);
+  color: var(--verde-principal);
+  font-weight: 700;
+}
+
+.calendario-voluntariado__dia--vacio,
+.calendario-voluntariado__dia--deshabilitado {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.calendario-voluntariado__resumen {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--verde-principal);
+  font-weight: 600;
+}
+
+.calendario-voluntariado__hint {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--texto-secundario);
+}
+
+.checkbox-lista--compacta {
+  gap: 8px;
+}
+
+.checkbox-lista--compacta .checkbox-item {
+  font-size: 13px;
+  padding: 6px 0;
+}
+
+/* =========================
+   CHECKBOXES LISTA
+========================= */
+
+.checkbox-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.checkbox-item input {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--verde-principal);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.area-otro {
+  margin-top: 4px;
+}
+
+/* =========================
+   DÍAS CHECKBOXES (legacy)
+========================= */
+
+.dias-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--borde-input);
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.dia-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.dia-checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--verde-principal);
+  cursor: pointer;
 }
 
 /* =========================
@@ -202,14 +779,15 @@ body {
 ========================= */
 
 .mensaje-error {
-  color: #c62828;
+  color: var(--error);
   font-size: 13px;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .form-error {
-  color: #c62828;
-  margin-top: 15px;
+  color: var(--error);
+  margin: 0 0 16px;
+  font-size: 14px;
 }
 
 /* =========================
@@ -217,24 +795,30 @@ body {
 ========================= */
 
 .acciones-formulario {
-  margin-top: 20px;
+  margin-top: 8px;
 }
 
 .btn-enviar {
   width: 100%;
   border: none;
-  background: #111;
-  color: white;
-  padding: 18px;
-  border-radius: 14px;
+  background: var(--verde-principal);
+  color: #ffffff;
+  padding: 16px 24px;
+  border-radius: 12px;
   cursor: pointer;
   font-size: 15px;
   font-weight: 600;
-  transition: 0.25s ease;
+  transition: background 0.25s ease, transform 0.15s ease;
+  font-family: inherit;
 }
 
-.btn-enviar:hover {
-  background: #2a2a2a;
+.btn-enviar:hover:not(:disabled) {
+  background: var(--verde-hover);
+}
+
+.btn-enviar:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 /* =========================
@@ -242,30 +826,60 @@ body {
 ========================= */
 
 .confirmacion {
-  background: white;
-  border-radius: 24px;
-  padding: 70px 40px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 60px 40px;
   text-align: center;
-  border: 1px solid #e5e5e5;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+  border: 1px solid #e8ecea;
+  box-shadow: 0 8px 28px rgba(40, 111, 84, 0.08);
+}
+
+.confirmacion__icono {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: var(--verde-claro);
+  color: var(--verde-principal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
 }
 
 .confirmacion h2 {
-  font-size: 36px;
-  margin-bottom: 14px;
+  font-size: clamp(24px, 3vw, 32px);
+  margin: 0 0 12px;
+  color: #1a1a1a;
 }
 
 .confirmacion p {
-  color: #666;
+  color: var(--texto-secundario);
   line-height: 1.7;
-  margin-bottom: 30px;
+  margin: 0 0 28px;
+}
+
+.confirmacion .btn-enviar {
+  max-width: 320px;
+  margin: 0 auto;
 }
 
 /* =========================
    RESPONSIVE
 ========================= */
 
-@media (max-width: 800px) {
+@media (max-width: 768px) {
+  .voluntariado-page {
+    padding-top: 16px;
+  }
+
+  .back-arrow {
+    margin-bottom: 16px;
+  }
+
+  .formulario-card {
+    padding: 24px 20px;
+  }
 
   .form-grid {
     grid-template-columns: 1fr;
@@ -275,16 +889,44 @@ body {
     grid-column: span 1;
   }
 
-  .formulario-card {
-    padding: 35px 25px;
-  }
-
-  .voluntariado-header h2 {
-    font-size: 32px;
-  }
-
   .tipo-opciones {
     flex-direction: column;
-    gap: 20px;
+    gap: 14px;
+  }
+
+  .participantes-agregar {
+    flex-direction: column;
+  }
+
+  .btn-agregar {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+  }
+
+  .dias-checkboxes {
+    grid-template-columns: 1fr;
+  }
+
+  .participantes-nombres__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .disponibilidad-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .calendario-voluntariado {
+    max-width: 100%;
+  }
+
+  .calendario-voluntariado__dia {
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .section-card {
+    padding: 16px;
   }
 }

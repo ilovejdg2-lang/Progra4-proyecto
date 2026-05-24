@@ -84,6 +84,17 @@ const Home = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (sessionStorage.getItem("scrollToIniciativas")) {
+      sessionStorage.removeItem("scrollToIniciativas");
+      window.setTimeout(() => {
+        document
+          .getElementById("iniciativas")
+          ?.scrollIntoView({ behavior: "smooth" });
+      }, 150);
+    }
+  }, []);
+
   return (
     <main className="home-page">
       {hero ? <Hero data={hero} /> : null}
@@ -98,7 +109,7 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="home-page__iniciativas">
+      <section id="iniciativas" className="home-page__iniciativas">
         <div className="iniciativas-header">
           <span className="iniciativas-eyebrow">Participá con nosotros</span>
           <h2 className="iniciativas-titulo">
