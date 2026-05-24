@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Link, useRouterState } from "@tanstack/react-router";
@@ -89,10 +89,10 @@ export function AppSidebar() {
       <SidebarHeader>
         <Link
           to="/"
-          className="block"
+          className="block text-xl font-bold text-slate-950 hover:text-slate-700"
           onClick={clearSidebarState}
         >
-          <img src="/logo.webp" alt="Café UNA" className="h-10 w-auto object-contain" />
+          {"Caf\u00e9 Una"}
         </Link>
       </SidebarHeader>
 
@@ -203,7 +203,7 @@ export function AppSidebar() {
               <div className="truncate font-medium text-slate-700">{displayName}</div>
               {displayEmail ? <div className="truncate">{displayEmail}</div> : null}
             </div>
-            <DropdownMenuItem onSelect={handleLogout} className="text-red-600 focus:bg-red-50 focus:text-red-700">
+            <DropdownMenuItem onSelect={handleLogout}>
               <LogOut className="size-4" />
               <span>Cerrar sesión</span>
             </DropdownMenuItem>
