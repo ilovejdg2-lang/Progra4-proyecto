@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import { Eye, Image, ImagePlus, Target, Trash2, X } from "lucide-react";
 
+<<<<<<< HEAD:proyecto-Cafe-UNA/src/Pages/Admin/InformacionSobreNosotros/InformacionSobreNosotros.jsx
 import { AdminLayout } from "../layouts/AdminLayout";
 import { actualizarInformacion, actualizarSeccion, obtenerInformacion } from "../../../services/informacionService";
+=======
+import { AdminLayout } from "../../layouts/AdminLayout";
+import { actualizarInformacion, actualizarSeccion, obtenerInformacion } from "../../services/informacionService";
+>>>>>>> e9713895f8ce68616e520010142169c33dd96a6a:proyecto-Cafe-UNA/src/Pages/Admin/InformacionSobreNosotros.jsx
 
 const infoInicial = {
   hero: {},
