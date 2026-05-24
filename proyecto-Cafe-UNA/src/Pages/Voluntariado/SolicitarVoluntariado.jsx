@@ -1,725 +1,578 @@
-
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { crearSolicitud } from "../../services/voluntariadoService";
+import { SectionCard } from "./CalendarioVoluntariado";
 import "./SolicitarVoluntariado.css";
 
-const tiposVoluntariado = [
-  "Voluntariado de Apoyo General",
-  "Voluntariado de Actividades de Limpieza",
-  "Voluntariado de Capacitaciones",
-  "Voluntariado de Investigación Académica",
+const TIPOS_VOLUNTARIADO = [
+  "Apoyo General",
+  "Capacitaciones",
+  "Investigación Académica",
+  "Eventos y actividades",
+  "Educación ambiental",
+  "Trabajo de campo",
+  "Otro",
 ];
 
+const INSTITUCIONES = [
+  "Universidad Nacional",
+  "Universidad Estatal a Distancia",
+  "Universidad de Costa Rica",
+  "Instituto Tecnológico",
+  "Otra",
+];
+
+const PAISES = [
+  "Costa Rica",
+  "México",
+  "Colombia",
+  "España",
+  "Estados Unidos",
+  "Otro",
+];
+
+const HORARIOS_PREFERIDOS = [
+  { id: "manana", label: "Mañana (8:00 – 12:00)" },
+  { id: "tarde", label: "Tarde (13:00 – 16:30)" },
+  { id: "flexible", label: "Horario flexible" },
+];
+
+const FORM_INICIAL = {
+  modalidad: "individual",
+  cantidadParticipantes: "",
+  tipo: "",
+  tipoOtro: "",
+  nombre: "",
+  identificacion: "",
+  institucion: "",
+  pais: "",
+  residencia: "",
+  correo: "",
+  telefono: "",
+  fechaInicio: "",
+  fechaFin: "",
+};
+
 function SolicitarVoluntariado() {
-
-  const [formulario, setFormulario] = useState({
-    modalidad: "individual",
-  });
-
+  const [formulario, setFormulario] = useState(FORM_INICIAL);
+  const [horariosSeleccionados, setHorariosSeleccionados] = useState([]);
   const [errores, setErrores] = useState({});
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
-  const [error, setError] = useState(null);
+  const [errorApi, setErrorApi] = useState(null);
+
+  const esGrupal = formulario.modalidad === "grupal";
+  const esTipoOtro = formulario.tipo === "Otro";
+
+  const limpiarError = (campo) => {
+    if (errores[campo]) {
+      setErrores((prev) => {
+        const next = { ...prev };
+        delete next[campo];
+        return next;
+      });
+    }
+  };
 
   const handleChange = (e) => {
-
     let valor = e.target.value;
 
-    // Sanitizar espacios
     if (typeof valor === "string") {
       valor = valor.replace(/\s+/g, " ").trimStart();
     }
 
-    // Correo en minúscula
     if (e.target.name === "correo") {
       valor = valor.toLowerCase();
     }
 
-    setFormulario({
-      ...formulario,
+    setFormulario((prev) => ({
+      ...prev,
       [e.target.name]: valor,
-    });
+    }));
+
+    limpiarError(e.target.name);
+  };
+
+  const handleTipoVoluntariado = (tipo) => {
+    setFormulario((prev) => ({
+      ...prev,
+      tipo,
+      tipoOtro: tipo === "Otro" ? prev.tipoOtro : "",
+    }));
+    limpiarError("tipo");
+    limpiarError("tipoOtro");
+  };
+
+  const handleModalidad = (modalidad) => {
+    setFormulario((prev) => ({
+      ...prev,
+      modalidad,
+      cantidadParticipantes: modalidad === "individual" ? "" : prev.cantidadParticipantes,
+    }));
+
+    if (modalidad === "individual") {
+      setErrores((prev) => {
+        const next = { ...prev };
+        delete next.cantidadParticipantes;
+        return next;
+      });
+    }
+  };
+
+  const toggleHorario = (id) => {
+    setHorariosSeleccionados((prev) =>
+      prev.includes(id) ? prev.filter((h) => h !== id) : [...prev, id]
+    );
+    limpiarError("horarios");
   };
 
   const validarFormulario = () => {
-
-    let nuevosErrores = {};
-
-    // =========================
-    // NOMBRE
-    // =========================
+    const nuevosErrores = {};
 
     const nombre = formulario.nombre?.trim();
+    if (!nombre) nuevosErrores.nombre = "El nombre es obligatorio";
+    else if (nombre.length < 3) nuevosErrores.nombre = "Mínimo 3 caracteres";
 
-    if (!nombre) {
-      nuevosErrores.nombre = "El nombre es obligatorio";
-    } else if (nombre.length < 3) {
-      nuevosErrores.nombre = "Mínimo 3 caracteres";
-    } else if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(nombre)) {
-      nuevosErrores.nombre = "Solo letras y espacios";
-    } else if (nombre.split(" ").length < 2) {
-      nuevosErrores.nombre = "Ingrese nombre y apellido";
-    }
+    const identificacion = formulario.identificacion?.trim();
+    if (!identificacion) nuevosErrores.identificacion = "La identificación es obligatoria";
 
-    // =========================
-    // EMAIL
-    // =========================
+    if (!formulario.institucion) nuevosErrores.institucion = "Seleccione una institución";
+    if (!formulario.pais) nuevosErrores.pais = "Seleccione un país";
+
+    const residencia = formulario.residencia?.trim();
+    if (!residencia) nuevosErrores.residencia = "El lugar de residencia es obligatorio";
 
     const correo = formulario.correo?.trim();
-
-    if (!correo) {
-      nuevosErrores.correo = "El correo es obligatorio";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+    if (!correo) nuevosErrores.correo = "El correo es obligatorio";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
       nuevosErrores.correo = "Correo inválido";
     }
 
-    // =========================
-    // IDENTIFICACIÓN
-    // =========================
-
-    const identificacion = formulario.identificacion?.trim();
-
-    if (!identificacion) {
-      nuevosErrores.identificacion = "La identificación es obligatoria";
-    } else if (!/^\d+$/.test(identificacion)) {
-      nuevosErrores.identificacion = "Solo números";
-    } else if (identificacion.length < 9) {
-      nuevosErrores.identificacion = "Debe tener mínimo 9 dígitos";
-    }
-
-    // =========================
-    // TELÉFONO
-    // =========================
-
     const telefono = formulario.telefono?.trim();
+    if (!telefono) nuevosErrores.telefono = "El teléfono es obligatorio";
 
-    if (!telefono) {
-      nuevosErrores.telefono = "El teléfono es obligatorio";
-    } else if (!/^(\+506)?\d{8}$/.test(telefono)) {
-      nuevosErrores.telefono = "Número inválido";
+    if (!formulario.tipo) {
+      nuevosErrores.tipo = "Seleccione el tipo de voluntariado";
+    } else if (esTipoOtro && !formulario.tipoOtro?.trim()) {
+      nuevosErrores.tipoOtro = "Especifique el tipo de voluntariado";
     }
 
-    // =========================
-    // INSTITUCIÓN
-    // =========================
+    if (!formulario.fechaInicio) nuevosErrores.fechaInicio = "Seleccione la fecha de inicio";
+    if (!formulario.fechaFin) nuevosErrores.fechaFin = "Seleccione la fecha de fin";
 
-    if (!formulario.institucion) {
-      nuevosErrores.institucion = "Seleccione una institución";
+    if (formulario.fechaInicio && formulario.fechaFin && formulario.fechaFin < formulario.fechaInicio) {
+      nuevosErrores.fechaFin = "La fecha fin debe ser posterior al inicio";
     }
 
-    // =========================
-    // PAÍS
-    // =========================
-
-    if (!formulario.pais) {
-      nuevosErrores.pais = "Seleccione un país";
+    if (horariosSeleccionados.length === 0) {
+      nuevosErrores.horarios = "Seleccione al menos un horario";
     }
 
-    // =========================
-    // MODALIDAD GRUPAL
-    // =========================
-
-    if (
-      formulario.modalidad === "grupal" &&
-      !formulario.cantidadParticipantes
-    ) {
-      nuevosErrores.cantidadParticipantes =
-        "Ingrese la cantidad de participantes";
+    if (esGrupal) {
+      const cantidad = Number(formulario.cantidadParticipantes);
+      if (!formulario.cantidadParticipantes || cantidad < 2) {
+        nuevosErrores.cantidadParticipantes = "Ingrese la cantidad (mínimo 2)";
+      } else if (cantidad > 100) {
+        nuevosErrores.cantidadParticipantes = "Máximo 100 participantes";
+      }
     }
 
     setErrores(nuevosErrores);
-
     return Object.keys(nuevosErrores).length === 0;
   };
 
+  const resetFormulario = () => {
+    setFormulario(FORM_INICIAL);
+    setHorariosSeleccionados([]);
+    setErrores({});
+    setErrorApi(null);
+  };
+
   const handleSubmit = async (e) => {
-
     e.preventDefault();
-
     if (!validarFormulario()) return;
 
+    const horariosLabel = HORARIOS_PREFERIDOS.filter((h) =>
+      horariosSeleccionados.includes(h.id)
+    ).map((h) => h.label);
+
+    const tipoFinal = esTipoOtro ? formulario.tipoOtro.trim() : formulario.tipo;
+
+    const datosEnvio = {
+      modalidad: formulario.modalidad,
+      cantidadParticipantes: esGrupal ? Number(formulario.cantidadParticipantes) : 1,
+      tipoVoluntariado: tipoFinal,
+      nombre: formulario.nombre.trim(),
+      identificacion: formulario.identificacion.trim(),
+      institucion: formulario.institucion,
+      pais: formulario.pais,
+      residencia: formulario.residencia.trim(),
+      email: formulario.correo.trim(),
+      telefono: formulario.telefono.trim(),
+      periodoDisponibilidad: { inicio: formulario.fechaInicio, fin: formulario.fechaFin },
+      horariosPreferidos: horariosLabel,
+    };
+
+    alert(`Solicitud registrada correctamente.\n\n${JSON.stringify(datosEnvio, null, 2)}`);
+
     setEnviando(true);
-    setError(null);
+    setErrorApi(null);
 
     try {
-
       await crearSolicitud({
         userId: "anonimo",
-
-        nombre: formulario.nombre,
-        email: formulario.correo,
-        telefono: formulario.telefono,
-        tipoVoluntariado: formulario.tipo,
-
-        identificacion: formulario.identificacion,
-        institucion: formulario.institucion,
-        pais: formulario.pais,
-
-        modalidad: formulario.modalidad,
-        cantidadParticipantes:
-          formulario.cantidadParticipantes || 1,
-
-        descripcion: formulario.experiencia ?? "",
-        motivacion: formulario.motivacion ?? "",
-        residencia: formulario.residencia ?? "",
-        horario: formulario.horario ?? "",
-        dias: formulario.dias ?? "",
-        area: formulario.area ?? "",
+        nombre: datosEnvio.nombre,
+        email: datosEnvio.email,
+        telefono: datosEnvio.telefono,
+        tipoVoluntariado: datosEnvio.tipoVoluntariado,
+        identificacion: datosEnvio.identificacion,
+        institucion: datosEnvio.institucion,
+        pais: datosEnvio.pais,
+        modalidad: datosEnvio.modalidad,
+        cantidadParticipantes: datosEnvio.cantidadParticipantes,
+        residencia: datosEnvio.residencia,
+        horario: horariosLabel.join(", "),
+        dias: `${formulario.fechaInicio} - ${formulario.fechaFin}`,
+        area: tipoFinal,
+        descripcion: `Periodo: ${formulario.fechaInicio} - ${formulario.fechaFin}.${
+          esGrupal ? ` Cantidad de participantes: ${formulario.cantidadParticipantes}.` : ""
+        }`,
+        motivacion: "",
       });
 
+      resetFormulario();
       setEnviado(true);
-
     } catch (err) {
-
-      setError(
-        "Ocurrió un error al enviar la solicitud."
-      );
-
+      setErrorApi("Ocurrió un error al enviar la solicitud. Intente nuevamente.");
       console.error(err);
-
     } finally {
       setEnviando(false);
     }
   };
 
   return (
+    <div className="voluntariado-page">
+      <Link
+        to="/"
+        className="back-arrow"
+        onClick={() => sessionStorage.setItem("scrollToIniciativas", "1")}
+      >
+        <i className="fas fa-arrow-left" aria-hidden="true" />
+        Volver al inicio
+      </Link>
 
-    <section
-      id="voluntariado"
-      className="voluntariado-section"
-    >
+      <section id="voluntariado" className="voluntariado-section">
+        <div className="voluntariado-header">
+          <span className="badge badge--voluntariado">Programa de Voluntariado</span>
+          <h2>Únete a nuestras iniciativas de voluntariado</h2>
+          <p>
+            Complete el siguiente formulario para aplicar al área de
+            voluntariado de su interés.
+          </p>
+        </div>
 
-      <div className="voluntariado-header">
-
-        <span className="badge badge--voluntariado">
-          Programa de Voluntariado
-        </span>
-
-        <h2>
-          Únete a nuestras iniciativas de voluntariado
-        </h2>
-
-        <p>
-          Complete el siguiente formulario para aplicar
-          al área de voluntariado de su interés.
-        </p>
-
-      </div>
-
-      {!enviado ? (
-
-        <form
-          onSubmit={handleSubmit}
-          className="formulario-card"
-        >
-
-          {/* =========================
-              MODALIDAD
-          ========================= */}
-
-          <div className="tipo-postulacion">
-
-            <p>¿Cómo desea participar?</p>
-
-            <div className="tipo-opciones">
-
-              <label className="radio-card">
-
-                <input
-                  type="radio"
-                  name="modalidad"
-                  value="individual"
-                  checked={
-                    formulario.modalidad === "individual"
-                  }
-                  onChange={handleChange}
-                />
-
-                <span className="radio-custom"></span>
-
-                <span>Individual</span>
-
-              </label>
-
-              <label className="radio-card">
-
-                <input
-                  type="radio"
-                  name="modalidad"
-                  value="grupal"
-                  checked={
-                    formulario.modalidad === "grupal"
-                  }
-                  onChange={handleChange}
-                />
-
-                <span className="radio-custom"></span>
-
-                <span>Grupal</span>
-
-              </label>
-
+        {!enviado ? (
+          <form onSubmit={handleSubmit} className="formulario-card" noValidate>
+            <div className="tipo-postulacion">
+              <p>
+                ¿Cómo desea participar? <span className="req">*</span>
+              </p>
+              <div className="tipo-opciones">
+                <label className="radio-card">
+                  <input
+                    type="radio"
+                    name="modalidad"
+                    value="individual"
+                    checked={formulario.modalidad === "individual"}
+                    onChange={() => handleModalidad("individual")}
+                  />
+                  <span className="radio-custom" />
+                  <span>Individual</span>
+                </label>
+                <label className="radio-card">
+                  <input
+                    type="radio"
+                    name="modalidad"
+                    value="grupal"
+                    checked={formulario.modalidad === "grupal"}
+                    onChange={() => handleModalidad("grupal")}
+                  />
+                  <span className="radio-custom" />
+                  <span>Grupal</span>
+                </label>
+              </div>
             </div>
 
-          </div>
+            <div className="form-secciones">
+              <SectionCard icon="fas fa-user" title="Información personal">
+                <div className="form-grid">
+                  <div className="campo full">
+                    <label>
+                      Nombre completo <span className="req">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="nombre"
+                      placeholder="Ingrese su nombre completo"
+                      value={formulario.nombre}
+                      onChange={handleChange}
+                      maxLength={80}
+                    />
+                    {errores.nombre && <span className="mensaje-error">{errores.nombre}</span>}
+                  </div>
 
-          {/* =========================
-              CANTIDAD PARTICIPANTES
-          ========================= */}
+                  <div className="campo">
+                    <label>
+                      Número de identificación <span className="req">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="identificacion"
+                      placeholder="Ej. 123456789"
+                      value={formulario.identificacion}
+                      onChange={handleChange}
+                      maxLength={20}
+                    />
+                    {errores.identificacion && (
+                      <span className="mensaje-error">{errores.identificacion}</span>
+                    )}
+                  </div>
 
-          {formulario.modalidad === "grupal" && (
+                  <div className="campo">
+                    <label>
+                      Lugar de residencia <span className="req">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="residencia"
+                      placeholder="Ciudad, provincia"
+                      value={formulario.residencia}
+                      onChange={handleChange}
+                    />
+                    {errores.residencia && (
+                      <span className="mensaje-error">{errores.residencia}</span>
+                    )}
+                  </div>
 
-            <div className="campo cantidad-grupo">
+                  <div className="campo">
+                    <label>
+                      Institución educativa <span className="req">*</span>
+                    </label>
+                    <div className="select-wrap">
+                      <select name="institucion" value={formulario.institucion} onChange={handleChange}>
+                        <option value="">Seleccione una institución</option>
+                        {INSTITUCIONES.map((inst) => (
+                          <option key={inst} value={inst}>{inst}</option>
+                        ))}
+                      </select>
+                      <i className="fas fa-chevron-down select-icon" aria-hidden="true" />
+                    </div>
+                    {errores.institucion && (
+                      <span className="mensaje-error">{errores.institucion}</span>
+                    )}
+                  </div>
 
-              <label>
-                Cantidad de participantes <span>*</span>
-              </label>
+                  <div className="campo">
+                    <label>
+                      País de residencia <span className="req">*</span>
+                    </label>
+                    <div className="select-wrap">
+                      <select name="pais" value={formulario.pais} onChange={handleChange}>
+                        <option value="">Seleccione un país</option>
+                        {PAISES.map((pais) => (
+                          <option key={pais} value={pais}>{pais}</option>
+                        ))}
+                      </select>
+                      <i className="fas fa-chevron-down select-icon" aria-hidden="true" />
+                    </div>
+                    {errores.pais && <span className="mensaje-error">{errores.pais}</span>}
+                  </div>
+                </div>
+              </SectionCard>
 
-              <input
-                type="number"
-                name="cantidadParticipantes"
-                min="2"
-                max="100"
-                placeholder="Ej: 15"
-                value={
-                  formulario.cantidadParticipantes || ""
-                }
-                onChange={handleChange}
-              />
+              <SectionCard icon="fas fa-envelope" title="Contacto al solicitante">
+                <div className="form-grid">
+                  <div className="campo">
+                    <label>
+                      Correo electrónico <span className="req">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="correo"
+                      placeholder="correo@ejemplo.com"
+                      value={formulario.correo}
+                      onChange={handleChange}
+                    />
+                    {errores.correo && <span className="mensaje-error">{errores.correo}</span>}
+                  </div>
 
-              {errores.cantidadParticipantes && (
-                <span className="mensaje-error">
-                  {errores.cantidadParticipantes}
-                </span>
+                  <div className="campo">
+                    <label>
+                      Número de teléfono <span className="req">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      name="telefono"
+                      placeholder="88888888"
+                      value={formulario.telefono}
+                      onChange={handleChange}
+                    />
+                    {errores.telefono && (
+                      <span className="mensaje-error">{errores.telefono}</span>
+                    )}
+                  </div>
+                </div>
+              </SectionCard>
+
+              {esGrupal && (
+                <SectionCard
+                  icon="fas fa-users"
+                  title="Participantes"
+                  hint="Indique cuántas personas asistirán"
+                >
+                  <div className="campo">
+                    <label>
+                      Cantidad de participantes <span className="req">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="cantidadParticipantes"
+                      min="2"
+                      max="100"
+                      placeholder="Ej. 15"
+                      value={formulario.cantidadParticipantes}
+                      onChange={handleChange}
+                    />
+                    {errores.cantidadParticipantes && (
+                      <span className="mensaje-error">{errores.cantidadParticipantes}</span>
+                    )}
+                  </div>
+                </SectionCard>
               )}
 
-            </div>
-          )}
+              <SectionCard icon="fas fa-hand-holding-heart" title="Información del voluntariado">
+                <div className="form-grid">
+                  <div className="campo">
+                    <label>
+                      Disponibilidad desde <span className="req">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="fechaInicio"
+                      className="input-fecha-simple"
+                      value={formulario.fechaInicio}
+                      onChange={handleChange}
+                    />
+                    {errores.fechaInicio && (
+                      <span className="mensaje-error">{errores.fechaInicio}</span>
+                    )}
+                  </div>
 
-          {/* =========================
-              INFORMACIÓN PERSONAL
-          ========================= */}
+                  <div className="campo">
+                    <label>
+                      Disponibilidad hasta <span className="req">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="fechaFin"
+                      className="input-fecha-simple"
+                      value={formulario.fechaFin}
+                      min={formulario.fechaInicio || undefined}
+                      onChange={handleChange}
+                    />
+                    {errores.fechaFin && (
+                      <span className="mensaje-error">{errores.fechaFin}</span>
+                    )}
+                  </div>
+                </div>
 
-          <div className="form-section">
+                <div className="campo">
+                  <label>
+                    Horario preferido <span className="req">*</span>
+                  </label>
+                  <div className="checkbox-lista checkbox-lista--compacta">
+                    {HORARIOS_PREFERIDOS.map((h) => (
+                      <label key={h.id} className="checkbox-item">
+                        <input
+                          type="checkbox"
+                          checked={horariosSeleccionados.includes(h.id)}
+                          onChange={() => toggleHorario(h.id)}
+                        />
+                        <span>{h.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {errores.horarios && (
+                    <span className="mensaje-error">{errores.horarios}</span>
+                  )}
+                </div>
+              </SectionCard>
 
-            <div className="section-title">
-              <span></span>
-              <h3>INFORMACIÓN PERSONAL</h3>
-            </div>
-
-            <div className="form-grid">
-
-              <div className="campo full">
-
-                <label>
-                  Tipo de voluntariado <span>*</span>
-                </label>
-
-                <select
-                  name="tipo"
-                  value={formulario.tipo || ""}
-                  onChange={handleChange}
-                  required
-                >
-
-                  <option value="">
-                    Seleccione una opción
-                  </option>
-
-                  {tiposVoluntariado.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
+              <SectionCard
+                icon="fas fa-seedling"
+                title="Tipo de voluntariado"
+                hint="Seleccione una única opción"
+              >
+                <div className="opciones-radio-lista">
+                  {TIPOS_VOLUNTARIADO.map((tipo) => (
+                    <label
+                      key={tipo}
+                      className={`opcion-radio${formulario.tipo === tipo ? " opcion-radio--activa" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name="tipoVoluntariado"
+                        value={tipo}
+                        checked={formulario.tipo === tipo}
+                        onChange={() => handleTipoVoluntariado(tipo)}
+                      />
+                      <span className="opcion-radio__indicador" />
+                      <span>{tipo}</span>
+                    </label>
                   ))}
+                </div>
 
-                </select>
-
-              </div>
-
-              {/* NOMBRE */}
-
-              <div className="campo full">
-
-                <label>
-                  Nombre completo <span>*</span>
-                </label>
-
-                <input
-                  type="text"
-                  name="nombre"
-                  placeholder="Ingrese su nombre completo"
-                  value={formulario.nombre || ""}
-                  onChange={handleChange}
-                  maxLength={80}
-                />
-
-                {errores.nombre && (
-                  <span className="mensaje-error">
-                    {errores.nombre}
-                  </span>
+                {esTipoOtro && (
+                  <div className="campo tipo-otro">
+                    <input
+                      type="text"
+                      name="tipoOtro"
+                      placeholder="Describa el tipo de voluntariado"
+                      value={formulario.tipoOtro}
+                      onChange={handleChange}
+                    />
+                    {errores.tipoOtro && (
+                      <span className="mensaje-error">{errores.tipoOtro}</span>
+                    )}
+                  </div>
                 )}
 
-              </div>
-
-              {/* IDENTIFICACIÓN */}
-
-              <div className="campo">
-
-                <label>
-                  Número de identificación <span>*</span>
-                </label>
-
-                <input
-                  type="text"
-                  name="identificacion"
-                  placeholder="Ej: 123456789"
-                  value={formulario.identificacion || ""}
-                  onChange={handleChange}
-                  maxLength={12}
-                />
-
-                {errores.identificacion && (
-                  <span className="mensaje-error">
-                    {errores.identificacion}
-                  </span>
-                )}
-
-              </div>
-
-              {/* EMAIL */}
-
-              <div className="campo">
-
-                <label>
-                  Correo electrónico <span>*</span>
-                </label>
-
-                <input
-                  type="email"
-                  name="correo"
-                  placeholder="correo@ejemplo.com"
-                  value={formulario.correo || ""}
-                  onChange={handleChange}
-                />
-
-                {errores.correo && (
-                  <span className="mensaje-error">
-                    {errores.correo}
-                  </span>
-                )}
-
-              </div>
-
-              {/* TELÉFONO */}
-
-              <div className="campo">
-
-                <label>
-                  Número de teléfono <span>*</span>
-                </label>
-
-                <input
-                  type="tel"
-                  name="telefono"
-                  placeholder="88888888"
-                  value={formulario.telefono || ""}
-                  onChange={handleChange}
-                />
-
-                {errores.telefono && (
-                  <span className="mensaje-error">
-                    {errores.telefono}
-                  </span>
-                )}
-
-              </div>
-
-              {/* RESIDENCIA */}
-
-              <div className="campo">
-
-                <label>
-                  Lugar de residencia <span>*</span>
-                </label>
-
-                <input
-                  type="text"
-                  name="residencia"
-                  placeholder="Ciudad, provincia"
-                  value={formulario.residencia || ""}
-                  onChange={handleChange}
-                />
-
-              </div>
-
-              {/* INSTITUCIÓN */}
-
-              <div className="campo">
-
-                <label>
-                  Institución educativa <span>*</span>
-                </label>
-
-                <select
-                  name="institucion"
-                  value={formulario.institucion || ""}
-                  onChange={handleChange}
-                >
-
-                  <option value="">
-                    Seleccione una institución
-                  </option>
-
-                  <option value="Universidad Nacional">
-                    Universidad Nacional
-                  </option>
-
-                  <option value="UCR">
-                    Universidad de Costa Rica
-                  </option>
-
-                  <option value="TEC">
-                    Instituto Tecnológico
-                  </option>
-
-                </select>
-
-                {errores.institucion && (
-                  <span className="mensaje-error">
-                    {errores.institucion}
-                  </span>
-                )}
-
-              </div>
-
-              {/* PAÍS */}
-
-              <div className="campo">
-
-                <label>
-                  País de residencia <span>*</span>
-                </label>
-
-                <select
-                  name="pais"
-                  value={formulario.pais || ""}
-                  onChange={handleChange}
-                >
-
-                  <option value="">
-                    Seleccione un país
-                  </option>
-
-                  <option value="Costa Rica">
-                    Costa Rica
-                  </option>
-
-                  <option value="Nicaragua">
-                    Nicaragua
-                  </option>
-
-                  <option value="Panamá">
-                    Panamá
-                  </option>
-
-                  <option value="Honduras">
-                    Honduras
-                  </option>
-
-                </select>
-
-                {errores.pais && (
-                  <span className="mensaje-error">
-                    {errores.pais}
-                  </span>
-                )}
-
-              </div>
-
-            </div>
-          </div>
-
-          {/* =========================
-              INFORMACIÓN VOLUNTARIADO
-          ========================= */}
-
-          <div className="form-section">
-
-            <div className="section-title">
-              <span></span>
-              <h3>INFORMACIÓN DEL VOLUNTARIADO</h3>
+                {errores.tipo && <span className="mensaje-error">{errores.tipo}</span>}
+              </SectionCard>
             </div>
 
-            <div className="form-grid">
+            {errorApi && <p className="form-error">{errorApi}</p>}
 
-              <div className="campo">
-
-                <label>Horario disponible</label>
-
-                <select
-                  name="horario"
-                  value={formulario.horario || ""}
-                  onChange={handleChange}
-                >
-
-                  <option value="">
-                    Seleccione un horario
-                  </option>
-
-                  <option value="mañana">
-                    Mañanas
-                  </option>
-
-                  <option value="tarde">
-                    Tardes
-                  </option>
-
-                  <option value="noche">
-                    Noches
-                  </option>
-
-                </select>
-
-              </div>
-
-              <div className="campo">
-
-                <label>Días disponibles</label>
-
-                <select
-                  name="dias"
-                  value={formulario.dias || ""}
-                  onChange={handleChange}
-                >
-
-                  <option value="">
-                    Seleccione los días
-                  </option>
-
-                  <option value="lunes-viernes">
-                    Lunes a Viernes
-                  </option>
-
-                  <option value="fines-semana">
-                    Fines de semana
-                  </option>
-
-                </select>
-
-              </div>
-
-              <div className="campo">
-
-                <label>Área de interés</label>
-
-                <select
-                  name="area"
-                  value={formulario.area || ""}
-                  onChange={handleChange}
-                >
-
-                  <option value="">
-                    Seleccione un área
-                  </option>
-
-                  <option value="campo">
-                    Trabajo de campo
-                  </option>
-
-                  <option value="eventos">
-                    Eventos
-                  </option>
-
-                  <option value="investigacion">
-                    Investigación
-                  </option>
-
-                </select>
-
-              </div>
-
+            <div className="acciones-formulario">
+              <button type="submit" className="btn-enviar" disabled={enviando}>
+                {enviando ? "Enviando..." : "Enviar Solicitud"}
+              </button>
             </div>
-
-            <div className="campo">
-
-              <label>Experiencia previa</label>
-
-              <textarea
-                name="experiencia"
-                placeholder="Describa brevemente su experiencia..."
-                value={formulario.experiencia || ""}
-                onChange={handleChange}
-              />
-
+          </form>
+        ) : (
+          <div className="confirmacion">
+            <div className="confirmacion__icono">
+              <i className="fas fa-check" aria-hidden="true" />
             </div>
-
-            <div className="campo">
-
-              <label>
-                ¿Por qué desea ser voluntario?
-              </label>
-
-              <textarea
-                name="motivacion"
-                placeholder="Comparta su motivación..."
-                value={formulario.motivacion || ""}
-                onChange={handleChange}
-              />
-
-            </div>
-
-          </div>
-
-          {error && (
-            <p className="form-error">{error}</p>
-          )}
-
-          <div className="acciones-formulario">
-
-            <button
-              type="submit"
-              className="btn-enviar"
-              disabled={enviando}
-            >
-
-              {enviando
-                ? "Enviando..."
-                : "Enviar Solicitud"}
-
+            <h2>Solicitud enviada</h2>
+            <p>Su solicitud fue registrada correctamente.</p>
+            <button type="button" className="btn-enviar" onClick={() => setEnviado(false)}>
+              Realizar otra solicitud
             </button>
-
           </div>
-
-        </form>
-
-      ) : (
-
-        <div className="confirmacion">
-
-          <div className="confirmacion__icono">
-            ✓
-          </div>
-
-          <h2>Solicitud enviada</h2>
-
-          <p>
-            Su solicitud fue registrada correctamente.
-          </p>
-
-          <button
-            className="btn-enviar"
-            onClick={() => {
-              setFormulario({});
-              setEnviado(false);
-            }}
-          >
-            Realizar otra solicitud
-          </button>
-
-        </div>
-      )}
-
-    </section>
+        )}
+      </section>
+    </div>
   );
 }
 
