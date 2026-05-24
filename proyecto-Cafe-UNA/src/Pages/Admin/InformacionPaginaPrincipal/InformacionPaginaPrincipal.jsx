@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import { Image, X } from "lucide-react";
 
+<<<<<<< HEAD:proyecto-Cafe-UNA/src/Pages/Admin/InformacionPaginaPrincipal/InformacionPaginaPrincipal.jsx
+import { AdminLayout } from "../layouts/AdminLayout";
+import { actualizarSeccion, obtenerInformacion } from "../../../services/informacionService";
+=======
 import { AdminLayout } from "../../layouts/AdminLayout";
 import { actualizarSeccion, obtenerInformacion } from "../../services/informacionService";
+>>>>>>> e9713895f8ce68616e520010142169c33dd96a6a:proyecto-Cafe-UNA/src/Pages/Admin/InformacionPaginaPrincipal.jsx
 
 const heroInicial = {
   title: "",
@@ -180,14 +185,14 @@ const AdminInformacionPaginaPrincipal = () => {
             {error}
           </div>
         ) : (
-          <article className="border-l-4 border-blue-600 bg-white p-7 shadow-sm ring-1 ring-slate-200">
+          <article className="border-l-4 border-amber-700 bg-white p-7 shadow-sm ring-1 ring-slate-200">
             <div className="flex items-start justify-between gap-5">
               <div className="min-w-0">
                 <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">Hero section</p>
                 <h1 className="mt-2 break-words text-xl font-bold text-slate-950">{hero.title || "Sin titulo"}</h1>
                 <p className="mt-3 max-w-3xl text-slate-600">{hero.subtitle || "Sin subtitulo configurado."}</p>
               </div>
-              <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700">
+              <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
                 <Image className="size-6" />
               </span>
             </div>
@@ -197,9 +202,9 @@ const AdminInformacionPaginaPrincipal = () => {
               <button
                 type="button"
                 onClick={() => setEditando(true)}
-                className="rounded-xl border border-blue-200 px-5 py-2 text-sm font-bold text-blue-600 transition hover:bg-blue-50"
+                className="rounded-xl border border-amber-300 px-5 py-2 text-sm font-bold text-amber-800 transition hover:bg-amber-50"
               >
-                Editar -&gt;
+                Editar
               </button>
             </div>
           </article>
