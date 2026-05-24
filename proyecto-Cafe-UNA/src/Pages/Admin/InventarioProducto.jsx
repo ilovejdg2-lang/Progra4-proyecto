@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 
-import { AdminLayout } from "../../layouts/AdminLayout";
+import { AdminLayout } from "./layouts/AdminLayout";
 import {
   actualizarProducto,
   crearProducto,
@@ -281,7 +281,7 @@ const AdminInventarioProducto = () => {
           <button
             type="button"
             onClick={() => setModalCrear(true)}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+            className="rounded-lg bg-stone-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-stone-600"
           >
             + Nuevo producto
           </button>

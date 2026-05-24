@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Eye, Image, ImagePlus, Target, Trash2, X } from "lucide-react";
 
-import { AdminLayout } from "../../layouts/AdminLayout";
+import { AdminLayout } from "./layouts/AdminLayout";
 import { actualizarInformacion, actualizarSeccion, obtenerInformacion } from "../../services/informacionService";
 
 const infoInicial = {
@@ -19,15 +19,15 @@ const infoInicial = {
 
 const estilos = {
   mission: {
-    borde: "border-violet-600",
-    icono: "bg-violet-50 text-violet-700",
+    borde: "border-amber-800",
+    icono: "bg-amber-50 text-amber-800",
     etiqueta: "Mision",
     resumen: "Texto institucional de mision.",
     Icon: Target,
   },
   vision: {
-    borde: "border-blue-600",
-    icono: "bg-blue-50 text-blue-700",
+    borde: "border-amber-700",
+    icono: "bg-amber-50 text-amber-700",
     etiqueta: "Vision",
     resumen: "Texto institucional de vision.",
     Icon: Eye,
@@ -268,9 +268,9 @@ function TarjetaTexto({ tipo, data, onEditar }) {
         <button
           type="button"
           onClick={() => onEditar(tipo)}
-          className="rounded-xl border border-blue-200 px-5 py-2 text-sm font-bold text-blue-600 transition hover:bg-blue-50"
+          className="rounded-xl border border-amber-700 px-5 py-2 text-sm font-bold text-amber-800 transition hover:bg-amber-50"
         >
-          Editar -&gt;
+          Editar
         </button>
       </div>
     </article>
@@ -351,13 +351,13 @@ const AdminInformacionSobreNosotros = () => {
               <TarjetaTexto tipo="vision" data={info.vision ?? {}} onEditar={setEditandoTexto} />
             </div>
 
-            <article className="border-l-4 border-teal-600 bg-white p-6 shadow-sm ring-1 ring-slate-200">
+            <article className="border-l-4 border-amber-700 bg-white p-6 shadow-sm ring-1 ring-slate-200">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Galeria de fotos</p>
                   <h2 className="mt-2 text-lg font-bold text-slate-950">Galeria institucional</h2>
                 </div>
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-teal-50 text-teal-700">
+                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-800">
                   <Image className="size-5" />
                 </span>
               </div>
@@ -384,9 +384,9 @@ const AdminInformacionSobreNosotros = () => {
                 <button
                   type="button"
                   onClick={() => setEditandoGaleria(true)}
-                  className="rounded-xl border border-blue-200 px-5 py-2 text-sm font-bold text-blue-600 transition hover:bg-blue-50"
+                  className="rounded-xl border border-amber-700 px-5 py-2 text-sm font-bold text-amber-800 transition hover:bg-amber-50"
                 >
-                  Editar -&gt;
+                  Editar
                 </button>
               </div>
             </article>
