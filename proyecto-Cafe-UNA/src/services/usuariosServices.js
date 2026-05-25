@@ -1,4 +1,4 @@
-const BASE_URL = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5152/api"}/usuarios`;
+const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/usuarios`;
 
 async function request(url, options = {}) {
   const res = await fetch(url, {
