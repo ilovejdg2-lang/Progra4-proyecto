@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import './Products.css';
+import { calcularPrecioConIVA } from '../../services/productosServices';
 
 const PRODUCTS_PER_PAGE = 8;
 const CART_STORAGE_KEY = 'cart';
@@ -35,12 +36,17 @@ const Products = () => {
     fetchProducts();
   }, []);
 
-  const totalPages = Math.ceil(products.length / PRODUCTS_PER_PAGE) || 1;
+  const visibleProducts = useMemo(
+    () => products.filter((product) => product.estado !== 'Deshabilitado'),
+    [products]
+  );
+
+  const totalPages = Math.ceil(visibleProducts.length / PRODUCTS_PER_PAGE) || 1;
 
   const currentProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
-    return products.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
-  }, [currentPage, products]);
+    return visibleProducts.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
+  }, [currentPage, visibleProducts]);
 
   const goToPage = (page) => {
     if (page < 1 || page > totalPages) {
@@ -49,11 +55,43 @@ const Products = () => {
     setCurrentPage(page);
   };
 
+  const productCards = currentProducts.map((product) => {
+    const precioNormal = Number(product.precioNormal ?? product.priceWithoutIva ?? product.price ?? 0) || 0;
+    const precioConIVA = calcularPrecioConIVA(precioNormal);
+    const stockDisponible = Number(product.stock) || 0;
+    const estaAgotado = stockDisponible <= 0 || product.estado === 'Deshabilitado';
+
+    return {
+      product,
+      precioNormal,
+      precioConIVA,
+      stockDisponible,
+      estaAgotado,
+    };
+  });
+
   const handleBuy = (product) => {
+    const stockDisponible = Number(product.stock) || 0;
     const rawCart = localStorage.getItem(CART_STORAGE_KEY);
     const parsedCart = rawCart ? JSON.parse(rawCart) : [];
 
     const existingProductIndex = parsedCart.findIndex((item) => item.id === product.id);
+    const unidadesEnCarrito = existingProductIndex >= 0 ? (Number(parsedCart[existingProductIndex].units) || 0) : 0;
+
+    if (product.estado === 'Deshabilitado') {
+      window.alert('Este producto está deshabilitado.');
+      return;
+    }
+
+    if (stockDisponible <= 0) {
+      window.alert('Este producto está agotado.');
+      return;
+    }
+
+    if (unidadesEnCarrito >= stockDisponible) {
+      window.alert('No hay más unidades disponibles de este producto.');
+      return;
+    }
 
     if (existingProductIndex >= 0) {
       parsedCart[existingProductIndex] = {
@@ -100,7 +138,7 @@ const Products = () => {
       <section className="products-page__grid" aria-label="Lista de productos de cafe">
         {loading && <p>Cargando productos...</p>}
         {error && <p>Error: {error}</p>}
-        {!loading && !error && currentProducts.map((product) => (
+        {!loading && !error && productCards.map(({ product, precioNormal, precioConIVA, stockDisponible, estaAgotado }) => (
           <article className="products-page__card" key={product.id}>
             {product.imagen && (
               <img 
@@ -114,7 +152,13 @@ const Products = () => {
               <strong>Cantidad:</strong> {product.peso}
             </p>
             <p>
-              <strong>Precio:</strong> CRC {product.precioNormal.toLocaleString('es-CR')}
+              <strong>Precio:</strong> CRC {precioNormal.toLocaleString('es-CR')}
+            </p>
+            <p>
+              <strong>Precio con IVA:</strong> CRC {precioConIVA.toLocaleString('es-CR')}
+            </p>
+            <p>
+              <strong>Disponibles:</strong> {stockDisponible}
             </p>
             <p style={{ fontSize: '0.85em', color: '#666', marginBottom: '12px' }}>
               {product.descripcion}
@@ -123,8 +167,9 @@ const Products = () => {
               type="button"
               className="products-page__buy-button"
               onClick={() => handleBuy(product)}
+              disabled={estaAgotado}
             >
-              Comprar
+              {estaAgotado ? 'Agotado' : 'Comprar'}
             </button>
             {lastAddedProductId === product.id ? (
               <p className="products-page__added" aria-live="polite">Producto agregado al carrito.</p>

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { ArrowLeft, Coffee, CreditCard, ShoppingBasket } from 'lucide-react';
 import './Checkout.css';
+import { ajustarStockProductos, calcularPrecioConIVA } from '../../services/productosServices';
 
 const CART_STORAGE_KEY = 'cart';
 
@@ -11,7 +13,7 @@ const formatCRC = (amount) => {
 
 const getQuantity = (item) => Number(item.units) || 1;
 const getUnitPriceWithoutIva = (item) => Number(item.precioNormal ?? item.priceWithoutIva ?? 0) || 0;
-const getUnitPriceWithIva = (item) => Number(item.precioConIVA ?? item.priceWithIva ?? item.price ?? 0) || 0;
+const getUnitPriceWithIva = (item) => calcularPrecioConIVA(getUnitPriceWithoutIva(item));
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -25,6 +27,8 @@ const Checkout = () => {
     }
   });
   const [paid, setPaid] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
 
   useEffect(() => {
     // Oculta la chrome (navbar + footer) mientras esta pagina este montada
@@ -62,21 +66,61 @@ const Checkout = () => {
     navigate({ to: '/productos' });
   };
 
-  const handlePay = () => {
-    // Simula pago: limpiar carrito, notificar y mostrar confirmación
-    localStorage.removeItem(CART_STORAGE_KEY);
-    window.dispatchEvent(new Event('cart-updated'));
-    window.dispatchEvent(new CustomEvent('order-confirmed', { detail: { total: totalConIva } }));
-    setPaid(true);
-    setTimeout(() => navigate({ to: '/' }), 2200);
+  const handleValidateCartItems = (items) => {
+    const deshabilitados = items.filter((item) => item.estado === 'Deshabilitado');
+    if (deshabilitados.length > 0) {
+      const nombres = deshabilitados.map((item) => item.nombre || item.name || 'Producto').join(', ');
+      throw new Error(`No se puede completar la compra porque estos productos están deshabilitados: ${nombres}`);
+    }
+  };
+
+  const handlePay = async () => {
+    if (cartItems.length === 0 || processingPayment) {
+      return;
+    }
+
+    try {
+      setProcessingPayment(true);
+      setPaymentError(null);
+
+      handleValidateCartItems(cartItems);
+      await ajustarStockProductos(cartItems);
+
+      localStorage.removeItem(CART_STORAGE_KEY);
+      window.dispatchEvent(new Event('cart-updated'));
+      window.dispatchEvent(new CustomEvent('order-confirmed', { detail: { total: totalConIva } }));
+      setPaid(true);
+      setTimeout(() => navigate({ to: '/' }), 8000);
+    } catch (error) {
+      const message = error?.message || 'No se pudo completar la compra por falta de stock.';
+      setPaymentError(message);
+      window.alert(message);
+    } finally {
+      setProcessingPayment(false);
+    }
   };
 
   if (paid) {
     return (
       <main className="checkout-page">
-        <section className="checkout-page__card">
-          <h2>Gracias por tu compra</h2>
-          <p>Tu pedido fue procesado correctamente. Serás redirigido a inicio.</p>
+        <section className="checkout-success-card" aria-live="polite">
+          <div className="checkout-success-card__top">
+            <Coffee size={88} strokeWidth={1.9} aria-hidden="true" className="checkout-success-card__icon" />
+          </div>
+          <div className="checkout-success-card__body">
+            <h2>Gracias por tu compra</h2>
+            <p>Tu pedido fue procesado correctamente.</p>
+            <span className="checkout-success-card__hint">Serás redirigido a inicio automáticamente en unos segundos.</span>
+          </div>
+          <div className="checkout-success-card__actions">
+            <button type="button" className="checkout-success-card__primary" onClick={() => navigate({ to: '/' })}>
+              Volver al inicio
+            </button>
+            <button type="button" className="checkout-success-card__secondary" onClick={handleContinueShopping}>
+              Seguir comprando
+            </button>
+          </div>
+          <p className="checkout-success-card__brand">Café UNA</p>
         </section>
       </main>
     );
@@ -85,7 +129,13 @@ const Checkout = () => {
   return (
     <main className="checkout-page">
       <section className="checkout-page__summary">
-        <h1>Resumen de tu pedido</h1>
+        <header className="checkout-page__header">
+          <button type="button" className="checkout-page__back" onClick={() => navigate({ to: '/productos' })} aria-label="Volver al catálogo">
+            <ArrowLeft size={22} strokeWidth={2.4} aria-hidden="true" />
+          </button>
+          <h1>Resumen de tu pedido</h1>
+        </header>
+        {paymentError ? <p style={{ color: '#b91c1c', marginBottom: '12px' }}>{paymentError}</p> : null}
         {cartItems.length === 0 ? (
           <p>No hay productos en el carrito.</p>
         ) : (
@@ -114,6 +164,7 @@ const Checkout = () => {
             </div>
 
             <div className="checkout-page__totals">
+              <p className="checkout-page__totals-label">Resumen del pago</p>
               <div className="checkout-page__subtotal-row">
                 <span>Subtotal</span>
                 <strong>{formatCRC(subtotalSinIva)}</strong>
@@ -129,8 +180,14 @@ const Checkout = () => {
             </div>
 
             <div className="checkout-page__actions">
-              <button className="checkout-page__pay" onClick={handlePay}>Pagar</button>
-              <button className="checkout-page__continue" onClick={handleContinueShopping}>Seguir comprando</button>
+              <button className="checkout-page__pay" onClick={handlePay} disabled={processingPayment}>
+                <CreditCard size={18} strokeWidth={2.3} aria-hidden="true" className="checkout-page__button-icon" />
+                {processingPayment ? 'Procesando...' : 'Pagar'}
+              </button>
+              <button className="checkout-page__continue" onClick={handleContinueShopping}>
+                <ShoppingBasket size={18} strokeWidth={2.3} aria-hidden="true" className="checkout-page__button-icon" />
+                <span>Seguir comprando</span>
+              </button>
             </div>
           </>
         )}
