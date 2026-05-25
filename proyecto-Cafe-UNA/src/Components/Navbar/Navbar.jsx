@@ -1,6 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './Navbar.css';
+import { calcularPrecioConIVA } from '../../services/productosServices';
+import { ArrowRight, Minus, Plus, Trash2, X } from 'lucide-react';
 
 const CART_STORAGE_KEY = 'cart';
 
@@ -11,7 +13,8 @@ const formatCRC = (amount) => {
 
 const getQuantity = (item) => Number(item.units) || 1;
 const getUnitPriceWithoutIva = (item) => Number(item.precioNormal ?? item.priceWithoutIva ?? item.price ?? 0) || 0;
-const getUnitPriceWithIva = (item) => Number(item.precioConIVA ?? item.priceWithIva ?? item.price ?? 0) || 0;
+const getUnitPriceWithIva = (item) => calcularPrecioConIVA(getUnitPriceWithoutIva(item));
+const getAvailableStock = (item) => Number(item.stock) || 0;
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -108,9 +111,27 @@ const Navbar = () => {
     };
 
     const addOneUnit = (productId) => {
+        const targetItem = cartItems.find((item) => item.id === productId);
+        if (!targetItem) {
+            return;
+        }
+
+        const stockDisponible = getAvailableStock(targetItem);
+        const unidadesActuales = getQuantity(targetItem);
+
+        if (stockDisponible <= 0 || targetItem.estado === 'Agotado') {
+            window.alert('Este producto está agotado.');
+            return;
+        }
+
+        if (unidadesActuales >= stockDisponible) {
+            window.alert('No hay más unidades disponibles de este producto.');
+            return;
+        }
+
         const updatedCart = cartItems.map((item) => (
             item.id === productId
-                ? { ...item, units: (item.units || 1) + 1 }
+                ? { ...item, units: unidadesActuales + 1 }
                 : item
         ));
 
@@ -178,11 +199,14 @@ const Navbar = () => {
                     />
                     <span className="cart-badge">{cartUnits}</span>
                     {showCartDropdown ? (
-                        <div
+                        <aside
                             className={`dropdown dropdown--cart dropdown--cart-panel ${isCartClosing ? 'is-closing' : 'is-open'}`}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label="Resumen del carrito"
                             onClick={(event) => event.stopPropagation()}
                         >
-                            <div className="cart-drawer-header">
+                            <header className="cart-drawer-header">
                                 <button
                                     type="button"
                                     className="cart-drawer__close-btn"
@@ -190,17 +214,26 @@ const Navbar = () => {
                                     title="Cerrar carrito"
                                     onClick={(e) => { e.stopPropagation(); closeCartPanel(); }}
                                 >
-                                    ×
+                                    <X size={20} strokeWidth={2.4} aria-hidden="true" />
                                 </button>
-                                <p>Resumen del carrito</p>
-                            </div>
+                                <h2>Resumen del carrito</h2>
+                            </header>
                             {cartItems.length === 0 ? (
-                                <span className="dropdown__empty">Tu carrito esta vacio.</span>
+                                <p className="dropdown__empty">Tu carrito esta vacio.</p>
                             ) : (
                                 <>
-                                    <div className="cart-items">
+                                    <section className="cart-items" aria-label="Productos en el carrito">
                                         {cartItems.map((item) => (
-                                            <div key={item.id} className="cart-item">
+                                            <article key={item.id} className="cart-item">
+                                                <button
+                                                    type="button"
+                                                    className="cart-item__remove-inline"
+                                                    onClick={() => removeLineItem(item.id)}
+                                                    aria-label={`Eliminar ${item.name || item.nombre || 'producto'} del carrito`}
+                                                    title="Eliminar producto"
+                                                >
+                                                    <Trash2 size={16} strokeWidth={2.2} aria-hidden="true" />
+                                                </button>
                                                 <div className="cart-item__media">
                                                     {item.imagen ? (
                                                         <img
@@ -214,45 +247,42 @@ const Navbar = () => {
                                                 </div>
                                                 <div className="cart-item__details">
                                                     <div className="cart-item__name">{item.nombre || item.name || 'Producto'}</div>
+                                                    <div className="cart-item__weight">{item.peso || item.quantity || 'Cantidad no disponible'} x {getQuantity(item)}</div>
                                                     <div className="cart-item__prices">
                                                         <span className="cart-item__price-pill">Sin IVA: {formatCRC(getUnitPriceWithoutIva(item))}</span>
                                                         <span className="cart-item__price-pill cart-item__price-pill--strong">Con IVA: {formatCRC(getUnitPriceWithIva(item))}</span>
                                                     </div>
-                                                    <div className="cart-item__meta">{item.peso || item.quantity || 'Cantidad no disponible'} x {getQuantity(item)}</div>
                                                 </div>
-                                                <div className="cart-item__controls">
-                                                    <button
-                                                        type="button"
-                                                        className="cart-item__stepper"
-                                                        onClick={() => removeOneUnit(item.id)}
-                                                        aria-label={`Quitar una unidad de ${item.name}`}
-                                                    >
-                                                        -
-                                                    </button>
-                                                    <span className="cart-item__units">{item.units}</span>
-                                                    <button
-                                                        type="button"
-                                                        className="cart-item__stepper"
-                                                        onClick={() => addOneUnit(item.id)}
-                                                        aria-label={`Agregar una unidad de ${item.name}`}
-                                                    >
-                                                        +
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        className="cart-item__trash"
-                                                        onClick={() => removeLineItem(item.id)}
-                                                        aria-label={`Eliminar ${item.name} del carrito`}
-                                                        title="Eliminar producto"
-                                                    >
-                                                        🗑
-                                                    </button>
-                                                </div>
-                                                <div className="cart-item__line-total">{formatCRC(getUnitPriceWithIva(item) * getQuantity(item))}</div>
-                                            </div>
+                                                <footer className="cart-item__bottom">
+                                                    <div className="cart-item__controls" aria-label="Controles de cantidad">
+                                                        <button
+                                                            type="button"
+                                                            className="cart-item__stepper"
+                                                            onClick={() => removeOneUnit(item.id)}
+                                                            aria-label={`Quitar una unidad de ${item.name}`}
+                                                        >
+                                                            <Minus size={14} strokeWidth={2.8} aria-hidden="true" />
+                                                        </button>
+                                                        <span className="cart-item__units">{item.units}</span>
+                                                        <button
+                                                            type="button"
+                                                            className="cart-item__stepper"
+                                                            onClick={() => addOneUnit(item.id)}
+                                                            aria-label={`Agregar una unidad de ${item.name}`}
+                                                            disabled={getAvailableStock(item) <= getQuantity(item) || item.estado === 'Agotado'}
+                                                        >
+                                                            <Plus size={14} strokeWidth={2.8} aria-hidden="true" />
+                                                        </button>
+                                                    </div>
+                                                    <div className="cart-item__line-total">
+                                                        <span className="cart-item__line-total-label">Subtotal</span>
+                                                        <strong>{formatCRC(getUnitPriceWithIva(item) * getQuantity(item))}</strong>
+                                                    </div>
+                                                </footer>
+                                            </article>
                                         ))}
-                                    </div>
-                                    <div className="cart-subtotal">
+                                    </section>
+                                    <footer className="cart-subtotal" aria-label="Totales del carrito">
                                         <div className="cart-subtotal-row">
                                             <span>Subtotal:</span>
                                             <strong>{formatCRC(cartSubtotal)}</strong>
@@ -265,7 +295,7 @@ const Navbar = () => {
                                             <strong>Total:</strong>
                                             <strong>{formatCRC(cartTotal)}</strong>
                                         </div>
-                                    </div>
+                                    </footer>
                                     <div className="cart-actions-row">
                                         <Link to="/checkout" className="cart-go-checkout" onClick={() => setShowCartDropdown(false)}>
                                             Ir a pagar
@@ -280,7 +310,7 @@ const Navbar = () => {
                                     </div>
                                 </>
                             )}
-                        </div>
+                        </aside>
                     ) : null}
                 </div>
 

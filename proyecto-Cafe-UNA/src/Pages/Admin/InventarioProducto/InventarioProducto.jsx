@@ -10,6 +10,7 @@ import {
   crearProducto,
   eliminarProducto,
   obtenerProductos,
+  calcularPrecioConIVA,
 } from "../../../services/productosServices";
 
 const FORM_VACIO = {
@@ -19,7 +20,7 @@ const FORM_VACIO = {
   precioNormal: "",
   precioConIVA: "",
   stock: "",
-  estado: "Disponible",
+  estado: "Habilitado",
   peso: "",
 };
 
@@ -51,8 +52,9 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando }) {
     ...FORM_VACIO,
     ...inicial,
     precioNormal: inicial?.precioNormal ?? "",
-    precioConIVA: inicial?.precioConIVA ?? "",
+    precioConIVA: calcularPrecioConIVA(inicial?.precioNormal ?? inicial?.precioConIVA ?? 0),
     stock: inicial?.stock ?? "",
+    estado: inicial?.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado",
   }));
 
   const handleChange = (event) => {
@@ -64,6 +66,9 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando }) {
           ? ""
           : Number(value)
         : value,
+      precioConIVA: name === "precioNormal"
+        ? calcularPrecioConIVA(value === "" ? 0 : Number(value))
+        : prev.precioConIVA,
     }));
   };
 
@@ -72,7 +77,7 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando }) {
     onGuardar({
       ...form,
       precioNormal: Number(form.precioNormal) || 0,
-      precioConIVA: Number(form.precioConIVA) || 0,
+      precioConIVA: calcularPrecioConIVA(form.precioNormal),
       stock: Number(form.stock) || 0,
     });
   };
@@ -112,7 +117,7 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando }) {
 
         <label className="grid gap-2 text-sm font-medium text-slate-700">
           Precio con IVA
-          <input type="number" name="precioConIVA" value={form.precioConIVA} onChange={handleChange} className={inputCls} min="0" required />
+          <input type="number" name="precioConIVA" value={form.precioConIVA} className={inputCls} min="0" readOnly aria-readonly="true" />
         </label>
 
         <label className="grid gap-2 text-sm font-medium text-slate-700">
@@ -128,9 +133,8 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando }) {
         <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
           Estado
           <select name="estado" value={form.estado} onChange={handleChange} className={inputCls}>
-            <option value="Disponible">Disponible</option>
-            <option value="Agotado">Agotado</option>
-            <option value="Descontinuado">Descontinuado</option>
+            <option value="Habilitado">Habilitado</option>
+            <option value="Deshabilitado">Deshabilitado</option>
           </select>
         </label>
       </div>
@@ -341,7 +345,7 @@ const AdminInventarioProducto = () => {
                     <td className="px-6 py-4 text-slate-700">{producto.stock}</td>
                     <td className="px-6 py-4">
                       <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                        {producto.estado || "Disponible"}
+                        {producto.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado"}
                       </span>
                     </td>
                     <td className="px-6 py-4">
