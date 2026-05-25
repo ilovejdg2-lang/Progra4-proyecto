@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { obtenerUsuariosActivos } from '../../services/usuariosServices';
 import './Login.css';
-
-const JSONBIN_USERS_URL = `https://api.jsonbin.io/v3/b/${import.meta.env.VITE_JSONBIN_USERS_BIN_ID_USUARIOS}/latest`;
 
 const isAdminUser = (roles = []) => roles.some((role) => role === 'SuperAdmin');
 
@@ -53,33 +52,13 @@ const Login = () => {
       return;
     }
 
-    if (
-      !import.meta.env.VITE_JSONBIN_USERS_BIN_ID_USUARIOS
-      || !import.meta.env.VITE_JSONBIN_ACCESS_KEY_LECTURA_USUARIOS
-    ) {
-      setFormError('Falta configurar las variables de entorno del login.');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const response = await fetch(JSONBIN_USERS_URL, {
-        headers: {
-          'X-Access-Key': import.meta.env.VITE_JSONBIN_ACCESS_KEY_LECTURA_USUARIOS,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('No se pudo consultar JSONBin.');
-      }
-
-      const data = await response.json();
-      const users = Array.isArray(data) ? data : data.record || [];
+      const users = await obtenerUsuariosActivos();
       const normalizedIdentifier = identifier.trim().toLowerCase();
       const foundUser = users.find((user) => (
-        user.estado === 'activo'
-        && (
+        (
           user.nombre?.toLowerCase() === normalizedIdentifier
           || user.correo?.toLowerCase() === normalizedIdentifier
         )
