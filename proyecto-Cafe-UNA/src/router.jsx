@@ -38,7 +38,7 @@ const rootRoute = createRootRoute({
         return (
             <>
                 <Navbar />
-              <section id="center">
+              <section id="center" className="site-main">
                 <Outlet />
               </section>
                 <Footer />
