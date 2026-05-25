@@ -89,10 +89,10 @@ export function AppSidebar() {
       <SidebarHeader>
         <Link
           to="/"
-          className="block text-xl font-bold text-slate-950 hover:text-slate-700"
+          className="block"
           onClick={clearSidebarState}
         >
-          {"Caf\u00e9 Una"}
+          <img src="/logo.webp" alt="Café UNA" className="h-8 w-auto" />
         </Link>
       </SidebarHeader>
 
