@@ -74,6 +74,12 @@ body {
   min-height: 100vh;
 }
 
+.site-main {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 h1,
 h2,
 h3,
