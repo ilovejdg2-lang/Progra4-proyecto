@@ -60,7 +60,7 @@ export function SidebarProvider({ defaultOpen = true, className, children, ...pr
   return (
     <SidebarContext.Provider value={value}>
       <div
-        className={cn("flex min-h-svh w-full bg-slate-50 text-slate-950", className)}
+        className={cn("flex min-h-svh w-full bg-white text-slate-950", className)}
         {...props}
       >
         {children}
