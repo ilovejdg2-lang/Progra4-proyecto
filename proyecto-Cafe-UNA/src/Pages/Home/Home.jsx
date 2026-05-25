@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import Hero from '../../Components/Hero/Hero';
+import { normalizeImageUrl } from '../../lib/imageUtils';
 import { obtenerInformacion } from '../../services/informacionService';
 import './Home.css';
 
@@ -61,11 +62,12 @@ const heroData = {
   title: "Bienvenidos a Café UNA",
   subtitle: "Disfruta del mejor café artesanal cultivado con pasión y tradición costarricense.",
   buttonText: "Conocer más",
-  backgroundImage: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085"
+  backgroundImage:
+    "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1920&q=80",
 };
 
 const Home = () => {
-  const [hero, setHero] = useState(null);
+  const [hero, setHero] = useState(heroData);
 
   useEffect(() => {
     let activo = true;
@@ -76,13 +78,27 @@ const Home = () => {
       })
       .catch((err) => {
         console.error("No se pudo cargar la informacion del hero.", err);
-        if (activo) setHero(heroData);
       });
 
     return () => {
       activo = false;
     };
   }, []);
+
+  useEffect(() => {
+    const href = normalizeImageUrl(hero.backgroundImage, { width: 1920 });
+    if (!href) return;
+
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
+    link.href = href;
+    document.head.appendChild(link);
+
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, [hero.backgroundImage]);
 
   useEffect(() => {
     if (sessionStorage.getItem("scrollToIniciativas")) {
@@ -96,73 +112,64 @@ const Home = () => {
   }, []);
 
   return (
-    <main className="home-page">
-      {hero ? <Hero data={hero} /> : null}
-      <section className="home-page__info">
-        <div className="home-page__intro">
-          {hero ? (
-            <>
-              <h2>{hero.title}</h2>
-              <p>{hero.subtitle}</p>
-            </>
-          ) : null}
-        </div>
-      </section>
+    <>
+      <Hero data={hero} />
+      <main className="home-page">
+        <section id="iniciativas" className="home-page__iniciativas">
+          <div className="iniciativas-header">
+            <span className="iniciativas-eyebrow">Participá con nosotros</span>
+            <h2 className="iniciativas-titulo">
+              Cada aporte, visita o colaboración
+              <br />
+              <em>deja una huella especial.</em>
+            </h2>
+            <p className="iniciativas-subtitulo">
+              Elegí cómo querés involucrarte con el Café UNA y completá el formulario correspondiente.
+            </p>
+          </div>
 
-      <section id="iniciativas" className="home-page__iniciativas">
-        <div className="iniciativas-header">
-          <span className="iniciativas-eyebrow">Participá con nosotros</span>
-          <h2 className="iniciativas-titulo">
-            Cada aporte, visita o colaboración
-            <br />
-            <em>deja una huella especial.</em>
-          </h2>
-          <p className="iniciativas-subtitulo">
-            Elegí cómo querés involucrarte con el Café UNA y completá el formulario correspondiente.
-          </p>
-        </div>
+          <div className="iniciativas-grid">
+            {cards.map((card) => (
+              <div
+                key={card.id}
+                className="iniciativa-card"
+                style={{
+                  '--accent': card.accentColor,
+                  '--accent-bg': card.accentBg,
+                  '--accent-border': card.borderColor,
+                }}
+              >
+                <div className="iniciativa-card__top">
+                  <div className="iniciativa-card__icono">{card.icono}</div>
+                  <span className="iniciativa-card__etiqueta">{card.etiqueta}</span>
+                </div>
 
-        <div className="iniciativas-grid">
-          {cards.map((card) => (
-            <div
-              key={card.id}
-              className="iniciativa-card"
-              style={{
-                '--accent': card.accentColor,
-                '--accent-bg': card.accentBg,
-                '--accent-border': card.borderColor,
-              }}
-            >
-              <div className="iniciativa-card__top">
-                <div className="iniciativa-card__icono">{card.icono}</div>
-                <span className="iniciativa-card__etiqueta">{card.etiqueta}</span>
+                <div className="iniciativa-card__body">
+                  <h3 className="iniciativa-card__titulo">{card.titulo}</h3>
+                  <p className="iniciativa-card__desc">{card.descripcion}</p>
+                </div>
+
+                {card.to ? (
+                  <Link to={card.to} className="iniciativa-card__btn">
+                    Completar formulario
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                ) : (
+                  <span className="iniciativa-card__btn iniciativa-card__btn--decorativo">
+                    Completar formulario
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                )}
               </div>
-
-              <div className="iniciativa-card__body">
-                <h3 className="iniciativa-card__titulo">{card.titulo}</h3>
-                <p className="iniciativa-card__desc">{card.descripcion}</p>
-              </div>
-
-              {card.to ? (
-                <Link to={card.to} className="iniciativa-card__btn">
-                  Completar formulario
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              ) : (
-                <span className="iniciativa-card__btn iniciativa-card__btn--decorativo">
-                  Completar formulario
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-    </main>
+            ))}
+          </div>
+        </section>
+      </main>
+    </>
   );
 };
 
