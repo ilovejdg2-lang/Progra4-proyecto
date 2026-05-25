@@ -1,79 +1,60 @@
-const BIN_ID  = import.meta.env.VITE_JSONBIN_USERS_BIN_ID_USUARIOS;
-const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+const BASE_URL = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5152/api"}/usuarios`;
 
-const headers = {
-  "Content-Type": "application/json",
-  "X-Access-Key": import.meta.env.VITE_JSONBIN_ACCESS_KEY_CRUD_USUARIOS,
-};
-
-// ─── Helper: leer el bin completo ────────────────────────────────────────────
-async function leerBin() {
-  const res = await fetch(BASE_URL, { headers });
-  if (!res.ok) throw new Error(`Error al leer usuarios: ${res.status}`);
-  const data = await res.json();
-  // JSONBin devuelve { record: [...] }
-  return data.record ?? [];
-}
-
-// ─── Helper: sobreescribir el bin completo ───────────────────────────────────
-async function escribirBin(usuarios) {
-  const res = await fetch(BASE_URL, {
-    method: "PUT",
-    headers,
-    body: JSON.stringify(usuarios),
+async function request(url, options = {}) {
+  const res = await fetch(url, {
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    ...options,
   });
-  if (!res.ok) throw new Error(`Error al guardar usuarios: ${res.status}`);
-  return res.json();
-}
 
-// ─── Helper: generar el próximo id único ────────────────────────────────────
-function siguienteId(usuarios) {
-  if (usuarios.length === 0) return 1;
-  return Math.max(...usuarios.map((u) => u.id ?? 0)) + 1;
+  if (!res.ok) {
+    let message = `Error en usuarios (${res.status})`;
+    try {
+      const data = await res.json();
+      message = data?.message || message;
+    } catch {
+      // ignore parse error and keep fallback message
+    }
+    throw new Error(message);
+  }
+
+  if (res.status === 204) {
+    return null;
+  }
+
+  return res.json();
 }
 
 // ─── READ: obtener todos los usuarios ────────────────────────────────────────
 export async function obtenerUsuarios() {
-  return leerBin();
+  const data = await request(BASE_URL);
+  return Array.isArray(data) ? data : [];
 }
 
 // ─── READ: obtener sólo usuarios activos ────────────────────────────────────
 export async function obtenerUsuariosActivos() {
-  const usuarios = await leerBin();
-  return usuarios.filter((u) => u.estado === "activo");
+  const data = await request(`${BASE_URL}/activos`);
+  return Array.isArray(data) ? data : [];
 }
 
 // ─── READ: obtener un usuario por id ────────────────────────────────────────
 export async function obtenerUsuarioPorId(id) {
-  const usuarios = await leerBin();
-  return usuarios.find((u) => u.id === id) ?? null;
+  return request(`${BASE_URL}/${id}`);
 }
 
 // ─── CREATE: agregar nuevo usuario ───────────────────────────────────────────
 export async function crearUsuario(nuevoUsuario) {
-  const usuarios = await leerBin();
-
-  const usuarioCompleto = {
-    ...nuevoUsuario,
-    id: siguienteId(usuarios), // id autoincremental sin repetición
-    estado: "activo",          // siempre activo al crear
-    roles: nuevoUsuario.roles ?? ["Usuario"],
-  };
-
-  await escribirBin([...usuarios, usuarioCompleto]);
-  return usuarioCompleto;
+  return request(BASE_URL, {
+    method: "POST",
+    body: JSON.stringify(nuevoUsuario),
+  });
 }
 
 // ─── UPDATE: actualizar campos de un usuario ────────────────────────────────
 export async function actualizarUsuario(id, cambios) {
-  const usuarios = await leerBin();
-
-  const actualizados = usuarios.map((u) =>
-    u.id === id ? { ...u, ...cambios, id } : u   // id nunca se sobreescribe
-  );
-
-  await escribirBin(actualizados);
-  return actualizados.find((u) => u.id === id) ?? null;
+  return request(`${BASE_URL}/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(cambios),
+  });
 }
 
 // ─── TOGGLE ESTADO: activar o inactivar un usuario ──────────────────────────
@@ -86,16 +67,12 @@ export async function actualizarUsuario(id, cambios) {
  * @returns {Promise<object>} usuario actualizado
  */
 export async function toggleEstadoUsuario(id, forzar = null) {
-  const usuarios = await leerBin();
-
-  const actualizados = usuarios.map((u) => {
-    if (u.id !== id) return u;
-    const nuevoEstado = forzar ?? (u.estado === "activo" ? "inactivo" : "activo");
-    return { ...u, estado: nuevoEstado };
+  return request(`${BASE_URL}/${id}/estado`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      estado: forzar ?? null,
+    }),
   });
-
-  await escribirBin(actualizados);
-  return actualizados.find((u) => u.id === id) ?? null;
 }
 
 // ─── Atajos explícitos ───────────────────────────────────────────────────────
