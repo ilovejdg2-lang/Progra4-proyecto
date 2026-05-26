@@ -1,28 +1,19 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import "./OptimizedImage.css";
 
-const OptimizedImage = ({
-  src,
-  alt = "",
-  className = "",
+function OptimizedImageFrame({
+  alt,
+  className,
   width,
   height,
-  priority = false,
-  fallbackSrc = "",
-}) => {
+  priority,
+  resolvedSrc,
+  resolvedFallback,
+}) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
-  const resolvedSrc = normalizeImageUrl(src, { width: width ?? 800 });
-  const resolvedFallback = fallbackSrc ? normalizeImageUrl(fallbackSrc, { width: width ?? 800 }) : "";
   const [activeSrc, setActiveSrc] = useState(resolvedSrc);
-
-  useEffect(() => {
-    setActiveSrc(resolvedSrc);
-    setLoaded(false);
-    setFailed(false);
-  }, [resolvedSrc]);
-
   const showImage = activeSrc && !failed;
 
   return (
@@ -57,6 +48,32 @@ const OptimizedImage = ({
         <span className="optimized-image__fallback" role="img" aria-label={alt || "Imagen no disponible"} />
       )}
     </div>
+  );
+}
+
+const OptimizedImage = ({
+  src,
+  alt = "",
+  className = "",
+  width,
+  height,
+  priority = false,
+  fallbackSrc = "",
+}) => {
+  const resolvedSrc = normalizeImageUrl(src, { width: width ?? 800 });
+  const resolvedFallback = fallbackSrc ? normalizeImageUrl(fallbackSrc, { width: width ?? 800 }) : "";
+
+  return (
+    <OptimizedImageFrame
+      key={`${resolvedSrc}|${resolvedFallback}`}
+      alt={alt}
+      className={className}
+      width={width}
+      height={height}
+      priority={priority}
+      resolvedSrc={resolvedSrc}
+      resolvedFallback={resolvedFallback}
+    />
   );
 };
 
