@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import './Products.css';
-import { calcularPrecioConIVA } from '../../services/productosServices';
+import { calcularPrecioConIVA, obtenerProductos } from '../../services/productosServices';
 
 const PRODUCTS_PER_PAGE = 8;
 const CART_STORAGE_KEY = 'cart';
@@ -16,16 +16,8 @@ const Products = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${import.meta.env.VITE_JSONBIN_BIN_ID_PRODUCTOS}`, {
-          headers: {
-            'X-Access-Key': import.meta.env.VITE_JSONBIN_API_KEY_LECTURA_PRODUCTOS
-          }
-        });
-        if (!response.ok) {
-          throw new Error('Error al cargar los productos');
-        }
-        const data = await response.json();
-        setProducts(data.record.productos);
+        const data = await obtenerProductos();
+        setProducts(data);
       } catch (err) {
         setError(err.message);
       } finally {
