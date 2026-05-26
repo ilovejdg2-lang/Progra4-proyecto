@@ -1,6 +1,10 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
+<<<<<<< HEAD:proyecto-Cafe-UNA/src/Pages/Admin/InventarioProducto/InventarioProducto.jsx
 import { AdminLayout } from "../layouts/AdminLayout";
+=======
+import { AdminLayout } from "../../layouts/AdminLayout";
+>>>>>>> e9713895f8ce68616e520010142169c33dd96a6a:proyecto-Cafe-UNA/src/Pages/Admin/InventarioProducto.jsx
 import {
   actualizarProducto,
   crearProducto,
