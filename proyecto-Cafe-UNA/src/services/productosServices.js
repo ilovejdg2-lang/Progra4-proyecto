@@ -1,35 +1,28 @@
-const API_KEY = import.meta.env.VITE_JSONBIN_API_KEY_CRUD_PRODUCTOS;
-const BIN_ID = import.meta.env.VITE_JSONBIN_BIN_ID_PRODUCTOS;
-const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/productos`;
 const IVA_RATE = 0.13;
 
-const headers = {
-  "Content-Type": "application/json",
-  "X-Access-Key": API_KEY,
-};
-
-// ─── Helper: leer el bin completo ───────────────────────────────────────────
-async function leerBin() {
-  const res = await fetch(BASE_URL, { headers });
-  if (!res.ok) throw new Error(`Error al leer el bin de productos: ${res.status}`);
-  return res.json();
-}
-
-// ─── Helper: sobreescribir el bin completo ───────────────────────────────────
-async function escribirBin(productos) {
-  const res = await fetch(BASE_URL, {
-    method: "PUT",
-    headers,
-    body: JSON.stringify({ productos }),
+async function request(url, options = {}) {
+  const res = await fetch(url, {
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    ...options,
   });
-  if (!res.ok) throw new Error(`Error al guardar productos: ${res.status}`);
-  return res.json();
-}
 
-// ─── Helper: normalizar la respuesta del bin ────────────────────────────────
-function obtenerListaProductos(record) {
-  if (Array.isArray(record)) return record;
-  return record?.productos ?? [];
+  if (!res.ok) {
+    let message = `Error en productos (${res.status})`;
+    try {
+      const data = await res.json();
+      message = data?.message || message;
+    } catch {
+      // ignore parse error and keep fallback message
+    }
+    throw new Error(message);
+  }
+
+  if (res.status === 204) {
+    return null;
+  }
+
+  return res.json();
 }
 
 export function calcularPrecioConIVA(precioNormal) {
@@ -51,16 +44,10 @@ function normalizarProducto(producto) {
   };
 }
 
-// ─── Helper: generar el próximo id único ────────────────────────────────────
-function siguienteId(productos) {
-  if (productos.length === 0) return 1;
-  return Math.max(...productos.map((producto) => producto.id ?? 0)) + 1;
-}
-
 // ─── READ: obtener todos los productos ──────────────────────────────────────
 export async function obtenerProductos() {
-  const data = await leerBin();
-  return obtenerListaProductos(data.record).map(normalizarProducto);
+  const data = await request(BASE_URL);
+  return (Array.isArray(data) ? data : []).map(normalizarProducto);
 }
 
 // ─── READ: obtener un producto por id ───────────────────────────────────────
@@ -71,98 +58,36 @@ export async function obtenerProductoPorId(id) {
 
 // ─── CREATE: agregar nuevo producto ─────────────────────────────────────────
 export async function crearProducto(nuevoProducto) {
-  const productos = await obtenerProductos();
-
-  const productoCompleto = normalizarProducto({
-    ...nuevoProducto,
-    id: siguienteId(productos),
+  const creado = await request(BASE_URL, {
+    method: "POST",
+    body: JSON.stringify(nuevoProducto),
   });
-
-  await escribirBin([...productos, productoCompleto]);
-  return productoCompleto;
+  return normalizarProducto(creado);
 }
 
 // ─── UPDATE: actualizar campos de un producto ──────────────────────────────
 export async function actualizarProducto(id, cambios) {
-  const productos = await obtenerProductos();
-
-  const actualizados = productos.map((producto) =>
-    producto.id === id ? normalizarProducto({ ...producto, ...cambios, id }) : producto
-  );
-
-  await escribirBin(actualizados);
-  return actualizados.find((producto) => producto.id === id) ?? null;
+  const actualizado = await request(`${BASE_URL}/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(cambios),
+  });
+  return actualizado ? normalizarProducto(actualizado) : null;
 }
 
 export async function ajustarStockProductos(carritoItems) {
-  const productos = await obtenerProductos();
-  const cambiosPorId = new Map(
-    carritoItems
-      .map((item) => ({
-        id: item?.id,
-        units: Number(item?.units) || 0,
-      }))
-      .filter((item) => Number.isFinite(item.id) && item.units > 0)
-      .map((item) => [item.id, item.units])
-  );
-
-  const faltantes = [];
-
-  for (const producto of productos) {
-    const unidadesCompradas = cambiosPorId.get(producto.id) ?? 0;
-    if (unidadesCompradas <= 0) {
-      continue;
-    }
-
-    const stockActual = Number(producto.stock) || 0;
-    const agotado = stockActual <= 0;
-    const deshabilitado = producto.estado === "Deshabilitado";
-
-    if (deshabilitado) {
-      faltantes.push(`${producto.nombre} (deshabilitado)`);
-      continue;
-    }
-
-    if (agotado) {
-      faltantes.push(`${producto.nombre} (sin stock)`);
-      continue;
-    }
-
-    if (stockActual < unidadesCompradas) {
-      faltantes.push(`${producto.nombre} (${stockActual} disponibles, solicitadas ${unidadesCompradas})`);
-    }
-  }
-
-  if (faltantes.length > 0) {
-    const error = new Error(`No se puede completar la compra. Stock insuficiente para: ${faltantes.join(", ")}`);
-    error.code = "STOCK_INSUFICIENTE";
-    error.items = faltantes;
-    throw error;
-  }
-
-  const actualizados = productos.map((producto) => {
-    const unidadesCompradas = cambiosPorId.get(producto.id) ?? 0;
-    if (unidadesCompradas <= 0) {
-      return producto;
-    }
-
-    const stockRestante = Math.max((Number(producto.stock) || 0) - unidadesCompradas, 0);
-
-    return {
-      ...producto,
-      stock: stockRestante,
-      estado: producto.estado,
-    };
+  const payload = (Array.isArray(carritoItems) ? carritoItems : []).map((item) => ({
+    id: Number(item?.id) || 0,
+    units: Number(item?.units) || 0,
+  }));
+  const actualizados = await request(`${BASE_URL}/ajustar-stock`, {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
-
-  await escribirBin(actualizados);
-  return actualizados;
+  return (Array.isArray(actualizados) ? actualizados : []).map(normalizarProducto);
 }
 
 // ─── DELETE: eliminar un producto ───────────────────────────────────────────
 export async function eliminarProducto(id) {
-  const productos = await obtenerProductos();
-  const filtrados = productos.filter((producto) => producto.id !== id);
-  await escribirBin(filtrados);
+  await request(`${BASE_URL}/${id}`, { method: "DELETE" });
   return true;
 }
