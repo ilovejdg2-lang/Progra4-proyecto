@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Hero from '../../Components/Hero/Hero';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { obtenerInformacion } from '../../services/informacionService';
+import { obtenerProductos } from '../../services/productosServices';
 import './Home.css';
 
 const cards = [
@@ -68,6 +69,7 @@ const heroData = {
 
 const Home = () => {
   const [hero, setHero] = useState(heroData);
+  const [featuredProduct, setFeaturedProduct] = useState(null);
 
   useEffect(() => {
     let activo = true;
@@ -78,6 +80,32 @@ const Home = () => {
       })
       .catch((err) => {
         console.error("No se pudo cargar la informacion del hero.", err);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
+
+    obtenerProductos()
+      .then((products) => {
+        if (!activo) return;
+
+        const destacado = products.find((product) => product.estado !== 'Deshabilitado' && Number(product.stock) > 0)
+          ?? products.find((product) => product.estado !== 'Deshabilitado')
+          ?? products[0]
+          ?? null;
+
+        setFeaturedProduct(destacado);
+      })
+      .catch((err) => {
+        console.error('No se pudo cargar el producto destacado.', err);
+        if (activo) {
+          setFeaturedProduct(null);
+        }
       });
 
     return () => {
@@ -115,6 +143,47 @@ const Home = () => {
     <>
       <Hero data={hero} />
       <main className="home-page">
+        <section className="home-page__featured">
+          <div className="featured-product__copy">
+            <h2 className="featured-product__title">Descubrí nuestra selección de cafés</h2>
+            <p className="featured-product__intro">
+              Explorá todos nuestros productos y elegí el café que mejor encaje con tu gusto, tu rutina y tu forma de disfrutarlo.
+            </p>
+          </div>
+
+          <article className="featured-product-card">
+            {featuredProduct?.imagen ? (
+              <img
+                className="featured-product-card__image"
+                src={featuredProduct.imagen}
+                alt={featuredProduct.nombre || 'Producto destacado'}
+              />
+            ) : (
+              <div className="featured-product-card__image featured-product-card__image--placeholder" aria-hidden="true" />
+            )}
+
+            <div className="featured-product-card__body">
+              <div className="featured-product-card__header">
+                <h3>{featuredProduct?.nombre || 'Café UNA'}</h3>
+              </div>
+
+              <p className="featured-product-card__desc">
+                {featuredProduct?.descripcion || 'Seleccionamos un producto para mostrarte la calidad y variedad de nuestro catálogo.'}
+              </p>
+
+              <div className="featured-product-card__meta">
+                <span><strong>Cantidad:</strong> {featuredProduct?.peso || 'Información no disponible'}</span>
+                <span><strong>Precio:</strong> CRC {(featuredProduct?.precioNormal ?? 0).toLocaleString('es-CR')}</span>
+                <span><strong>Stock:</strong> {featuredProduct?.stock ?? 0}</span>
+              </div>
+
+              <Link to="/productos" className="featured-product-card__button">
+                Conoce nuestro catalogo
+              </Link>
+            </div>
+          </article>
+        </section>
+
         <section id="iniciativas" className="home-page__iniciativas">
           <div className="iniciativas-header">
             <span className="iniciativas-eyebrow">Participá con nosotros</span>
