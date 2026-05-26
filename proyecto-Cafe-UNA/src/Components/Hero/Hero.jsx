@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import "./Hero.css";
@@ -14,30 +14,13 @@ const defaultData = {
 const Hero = ({ data = {} }) => {
   const heroData = { ...defaultData, ...data };
   const backgroundUrl = normalizeImageUrl(heroData.backgroundImage, { width: 1920 });
-  const [bgReady, setBgReady] = useState(false);
-
-  useEffect(() => {
-    setBgReady(false);
-    if (!backgroundUrl) {
-      setBgReady(true);
-      return;
-    }
-
-    const img = new Image();
-    img.onload = () => setBgReady(true);
-    img.onerror = () => setBgReady(true);
-    img.src = backgroundUrl;
-
-    return () => {
-      img.onload = null;
-      img.onerror = null;
-    };
-  }, [backgroundUrl]);
+  const [bgReady, setBgReady] = useState(!backgroundUrl);
 
   return (
     <section className={`hero ${bgReady ? "hero--ready" : ""}`}>
       {backgroundUrl ? (
         <img
+          key={backgroundUrl}
           src={backgroundUrl}
           alt=""
           className="hero__bg"
@@ -46,6 +29,8 @@ const Hero = ({ data = {} }) => {
           loading="eager"
           decoding="async"
           fetchPriority="high"
+          onLoad={() => setBgReady(true)}
+          onError={() => setBgReady(true)}
           aria-hidden="true"
         />
       ) : null}
