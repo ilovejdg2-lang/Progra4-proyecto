@@ -124,6 +124,10 @@
   font-size: 0.8rem;
   color: #888888;
   text-decoration: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
   transition: color 0.2s ease;
 }
 
@@ -166,9 +170,64 @@
   color: #c0392b;
   font-weight: 600;
   text-decoration: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
   transition: opacity 0.2s ease;
 }
 
 .login-register-link:hover {
   opacity: 0.8;
+}
+
+.login-success {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #bde2c8;
+  border-radius: 8px;
+  background: #f2fff5;
+  color: #1f6a33;
+  font-size: 0.86rem;
+}
+
+.login-error-banner {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #efb4b4;
+  border-radius: 8px;
+  background: #fff3f3;
+  color: #a22a2a;
+  font-size: 0.86rem;
+}
+
+.login-recover {
+  display: grid;
+  gap: 1rem;
+}
+
+.login-form--compact {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ececec;
+}
+
+.login-alt-link {
+  border: none;
+  background: transparent;
+  color: #666;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.82rem;
+  margin-top: 0.2rem;
+}
+
+.login-dev-token {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #7d4b11;
+  background: #fff6e8;
+  border: 1px dashed #e7bf87;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
 }
