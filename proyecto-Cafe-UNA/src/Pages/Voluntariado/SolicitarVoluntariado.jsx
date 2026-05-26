@@ -8,9 +8,7 @@ const TIPOS_VOLUNTARIADO = [
   "Apoyo General",
   "Capacitaciones",
   "Investigación Académica",
-  "Eventos y actividades",
-  "Educación ambiental",
-  "Trabajo de campo",
+  "Actividades de limpieza y mantenimiento",
   "Otro",
 ];
 
@@ -33,7 +31,7 @@ const PAISES = [
 
 const HORARIOS_PREFERIDOS = [
   { id: "manana", label: "Mañana (8:00 – 12:00)" },
-  { id: "tarde", label: "Tarde (13:00 – 16:30)" },
+  { id: "tarde", label: "Tarde (01:00 – 04:30)" },
   { id: "flexible", label: "Horario flexible" },
 ];
 
@@ -212,8 +210,6 @@ function SolicitarVoluntariado() {
       periodoDisponibilidad: { inicio: formulario.fechaInicio, fin: formulario.fechaFin },
       horariosPreferidos: horariosLabel,
     };
-
-    alert(`Solicitud registrada correctamente.\n\n${JSON.stringify(datosEnvio, null, 2)}`);
 
     setEnviando(true);
     setErrorApi(null);
@@ -575,5 +571,4 @@ function SolicitarVoluntariado() {
     </div>
   );
 }
-
 export default SolicitarVoluntariado;

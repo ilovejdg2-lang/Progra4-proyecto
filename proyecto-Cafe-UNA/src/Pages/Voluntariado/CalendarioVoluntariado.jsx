@@ -44,8 +44,8 @@ function CalendarioVoluntariado({
     return d;
   }, []);
 
-  const minDate = parseISO(fechaMin);
-  const maxDate = parseISO(fechaMax);
+  const minDate = useMemo(() => parseISO(fechaMin), [fechaMin]);
+  const maxDate = useMemo(() => parseISO(fechaMax), [fechaMax]);
 
   const celdas = useMemo(() => {
     const year = mesActual.getFullYear();
@@ -83,7 +83,7 @@ function CalendarioVoluntariado({
     }
 
     return resultado;
-  }, [mesActual, fechasSeleccionadas, fechaMin, fechaMax, hoy]);
+  }, [mesActual, fechasSeleccionadas, minDate, maxDate, hoy]);
 
   const mesAnterior = () => {
     setMesActual(new Date(mesActual.getFullYear(), mesActual.getMonth() - 1, 1));
@@ -168,4 +168,5 @@ function SectionCard({ icon, title, hint, children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { CalendarioVoluntariado, SectionCard, toISO, parseISO };
