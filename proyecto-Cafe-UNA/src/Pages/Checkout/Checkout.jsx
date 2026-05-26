@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, Coffee, CreditCard, ShoppingBasket } from 'lucide-react';
 import './Checkout.css';
@@ -17,6 +17,7 @@ const getUnitPriceWithIva = (item) => calcularPrecioConIVA(getUnitPriceWithoutIv
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const redirectTimeoutRef = useRef(null);
   const [cartItems, setCartItems] = useState(() => {
     const raw = localStorage.getItem(CART_STORAGE_KEY);
     try {
@@ -34,6 +35,10 @@ const Checkout = () => {
     // Oculta la chrome (navbar + footer) mientras esta pagina este montada
     document.body.classList.add('hide-chrome');
     return () => {
+      if (redirectTimeoutRef.current) {
+        window.clearTimeout(redirectTimeoutRef.current);
+        redirectTimeoutRef.current = null;
+      }
       document.body.classList.remove('hide-chrome');
     };
   }, []);
@@ -63,6 +68,10 @@ const Checkout = () => {
   const ivaTotal = useMemo(() => totalConIva - subtotalSinIva, [totalConIva, subtotalSinIva]);
 
   const handleContinueShopping = () => {
+    if (redirectTimeoutRef.current) {
+      window.clearTimeout(redirectTimeoutRef.current);
+      redirectTimeoutRef.current = null;
+    }
     navigate({ to: '/productos' });
   };
 
@@ -90,7 +99,10 @@ const Checkout = () => {
       window.dispatchEvent(new Event('cart-updated'));
       window.dispatchEvent(new CustomEvent('order-confirmed', { detail: { total: totalConIva } }));
       setPaid(true);
-      setTimeout(() => navigate({ to: '/' }), 8000);
+      redirectTimeoutRef.current = window.setTimeout(() => {
+        redirectTimeoutRef.current = null;
+        navigate({ to: '/' });
+      }, 8000);
     } catch (error) {
       const message = error?.message || 'No se pudo completar la compra por falta de stock.';
       setPaymentError(message);
