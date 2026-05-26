@@ -143,6 +143,39 @@ const Home = () => {
     <>
       <Hero data={hero} />
       <main className="home-page">
+        <section className="home-page__mission-spotlight" aria-labelledby="mission-spotlight-title">
+          <div className="mission-spotlight-shell">
+            <article className="mission-spotlight-card">
+              <h2 id="mission-spotlight-title" className="mission-spotlight-card__title">
+                Elevando la cultura del café con alma y conciencia.
+              </h2>
+
+              <div className="mission-spotlight-card__body">
+                <div className="mission-spotlight-card__media">
+                  <img
+                    src="https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=900&q=80"
+                    alt="Granos de café tostado"
+                    loading="lazy"
+                  />
+                </div>
+
+                <div className="mission-spotlight-card__content">
+                  <p className="mission-spotlight-card__description">
+                    En Café UNA, cada grano cuenta una historia de esfuerzo, respeto por la tierra y comercio justo.
+                    Trabajamos junto a productores locales para ofrecer café de alta calidad con impacto social real.
+                  </p>
+                  <Link to="/sobre-nosotros" className="mission-spotlight-card__link">
+                    Conoce nuestra historia completa
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
         <section className="home-page__featured">
           <div className="featured-product__copy">
             <h2 className="featured-product__title">Descubrí nuestra selección de cafés</h2>
