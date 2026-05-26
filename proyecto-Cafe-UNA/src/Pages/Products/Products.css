@@ -1,5 +1,5 @@
 .products-page {
-  max-width: 1080px;
+  max-width: 1360px;
   margin: 0 auto;
   padding: 2rem 1.25rem 3.5rem;
   display: flex;
@@ -13,6 +13,10 @@
   background: linear-gradient(135deg, #fff9f3 0%, #f5e8d8 100%);
   border: 1px solid rgba(96, 74, 49, 0.12);
   box-shadow: 0 16px 40px rgba(33, 24, 16, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .products-page__hero h1 {
@@ -26,26 +30,51 @@
 .products-page__grid {
   display: grid;
   gap: 1.2rem;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .products-page__card {
-  display: grid;
-  gap: 0.7rem;
-  padding: 1.25rem;
-  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(96, 74, 49, 0.14);
   box-shadow: 0 12px 30px rgba(22, 18, 14, 0.09);
 }
 
+.products-page__card-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
 .products-page__card h2 {
-  font-size: 1.1rem;
+  font-size: 1.02rem;
+  line-height: 1.2;
+  margin: 0.1rem 0 0;
+}
+
+.products-page__card p {
+  margin: 0;
+}
+
+.products-page__description {
+  font-size: 0.86rem;
+  color: #666;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(0.86rem * 1.5 * 3);
 }
 
 .products-page__buy-button {
   width: fit-content;
-  margin-top: 0.25rem;
+  margin-top: 0.2rem;
   padding: 0.7rem 1.2rem;
   border: 1px solid rgba(92, 68, 43, 0.18);
   border-radius: 999px;
@@ -84,6 +113,18 @@
 
 .products-page__added {
   animation: addedFade 2.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (max-width: 1180px) {
+  .products-page__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .products-page__grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .products-page__pagination {
@@ -127,5 +168,13 @@
 
   .products-page__hero {
     padding: 1.25rem;
+  }
+
+  .products-page__grid {
+    gap: 1rem;
+  }
+
+  .products-page__card-image {
+    max-height: 160px;
   }
 }
