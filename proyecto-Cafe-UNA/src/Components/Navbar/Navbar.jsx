@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './Navbar.css';
 import { calcularPrecioConIVA } from '../../services/productosServices';
-import { ArrowRight, Minus, Plus, Trash2, X } from 'lucide-react';
+import { Minus, Plus, Trash2, X } from 'lucide-react';
 
 const CART_STORAGE_KEY = 'cart';
 
