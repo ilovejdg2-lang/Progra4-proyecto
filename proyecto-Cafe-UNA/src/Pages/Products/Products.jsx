@@ -134,9 +134,9 @@ const Products = () => {
           <article className="products-page__card" key={product.id}>
             {product.imagen && (
               <img 
+                className="products-page__card-image"
                 src={product.imagen} 
                 alt={product.nombre} 
-                style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px', marginBottom: '16px' }} 
               />
             )}
             <h2>{product.nombre}</h2>
@@ -152,7 +152,7 @@ const Products = () => {
             <p>
               <strong>Disponibles:</strong> {stockDisponible}
             </p>
-            <p style={{ fontSize: '0.85em', color: '#666', marginBottom: '12px' }}>
+            <p className="products-page__description">
               {product.descripcion}
             </p>
             <button
