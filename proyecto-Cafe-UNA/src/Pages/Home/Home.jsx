@@ -71,7 +71,8 @@ const mapsUrl = 'https://www.google.com/maps/place/Finca+Experimental+Santa+Luc%
 const Home = () => {
   const [hero, setHero] = useState({});
   const [heroLoaded, setHeroLoaded] = useState(false);
-  const [featuredProduct, setFeaturedProduct] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
 
   useEffect(() => {
     let activo = true;
@@ -98,21 +99,17 @@ const Home = () => {
     let activo = true;
 
     obtenerProductos()
-      .then((products) => {
+      .then((list) => {
         if (!activo) return;
 
-        const destacado = products.find((product) => product.estado !== 'Deshabilitado' && Number(product.stock) > 0)
-          ?? products.find((product) => product.estado !== 'Deshabilitado')
-          ?? products[0]
-          ?? null;
-
-        setFeaturedProduct(destacado);
+        setProducts(Array.isArray(list) ? list : []);
       })
       .catch((err) => {
-        console.error('No se pudo cargar el producto destacado.', err);
-        if (activo) {
-          setFeaturedProduct(null);
-        }
+        console.error('No se pudo cargar los productos para la galería.', err);
+        if (activo) setProducts([]);
+      })
+      .finally(() => {
+        if (activo) setLoadingProducts(false);
       });
 
     return () => {
@@ -202,35 +199,29 @@ const Home = () => {
           </div>
 
           <article className="featured-product-card">
-            {featuredProduct?.imagen ? (
-              <img
-                className="featured-product-card__image"
-                src={featuredProduct.imagen}
-                alt={featuredProduct.nombre || 'Producto destacado'}
-              />
-            ) : (
-              <div className="featured-product-card__image featured-product-card__image--placeholder" aria-hidden="true" />
-            )}
-
-            <div className="featured-product-card__body">
-              <div className="featured-product-card__header">
-                <h3>{featuredProduct?.nombre || 'Café UNA'}</h3>
-              </div>
-
-              <p className="featured-product-card__desc">
-                {featuredProduct?.descripcion || 'Seleccionamos un producto para mostrarte la calidad y variedad de nuestro catálogo.'}
-              </p>
-
-              <div className="featured-product-card__meta">
-                <span><strong>Cantidad:</strong> {featuredProduct?.peso || 'Información no disponible'}</span>
-                <span><strong>Precio:</strong> CRC {(featuredProduct?.precioNormal ?? 0).toLocaleString('es-CR')}</span>
-                <span><strong>Stock:</strong> {featuredProduct?.stock ?? 0}</span>
-              </div>
-
-              <Link to="/productos" className="featured-product-card__button">
-                Conoce nuestro catalogo
-              </Link>
+            <div className="featured-gallery" aria-busy={loadingProducts} aria-hidden={products.length === 0 && !loadingProducts}>
+              {(loadingProducts ? Array.from({ length: 6 }) : products.slice(0, 6)).map((p, idx) => (
+                <div key={p?.id ?? p?.nombre ?? `placeholder-${idx}`} className="featured-gallery__item">
+                  {p ? (
+                    <Link to="/productos" className="featured-gallery__link">
+                      <img
+                        src={normalizeImageUrl(p.imagen, { width: 420 }) || p.imagen}
+                        alt={p.nombre || 'Café'}
+                        loading="lazy"
+                        width="420"
+                        height="420"
+                      />
+                    </Link>
+                  ) : (
+                    <div className="featured-gallery__placeholder" />
+                  )}
+                </div>
+              ))}
             </div>
+
+            <Link to="/productos" className="featured-product-card__button">
+              Conoce nuestro catalogo
+            </Link>
           </article>
         </section>
 
