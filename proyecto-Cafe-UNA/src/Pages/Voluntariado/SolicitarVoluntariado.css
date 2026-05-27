@@ -864,6 +864,54 @@
   margin: 0 auto;
 }
 
+.auth-required-card {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 44px 32px;
+  border: 1px solid #e8ecea;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 28px rgba(40, 111, 84, 0.08);
+  text-align: center;
+}
+
+.auth-required-card__icono {
+  width: 58px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+  border-radius: 999px;
+  background: var(--verde-claro);
+  color: var(--verde-principal);
+  font-size: 22px;
+}
+
+.auth-required-card h2 {
+  margin: 0 0 12px;
+  color: #1a1a1a;
+  font-size: clamp(22px, 3vw, 30px);
+  line-height: 1.2;
+}
+
+.auth-required-card p {
+  max-width: 520px;
+  margin: 0 auto 24px;
+  color: var(--texto-secundario);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.auth-required-card__btn {
+  display: inline-flex;
+  width: auto;
+  min-width: 180px;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
 /* =========================
    RESPONSIVE
 ========================= */
@@ -928,5 +976,53 @@
 
   .section-card {
     padding: 16px;
+  }
+
+  .auth-required-card {
+    padding: 34px 20px;
+  }
+}
+
+@media (max-width: 520px) {
+  .voluntariado-section {
+    padding: 0 14px;
+  }
+
+  .voluntariado-header {
+    margin-bottom: 24px;
+  }
+
+  .voluntariado-header h2 {
+    font-size: 24px;
+  }
+
+  .formulario-card {
+    padding: 18px 14px;
+  }
+
+  .section-card {
+    padding: 14px 12px;
+  }
+
+  .section-card__header {
+    align-items: flex-start;
+  }
+
+  .campo input,
+  .campo select,
+  .input-fecha-simple {
+    min-height: 46px;
+    padding: 12px 13px;
+  }
+
+  .opcion-radio,
+  .checkbox-item,
+  .radio-card {
+    font-size: 13px;
+  }
+
+  .btn-enviar {
+    min-height: 48px;
+    padding: 13px 18px;
   }
 }

@@ -110,7 +110,9 @@ const Login = () => {
 
       localStorage.setItem('user', JSON.stringify(mapAuthenticatedUser(foundUser)));
       window.dispatchEvent(new Event('storage'));
-      window.location.href = '/';
+      const redirectTo = sessionStorage.getItem('postLoginRedirect') || '/';
+      sessionStorage.removeItem('postLoginRedirect');
+      window.location.href = redirectTo;
     } catch (err) {
       setFormError(err.message || 'Ocurrió un error al iniciar sesión.');
     } finally {

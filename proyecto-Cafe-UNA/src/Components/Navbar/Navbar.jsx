@@ -2,7 +2,8 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './Navbar.css';
 import { calcularPrecioConIVA } from '../../services/productosServices';
-import { ArrowRight, Minus, Plus, Trash2, X } from 'lucide-react';
+import { Bell, Minus, Plus, Trash2, X } from 'lucide-react';
+import { obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService';
 
 const CART_STORAGE_KEY = 'cart';
 
@@ -21,10 +22,15 @@ const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const [showCartDropdown, setShowCartDropdown] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
     const [isCartClosing, setIsCartClosing] = useState(false);
     const [user, setUser] = useState(null);
     const [cartItems, setCartItems] = useState([]);
+    const [solicitudes, setSolicitudes] = useState([]);
+    const [notificationsLoading, setNotificationsLoading] = useState(false);
+    const [notificationsError, setNotificationsError] = useState('');
     const cartContainerRef = useRef(null);
+    const notificationsRef = useRef(null);
     const cartCloseTimerRef = useRef(null);
     const navbarRef = useRef(null);
     const pathname = useRouterState({
@@ -37,6 +43,10 @@ const Navbar = () => {
             const storedCart = localStorage.getItem(CART_STORAGE_KEY);
             setUser(storedUser);
             setCartItems(storedCart ? JSON.parse(storedCart) : []);
+            if (!storedUser) {
+                setSolicitudes([]);
+                setShowNotifications(false);
+            }
         };
         syncNavbarState();
         window.addEventListener('storage', syncNavbarState);
@@ -46,6 +56,35 @@ const Navbar = () => {
             window.removeEventListener('cart-updated', syncNavbarState);
         };
     }, []);
+
+    const loadSolicitudesUsuario = useCallback(async (currentUser = user) => {
+        const userId = currentUser?.id || currentUser?.email || currentUser?.username;
+        if (!userId) {
+            setSolicitudes([]);
+            return;
+        }
+
+        setNotificationsLoading(true);
+        setNotificationsError('');
+        try {
+            const data = await obtenerSolicitudesDeUsuario(String(userId));
+            setSolicitudes(data);
+        } catch (err) {
+            console.error('No se pudieron cargar las solicitudes de voluntariado.', err);
+            setNotificationsError('No se pudieron cargar las solicitudes.');
+        } finally {
+            setNotificationsLoading(false);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        if (!user) return;
+        loadSolicitudesUsuario(user);
+
+        const syncSolicitudes = () => loadSolicitudesUsuario(user);
+        window.addEventListener('voluntariado-updated', syncSolicitudes);
+        return () => window.removeEventListener('voluntariado-updated', syncSolicitudes);
+    }, [user, loadSolicitudesUsuario]);
 
     const syncScrolledState = useCallback(() => {
         setIsScrolled(window.scrollY > 10);
@@ -136,11 +175,38 @@ const Navbar = () => {
         };
     }, [showCartDropdown, closeCartPanel]);
 
+    useEffect(() => {
+        if (!showNotifications) {
+            return;
+        }
+
+        const handlePointerDown = (event) => {
+            if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+                setShowNotifications(false);
+            }
+        };
+
+        const handleEscapeKey = (event) => {
+            if (event.key === 'Escape') {
+                setShowNotifications(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handlePointerDown);
+        document.addEventListener('keydown', handleEscapeKey);
+
+        return () => {
+            document.removeEventListener('mousedown', handlePointerDown);
+            document.removeEventListener('keydown', handleEscapeKey);
+        };
+    }, [showNotifications]);
+
     const cartUnits = cartItems.reduce((acc, item) => acc + (Number(item.units) || 0), 0);
     const cartSubtotal = cartItems.reduce((acc, item) => acc + (getUnitPriceWithoutIva(item) * getQuantity(item)), 0);
     const cartIva = cartItems.reduce((acc, item) => acc + ((getUnitPriceWithIva(item) - getUnitPriceWithoutIva(item)) * getQuantity(item)), 0);
     const cartTotal = cartItems.reduce((acc, item) => acc + (getUnitPriceWithIva(item) * getQuantity(item)), 0);
     const userDisplayName = user?.username?.includes('@') ? user?.name : user?.username || user?.name;
+    const solicitudesPendientes = solicitudes.filter((solicitud) => solicitud.estado === 'Pendiente').length;
 
     const saveCart = (updatedCart) => {
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
@@ -201,8 +267,19 @@ const Navbar = () => {
         if (user) {
             setShowDropdown(!showDropdown);
             setShowCartDropdown(false);
+            setShowNotifications(false);
         } else {
             navigate({ to: '/login' });
+        }
+    };
+
+    const handleNotificationsClick = () => {
+        const nextState = !showNotifications;
+        setShowNotifications(nextState);
+        setShowDropdown(false);
+        setShowCartDropdown(false);
+        if (nextState) {
+            loadSolicitudesUsuario(user);
         }
     };
 
@@ -220,6 +297,7 @@ const Navbar = () => {
         setIsCartClosing(false);
         setShowCartDropdown(true);
         setShowDropdown(false);
+        setShowNotifications(false);
     };
 
     const handleLogout = () => {
@@ -370,6 +448,53 @@ const Navbar = () => {
                         </aside>
                     ) : null}
                 </div>
+
+                {user ? (
+                    <div className="navbar__notifications" ref={notificationsRef}>
+                        <button
+                            type="button"
+                            className="navbar__icon-button"
+                            aria-label="Ver solicitudes de voluntariado"
+                            title="Solicitudes de voluntariado"
+                            onClick={handleNotificationsClick}
+                        >
+                            <Bell size={25} strokeWidth={2.2} aria-hidden="true" />
+                            {solicitudesPendientes > 0 ? (
+                                <span className="notifications-badge">{solicitudesPendientes}</span>
+                            ) : null}
+                        </button>
+                        {showNotifications ? (
+                            <aside className="dropdown dropdown--notifications" aria-label="Solicitudes de voluntariado">
+                                <header className="notifications-header">
+                                    <h2>Mis solicitudes</h2>
+                                    <span>{solicitudes.length}</span>
+                                </header>
+
+                                {notificationsLoading ? (
+                                    <p className="dropdown__empty">Cargando solicitudes...</p>
+                                ) : notificationsError ? (
+                                    <p className="dropdown__empty">{notificationsError}</p>
+                                ) : solicitudes.length === 0 ? (
+                                    <p className="dropdown__empty">Aun no ha enviado solicitudes.</p>
+                                ) : (
+                                    <div className="notifications-list">
+                                        {solicitudes.map((solicitud) => (
+                                            <article key={solicitud.id} className="notification-item">
+                                                <div className="notification-item__main">
+                                                    <strong>{solicitud.tipoVoluntariado || solicitud.area || 'Voluntariado'}</strong>
+                                                    <span>{solicitud.fechaSolicitud || 'Fecha no disponible'}</span>
+                                                </div>
+                                                <span className={`notification-status notification-status--${(solicitud.estado || 'pendiente').toLowerCase()}`}>
+                                                    {solicitud.estado || 'Pendiente'}
+                                                </span>
+                                            </article>
+                                        ))}
+                                    </div>
+                                )}
+                            </aside>
+                        ) : null}
+                    </div>
+                ) : null}
 
                 <div className="navbar__user" onClick={handleIconClick}>
                     <img src="https://cdn-icons-png.flaticon.com/512/7531/7531708.png" alt="User Icon" className="user-icon" />
