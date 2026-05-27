@@ -1,23 +1,42 @@
 .navbar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 2rem;
-  background: rgba(255, 255, 255, 0.9);
+  transition: background-color 180ms ease, border-color 180ms ease, backdrop-filter 180ms ease;
+}
+
+.navbar--solid {
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(18px);
   border-bottom: 1px solid rgba(41, 31, 20, 0.08);
 }
 
+.navbar--transparent {
+  background: transparent;
+  backdrop-filter: none;
+  border-bottom: 1px solid transparent;
+}
+
 .navbar__brand {
-  font-weight: 900;
-  font-size: 1.05rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #2a1c10;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  max-width: 240px;
+}
+
+.navbar__brand-logo {
+  height: 52px !important;
+  width: auto !important;
+  max-width: 240px;
+  object-fit: contain;
+  display: block;
 }
 
 .navbar__menu {
@@ -37,9 +56,19 @@
   transition: color 0.2s ease;
 }
 
+.navbar--transparent .navbar__menu a,
+.navbar--transparent .navbar__menu .router-link {
+  color: #fff;
+}
+
 .navbar__menu a:hover,
 .navbar__menu .router-link:hover {
   color: #8c6f4d;
+}
+
+.navbar--transparent .navbar__menu a:hover,
+.navbar--transparent .navbar__menu .router-link:hover {
+  color: #f2e7dc;
 }
 
 .navbar__actions {
@@ -96,6 +125,11 @@
 .cart-icon {
   width: 32px;
   height: 32px;
+}
+
+.navbar--transparent .cart-icon,
+.navbar--transparent .user-icon {
+  filter: brightness(0) invert(1);
 }
 
 .cart-badge {
