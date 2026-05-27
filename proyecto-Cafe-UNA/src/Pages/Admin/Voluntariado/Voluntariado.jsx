@@ -1,5 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
-import { Eye, Pencil, RefreshCw, Trash2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  Calendar,
+  Clock,
+  Eye,
+  GraduationCap,
+  Hash,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  RefreshCw,
+  Trash2,
+  UserRound,
+  Users,
+  X,
+} from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import {
@@ -43,67 +60,172 @@ function BadgeEstado({ estado }) {
   );
 }
 
-function ModalDetalle({ solicitud, onCerrar }) {
-  const detalles = [
-    ["Nombre", solicitud.nombre],
-    ["Correo", solicitud.email],
-    ["Teléfono", solicitud.telefono],
-    ["Tipo", solicitud.tipoVoluntariado],
-    ["Fecha", solicitud.fechaSolicitud],
-    ["Estado", solicitud.estado],
-    ["Modalidad", solicitud.modalidad],
-    ["Participantes", solicitud.cantidadParticipantes],
-    ["Identificación", solicitud.identificacion],
-    ["Institución", solicitud.institucion],
-    ["País", solicitud.pais],
-    ["Residencia", solicitud.residencia],
-    ["Horario", solicitud.horario],
-    ["Días", solicitud.dias],
-    ["Área", solicitud.area],
-    ["Experiencia", solicitud.descripcion],
-    ["Motivación", solicitud.motivacion],
-  ];
+const getInitials = (name = "") => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "SV";
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join("");
+};
+
+function DetailInput({ icon: Icon, label, name, value, onChange, type = "text", className = "" }) {
+  return (
+    <label className={`grid gap-1.5 border-b border-white/15 pb-3 ${className}`}>
+      <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-white/60">
+        <Icon className="size-3.5" />
+        {label}
+      </span>
+      <input
+        type={type}
+        name={name}
+        value={value ?? ""}
+        onChange={onChange}
+        className="w-full border-0 bg-transparent p-0 text-sm font-bold leading-5 text-white outline-none placeholder:text-white/30"
+        placeholder="No indicado"
+      />
+    </label>
+  );
+}
+
+function DetailTextarea({ label, name, value, onChange, rows = 4 }) {
+  return (
+    <label className="grid gap-2">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-white/55">{label}</span>
+      <textarea
+        name={name}
+        value={value ?? ""}
+        onChange={onChange}
+        rows={rows}
+        className="min-h-[108px] resize-y rounded-lg border border-white/15 bg-white/[0.04] px-3 py-3 text-sm font-semibold leading-6 text-white outline-none transition placeholder:text-white/30 focus:border-white/35 focus:bg-white/[0.07]"
+        placeholder="Escriba aqui..."
+      />
+    </label>
+  );
+}
+
+function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
+  const [form, setForm] = useState(() => ({
+    estado: solicitud.estado || "Pendiente",
+    nombre: solicitud.nombre || "",
+    email: solicitud.email || "",
+    telefono: solicitud.telefono || "",
+    tipoVoluntariado: solicitud.tipoVoluntariado || "",
+    fechaSolicitud: solicitud.fechaSolicitud || "",
+    identificacion: solicitud.identificacion || "",
+    institucion: solicitud.institucion || "",
+    pais: solicitud.pais || "",
+    residencia: solicitud.residencia || "",
+    horario: solicitud.horario || "",
+    dias: solicitud.dias || "",
+    area: solicitud.area || "",
+    modalidad: solicitud.modalidad || "individual",
+    cantidadParticipantes: solicitud.cantidadParticipantes || 1,
+    descripcion: solicitud.descripcion || "",
+    motivacion: solicitud.motivacion || "",
+    observacionesAdmin: solicitud.observacionesAdmin || "",
+  }));
+  const [guardando, setGuardando] = useState(false);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setGuardando(true);
+    try {
+      await onGuardar(solicitud.id, {
+        ...form,
+        cantidadParticipantes: Number(form.cantidadParticipantes) || 1,
+      });
+      onCerrar();
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const setEstado = (estado) => {
+    setForm((prev) => ({ ...prev, estado }));
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-950">Detalle de solicitud</h2>
-            <p className="text-sm text-slate-500">Información registrada por la persona voluntaria.</p>
-          </div>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-            aria-label="Cerrar"
-          >
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 p-4 text-white">
+      <form onSubmit={handleSubmit} className="mx-auto w-full max-w-[760px] space-y-5 rounded-xl bg-[#1f1f1d] p-5 shadow-2xl ring-1 ring-white/10">
+        <div className="flex items-center justify-between gap-3">
+          <button type="button" onClick={onCerrar} className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/[0.03] px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10">
+            <ArrowLeft className="size-3.5" />
+            Volver a solicitudes
+          </button>
+          <button type="button" onClick={onCerrar} className="rounded-lg p-2 text-white/60 transition hover:bg-white/10 hover:text-white" aria-label="Cerrar">
             <X className="size-4" />
           </button>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
-          <dl className="grid min-w-0 gap-4 sm:grid-cols-2">
-            {detalles.map(([label, value]) => (
-              <div
-                key={label}
-                className={`min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-4 ${
-                  label === "Experiencia" || label === "Motivación" ? "sm:col-span-2" : ""
-                }`}
-              >
-                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</dt>
-                <dd className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-900">
-                  {value || "No indicado"}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </div>
+        <header className="flex items-center gap-4">
+          <div className="grid size-16 shrink-0 place-items-center rounded-full bg-blue-700 text-lg font-bold text-white">
+            {getInitials(form.nombre)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <input
+              name="nombre"
+              value={form.nombre}
+              onChange={handleChange}
+              className="w-full border-0 bg-transparent p-0 text-xl font-extrabold leading-tight text-white outline-none placeholder:text-white/30"
+              placeholder="Nombre de solicitante"
+            />
+            <p className="mt-1 text-xs font-bold text-white/70">
+              Solicitud #{solicitud.id} - Recibida el {form.fechaSolicitud || "Sin fecha"}
+            </p>
+          </div>
+        </header>
+
+        <section className="rounded-lg border border-white/15 bg-white/[0.05] p-5">
+          <h3 className="mb-4 text-[11px] font-extrabold uppercase tracking-wide text-white/55">Solicitud completa</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <DetailInput icon={UserRound} label="Nombre" name="nombre" value={form.nombre} onChange={handleChange} />
+            <DetailInput icon={Mail} label="Correo" name="email" type="email" value={form.email} onChange={handleChange} />
+            <DetailInput icon={Phone} label="Telefono" name="telefono" value={form.telefono} onChange={handleChange} />
+            <DetailInput icon={GraduationCap} label="Tipo de voluntariado" name="tipoVoluntariado" value={form.tipoVoluntariado} onChange={handleChange} />
+            <DetailInput icon={Calendar} label="Fecha de solicitud" name="fechaSolicitud" type="date" value={form.fechaSolicitud} onChange={handleChange} />
+            <DetailInput icon={Clock} label="Disponibilidad" name="horario" value={form.horario} onChange={handleChange} />
+            <DetailInput icon={Hash} label="Identificacion" name="identificacion" value={form.identificacion} onChange={handleChange} />
+            <DetailInput icon={Building2} label="Institucion" name="institucion" value={form.institucion} onChange={handleChange} />
+            <DetailInput icon={MapPin} label="Residencia" name="residencia" value={form.residencia} onChange={handleChange} />
+            <DetailInput icon={Users} label="Participantes" name="cantidadParticipantes" type="number" value={form.cantidadParticipantes} onChange={handleChange} />
+            <DetailInput icon={MapPin} label="Pais" name="pais" value={form.pais} onChange={handleChange} />
+            <DetailInput icon={Calendar} label="Dias disponibles" name="dias" value={form.dias} onChange={handleChange} />
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-white/15 bg-white/[0.05] p-5">
+          <DetailTextarea label="Motivacion" name="motivacion" value={form.motivacion} onChange={handleChange} />
+        </section>
+
+        <section className="rounded-lg border border-white/15 bg-white/[0.05] p-5">
+          <h3 className="mb-4 text-[11px] font-extrabold uppercase tracking-wide text-white/55">Panel de administracion</h3>
+          <div className="grid gap-4">
+            <DetailTextarea label="Observaciones del administrador" name="observacionesAdmin" value={form.observacionesAdmin} onChange={handleChange} rows={3} />
+            <DetailTextarea label="Experiencia / descripcion" name="descripcion" value={form.descripcion} onChange={handleChange} rows={3} />
+            <label className="grid gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-white/55">Estado</span>
+              <select name="estado" value={form.estado} onChange={handleChange} className="rounded-lg border border-white/15 bg-[#252522] px-3 py-3 text-sm font-bold text-white outline-none transition focus:border-white/35">
+                {ESTADOS.map((estado) => (
+                  <option key={estado} value={estado}>{estado}</option>
+                ))}
+              </select>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => setEstado("Aprobado")} className="rounded-lg border border-white/20 px-4 py-2 text-xs font-extrabold text-white transition hover:bg-emerald-700">Aprobar</button>
+              <button type="button" onClick={() => setEstado("Rechazado")} className="rounded-lg border border-white/20 px-4 py-2 text-xs font-extrabold text-white transition hover:bg-red-700">Rechazar</button>
+              <button type="submit" disabled={guardando} className="rounded-lg border border-white/30 bg-white/[0.04] px-4 py-2 text-xs font-extrabold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60">
+                {guardando ? "Guardando..." : "Guardar cambios"}
+              </button>
+            </div>
+          </div>
+        </section>
+      </form>
     </div>
   );
 }
-
 function ModalEditar({ solicitud, onGuardar, onCerrar }) {
   const [form, setForm] = useState(() => ({
     estado: solicitud.estado || "Pendiente",
@@ -464,7 +586,9 @@ const AdminVoluntariado = () => {
         ) : null}
       </section>
 
-      {viendo ? <ModalDetalle solicitud={viendo} onCerrar={() => setViendo(null)} /> : null}
+      {viendo ? (
+        <ModalDetalle solicitud={viendo} onGuardar={handleActualizar} onCerrar={() => setViendo(null)} />
+      ) : null}
       {editando ? (
         <ModalEditar solicitud={editando} onGuardar={handleActualizar} onCerrar={() => setEditando(null)} />
       ) : null}
@@ -473,3 +597,4 @@ const AdminVoluntariado = () => {
 };
 
 export default AdminVoluntariado;
+
