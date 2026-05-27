@@ -6,7 +6,7 @@ import { Coffee, Eye } from 'lucide-react';
 
 import OptimizedImage from '../../Components/OptimizedImage/OptimizedImage';
 
-import { obtenerInformacion } from '../../services/informacionService';
+import { obtenerInformacionSobreNosotros } from '../../services/informacionService';
 
 import './AboutUs.css';
 
@@ -14,7 +14,7 @@ import './AboutUs.css';
 
 const historiaDefault =
 
-  'CAFÉ-UNA nació de una obsesión silenciosa por la pureza del grano. En un mundo de ruido constante, buscamos crear un refugio donde el tiempo se mide en la caída lenta de un filtrado. Lo que comenzó como un pequeño tostadero artesanal se ha convertido en un santuario para quienes valoran la trazabilidad, la paciencia y la elegancia de lo esencial. Cada taza es el resultado de una búsqueda incansable por los micro-lotes más honestos de la región.';
+  'En Café UNA, cada grano cuenta una historia de esfuerzo, respeto por la tierra y comercio justo. Trabajamos junto a productores locales para ofrecer café de alta calidad con impacto social real.';
 
 
 
@@ -86,6 +86,7 @@ const galleryDefault = [
 
 const AboutUs = () => {
 
+  const [historiaTitulo, setHistoriaTitulo] = useState('Nuestra historia');
   const [historia, setHistoria] = useState(historiaDefault);
 
   const [missionData, setMissionData] = useState(missionDefault);
@@ -102,7 +103,7 @@ const AboutUs = () => {
 
 
 
-    obtenerInformacion()
+    obtenerInformacionSobreNosotros()
 
       .then((info) => {
 
@@ -110,10 +111,12 @@ const AboutUs = () => {
 
 
 
-        if (typeof info.historia === 'string' && info.historia.trim()) {
+        if (typeof info.historia?.title === 'string' && info.historia.title.trim()) {
+          setHistoriaTitulo(info.historia.title.trim());
+        }
 
-          setHistoria(info.historia.trim());
-
+        if (typeof info.historia?.description === 'string' && info.historia.description.trim()) {
+          setHistoria(info.historia.description.trim());
         }
 
 
@@ -124,8 +127,7 @@ const AboutUs = () => {
 
 
 
-        const gallery = Array.isArray(info.gallery) && info.gallery.length > 0 ? info.gallery : galleryDefault;
-
+        const gallery = Array.isArray(info.gallery) ? info.gallery : [];
         setGalleryData(gallery.slice(0, 3));
 
       })
@@ -148,9 +150,7 @@ const AboutUs = () => {
 
 
 
-  const galleryItems =
-
-    galleryData.length >= 3 ? galleryData.slice(0, 3) : [...galleryData, ...galleryDefault].slice(0, 3);
+  const galleryItems = galleryData.slice(0, 3);
 
 
 
@@ -162,7 +162,7 @@ const AboutUs = () => {
 
         <h1 id="about-historia-title" className="about-page__title">
 
-          Nuestra historia
+          {historiaTitulo}
 
         </h1>
 
@@ -225,6 +225,10 @@ const AboutUs = () => {
             </figure>
 
           ))}
+
+          {galleryItems.length === 0 ? (
+            <p className="about-page__gallery-empty">No hay imágenes en la galería todavía.</p>
+          ) : null}
 
         </div>
 
