@@ -1,8 +1,8 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './Navbar.css';
 import { calcularPrecioConIVA } from '../../services/productosServices';
-import { Minus, Plus, Trash2, X } from 'lucide-react';
+import { ArrowRight, Minus, Plus, Trash2, X } from 'lucide-react';
 
 const CART_STORAGE_KEY = 'cart';
 
@@ -18,6 +18,7 @@ const getAvailableStock = (item) => Number(item.stock) || 0;
 
 const Navbar = () => {
     const navigate = useNavigate();
+    const [isScrolled, setIsScrolled] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const [showCartDropdown, setShowCartDropdown] = useState(false);
     const [isCartClosing, setIsCartClosing] = useState(false);
@@ -25,6 +26,10 @@ const Navbar = () => {
     const [cartItems, setCartItems] = useState([]);
     const cartContainerRef = useRef(null);
     const cartCloseTimerRef = useRef(null);
+    const navbarRef = useRef(null);
+    const pathname = useRouterState({
+        select: (state) => state.location.pathname,
+    });
 
     useEffect(() => {
         const syncNavbarState = () => {
@@ -42,11 +47,56 @@ const Navbar = () => {
         };
     }, []);
 
+    const syncScrolledState = useCallback(() => {
+        setIsScrolled(window.scrollY > 10);
+    }, []);
+
+    useEffect(() => {
+        syncScrolledState();
+        window.addEventListener('scroll', syncScrolledState, { passive: true });
+        return () => window.removeEventListener('scroll', syncScrolledState);
+    }, [syncScrolledState]);
+
+    useEffect(() => {
+        syncScrolledState();
+        const rafId = window.requestAnimationFrame(syncScrolledState);
+        const timeoutId = window.setTimeout(syncScrolledState, 80);
+
+        return () => {
+            window.cancelAnimationFrame(rafId);
+            window.clearTimeout(timeoutId);
+        };
+    }, [pathname, syncScrolledState]);
+
     useEffect(() => () => {
         if (cartCloseTimerRef.current) {
             window.clearTimeout(cartCloseTimerRef.current);
         }
     }, []);
+
+    useEffect(() => {
+        const updateNavbarHeight = () => {
+            const currentHeight = navbarRef.current?.offsetHeight;
+            if (!currentHeight) return;
+            document.documentElement.style.setProperty('--navbar-height', `${currentHeight}px`);
+        };
+
+        updateNavbarHeight();
+        window.addEventListener('resize', updateNavbarHeight);
+        const resizeObserver =
+            typeof ResizeObserver !== 'undefined' && navbarRef.current
+                ? new ResizeObserver(() => updateNavbarHeight())
+                : null;
+
+        if (resizeObserver && navbarRef.current) {
+            resizeObserver.observe(navbarRef.current);
+        }
+
+        return () => {
+            window.removeEventListener('resize', updateNavbarHeight);
+            resizeObserver?.disconnect();
+        };
+    }, [pathname, isScrolled, cartItems, showCartDropdown, showDropdown]);
 
     const closeCartPanel = useCallback(() => {
         if (!showCartDropdown || isCartClosing) {
@@ -180,12 +230,19 @@ const Navbar = () => {
         window.location.href = '/';
     };
 
+    const isTransparent = pathname === '/' && !isScrolled;
+
     return (
-        <nav className="navbar">
-            <div className="navbar__brand">Café UNA</div>
+        <nav ref={navbarRef} className={`navbar ${isTransparent ? 'navbar--transparent' : 'navbar--solid'}`}>
+            <Link to="/" className="navbar__brand" aria-label="Ir a inicio">
+                <img
+                    src={isTransparent ? "/logoblancoyrojo.png" : "/logo.webp"}
+                    alt="Café UNA"
+                    className="navbar__brand-logo"
+                />
+            </Link>
             <div className="navbar__menu">
-                <Link to="/" activeProps={{ style: { fontWeight: '700' } }}>Inicio</Link>
-                <Link to="/AboutUs" activeProps={{ style: { fontWeight: '700' } }}>About Us</Link>
+                <Link to="/AboutUs" activeProps={{ style: { fontWeight: '700' } }}>Sobre nosotros</Link>
                 <Link to="/productos" activeProps={{ style: { fontWeight: '700' } }}>Productos</Link>
                 <Link to="/voluntariado/solicitar">Voluntariado</Link>
                 

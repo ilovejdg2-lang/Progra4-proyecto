@@ -5,6 +5,7 @@
 
 @custom-variant dark (&:is(.dark *));
 :root {
+  --navbar-height: 84px;
   --text: #4a3d31;
   --text-h: #1c140f;
   --bg: #f5efe7;
@@ -78,6 +79,32 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
+  flex: 1;
+  padding-top: var(--navbar-height);
+  scroll-padding-top: calc(var(--navbar-height) + 8px);
+}
+
+.navbar.navbar--transparent + .site-main {
+  padding-top: 0;
+  scroll-padding-top: 0;
+}
+
+.site-main--home {
+  padding-top: 0;
+}
+
+.site-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.site-shell > footer {
+  margin-top: auto;
+}
+
+.hide-chrome .site-main {
+  padding-top: 0;
 }
 
 h1,
@@ -107,6 +134,7 @@ img {
 @media (max-width: 1024px) {
   :root {
     font-size: 16px;
+    --navbar-height: 76px;
   }
 }
 
