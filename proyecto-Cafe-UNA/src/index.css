@@ -6,7 +6,6 @@
 @custom-variant dark (&:is(.dark *));
 :root {
   --navbar-height: 84px;
-  --ui-radius: 16px;
   --text: #4a3d31;
   --text-h: #1c140f;
   --bg: #f5efe7;
@@ -145,26 +144,6 @@ a {
 img {
   max-width: 100%;
   display: block;
-}
-
-button,
-input:not([type="checkbox"]):not([type="radio"]),
-select,
-textarea,
-a[class*="button"],
-a[class*="btn"],
-[class*="button"],
-[class*="btn"] {
-  border-radius: var(--ui-radius) !important;
-}
-
-[class*="card"],
-[class*="panel"],
-[class*="dropdown"],
-[class*="modal"],
-[class*="badge"],
-[class*="pill"] {
-  border-radius: var(--ui-radius) !important;
 }
 
 @media (max-width: 1024px) {
