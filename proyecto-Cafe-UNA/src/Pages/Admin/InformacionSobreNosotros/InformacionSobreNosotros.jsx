@@ -1,11 +1,21 @@
 import { useEffect, useState } from "react";
-import { Eye, Image, ImagePlus, Target, Trash2, X } from "lucide-react";
+import { BookOpenText, Eye, Image, ImagePlus, Target, Trash2, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
-import { actualizarInformacion, actualizarSeccion, obtenerInformacion } from "../../../services/informacionService";
+import {
+  actualizarGaleriaItem,
+  actualizarSeccion,
+  agregarGaleriaItem,
+  eliminarGaleriaItem,
+  obtenerInformacionSobreNosotros,
+} from "../../../services/informacionService";
 
 const infoInicial = {
   hero: {},
+  historia: {
+    title: "",
+    description: "",
+  },
   mission: {
     title: "",
     description: "",
@@ -18,6 +28,13 @@ const infoInicial = {
 };
 
 const estilos = {
+  historia: {
+    borde: "border-amber-700",
+    icono: "bg-amber-50 text-amber-700",
+    etiqueta: "Historia",
+    resumen: "Resumen institucional de nuestra historia.",
+    Icon: BookOpenText,
+  },
   mission: {
     borde: "border-amber-700",
     icono: "bg-amber-50 text-amber-700",
@@ -85,7 +102,7 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
               name="title"
               value={form.title}
               onChange={cambiarCampo}
-              className="rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
               required
             />
           </label>
@@ -97,7 +114,7 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
               value={form.description}
               onChange={cambiarCampo}
               rows={6}
-              className="resize-none rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="resize-none rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
               required
             />
           </label>
@@ -114,7 +131,7 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
           <button
             type="submit"
             disabled={guardando}
-            className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {guardando ? "Guardando..." : "Guardar cambios"}
           </button>
@@ -196,7 +213,7 @@ function ModalGaleria({ info, onCerrar, onGuardar, guardando }) {
                     <input
                       value={item.title}
                       onChange={(event) => cambiarItem(item.id, "title", event.target.value)}
-                      className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
                       required
                     />
                   </label>
@@ -206,7 +223,7 @@ function ModalGaleria({ info, onCerrar, onGuardar, guardando }) {
                       value={item.image}
                       onChange={(event) => cambiarItem(item.id, "image", event.target.value)}
                       placeholder="https://..."
-                      className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
                       required
                     />
                   </label>
@@ -236,7 +253,7 @@ function ModalGaleria({ info, onCerrar, onGuardar, guardando }) {
           <button
             type="submit"
             disabled={guardando}
-            className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {guardando ? "Guardando..." : "Guardar cambios"}
           </button>
@@ -288,7 +305,7 @@ const AdminInformacionSobreNosotros = () => {
   useEffect(() => {
     let activo = true;
 
-    obtenerInformacion()
+    obtenerInformacionSobreNosotros()
       .then((data) => {
         if (activo) setInfo({ ...infoInicial, ...data, gallery: Array.isArray(data.gallery) ? data.gallery : [] });
       })
@@ -320,9 +337,31 @@ const AdminInformacionSobreNosotros = () => {
   const guardarGaleria = async (gallery) => {
     try {
       setGuardando(true);
-      const actualizado = { ...info, gallery };
-      await actualizarInformacion(actualizado);
-      setInfo(actualizado);
+      const actual = Array.isArray(info.gallery) ? info.gallery : [];
+      const actualPorId = new Map(actual.map((item) => [Number(item.id), item]));
+      const nuevaPorId = new Map(gallery.map((item) => [Number(item.id), item]));
+
+      const removidos = actual.filter((item) => !nuevaPorId.has(Number(item.id)));
+      const agregados = gallery.filter((item) => !actualPorId.has(Number(item.id)));
+      const editados = gallery.filter((item) => {
+        const previo = actualPorId.get(Number(item.id));
+        if (!previo) return false;
+        return (previo.title ?? "") !== (item.title ?? "") || (previo.image ?? "") !== (item.image ?? "");
+      });
+
+      await Promise.all(removidos.map((item) => eliminarGaleriaItem(item.id)));
+      await Promise.all(agregados.map((item) => agregarGaleriaItem({ title: item.title, image: item.image })));
+      await Promise.all(
+        editados.map((item) =>
+          actualizarGaleriaItem(item.id, {
+            title: item.title,
+            image: item.image,
+          })
+        )
+      );
+
+      const recargado = await obtenerInformacionSobreNosotros();
+      setInfo({ ...infoInicial, ...recargado, gallery: Array.isArray(recargado.gallery) ? recargado.gallery : [] });
       setEditandoGaleria(false);
     } catch (err) {
       alert(err.message || "No se pudo guardar la galeria.");
@@ -346,7 +385,8 @@ const AdminInformacionSobreNosotros = () => {
           </div>
         ) : (
           <>
-            <div className="grid gap-5 lg:grid-cols-2">
+            <div className="grid gap-5 lg:grid-cols-3">
+              <TarjetaTexto tipo="historia" data={info.historia ?? {}} onEditar={setEditandoTexto} />
               <TarjetaTexto tipo="mission" data={info.mission ?? {}} onEditar={setEditandoTexto} />
               <TarjetaTexto tipo="vision" data={info.vision ?? {}} onEditar={setEditandoTexto} />
             </div>

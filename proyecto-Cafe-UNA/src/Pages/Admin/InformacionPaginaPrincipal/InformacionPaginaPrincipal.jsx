@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Image, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
-import { actualizarSeccion, obtenerInformacion } from "../../../services/informacionService";
+import { actualizarSeccion, obtenerHero } from "../../../services/informacionService";
 
 const heroInicial = {
   title: "",
@@ -38,7 +38,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
       <form onSubmit={enviar} className="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-7 py-5">
           <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-700">
+            <span className="grid size-10 place-items-center rounded-xl bg-amber-50 text-amber-700">
               <Image className="size-5" />
             </span>
             <h2 className="text-xl font-bold text-slate-950">Hero section</h2>
@@ -60,7 +60,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
               name="title"
               value={form.title}
               onChange={cambiarCampo}
-              className="rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
               required
             />
             <span className="text-xs font-medium normal-case tracking-normal text-slate-400">
@@ -75,7 +75,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
               value={form.subtitle}
               onChange={cambiarCampo}
               rows={4}
-              className="resize-none rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="resize-none rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
               required
             />
           </label>
@@ -87,7 +87,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
                 name="buttonText"
                 value={form.buttonText}
                 onChange={cambiarCampo}
-                className="rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
               />
             </label>
 
@@ -98,7 +98,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
                 value={form.backgroundImage}
                 onChange={cambiarCampo}
                 placeholder="https://..."
-                className="rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
               />
             </label>
           </div>
@@ -115,7 +115,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
           <button
             type="submit"
             disabled={guardando}
-            className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {guardando ? "Guardando..." : "Guardar cambios"}
           </button>
@@ -135,9 +135,9 @@ const AdminInformacionPaginaPrincipal = () => {
   useEffect(() => {
     let activo = true;
 
-    obtenerInformacion()
+    obtenerHero()
       .then((info) => {
-        if (activo) setHero({ ...heroInicial, ...(info.hero ?? {}) });
+        if (activo) setHero({ ...heroInicial, ...(info ?? {}) });
       })
       .catch(() => {
         if (activo) setError("No se pudo cargar la informacion principal.");
