@@ -88,6 +88,137 @@
   cursor: pointer;
 }
 
+.navbar__notifications {
+  position: relative;
+}
+
+.navbar__icon-button {
+  position: relative;
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: #3f352b;
+  cursor: pointer;
+  padding: 0;
+}
+
+.navbar--transparent .navbar__icon-button {
+  color: #fff;
+}
+
+.notifications-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #286f54;
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.dropdown--notifications {
+  right: -12px;
+  width: min(360px, calc(100vw - 28px));
+  padding: 0.95rem;
+  border: 1px solid #e4d7ca;
+  box-shadow: 0 18px 38px rgba(34, 24, 16, 0.14);
+}
+
+.notifications-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.notifications-header h2 {
+  margin: 0;
+  color: #241911;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.notifications-header span {
+  display: inline-flex;
+  min-width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #edf7f3;
+  color: #286f54;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.notifications-list {
+  display: grid;
+  gap: 0.65rem;
+  max-height: min(360px, 58vh);
+  overflow: auto;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.8rem;
+  border: 1px solid #efe5db;
+  border-radius: 12px;
+  background: #fffaf6;
+}
+
+.notification-item__main {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.notification-item__main strong {
+  color: #2b2118;
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.notification-item__main span {
+  color: #786b60;
+  font-size: 0.78rem;
+}
+
+.notification-status {
+  flex: 0 0 auto;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  background: #fff4d8;
+  color: #7a5810;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.notification-status--aprobada,
+.notification-status--aprobado {
+  background: #e8f3ee;
+  color: #286f54;
+}
+
+.notification-status--rechazada,
+.notification-status--rechazado {
+  background: #feecec;
+  color: #b42318;
+}
+
 .navbar__cart .dropdown--cart-panel {
   position: fixed;
   top: 0;
@@ -614,6 +745,11 @@
   .navbar__actions {
     width: 100%;
     justify-content: center;
+  }
+
+  .dropdown--notifications {
+    right: 50%;
+    transform: translateX(50%);
   }
 
   .navbar__cart .dropdown--cart-panel {
