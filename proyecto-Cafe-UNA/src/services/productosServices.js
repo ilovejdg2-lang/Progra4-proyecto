@@ -47,7 +47,12 @@ function normalizarProducto(producto) {
 // ─── READ: obtener todos los productos ──────────────────────────────────────
 export async function obtenerProductos() {
   const data = await request(BASE_URL);
-  return (Array.isArray(data) ? data : []).map(normalizarProducto);
+  const list = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.value)
+      ? data.value
+      : [];
+  return list.map(normalizarProducto);
 }
 
 // ─── READ: obtener un producto por id ───────────────────────────────────────
