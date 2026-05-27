@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { crearSolicitud } from "../../services/voluntariadoService";
 import { SectionCard } from "./CalendarioVoluntariado";
@@ -52,6 +52,7 @@ const FORM_INICIAL = {
 };
 
 function SolicitarVoluntariado() {
+  const [usuario, setUsuario] = useState(null);
   const [formulario, setFormulario] = useState(FORM_INICIAL);
   const [horariosSeleccionados, setHorariosSeleccionados] = useState([]);
   const [errores, setErrores] = useState({});
@@ -61,6 +62,11 @@ function SolicitarVoluntariado() {
 
   const esGrupal = formulario.modalidad === "grupal";
   const esTipoOtro = formulario.tipo === "Otro";
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    setUsuario(storedUser ? JSON.parse(storedUser) : null);
+  }, []);
 
   const limpiarError = (campo) => {
     if (errores[campo]) {
@@ -188,6 +194,12 @@ function SolicitarVoluntariado() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!usuario) {
+      sessionStorage.setItem("postLoginRedirect", "/voluntariado/solicitar");
+      setErrorApi("Debe iniciar sesión antes de enviar una solicitud de voluntariado.");
+      return;
+    }
+
     if (!validarFormulario()) return;
 
     const horariosLabel = HORARIOS_PREFERIDOS.filter((h) =>
@@ -216,7 +228,7 @@ function SolicitarVoluntariado() {
 
     try {
       await crearSolicitud({
-        userId: "anonimo",
+        userId: String(usuario.id || usuario.email || usuario.username),
         nombre: datosEnvio.nombre,
         email: datosEnvio.email,
         telefono: datosEnvio.telefono,
@@ -236,6 +248,7 @@ function SolicitarVoluntariado() {
         motivacion: "",
       });
 
+      window.dispatchEvent(new Event("voluntariado-updated"));
       resetFormulario();
       setEnviado(true);
     } catch (err) {
@@ -267,7 +280,25 @@ function SolicitarVoluntariado() {
           </p>
         </div>
 
-        {!enviado ? (
+        {!usuario ? (
+          <div className="auth-required-card">
+            <div className="auth-required-card__icono">
+              <i className="fas fa-lock" aria-hidden="true" />
+            </div>
+            <h2>Inicie sesión para enviar su solicitud</h2>
+            <p>
+              Para registrar y consultar el estado de sus solicitudes de voluntariado,
+              primero debe ingresar con su cuenta.
+            </p>
+            <Link
+              to="/login"
+              className="btn-enviar auth-required-card__btn"
+              onClick={() => sessionStorage.setItem("postLoginRedirect", "/voluntariado/solicitar")}
+            >
+              Iniciar sesión
+            </Link>
+          </div>
+        ) : !enviado ? (
           <form onSubmit={handleSubmit} className="formulario-card" noValidate>
             <div className="tipo-postulacion">
               <p>
