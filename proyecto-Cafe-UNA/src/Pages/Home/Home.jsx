@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { ExternalLink, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Hero from '../../Components/Hero/Hero';
 import { normalizeImageUrl } from '../../lib/imageUtils';
@@ -64,6 +65,8 @@ const missionSpotlightDefault = {
   description:
     'Descubrí nuestra historia, propósito y el impacto que construimos junto a productores locales y la comunidad universitaria.',
 };
+
+const mapsUrl = 'https://www.google.com/maps/place/Finca+Experimental+Santa+Luc%C3%ADa+-+Universidad+Nacional/@10.0232398,-84.11705,17z/data=!4m14!1m7!3m6!1s0x8fa0faa5f69f073d:0x656b2da8f85723be!2sFinca+Experimental+Santa+Luc%C3%ADa+-+Universidad+Nacional!8m2!3d10.0232346!4d-84.1121791!16s%2Fg%2F1pp2tywc7!3m5!1s0x8fa0faa5f69f073d:0x656b2da8f85723be!8m2!3d10.0232346!4d-84.1121791!16s%2Fg%2F1pp2tywc7?entry=ttu&g_ep=EgoyMDI2MDUyNS4wIKXMDSoASAFQAw%3D%3D';
 
 const Home = () => {
   const [hero, setHero] = useState({});
@@ -282,6 +285,36 @@ const Home = () => {
                 )}
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="home-page__location" aria-labelledby="location-title">
+          <div className="location-card">
+            <div className="location-card__copy">
+              <span className="location-card__eyebrow">
+                <MapPin size={16} strokeWidth={2.4} aria-hidden="true" />
+                Nuestra ubicacion
+              </span>
+              <h2 id="location-title">Visitanos en la Finca Experimental Santa Lucia</h2>
+              <p>
+                Estamos en Heredia, Barva. Abrilo en Google Maps para ver la ruta y llegar con facilidad.
+              </p>
+              <a href={mapsUrl} target="_blank" rel="noreferrer" className="location-card__button">
+                Ver en Google Maps
+                <ExternalLink size={16} strokeWidth={2.4} aria-hidden="true" />
+              </a>
+            </div>
+
+            <div className="location-card__map">
+              <iframe
+                title="Mapa de Finca Experimental Santa Lucia"
+                src="https://www.google.com/maps?q=Finca%20Experimental%20Santa%20Lucia%20Universidad%20Nacional%20Heredia&output=embed"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                aria-hidden="true"
+              />
+              <a href={mapsUrl} target="_blank" rel="noreferrer" className="location-card__map-link" aria-label="Abrir ubicacion en Google Maps" />
+            </div>
           </div>
         </section>
       </main>
