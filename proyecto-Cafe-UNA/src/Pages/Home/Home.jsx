@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import Hero from '../../Components/Hero/Hero';
 import { normalizeImageUrl } from '../../lib/imageUtils';
-import { obtenerInformacion } from '../../services/informacionService';
+import { obtenerHero } from '../../services/informacionService';
 import { obtenerProductos } from '../../services/productosServices';
 import './Home.css';
 
@@ -59,24 +59,23 @@ const cards = [
   },
 ];
 
-const heroData = {
-  title: "Bienvenidos a Café UNA",
-  subtitle: "Disfruta del mejor café artesanal cultivado con pasión y tradición costarricense.",
-  buttonText: "Conocer más",
-  backgroundImage:
-    "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1920&q=80",
+const missionSpotlightDefault = {
+  title: 'Conocé más sobre Café UNA',
+  description:
+    'Descubrí nuestra historia, propósito y el impacto que construimos junto a productores locales y la comunidad universitaria.',
 };
 
 const Home = () => {
-  const [hero, setHero] = useState(heroData);
+  const [hero, setHero] = useState({});
   const [featuredProduct, setFeaturedProduct] = useState(null);
 
   useEffect(() => {
     let activo = true;
 
-    obtenerInformacion()
-      .then((info) => {
-        if (activo) setHero({ ...heroData, ...(info.hero ?? {}) });
+    obtenerHero()
+      .then((heroInfo) => {
+        if (!activo) return;
+        setHero(heroInfo ?? {});
       })
       .catch((err) => {
         console.error("No se pudo cargar la informacion del hero.", err);
@@ -147,24 +146,23 @@ const Home = () => {
           <div className="mission-spotlight-shell">
             <article className="mission-spotlight-card">
               <h2 id="mission-spotlight-title" className="mission-spotlight-card__title">
-                Elevando la cultura del café con alma y conciencia.
+                {missionSpotlightDefault.title}
               </h2>
 
               <div className="mission-spotlight-card__body">
                 <div className="mission-spotlight-card__media">
                   <img
                     src="https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=900&q=80"
-                    alt="Granos de café tostado"
+                    alt="Sobre Café UNA"
                     loading="lazy"
                   />
                 </div>
 
                 <div className="mission-spotlight-card__content">
                   <p className="mission-spotlight-card__description">
-                    En Café UNA, cada grano cuenta una historia de esfuerzo, respeto por la tierra y comercio justo.
-                    Trabajamos junto a productores locales para ofrecer café de alta calidad con impacto social real.
+                    {missionSpotlightDefault.description}
                   </p>
-                  <Link to="/sobre-nosotros" className="mission-spotlight-card__link">
+                  <Link to="/AboutUs" className="mission-spotlight-card__link">
                     Conoce nuestra historia completa
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14M12 5l7 7-7 7" />
