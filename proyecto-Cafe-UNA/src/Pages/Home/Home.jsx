@@ -235,9 +235,9 @@ const Home = () => {
           <div className="iniciativas-header">
             <span className="iniciativas-eyebrow">Participá con nosotros</span>
             <h2 className="iniciativas-titulo">
-              Cada aporte, visita o colaboración
+              Cada aporte, visita o colaboración deja una huella especial.
               <br />
-              <em>deja una huella especial.</em>
+              
             </h2>
             <p className="iniciativas-subtitulo">
               Elegí cómo querés involucrarte con el Café UNA y completá el formulario correspondiente.
