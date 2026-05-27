@@ -20,6 +20,7 @@ const Products = () => {
         setProducts(data);
       } catch (err) {
         setError(err.message);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
@@ -130,6 +131,9 @@ const Products = () => {
       <section className="products-page__grid" aria-label="Lista de productos de cafe">
         {loading && <p>Cargando productos...</p>}
         {error && <p>Error: {error}</p>}
+        {!loading && !error && productCards.length === 0 && (
+          <p>No hay productos disponibles en este momento.</p>
+        )}
         {!loading && !error && productCards.map(({ product, precioNormal, precioConIVA, stockDisponible, estaAgotado }) => (
           <article className="products-page__card" key={product.id}>
             {product.imagen && (
