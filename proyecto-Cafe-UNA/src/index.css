@@ -59,12 +59,15 @@
 }
 
 html {
+  height: 100%;
   scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background: radial-gradient(circle at top, rgba(255, 255, 255, 0.95), rgba(245, 239, 231, 1));
 }
 
@@ -73,6 +76,9 @@ body {
   max-width: 100%;
   margin: 0;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .site-main {
@@ -89,18 +95,27 @@ body {
   scroll-padding-top: 0;
 }
 
+body:not(.home-hero-ready) .navbar.navbar--transparent + .site-main {
+  padding-top: var(--navbar-height);
+  scroll-padding-top: calc(var(--navbar-height) + 8px);
+}
+
 .site-main--home {
   padding-top: 0;
 }
 
 .site-shell {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .site-shell > footer {
+  width: 100%;
   margin-top: auto;
+  flex-shrink: 0;
 }
 
 .hide-chrome .site-main {

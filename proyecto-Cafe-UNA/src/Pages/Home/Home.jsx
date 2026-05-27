@@ -67,6 +67,7 @@ const missionSpotlightDefault = {
 
 const Home = () => {
   const [hero, setHero] = useState({});
+  const [heroLoaded, setHeroLoaded] = useState(false);
   const [featuredProduct, setFeaturedProduct] = useState(null);
 
   useEffect(() => {
@@ -76,9 +77,13 @@ const Home = () => {
       .then((heroInfo) => {
         if (!activo) return;
         setHero(heroInfo ?? {});
+        setHeroLoaded(true);
       })
       .catch((err) => {
         console.error("No se pudo cargar la informacion del hero.", err);
+        if (activo) {
+          setHeroLoaded(true);
+        }
       });
 
     return () => {
@@ -137,6 +142,17 @@ const Home = () => {
       }, 150);
     }
   }, []);
+
+  const heroHasContent = Boolean(
+    hero?.backgroundImage || hero?.title || hero?.subtitle || hero?.buttonText
+  );
+
+  useEffect(() => {
+    document.body.classList.toggle('home-hero-ready', heroLoaded && heroHasContent);
+    return () => {
+      document.body.classList.remove('home-hero-ready');
+    };
+  }, [heroLoaded, heroHasContent]);
 
   return (
     <>

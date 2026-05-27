@@ -1,10 +1,11 @@
 .products-page {
   max-width: 1360px;
   margin: 0 auto;
-  padding: 2rem 1.25rem 3.5rem;
+  padding: 2rem 1.25rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.8rem;
+  width: 100%;
 }
 
 .products-page__hero {
@@ -163,7 +164,7 @@
 
 @media (max-width: 768px) {
   .products-page {
-    padding: 1.25rem 1rem 2.75rem;
+    padding: 1.25rem 1rem 1.25rem;
   }
 
   .products-page__hero {
