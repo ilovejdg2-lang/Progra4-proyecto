@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import PageLoading from "../../Components/PageLoading/PageLoading";
+import { getActiveSessionUser } from "../../services/sessionService";
 import { crearSolicitud } from "../../services/voluntariadoService";
 import { SectionCard } from "./CalendarioVoluntariado";
 import "./SolicitarVoluntariado.css";
@@ -52,36 +52,29 @@ const FORM_INICIAL = {
   fechaFin: "",
 };
 
+function obtenerUsuarioActual() {
+  return getActiveSessionUser();
+}
+
 function SolicitarVoluntariado() {
-  const [usuario, setUsuario] = useState(null);
+  const [usuario] = useState(() => obtenerUsuarioActual());
   const [formulario, setFormulario] = useState(FORM_INICIAL);
   const [horariosSeleccionados, setHorariosSeleccionados] = useState([]);
   const [errores, setErrores] = useState({});
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [errorApi, setErrorApi] = useState(null);
-  const [ready, setReady] = useState(false);
 
   const esGrupal = formulario.modalidad === "grupal";
   const esTipoOtro = formulario.tipo === "Otro";
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    try {
-      setUsuario(storedUser ? JSON.parse(storedUser) : null);
-    } catch {
-      setUsuario(null);
-    }
-    setReady(true);
-  }, []);
+    const timeoutId = window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("public-route-ready", { detail: { pathname: "/voluntariado/solicitar" } }));
+    }, 0);
 
-  useEffect(() => {
-    if (ready) {
-      window.setTimeout(() => {
-        window.dispatchEvent(new CustomEvent("public-route-ready", { detail: { pathname: "/voluntariado/solicitar" } }));
-      }, 0);
-    }
-  }, [ready]);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   const limpiarError = (campo) => {
     if (errores[campo]) {
@@ -273,10 +266,6 @@ function SolicitarVoluntariado() {
       setEnviando(false);
     }
   };
-
-  if (!ready) {
-    return <PageLoading message="Cargando voluntariado..." />;
-  }
 
   return (
     <div className="voluntariado-page">

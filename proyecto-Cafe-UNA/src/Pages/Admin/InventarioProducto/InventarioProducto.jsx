@@ -8,6 +8,7 @@ import {
   obtenerProductos,
   calcularPrecioConIVA,
 } from "../../../services/productosServices";
+import { getActiveSessionUser } from "../../../services/sessionService";
 
 const FORM_VACIO = {
   nombre: "",
@@ -166,7 +167,7 @@ function formatearPrecio(valor) {
 const AdminInventarioProducto = () => {
   const actor = (() => {
     try {
-      return JSON.parse(localStorage.getItem("user") || "null");
+      return getActiveSessionUser();
     } catch {
       return null;
     }

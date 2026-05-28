@@ -3,10 +3,11 @@ import { useNavigate } from "@tanstack/react-router";
 
 import { AppSidebar } from "../../../Components/Admin/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "../../../Components/Admin/ui/Sidebar";
+import { getActiveSessionUser } from "../../../services/sessionService";
 
 export function AdminLayout({ children }) {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = getActiveSessionUser();
 
   useEffect(() => {
     if (!user || user.role !== "admin") {
