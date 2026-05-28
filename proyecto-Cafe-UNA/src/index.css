@@ -82,6 +82,53 @@ body {
   flex: 1;
 }
 
+.app-loading-screen,
+.page-loading {
+  min-height: 100vh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.98), rgba(245, 239, 231, 1));
+  color: #4d2b1f;
+  text-align: center;
+}
+
+.page-loading {
+  min-height: max(360px, calc(100vh - var(--navbar-height)));
+}
+
+.app-loading-screen__logo {
+  width: 96px;
+  height: auto;
+  object-fit: contain;
+}
+
+.app-loading-screen p,
+.page-loading p {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.app-loading-screen__spinner,
+.page-loading__spinner {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 3px solid rgba(77, 43, 31, 0.16);
+  border-top-color: #4d2b1f;
+  border-radius: 999px;
+  animation: app-loading-spin 0.8s linear infinite;
+}
+
+@keyframes app-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .site-main {
   display: flex;
   flex-direction: column;
@@ -117,6 +164,47 @@ body:not(.home-hero-ready) .navbar.navbar--transparent + .site-main {
   width: 100%;
   margin-top: auto;
   flex-shrink: 0;
+}
+
+body.app-route-loading .site-shell > .navbar,
+body.app-route-loading .site-shell > footer {
+  display: none;
+}
+
+body.app-route-loading .site-shell,
+body.app-route-loading .site-main {
+  min-height: 100vh;
+}
+
+body.app-route-loading .site-main {
+  padding-top: 0;
+  scroll-padding-top: 0;
+}
+
+body.app-route-loading .page-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 1), rgba(245, 239, 231, 1));
+}
+
+body.app-route-loading {
+  overflow: hidden;
+}
+
+.site-shell:has(.page-loading) > .navbar,
+.site-shell:has(.page-loading) > footer {
+  display: none;
+}
+
+.site-shell:has(.page-loading) .site-main {
+  padding-top: 0;
+  scroll-padding-top: 0;
+}
+
+.site-shell:has(.page-loading) .page-loading {
+  min-height: 100vh;
 }
 
 .hide-chrome .site-main {
