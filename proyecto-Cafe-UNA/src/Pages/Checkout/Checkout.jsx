@@ -14,6 +14,22 @@ const formatCRC = (amount) => {
 const getQuantity = (item) => Number(item.units) || 1;
 const getUnitPriceWithoutIva = (item) => Number(item.precioNormal ?? item.priceWithoutIva ?? 0) || 0;
 const getUnitPriceWithIva = (item) => calcularPrecioConIVA(getUnitPriceWithoutIva(item));
+const getCurrentUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('user'));
+  } catch {
+    localStorage.removeItem('user');
+    return null;
+  }
+};
+
+const canCompletePurchase = (user) => {
+  const roles = Array.isArray(user?.roles) ? user.roles : [];
+  return roles.some((role) => {
+    const normalizedRole = String(role).toLowerCase();
+    return normalizedRole === 'cliente' || normalizedRole === 'superadmin';
+  });
+};
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -83,8 +99,18 @@ const Checkout = () => {
     }
   };
 
+  const redirectToLoginForPurchase = () => {
+    sessionStorage.setItem('postLoginRedirect', '/checkout');
+    navigate({ to: '/login' });
+  };
+
   const handlePay = async () => {
     if (cartItems.length === 0 || processingPayment) {
+      return;
+    }
+
+    if (!canCompletePurchase(getCurrentUser())) {
+      redirectToLoginForPurchase();
       return;
     }
 
