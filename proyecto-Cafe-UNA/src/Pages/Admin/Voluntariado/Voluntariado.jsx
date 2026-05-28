@@ -379,6 +379,15 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
 }
 
 const AdminVoluntariado = () => {
+  const actor = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const actorRoles = Array.isArray(actor?.roles) ? actor.roles.map((rol) => String(rol).toLowerCase()) : [];
+  const esSuperAdmin = actorRoles.includes("superadmin");
   const [solicitudes, setSolicitudes] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -442,6 +451,11 @@ const AdminVoluntariado = () => {
   };
 
   const handleEliminar = async (solicitud) => {
+    if (!esSuperAdmin) {
+      alert("Solo SuperAdmin puede eliminar solicitudes de voluntariado.");
+      return;
+    }
+
     const confirmar = window.confirm(`¿Deseás eliminar la solicitud de ${solicitud.nombre || "esta persona"}?`);
     if (!confirmar) return;
 
@@ -562,19 +576,21 @@ const AdminVoluntariado = () => {
                           >
                             <Pencil className="size-4" />
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => handleEliminar(solicitud)}
-                            disabled={eliminando === solicitud.id}
-                            className="inline-flex size-9 items-center justify-center rounded-lg bg-red-50 text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                            title="Eliminar solicitud"
-                          >
-                            {eliminando === solicitud.id ? (
-                              <RefreshCw className="size-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="size-4" />
-                            )}
-                          </button>
+                          {esSuperAdmin ? (
+                            <button
+                              type="button"
+                              onClick={() => handleEliminar(solicitud)}
+                              disabled={eliminando === solicitud.id}
+                              className="inline-flex size-9 items-center justify-center rounded-lg bg-red-50 text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                              title="Eliminar solicitud"
+                            >
+                              {eliminando === solicitud.id ? (
+                                <RefreshCw className="size-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="size-4" />
+                              )}
+                            </button>
+                          ) : null}
                         </div>
                       </td>
                     </tr>

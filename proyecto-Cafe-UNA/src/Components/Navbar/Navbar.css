@@ -710,6 +710,15 @@
   padding: 0;
 }
 
+.dropdown button.dropdown__logout {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.dropdown button.dropdown__logout:hover {
+  color: #b91c1c;
+}
+
 .dropdown button:hover {
   text-decoration: underline;
 }
