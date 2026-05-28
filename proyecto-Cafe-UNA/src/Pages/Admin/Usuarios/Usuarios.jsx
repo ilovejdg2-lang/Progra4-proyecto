@@ -49,6 +49,16 @@ function BadgeRol({ rol }) {
 const ROLES_DISPONIBLES = ["SuperAdmin", "Admin", "Usuario", "Cliente"];
 
 function FormUsuario({ inicial, onGuardar, onCancelar, cargando }) {
+  const actor = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const actorId = Number(actor?.id) || null;
+  const editandoPropioUsuario = Boolean(inicial?.id) && actorId !== null && Number(inicial.id) === actorId;
+
   const [form, setForm] = useState({
     nombre: inicial?.nombre ?? "",
     correo: inicial?.correo ?? "",
@@ -86,19 +96,25 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando }) {
         <label className="mb-1 block text-xs font-medium text-slate-600">Correo</label>
         <input type="email" className={inputCls} value={form.correo} onChange={set("correo")} required />
       </div>
-      <div>
-        <label className="mb-1 block text-xs font-medium text-slate-600">
-          Contraseña {inicial && <span className="text-slate-400">(secreta)</span>}
-        </label>
-        <input
-          type="password"
-          className={inputCls}
-          value={form.passwordHash}
-          onChange={set("passwordHash")}
-          required={!inicial}
-          placeholder={inicial ? "••••••••" : ""}
-        />
-      </div>
+      {!inicial || editandoPropioUsuario ? (
+        <div>
+          <label className="mb-1 block text-xs font-medium text-slate-600">
+            Contraseña {inicial && <span className="text-slate-400">(secreta)</span>}
+          </label>
+          <input
+            type="password"
+            className={inputCls}
+            value={form.passwordHash}
+            onChange={set("passwordHash")}
+            required={!inicial}
+            placeholder={inicial ? "••••••••" : ""}
+          />
+        </div>
+      ) : (
+        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+          Solo puede cambiar su propia contraseña.
+        </p>
+      )}
       <div>
         <label className="mb-2 block text-xs font-medium text-slate-600">Roles</label>
         <div className="flex flex-wrap gap-2">
@@ -142,6 +158,17 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando }) {
 
 // ─── Página principal ─────────────────────────────────────────────────────────
 const AdminUsuarios = () => {
+  const actor = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const actorId = Number(actor?.id) || null;
+  const actorRoles = Array.isArray(actor?.roles) ? actor.roles : [];
+  const esSuperAdmin = actorRoles.includes("SuperAdmin");
+
   const [usuarios, setUsuarios]   = useState([]);
   const [cargando, setCargando]   = useState(true);
   const [error, setError]         = useState(null);
@@ -212,12 +239,22 @@ const AdminUsuarios = () => {
   }
 
   async function handleToggle(usuario) {
+    const esMismoUsuario = actorId !== null && Number(usuario.id) === actorId;
+    if (!esSuperAdmin) {
+      alert("Solo un SuperAdmin puede inactivar o activar usuarios.");
+      return;
+    }
+    if (esMismoUsuario) {
+      alert("No puede inactivarse a sí mismo.");
+      return;
+    }
+
     try {
       setToggleando(usuario.id);
       const actualizado = await toggleEstadoUsuario(usuario.id);
       setUsuarios((prev) => prev.map((u) => (u.id === actualizado.id ? actualizado : u)));
-    } catch {
-      alert("Error al cambiar el estado.");
+    } catch (err) {
+      alert(err?.message || "Error al cambiar el estado.");
     } finally {
       setToggleando(null);
     }
@@ -284,6 +321,10 @@ const AdminUsuarios = () => {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {usuarios.map((u) => (
+                  (() => {
+                    const esMismoUsuario = actorId !== null && Number(u.id) === actorId;
+                    const puedeCambiarEstado = esSuperAdmin && !esMismoUsuario;
+                    return (
                   <tr key={u.id} className="transition hover:bg-slate-50/60">
                     <td className="px-6 py-3.5 font-medium text-slate-800">{u.nombre}</td>
                     <td className="px-6 py-3.5 text-slate-500">{u.correo}</td>
@@ -311,25 +352,32 @@ const AdminUsuarios = () => {
                         >
                           Editar
                         </button>
-                        {/* Toggle activo/inactivo */}
+                        {/* Solo inactivar */}
                         <button
                           onClick={() => handleToggle(u)}
-                          disabled={toggleando === u.id}
+                          disabled={toggleando === u.id || !puedeCambiarEstado || u.estado !== "activo"}
+                          title={
+                            !esSuperAdmin
+                              ? "Solo SuperAdmin puede cambiar estado."
+                              : esMismoUsuario
+                              ? "No puede inactivarse a sí mismo."
+                              : u.estado !== "activo"
+                              ? "Solo se permite inactivar usuarios activos."
+                              : ""
+                          }
                           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
-                            u.estado === "activo"
-                              ? "bg-red-50 text-red-600 hover:bg-red-100"
-                              : "bg-green-50 text-green-700 hover:bg-green-100"
+                            "bg-red-50 text-red-600 hover:bg-red-100"
                           }`}
                         >
                           {toggleando === u.id
                             ? "…"
-                            : u.estado === "activo"
-                            ? "Inactivar"
-                            : "Activar"}
+                            : "Inactivar"}
                         </button>
                       </div>
                     </td>
                   </tr>
+                    );
+                  })()
                 ))}
               </tbody>
             </table>

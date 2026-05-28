@@ -41,7 +41,13 @@ const GENERAL_OPEN_KEY = "admin-sidebar-general-open";
 const INVENTORY_OPEN_KEY = "admin-sidebar-inventory-open";
 
 export function AppSidebar() {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
   const displayName = user?.username?.includes("@") ? user?.name : user?.username || user?.name || "Usuario";
   const displayEmail = user?.email || user?.correo || "";
 
@@ -203,7 +209,7 @@ export function AppSidebar() {
               <div className="truncate font-medium text-slate-700">{displayName}</div>
               {displayEmail ? <div className="truncate">{displayEmail}</div> : null}
             </div>
-            <DropdownMenuItem onSelect={handleLogout}>
+            <DropdownMenuItem onSelect={handleLogout} className="text-red-600 focus:text-red-700">
               <LogOut className="size-4" />
               <span>Cerrar sesión</span>
             </DropdownMenuItem>
