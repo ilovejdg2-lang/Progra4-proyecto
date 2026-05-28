@@ -1,4 +1,29 @@
 const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/informacion`;
+const REQUEST_TIMEOUT_MS = 10000;
+const CACHE_TTL_MS = 15000;
+const cache = new Map();
+
+function getCache(key) {
+  const entry = cache.get(key);
+  if (!entry || entry.expiresAt <= Date.now()) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.promise;
+}
+
+function setCache(key, promise) {
+  cache.set(key, {
+    expiresAt: Date.now() + CACHE_TTL_MS,
+    promise,
+  });
+  promise.catch(() => cache.delete(key));
+  return promise;
+}
+
+function clearInfoCache() {
+  cache.clear();
+}
 
 function obtenerActorRoles() {
   try {
@@ -14,10 +39,23 @@ function obtenerActorRoles() {
 }
 
 async function request(url, options = {}) {
-  const res = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options,
-  });
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch(url, {
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("Tiempo de espera agotado al consultar informacion.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 
   if (!res.ok) {
     let message = `Error en informacion (${res.status})`;
@@ -38,39 +76,48 @@ async function request(url, options = {}) {
 }
 
 export async function obtenerInformacion() {
-  return request(BASE_URL);
+  return getCache("all") ?? setCache("all", request(BASE_URL));
 }
 
 export async function obtenerSeccion(seccion) {
-  return request(`${BASE_URL}/${encodeURIComponent(seccion)}`);
+  const key = `section:${seccion}`;
+  return getCache(key) ?? setCache(key, request(`${BASE_URL}/${encodeURIComponent(seccion)}`));
 }
 
 export async function actualizarInformacion(nuevaInformacion) {
-  return request(BASE_URL, {
+  const result = await request(BASE_URL, {
     method: "PUT",
     body: JSON.stringify(nuevaInformacion),
   });
+  clearInfoCache();
+  return result;
 }
 
 export async function actualizarSeccion(seccion, cambios) {
-  return request(`${BASE_URL}/${encodeURIComponent(seccion)}`, {
+  const result = await request(`${BASE_URL}/${encodeURIComponent(seccion)}`, {
     method: "PATCH",
     body: JSON.stringify(cambios),
   });
+  clearInfoCache();
+  return result;
 }
 
 export async function agregarGaleriaItem(item) {
-  return request(`${BASE_URL}/galeria`, {
+  const result = await request(`${BASE_URL}/galeria`, {
     method: "POST",
     body: JSON.stringify(item),
   });
+  clearInfoCache();
+  return result;
 }
 
 export async function actualizarGaleriaItem(id, cambios) {
-  return request(`${BASE_URL}/galeria/${id}`, {
+  const result = await request(`${BASE_URL}/galeria/${id}`, {
     method: "PUT",
     body: JSON.stringify(cambios),
   });
+  clearInfoCache();
+  return result;
 }
 
 export async function eliminarGaleriaItem(id) {
@@ -78,11 +125,12 @@ export async function eliminarGaleriaItem(id) {
     method: "DELETE",
     body: JSON.stringify({ actorRoles: obtenerActorRoles() }),
   });
+  clearInfoCache();
   return true;
 }
 
 export async function obtenerHero() {
-  return request(`${BASE_URL}/hero`);
+  return getCache("hero") ?? setCache("hero", request(`${BASE_URL}/hero`));
 }
 
 export async function obtenerInformacionSobreNosotros() {
