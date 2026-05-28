@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Eye, EyeOff } from 'lucide-react';
 import { registrarUsuario, solicitarRecuperacion, restablecerPassword } from '../../services/authService';
+import { saveAuthenticatedUser } from '../../services/sessionService';
 import { obtenerUsuarios, obtenerUsuariosActivos } from '../../services/usuariosServices';
 import './Login.css';
 
@@ -160,8 +161,7 @@ const Login = () => {
         return;
       }
 
-      localStorage.setItem('user', JSON.stringify(mapAuthenticatedUser(foundUser)));
-      window.dispatchEvent(new Event('storage'));
+      saveAuthenticatedUser(mapAuthenticatedUser(foundUser));
       const redirectTo = sessionStorage.getItem('postLoginRedirect') || '/';
       sessionStorage.removeItem('postLoginRedirect');
       window.location.href = redirectTo;
