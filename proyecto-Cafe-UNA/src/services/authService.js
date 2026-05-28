@@ -1,31 +1,13 @@
+import { apiRequest } from "./apiClient";
+
 const AUTH_BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/auth`;
-const REQUEST_TIMEOUT_MS = 10000;
 
 async function request(url, options = {}) {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  let res;
-  try {
-    res = await fetch(url, {
-      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-      ...options,
-      signal: controller.signal,
-    });
-  } catch (error) {
-    if (error?.name === "AbortError") {
-      throw new Error("Tiempo de espera agotado al autenticar.", { cause: error });
-    }
-    throw error;
-  } finally {
-    window.clearTimeout(timeoutId);
-  }
-
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data?.message || `Error de autenticación (${res.status})`);
-  }
-
-  return data;
+  return apiRequest(url, {
+    ...options,
+    errorPrefix: "Error de autenticación",
+    timeoutMessage: "Tiempo de espera agotado al autenticar.",
+  });
 }
 
 export async function registrarUsuario(payload) {
