@@ -13,7 +13,7 @@ async function request(url, options = {}) {
     });
   } catch (error) {
     if (error?.name === "AbortError") {
-      throw new Error("Tiempo de espera agotado al autenticar.");
+      throw new Error("Tiempo de espera agotado al autenticar.", { cause: error });
     }
     throw error;
   } finally {

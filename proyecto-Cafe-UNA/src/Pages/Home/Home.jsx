@@ -86,11 +86,18 @@ function waitForImage(src, timeoutMs = 8000) {
   });
 }
 
+function notifyRouteError(message) {
+  window.setTimeout(() => {
+    window.dispatchEvent(new CustomEvent('public-route-error', { detail: { pathname: '/', message } }));
+  }, 0);
+}
+
 const Home = () => {
   const [hero, setHero] = useState({});
   const [heroLoaded, setHeroLoaded] = useState(false);
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     let activo = true;
@@ -110,7 +117,9 @@ const Home = () => {
       .catch((err) => {
         console.error("No se pudo cargar la informacion del hero.", err);
         if (activo) {
-          setHeroLoaded(true);
+          const message = err?.message || 'No se pudo cargar la información del inicio.';
+          setLoadError(message);
+          notifyRouteError(message);
         }
       });
 
@@ -130,7 +139,12 @@ const Home = () => {
       })
       .catch((err) => {
         console.error('No se pudo cargar los productos para la galería.', err);
-        if (activo) setProducts([]);
+        if (activo) {
+          const message = err?.message || 'No se pudieron cargar los productos del inicio.';
+          setLoadError(message);
+          setProducts([]);
+          notifyRouteError(message);
+        }
       })
       .finally(() => {
         if (activo) setLoadingProducts(false);
@@ -170,7 +184,7 @@ const Home = () => {
   const heroHasContent = Boolean(
     hero?.backgroundImage || hero?.title || hero?.subtitle || hero?.buttonText
   );
-  const homeReady = heroLoaded && !loadingProducts;
+  const homeReady = heroLoaded && !loadingProducts && !loadError;
 
   useEffect(() => {
     document.body.classList.toggle('home-hero-ready', heroLoaded && heroHasContent);
@@ -188,7 +202,13 @@ const Home = () => {
   }, [homeReady]);
 
   if (!homeReady) {
-    return <PageLoading message="Cargando inicio..." />;
+    return (
+      <PageLoading
+        message={loadError || "Cargando inicio..."}
+        detail={loadError ? "Revise que el backend esté encendido y vuelva a intentar." : ""}
+        isError={Boolean(loadError)}
+      />
+    );
   }
 
   return (

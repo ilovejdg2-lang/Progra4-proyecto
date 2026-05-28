@@ -1,14 +1,18 @@
+/* eslint-disable react-refresh/only-export-components */
 import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { RouterProvider } from '@tanstack/react-router'
 import { router } from './router'
+import { getActiveSessionUser } from './services/sessionService'
 
 function AppStartupGate() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let mounted = true;
+    getActiveSessionUser();
+    const sessionIntervalId = window.setInterval(getActiveSessionUser, 30_000);
     const timeoutId = window.setTimeout(() => {
       if (mounted) setReady(true);
     }, 2500);
@@ -30,6 +34,7 @@ function AppStartupGate() {
 
     return () => {
       mounted = false;
+      window.clearInterval(sessionIntervalId);
       window.clearTimeout(timeoutId);
     };
   }, []);
