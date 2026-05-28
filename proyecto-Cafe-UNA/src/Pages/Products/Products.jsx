@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import './Products.css';
+import PageLoading from '../../Components/PageLoading/PageLoading';
 import { calcularPrecioConIVA, obtenerProductos } from '../../services/productosServices';
 
 const PRODUCTS_PER_PAGE = 8;
@@ -181,6 +182,18 @@ const Products = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (!loading) {
+      window.setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('public-route-ready', { detail: { pathname: '/productos' } }));
+      }, 0);
+    }
+  }, [loading]);
+
+  if (loading) {
+    return <PageLoading message="Cargando productos..." />;
+  }
+
   return (
     <main className="products-page">
       <section className="products-page__hero">
@@ -191,7 +204,6 @@ const Products = () => {
       </section>
 
       <section className="products-page__grid" aria-label="Lista de productos de cafe">
-        {loading && <p>Cargando productos...</p>}
         {error && <p>Error: {error}</p>}
         {!loading && !error && productCards.length === 0 && (
           <p>No hay productos disponibles en este momento.</p>

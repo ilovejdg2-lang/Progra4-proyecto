@@ -5,6 +5,7 @@ import { Coffee, Eye } from 'lucide-react';
 
 
 import OptimizedImage from '../../Components/OptimizedImage/OptimizedImage';
+import PageLoading from '../../Components/PageLoading/PageLoading';
 
 import { obtenerInformacionSobreNosotros } from '../../services/informacionService';
 
@@ -94,6 +95,7 @@ const AboutUs = () => {
   const [visionData, setVisionData] = useState(visionDefault);
 
   const [galleryData, setGalleryData] = useState(galleryDefault);
+  const [loading, setLoading] = useState(true);
 
 
 
@@ -136,6 +138,9 @@ const AboutUs = () => {
 
         console.error('No se pudo cargar la informacion de sobre nosotros.', err);
 
+      })
+      .finally(() => {
+        if (activo) setLoading(false);
       });
 
 
@@ -151,6 +156,18 @@ const AboutUs = () => {
 
 
   const galleryItems = galleryData.slice(0, 3);
+
+  useEffect(() => {
+    if (!loading) {
+      window.setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('public-route-ready', { detail: { pathname: '/AboutUs' } }));
+      }, 0);
+    }
+  }, [loading]);
+
+  if (loading) {
+    return <PageLoading message="Cargando sobre nosotros..." />;
+  }
 
 
 

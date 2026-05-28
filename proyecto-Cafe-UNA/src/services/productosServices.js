@@ -1,6 +1,15 @@
 const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/productos`;
 const IVA_RATE = 0.13;
 const REQUEST_TIMEOUT_MS = 10000;
+const CACHE_TTL_MS = 15000;
+let productosCache = {
+  expiresAt: 0,
+  promise: null,
+};
+
+function limpiarProductosCache() {
+  productosCache = { expiresAt: 0, promise: null };
+}
 
 function obtenerActorRoles() {
   try {
@@ -73,13 +82,27 @@ function normalizarProducto(producto) {
 
 // ─── READ: obtener todos los productos ──────────────────────────────────────
 export async function obtenerProductos() {
-  const data = await request(BASE_URL);
-  const list = Array.isArray(data)
-    ? data
-    : Array.isArray(data?.value)
-      ? data.value
-      : [];
-  return list.map(normalizarProducto);
+  const now = Date.now();
+  if (productosCache.promise && productosCache.expiresAt > now) {
+    return productosCache.promise;
+  }
+
+  productosCache.promise = request(BASE_URL)
+    .then((data) => {
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.value)
+          ? data.value
+          : [];
+      return list.map(normalizarProducto);
+    })
+    .catch((error) => {
+      limpiarProductosCache();
+      throw error;
+    });
+  productosCache.expiresAt = now + CACHE_TTL_MS;
+
+  return productosCache.promise;
 }
 
 // ─── READ: obtener un producto por id ───────────────────────────────────────
@@ -94,6 +117,7 @@ export async function crearProducto(nuevoProducto) {
     method: "POST",
     body: JSON.stringify({ ...nuevoProducto, actorRoles: obtenerActorRoles() }),
   });
+  limpiarProductosCache();
   return normalizarProducto(creado);
 }
 
@@ -103,6 +127,7 @@ export async function actualizarProducto(id, cambios) {
     method: "PUT",
     body: JSON.stringify({ ...cambios, actorRoles: obtenerActorRoles() }),
   });
+  limpiarProductosCache();
   return actualizado ? normalizarProducto(actualizado) : null;
 }
 
@@ -115,6 +140,7 @@ export async function ajustarStockProductos(carritoItems) {
     method: "POST",
     body: JSON.stringify(payload),
   });
+  limpiarProductosCache();
   return (Array.isArray(actualizados) ? actualizados : []).map(normalizarProducto);
 }
 
@@ -124,5 +150,6 @@ export async function eliminarProducto(id) {
     method: "DELETE",
     body: JSON.stringify({ actorRoles: obtenerActorRoles() }),
   });
+  limpiarProductosCache();
   return true;
 }
