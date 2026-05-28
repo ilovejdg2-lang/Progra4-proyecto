@@ -1,11 +1,16 @@
 /* SolicitarVoluntariado.css */
 
+.site-main:has(.voluntariado-page),
+#center.site-main:has(.voluntariado-page) {
+  background: #ffffff;
+}
+
 :root {
   --verde-principal: #286f54;
   --verde-hover: #1f5843;
   --verde-claro: #e8f3ee;
   --verde-badge-text: #1d5a44;
-  --fondo-pagina: #f4f7f6;
+  --fondo-pagina: #ffffff;
   --borde-input: #d1d5db;
   --texto-secundario: #6b7280;
   --error: #c62828;
@@ -15,7 +20,7 @@
   background: var(--fondo-pagina);
   min-height: 100vh;
   padding: 24px 0 60px;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-family: var(--sans);
 }
 
 /* =========================
@@ -58,8 +63,11 @@
 }
 
 .voluntariado-header {
-  margin-bottom: 36px;
+  margin: 0 auto 36px;
   max-width: 720px;
+  display: grid;
+  justify-items: center;
+  text-align: center;
 }
 
 .badge--voluntariado {

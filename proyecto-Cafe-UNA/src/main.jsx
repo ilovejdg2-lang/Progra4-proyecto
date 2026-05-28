@@ -42,9 +42,7 @@ function AppStartupGate() {
   if (!ready) {
     return (
       <div className="app-loading-screen" role="status" aria-live="polite">
-        <img src="/logo.webp" alt="Café UNA" className="app-loading-screen__logo" />
-        <span className="app-loading-screen__spinner" aria-hidden="true" />
-        <p>Cargando Café UNA...</p>
+        <p>Cargando...</p>
       </div>
     );
   }
