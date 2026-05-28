@@ -1,43 +1,14 @@
 import { getActiveSessionUser } from "./sessionService";
+import { apiRequest } from "./apiClient";
 
 const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/usuarios`;
-const REQUEST_TIMEOUT_MS = 10000;
 
 async function request(url, options = {}) {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  let res;
-  try {
-    res = await fetch(url, {
-      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-      ...options,
-      signal: controller.signal,
-    });
-  } catch (error) {
-    if (error?.name === "AbortError") {
-      throw new Error("Tiempo de espera agotado al consultar usuarios.", { cause: error });
-    }
-    throw error;
-  } finally {
-    window.clearTimeout(timeoutId);
-  }
-
-  if (!res.ok) {
-    let message = `Error en usuarios (${res.status})`;
-    try {
-      const data = await res.json();
-      message = data?.message || message;
-    } catch {
-      // ignore parse error and keep fallback message
-    }
-    throw new Error(message);
-  }
-
-  if (res.status === 204) {
-    return null;
-  }
-
-  return res.json();
+  return apiRequest(url, {
+    ...options,
+    errorPrefix: "Error en usuarios",
+    timeoutMessage: "Tiempo de espera agotado al consultar usuarios.",
+  });
 }
 
 // ─── READ: obtener todos los usuarios ────────────────────────────────────────
