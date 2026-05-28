@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import PageLoading from "../../Components/PageLoading/PageLoading";
 import { crearSolicitud } from "../../services/voluntariadoService";
 import { SectionCard } from "./CalendarioVoluntariado";
 import "./SolicitarVoluntariado.css";
@@ -59,14 +60,28 @@ function SolicitarVoluntariado() {
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [errorApi, setErrorApi] = useState(null);
+  const [ready, setReady] = useState(false);
 
   const esGrupal = formulario.modalidad === "grupal";
   const esTipoOtro = formulario.tipo === "Otro";
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    setUsuario(storedUser ? JSON.parse(storedUser) : null);
+    try {
+      setUsuario(storedUser ? JSON.parse(storedUser) : null);
+    } catch {
+      setUsuario(null);
+    }
+    setReady(true);
   }, []);
+
+  useEffect(() => {
+    if (ready) {
+      window.setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("public-route-ready", { detail: { pathname: "/voluntariado/solicitar" } }));
+      }, 0);
+    }
+  }, [ready]);
 
   const limpiarError = (campo) => {
     if (errores[campo]) {
@@ -258,6 +273,10 @@ function SolicitarVoluntariado() {
       setEnviando(false);
     }
   };
+
+  if (!ready) {
+    return <PageLoading message="Cargando voluntariado..." />;
+  }
 
   return (
     <div className="voluntariado-page">
