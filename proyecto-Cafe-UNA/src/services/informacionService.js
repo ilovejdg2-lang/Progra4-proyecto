@@ -1,7 +1,7 @@
 import { getActiveSessionUser } from "./sessionService";
+import { apiRequest } from "./apiClient";
 
 const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/informacion`;
-const REQUEST_TIMEOUT_MS = 10000;
 const CACHE_TTL_MS = 15000;
 const cache = new Map();
 
@@ -41,40 +41,11 @@ function obtenerActorRoles() {
 }
 
 async function request(url, options = {}) {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  let res;
-  try {
-    res = await fetch(url, {
-      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-      ...options,
-      signal: controller.signal,
-    });
-  } catch (error) {
-    if (error?.name === "AbortError") {
-      throw new Error("Tiempo de espera agotado al consultar informacion.", { cause: error });
-    }
-    throw error;
-  } finally {
-    window.clearTimeout(timeoutId);
-  }
-
-  if (!res.ok) {
-    let message = `Error en informacion (${res.status})`;
-    try {
-      const data = await res.json();
-      message = data?.message || message;
-    } catch {
-      // ignore parse error and keep fallback message
-    }
-    throw new Error(message);
-  }
-
-  if (res.status === 204) {
-    return null;
-  }
-
-  return res.json();
+  return apiRequest(url, {
+    ...options,
+    errorPrefix: "Error en informacion",
+    timeoutMessage: "Tiempo de espera agotado al consultar informacion.",
+  });
 }
 
 export async function obtenerInformacion() {

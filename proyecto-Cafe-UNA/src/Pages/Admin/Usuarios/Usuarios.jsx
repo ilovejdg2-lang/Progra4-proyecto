@@ -1,4 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "@tanstack/react-form";
+import {
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import { AdminLayout } from "../layouts/AdminLayout";
 import {
   obtenerUsuarios,
@@ -56,28 +63,30 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando, puedeEditarRole
   const actorId = Number(actor?.id) || null;
   const editandoPropioUsuario = Boolean(inicial?.id) && actorId !== null && Number(inicial.id) === actorId;
 
-  const [form, setForm] = useState({
-    nombre: inicial?.nombre ?? "",
-    correo: inicial?.correo ?? "",
-    passwordHash: inicial?.passwordHash ?? "",
-    roles: inicial?.roles ?? ["Usuario"],
+  const form = useForm({
+    defaultValues: {
+      nombre: inicial?.nombre ?? "",
+      correo: inicial?.correo ?? "",
+      passwordHash: inicial?.passwordHash ?? "",
+      roles: inicial?.roles ?? ["Usuario"],
+    },
+    onSubmit: ({ value }) => {
+      const payload = {
+        ...value,
+        nombre: value.nombre.trim(),
+        correo: value.correo.trim(),
+        roles: Array.isArray(value.roles) && value.roles.length > 0 ? value.roles : ["Usuario"],
+      };
+
+      if (!payload.nombre || !payload.correo) return;
+      onGuardar(payload);
+    },
   });
-
-  const set = (campo) => (e) => setForm((f) => ({ ...f, [campo]: e.target.value }));
-
-  function toggleRol(rol) {
-    setForm((f) => ({
-      ...f,
-      roles: f.roles.includes(rol)
-        ? f.roles.filter((r) => r !== rol)
-        : [...f.roles, rol],
-    }));
-  }
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (!form.nombre.trim() || !form.correo.trim()) return;
-    onGuardar(form);
+    e.stopPropagation();
+    form.handleSubmit();
   }
 
   const inputCls =
@@ -87,25 +96,51 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando, puedeEditarRole
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="mb-1 block text-xs font-medium text-slate-600">Nombre</label>
-        <input className={inputCls} value={form.nombre} onChange={set("nombre")} required />
+        <form.Field name="nombre">
+          {(field) => (
+            <input
+              className={inputCls}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(event) => field.handleChange(event.target.value)}
+              required
+            />
+          )}
+        </form.Field>
       </div>
       <div>
         <label className="mb-1 block text-xs font-medium text-slate-600">Correo</label>
-        <input type="email" className={inputCls} value={form.correo} onChange={set("correo")} required />
+        <form.Field name="correo">
+          {(field) => (
+            <input
+              type="email"
+              className={inputCls}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(event) => field.handleChange(event.target.value)}
+              required
+            />
+          )}
+        </form.Field>
       </div>
       {!inicial || editandoPropioUsuario ? (
         <div>
           <label className="mb-1 block text-xs font-medium text-slate-600">
             Contraseña {inicial && <span className="text-slate-400">(secreta)</span>}
           </label>
-          <input
-            type="password"
-            className={inputCls}
-            value={form.passwordHash}
-            onChange={set("passwordHash")}
-            required={!inicial}
-            placeholder={inicial ? "••••••••" : ""}
-          />
+          <form.Field name="passwordHash">
+            {(field) => (
+              <input
+                type="password"
+                className={inputCls}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.target.value)}
+                required={!inicial}
+                placeholder={inicial ? "••••••••" : ""}
+              />
+            )}
+          </form.Field>
         </div>
       ) : (
         <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
@@ -115,28 +150,47 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando, puedeEditarRole
       <div>
         <label className="mb-2 block text-xs font-medium text-slate-600">Roles</label>
         {puedeEditarRoles ? (
-          <div className="flex flex-wrap gap-2">
-            {ROLES_DISPONIBLES.map((rol) => (
-              <button
-                key={rol}
-                type="button"
-                onClick={() => toggleRol(rol)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                  form.roles.includes(rol)
-                    ? `${colorRol[rol] ?? "bg-slate-800 text-white"}`
-                    : "border border-slate-200 bg-white text-slate-500 hover:border-slate-300"
-                }`}
-              >
-                {rol}
-              </button>
-            ))}
-          </div>
+          <form.Field name="roles">
+            {(field) => {
+              const selectedRoles = Array.isArray(field.state.value) ? field.state.value : [];
+              const toggleRol = (rol) => {
+                field.handleChange(
+                  selectedRoles.includes(rol)
+                    ? selectedRoles.filter((actual) => actual !== rol)
+                    : [...selectedRoles, rol],
+                );
+              };
+
+              return (
+                <div className="flex flex-wrap gap-2">
+                  {ROLES_DISPONIBLES.map((rol) => (
+                    <button
+                      key={rol}
+                      type="button"
+                      onClick={() => toggleRol(rol)}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                        selectedRoles.includes(rol)
+                          ? `${colorRol[rol] ?? "bg-slate-800 text-white"}`
+                          : "border border-slate-200 bg-white text-slate-500 hover:border-slate-300"
+                      }`}
+                    >
+                      {rol}
+                    </button>
+                  ))}
+                </div>
+              );
+            }}
+          </form.Field>
         ) : (
-          <div className="flex flex-wrap gap-2">
-            {form.roles.map((rol) => (
-              <BadgeRol key={rol} rol={rol} />
-            ))}
-          </div>
+          <form.Field name="roles">
+            {(field) => (
+              <div className="flex flex-wrap gap-2">
+                {(Array.isArray(field.state.value) ? field.state.value : []).map((rol) => (
+                  <BadgeRol key={rol} rol={rol} />
+                ))}
+              </div>
+            )}
+          </form.Field>
         )}
       </div>
 
@@ -177,6 +231,7 @@ const AdminUsuarios = () => {
   const [usuarioEditar, setUsuarioEditar] = useState(null); // objeto usuario
   const [guardando, setGuardando] = useState(false);
   const [toggleando, setToggleando] = useState(null); // id en proceso
+  const [sorting, setSorting] = useState([]);
 
   async function cargar() {
     try {
@@ -239,7 +294,7 @@ const AdminUsuarios = () => {
     }
   }
 
-  async function handleToggle(usuario) {
+  const handleToggle = useCallback(async (usuario) => {
     const esMismoUsuario = actorId !== null && Number(usuario.id) === actorId;
     if (!esSuperAdmin) {
       alert("Solo un SuperAdmin puede inactivar o activar usuarios.");
@@ -259,7 +314,99 @@ const AdminUsuarios = () => {
     } finally {
       setToggleando(null);
     }
-  }
+  }, [actorId, esSuperAdmin]);
+
+  const columns = useMemo(() => [
+    {
+      accessorKey: "nombre",
+      header: "Nombre",
+      cell: ({ getValue }) => (
+        <span className="font-medium text-slate-800">{getValue()}</span>
+      ),
+    },
+    {
+      accessorKey: "correo",
+      header: "Email",
+      cell: ({ getValue }) => (
+        <span className="text-slate-500">{getValue()}</span>
+      ),
+    },
+    {
+      accessorKey: "roles",
+      header: "Roles",
+      enableSorting: false,
+      cell: ({ getValue }) => (
+        <div className="flex flex-wrap gap-1">
+          {(Array.isArray(getValue()) ? getValue() : []).map((rol) => <BadgeRol key={rol} rol={rol} />)}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "estado",
+      header: "Estado",
+      cell: ({ getValue }) => {
+        const estado = getValue();
+        return (
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            estado === "activo"
+              ? "bg-green-50 text-green-700"
+              : "bg-red-50 text-red-600"
+          }`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${estado === "activo" ? "bg-green-500" : "bg-red-400"}`} />
+            {estado === "activo" ? "Activo" : "Inactivo"}
+          </span>
+        );
+      },
+    },
+    {
+      id: "acciones",
+      header: "Acciones",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const usuario = row.original;
+        const esMismoUsuario = actorId !== null && Number(usuario.id) === actorId;
+        const puedeCambiarEstado = esSuperAdmin && !esMismoUsuario;
+
+        return (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setUsuarioEditar(usuario)}
+              className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition hover:bg-amber-100"
+            >
+              Editar
+            </button>
+            <button
+              onClick={() => handleToggle(usuario)}
+              disabled={toggleando === usuario.id || !puedeCambiarEstado || usuario.estado !== "activo"}
+              title={
+                !esSuperAdmin
+                  ? "Solo SuperAdmin puede cambiar estado."
+                  : esMismoUsuario
+                    ? "No puede inactivarse a sí mismo."
+                    : usuario.estado !== "activo"
+                      ? "Solo se permite inactivar usuarios activos."
+                      : ""
+              }
+              className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+            >
+              {toggleando === usuario.id ? "..." : "Inactivar"}
+            </button>
+          </div>
+        );
+      },
+    },
+  ], [actorId, esSuperAdmin, handleToggle, toggleando]);
+
+  // TanStack Table returns instance helpers by design; the warning is expected with React Compiler.
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const table = useReactTable({
+    data: usuarios,
+    columns,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
   return (
     <AdminLayout>
@@ -313,73 +460,38 @@ const AdminUsuarios = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <th className="px-6 py-3">Nombre</th>
-                  <th className="px-6 py-3">Email</th>
-                  <th className="px-6 py-3">Roles</th>
-                  <th className="px-6 py-3">Estado</th>
-                  <th className="px-6 py-3">Acciones</th>
-                </tr>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id} className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {headerGroup.headers.map((header) => (
+                      <th key={header.id} className="px-6 py-3">
+                        {header.column.getCanSort() ? (
+                          <button
+                            type="button"
+                            onClick={header.column.getToggleSortingHandler()}
+                            className="inline-flex items-center gap-1 uppercase tracking-wide transition hover:text-slate-800"
+                          >
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            <span className="text-[10px]">
+                              {header.column.getIsSorted() === "asc" ? "▲" : header.column.getIsSorted() === "desc" ? "▼" : "↕"}
+                            </span>
+                          </button>
+                        ) : (
+                          flexRender(header.column.columnDef.header, header.getContext())
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {usuarios.map((u) => (
-                  (() => {
-                    const esMismoUsuario = actorId !== null && Number(u.id) === actorId;
-                    const puedeCambiarEstado = esSuperAdmin && !esMismoUsuario;
-                    return (
-                  <tr key={u.id} className="transition hover:bg-slate-50/60">
-                    <td className="px-6 py-3.5 font-medium text-slate-800">{u.nombre}</td>
-                    <td className="px-6 py-3.5 text-slate-500">{u.correo}</td>
-                    <td className="px-6 py-3.5">
-                      <div className="flex flex-wrap gap-1">
-                        {u.roles?.map((r) => <BadgeRol key={r} rol={r} />)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        u.estado === "activo"
-                          ? "bg-green-50 text-green-700"
-                          : "bg-red-50 text-red-600"
-                      }`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${u.estado === "activo" ? "bg-green-500" : "bg-red-400"}`} />
-                        {u.estado === "activo" ? "Activo" : "Inactivo"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-2">
-                        {/* Editar */}
-                        <button
-                          onClick={() => setUsuarioEditar(u)}
-                          className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition hover:bg-amber-100"
-                        >
-                          Editar
-                        </button>
-                        {/* Solo inactivar */}
-                        <button
-                          onClick={() => handleToggle(u)}
-                          disabled={toggleando === u.id || !puedeCambiarEstado || u.estado !== "activo"}
-                          title={
-                            !esSuperAdmin
-                              ? "Solo SuperAdmin puede cambiar estado."
-                              : esMismoUsuario
-                              ? "No puede inactivarse a sí mismo."
-                              : u.estado !== "activo"
-                              ? "Solo se permite inactivar usuarios activos."
-                              : ""
-                          }
-                          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
-                            "bg-red-50 text-red-600 hover:bg-red-100"
-                          }`}
-                        >
-                          {toggleando === u.id
-                            ? "…"
-                            : "Inactivar"}
-                        </button>
-                      </div>
-                    </td>
+                {table.getRowModel().rows.map((row) => (
+                  <tr key={row.id} className="transition hover:bg-slate-50/60">
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="px-6 py-3.5">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
                   </tr>
-                    );
-                  })()
                 ))}
               </tbody>
             </table>
