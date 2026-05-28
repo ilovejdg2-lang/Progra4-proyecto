@@ -6,7 +6,7 @@
   justify-content: center;
   padding: 2rem 1rem;
   background: #fdf8f5;
-  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--sans);
 }
 
 .login-back {
