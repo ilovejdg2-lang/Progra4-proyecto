@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 .env
+.env.production
+public/_redirects
 *.local
 
 # Editor directories and files

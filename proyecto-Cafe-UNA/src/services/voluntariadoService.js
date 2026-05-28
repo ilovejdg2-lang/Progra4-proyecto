@@ -1,4 +1,5 @@
 import { getActiveSessionUser } from "./sessionService";
+import { apiRequest } from "./apiClient";
 
 const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/voluntariado/solicitudes`;
 
@@ -16,27 +17,11 @@ function obtenerActorRoles() {
 }
 
 async function request(url, options = {}) {
-  const res = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+  return apiRequest(url, {
     ...options,
+    errorPrefix: "Error en voluntariado",
+    timeoutMessage: "Tiempo de espera agotado al consultar voluntariado.",
   });
-
-  if (!res.ok) {
-    let message = `Error en voluntariado (${res.status})`;
-    try {
-      const data = await res.json();
-      message = data?.message || message;
-    } catch {
-      // ignore parse error and keep fallback message
-    }
-    throw new Error(message);
-  }
-
-  if (res.status === 204) {
-    return null;
-  }
-
-  return res.json();
 }
 
 // ─── READ: obtener todas las solicitudes ────────────────────────────────────
