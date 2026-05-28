@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { Eye, EyeOff } from 'lucide-react';
 import { registrarUsuario, solicitarRecuperacion, restablecerPassword } from '../../services/authService';
-import { obtenerUsuariosActivos } from '../../services/usuariosServices';
+import { obtenerUsuarios, obtenerUsuariosActivos } from '../../services/usuariosServices';
 import './Login.css';
 
 const isAdminUser = (roles = []) => roles.some((role) => role === 'SuperAdmin' || role === 'Admin');
@@ -17,6 +18,46 @@ const mapAuthenticatedUser = (user) => ({
 
 const LOGO_URL = '/logo.webp';
 
+function PasswordField({
+  id,
+  value,
+  onChange,
+  visible,
+  onToggle,
+  placeholder = '••••••••',
+  autoComplete,
+  className = '',
+  ariaInvalid,
+  ariaDescribedBy,
+}) {
+  const Icon = visible ? Eye : EyeOff;
+
+  return (
+    <div className="login-password-wrapper">
+      <input
+        id={id}
+        type={visible ? 'text' : 'password'}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        value={value}
+        onChange={onChange}
+        className={className}
+        aria-invalid={ariaInvalid}
+        aria-describedby={ariaDescribedBy}
+        required
+      />
+      <button
+        type="button"
+        className="login-password-toggle"
+        onClick={onToggle}
+        aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+      >
+        <Icon className="login-password-icon" aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
 
 const Login = () => {
   const [mode, setMode] = useState('login');
@@ -26,6 +67,13 @@ const Login = () => {
   const [formError, setFormError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [visiblePasswords, setVisiblePasswords] = useState({
+    login: false,
+    register: false,
+    registerConfirm: false,
+    recoverNew: false,
+    recoverConfirm: false,
+  });
 
   const [registerForm, setRegisterForm] = useState({
     nombre: '',
@@ -65,6 +113,10 @@ const Login = () => {
     if (successMessage) {
       setSuccessMessage('');
     }
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setVisiblePasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
   const validateForm = () => {
@@ -149,9 +201,18 @@ const Login = () => {
 
     setIsLoading(true);
     try {
+      const correoRegistro = registerForm.correo.trim().toLowerCase();
+      const usuarios = await obtenerUsuarios();
+      const correoYaExiste = usuarios.some((user) => user.correo?.trim().toLowerCase() === correoRegistro);
+
+      if (correoYaExiste) {
+        setFormError('Ya existe una cuenta con ese correo.');
+        return;
+      }
+
       await registrarUsuario({
         nombre: registerForm.nombre.trim(),
-        correo: registerForm.correo.trim().toLowerCase(),
+        correo: correoRegistro,
         password: registerForm.password,
       });
       setSuccessMessage('Cuenta creada correctamente. Ya puede iniciar sesión.');
@@ -289,11 +350,10 @@ const Login = () => {
 
           <div className="login-field">
             <label htmlFor="password">Contraseña</label>
-            <input
+            <PasswordField
               id="password"
-              name="password"
-              type="password"
-              placeholder="••••••••"
+              visible={visiblePasswords.login}
+              onToggle={() => togglePasswordVisibility('login')}
               autoComplete="current-password"
               value={password}
               onChange={(e) => {
@@ -301,8 +361,8 @@ const Login = () => {
                 clearFieldError('password');
               }}
               className={fieldErrors.password || formError ? 'input-error' : ''}
-              aria-invalid={Boolean(fieldErrors.password || formError)}
-              aria-describedby={fieldErrors.password || formError ? 'password-error' : undefined}
+              ariaInvalid={Boolean(fieldErrors.password || formError)}
+              ariaDescribedBy={fieldErrors.password || formError ? 'password-error' : undefined}
             />
             {(fieldErrors.password || formError) && (
               <p id="password-error" className="login-field-error">
@@ -344,22 +404,24 @@ const Login = () => {
             </div>
             <div className="login-field">
               <label htmlFor="passwordRegistro">Contraseña</label>
-              <input
+              <PasswordField
                 id="passwordRegistro"
-                type="password"
+                visible={visiblePasswords.register}
+                onToggle={() => togglePasswordVisibility('register')}
+                autoComplete="new-password"
                 value={registerForm.password}
                 onChange={(e) => setRegisterForm((prev) => ({ ...prev, password: e.target.value }))}
-                required
               />
             </div>
             <div className="login-field">
               <label htmlFor="confirmPasswordRegistro">Confirmar contraseña</label>
-              <input
+              <PasswordField
                 id="confirmPasswordRegistro"
-                type="password"
+                visible={visiblePasswords.registerConfirm}
+                onToggle={() => togglePasswordVisibility('registerConfirm')}
+                autoComplete="new-password"
                 value={registerForm.confirmPassword}
                 onChange={(e) => setRegisterForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                required
               />
             </div>
             {formError ? <p className="login-field-error">{formError}</p> : null}
@@ -409,22 +471,24 @@ const Login = () => {
               </div>
               <div className="login-field">
                 <label htmlFor="newPassword">Nueva contraseña</label>
-                <input
+                <PasswordField
                   id="newPassword"
-                  type="password"
+                  visible={visiblePasswords.recoverNew}
+                  onToggle={() => togglePasswordVisibility('recoverNew')}
+                  autoComplete="new-password"
                   value={recoverForm.nuevaPassword}
                   onChange={(e) => setRecoverForm((prev) => ({ ...prev, nuevaPassword: e.target.value }))}
-                  required
                 />
               </div>
               <div className="login-field">
                 <label htmlFor="confirmNewPassword">Confirmar nueva contraseña</label>
-                <input
+                <PasswordField
                   id="confirmNewPassword"
-                  type="password"
+                  visible={visiblePasswords.recoverConfirm}
+                  onToggle={() => togglePasswordVisibility('recoverConfirm')}
+                  autoComplete="new-password"
                   value={recoverForm.confirmPassword}
                   onChange={(e) => setRecoverForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                  required
                 />
               </div>
               <button type="submit" className="login-button" disabled={isLoading}>
