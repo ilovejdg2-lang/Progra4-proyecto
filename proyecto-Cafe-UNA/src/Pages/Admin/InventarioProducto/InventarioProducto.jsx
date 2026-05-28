@@ -164,6 +164,15 @@ function formatearPrecio(valor) {
 }
 
 const AdminInventarioProducto = () => {
+  const actor = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const actorRoles = Array.isArray(actor?.roles) ? actor.roles.map((rol) => String(rol).toLowerCase()) : [];
+  const esSuperAdmin = actorRoles.includes("superadmin");
   const [productos, setProductos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -241,6 +250,11 @@ const AdminInventarioProducto = () => {
   };
 
   const handleEliminar = async (producto) => {
+    if (!esSuperAdmin) {
+      alert("Solo SuperAdmin puede eliminar productos.");
+      return;
+    }
+
     const confirmar = window.confirm(`¿Eliminar ${producto.nombre}?`);
     if (!confirmar) return;
 
@@ -249,6 +263,24 @@ const AdminInventarioProducto = () => {
       setProductos((prev) => prev.filter((item) => item.id !== producto.id));
     } catch {
       alert("No se pudo eliminar el producto.");
+    }
+  };
+
+  const handleToggleEstado = async (producto) => {
+    if (!esSuperAdmin) {
+      alert("Solo SuperAdmin puede habilitar o inhabilitar productos.");
+      return;
+    }
+
+    const nuevoEstado = producto.estado === "Deshabilitado" ? "Habilitado" : "Deshabilitado";
+    try {
+      const actualizado = await actualizarProducto(producto.id, {
+        ...producto,
+        estado: nuevoEstado,
+      });
+      setProductos((prev) => prev.map((item) => (item.id === actualizado.id ? actualizado : item)));
+    } catch (err) {
+      alert(err?.message || "No se pudo cambiar el estado del producto.");
     }
   };
 
@@ -340,7 +372,13 @@ const AdminInventarioProducto = () => {
                     <td className="px-6 py-4 text-slate-700">{formatearPrecio(producto.precioNormal)}</td>
                     <td className="px-6 py-4 text-slate-700">{producto.stock}</td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                          producto.estado === "Deshabilitado"
+                            ? "bg-red-50 text-red-700"
+                            : "bg-emerald-50 text-emerald-700"
+                        }`}
+                      >
                         {producto.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado"}
                       </span>
                     </td>
@@ -353,13 +391,28 @@ const AdminInventarioProducto = () => {
                         >
                           Editar
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleEliminar(producto)}
-                          className="rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-200"
-                        >
-                          Eliminar
-                        </button>
+                        {esSuperAdmin ? (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleEstado(producto)}
+                            className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
+                              producto.estado === "Deshabilitado"
+                                ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                : "bg-red-50 text-red-600 hover:bg-red-100"
+                            }`}
+                          >
+                            {producto.estado === "Deshabilitado" ? "Habilitar" : "Inhabilitar"}
+                          </button>
+                        ) : null}
+                        {esSuperAdmin ? (
+                          <button
+                            type="button"
+                            onClick={() => handleEliminar(producto)}
+                            className="rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-200"
+                          >
+                            Eliminar
+                          </button>
+                        ) : null}
                       </div>
                     </td>
                   </tr>

@@ -1,5 +1,18 @@
 const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/informacion`;
 
+function obtenerActorRoles() {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    const roles = Array.isArray(user?.roles) ? user.roles : [];
+    if (String(user?.role || "").toLowerCase() === "admin" && !roles.some((rol) => String(rol).toLowerCase() === "admin")) {
+      return [...roles, "Admin"];
+    }
+    return roles;
+  } catch {
+    return [];
+  }
+}
+
 async function request(url, options = {}) {
   const res = await fetch(url, {
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
@@ -61,7 +74,10 @@ export async function actualizarGaleriaItem(id, cambios) {
 }
 
 export async function eliminarGaleriaItem(id) {
-  await request(`${BASE_URL}/galeria/${id}`, { method: "DELETE" });
+  await request(`${BASE_URL}/galeria/${id}`, {
+    method: "DELETE",
+    body: JSON.stringify({ actorRoles: obtenerActorRoles() }),
+  });
   return true;
 }
 
