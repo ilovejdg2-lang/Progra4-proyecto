@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { ExternalLink, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Hero from '../../Components/Hero/Hero';
+import PageLoading from '../../Components/PageLoading/PageLoading';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { obtenerHero } from '../../services/informacionService';
 import { obtenerProductos } from '../../services/productosServices';
@@ -68,6 +69,23 @@ const missionSpotlightDefault = {
 
 const mapsUrl = 'https://www.google.com/maps/place/Finca+Experimental+Santa+Luc%C3%ADa+-+Universidad+Nacional/@10.0232398,-84.11705,17z/data=!4m14!1m7!3m6!1s0x8fa0faa5f69f073d:0x656b2da8f85723be!2sFinca+Experimental+Santa+Luc%C3%ADa+-+Universidad+Nacional!8m2!3d10.0232346!4d-84.1121791!16s%2Fg%2F1pp2tywc7!3m5!1s0x8fa0faa5f69f073d:0x656b2da8f85723be!8m2!3d10.0232346!4d-84.1121791!16s%2Fg%2F1pp2tywc7?entry=ttu&g_ep=EgoyMDI2MDUyNS4wIKXMDSoASAFQAw%3D%3D';
 
+function waitForImage(src, timeoutMs = 8000) {
+  if (!src) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    const image = new Image();
+    const timeoutId = window.setTimeout(resolve, timeoutMs);
+    const done = () => {
+      window.clearTimeout(timeoutId);
+      resolve();
+    };
+
+    image.onload = done;
+    image.onerror = done;
+    image.src = src;
+  });
+}
+
 const Home = () => {
   const [hero, setHero] = useState({});
   const [heroLoaded, setHeroLoaded] = useState(false);
@@ -78,9 +96,15 @@ const Home = () => {
     let activo = true;
 
     obtenerHero()
-      .then((heroInfo) => {
+      .then(async (heroInfo) => {
         if (!activo) return;
-        setHero(heroInfo ?? {});
+        const nextHero = heroInfo ?? {};
+        const backgroundUrl = normalizeImageUrl(nextHero.backgroundImage, { width: 1920 });
+
+        await waitForImage(backgroundUrl);
+        if (!activo) return;
+
+        setHero(nextHero);
         setHeroLoaded(true);
       })
       .catch((err) => {
@@ -146,6 +170,7 @@ const Home = () => {
   const heroHasContent = Boolean(
     hero?.backgroundImage || hero?.title || hero?.subtitle || hero?.buttonText
   );
+  const homeReady = heroLoaded && !loadingProducts;
 
   useEffect(() => {
     document.body.classList.toggle('home-hero-ready', heroLoaded && heroHasContent);
@@ -153,6 +178,18 @@ const Home = () => {
       document.body.classList.remove('home-hero-ready');
     };
   }, [heroLoaded, heroHasContent]);
+
+  useEffect(() => {
+    if (homeReady) {
+      window.setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('public-route-ready', { detail: { pathname: '/' } }));
+      }, 0);
+    }
+  }, [homeReady]);
+
+  if (!homeReady) {
+    return <PageLoading message="Cargando inicio..." />;
+  }
 
   return (
     <>
