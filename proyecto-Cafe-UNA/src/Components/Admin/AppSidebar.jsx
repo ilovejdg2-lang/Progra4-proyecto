@@ -36,18 +36,13 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "./ui/Sidebar";
+import { clearSession, getActiveSessionUser } from "../../services/sessionService";
 
 const GENERAL_OPEN_KEY = "admin-sidebar-general-open";
 const INVENTORY_OPEN_KEY = "admin-sidebar-inventory-open";
 
 export function AppSidebar() {
-  const user = (() => {
-    try {
-      return JSON.parse(localStorage.getItem("user") || "null");
-    } catch {
-      return null;
-    }
-  })();
+  const user = getActiveSessionUser();
   const displayName = user?.username?.includes("@") ? user?.name : user?.username || user?.name || "Usuario";
   const displayEmail = user?.email || user?.correo || "";
 
@@ -85,8 +80,7 @@ export function AppSidebar() {
 
   const handleLogout = () => {
     clearSidebarState();
-    localStorage.removeItem("user");
-    window.dispatchEvent(new Event("storage"));
+    clearSession();
     window.location.href = "/";
   };
 

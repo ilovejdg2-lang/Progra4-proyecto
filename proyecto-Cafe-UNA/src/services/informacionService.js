@@ -1,3 +1,5 @@
+import { getActiveSessionUser } from "./sessionService";
+
 const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/informacion`;
 const REQUEST_TIMEOUT_MS = 10000;
 const CACHE_TTL_MS = 15000;
@@ -27,7 +29,7 @@ function clearInfoCache() {
 
 function obtenerActorRoles() {
   try {
-    const user = JSON.parse(localStorage.getItem("user") || "null");
+    const user = getActiveSessionUser();
     const roles = Array.isArray(user?.roles) ? user.roles : [];
     if (String(user?.role || "").toLowerCase() === "admin" && !roles.some((rol) => String(rol).toLowerCase() === "admin")) {
       return [...roles, "Admin"];
@@ -50,7 +52,7 @@ async function request(url, options = {}) {
     });
   } catch (error) {
     if (error?.name === "AbortError") {
-      throw new Error("Tiempo de espera agotado al consultar informacion.");
+      throw new Error("Tiempo de espera agotado al consultar informacion.", { cause: error });
     }
     throw error;
   } finally {

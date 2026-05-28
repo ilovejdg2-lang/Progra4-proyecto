@@ -1,8 +1,9 @@
 import { AdminLayout } from "../layouts/AdminLayout";
+import { getActiveSessionUser } from "../../../services/sessionService";
 import "./Panel.css";
 
 const AdminPanel = () => {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = getActiveSessionUser();
 
   return (
     <AdminLayout>

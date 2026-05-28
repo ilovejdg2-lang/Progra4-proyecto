@@ -14,7 +14,7 @@ function removeGlobalLoading() {
   }
 }
 
-const PageLoading = ({ message = 'Cargando página...' }) => {
+const PageLoading = ({ message = 'Cargando página...', detail = '', isError = false }) => {
   useLayoutEffect(() => {
     addGlobalLoading();
 
@@ -24,9 +24,10 @@ const PageLoading = ({ message = 'Cargando página...' }) => {
   }, []);
 
   return (
-    <div className="page-loading" role="status" aria-live="polite">
-      <span className="page-loading__spinner" aria-hidden="true" />
+    <div className={`page-loading ${isError ? 'page-loading--error' : ''}`} role="status" aria-live="polite">
+      {isError ? null : <span className="page-loading__spinner" aria-hidden="true" />}
       <p>{message}</p>
+      {detail ? <span className="page-loading__detail">{detail}</span> : null}
     </div>
   );
 };
