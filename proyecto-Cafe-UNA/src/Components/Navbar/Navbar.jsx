@@ -16,6 +16,13 @@ const getQuantity = (item) => Number(item.units) || 1;
 const getUnitPriceWithoutIva = (item) => Number(item.precioNormal ?? item.priceWithoutIva ?? item.price ?? 0) || 0;
 const getUnitPriceWithIva = (item) => calcularPrecioConIVA(getUnitPriceWithoutIva(item));
 const getAvailableStock = (item) => Number(item.stock) || 0;
+const canCompletePurchase = (user) => {
+    const roles = Array.isArray(user?.roles) ? user.roles : [];
+    return roles.some((role) => {
+        const normalizedRole = String(role).toLowerCase();
+        return normalizedRole === 'cliente' || normalizedRole === 'superadmin';
+    });
+};
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -300,6 +307,18 @@ const Navbar = () => {
         setShowNotifications(false);
     };
 
+    const handleCheckoutClick = (event) => {
+        if (canCompletePurchase(user)) {
+            setShowCartDropdown(false);
+            return;
+        }
+
+        event.preventDefault();
+        setShowCartDropdown(false);
+        sessionStorage.setItem('postLoginRedirect', '/checkout');
+        navigate({ to: '/login' });
+    };
+
     const handleLogout = () => {
         localStorage.removeItem('user');
         window.dispatchEvent(new Event('storage'));
@@ -432,7 +451,7 @@ const Navbar = () => {
                                         </div>
                                     </footer>
                                     <div className="cart-actions-row">
-                                        <Link to="/checkout" className="cart-go-checkout" onClick={() => setShowCartDropdown(false)}>
+                                        <Link to="/checkout" className="cart-go-checkout" onClick={handleCheckoutClick}>
                                             Ir a pagar
                                         </Link>
                                         <button
