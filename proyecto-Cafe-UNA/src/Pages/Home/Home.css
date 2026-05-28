@@ -1,12 +1,41 @@
+.site-main:has(.home-page),
+#center.site-main:has(.home-page) {
+  background: #ffffff;
+}
+
 .home-page {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 3.5rem;
   width: 100%;
   max-width: 1180px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 3rem;
+  padding: 2.25rem 1.5rem 3.25rem;
   font-size: 16px;
+  background: #ffffff;
+}
+
+.home-page__mission-spotlight,
+.home-page__featured,
+.home-page__iniciativas {
+  position: relative;
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.home-page__mission-spotlight::after,
+.home-page__featured::after {
+  position: absolute;
+  left: 50%;
+  bottom: -1.8rem;
+  width: min(260px, 42vw);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(113, 82, 53, 0.26), transparent);
+  content: '';
+  transform: translateX(-50%);
 }
 
 /* =========================
@@ -16,13 +45,11 @@
 .home-page__featured {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 1rem;
-  width: min(100%, 1080px);
-  margin: 0 auto;
-  padding: 1rem 0;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
+  gap: 1.45rem;
+  min-height: calc(82svh - var(--navbar-height));
+  align-content: center;
+  padding: 0;
+  scroll-margin-top: calc(var(--navbar-height) + 1rem);
 }
 
 .featured-product__copy {
@@ -299,7 +326,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: calc(82svh - var(--navbar-height));
   padding: 0;
+  scroll-margin-top: calc(var(--navbar-height) + 1rem);
 }
 
 .mission-spotlight-card {
@@ -308,6 +337,10 @@
   gap: 1rem;
   width: min(100%, 860px);
   margin: 0 auto;
+}
+
+.mission-spotlight-card__title {
+  text-align: center;
 }
 
 .mission-spotlight-card__media {
@@ -367,14 +400,21 @@
 
 .home-page__location {
   width: 100%;
-  padding-top: 0.25rem;
+  min-height: calc(92svh - var(--navbar-height));
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  padding-block: 2rem;
+  scroll-margin-top: calc(var(--navbar-height) + 1rem);
 }
 
 .location-card {
   display: grid;
   grid-template-columns: minmax(240px, 0.78fr) minmax(320px, 1.22fr);
-  gap: 1.2rem;
-  align-items: stretch;
+  gap: clamp(1.5rem, 3vw, 2.4rem);
+  align-items: center;
+  width: min(100%, 1080px);
+  margin: 0 auto;
 }
 
 .location-card__copy {
@@ -441,7 +481,7 @@
 
 .location-card__map {
   position: relative;
-  min-height: 310px;
+  min-height: 380px;
   overflow: hidden;
   border-radius: 14px;
   background: #eadfce;
@@ -451,7 +491,7 @@
 .location-card__map iframe {
   width: 100%;
   height: 100%;
-  min-height: 310px;
+  min-height: 380px;
   display: block;
   border: 0;
   pointer-events: none;
@@ -468,12 +508,12 @@
 ========================= */
 
 .home-page__iniciativas {
-  padding-top: 0;
+  padding: 0;
 }
 
 .iniciativas-header {
   max-width: 1000px;
-  margin: 0 auto 1.5rem;
+  margin: 0 auto 2.1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -505,7 +545,6 @@
   color: #4f4a49;
   font-size: 0.97rem;
   line-height: 1.5;
-  white-space: nowrap;
 }
 
 /* =========================
@@ -515,7 +554,7 @@
 .iniciativas-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
+  gap: clamp(1rem, 2vw, 1.35rem);
   align-items: stretch;
 }
 
@@ -526,14 +565,15 @@
 .iniciativa-card {
   position: relative;
   display: flex;
-  min-height: 175px;
+  min-height: 230px;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 1rem;
   overflow: hidden;
-  padding: 1.1rem;
+  padding: 1.25rem;
   border: 1px solid var(--accent-border);
   border-radius: 16px;
   background: #fff;
+  box-shadow: 0 12px 26px rgba(33, 24, 16, 0.05);
   transition: 0.2s ease;
 }
 
@@ -674,22 +714,28 @@
 
 @media (max-width: 768px) {
   .home-page {
-    gap: 2rem;
-    padding: 1.5rem 1rem 3rem;
+    gap: 2.45rem;
+    padding: 1.6rem 1rem 3rem;
   }
 
+  .home-page__mission-spotlight,
+  .home-page__featured,
+  .home-page__iniciativas {
+    padding: 0;
+  }
+
+  .home-page__mission-spotlight,
   .home-page__featured {
-    padding: 1.25rem;
-    border-radius: 22px;
+    min-height: calc(78svh - var(--navbar-height));
   }
 
   .location-card__map,
   .location-card__map iframe {
-    min-height: 240px;
+    min-height: 300px;
   }
 
   .home-page__iniciativas {
-    padding-top: 1rem;
+    padding: 0;
   }
 
   .mission-spotlight-card {
@@ -712,7 +758,7 @@
   }
 
   .iniciativas-header {
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
   }
 
   .iniciativas-titulo {
@@ -731,12 +777,34 @@
 }
 
 @media (max-width: 620px) {
+  .home-page__mission-spotlight,
+  .home-page__featured,
+  .home-page__iniciativas {
+    padding: 0;
+  }
+
+  .home-page__mission-spotlight,
+  .home-page__featured {
+    min-height: auto;
+    padding-block: 2rem;
+  }
+
   .mission-spotlight-card__body {
     gap: 1rem;
   }
 
   .featured-product-card {
-    padding: 0.8rem;
+    padding: 0.2rem;
+  }
+
+  .home-page__location {
+    min-height: auto;
+    padding-block: 2.5rem;
+  }
+
+  .location-card__map,
+  .location-card__map iframe {
+    min-height: 260px;
   }
 
   .iniciativas-grid {
