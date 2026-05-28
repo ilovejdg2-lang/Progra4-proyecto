@@ -5,23 +5,31 @@ import {
     Outlet,
     useRouterState,
 } from "@tanstack/react-router";
+import { lazy, Suspense, useEffect, useState } from "react";
 
-import Home from "./Pages/Home/Home";
-import AboutUs from "./Pages/AboutUs/AboutUs";
-import Login from "./Pages/Login/Login";
-import AdminPanel from "./Pages/Admin/Panel/Panel";
-import AdminInformacionPaginaPrincipal from "./Pages/Admin/InformacionPaginaPrincipal/InformacionPaginaPrincipal";
-import AdminInformacionSobreNosotros from "./Pages/Admin/InformacionSobreNosotros/InformacionSobreNosotros";
-import AdminInventarioProducto from "./Pages/Admin/InventarioProducto/InventarioProducto";
-import AdminVoluntariado from "./Pages/Admin/Voluntariado/Voluntariado";
-import AdminUsuarios from "./Pages/Admin/Usuarios/Usuarios";
-import Products from "./Pages/Products/Products";
-import Checkout from "./Pages/Checkout/Checkout";
 import Footer from "./Components/Footer/Footer";
 import Navbar from './Components/Navbar/Navbar';
-import SolicitarVoluntariado from "./Pages/Voluntariado/SolicitarVoluntariado";
-//import VoluntariadoMisSolicitudes from "./Pages/VoluntariadoMisSolicitudes";
+import PageLoading from "./Components/PageLoading/PageLoading";
 
+const Home = lazy(() => import("./Pages/Home/Home"));
+const AboutUs = lazy(() => import("./Pages/AboutUs/AboutUs"));
+const Login = lazy(() => import("./Pages/Login/Login"));
+const AdminPanel = lazy(() => import("./Pages/Admin/Panel/Panel"));
+const AdminInformacionPaginaPrincipal = lazy(() => import("./Pages/Admin/InformacionPaginaPrincipal/InformacionPaginaPrincipal"));
+const AdminInformacionSobreNosotros = lazy(() => import("./Pages/Admin/InformacionSobreNosotros/InformacionSobreNosotros"));
+const AdminInventarioProducto = lazy(() => import("./Pages/Admin/InventarioProducto/InventarioProducto"));
+const AdminVoluntariado = lazy(() => import("./Pages/Admin/Voluntariado/Voluntariado"));
+const AdminUsuarios = lazy(() => import("./Pages/Admin/Usuarios/Usuarios"));
+const Products = lazy(() => import("./Pages/Products/Products"));
+const Checkout = lazy(() => import("./Pages/Checkout/Checkout"));
+const SolicitarVoluntariado = lazy(() => import("./Pages/Voluntariado/SolicitarVoluntariado"));
+
+const CHROME_GATED_PUBLIC_ROUTES = new Set([
+    "/",
+    "/AboutUs",
+    "/productos",
+    "/voluntariado/solicitar",
+]);
 
 const rootRoute = createRootRoute({
     component: function RootLayout() {
@@ -30,19 +38,47 @@ const rootRoute = createRootRoute({
         });
         const isAdminRoute = pathname.startsWith("/admin");
         const isLoginRoute = pathname === "/login";
+        const isHomeRoute = pathname === "/";
+        const isChromeGatedRoute = CHROME_GATED_PUBLIC_ROUTES.has(pathname);
+        const [publicRouteReady, setPublicRouteReady] = useState(!isChromeGatedRoute);
+
+        useEffect(() => {
+            if (!isChromeGatedRoute) {
+                setPublicRouteReady(true);
+                return undefined;
+            }
+
+            setPublicRouteReady(false);
+            const handlePublicRouteReady = (event) => {
+                if (event?.detail?.pathname === pathname) {
+                    setPublicRouteReady(true);
+                }
+            };
+            window.addEventListener("public-route-ready", handlePublicRouteReady);
+
+            return () => {
+                window.removeEventListener("public-route-ready", handlePublicRouteReady);
+            };
+        }, [isChromeGatedRoute, pathname]);
 
         if (isAdminRoute || isLoginRoute) {
-            return <Outlet />;
+            return (
+                <Suspense fallback={<PageLoading />}>
+                    <Outlet />
+                </Suspense>
+            );
         }
 
         return (
-            <>
-                <Navbar />
-              <section id="center" className="site-main">
-                <Outlet />
-              </section>
-                <Footer />
-            </>
+            <div className="site-shell">
+                {isChromeGatedRoute && !publicRouteReady ? null : <Navbar />}
+                <section id="center" className={`site-main ${pathname === "/" ? "site-main--home" : ""}`}>
+                    <Suspense fallback={<PageLoading />}>
+                        <Outlet />
+                    </Suspense>
+                </section>
+                {isChromeGatedRoute && !publicRouteReady ? null : <Footer />}
+            </div>
         )
     },
 })
