@@ -3,7 +3,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import './Navbar.css';
 import { calcularPrecioConIVA } from '../../services/productosServices';
 import { Bell, Minus, Plus, Trash2, X } from 'lucide-react';
-import { obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService';
+import { obtenerSolicitudes, obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService';
+import { clearSession, getActiveSessionUser } from '../../services/sessionService';
 
 const CART_STORAGE_KEY = 'cart';
 
@@ -25,13 +26,16 @@ const getQuantity = (item) => Number(item.units) || 1;
 const getUnitPriceWithoutIva = (item) => Number(item.precioNormal ?? item.priceWithoutIva ?? item.price ?? 0) || 0;
 const getUnitPriceWithIva = (item) => calcularPrecioConIVA(getUnitPriceWithoutIva(item));
 const getAvailableStock = (item) => Number(item.stock) || 0;
-const canCompletePurchase = (user) => {
+const canCompletePurchase = (user) => Boolean(user);
+const canSeeAllSolicitudes = (user) => {
     const roles = Array.isArray(user?.roles) ? user.roles : [];
     return roles.some((role) => {
         const normalizedRole = String(role).toLowerCase();
-        return normalizedRole === 'cliente' || normalizedRole === 'superadmin';
+        return normalizedRole === 'admin' || normalizedRole === 'superadmin';
     });
 };
+const isSolicitudPendiente = (solicitud) =>
+    String(solicitud?.estado || '').trim().toLowerCase() === 'pendiente';
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -55,7 +59,7 @@ const Navbar = () => {
 
     useEffect(() => {
         const syncNavbarState = () => {
-            const storedUser = parseStorageJson('user', null);
+            const storedUser = getActiveSessionUser();
             const storedCart = parseStorageJson(CART_STORAGE_KEY, []);
             setUser(storedUser);
             setCartItems(Array.isArray(storedCart) ? storedCart : []);
@@ -74,8 +78,7 @@ const Navbar = () => {
     }, []);
 
     const loadSolicitudesUsuario = useCallback(async (currentUser = user) => {
-        const userId = currentUser?.id || currentUser?.email || currentUser?.username;
-        if (!userId) {
+        if (!currentUser) {
             setSolicitudes([]);
             return;
         }
@@ -83,7 +86,10 @@ const Navbar = () => {
         setNotificationsLoading(true);
         setNotificationsError('');
         try {
-            const data = await obtenerSolicitudesDeUsuario(String(userId));
+            const userId = currentUser?.id || currentUser?.email || currentUser?.username;
+            const data = canSeeAllSolicitudes(currentUser)
+                ? await obtenerSolicitudes()
+                : await obtenerSolicitudesDeUsuario(String(userId));
             setSolicitudes(data);
         } catch (err) {
             console.error('No se pudieron cargar las solicitudes de voluntariado.', err);
@@ -95,11 +101,16 @@ const Navbar = () => {
 
     useEffect(() => {
         if (!user) return;
-        loadSolicitudesUsuario(user);
+        const initialLoadId = window.setTimeout(() => {
+            loadSolicitudesUsuario(user);
+        }, 0);
 
         const syncSolicitudes = () => loadSolicitudesUsuario(user);
         window.addEventListener('voluntariado-updated', syncSolicitudes);
-        return () => window.removeEventListener('voluntariado-updated', syncSolicitudes);
+        return () => {
+            window.clearTimeout(initialLoadId);
+            window.removeEventListener('voluntariado-updated', syncSolicitudes);
+        };
     }, [user, loadSolicitudesUsuario]);
 
     const syncScrolledState = useCallback(() => {
@@ -107,13 +118,15 @@ const Navbar = () => {
     }, []);
 
     useEffect(() => {
-        syncScrolledState();
+        const rafId = window.requestAnimationFrame(syncScrolledState);
         window.addEventListener('scroll', syncScrolledState, { passive: true });
-        return () => window.removeEventListener('scroll', syncScrolledState);
+        return () => {
+            window.cancelAnimationFrame(rafId);
+            window.removeEventListener('scroll', syncScrolledState);
+        };
     }, [syncScrolledState]);
 
     useEffect(() => {
-        syncScrolledState();
         const rafId = window.requestAnimationFrame(syncScrolledState);
         const timeoutId = window.setTimeout(syncScrolledState, 80);
 
@@ -222,7 +235,8 @@ const Navbar = () => {
     const cartIva = cartItems.reduce((acc, item) => acc + ((getUnitPriceWithIva(item) - getUnitPriceWithoutIva(item)) * getQuantity(item)), 0);
     const cartTotal = cartItems.reduce((acc, item) => acc + (getUnitPriceWithIva(item) * getQuantity(item)), 0);
     const userDisplayName = user?.username?.includes('@') ? user?.name : user?.username || user?.name;
-    const solicitudesPendientes = solicitudes.filter((solicitud) => solicitud.estado === 'Pendiente').length;
+    const solicitudesPendientes = solicitudes.filter(isSolicitudPendiente);
+    const solicitudesPendientesCount = solicitudesPendientes.length;
 
     const saveCart = (updatedCart) => {
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
@@ -299,6 +313,13 @@ const Navbar = () => {
         }
     };
 
+    const handleNotificationOpen = () => {
+        setShowNotifications(false);
+        if (user?.role === 'admin') {
+            navigate({ to: '/admin/voluntariado' });
+        }
+    };
+
     const handleCartClick = () => {
         if (showCartDropdown) {
             closeCartPanel();
@@ -329,8 +350,7 @@ const Navbar = () => {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('user');
-        window.dispatchEvent(new Event('storage'));
+        clearSession();
         setUser(null);
         setShowDropdown(false);
         window.location.href = '/';
@@ -487,36 +507,55 @@ const Navbar = () => {
                             onClick={handleNotificationsClick}
                         >
                             <Bell size={25} strokeWidth={2.2} aria-hidden="true" />
-                            {solicitudesPendientes > 0 ? (
-                                <span className="notifications-badge">{solicitudesPendientes}</span>
+                            {solicitudesPendientesCount > 0 ? (
+                                <span className="notifications-badge">{solicitudesPendientesCount}</span>
                             ) : null}
                         </button>
                         {showNotifications ? (
                             <aside className="dropdown dropdown--notifications" aria-label="Solicitudes de voluntariado">
                                 <header className="notifications-header">
                                     <h2>Mis solicitudes</h2>
-                                    <span>{solicitudes.length}</span>
+                                    <span>{solicitudesPendientesCount}</span>
                                 </header>
 
                                 {notificationsLoading ? (
                                     <p className="dropdown__empty">Cargando solicitudes...</p>
                                 ) : notificationsError ? (
                                     <p className="dropdown__empty">{notificationsError}</p>
-                                ) : solicitudes.length === 0 ? (
-                                    <p className="dropdown__empty">Aun no ha enviado solicitudes.</p>
+                                ) : solicitudesPendientesCount === 0 ? (
+                                    <p className="dropdown__empty">No hay solicitudes pendientes.</p>
                                 ) : (
                                     <div className="notifications-list">
-                                        {solicitudes.map((solicitud) => (
-                                            <article key={solicitud.id} className="notification-item">
-                                                <div className="notification-item__main">
-                                                    <strong>{solicitud.tipoVoluntariado || solicitud.area || 'Voluntariado'}</strong>
-                                                    <span>{solicitud.fechaSolicitud || 'Fecha no disponible'}</span>
-                                                </div>
-                                                <span className={`notification-status notification-status--${(solicitud.estado || 'pendiente').toLowerCase()}`}>
-                                                    {solicitud.estado || 'Pendiente'}
-                                                </span>
-                                            </article>
-                                        ))}
+                                        {solicitudesPendientes.map((solicitud) => {
+                                            const notificationContent = (
+                                                <>
+                                                    <div className="notification-item__main">
+                                                        <strong>{solicitud.tipoVoluntariado || solicitud.area || 'Voluntariado'}</strong>
+                                                        <span>{solicitud.fechaSolicitud || 'Fecha no disponible'}</span>
+                                                        {user?.role === 'admin' ? <small>Abrir en administración</small> : null}
+                                                    </div>
+                                                    <span className={`notification-status notification-status--${(solicitud.estado || 'pendiente').toLowerCase()}`}>
+                                                        {solicitud.estado || 'Pendiente'}
+                                                    </span>
+                                                </>
+                                            );
+
+                                            return user?.role === 'admin' ? (
+                                                <button
+                                                    key={solicitud.id}
+                                                    type="button"
+                                                    className="notification-item"
+                                                    onClick={handleNotificationOpen}
+                                                    title="Abrir administración de voluntariado"
+                                                >
+                                                    {notificationContent}
+                                                </button>
+                                            ) : (
+                                                <article key={solicitud.id} className="notification-item notification-item--readonly">
+                                                    {notificationContent}
+                                                </article>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </aside>

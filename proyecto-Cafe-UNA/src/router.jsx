@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
     createRootRoute,
     createRoute,
@@ -31,6 +32,15 @@ const CHROME_GATED_PUBLIC_ROUTES = new Set([
     "/voluntariado/solicitar",
 ]);
 
+function AdminRouteLoading() {
+    return (
+        <div className="admin-route-loading" role="status" aria-live="polite">
+            <span className="admin-route-loading__spinner" aria-hidden="true" />
+            <p>Cargando panel administrativo...</p>
+        </div>
+    );
+}
+
 const rootRoute = createRootRoute({
     component: function RootLayout() {
         const pathname = useRouterState({
@@ -38,32 +48,55 @@ const rootRoute = createRootRoute({
         });
         const isAdminRoute = pathname.startsWith("/admin");
         const isLoginRoute = pathname === "/login";
-        const isHomeRoute = pathname === "/";
         const isChromeGatedRoute = CHROME_GATED_PUBLIC_ROUTES.has(pathname);
         const [publicRouteReady, setPublicRouteReady] = useState(!isChromeGatedRoute);
+        const [publicRouteError, setPublicRouteError] = useState("");
+        const waitingForPublicRoute = isChromeGatedRoute && !publicRouteReady;
+
+        useEffect(() => {
+            document.body.classList.toggle("admin-route-active", isAdminRoute);
+            if (isAdminRoute) {
+                document.body.classList.remove("app-route-loading", "home-hero-ready");
+            }
+
+            return () => {
+                document.body.classList.remove("admin-route-active");
+            };
+        }, [isAdminRoute]);
 
         useEffect(() => {
             if (!isChromeGatedRoute) {
+                setPublicRouteError("");
                 setPublicRouteReady(true);
                 return undefined;
             }
 
+            setPublicRouteError("");
             setPublicRouteReady(false);
             const handlePublicRouteReady = (event) => {
                 if (event?.detail?.pathname === pathname) {
+                    setPublicRouteError("");
                     setPublicRouteReady(true);
                 }
             };
+            const handlePublicRouteError = (event) => {
+                if (event?.detail?.pathname === pathname) {
+                    setPublicRouteError(event?.detail?.message || "No se pudo cargar la información del backend.");
+                    setPublicRouteReady(false);
+                }
+            };
             window.addEventListener("public-route-ready", handlePublicRouteReady);
+            window.addEventListener("public-route-error", handlePublicRouteError);
 
             return () => {
                 window.removeEventListener("public-route-ready", handlePublicRouteReady);
+                window.removeEventListener("public-route-error", handlePublicRouteError);
             };
         }, [isChromeGatedRoute, pathname]);
 
         if (isAdminRoute || isLoginRoute) {
             return (
-                <Suspense fallback={<PageLoading />}>
+                <Suspense fallback={isAdminRoute ? <AdminRouteLoading /> : <PageLoading />}>
                     <Outlet />
                 </Suspense>
             );
@@ -71,13 +104,23 @@ const rootRoute = createRootRoute({
 
         return (
             <div className="site-shell">
-                {isChromeGatedRoute && !publicRouteReady ? null : <Navbar />}
-                <section id="center" className={`site-main ${pathname === "/" ? "site-main--home" : ""}`}>
+                {waitingForPublicRoute ? null : <Navbar />}
+                {waitingForPublicRoute ? (
+                    <PageLoading
+                        message={publicRouteError || "Cargando información..."}
+                        detail={publicRouteError ? "Revise que el backend esté encendido y vuelva a intentar." : ""}
+                        isError={Boolean(publicRouteError)}
+                    />
+                ) : null}
+                <section
+                    id="center"
+                    className={`site-main ${pathname === "/" ? "site-main--home" : ""} ${waitingForPublicRoute ? "site-main--awaiting-ready" : ""}`}
+                >
                     <Suspense fallback={<PageLoading />}>
                         <Outlet />
                     </Suspense>
                 </section>
-                {isChromeGatedRoute && !publicRouteReady ? null : <Footer />}
+                {waitingForPublicRoute ? null : <Footer />}
             </div>
         )
     },

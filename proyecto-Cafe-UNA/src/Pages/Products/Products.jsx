@@ -7,17 +7,32 @@ import { calcularPrecioConIVA, obtenerProductos } from '../../services/productos
 const PRODUCTS_PER_PAGE = 8;
 const CART_STORAGE_KEY = 'cart';
 
+function getStoredCart() {
+  try {
+    const rawCart = localStorage.getItem(CART_STORAGE_KEY);
+    const parsedCart = rawCart ? JSON.parse(rawCart) : [];
+    return Array.isArray(parsedCart) ? parsedCart : [];
+  } catch {
+    localStorage.removeItem(CART_STORAGE_KEY);
+    return [];
+  }
+}
+
+function notifyRouteError(message) {
+  window.setTimeout(() => {
+    window.dispatchEvent(new CustomEvent('public-route-error', { detail: { pathname: '/productos', message } }));
+  }, 0);
+}
+
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [lastAddedProductId, setLastAddedProductId] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [confirmationMessage, setConfirmationMessage] = useState('');
   const [confirmationVisible, setConfirmationVisible] = useState(false);
-  const addTimerRef = useRef(null);
   const confirmationTimerRef = useRef(null);
 
   const openProduct = (card) => {
@@ -39,14 +54,6 @@ const Products = () => {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  useEffect(() => {
-    if (selectedProduct) {
-      setSelectedQuantity(1);
-      setConfirmationMessage('');
-      setConfirmationVisible(false);
-    }
-  }, [selectedProduct]);
-
   const changeQuantity = (delta) => {
     if (!selectedProduct) return;
 
@@ -62,8 +69,10 @@ const Products = () => {
         const data = await obtenerProductos();
         setProducts(data);
       } catch (err) {
-        setError(err.message);
+        const message = err?.message || 'No se pudo cargar el catálogo.';
+        setError(message);
         setProducts([]);
+        notifyRouteError(message);
       } finally {
         setLoading(false);
       }
@@ -108,8 +117,7 @@ const Products = () => {
 
   const handleBuy = (product, quantity = 1) => {
     const stockDisponible = Number(product.stock) || 0;
-    const rawCart = localStorage.getItem(CART_STORAGE_KEY);
-    const parsedCart = rawCart ? JSON.parse(rawCart) : [];
+    const parsedCart = getStoredCart();
 
     const existingProductIndex = parsedCart.findIndex((item) => item.id === product.id);
     const unidadesEnCarrito = existingProductIndex >= 0 ? (Number(parsedCart[existingProductIndex].units) || 0) : 0;
@@ -143,16 +151,6 @@ const Products = () => {
 
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(parsedCart));
     window.dispatchEvent(new Event('cart-updated'));
-    setLastAddedProductId(product.id);
-
-    if (addTimerRef.current) {
-      window.clearTimeout(addTimerRef.current);
-    }
-
-    addTimerRef.current = window.setTimeout(() => {
-      setLastAddedProductId(null);
-      addTimerRef.current = null;
-    }, 2100);
 
     setConfirmationMessage(`Se añadieron ${quantity} unidad${quantity === 1 ? '' : 'es'} de ${product.nombre} al carrito.`);
     setConfirmationVisible(true);
@@ -172,10 +170,6 @@ const Products = () => {
   };
 
   useEffect(() => () => {
-    if (addTimerRef.current) {
-      window.clearTimeout(addTimerRef.current);
-      addTimerRef.current = null;
-    }
     if (confirmationTimerRef.current) {
       window.clearTimeout(confirmationTimerRef.current);
       confirmationTimerRef.current = null;
@@ -183,15 +177,21 @@ const Products = () => {
   }, []);
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !error) {
       window.setTimeout(() => {
         window.dispatchEvent(new CustomEvent('public-route-ready', { detail: { pathname: '/productos' } }));
       }, 0);
     }
-  }, [loading]);
+  }, [error, loading]);
 
-  if (loading) {
-    return <PageLoading message="Cargando productos..." />;
+  if (loading || error) {
+    return (
+      <PageLoading
+        message={error || "Cargando productos..."}
+        detail={error ? "Revise que el backend esté encendido y vuelva a intentar." : ""}
+        isError={Boolean(error)}
+      />
+    );
   }
 
   return (

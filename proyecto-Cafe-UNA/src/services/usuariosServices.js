@@ -1,3 +1,5 @@
+import { getActiveSessionUser } from "./sessionService";
+
 const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/usuarios`;
 const REQUEST_TIMEOUT_MS = 10000;
 
@@ -13,7 +15,7 @@ async function request(url, options = {}) {
     });
   } catch (error) {
     if (error?.name === "AbortError") {
-      throw new Error("Tiempo de espera agotado al consultar usuarios.");
+      throw new Error("Tiempo de espera agotado al consultar usuarios.", { cause: error });
     }
     throw error;
   } finally {
@@ -65,19 +67,14 @@ export async function crearUsuario(nuevoUsuario) {
 
 // ─── UPDATE: actualizar campos de un usuario ────────────────────────────────
 export async function actualizarUsuario(id, cambios) {
-  const actorRaw = localStorage.getItem("user");
-  let actor = null;
-  try {
-    actor = actorRaw ? JSON.parse(actorRaw) : null;
-  } catch {
-    actor = null;
-  }
+  const actor = getActiveSessionUser();
 
   return request(`${BASE_URL}/${id}`, {
     method: "PUT",
     body: JSON.stringify({
       ...cambios,
       actorId: Number(actor?.id) || null,
+      actorRoles: Array.isArray(actor?.roles) ? actor.roles : [],
     }),
   });
 }
@@ -92,13 +89,7 @@ export async function actualizarUsuario(id, cambios) {
  * @returns {Promise<object>} usuario actualizado
  */
 export async function toggleEstadoUsuario(id, forzar = null) {
-  const actorRaw = localStorage.getItem("user");
-  let actor = null;
-  try {
-    actor = actorRaw ? JSON.parse(actorRaw) : null;
-  } catch {
-    actor = null;
-  }
+  const actor = getActiveSessionUser();
 
   return request(`${BASE_URL}/${id}/estado`, {
     method: "PATCH",

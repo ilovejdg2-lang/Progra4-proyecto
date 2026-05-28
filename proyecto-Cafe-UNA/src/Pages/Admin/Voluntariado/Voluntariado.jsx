@@ -24,6 +24,7 @@ import {
   eliminarSolicitud,
   obtenerSolicitudes,
 } from "../../../services/voluntariadoService";
+import { getActiveSessionUser } from "../../../services/sessionService";
 
 const ESTADOS = ["Pendiente", "En revisión", "Aprobado", "Rechazado"];
 
@@ -33,6 +34,26 @@ const ESTADO_ESTILOS = {
   Aprobado: "border-emerald-200 bg-emerald-50 text-emerald-700",
   Rechazado: "border-red-200 bg-red-50 text-red-700",
 };
+
+function normalizarEstado(estado) {
+  const normalized = String(estado || "Pendiente")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (normalized === "aprobada" || normalized === "aprobado") return "Aprobado";
+  if (normalized === "rechazada" || normalized === "rechazado") return "Rechazado";
+  if (normalized === "en revision" || normalized === "revision") return "En revisión";
+  return "Pendiente";
+}
+
+function normalizarSolicitud(solicitud) {
+  return {
+    ...solicitud,
+    estado: normalizarEstado(solicitud?.estado),
+  };
+}
 
 const CAMPOS_EDITABLES = [
   { name: "nombre", label: "Nombre completo" },
@@ -49,13 +70,15 @@ const CAMPOS_EDITABLES = [
 ];
 
 function BadgeEstado({ estado }) {
+  const estadoNormalizado = normalizarEstado(estado);
+
   return (
     <span
       className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
-        ESTADO_ESTILOS[estado] ?? "border-slate-200 bg-slate-50 text-slate-600"
+        ESTADO_ESTILOS[estadoNormalizado] ?? "border-slate-200 bg-slate-50 text-slate-600"
       }`}
     >
-      {estado || "Sin estado"}
+      {estadoNormalizado}
     </span>
   );
 }
@@ -381,7 +404,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
 const AdminVoluntariado = () => {
   const actor = (() => {
     try {
-      return JSON.parse(localStorage.getItem("user") || "null");
+      return getActiveSessionUser();
     } catch {
       return null;
     }
@@ -396,10 +419,11 @@ const AdminVoluntariado = () => {
   const [eliminando, setEliminando] = useState(null);
 
   const resumen = useMemo(() => {
-    return ESTADOS.reduce((acc, estado) => {
-      acc[estado] = solicitudes.filter((solicitud) => solicitud.estado === estado).length;
+    return solicitudes.reduce((acc, solicitud) => {
+      const estado = normalizarEstado(solicitud.estado);
+      acc[estado] = (acc[estado] || 0) + 1;
       return acc;
-    }, {});
+    }, Object.fromEntries(ESTADOS.map((estado) => [estado, 0])));
   }, [solicitudes]);
 
   const cargarSolicitudes = async () => {
@@ -407,7 +431,7 @@ const AdminVoluntariado = () => {
     setError(null);
     try {
       const data = await obtenerSolicitudes();
-      setSolicitudes(Array.isArray(data) ? data : []);
+      setSolicitudes(Array.isArray(data) ? data.map(normalizarSolicitud) : []);
     } catch (err) {
       setError("No se pudieron cargar las solicitudes de voluntariado.");
       console.error(err);
@@ -421,7 +445,7 @@ const AdminVoluntariado = () => {
 
     obtenerSolicitudes()
       .then((data) => {
-        if (activo) setSolicitudes(Array.isArray(data) ? data : []);
+        if (activo) setSolicitudes(Array.isArray(data) ? data.map(normalizarSolicitud) : []);
       })
       .catch((err) => {
         if (!activo) return;
@@ -441,7 +465,11 @@ const AdminVoluntariado = () => {
     try {
       const actualizada = await actualizarSolicitud(id, cambios);
       setSolicitudes((prev) =>
-        prev.map((solicitud) => (solicitud.id === id ? { ...solicitud, ...(actualizada || cambios) } : solicitud))
+        prev.map((solicitud) => (
+          solicitud.id === id
+            ? normalizarSolicitud({ ...solicitud, ...(actualizada || cambios) })
+            : solicitud
+        ))
       );
       setEditando(null);
     } catch (err) {

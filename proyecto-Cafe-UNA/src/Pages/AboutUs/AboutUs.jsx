@@ -83,6 +83,12 @@ const galleryDefault = [
 
 ];
 
+function notifyRouteError(message) {
+  window.setTimeout(() => {
+    window.dispatchEvent(new CustomEvent('public-route-error', { detail: { pathname: '/AboutUs', message } }));
+  }, 0);
+}
+
 
 
 const AboutUs = () => {
@@ -96,6 +102,7 @@ const AboutUs = () => {
 
   const [galleryData, setGalleryData] = useState(galleryDefault);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
 
 
@@ -137,6 +144,11 @@ const AboutUs = () => {
       .catch((err) => {
 
         console.error('No se pudo cargar la informacion de sobre nosotros.', err);
+        if (activo) {
+          const message = err?.message || 'No se pudo cargar la información de Sobre Nosotros.';
+          setLoadError(message);
+          notifyRouteError(message);
+        }
 
       })
       .finally(() => {
@@ -158,15 +170,21 @@ const AboutUs = () => {
   const galleryItems = galleryData.slice(0, 3);
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !loadError) {
       window.setTimeout(() => {
         window.dispatchEvent(new CustomEvent('public-route-ready', { detail: { pathname: '/AboutUs' } }));
       }, 0);
     }
-  }, [loading]);
+  }, [loadError, loading]);
 
-  if (loading) {
-    return <PageLoading message="Cargando sobre nosotros..." />;
+  if (loading || loadError) {
+    return (
+      <PageLoading
+        message={loadError || "Cargando sobre nosotros..."}
+        detail={loadError ? "Revise que el backend esté encendido y vuelva a intentar." : ""}
+        isError={Boolean(loadError)}
+      />
+    );
   }
 
 
