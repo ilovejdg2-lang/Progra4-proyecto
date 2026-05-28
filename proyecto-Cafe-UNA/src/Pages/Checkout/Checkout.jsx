@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, Coffee, CreditCard, ShoppingBasket } from 'lucide-react';
 import './Checkout.css';
 import { ajustarStockProductos, calcularPrecioConIVA } from '../../services/productosServices';
+import { getActiveSessionUser } from '../../services/sessionService';
 
 const CART_STORAGE_KEY = 'cart';
 
@@ -14,22 +15,8 @@ const formatCRC = (amount) => {
 const getQuantity = (item) => Number(item.units) || 1;
 const getUnitPriceWithoutIva = (item) => Number(item.precioNormal ?? item.priceWithoutIva ?? 0) || 0;
 const getUnitPriceWithIva = (item) => calcularPrecioConIVA(getUnitPriceWithoutIva(item));
-const getCurrentUser = () => {
-  try {
-    return JSON.parse(localStorage.getItem('user'));
-  } catch {
-    localStorage.removeItem('user');
-    return null;
-  }
-};
-
-const canCompletePurchase = (user) => {
-  const roles = Array.isArray(user?.roles) ? user.roles : [];
-  return roles.some((role) => {
-    const normalizedRole = String(role).toLowerCase();
-    return normalizedRole === 'cliente' || normalizedRole === 'superadmin';
-  });
-};
+const getCurrentUser = () => getActiveSessionUser();
+const canCompletePurchase = (user) => Boolean(user);
 
 const Checkout = () => {
   const navigate = useNavigate();

@@ -9,6 +9,7 @@ import {
   eliminarGaleriaItem,
   obtenerInformacionSobreNosotros,
 } from "../../../services/informacionService";
+import { getActiveSessionUser } from "../../../services/sessionService";
 
 const infoInicial = {
   hero: {},
@@ -301,7 +302,7 @@ function TarjetaTexto({ tipo, data, onEditar }) {
 const AdminInformacionSobreNosotros = () => {
   const actor = (() => {
     try {
-      return JSON.parse(localStorage.getItem("user") || "null");
+      return getActiveSessionUser();
     } catch {
       return null;
     }

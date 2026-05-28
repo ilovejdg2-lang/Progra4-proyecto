@@ -6,6 +6,7 @@ import {
   actualizarUsuario,
   toggleEstadoUsuario,
 } from "../../../services/usuariosServices";
+import { getActiveSessionUser } from "../../../services/sessionService";
 
 // ─── Modal reutilizable ───────────────────────────────────────────────────────
 function Modal({ titulo, onClose, children }) {
@@ -48,13 +49,9 @@ function BadgeRol({ rol }) {
 // ─── Formulario de usuario (crear / editar) ───────────────────────────────────
 const ROLES_DISPONIBLES = ["SuperAdmin", "Admin", "Usuario", "Cliente"];
 
-function FormUsuario({ inicial, onGuardar, onCancelar, cargando }) {
+function FormUsuario({ inicial, onGuardar, onCancelar, cargando, puedeEditarRoles = false }) {
   const actor = (() => {
-    try {
-      return JSON.parse(localStorage.getItem("user") || "null");
-    } catch {
-      return null;
-    }
+    return getActiveSessionUser();
   })();
   const actorId = Number(actor?.id) || null;
   const editandoPropioUsuario = Boolean(inicial?.id) && actorId !== null && Number(inicial.id) === actorId;
@@ -117,22 +114,30 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando }) {
       )}
       <div>
         <label className="mb-2 block text-xs font-medium text-slate-600">Roles</label>
-        <div className="flex flex-wrap gap-2">
-          {ROLES_DISPONIBLES.map((rol) => (
-            <button
-              key={rol}
-              type="button"
-              onClick={() => toggleRol(rol)}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                form.roles.includes(rol)
-                  ? `${colorRol[rol] ?? "bg-slate-800 text-white"}`
-                  : "border border-slate-200 bg-white text-slate-500 hover:border-slate-300"
-              }`}
-            >
-              {rol}
-            </button>
-          ))}
-        </div>
+        {puedeEditarRoles ? (
+          <div className="flex flex-wrap gap-2">
+            {ROLES_DISPONIBLES.map((rol) => (
+              <button
+                key={rol}
+                type="button"
+                onClick={() => toggleRol(rol)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                  form.roles.includes(rol)
+                    ? `${colorRol[rol] ?? "bg-slate-800 text-white"}`
+                    : "border border-slate-200 bg-white text-slate-500 hover:border-slate-300"
+                }`}
+              >
+                {rol}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {form.roles.map((rol) => (
+              <BadgeRol key={rol} rol={rol} />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
@@ -159,11 +164,7 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando }) {
 // ─── Página principal ─────────────────────────────────────────────────────────
 const AdminUsuarios = () => {
   const actor = (() => {
-    try {
-      return JSON.parse(localStorage.getItem("user") || "null");
-    } catch {
-      return null;
-    }
+    return getActiveSessionUser();
   })();
   const actorId = Number(actor?.id) || null;
   const actorRoles = Array.isArray(actor?.roles) ? actor.roles : [];
@@ -265,7 +266,7 @@ const AdminUsuarios = () => {
       {/* Modales */}
       {modalCrear && (
         <Modal titulo="Nuevo usuario" onClose={() => setModalCrear(false)}>
-          <FormUsuario onGuardar={handleCrear} onCancelar={() => setModalCrear(false)} cargando={guardando} />
+          <FormUsuario onGuardar={handleCrear} onCancelar={() => setModalCrear(false)} cargando={guardando} puedeEditarRoles={esSuperAdmin} />
         </Modal>
       )}
       {usuarioEditar && (
@@ -275,6 +276,7 @@ const AdminUsuarios = () => {
             onGuardar={handleEditar}
             onCancelar={() => setUsuarioEditar(null)}
             cargando={guardando}
+            puedeEditarRoles={esSuperAdmin}
           />
         </Modal>
       )}

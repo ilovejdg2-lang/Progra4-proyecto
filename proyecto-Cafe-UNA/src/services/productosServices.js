@@ -1,3 +1,5 @@
+import { getActiveSessionUser } from "./sessionService";
+
 const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/productos`;
 const IVA_RATE = 0.13;
 const REQUEST_TIMEOUT_MS = 10000;
@@ -13,7 +15,7 @@ function limpiarProductosCache() {
 
 function obtenerActorRoles() {
   try {
-    const user = JSON.parse(localStorage.getItem("user") || "null");
+    const user = getActiveSessionUser();
     const roles = Array.isArray(user?.roles) ? user.roles : [];
     if (String(user?.role || "").toLowerCase() === "admin" && !roles.some((rol) => String(rol).toLowerCase() === "admin")) {
       return [...roles, "Admin"];
@@ -36,7 +38,7 @@ async function request(url, options = {}) {
     });
   } catch (error) {
     if (error?.name === "AbortError") {
-      throw new Error("Tiempo de espera agotado al consultar productos.");
+      throw new Error("Tiempo de espera agotado al consultar productos.", { cause: error });
     }
     throw error;
   } finally {
