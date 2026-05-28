@@ -4,7 +4,7 @@ import { registrarUsuario, solicitarRecuperacion, restablecerPassword } from '..
 import { obtenerUsuariosActivos } from '../../services/usuariosServices';
 import './Login.css';
 
-const isAdminUser = (roles = []) => roles.some((role) => role === 'SuperAdmin');
+const isAdminUser = (roles = []) => roles.some((role) => role === 'SuperAdmin' || role === 'Admin');
 
 const mapAuthenticatedUser = (user) => ({
   id: user.id,

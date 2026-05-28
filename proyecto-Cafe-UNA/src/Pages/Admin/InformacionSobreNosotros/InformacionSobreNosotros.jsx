@@ -141,7 +141,7 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
   );
 }
 
-function ModalGaleria({ info, onCerrar, onGuardar, guardando }) {
+function ModalGaleria({ info, onCerrar, onGuardar, guardando, puedeEliminar }) {
   const [gallery, setGallery] = useState(() => (Array.isArray(info.gallery) ? info.gallery : []));
 
   const cambiarItem = (id, campo, valor) => {
@@ -229,14 +229,18 @@ function ModalGaleria({ info, onCerrar, onGuardar, guardando }) {
                   </label>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => eliminarItem(item.id)}
-                  className="inline-flex size-10 items-center justify-center rounded-xl bg-red-50 text-red-700 transition hover:bg-red-100"
-                  aria-label="Eliminar foto"
-                >
-                  <Trash2 className="size-5" />
-                </button>
+                {puedeEliminar ? (
+                  <button
+                    type="button"
+                    onClick={() => eliminarItem(item.id)}
+                    className="inline-flex size-10 items-center justify-center rounded-xl bg-red-50 text-red-700 transition hover:bg-red-100"
+                    aria-label="Eliminar foto"
+                  >
+                    <Trash2 className="size-5" />
+                  </button>
+                ) : (
+                  <span className="text-xs font-semibold text-slate-400">Sin eliminar</span>
+                )}
               </div>
             ))}
           </div>
@@ -295,6 +299,15 @@ function TarjetaTexto({ tipo, data, onEditar }) {
 }
 
 const AdminInformacionSobreNosotros = () => {
+  const actor = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const actorRoles = Array.isArray(actor?.roles) ? actor.roles : [];
+  const esSuperAdmin = actorRoles.includes("SuperAdmin");
   const [info, setInfo] = useState(infoInicial);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -341,7 +354,7 @@ const AdminInformacionSobreNosotros = () => {
       const actualPorId = new Map(actual.map((item) => [Number(item.id), item]));
       const nuevaPorId = new Map(gallery.map((item) => [Number(item.id), item]));
 
-      const removidos = actual.filter((item) => !nuevaPorId.has(Number(item.id)));
+      const removidos = esSuperAdmin ? actual.filter((item) => !nuevaPorId.has(Number(item.id))) : [];
       const agregados = gallery.filter((item) => !actualPorId.has(Number(item.id)));
       const editados = gallery.filter((item) => {
         const previo = actualPorId.get(Number(item.id));
@@ -445,7 +458,7 @@ const AdminInformacionSobreNosotros = () => {
       ) : null}
 
       {editandoGaleria ? (
-        <ModalGaleria info={info} onCerrar={() => setEditandoGaleria(false)} onGuardar={guardarGaleria} guardando={guardando} />
+        <ModalGaleria info={info} onCerrar={() => setEditandoGaleria(false)} onGuardar={guardarGaleria} guardando={guardando} puedeEliminar={esSuperAdmin} />
       ) : null}
     </AdminLayout>
   );

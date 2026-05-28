@@ -2,6 +2,19 @@ const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/productos`;
 const IVA_RATE = 0.13;
 const REQUEST_TIMEOUT_MS = 10000;
 
+function obtenerActorRoles() {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    const roles = Array.isArray(user?.roles) ? user.roles : [];
+    if (String(user?.role || "").toLowerCase() === "admin" && !roles.some((rol) => String(rol).toLowerCase() === "admin")) {
+      return [...roles, "Admin"];
+    }
+    return roles;
+  } catch {
+    return [];
+  }
+}
+
 async function request(url, options = {}) {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -79,7 +92,7 @@ export async function obtenerProductoPorId(id) {
 export async function crearProducto(nuevoProducto) {
   const creado = await request(BASE_URL, {
     method: "POST",
-    body: JSON.stringify(nuevoProducto),
+    body: JSON.stringify({ ...nuevoProducto, actorRoles: obtenerActorRoles() }),
   });
   return normalizarProducto(creado);
 }
@@ -88,7 +101,7 @@ export async function crearProducto(nuevoProducto) {
 export async function actualizarProducto(id, cambios) {
   const actualizado = await request(`${BASE_URL}/${id}`, {
     method: "PUT",
-    body: JSON.stringify(cambios),
+    body: JSON.stringify({ ...cambios, actorRoles: obtenerActorRoles() }),
   });
   return actualizado ? normalizarProducto(actualizado) : null;
 }
@@ -107,6 +120,9 @@ export async function ajustarStockProductos(carritoItems) {
 
 // ─── DELETE: eliminar un producto ───────────────────────────────────────────
 export async function eliminarProducto(id) {
-  await request(`${BASE_URL}/${id}`, { method: "DELETE" });
+  await request(`${BASE_URL}/${id}`, {
+    method: "DELETE",
+    body: JSON.stringify({ actorRoles: obtenerActorRoles() }),
+  });
   return true;
 }
