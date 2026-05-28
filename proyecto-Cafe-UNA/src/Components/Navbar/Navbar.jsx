@@ -528,16 +528,11 @@ const Navbar = () => {
                                     <div className="notifications-list">
                                         {solicitudesPendientes.map((solicitud) => {
                                             const notificationContent = (
-                                                <>
-                                                    <div className="notification-item__main">
-                                                        <strong>{solicitud.tipoVoluntariado || solicitud.area || 'Voluntariado'}</strong>
-                                                        <span>{solicitud.fechaSolicitud || 'Fecha no disponible'}</span>
-                                                        {user?.role === 'admin' ? <small>Abrir en administración</small> : null}
-                                                    </div>
-                                                    <span className={`notification-status notification-status--${(solicitud.estado || 'pendiente').toLowerCase()}`}>
-                                                        {solicitud.estado || 'Pendiente'}
-                                                    </span>
-                                                </>
+                                                <div className="notification-item__main">
+                                                    <strong>{solicitud.tipoVoluntariado || solicitud.area || 'Voluntariado'}</strong>
+                                                    <span>{solicitud.fechaSolicitud || 'Fecha no disponible'}</span>
+                                                    {user?.role === 'admin' ? <small>Abrir en administración</small> : null}
+                                                </div>
                                             );
 
                                             return user?.role === 'admin' ? (
