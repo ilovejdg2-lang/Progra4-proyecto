@@ -7,6 +7,15 @@ import { obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService'
 
 const CART_STORAGE_KEY = 'cart';
 
+const parseStorageJson = (key, fallback) => {
+    try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+    } catch {
+        return fallback;
+    }
+};
+
 const formatCRC = (amount) => {
     const value = Number.isFinite(amount) ? amount : 0;
     return `CRC ${value.toLocaleString('es-CR')}`;
@@ -46,10 +55,10 @@ const Navbar = () => {
 
     useEffect(() => {
         const syncNavbarState = () => {
-            const storedUser = JSON.parse(localStorage.getItem('user'));
-            const storedCart = localStorage.getItem(CART_STORAGE_KEY);
+            const storedUser = parseStorageJson('user', null);
+            const storedCart = parseStorageJson(CART_STORAGE_KEY, []);
             setUser(storedUser);
-            setCartItems(storedCart ? JSON.parse(storedCart) : []);
+            setCartItems(Array.isArray(storedCart) ? storedCart : []);
             if (!storedUser) {
                 setSolicitudes([]);
                 setShowNotifications(false);
@@ -523,7 +532,7 @@ const Navbar = () => {
                         {user.role === 'admin' && (
                             <Link to="/admin" onClick={() => setShowDropdown(false)}>Panel Administrativo</Link>
                         )}
-                        <button onClick={handleLogout}>Cerrar Sesión</button>
+                        <button className="dropdown__logout" onClick={handleLogout}>Cerrar Sesión</button>
                         </div>
                     )}
                 </div>
