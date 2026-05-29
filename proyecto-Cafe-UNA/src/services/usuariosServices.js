@@ -65,9 +65,20 @@ export async function crearUsuario(nuevoUsuario) {
 
 // ─── UPDATE: actualizar campos de un usuario ────────────────────────────────
 export async function actualizarUsuario(id, cambios) {
+  const actorRaw = localStorage.getItem("user");
+  let actor = null;
+  try {
+    actor = actorRaw ? JSON.parse(actorRaw) : null;
+  } catch {
+    actor = null;
+  }
+
   return request(`${BASE_URL}/${id}`, {
     method: "PUT",
-    body: JSON.stringify(cambios),
+    body: JSON.stringify({
+      ...cambios,
+      actorId: Number(actor?.id) || null,
+    }),
   });
 }
 
@@ -81,10 +92,20 @@ export async function actualizarUsuario(id, cambios) {
  * @returns {Promise<object>} usuario actualizado
  */
 export async function toggleEstadoUsuario(id, forzar = null) {
+  const actorRaw = localStorage.getItem("user");
+  let actor = null;
+  try {
+    actor = actorRaw ? JSON.parse(actorRaw) : null;
+  } catch {
+    actor = null;
+  }
+
   return request(`${BASE_URL}/${id}/estado`, {
     method: "PATCH",
     body: JSON.stringify({
       estado: forzar ?? null,
+      actorId: Number(actor?.id) || null,
+      actorRoles: Array.isArray(actor?.roles) ? actor.roles : [],
     }),
   });
 }
