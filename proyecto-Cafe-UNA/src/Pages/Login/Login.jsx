@@ -1,21 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Eye, EyeOff } from 'lucide-react';
-import { registrarUsuario, solicitarRecuperacion, restablecerPassword } from '../../services/authService';
+import {
+  iniciarSesion,
+  mapAuthenticatedUser,
+  registrarUsuario,
+  solicitarRecuperacion,
+  restablecerPassword,
+} from '../../services/authService';
 import { saveAuthenticatedUser } from '../../services/sessionService';
-import { obtenerUsuarios, obtenerUsuariosActivos } from '../../services/usuariosServices';
 import './Login.css';
-
-const isAdminUser = (roles = []) => roles.some((role) => role === 'SuperAdmin' || role === 'Admin');
-
-const mapAuthenticatedUser = (user) => ({
-  id: user.id,
-  username: user.nombre,
-  email: user.correo,
-  name: user.nombre,
-  role: isAdminUser(user.roles) ? 'admin' : 'user',
-  roles: user.roles || [],
-});
 
 const LOGO_URL = '/logo.webp';
 
@@ -146,22 +140,18 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const users = await obtenerUsuariosActivos();
-      const normalizedIdentifier = identifier.trim().toLowerCase();
-      const foundUser = users.find((user) => (
-        (
-          user.nombre?.toLowerCase() === normalizedIdentifier
-          || user.correo?.toLowerCase() === normalizedIdentifier
-        )
-        && user.passwordHash === password
-      ));
+      const result = await iniciarSesion({
+        identifier: identifier.trim(),
+        password,
+      });
 
-      if (!foundUser) {
+      const token = result?.token || result?.Token;
+      if (!token) {
         setFormError('Credenciales incorrectas');
         return;
       }
 
-      saveAuthenticatedUser(mapAuthenticatedUser(foundUser));
+      saveAuthenticatedUser(mapAuthenticatedUser(token));
       const redirectTo = sessionStorage.getItem('postLoginRedirect') || '/';
       sessionStorage.removeItem('postLoginRedirect');
       window.location.href = redirectTo;
@@ -201,18 +191,9 @@ const Login = () => {
 
     setIsLoading(true);
     try {
-      const correoRegistro = registerForm.correo.trim().toLowerCase();
-      const usuarios = await obtenerUsuarios();
-      const correoYaExiste = usuarios.some((user) => user.correo?.trim().toLowerCase() === correoRegistro);
-
-      if (correoYaExiste) {
-        setFormError('Ya existe una cuenta con ese correo.');
-        return;
-      }
-
       await registrarUsuario({
         nombre: registerForm.nombre.trim(),
-        correo: correoRegistro,
+        correo: registerForm.correo.trim().toLowerCase(),
         password: registerForm.password,
       });
       setSuccessMessage('Cuenta creada correctamente. Ya puede iniciar sesión.');
