@@ -1,62 +1,111 @@
+import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Mail, MapPin, Phone, Share2 } from 'lucide-react';
+import SiteNavLink from '../SiteNavLink/SiteNavLink';
+import { normalizeImageUrl } from '../../lib/imageUtils';
+import { obtenerEnlaces, obtenerFooter } from '../../services/informacionService';
 import './Footer.css';
 
-const mapsUrl = 'https://www.google.com/maps/place/Finca+Experimental+Santa+Luc%C3%ADa+-+Universidad+Nacional/@10.0232398,-84.11705,17z/data=!4m14!1m7!3m6!1s0x8fa0faa5f69f073d:0x656b2da8f85723be!2sFinca+Experimental+Santa+Luc%C3%ADa+-+Universidad+Nacional!8m2!3d10.0232346!4d-84.1121791!16s%2Fg%2F1pp2tywc7!3m5!1s0x8fa0faa5f69f073d:0x656b2da8f85723be!8m2!3d10.0232346!4d-84.1121791!16s%2Fg%2F1pp2tywc7?entry=ttu&g_ep=EgoyMDI2MDUyNS4wIKXMDSoASAFQAw%3D%3D';
-const facebookUrl = 'https://www.facebook.com/p/Caf%C3%A9-UNA-100051575025767/';
-const instagramUrl = 'https://www.instagram.com/cafeuna_/';
+function telefonoHref(telefono) {
+  const digits = String(telefono || '').replace(/\D/g, '');
+  if (!digits) return '';
+  return digits.startsWith('506') ? `tel:+${digits}` : `tel:+506${digits}`;
+}
 
 const Footer = () => {
-    return (
-        <footer className="footer">
-            <div className="footer__top">
-                <Link to="/" className="footer__brand" aria-label="Ir al inicio">
-                    <img src="/logoblancoyrojo.png" alt="Cafe UNA" className="footer__logo" />
-                    <div className="footer__brand-copy">
-                        <strong>Cafe UNA</strong>
-                        <span>Frase</span>
-                    </div>
-                </Link>
+  const [footer, setFooter] = useState(null);
+  const [enlacesExplorar, setEnlacesExplorar] = useState([]);
 
-                <nav className="footer__column" aria-label="Explorar">
-                    <h2>Explorar</h2>
-                    <Link to="/AboutUs">Nuestra Historia</Link>
-                    <Link to="/productos">Tienda Online</Link>
-                    <Link to="/voluntariado/solicitar">Voluntariado</Link>
-                    <Link to="/login">Mi Cuenta</Link>
-                </nav>
+  useEffect(() => {
+    let activo = true;
 
-                <section className="footer__column footer__contact" aria-label="Contacto">
-                    <h2>Contacto</h2>
-                    <a href="tel:+50685997693" className="footer__contact-item">
-                        <Phone className="footer__contact-icon" aria-hidden="true" />
-                        <span>8599-7693</span>
-                    </a>
-                    <a href="mailto:cafeuna@una.cr" className="footer__contact-item">
-                        <Mail className="footer__contact-icon" aria-hidden="true" />
-                        <span>cafeuna@una.cr</span>
-                    </a>
-                    <a href={facebookUrl} target="_blank" rel="noreferrer" className="footer__contact-item">
-                        <Share2 className="footer__contact-icon" aria-hidden="true" />
-                        <span>Facebook Cafe UNA</span>
-                    </a>
-                    <a href={instagramUrl} target="_blank" rel="noreferrer" className="footer__contact-item">
-                        <Share2 className="footer__contact-icon" aria-hidden="true" />
-                        <span>Instagram @cafeuna_</span>
-                    </a>
-                    <a href={mapsUrl} target="_blank" rel="noreferrer" className="footer__contact-item">
-                        <MapPin className="footer__contact-icon" aria-hidden="true" />
-                        <span>Finca Experimental Santa Lucia</span>
-                    </a>
-                </section>
-            </div>
+    Promise.all([
+      obtenerFooter().catch(() => null),
+      obtenerEnlaces('FooterExplorar').catch(() => []),
+    ]).then(([footerData, enlaces]) => {
+      if (!activo) return;
+      setFooter(footerData);
+      setEnlacesExplorar(Array.isArray(enlaces) ? enlaces : []);
+    });
 
-            <div className="footer__divider" />
-            <div className="footer__bottom">
-                <p className="footer__text">© 2026 Cafe UNA Todos los derechos reservados.</p>
-            </div>
-        </footer>
-    );
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  const telHref = telefonoHref(footer?.telefono);
+  const footerLogoSrc = normalizeImageUrl(footer?.logoClaroUrl || footer?.logoUrl, { width: 320 });
+  const hasContact = Boolean(
+    telHref || footer?.correo || footer?.facebookUrl || footer?.instagramUrl || footer?.mapsUrl
+  );
+
+  return (
+    <footer className="footer">
+      <div className="footer__top">
+        <Link to="/" className="footer__brand" aria-label="Ir al inicio">
+          {footerLogoSrc ? (
+            <img src={footerLogoSrc} alt="Cafe UNA" className="footer__logo" />
+          ) : null}
+          <div className="footer__brand-copy">
+            <strong>Cafe UNA</strong>
+            {footer?.fraseMarca ? <span>{footer.fraseMarca}</span> : null}
+          </div>
+        </Link>
+
+        {enlacesExplorar.length > 0 ? (
+          <nav className="footer__column" aria-label="Explorar">
+            <h2>Explorar</h2>
+            {enlacesExplorar.map((enlace) => (
+              <SiteNavLink key={enlace.id ?? enlace.ruta} enlace={enlace} />
+            ))}
+          </nav>
+        ) : null}
+
+        {hasContact ? (
+          <section className="footer__column footer__contact" aria-label="Contacto">
+            <h2>Contacto</h2>
+            {telHref ? (
+              <a href={telHref} className="footer__contact-item">
+                <Phone className="footer__contact-icon" aria-hidden="true" />
+                <span>{footer.telefono}</span>
+              </a>
+            ) : null}
+            {footer?.correo ? (
+              <a href={`mailto:${footer.correo}`} className="footer__contact-item">
+                <Mail className="footer__contact-icon" aria-hidden="true" />
+                <span>{footer.correo}</span>
+              </a>
+            ) : null}
+            {footer?.facebookUrl ? (
+              <a href={footer.facebookUrl} target="_blank" rel="noreferrer" className="footer__contact-item">
+                <Share2 className="footer__contact-icon" aria-hidden="true" />
+                <span>Facebook</span>
+              </a>
+            ) : null}
+            {footer?.instagramUrl ? (
+              <a href={footer.instagramUrl} target="_blank" rel="noreferrer" className="footer__contact-item">
+                <Share2 className="footer__contact-icon" aria-hidden="true" />
+                <span>Instagram</span>
+              </a>
+            ) : null}
+            {footer?.mapsUrl ? (
+              <a href={footer.mapsUrl} target="_blank" rel="noreferrer" className="footer__contact-item">
+                <MapPin className="footer__contact-icon" aria-hidden="true" />
+                <span>Ubicacion</span>
+              </a>
+            ) : null}
+          </section>
+        ) : null}
+      </div>
+
+      <div className="footer__divider" />
+      <div className="footer__bottom">
+        {footer?.textoCopyright ? (
+          <p className="footer__text">{footer.textoCopyright}</p>
+        ) : null}
+      </div>
+    </footer>
+  );
 };
 
 export default Footer;

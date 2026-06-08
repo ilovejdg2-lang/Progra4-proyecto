@@ -18,12 +18,6 @@ function getStoredCart() {
   }
 }
 
-function notifyRouteError(message) {
-  window.setTimeout(() => {
-    window.dispatchEvent(new CustomEvent('public-route-error', { detail: { pathname: '/productos', message } }));
-  }, 0);
-}
-
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -69,10 +63,9 @@ const Products = () => {
         const data = await obtenerProductos();
         setProducts(data);
       } catch (err) {
-        const message = err?.message || 'No se pudo cargar el catálogo.';
-        setError(message);
+        console.error('No se pudo cargar el catálogo de productos.', err);
+        setError(err?.message || 'No se pudo cargar el catálogo.');
         setProducts([]);
-        notifyRouteError(message);
       } finally {
         setLoading(false);
       }
@@ -177,20 +170,16 @@ const Products = () => {
   }, []);
 
   useEffect(() => {
-    if (!loading && !error) {
+    if (!loading) {
       window.setTimeout(() => {
         window.dispatchEvent(new CustomEvent('public-route-ready', { detail: { pathname: '/productos' } }));
       }, 0);
     }
-  }, [error, loading]);
+  }, [loading]);
 
-  if (loading || error) {
+  if (loading) {
     return (
-      <PageLoading
-        message={error || "Cargando productos..."}
-        detail={error ? "Revise que el backend esté encendido y vuelva a intentar." : ""}
-        isError={Boolean(error)}
-      />
+      <PageLoading message="Cargando productos..." />
     );
   }
 

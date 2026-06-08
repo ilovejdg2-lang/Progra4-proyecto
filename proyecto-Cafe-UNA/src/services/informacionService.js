@@ -106,6 +106,39 @@ export async function obtenerHero() {
   return getCache("hero") ?? setCache("hero", request(`${BASE_URL}/hero`));
 }
 
+export async function obtenerNavbar() {
+  return getCache("navbar") ?? setCache("navbar", request(`${BASE_URL}/navbar`));
+}
+
+export async function actualizarNavbar(cambios) {
+  const result = await request(`${BASE_URL}/navbar`, {
+    method: "PATCH",
+    body: JSON.stringify(cambios),
+  });
+  clearInfoCache();
+  return result;
+}
+
+export async function obtenerFooter() {
+  return getCache("footer") ?? setCache("footer", request(`${BASE_URL}/footer`));
+}
+
+export async function actualizarFooter(cambios) {
+  const result = await request(`${BASE_URL}/footer`, {
+    method: "PATCH",
+    body: JSON.stringify(cambios),
+  });
+  clearInfoCache();
+  return result;
+}
+
+export async function obtenerEnlaces(seccion) {
+  const key = `enlaces:${seccion || "all"}`;
+  const query = seccion ? `?seccion=${encodeURIComponent(seccion)}` : "";
+  const promise = request(`${BASE_URL}/enlaces${query}`).then((data) => (Array.isArray(data) ? data : []));
+  return getCache(key) ?? setCache(key, promise);
+}
+
 export async function obtenerInformacionSobreNosotros() {
   const [historia, mission, vision, gallery] = await Promise.all([
     obtenerSeccion("historia").catch(() => ({})),
