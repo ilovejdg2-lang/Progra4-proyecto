@@ -8,10 +8,10 @@ import {
   solicitarRecuperacion,
   restablecerPassword,
 } from '../../services/authService';
+import { obtenerNavbar } from '../../services/informacionService';
+import { normalizeImageUrl } from '../../lib/imageUtils';
 import { saveAuthenticatedUser } from '../../services/sessionService';
 import './Login.css';
-
-const LOGO_URL = '/logo.webp';
 
 function PasswordField({
   id,
@@ -76,6 +76,23 @@ const Login = () => {
     password: '',
     confirmPassword: '',
   });
+
+  const [logoUrl, setLogoUrl] = useState('');
+
+  useEffect(() => {
+    let activo = true;
+
+    obtenerNavbar()
+      .then((navbar) => {
+        if (!activo) return;
+        setLogoUrl(typeof navbar?.logoUrl === 'string' ? navbar.logoUrl.trim() : '');
+      })
+      .catch(() => {});
+
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   const [recoverForm, setRecoverForm] = useState({
     identifier: '',
@@ -151,8 +168,10 @@ const Login = () => {
         return;
       }
 
-      saveAuthenticatedUser(mapAuthenticatedUser(token));
-      const redirectTo = sessionStorage.getItem('postLoginRedirect') || '/';
+      const authenticatedUser = mapAuthenticatedUser(token);
+      saveAuthenticatedUser(authenticatedUser);
+      const redirectTo = sessionStorage.getItem('postLoginRedirect')
+        || (authenticatedUser.role === 'admin' ? '/admin' : '/');
       sessionStorage.removeItem('postLoginRedirect');
       window.location.href = redirectTo;
     } catch (err) {
@@ -292,11 +311,15 @@ const Login = () => {
 
       <div className="login-card">
         <div className="login-brand">
-          <img
-            src={LOGO_URL}
-            alt="Café UNA"
-            className="login-logo"
-          />
+          {logoUrl ? (
+            <img
+              src={normalizeImageUrl(logoUrl, { width: 320 })}
+              alt="Café UNA"
+              className="login-logo"
+            />
+          ) : (
+            <span className="login-brand-text">Café UNA</span>
+          )}
         </div>
 
         {successMessage ? (
