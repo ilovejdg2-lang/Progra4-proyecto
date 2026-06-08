@@ -39,6 +39,13 @@
   display: block;
 }
 
+.navbar__brand-text {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: inherit;
+}
+
 .navbar__menu {
   display: flex;
   align-items: center;
