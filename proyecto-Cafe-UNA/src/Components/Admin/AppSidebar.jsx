@@ -2,7 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   ChevronDown,
@@ -36,6 +36,8 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "./ui/Sidebar";
+import { normalizeImageUrl } from "../../lib/imageUtils";
+import { obtenerNavbar } from "../../services/informacionService";
 import { clearSession, getActiveSessionUser } from "../../services/sessionService";
 
 const GENERAL_OPEN_KEY = "admin-sidebar-general-open";
@@ -58,6 +60,23 @@ export function AppSidebar() {
     const savedValue = localStorage.getItem(GENERAL_OPEN_KEY);
     return savedValue === null ? isGeneralRoute : savedValue === "true";
   });
+  const [logoUrl, setLogoUrl] = useState("");
+
+  useEffect(() => {
+    let activo = true;
+
+    obtenerNavbar()
+      .then((navbar) => {
+        if (!activo) return;
+        setLogoUrl(typeof navbar?.logoUrl === "string" ? navbar.logoUrl.trim() : "");
+      })
+      .catch(() => {});
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
   const [inventoryOpen, setInventoryOpen] = useState(() => {
     const savedValue = localStorage.getItem(INVENTORY_OPEN_KEY);
     return savedValue === null ? isInventoryRoute : savedValue === "true";
@@ -92,7 +111,15 @@ export function AppSidebar() {
           className="block"
           onClick={clearSidebarState}
         >
-          <img src="/logo.webp" alt="Café UNA" className="h-8 w-auto" />
+          {logoUrl ? (
+            <img
+              src={normalizeImageUrl(logoUrl, { width: 320 })}
+              alt="Café UNA"
+              className="h-8 w-auto"
+            />
+          ) : (
+            <span className="text-sm font-bold text-slate-900">Café UNA</span>
+          )}
         </Link>
       </SidebarHeader>
 
