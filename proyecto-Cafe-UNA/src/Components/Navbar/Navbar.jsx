@@ -3,8 +3,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import './Navbar.css';
 import { calcularPrecioConIVA } from '../../services/productosServices';
 import { Bell, Minus, Plus, Trash2, X } from 'lucide-react';
+import { obtenerEnlaces, obtenerNavbar } from '../../services/informacionService';
+import { normalizeImageUrl } from '../../lib/imageUtils';
 import { obtenerSolicitudes, obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService';
 import { clearSession, getActiveSessionUser } from '../../services/sessionService';
+import SiteNavLink from '../SiteNavLink/SiteNavLink';
 
 const CART_STORAGE_KEY = 'cart';
 
@@ -49,6 +52,9 @@ const Navbar = () => {
     const [solicitudes, setSolicitudes] = useState([]);
     const [notificationsLoading, setNotificationsLoading] = useState(false);
     const [notificationsError, setNotificationsError] = useState('');
+    const [enlacesNavbar, setEnlacesNavbar] = useState([]);
+    const [logoUrl, setLogoUrl] = useState('');
+    const [logoClaroUrl, setLogoClaroUrl] = useState('');
     const cartContainerRef = useRef(null);
     const notificationsRef = useRef(null);
     const cartCloseTimerRef = useRef(null);
@@ -56,6 +62,28 @@ const Navbar = () => {
     const pathname = useRouterState({
         select: (state) => state.location.pathname,
     });
+
+    useEffect(() => {
+        let activo = true;
+
+        Promise.all([
+            obtenerEnlaces('Navbar').catch(() => []),
+            obtenerNavbar().catch(() => null),
+        ])
+            .then(([enlaces, navbar]) => {
+                if (!activo) return;
+                setEnlacesNavbar(Array.isArray(enlaces) ? enlaces : []);
+                setLogoUrl(typeof navbar?.logoUrl === 'string' ? navbar.logoUrl.trim() : '');
+                setLogoClaroUrl(typeof navbar?.logoClaroUrl === 'string' ? navbar.logoClaroUrl.trim() : '');
+            })
+            .catch((err) => {
+                console.error('No se pudo cargar la informacion del navbar.', err);
+            });
+
+        return () => {
+            activo = false;
+        };
+    }, []);
 
     useEffect(() => {
         const syncNavbarState = () => {
@@ -357,21 +385,32 @@ const Navbar = () => {
     };
 
     const isTransparent = pathname === '/' && !isScrolled;
+    const brandLogoSrc = normalizeImageUrl(
+        isTransparent ? (logoClaroUrl || logoUrl) : logoUrl,
+        { width: 480 }
+    );
 
     return (
         <nav ref={navbarRef} className={`navbar ${isTransparent ? 'navbar--transparent' : 'navbar--solid'}`}>
             <Link to="/" className="navbar__brand" aria-label="Ir a inicio">
-                <img
-                    src={isTransparent ? "/logoblancoyrojo.png" : "/logo.webp"}
-                    alt="Café UNA"
-                    className="navbar__brand-logo"
-                />
+                {brandLogoSrc ? (
+                    <img
+                        src={brandLogoSrc}
+                        alt="Café UNA"
+                        className="navbar__brand-logo"
+                    />
+                ) : (
+                    <span className="navbar__brand-text">Café UNA</span>
+                )}
             </Link>
             <div className="navbar__menu">
-                <Link to="/AboutUs" activeProps={{ style: { fontWeight: '700' } }}>Sobre nosotros</Link>
-                <Link to="/productos" activeProps={{ style: { fontWeight: '700' } }}>Productos</Link>
-                <Link to="/voluntariado/solicitar">Voluntariado</Link>
-                
+                {enlacesNavbar.map((enlace) => (
+                    <SiteNavLink
+                        key={enlace.id ?? enlace.ruta}
+                        enlace={enlace}
+                        activeProps={{ style: { fontWeight: '700' } }}
+                    />
+                ))}
             </div>
             <div className="navbar__actions">
                 <div className="navbar__cart" ref={cartContainerRef} onClick={handleCartClick}>
