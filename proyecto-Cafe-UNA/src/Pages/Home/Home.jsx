@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Hero from '../../Components/Hero/Hero';
 import PageLoading from '../../Components/PageLoading/PageLoading';
 import { normalizeImageUrl } from '../../lib/imageUtils';
-import { obtenerHero } from '../../services/informacionService';
+import { obtenerFooter, obtenerHero, obtenerSeccion } from '../../services/informacionService';
 import { obtenerProductos } from '../../services/productosServices';
 import './Home.css';
 
@@ -67,7 +67,14 @@ const missionSpotlightDefault = {
     'Descubrí nuestra historia, propósito y el impacto que construimos junto a productores locales y la comunidad universitaria.',
 };
 
-const mapsUrl = 'https://www.google.com/maps/place/Finca+Experimental+Santa+Luc%C3%ADa+-+Universidad+Nacional/@10.0232398,-84.11705,17z/data=!4m14!1m7!3m6!1s0x8fa0faa5f69f073d:0x656b2da8f85723be!2sFinca+Experimental+Santa+Luc%C3%ADa+-+Universidad+Nacional!8m2!3d10.0232346!4d-84.1121791!16s%2Fg%2F1pp2tywc7!3m5!1s0x8fa0faa5f69f073d:0x656b2da8f85723be!8m2!3d10.0232346!4d-84.1121791!16s%2Fg%2F1pp2tywc7?entry=ttu&g_ep=EgoyMDI2MDUyNS4wIKXMDSoASAFQAw%3D%3D';
+const spotlightImageDefault =
+  'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=900&q=80';
+
+const mapsUrlDefault =
+  'https://www.google.com/maps/place/Finca+Experimental+Santa+Luc%C3%ADa+-+Universidad+Nacional/@10.0232398,-84.11705,17z/data=!4m14!1m7!3m6!1s0x8fa0faa5f69f073d:0x656b2da8f85723be!2sFinca+Experimental+Santa+Luc%C3%ADa+-+Universidad+Nacional!8m2!3d10.0232346!4d-84.1121791!16s%2Fg%2F1pp2tywc7!3m5!1s0x8fa0faa5f69f073d:0x656b2da8f85723be!8m2!3d10.0232346!4d-84.1121791!16s%2Fg%2F1pp2tywc7?entry=ttu&g_ep=EgoyMDI2MDUyNS4wIKXMDSoASAFQAw%3D%3D';
+
+const mapsEmbedUrl =
+  'https://www.google.com/maps?q=Finca%20Experimental%20Santa%20Lucia%20Universidad%20Nacional%20Heredia&output=embed';
 
 function waitForImage(src, timeoutMs = 8000) {
   if (!src) return Promise.resolve();
@@ -95,6 +102,9 @@ function notifyRouteError(message) {
 const Home = () => {
   const [hero, setHero] = useState({});
   const [heroLoaded, setHeroLoaded] = useState(false);
+  const [missionSpotlight, setMissionSpotlight] = useState({ title: '', description: '' });
+  const [spotlightImage, setSpotlightImage] = useState('');
+  const [mapsUrl, setMapsUrl] = useState('');
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -115,7 +125,7 @@ const Home = () => {
         setHeroLoaded(true);
       })
       .catch((err) => {
-        console.error("No se pudo cargar la informacion del hero.", err);
+        console.error('No se pudo cargar la informacion del hero.', err);
         if (activo) {
           const message = err?.message || 'No se pudo cargar la información del inicio.';
           setLoadError(message);
@@ -131,19 +141,40 @@ const Home = () => {
   useEffect(() => {
     let activo = true;
 
+    Promise.all([
+      obtenerSeccion('mission').catch(() => ({})),
+      obtenerSeccion('gallery').catch(() => []),
+      obtenerFooter().catch(() => null),
+    ]).then(([mission, gallery, footer]) => {
+      if (!activo) return;
+
+      setMissionSpotlight({
+        title: typeof mission?.title === 'string' ? mission.title.trim() : '',
+        description: typeof mission?.description === 'string' ? mission.description.trim() : '',
+      });
+
+      const firstImage = Array.isArray(gallery) ? gallery.find((item) => item?.image)?.image : '';
+      setSpotlightImage(typeof firstImage === 'string' ? firstImage.trim() : '');
+      setMapsUrl(typeof footer?.mapsUrl === 'string' ? footer.mapsUrl.trim() : '');
+    });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
+
     obtenerProductos()
       .then((list) => {
         if (!activo) return;
-
         setProducts(Array.isArray(list) ? list : []);
       })
       .catch((err) => {
         console.error('No se pudo cargar los productos para la galería.', err);
         if (activo) {
-          const message = err?.message || 'No se pudieron cargar los productos del inicio.';
-          setLoadError(message);
           setProducts([]);
-          notifyRouteError(message);
         }
       })
       .finally(() => {
@@ -159,9 +190,9 @@ const Home = () => {
     const href = normalizeImageUrl(hero.backgroundImage, { width: 1920 });
     if (!href) return;
 
-    const link = document.createElement("link");
-    link.rel = "preload";
-    link.as = "image";
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
     link.href = href;
     document.head.appendChild(link);
 
@@ -171,12 +202,10 @@ const Home = () => {
   }, [hero.backgroundImage]);
 
   useEffect(() => {
-    if (sessionStorage.getItem("scrollToIniciativas")) {
-      sessionStorage.removeItem("scrollToIniciativas");
+    if (sessionStorage.getItem('scrollToIniciativas')) {
+      sessionStorage.removeItem('scrollToIniciativas');
       window.setTimeout(() => {
-        document
-          .getElementById("iniciativas")
-          ?.scrollIntoView({ behavior: "smooth" });
+        document.getElementById('iniciativas')?.scrollIntoView({ behavior: 'smooth' });
       }, 150);
     }
   }, []);
@@ -184,14 +213,18 @@ const Home = () => {
   const heroHasContent = Boolean(
     hero?.backgroundImage || hero?.title || hero?.subtitle || hero?.buttonText
   );
-  const homeReady = heroLoaded && !loadingProducts && !loadError;
+  const homeReady = heroLoaded && !loadError;
+  const spotlightTitle = missionSpotlight.title || missionSpotlightDefault.title;
+  const spotlightDescription = missionSpotlight.description || missionSpotlightDefault.description;
+  const spotlightImageUrl = normalizeImageUrl(spotlightImage || spotlightImageDefault, { width: 900 });
+  const activeMapsUrl = mapsUrl || mapsUrlDefault;
 
   useEffect(() => {
-    document.body.classList.toggle('home-hero-ready', heroLoaded && heroHasContent);
+    document.body.classList.toggle('home-hero-ready', heroLoaded);
     return () => {
       document.body.classList.remove('home-hero-ready');
     };
-  }, [heroLoaded, heroHasContent]);
+  }, [heroLoaded]);
 
   useEffect(() => {
     if (homeReady) {
@@ -204,8 +237,8 @@ const Home = () => {
   if (!homeReady) {
     return (
       <PageLoading
-        message={loadError || "Cargando inicio..."}
-        detail={loadError ? "Revise que el backend esté encendido y vuelva a intentar." : ""}
+        message={loadError || 'Cargando inicio...'}
+        detail={loadError ? 'Revise que el backend esté encendido y vuelva a intentar.' : ''}
         isError={Boolean(loadError)}
       />
     );
@@ -219,21 +252,21 @@ const Home = () => {
           <div className="mission-spotlight-shell">
             <article className="mission-spotlight-card">
               <h2 id="mission-spotlight-title" className="mission-spotlight-card__title">
-                {missionSpotlightDefault.title}
+                {spotlightTitle}
               </h2>
 
               <div className="mission-spotlight-card__body">
                 <div className="mission-spotlight-card__media">
                   <img
-                    src="https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=900&q=80"
-                    alt="Sobre Café UNA"
+                    src={spotlightImageUrl}
+                    alt={spotlightTitle}
                     loading="lazy"
                   />
                 </div>
 
                 <div className="mission-spotlight-card__content">
                   <p className="mission-spotlight-card__description">
-                    {missionSpotlightDefault.description}
+                    {spotlightDescription}
                   </p>
                   <Link to="/AboutUs" className="mission-spotlight-card__link">
                     Conoce nuestra historia completa
@@ -248,38 +281,38 @@ const Home = () => {
         </section>
 
         <section className="home-page__featured">
-          <div className="featured-product__copy">
-            <h2 className="featured-product__title">Descubrí nuestra selección de cafés</h2>
-            <p className="featured-product__intro">
-              Explorá todos nuestros productos y elegí el café que mejor encaje con tu gusto, tu rutina y tu forma de disfrutarlo.
-            </p>
-          </div>
-
-          <article className="featured-product-card">
-            <div className="featured-gallery" aria-busy={loadingProducts} aria-hidden={products.length === 0 && !loadingProducts}>
-              {(loadingProducts ? Array.from({ length: 6 }) : products.slice(0, 6)).map((p, idx) => (
-                <div key={p?.id ?? p?.nombre ?? `placeholder-${idx}`} className="featured-gallery__item">
-                  {p ? (
-                    <Link to="/productos" className="featured-gallery__link">
-                      <img
-                        src={normalizeImageUrl(p.imagen, { width: 420 }) || p.imagen}
-                        alt={p.nombre || 'Café'}
-                        loading="lazy"
-                        width="420"
-                        height="420"
-                      />
-                    </Link>
-                  ) : (
-                    <div className="featured-gallery__placeholder" />
-                  )}
-                </div>
-              ))}
+            <div className="featured-product__copy">
+              <h2 className="featured-product__title">Descubrí nuestra selección de cafés</h2>
+              <p className="featured-product__intro">
+                Explorá todos nuestros productos y elegí el café que mejor encaje con tu gusto, tu rutina y tu forma de disfrutarlo.
+              </p>
             </div>
 
-            <Link to="/productos" className="featured-product-card__button">
-              Conoce nuestro catalogo
-            </Link>
-          </article>
+            <article className="featured-product-card">
+              <div className="featured-gallery" aria-busy={loadingProducts} aria-hidden={products.length === 0 && !loadingProducts}>
+                {(loadingProducts ? Array.from({ length: 6 }) : products.slice(0, 6)).map((p, idx) => (
+                  <div key={p?.id ?? p?.nombre ?? `placeholder-${idx}`} className="featured-gallery__item">
+                    {p ? (
+                      <Link to="/productos" className="featured-gallery__link">
+                        <img
+                          src={normalizeImageUrl(p.imagen, { width: 420 }) || p.imagen}
+                          alt={p.nombre || 'Café'}
+                          loading="lazy"
+                          width="420"
+                          height="420"
+                        />
+                      </Link>
+                    ) : (
+                      <div className="featured-gallery__placeholder" />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <Link to="/productos" className="featured-product-card__button">
+                Conoce nuestro catalogo
+              </Link>
+            </article>
         </section>
 
         <section id="iniciativas" className="home-page__iniciativas">
@@ -288,7 +321,6 @@ const Home = () => {
             <h2 className="iniciativas-titulo">
               Cada aporte, visita o colaboración deja una huella especial.
               <br />
-              
             </h2>
             <p className="iniciativas-subtitulo">
               Elegí cómo querés involucrarte con el Café UNA y completá el formulario correspondiente.
@@ -347,7 +379,7 @@ const Home = () => {
               <p>
                 Estamos en Heredia, Barva. Abrilo en Google Maps para ver la ruta y llegar con facilidad.
               </p>
-              <a href={mapsUrl} target="_blank" rel="noreferrer" className="location-card__button">
+              <a href={activeMapsUrl} target="_blank" rel="noreferrer" className="location-card__button">
                 Ver en Google Maps
                 <ExternalLink size={16} strokeWidth={2.4} aria-hidden="true" />
               </a>
@@ -356,12 +388,12 @@ const Home = () => {
             <div className="location-card__map">
               <iframe
                 title="Mapa de Finca Experimental Santa Lucia"
-                src="https://www.google.com/maps?q=Finca%20Experimental%20Santa%20Lucia%20Universidad%20Nacional%20Heredia&output=embed"
+                src={mapsEmbedUrl}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 aria-hidden="true"
               />
-              <a href={mapsUrl} target="_blank" rel="noreferrer" className="location-card__map-link" aria-label="Abrir ubicacion en Google Maps" />
+              <a href={activeMapsUrl} target="_blank" rel="noreferrer" className="location-card__map-link" aria-label="Abrir ubicacion en Google Maps" />
             </div>
           </div>
         </section>

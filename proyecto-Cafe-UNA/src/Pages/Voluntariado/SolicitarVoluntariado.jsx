@@ -272,7 +272,7 @@ function SolicitarVoluntariado() {
       <Link
         to="/"
         className="back-arrow"
-        onClick={() => sessionStorage.setItem("scrollToIniciativas", "1")}
+        onClick={() => sessionStorage.setItem('scrollToIniciativas', '1')}
       >
         <i className="fas fa-arrow-left" aria-hidden="true" />
         Volver al inicio
