@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ExternalLink, MapPin } from 'lucide-react';
+import { ArrowRight, ExternalLink, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Hero from '../../Components/Hero/Hero';
 import PageLoading from '../../Components/PageLoading/PageLoading';
@@ -60,6 +60,11 @@ const cards = [
     borderColor: '#dfc98d',
   },
 ];
+
+const COLLECTION_LABELS = ['ORIGEN', 'EXPERIENCIA', 'ARTESANÍA'];
+
+const featuredIntroDefault =
+  'Explorá todos nuestros productos y elegí el café que mejor encaje con tu gusto, tu rutina y tu forma de disfrutarlo.';
 
 const missionSpotlightDefault = {
   title: 'Conocé más sobre Café UNA',
@@ -218,6 +223,7 @@ const Home = () => {
   const spotlightDescription = missionSpotlight.description || missionSpotlightDefault.description;
   const spotlightImageUrl = normalizeImageUrl(spotlightImage || spotlightImageDefault, { width: 900 });
   const activeMapsUrl = mapsUrl || mapsUrlDefault;
+  const featuredProducts = products.filter((product) => product.estado !== 'Deshabilitado');
 
   useEffect(() => {
     document.body.classList.toggle('home-hero-ready', heroLoaded);
@@ -280,39 +286,57 @@ const Home = () => {
           </div>
         </section>
 
-        <section className="home-page__featured">
-            <div className="featured-product__copy">
-              <h2 className="featured-product__title">Descubrí nuestra selección de cafés</h2>
-              <p className="featured-product__intro">
-                Explorá todos nuestros productos y elegí el café que mejor encaje con tu gusto, tu rutina y tu forma de disfrutarlo.
-              </p>
+        <section className="home-page__featured curated-collections">
+          <header className="curated-collections__header">
+            <h2 className="curated-collections__title">Descubrí nuestra selección de cafés</h2>
+            <p className="curated-collections__intro">{featuredIntroDefault}</p>
+          </header>
+
+          {!loadingProducts && featuredProducts.length === 0 ? (
+            <p className="curated-collections__empty">Pronto tendremos nuevos cafés disponibles.</p>
+          ) : (
+            <div
+              className="curated-collections__grid"
+              aria-busy={loadingProducts}
+              aria-label="Selección destacada de cafés"
+            >
+              {(loadingProducts ? Array.from({ length: 3 }) : featuredProducts.slice(0, 3)).map((p, idx) => (
+                <article
+                  key={p?.id ?? p?.nombre ?? `placeholder-${idx}`}
+                  className={`curated-collections__card${idx === 1 ? ' curated-collections__card--offset' : ''}${p ? '' : ' curated-collections__card--loading'}`}
+                >
+                  {p ? (
+                    <Link to="/productos" className="curated-collections__card-link">
+                      <img
+                        src={normalizeImageUrl(p.imagen, { width: 800 }) || p.imagen}
+                        alt={p.nombre || 'Café'}
+                        loading="lazy"
+                        width="800"
+                        height="1000"
+                      />
+                      <div className="curated-collections__overlay" aria-hidden="true" />
+                      <div className="curated-collections__content">
+                        <span className="curated-collections__pill">
+                          {p.peso ? String(p.peso).toUpperCase() : COLLECTION_LABELS[idx % COLLECTION_LABELS.length]}
+                        </span>
+                        <h3>{p.nombre}</h3>
+                        {p.descripcion ? <p>{p.descripcion}</p> : null}
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="curated-collections__skeleton" aria-hidden="true" />
+                  )}
+                </article>
+              ))}
             </div>
+          )}
 
-            <article className="featured-product-card">
-              <div className="featured-gallery" aria-busy={loadingProducts} aria-hidden={products.length === 0 && !loadingProducts}>
-                {(loadingProducts ? Array.from({ length: 6 }) : products.slice(0, 6)).map((p, idx) => (
-                  <div key={p?.id ?? p?.nombre ?? `placeholder-${idx}`} className="featured-gallery__item">
-                    {p ? (
-                      <Link to="/productos" className="featured-gallery__link">
-                        <img
-                          src={normalizeImageUrl(p.imagen, { width: 420 }) || p.imagen}
-                          alt={p.nombre || 'Café'}
-                          loading="lazy"
-                          width="420"
-                          height="420"
-                        />
-                      </Link>
-                    ) : (
-                      <div className="featured-gallery__placeholder" />
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <Link to="/productos" className="featured-product-card__button">
-                Conoce nuestro catalogo
-              </Link>
-            </article>
+          <footer className="curated-collections__footer">
+            <Link to="/productos" className="curated-collections__cta">
+              Conoce nuestro catálogo
+              <ArrowRight size={18} aria-hidden="true" />
+            </Link>
+          </footer>
         </section>
 
         <section id="iniciativas" className="home-page__iniciativas">
