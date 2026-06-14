@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BookOpenText, Eye, Image, ImagePlus, Target, Trash2, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
+import { AdminModal, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
 import {
   actualizarGaleriaItem,
   actualizarSeccion,
@@ -77,14 +78,14 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
-      <form onSubmit={enviar} className="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-7 py-5">
-          <div className="flex items-center gap-3">
-            <span className={`grid size-10 place-items-center rounded-xl ${estilo.icono}`}>
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-2xl" labelledBy="admin-texto-modal-title">
+      <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
+        <AdminModalHeader>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${estilo.icono}`}>
               <Icon className="size-5" />
             </span>
-            <h2 className="text-xl font-bold text-slate-950">{form.title || estilo.etiqueta}</h2>
+            <h2 id="admin-texto-modal-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">{form.title || estilo.etiqueta}</h2>
           </div>
           <button
             type="button"
@@ -94,9 +95,9 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
           >
             <X className="size-5" />
           </button>
-        </div>
+        </AdminModalHeader>
 
-        <div className="space-y-6 px-7 py-6">
+        <AdminModalBody className="space-y-6">
           <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
             Titulo de la seccion
             <input
@@ -119,26 +120,26 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
               required
             />
           </label>
-        </div>
+        </AdminModalBody>
 
-        <div className="flex justify-end gap-3 border-t border-slate-200 px-7 py-5">
+        <AdminModalFooter>
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+            className="w-full rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={guardando}
-            className="rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             {guardando ? "Guardando..." : "Guardar cambios"}
           </button>
-        </div>
+        </AdminModalFooter>
       </form>
-    </div>
+    </AdminModal>
   );
 }
 
@@ -163,14 +164,14 @@ function ModalGaleria({ info, onCerrar, onGuardar, guardando, puedeEliminar }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
-      <form onSubmit={enviar} className="max-h-[92vh] w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-7 py-5">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-xl bg-teal-50 text-teal-700">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-3xl" labelledBy="admin-galeria-modal-title">
+      <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
+        <AdminModalHeader>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-teal-50 text-teal-700">
               <Image className="size-5" />
             </span>
-            <h2 className="text-xl font-bold text-slate-950">Galeria institucional</h2>
+            <h2 id="admin-galeria-modal-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">Galeria institucional</h2>
           </div>
           <button
             type="button"
@@ -180,15 +181,15 @@ function ModalGaleria({ info, onCerrar, onGuardar, guardando, puedeEliminar }) {
           >
             <X className="size-5" />
           </button>
-        </div>
+        </AdminModalHeader>
 
-        <div className="max-h-[65vh] space-y-5 overflow-y-auto px-7 py-6">
-          <div className="flex items-center justify-between gap-3">
+        <AdminModalBody className="space-y-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Fotos actuales</p>
             <button
               type="button"
               onClick={agregarItem}
-              className="inline-flex items-center gap-2 rounded-xl border border-teal-200 px-4 py-2 text-sm font-bold text-teal-700 transition hover:bg-teal-50"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-teal-200 px-4 py-2 text-sm font-bold text-teal-700 transition hover:bg-teal-50 sm:w-auto"
             >
               <ImagePlus className="size-4" />
               Agregar foto
@@ -234,37 +235,37 @@ function ModalGaleria({ info, onCerrar, onGuardar, guardando, puedeEliminar }) {
                   <button
                     type="button"
                     onClick={() => eliminarItem(item.id)}
-                    className="inline-flex size-10 items-center justify-center rounded-xl bg-red-50 text-red-700 transition hover:bg-red-100"
+                    className="inline-flex size-10 items-center justify-center self-start rounded-xl bg-red-50 text-red-700 transition hover:bg-red-100 md:self-center"
                     aria-label="Eliminar foto"
                   >
                     <Trash2 className="size-5" />
                   </button>
                 ) : (
-                  <span className="text-xs font-semibold text-slate-400">Sin eliminar</span>
+                  <span className="self-start text-xs font-semibold text-slate-400 md:self-center">Sin eliminar</span>
                 )}
               </div>
             ))}
           </div>
-        </div>
+        </AdminModalBody>
 
-        <div className="flex justify-end gap-3 border-t border-slate-200 px-7 py-5">
+        <AdminModalFooter>
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+            className="w-full rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={guardando}
-            className="rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             {guardando ? "Guardando..." : "Guardar cambios"}
           </button>
-        </div>
+        </AdminModalFooter>
       </form>
-    </div>
+    </AdminModal>
   );
 }
 
@@ -273,9 +274,9 @@ function TarjetaTexto({ tipo, data, onEditar }) {
   const Icon = estilo.Icon;
 
   return (
-    <article className={`border-l-4 ${estilo.borde} bg-white p-6 shadow-sm ring-1 ring-slate-200`}>
+    <article className={`border-l-4 ${estilo.borde} bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-6`}>
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{estilo.etiqueta}</p>
           <h2 className="mt-2 text-lg font-bold text-slate-950">{data.title || estilo.etiqueta}</h2>
           <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{data.description || estilo.resumen}</p>
@@ -285,12 +286,12 @@ function TarjetaTexto({ tipo, data, onEditar }) {
         </span>
       </div>
 
-      <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-4">
+      <div className="mt-5 flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <EstadoPublicado />
         <button
           type="button"
           onClick={() => onEditar(tipo)}
-          className="rounded-xl border border-amber-300 px-5 py-2 text-sm font-bold text-amber-800 transition hover:bg-amber-50"
+          className="w-full rounded-xl border border-amber-300 px-5 py-2 text-sm font-bold text-amber-800 transition hover:bg-amber-50 sm:w-auto"
         >
           Editar
         </button>
@@ -405,9 +406,9 @@ const AdminInformacionSobreNosotros = () => {
               <TarjetaTexto tipo="vision" data={info.vision ?? {}} onEditar={setEditandoTexto} />
             </div>
 
-            <article className="border-l-4 border-teal-600 bg-white p-6 shadow-sm ring-1 ring-slate-200">
+            <article className="border-l-4 border-teal-600 bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-6">
               <div className="flex items-start justify-between gap-4">
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Galeria de fotos</p>
                   <h2 className="mt-2 text-lg font-bold text-slate-950">Galeria institucional</h2>
                 </div>
@@ -416,7 +417,7 @@ const AdminInformacionSobreNosotros = () => {
                 </span>
               </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4">
                 {(info.gallery ?? []).slice(0, 4).map((item) => (
                   <div key={item.id} className="aspect-[4/3] overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
                     {item.image ? (
@@ -433,12 +434,12 @@ const AdminInformacionSobreNosotros = () => {
                 ) : null}
               </div>
 
-              <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-4">
+              <div className="mt-5 flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <EstadoPublicado />
                 <button
                   type="button"
                   onClick={() => setEditandoGaleria(true)}
-                  className="rounded-xl border border-emerald-300 px-5 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50"
+                  className="w-full rounded-xl border border-emerald-300 px-5 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50 sm:w-auto"
                 >
                   Editar
                 </button>

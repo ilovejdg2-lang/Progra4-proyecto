@@ -4,7 +4,7 @@ function esRutaExterna(ruta) {
   return /^https?:\/\//i.test(String(ruta || ''));
 }
 
-const SiteNavLink = ({ enlace, className, activeProps, children }) => {
+const SiteNavLink = ({ enlace, className, activeProps, children, onClick }) => {
   const etiqueta = children ?? enlace?.etiqueta;
   const ruta = enlace?.ruta;
 
@@ -17,6 +17,7 @@ const SiteNavLink = ({ enlace, className, activeProps, children }) => {
       <a
         href={ruta}
         className={className}
+        onClick={onClick}
         target={enlace.abrirEnNuevaPestana ? '_blank' : undefined}
         rel={enlace.abrirEnNuevaPestana ? 'noreferrer' : undefined}
       >
@@ -26,7 +27,7 @@ const SiteNavLink = ({ enlace, className, activeProps, children }) => {
   }
 
   return (
-    <Link to={ruta} className={className} activeProps={activeProps}>
+    <Link to={ruta} className={className} activeProps={activeProps} onClick={onClick}>
       {etiqueta}
     </Link>
   );
