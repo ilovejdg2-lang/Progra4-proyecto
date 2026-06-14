@@ -200,43 +200,65 @@ const Products = () => {
         {!loading && !error && productCards.length === 0 && (
           <p>No hay productos disponibles en este momento.</p>
         )}
-        {!loading && !error && productCards.map(({ product, precioNormal, precioConIVA, stockDisponible, estaAgotado }) => (
+        {!loading && !error && productCards.map((card) => {
+          const { product, precioNormal, precioConIVA, stockDisponible, estaAgotado } = card;
+
+          return (
           <article
-            className={`products-page__card`}
+            className="products-page__card"
             key={product.id}
-            onClick={() => openProduct({ product, precioNormal, precioConIVA, stockDisponible, estaAgotado })}
+            onClick={() => openProduct(card)}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProduct({ product, precioNormal, precioConIVA, stockDisponible, estaAgotado }); } }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProduct(card); } }}
           >
-            {product.imagen && (
-              <img
-                className="products-page__card-image"
-                src={product.imagen}
-                alt={product.nombre}
-              />
+            {product.imagen ? (
+              <div className="products-page__card-media">
+                <img
+                  className="products-page__card-image"
+                  src={product.imagen}
+                  alt={product.nombre}
+                />
+              </div>
+            ) : (
+              <div className="products-page__card-media products-page__card-media--placeholder" aria-hidden="true" />
             )}
 
-            <h2>{product.nombre}</h2>
+            <div className="products-page__card-body">
+              <h2>{product.nombre}</h2>
+              <p className="products-page__price">CRC {precioConIVA.toLocaleString('es-CR')}</p>
+            </div>
 
-            <p className="products-page__price"><strong>CRC {precioConIVA.toLocaleString('es-CR')}</strong></p>
+            <div className="products-page__card-actions">
+              <button
+                type="button"
+                className="products-page__details-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openProduct(card);
+                }}
+              >
+                Detalles
+              </button>
 
-            <button
-              type="button"
-              className="products-page__quick-buy"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleBuy(product, 1);
-                e.currentTarget.blur();
-              }}
-              disabled={estaAgotado}
-              aria-label={`Compra rápida de ${product.nombre}`}
-            >
-              <ShoppingCart className="products-page__quick-buy-icon" aria-hidden="true" />
-              <span className="products-page__quick-buy-text">Compra rápida</span>
-            </button>
+              <button
+                type="button"
+                className="products-page__quick-buy"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBuy(product, 1);
+                  e.currentTarget.blur();
+                }}
+                disabled={estaAgotado}
+                aria-label={`Compra rápida de ${product.nombre}`}
+              >
+                <ShoppingCart className="products-page__quick-buy-icon" aria-hidden="true" />
+                <span className="products-page__quick-buy-text">Compra rápida</span>
+              </button>
+            </div>
           </article>
-        ))}
+          );
+        })}
       </section>
 
       <nav className="products-page__pagination" aria-label="Paginacion de productos">
