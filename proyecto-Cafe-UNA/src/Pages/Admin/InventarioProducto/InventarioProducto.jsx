@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { X } from "lucide-react";
+import { Pencil, Power, Trash2, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
@@ -161,6 +161,66 @@ function formatearPrecio(valor) {
     currency: "CRC",
     maximumFractionDigits: 0,
   }).format(valor || 0);
+}
+
+const accionBtnBase =
+  "inline-flex items-center justify-center gap-1.5 rounded-lg border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
+
+function AccionesProducto({ producto, esSuperAdmin, onEditar, onToggleEstado, onEliminar, variant = "table" }) {
+  const esDeshabilitado = producto.estado === "Deshabilitado";
+  const esMovil = variant === "mobile";
+
+  const editarCls = `${accionBtnBase} border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 focus-visible:ring-amber-300`;
+  const toggleCls = `${accionBtnBase} ${
+    esDeshabilitado
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300"
+      : "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300"
+  }`;
+  const eliminarCls = `${accionBtnBase} border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300`;
+
+  if (esMovil) {
+    return (
+      <div className={`grid gap-2 ${esSuperAdmin ? "grid-cols-3" : "grid-cols-1"}`}>
+        <button type="button" onClick={onEditar} className={`${editarCls} min-h-10 px-2 py-2`}>
+          <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className="truncate">Editar</span>
+        </button>
+        {esSuperAdmin ? (
+          <>
+            <button type="button" onClick={onToggleEstado} className={`${toggleCls} min-h-10 px-2 py-2`}>
+              <Power className="size-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">{esDeshabilitado ? "Habilitar" : "Inhabilitar"}</span>
+            </button>
+            <button type="button" onClick={onEliminar} className={`${eliminarCls} min-h-10 px-2 py-2`}>
+              <Trash2 className="size-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">Eliminar</span>
+            </button>
+          </>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`grid w-[11.5rem] gap-1.5 ${esSuperAdmin ? "grid-cols-2" : "grid-cols-1"}`}>
+      <button type="button" onClick={onEditar} className={`${editarCls} h-9 px-2.5`}>
+        <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
+        <span>Editar</span>
+      </button>
+      {esSuperAdmin ? (
+        <>
+          <button type="button" onClick={onToggleEstado} className={`${toggleCls} h-9 px-2.5`}>
+            <Power className="size-3.5 shrink-0" aria-hidden="true" />
+            <span>{esDeshabilitado ? "Habilitar" : "Inhabilitar"}</span>
+          </button>
+          <button type="button" onClick={onEliminar} className={`${eliminarCls} col-span-2 h-9 px-2.5`}>
+            <Trash2 className="size-3.5 shrink-0" aria-hidden="true" />
+            <span>Eliminar</span>
+          </button>
+        </>
+      ) : null}
+    </div>
+  );
 }
 
 const AdminInventarioProducto = () => {
@@ -345,7 +405,7 @@ const AdminInventarioProducto = () => {
                     <th className="px-6 py-4">Precio</th>
                     <th className="px-6 py-4">Stock</th>
                     <th className="px-6 py-4">Estado</th>
-                    <th className="px-6 py-4">Acciones</th>
+                    <th className="px-6 py-4 w-48">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -383,38 +443,14 @@ const AdminInventarioProducto = () => {
                           {producto.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado"}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setProductoEditar(producto)}
-                            className="rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-200"
-                          >
-                            Editar
-                          </button>
-                          {esSuperAdmin ? (
-                            <button
-                              type="button"
-                              onClick={() => handleToggleEstado(producto)}
-                              className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
-                                producto.estado === "Deshabilitado"
-                                  ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                  : "bg-red-50 text-red-600 hover:bg-red-100"
-                              }`}
-                            >
-                              {producto.estado === "Deshabilitado" ? "Habilitar" : "Inhabilitar"}
-                            </button>
-                          ) : null}
-                          {esSuperAdmin ? (
-                            <button
-                              type="button"
-                              onClick={() => handleEliminar(producto)}
-                              className="rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-200"
-                            >
-                              Eliminar
-                            </button>
-                          ) : null}
-                        </div>
+                      <td className="px-6 py-4 align-top">
+                        <AccionesProducto
+                          producto={producto}
+                          esSuperAdmin={esSuperAdmin}
+                          onEditar={() => setProductoEditar(producto)}
+                          onToggleEstado={() => handleToggleEstado(producto)}
+                          onEliminar={() => handleEliminar(producto)}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -460,37 +496,14 @@ const AdminInventarioProducto = () => {
                     {producto.peso ? <span><strong className="text-slate-800">Peso:</strong> {producto.peso}</span> : null}
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setProductoEditar(producto)}
-                      className="rounded-lg bg-amber-100 px-3 py-2 text-xs font-medium text-amber-700 transition hover:bg-amber-200"
-                    >
-                      Editar
-                    </button>
-                    {esSuperAdmin ? (
-                      <button
-                        type="button"
-                        onClick={() => handleToggleEstado(producto)}
-                        className={`rounded-lg px-3 py-2 text-xs font-medium transition ${
-                          producto.estado === "Deshabilitado"
-                            ? "bg-green-100 text-green-700 hover:bg-green-200"
-                            : "bg-red-50 text-red-600 hover:bg-red-100"
-                        }`}
-                      >
-                        {producto.estado === "Deshabilitado" ? "Habilitar" : "Inhabilitar"}
-                      </button>
-                    ) : null}
-                    {esSuperAdmin ? (
-                      <button
-                        type="button"
-                        onClick={() => handleEliminar(producto)}
-                        className="rounded-lg bg-red-100 px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-200"
-                      >
-                        Eliminar
-                      </button>
-                    ) : null}
-                  </div>
+                  <AccionesProducto
+                    producto={producto}
+                    esSuperAdmin={esSuperAdmin}
+                    variant="mobile"
+                    onEditar={() => setProductoEditar(producto)}
+                    onToggleEstado={() => handleToggleEstado(producto)}
+                    onEliminar={() => handleEliminar(producto)}
+                  />
                 </article>
               ))}
             </div>
