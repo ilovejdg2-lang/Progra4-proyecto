@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 
+import { X } from "lucide-react";
+
 import { AdminLayout } from "../layouts/AdminLayout";
+import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
 import {
   actualizarProducto,
   crearProducto,
@@ -23,24 +26,20 @@ const FORM_VACIO = {
 
 function Modal({ titulo, onClose, children, ancho = "max-w-2xl" }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm">
-      <div className={`w-full ${ancho} overflow-hidden rounded-2xl bg-white shadow-2xl`}>
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-950">{titulo}</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-            aria-label="Cerrar"
-          >
-            ✕
-          </button>
-        </div>
-        <div className="px-6 py-5">{children}</div>
-      </div>
-    </div>
+    <AdminModal open onClose={onClose} maxWidth={ancho} labelledBy="admin-productos-modal-title">
+      <AdminModalHeader>
+        <h2 id="admin-productos-modal-title" className="text-lg font-semibold text-slate-950">{titulo}</h2>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+          aria-label="Cerrar"
+        >
+          <X className="size-5" />
+        </button>
+      </AdminModalHeader>
+      <AdminModalBody>{children}</AdminModalBody>
+    </AdminModal>
   );
 }
 
@@ -136,18 +135,18 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando }) {
         </label>
       </div>
 
-      <div className="flex justify-end gap-3 pt-2">
+      <div className="flex flex-col-reverse justify-end gap-3 pt-2 sm:flex-row">
         <button
           type="button"
           onClick={onCancelar}
-          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={cargando}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           {cargando ? "Guardando..." : inicial ? "Guardar cambios" : "Crear producto"}
         </button>
@@ -309,118 +308,193 @@ const AdminInventarioProducto = () => {
       )}
 
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+        <div className="flex flex-col gap-4 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-950">Productos</h1>
+            <h1 className="text-xl font-semibold text-slate-950 sm:text-2xl">Productos</h1>
             <p className="mt-1 text-sm text-slate-500">Administración de inventario</p>
           </div>
 
           <button
             type="button"
             onClick={() => setModalCrear(true)}
-            className="rounded-full bg-amber-900 px-5 py-2 text-sm font-semibold text-amber-50 transition hover:bg-amber-800"
+            className="w-full rounded-full bg-amber-900 px-5 py-2 text-sm font-semibold text-amber-50 transition hover:bg-amber-800 sm:w-auto"
           >
             + Nuevo producto
           </button>
         </div>
 
         {cargando ? (
-          <div className="px-6 py-14 text-center text-sm text-slate-500">Cargando productos...</div>
+          <div className="px-4 py-14 text-center text-sm text-slate-500 sm:px-6">Cargando productos...</div>
         ) : error ? (
-          <div className="px-6 py-14 text-center text-sm text-red-500">
+          <div className="px-4 py-14 text-center text-sm text-red-500 sm:px-6">
             <p>{error}</p>
             <button type="button" onClick={cargarProductos} className="mt-3 font-semibold text-slate-700 underline">
               Reintentar
             </button>
           </div>
         ) : productos.length === 0 ? (
-          <div className="px-6 py-14 text-center text-sm text-slate-500">No hay productos registrados.</div>
+          <div className="px-4 py-14 text-center text-sm text-slate-500 sm:px-6">No hay productos registrados.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <th className="px-6 py-4">Imagen</th>
-                  <th className="px-6 py-4">Nombre</th>
-                  <th className="px-6 py-4">Precio</th>
-                  <th className="px-6 py-4">Stock</th>
-                  <th className="px-6 py-4">Estado</th>
-                  <th className="px-6 py-4">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {productos.map((producto) => (
-                  <tr key={producto.id} className="border-b border-slate-100 last:border-b-0">
-                    <td className="px-6 py-4">
-                      {producto.imagen ? (
-                        <img
-                          src={producto.imagen}
-                          alt={producto.nombre}
-                          className="h-14 w-14 rounded-xl object-cover ring-1 ring-slate-200"
-                        />
-                      ) : (
-                        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-slate-200 text-xs text-slate-500">
-                          Sin foto
+          <>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[900px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="px-6 py-4">Imagen</th>
+                    <th className="px-6 py-4">Nombre</th>
+                    <th className="px-6 py-4">Precio</th>
+                    <th className="px-6 py-4">Stock</th>
+                    <th className="px-6 py-4">Estado</th>
+                    <th className="px-6 py-4">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productos.map((producto) => (
+                    <tr key={producto.id} className="border-b border-slate-100 last:border-b-0">
+                      <td className="px-6 py-4">
+                        {producto.imagen ? (
+                          <img
+                            src={producto.imagen}
+                            alt={producto.nombre}
+                            className="h-14 w-14 rounded-xl object-cover ring-1 ring-slate-200"
+                          />
+                        ) : (
+                          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-slate-200 text-xs text-slate-500">
+                            Sin foto
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-slate-900">{producto.nombre}</div>
+                        <div className="mt-1 line-clamp-2 max-w-xl text-xs leading-5 text-slate-500">
+                          {producto.descripcion}
                         </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900">{producto.nombre}</div>
-                      <div className="mt-1 line-clamp-2 max-w-xl text-xs leading-5 text-slate-500">
-                        {producto.descripcion}
+                      </td>
+                      <td className="px-6 py-4 text-slate-700">{formatearPrecio(producto.precioNormal)}</td>
+                      <td className="px-6 py-4 text-slate-700">{producto.stock}</td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                            producto.estado === "Deshabilitado"
+                              ? "bg-red-50 text-red-700"
+                              : "bg-emerald-50 text-emerald-700"
+                          }`}
+                        >
+                          {producto.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setProductoEditar(producto)}
+                            className="rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-200"
+                          >
+                            Editar
+                          </button>
+                          {esSuperAdmin ? (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleEstado(producto)}
+                              className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
+                                producto.estado === "Deshabilitado"
+                                  ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                  : "bg-red-50 text-red-600 hover:bg-red-100"
+                              }`}
+                            >
+                              {producto.estado === "Deshabilitado" ? "Habilitar" : "Inhabilitar"}
+                            </button>
+                          ) : null}
+                          {esSuperAdmin ? (
+                            <button
+                              type="button"
+                              onClick={() => handleEliminar(producto)}
+                              className="rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-200"
+                            >
+                              Eliminar
+                            </button>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="divide-y divide-slate-100 md:hidden">
+              {productos.map((producto) => (
+                <article key={producto.id} className="space-y-3 px-4 py-4">
+                  <div className="flex items-start gap-3">
+                    {producto.imagen ? (
+                      <img
+                        src={producto.imagen}
+                        alt={producto.nombre}
+                        className="h-16 w-16 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-xs text-slate-500">
+                        Sin foto
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-slate-700">{formatearPrecio(producto.precioNormal)}</td>
-                    <td className="px-6 py-4 text-slate-700">{producto.stock}</td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold text-slate-900">{producto.nombre}</h3>
+                        <span
+                          className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                            producto.estado === "Deshabilitado"
+                              ? "bg-red-50 text-red-700"
+                              : "bg-emerald-50 text-emerald-700"
+                          }`}
+                        >
+                          {producto.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado"}
+                        </span>
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{producto.descripcion}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 text-sm text-slate-600">
+                    <span><strong className="text-slate-800">Precio:</strong> {formatearPrecio(producto.precioNormal)}</span>
+                    <span><strong className="text-slate-800">Stock:</strong> {producto.stock}</span>
+                    {producto.peso ? <span><strong className="text-slate-800">Peso:</strong> {producto.peso}</span> : null}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setProductoEditar(producto)}
+                      className="rounded-lg bg-amber-100 px-3 py-2 text-xs font-medium text-amber-700 transition hover:bg-amber-200"
+                    >
+                      Editar
+                    </button>
+                    {esSuperAdmin ? (
+                      <button
+                        type="button"
+                        onClick={() => handleToggleEstado(producto)}
+                        className={`rounded-lg px-3 py-2 text-xs font-medium transition ${
                           producto.estado === "Deshabilitado"
-                            ? "bg-red-50 text-red-700"
-                            : "bg-emerald-50 text-emerald-700"
+                            ? "bg-green-100 text-green-700 hover:bg-green-200"
+                            : "bg-red-50 text-red-600 hover:bg-red-100"
                         }`}
                       >
-                        {producto.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setProductoEditar(producto)}
-                          className="rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-200"
-                        >
-                          Editar
-                        </button>
-                        {esSuperAdmin ? (
-                          <button
-                            type="button"
-                            onClick={() => handleToggleEstado(producto)}
-                            className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
-                              producto.estado === "Deshabilitado"
-                                ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                : "bg-red-50 text-red-600 hover:bg-red-100"
-                            }`}
-                          >
-                            {producto.estado === "Deshabilitado" ? "Habilitar" : "Inhabilitar"}
-                          </button>
-                        ) : null}
-                        {esSuperAdmin ? (
-                          <button
-                            type="button"
-                            onClick={() => handleEliminar(producto)}
-                            className="rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-200"
-                          >
-                            Eliminar
-                          </button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        {producto.estado === "Deshabilitado" ? "Habilitar" : "Inhabilitar"}
+                      </button>
+                    ) : null}
+                    {esSuperAdmin ? (
+                      <button
+                        type="button"
+                        onClick={() => handleEliminar(producto)}
+                        className="rounded-lg bg-red-100 px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-200"
+                      >
+                        Eliminar
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </>
         )}
       </section>
     </AdminLayout>
