@@ -4,6 +4,8 @@ import * as React from "react";
 import { PanelLeft, X } from "lucide-react";
 import { Slot } from "@radix-ui/react-slot";
 
+import { useBodyScrollLock } from "../../../hooks/useBodyScrollLock";
+
 const SidebarContext = React.createContext(null);
 
 function cn(...classes) {
@@ -23,6 +25,8 @@ function useSidebar() {
 export function SidebarProvider({ defaultOpen = true, className, children, ...props }) {
   const [open, setOpen] = React.useState(defaultOpen);
   const [openMobile, setOpenMobile] = React.useState(false);
+
+  useBodyScrollLock(openMobile);
 
   const toggleSidebar = React.useCallback(() => {
     if (window.matchMedia("(max-width: 767px)").matches) {
@@ -44,6 +48,21 @@ export function SidebarProvider({ defaultOpen = true, className, children, ...pr
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleSidebar]);
+
+  React.useEffect(() => {
+    if (!openMobile) {
+      return;
+    }
+
+    const handleEscapeKey = (event) => {
+      if (event.key === "Escape") {
+        setOpenMobile(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscapeKey);
+    return () => window.removeEventListener("keydown", handleEscapeKey);
+  }, [openMobile]);
 
   const value = React.useMemo(
     () => ({
@@ -96,35 +115,51 @@ export function Sidebar({
 
       {open && collapsible !== "none" ? <div className="hidden w-64 shrink-0 md:block" /> : null}
 
-      {openMobile ? (
-        <div className="fixed inset-0 z-50 md:hidden">
+      <div
+        className={cn(
+          "fixed inset-0 z-50 md:hidden",
+          openMobile ? "pointer-events-auto" : "pointer-events-none",
+        )}
+        aria-hidden={!openMobile}
+      >
+        <button
+          type="button"
+          className={cn(
+            "absolute inset-0 border-0 bg-slate-950/40 transition-opacity duration-300 ease-out",
+            openMobile ? "opacity-100" : "opacity-0",
+          )}
+          aria-label="Cerrar sidebar"
+          tabIndex={openMobile ? 0 : -1}
+          onClick={() => setOpenMobile(false)}
+        />
+        <aside
+          className={cn(
+            "absolute inset-y-0 flex w-72 max-w-[85vw] flex-col border-slate-200 bg-white text-slate-900 shadow-xl transition-transform duration-300 ease-out",
+            position,
+            openMobile
+              ? "translate-x-0"
+              : side === "left"
+                ? "-translate-x-full"
+                : "translate-x-full",
+            className,
+          )}
+        >
           <button
-            className="absolute inset-0 bg-slate-950/40"
-            aria-label="Cerrar sidebar"
+            type="button"
+            className="absolute right-3 top-3 z-10 inline-flex size-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900"
             onClick={() => setOpenMobile(false)}
-          />
-          <aside
-            className={cn(
-              "absolute inset-y-0 flex w-72 max-w-[85vw] flex-col border-slate-200 bg-white text-slate-900 shadow-xl",
-              position,
-              className,
-            )}
           >
-            <button
-              type="button"
-              className="absolute right-3 top-3 inline-flex size-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-              onClick={() => setOpenMobile(false)}
-            >
-              <X className="size-4" />
-              <span className="sr-only">Cerrar sidebar</span>
-            </button>
-            {children}
-          </aside>
-        </div>
-      ) : null}
+            <X className="size-4" />
+            <span className="sr-only">Cerrar sidebar</span>
+          </button>
+          {children}
+        </aside>
+      </div>
     </>
   );
 }
+
+export { useSidebar };
 
 export function SidebarTrigger({ className, onClick, ...props }) {
   const { toggleSidebar } = useSidebar();

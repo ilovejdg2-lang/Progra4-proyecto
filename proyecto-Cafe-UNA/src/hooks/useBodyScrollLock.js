@@ -1,0 +1,30 @@
+import { useEffect } from "react";
+
+let lockCount = 0;
+let savedOverflow = "";
+
+function acquireBodyScrollLock() {
+  if (lockCount === 0) {
+    savedOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+  }
+  lockCount += 1;
+}
+
+function releaseBodyScrollLock() {
+  lockCount = Math.max(0, lockCount - 1);
+  if (lockCount === 0) {
+    document.body.style.overflow = savedOverflow;
+  }
+}
+
+export function useBodyScrollLock(locked) {
+  useEffect(() => {
+    if (!locked) {
+      return undefined;
+    }
+
+    acquireBodyScrollLock();
+    return () => releaseBodyScrollLock();
+  }, [locked]);
+}
