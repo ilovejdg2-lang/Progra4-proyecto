@@ -2,12 +2,13 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './Navbar.css';
 import { calcularPrecioConIVA } from '../../services/productosServices';
-import { Bell, Minus, Plus, Trash2, X } from 'lucide-react';
+import { Bell, Menu, Minus, Plus, ShoppingCart, Trash2, User, X } from 'lucide-react';
 import { obtenerEnlaces, obtenerNavbar } from '../../services/informacionService';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { obtenerSolicitudes, obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService';
 import { clearSession, getActiveSessionUser } from '../../services/sessionService';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 const CART_STORAGE_KEY = 'cart';
 
@@ -43,6 +44,7 @@ const isSolicitudPendiente = (solicitud) =>
 const Navbar = () => {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const [showCartDropdown, setShowCartDropdown] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
@@ -62,6 +64,8 @@ const Navbar = () => {
     const pathname = useRouterState({
         select: (state) => state.location.pathname,
     });
+
+    useBodyScrollLock(isMobileMenuOpen || showCartDropdown);
 
     useEffect(() => {
         let activo = true;
@@ -164,6 +168,25 @@ const Navbar = () => {
         };
     }, [pathname, syncScrolledState]);
 
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [pathname]);
+
+    useEffect(() => {
+        if (!isMobileMenuOpen) {
+            return;
+        }
+
+        const handleEscapeKey = (event) => {
+            if (event.key === 'Escape') {
+                setIsMobileMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('keydown', handleEscapeKey);
+        return () => document.removeEventListener('keydown', handleEscapeKey);
+    }, [isMobileMenuOpen]);
+
     useEffect(() => () => {
         if (cartCloseTimerRef.current) {
             window.clearTimeout(cartCloseTimerRef.current);
@@ -192,7 +215,7 @@ const Navbar = () => {
             window.removeEventListener('resize', updateNavbarHeight);
             resizeObserver?.disconnect();
         };
-    }, [pathname, isScrolled, cartItems, showCartDropdown, showDropdown]);
+    }, [pathname, isScrolled, cartItems, showCartDropdown, showDropdown, isMobileMenuOpen]);
 
     const closeCartPanel = useCallback(() => {
         if (!showCartDropdown || isCartClosing) {
@@ -321,11 +344,26 @@ const Navbar = () => {
         saveCart([]);
     };
 
+    const closeMobileMenu = () => {
+        setIsMobileMenuOpen(false);
+    };
+
+    const handleMobileMenuToggle = () => {
+        const nextState = !isMobileMenuOpen;
+        setIsMobileMenuOpen(nextState);
+        if (nextState) {
+            setShowDropdown(false);
+            setShowCartDropdown(false);
+            setShowNotifications(false);
+        }
+    };
+
     const handleIconClick = () => {
         if (user) {
             setShowDropdown(!showDropdown);
             setShowCartDropdown(false);
             setShowNotifications(false);
+            setIsMobileMenuOpen(false);
         } else {
             navigate({ to: '/login' });
         }
@@ -385,24 +423,46 @@ const Navbar = () => {
     };
 
     const isTransparent = pathname === '/' && !isScrolled;
+    const useSolidNavbar = isScrolled || isMobileMenuOpen;
     const brandLogoSrc = normalizeImageUrl(
-        isTransparent ? (logoClaroUrl || logoUrl) : logoUrl,
+        isTransparent && !useSolidNavbar ? (logoClaroUrl || logoUrl) : logoUrl,
         { width: 480 }
     );
 
     return (
-        <nav ref={navbarRef} className={`navbar ${isTransparent ? 'navbar--transparent' : 'navbar--solid'}`}>
-            <Link to="/" className="navbar__brand" aria-label="Ir a inicio">
-                {brandLogoSrc ? (
-                    <img
-                        src={brandLogoSrc}
-                        alt="Café UNA"
-                        className="navbar__brand-logo"
-                    />
-                ) : (
-                    <span className="navbar__brand-text">Café UNA</span>
-                )}
-            </Link>
+        <nav
+            ref={navbarRef}
+            className={`navbar ${isTransparent && !useSolidNavbar ? 'navbar--transparent' : 'navbar--solid'}`}
+        >
+            <div className="navbar__start">
+                <button
+                    type="button"
+                    className="navbar__menu-toggle"
+                    aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+                    aria-expanded={isMobileMenuOpen}
+                    aria-controls="navbar-mobile-menu"
+                    onClick={handleMobileMenuToggle}
+                >
+                    {isMobileMenuOpen ? (
+                        <X size={24} strokeWidth={2.2} aria-hidden="true" />
+                    ) : (
+                        <Menu size={24} strokeWidth={2.2} aria-hidden="true" />
+                    )}
+                </button>
+
+                <Link to="/" className="navbar__brand" aria-label="Ir a inicio" onClick={closeMobileMenu}>
+                    {brandLogoSrc ? (
+                        <img
+                            src={brandLogoSrc}
+                            alt="Café UNA"
+                            className="navbar__brand-logo"
+                        />
+                    ) : (
+                        <span className="navbar__brand-text">Café UNA</span>
+                    )}
+                </Link>
+            </div>
+
             <div className="navbar__menu">
                 {enlacesNavbar.map((enlace) => (
                     <SiteNavLink
@@ -412,13 +472,17 @@ const Navbar = () => {
                     />
                 ))}
             </div>
+
             <div className="navbar__actions">
                 <div className="navbar__cart" ref={cartContainerRef} onClick={handleCartClick}>
-                    <img
-                        src="https://cdn-icons-png.flaticon.com/512/263/263142.png"
-                        alt="Carrito"
-                        className="cart-icon"
-                    />
+                    <button
+                        type="button"
+                        className="navbar__icon-button navbar__cart-button"
+                        aria-label="Ver carrito de compras"
+                        title="Carrito"
+                    >
+                        <ShoppingCart size={24} strokeWidth={2} aria-hidden="true" />
+                    </button>
                     <span className="cart-badge">{cartUnits}</span>
                     {showCartDropdown ? (
                         <aside
@@ -598,7 +662,14 @@ const Navbar = () => {
                 ) : null}
 
                 <div className="navbar__user" onClick={handleIconClick}>
-                    <img src="https://cdn-icons-png.flaticon.com/512/7531/7531708.png" alt="User Icon" className="user-icon" />
+                    <button
+                        type="button"
+                        className="navbar__icon-button navbar__user-button"
+                        aria-label={user ? 'Abrir menú de usuario' : 'Iniciar sesión'}
+                        title={user ? 'Mi cuenta' : 'Iniciar sesión'}
+                    >
+                        <User size={24} strokeWidth={2} aria-hidden="true" />
+                    </button>
                     {showDropdown && user && (
                         <div className="dropdown">
                         <p>{userDisplayName}</p>
@@ -609,6 +680,49 @@ const Navbar = () => {
                         </div>
                     )}
                 </div>
+            </div>
+
+            <div
+                className={`navbar__mobile-drawer ${isMobileMenuOpen ? 'is-open' : ''}`}
+                aria-hidden={!isMobileMenuOpen}
+            >
+                <button
+                    type="button"
+                    className="navbar__mobile-backdrop"
+                    aria-label="Cerrar menú"
+                    tabIndex={isMobileMenuOpen ? 0 : -1}
+                    onClick={closeMobileMenu}
+                />
+                <aside
+                    id="navbar-mobile-menu"
+                    className="navbar__mobile-panel"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Menú de navegación"
+                >
+                    <header className="navbar__mobile-header">
+                        <span>Café UNA</span>
+                        <button
+                            type="button"
+                            className="navbar__mobile-close"
+                            aria-label="Cerrar menú"
+                            onClick={closeMobileMenu}
+                        >
+                            <X size={20} strokeWidth={2.4} aria-hidden="true" />
+                        </button>
+                    </header>
+                    <nav className="navbar__mobile-links">
+                        {enlacesNavbar.map((enlace) => (
+                            <SiteNavLink
+                                key={`mobile-${enlace.id ?? enlace.ruta}`}
+                                enlace={enlace}
+                                className="navbar__mobile-link"
+                                activeProps={{ className: 'navbar__mobile-link is-active' }}
+                                onClick={closeMobileMenu}
+                            />
+                        ))}
+                    </nav>
+                </aside>
             </div>
         </nav>
     )
