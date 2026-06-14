@@ -35,6 +35,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "./ui/Sidebar";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { obtenerNavbar } from "../../services/informacionService";
@@ -45,6 +46,7 @@ const INVENTORY_OPEN_KEY = "admin-sidebar-inventory-open";
 
 export function AppSidebar() {
   const user = getActiveSessionUser();
+  const { setOpenMobile } = useSidebar();
   const displayName = user?.username?.includes("@") ? user?.name : user?.username || user?.name || "Usuario";
   const displayEmail = user?.email || user?.correo || "";
 
@@ -61,6 +63,10 @@ export function AppSidebar() {
     return savedValue === null ? isGeneralRoute : savedValue === "true";
   });
   const [logoUrl, setLogoUrl] = useState("");
+
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [pathname, setOpenMobile]);
 
   useEffect(() => {
     let activo = true;
@@ -92,6 +98,8 @@ export function AppSidebar() {
     localStorage.setItem(INVENTORY_OPEN_KEY, String(open));
   };
 
+  const closeMobileSidebar = () => setOpenMobile(false);
+
   const clearSidebarState = () => {
     localStorage.removeItem(GENERAL_OPEN_KEY);
     localStorage.removeItem(INVENTORY_OPEN_KEY);
@@ -109,7 +117,10 @@ export function AppSidebar() {
         <Link
           to="/"
           className="block"
-          onClick={clearSidebarState}
+          onClick={() => {
+            clearSidebarState();
+            closeMobileSidebar();
+          }}
         >
           {logoUrl ? (
             <img
@@ -142,7 +153,7 @@ export function AppSidebar() {
                 <SidebarMenuSub>
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/informacion-pagina-principal">
+                      <Link to="/admin/informacion-pagina-principal" onClick={closeMobileSidebar}>
                         <Info />
                         <span>{"Informaci\u00f3n pagina principal"}</span>
                       </Link>
@@ -150,7 +161,7 @@ export function AppSidebar() {
                   </SidebarMenuSubItem>
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/sobre-nosotros">
+                      <Link to="/admin/sobre-nosotros" onClick={closeMobileSidebar}>
                         <ClipboardList />
                         <span>Sobre nosotros</span>
                       </Link>
@@ -180,7 +191,7 @@ export function AppSidebar() {
                 <SidebarMenuSub>
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/producto">
+                      <Link to="/admin/producto" onClick={closeMobileSidebar}>
                         <Box />
                         <span>Producto</span>
                       </Link>
@@ -196,7 +207,7 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link to="/admin/voluntariado">
+                <Link to="/admin/voluntariado" onClick={closeMobileSidebar}>
                   <HandHeart />
                   <span>Administrar voluntariado</span>
                 </Link>
@@ -204,7 +215,7 @@ export function AppSidebar() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link to="/admin/usuarios">
+                <Link to="/admin/usuarios" onClick={closeMobileSidebar}>
                   <Users />
                   <span>Administrar usuarios</span>
                 </Link>
