@@ -2,6 +2,7 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import './Products.css';
 import PageLoading from '../../Components/PageLoading/PageLoading';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { calcularPrecioConIVA, obtenerProductos } from '../../services/productosServices';
 
 const PRODUCTS_PER_PAGE = 8;
@@ -28,6 +29,8 @@ const Products = () => {
   const [confirmationMessage, setConfirmationMessage] = useState('');
   const [confirmationVisible, setConfirmationVisible] = useState(false);
   const confirmationTimerRef = useRef(null);
+
+  useBodyScrollLock(Boolean(selectedProduct));
 
   const openProduct = (card) => {
     setSelectedProduct(card);

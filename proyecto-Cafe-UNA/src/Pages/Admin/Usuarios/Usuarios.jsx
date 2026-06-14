@@ -6,7 +6,9 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { X } from "lucide-react";
 import { AdminLayout } from "../layouts/AdminLayout";
+import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
 import {
   obtenerUsuarios,
   crearUsuario,
@@ -15,23 +17,22 @@ import {
 } from "../../../services/usuariosServices";
 import { getActiveSessionUser } from "../../../services/sessionService";
 
-// ─── Modal reutilizable ───────────────────────────────────────────────────────
 function Modal({ titulo, onClose, children }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">{titulo}</h2>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-          >
-            ✕
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
+    <AdminModal open onClose={onClose} maxWidth="max-w-lg" labelledBy="admin-usuarios-modal-title">
+      <AdminModalHeader>
+        <h2 id="admin-usuarios-modal-title" className="text-lg font-semibold text-slate-900">{titulo}</h2>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+          aria-label="Cerrar"
+        >
+          <X className="size-5" />
+        </button>
+      </AdminModalHeader>
+      <AdminModalBody>{children}</AdminModalBody>
+    </AdminModal>
   );
 }
 
@@ -194,18 +195,18 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando, puedeEditarRole
         )}
       </div>
 
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex flex-col-reverse justify-end gap-2 pt-2 sm:flex-row">
         <button
           type="button"
           onClick={onCancelar}
-          className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50"
+          className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50 sm:w-auto"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={cargando}
-          className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-50"
+          className="w-full rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-50 sm:w-auto"
         >
           {cargando ? "Guardando…" : inicial ? "Guardar cambios" : "Crear usuario"}
         </button>
@@ -431,14 +432,14 @@ const AdminUsuarios = () => {
       {/* Contenido */}
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+        <div className="flex flex-col gap-4 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <div>
             <h1 className="text-xl font-semibold text-slate-900">Administrar usuarios</h1>
             <p className="mt-0.5 text-sm text-slate-500">Gestión de acceso y roles</p>
           </div>
           <button
             onClick={() => setModalCrear(true)}
-            className="rounded-full bg-amber-900 px-5 py-2 text-sm font-semibold text-amber-50 transition hover:bg-amber-800"
+            className="w-full rounded-full bg-amber-900 px-5 py-2 text-sm font-semibold text-amber-50 transition hover:bg-amber-800 sm:w-auto"
           >
             Nuevo usuario +
           </button>
@@ -457,45 +458,95 @@ const AdminUsuarios = () => {
         ) : usuarios.length === 0 ? (
           <div className="py-16 text-center text-sm text-slate-400">No hay usuarios registrados.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id} className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {headerGroup.headers.map((header) => (
-                      <th key={header.id} className="px-6 py-3">
-                        {header.column.getCanSort() ? (
-                          <button
-                            type="button"
-                            onClick={header.column.getToggleSortingHandler()}
-                            className="inline-flex items-center gap-1 uppercase tracking-wide transition hover:text-slate-800"
-                          >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            <span className="text-[10px]">
-                              {header.column.getIsSorted() === "asc" ? "▲" : header.column.getIsSorted() === "desc" ? "▼" : "↕"}
-                            </span>
-                          </button>
-                        ) : (
-                          flexRender(header.column.columnDef.header, header.getContext())
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="transition hover:bg-slate-50/60">
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-6 py-3.5">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full text-sm">
+                <thead>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr key={headerGroup.id} className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {headerGroup.headers.map((header) => (
+                        <th key={header.id} className="px-6 py-3">
+                          {header.column.getCanSort() ? (
+                            <button
+                              type="button"
+                              onClick={header.column.getToggleSortingHandler()}
+                              className="inline-flex items-center gap-1 uppercase tracking-wide transition hover:text-slate-800"
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                              <span className="text-[10px]">
+                                {header.column.getIsSorted() === "asc" ? "▲" : header.column.getIsSorted() === "desc" ? "▼" : "↕"}
+                              </span>
+                            </button>
+                          ) : (
+                            flexRender(header.column.columnDef.header, header.getContext())
+                          )}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {table.getRowModel().rows.map((row) => (
+                    <tr key={row.id} className="transition hover:bg-slate-50/60">
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="px-6 py-3.5">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="divide-y divide-slate-100 md:hidden">
+              {usuarios.map((usuario) => {
+                const esMismoUsuario = actorId !== null && Number(usuario.id) === actorId;
+                const puedeCambiarEstado = esSuperAdmin && !esMismoUsuario;
+
+                return (
+                  <article key={usuario.id} className="space-y-3 px-4 py-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="truncate font-semibold text-slate-900">{usuario.nombre}</h3>
+                        <p className="mt-0.5 truncate text-sm text-slate-500">{usuario.correo}</p>
+                      </div>
+                      <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        usuario.estado === "activo"
+                          ? "bg-green-50 text-green-700"
+                          : "bg-red-50 text-red-600"
+                      }`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${usuario.estado === "activo" ? "bg-green-500" : "bg-red-400"}`} />
+                        {usuario.estado === "activo" ? "Activo" : "Inactivo"}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1">
+                      {(Array.isArray(usuario.roles) ? usuario.roles : []).map((rol) => (
+                        <BadgeRol key={rol} rol={rol} />
+                      ))}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setUsuarioEditar(usuario)}
+                        className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition hover:bg-amber-100"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleToggle(usuario)}
+                        disabled={toggleando === usuario.id || !puedeCambiarEstado || usuario.estado !== "activo"}
+                        className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+                      >
+                        {toggleando === usuario.id ? "..." : "Inactivar"}
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </>
         )}
       </section>
     </AdminLayout>
