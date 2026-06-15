@@ -792,6 +792,25 @@
   margin-top: 6px;
 }
 
+.mensaje-info {
+  color: #2e7d32;
+  font-size: 13px;
+  margin-top: 6px;
+  display: block;
+}
+
+.campo-pregunta {
+  margin: 0 0 10px;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.input-solo-lectura {
+  background-color: #f5f5f5;
+  color: #333;
+  cursor: default;
+}
+
 .form-error {
   color: var(--error);
   margin: 0 0 16px;
