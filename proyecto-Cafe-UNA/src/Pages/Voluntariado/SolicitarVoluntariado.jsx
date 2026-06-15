@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { getActiveSessionUser } from "../../services/sessionService";
 import { crearSolicitud } from "../../services/voluntariadoService";
+import { consultarCedula } from "../../services/cedulaService";
 import { SectionCard } from "./CalendarioVoluntariado";
 import "./SolicitarVoluntariado.css";
 
@@ -10,23 +11,6 @@ const TIPOS_VOLUNTARIADO = [
   "Capacitaciones",
   "Investigación Académica",
   "Actividades de limpieza y mantenimiento",
-  "Otro",
-];
-
-const INSTITUCIONES = [
-  "Universidad Nacional",
-  "Universidad Estatal a Distancia",
-  "Universidad de Costa Rica",
-  "Instituto Tecnológico",
-  "Otra",
-];
-
-const PAISES = [
-  "Costa Rica",
-  "México",
-  "Colombia",
-  "España",
-  "Estados Unidos",
   "Otro",
 ];
 
@@ -41,6 +25,7 @@ const FORM_INICIAL = {
   cantidadParticipantes: "",
   tipo: "",
   tipoOtro: "",
+  esNacional: "",
   nombre: "",
   identificacion: "",
   institucion: "",
@@ -52,21 +37,39 @@ const FORM_INICIAL = {
   fechaFin: "",
 };
 
+function normalizarCedulaCr(valor) {
+  return String(valor ?? "").replace(/\D/g, "");
+}
+
 function obtenerUsuarioActual() {
   return getActiveSessionUser();
 }
 
+function obtenerCorreoUsuario(user) {
+  return String(user?.email || user?.correo || "").trim().toLowerCase();
+}
+
+function crearFormularioInicial(user) {
+  return {
+    ...FORM_INICIAL,
+    correo: obtenerCorreoUsuario(user),
+  };
+}
+
 function SolicitarVoluntariado() {
   const [usuario] = useState(() => obtenerUsuarioActual());
-  const [formulario, setFormulario] = useState(FORM_INICIAL);
+  const [formulario, setFormulario] = useState(() => crearFormularioInicial(obtenerUsuarioActual()));
   const [horariosSeleccionados, setHorariosSeleccionados] = useState([]);
   const [errores, setErrores] = useState({});
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [errorApi, setErrorApi] = useState(null);
+  const [consultandoCedula, setConsultandoCedula] = useState(false);
+  const [avisoCedula, setAvisoCedula] = useState(null);
 
   const esGrupal = formulario.modalidad === "grupal";
   const esTipoOtro = formulario.tipo === "Otro";
+  const esNacionalCr = formulario.esNacional === "si";
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -75,6 +78,13 @@ function SolicitarVoluntariado() {
 
     return () => window.clearTimeout(timeoutId);
   }, []);
+
+  useEffect(() => {
+    if (!esNacionalCr || consultandoCedula) return;
+    const digitos = normalizarCedulaCr(formulario.identificacion);
+    if (digitos.length !== 9 || formulario.nombre?.trim()) return;
+    consultarDatosCedula(digitos);
+  }, [formulario.identificacion, esNacionalCr]);
 
   const limpiarError = (campo) => {
     if (errores[campo]) {
@@ -97,12 +107,109 @@ function SolicitarVoluntariado() {
       valor = valor.toLowerCase();
     }
 
+    if (e.target.name === "identificacion") {
+      if (formulario.esNacional === "si") {
+        valor = valor.replace(/\D/g, "").slice(0, 9);
+        setFormulario((prev) => ({
+          ...prev,
+          identificacion: valor,
+          nombre: "",
+          residencia: "",
+        }));
+        setAvisoCedula(null);
+        limpiarError(e.target.name);
+        return;
+      }
+
+      valor = valor.replace(/\s+/g, " ").trimStart();
+    }
+
     setFormulario((prev) => ({
       ...prev,
       [e.target.name]: valor,
     }));
 
     limpiarError(e.target.name);
+  };
+
+  const handleEsNacional = (valor) => {
+    setFormulario((prev) => ({
+      ...prev,
+      esNacional: valor,
+      nombre: "",
+      residencia: "",
+      identificacion: valor === "si" ? normalizarCedulaCr(prev.identificacion) : prev.identificacion,
+      pais: valor === "si" ? "Costa Rica" : prev.pais === "Costa Rica" ? "" : prev.pais,
+    }));
+    setAvisoCedula(null);
+    limpiarError("esNacional");
+    limpiarError("identificacion");
+
+    if (valor === "si") {
+      const digitos = normalizarCedulaCr(formulario.identificacion);
+      if (digitos.length === 9) {
+        consultarDatosCedula(digitos);
+      }
+    }
+  };
+
+  const consultarDatosCedula = async (digitos) => {
+    setConsultandoCedula(true);
+    setAvisoCedula(null);
+
+    try {
+      const datos = await consultarCedula(digitos);
+
+      if (!datos?.nombre?.trim()) {
+        setAvisoCedula("No se encontraron datos para esta cédula. Complete el nombre y residencia manualmente.");
+        return;
+      }
+
+      setFormulario((prev) => ({
+        ...prev,
+        identificacion: digitos,
+        nombre: datos.nombre.trim(),
+        residencia: datos.residencia?.trim() || prev.residencia,
+        pais: "Costa Rica",
+      }));
+      setAvisoCedula("Datos cargados automáticamente. Puede editarlos si es necesario.");
+      limpiarError("nombre");
+      limpiarError("residencia");
+      limpiarError("identificacion");
+    } catch (error) {
+      const esErrorServicio = /suscripci[oó]n|plan|api key|configurad|demasiadas consultas|espere \d+/i.test(error.message);
+      setAvisoCedula(
+        esErrorServicio
+          ? error.message
+          : `${error.message} Complete el nombre y residencia manualmente.`
+      );
+    } finally {
+      setConsultandoCedula(false);
+    }
+  };
+
+  const handleIdentificacionBlur = async () => {
+    const digitos = normalizarCedulaCr(formulario.identificacion);
+
+    if (esNacionalCr && digitos !== formulario.identificacion) {
+      setFormulario((prev) => ({
+        ...prev,
+        identificacion: digitos,
+      }));
+    }
+
+    if (!esNacionalCr) {
+      return;
+    }
+
+    if (digitos.length !== 9) {
+      if (digitos.length > 0) {
+        setAvisoCedula("La cédula costarricense debe tener 9 dígitos.");
+      }
+      return;
+    }
+
+    await consultarDatosCedula(digitos);
   };
 
   const handleTipoVoluntariado = (tipo) => {
@@ -141,15 +248,31 @@ function SolicitarVoluntariado() {
   const validarFormulario = () => {
     const nuevosErrores = {};
 
+    if (!formulario.esNacional) {
+      nuevosErrores.esNacional = "Indique si es nacional costarricense";
+    }
+
     const nombre = formulario.nombre?.trim();
     if (!nombre) nuevosErrores.nombre = "El nombre es obligatorio";
     else if (nombre.length < 3) nuevosErrores.nombre = "Mínimo 3 caracteres";
 
     const identificacion = formulario.identificacion?.trim();
-    if (!identificacion) nuevosErrores.identificacion = "La identificación es obligatoria";
+    if (!identificacion) {
+      nuevosErrores.identificacion = "La identificación es obligatoria";
+    } else if (esNacionalCr) {
+      const digitos = normalizarCedulaCr(identificacion);
+      if (digitos.length !== 9) {
+        nuevosErrores.identificacion = "La cédula costarricense debe tener 9 dígitos";
+      }
+    }
 
-    if (!formulario.institucion) nuevosErrores.institucion = "Seleccione una institución";
-    if (!formulario.pais) nuevosErrores.pais = "Seleccione un país";
+    if (!formulario.institucion?.trim()) {
+      nuevosErrores.institucion = "Ingrese la institución educativa";
+    }
+
+    if (!formulario.pais?.trim()) {
+      nuevosErrores.pais = "Ingrese el país de residencia";
+    }
 
     const residencia = formulario.residencia?.trim();
     if (!residencia) nuevosErrores.residencia = "El lugar de residencia es obligatorio";
@@ -194,10 +317,11 @@ function SolicitarVoluntariado() {
   };
 
   const resetFormulario = () => {
-    setFormulario(FORM_INICIAL);
+    setFormulario(crearFormularioInicial(usuario));
     setHorariosSeleccionados([]);
     setErrores({});
     setErrorApi(null);
+    setAvisoCedula(null);
   };
 
   const handleSubmit = async (e) => {
@@ -210,6 +334,11 @@ function SolicitarVoluntariado() {
 
     if (!validarFormulario()) return;
 
+    if (esNacionalCr && !formulario.nombre?.trim()) {
+      setAvisoCedula("Debe verificar su cédula antes de enviar la solicitud.");
+      return;
+    }
+
     const horariosLabel = HORARIOS_PREFERIDOS.filter((h) =>
       horariosSeleccionados.includes(h.id)
     ).map((h) => h.label);
@@ -221,9 +350,11 @@ function SolicitarVoluntariado() {
       cantidadParticipantes: esGrupal ? Number(formulario.cantidadParticipantes) : 1,
       tipoVoluntariado: tipoFinal,
       nombre: formulario.nombre.trim(),
-      identificacion: formulario.identificacion.trim(),
-      institucion: formulario.institucion,
-      pais: formulario.pais,
+      identificacion: esNacionalCr
+        ? normalizarCedulaCr(formulario.identificacion)
+        : formulario.identificacion.trim(),
+      institucion: formulario.institucion.trim(),
+      pais: formulario.pais.trim(),
       residencia: formulario.residencia.trim(),
       email: formulario.correo.trim(),
       telefono: formulario.telefono.trim(),
@@ -342,32 +473,99 @@ function SolicitarVoluntariado() {
               <SectionCard icon="fas fa-user" title="Información personal">
                 <div className="form-grid">
                   <div className="campo full">
+                    <p className="campo-pregunta">
+                      ¿Es nacional costarricense? <span className="req">*</span>
+                    </p>
+                    <div className="tipo-opciones">
+                      <label className="radio-card">
+                        <input
+                          type="radio"
+                          name="esNacional"
+                          value="si"
+                          checked={formulario.esNacional === "si"}
+                          onChange={() => handleEsNacional("si")}
+                        />
+                        <span className="radio-custom" />
+                        <span>Sí</span>
+                      </label>
+                      <label className="radio-card">
+                        <input
+                          type="radio"
+                          name="esNacional"
+                          value="no"
+                          checked={formulario.esNacional === "no"}
+                          onChange={() => handleEsNacional("no")}
+                        />
+                        <span className="radio-custom" />
+                        <span>No</span>
+                      </label>
+                    </div>
+                    {errores.esNacional && (
+                      <span className="mensaje-error">{errores.esNacional}</span>
+                    )}
+                  </div>
+
+                  <div className="campo full">
                     <label>
                       Nombre completo <span className="req">*</span>
                     </label>
-                    <input
-                      type="text"
-                      name="nombre"
-                      placeholder="Ingrese su nombre completo"
-                      value={formulario.nombre}
-                      onChange={handleChange}
-                      maxLength={80}
-                    />
+                    {esNacionalCr ? (
+                      <>
+                        <input
+                          type="text"
+                          name="nombre"
+                          placeholder={consultandoCedula ? "Consultando..." : "Se completará con su cédula"}
+                          value={formulario.nombre}
+                          readOnly
+                          className="input-solo-lectura"
+                          maxLength={80}
+                          disabled={!formulario.esNacional}
+                        />
+                        {!formulario.nombre?.trim() && !consultandoCedula && formulario.identificacion.length > 0 && (
+                          <span className="mensaje-info">
+                            Espere a que se cargue su nombre o verifique la cédula.
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <input
+                        type="text"
+                        name="nombre"
+                        placeholder="Ingrese su nombre completo"
+                        value={formulario.nombre}
+                        onChange={handleChange}
+                        maxLength={80}
+                        disabled={!formulario.esNacional}
+                      />
+                    )}
                     {errores.nombre && <span className="mensaje-error">{errores.nombre}</span>}
                   </div>
 
                   <div className="campo">
                     <label>
-                      Número de identificación <span className="req">*</span>
+                      {esNacionalCr ? "Número de cédula" : "Documento de identificación"}{" "}
+                      <span className="req">*</span>
                     </label>
                     <input
                       type="text"
                       name="identificacion"
-                      placeholder="Ej. 123456789"
+                      placeholder={esNacionalCr ? "504680314" : "Pasaporte o documento de identidad"}
                       value={formulario.identificacion}
                       onChange={handleChange}
-                      maxLength={20}
+                      onBlur={esNacionalCr ? handleIdentificacionBlur : undefined}
+                      maxLength={esNacionalCr ? 9 : 30}
+                      inputMode={esNacionalCr ? "numeric" : "text"}
+                      autoComplete="off"
+                      disabled={!formulario.esNacional}
                     />
+                    {consultandoCedula && (
+                      <span className="mensaje-info">Consultando datos en el TSE...</span>
+                    )}
+                    {!consultandoCedula && avisoCedula && (
+                      <span className={avisoCedula.includes("cargados") ? "mensaje-info" : "mensaje-error"}>
+                        {avisoCedula}
+                      </span>
+                    )}
                     {errores.identificacion && (
                       <span className="mensaje-error">{errores.identificacion}</span>
                     )}
@@ -383,6 +581,9 @@ function SolicitarVoluntariado() {
                       placeholder="Ciudad, provincia"
                       value={formulario.residencia}
                       onChange={handleChange}
+                      readOnly={esNacionalCr && Boolean(formulario.residencia?.trim())}
+                      className={esNacionalCr && formulario.residencia?.trim() ? "input-solo-lectura" : ""}
+                      disabled={!formulario.esNacional}
                     />
                     {errores.residencia && (
                       <span className="mensaje-error">{errores.residencia}</span>
@@ -391,73 +592,74 @@ function SolicitarVoluntariado() {
 
                   <div className="campo">
                     <label>
-                      Institución educativa <span className="req">*</span>
+                      País de residencia <span className="req">*</span>
                     </label>
-                    <div className="select-wrap">
-                      <select name="institucion" value={formulario.institucion} onChange={handleChange}>
-                        <option value="">Seleccione una institución</option>
-                        {INSTITUCIONES.map((inst) => (
-                          <option key={inst} value={inst}>{inst}</option>
-                        ))}
-                      </select>
-                      <i className="fas fa-chevron-down select-icon" aria-hidden="true" />
-                    </div>
-                    {errores.institucion && (
-                      <span className="mensaje-error">{errores.institucion}</span>
-                    )}
+                    <input
+                      type="text"
+                      name="pais"
+                      placeholder="Ej. Costa Rica"
+                      value={formulario.pais}
+                      onChange={handleChange}
+                      readOnly={esNacionalCr}
+                      className={esNacionalCr ? "input-solo-lectura" : ""}
+                      disabled={!formulario.esNacional}
+                    />
+                    {errores.pais && <span className="mensaje-error">{errores.pais}</span>}
                   </div>
 
                   <div className="campo">
                     <label>
-                      País de residencia <span className="req">*</span>
+                      Institución educativa <span className="req">*</span>
                     </label>
-                    <div className="select-wrap">
-                      <select name="pais" value={formulario.pais} onChange={handleChange}>
-                        <option value="">Seleccione un país</option>
-                        {PAISES.map((pais) => (
-                          <option key={pais} value={pais}>{pais}</option>
-                        ))}
-                      </select>
-                      <i className="fas fa-chevron-down select-icon" aria-hidden="true" />
-                    </div>
-                    {errores.pais && <span className="mensaje-error">{errores.pais}</span>}
+                    <input
+                      type="text"
+                      name="institucion"
+                      placeholder="Ej. Universidad Nacional"
+                      value={formulario.institucion}
+                      onChange={handleChange}
+                      maxLength={120}
+                      disabled={!formulario.esNacional}
+                    />
+                    {errores.institucion && (
+                      <span className="mensaje-error">{errores.institucion}</span>
+                    )}
                   </div>
                 </div>
               </SectionCard>
 
               <SectionCard icon="fas fa-envelope" title="Contacto al solicitante">
-                <div className="form-grid">
-                  <div className="campo">
-                    <label>
-                      Correo electrónico <span className="req">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      name="correo"
-                      placeholder="correo@ejemplo.com"
-                      value={formulario.correo}
-                      onChange={handleChange}
-                    />
-                    {errores.correo && <span className="mensaje-error">{errores.correo}</span>}
-                  </div>
+                    <div className="form-grid">
+                      <div className="campo">
+                        <label>
+                          Correo electrónico <span className="req">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          name="correo"
+                          placeholder="correo@ejemplo.com"
+                          value={formulario.correo}
+                          onChange={handleChange}
+                        />
+                        {errores.correo && <span className="mensaje-error">{errores.correo}</span>}
+                      </div>
 
-                  <div className="campo">
-                    <label>
-                      Número de teléfono <span className="req">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      name="telefono"
-                      placeholder="88888888"
-                      value={formulario.telefono}
-                      onChange={handleChange}
-                    />
-                    {errores.telefono && (
-                      <span className="mensaje-error">{errores.telefono}</span>
-                    )}
-                  </div>
-                </div>
-              </SectionCard>
+                      <div className="campo">
+                        <label>
+                          Número de teléfono <span className="req">*</span>
+                        </label>
+                        <input
+                          type="tel"
+                          name="telefono"
+                          placeholder="88888888"
+                          value={formulario.telefono}
+                          onChange={handleChange}
+                        />
+                        {errores.telefono && (
+                          <span className="mensaje-error">{errores.telefono}</span>
+                        )}
+                      </div>
+                    </div>
+                  </SectionCard>
 
               {esGrupal && (
                 <SectionCard
