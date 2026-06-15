@@ -505,6 +505,26 @@
   font-weight: bold;
 }
 
+.dropdown__user {
+  padding-bottom: 0.55rem;
+  margin-bottom: 0.55rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.dropdown__name {
+  margin: 0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dropdown__email {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #64748b;
+  word-break: break-word;
+}
+
 .cart-drawer-header {
   display: flex;
   align-items: center;

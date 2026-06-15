@@ -4,6 +4,7 @@ import { Mail, MapPin, Phone, Share2 } from 'lucide-react';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { obtenerEnlaces, obtenerFooter } from '../../services/informacionService';
+import { DEFAULT_FOOTER_LINKS } from '../../lib/defaultSiteLinks';
 import './Footer.css';
 
 function telefonoHref(telefono) {
@@ -35,6 +36,7 @@ const Footer = () => {
 
   const telHref = telefonoHref(footer?.telefono);
   const footerLogoSrc = normalizeImageUrl(footer?.logoClaroUrl || footer?.logoUrl, { width: 320 });
+  const explorarLinks = enlacesExplorar.length > 0 ? enlacesExplorar : DEFAULT_FOOTER_LINKS;
   const hasContact = Boolean(
     telHref || footer?.correo || footer?.facebookUrl || footer?.instagramUrl || footer?.mapsUrl
   );
@@ -52,14 +54,12 @@ const Footer = () => {
           </div>
         </Link>
 
-        {enlacesExplorar.length > 0 ? (
-          <nav className="footer__column" aria-label="Explorar">
-            <h2>Explorar</h2>
-            {enlacesExplorar.map((enlace) => (
-              <SiteNavLink key={enlace.id ?? enlace.ruta} enlace={enlace} />
-            ))}
-          </nav>
-        ) : null}
+        <nav className="footer__column" aria-label="Explorar">
+          <h2>Explorar</h2>
+          {explorarLinks.map((enlace) => (
+            <SiteNavLink key={enlace.id ?? enlace.ruta} enlace={enlace} />
+          ))}
+        </nav>
 
         {hasContact ? (
           <section className="footer__column footer__contact" aria-label="Contacto">

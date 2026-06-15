@@ -6,7 +6,7 @@ import {
     Outlet,
     useRouterState,
 } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect } from "react";
 
 import Footer from "./Components/Footer/Footer";
 import Navbar from './Components/Navbar/Navbar';
@@ -24,13 +24,8 @@ const AdminUsuarios = lazy(() => import("./Pages/Admin/Usuarios/Usuarios"));
 const Products = lazy(() => import("./Pages/Products/Products"));
 const Checkout = lazy(() => import("./Pages/Checkout/Checkout"));
 const SolicitarVoluntariado = lazy(() => import("./Pages/Voluntariado/SolicitarVoluntariado"));
-
-const CHROME_GATED_PUBLIC_ROUTES = new Set([
-    "/",
-    "/AboutUs",
-    "/productos",
-    "/voluntariado/solicitar",
-]);
+const Perfil = lazy(() => import("./Pages/Perfil/Perfil"));
+const AdminPerfil = lazy(() => import("./Pages/Admin/Perfil/AdminPerfil"));
 
 function AdminRouteLoading() {
     return (
@@ -48,53 +43,22 @@ const rootRoute = createRootRoute({
         });
         const isAdminRoute = pathname.startsWith("/admin");
         const isLoginRoute = pathname === "/login";
-        const isChromeGatedRoute = CHROME_GATED_PUBLIC_ROUTES.has(pathname);
-        const [publicRouteReady, setPublicRouteReady] = useState(!isChromeGatedRoute);
-        const [publicRouteError, setPublicRouteError] = useState("");
-        const waitingForPublicRoute = isChromeGatedRoute && !publicRouteReady;
+        const isPerfilRoute = pathname === "/perfil";
 
         useEffect(() => {
             document.body.classList.toggle("admin-route-active", isAdminRoute);
-            if (isAdminRoute) {
+            document.body.classList.toggle("perfil-route-active", isPerfilRoute);
+            if (isAdminRoute || isPerfilRoute) {
                 document.body.classList.remove("app-route-loading", "home-hero-ready");
             }
 
             return () => {
                 document.body.classList.remove("admin-route-active");
+                document.body.classList.remove("perfil-route-active");
             };
-        }, [isAdminRoute]);
+        }, [isAdminRoute, isPerfilRoute]);
 
-        useEffect(() => {
-            if (!isChromeGatedRoute) {
-                setPublicRouteError("");
-                setPublicRouteReady(true);
-                return undefined;
-            }
-
-            setPublicRouteError("");
-            setPublicRouteReady(false);
-            const handlePublicRouteReady = (event) => {
-                if (event?.detail?.pathname === pathname) {
-                    setPublicRouteError("");
-                    setPublicRouteReady(true);
-                }
-            };
-            const handlePublicRouteError = (event) => {
-                if (event?.detail?.pathname === pathname) {
-                    setPublicRouteError(event?.detail?.message || "No se pudo cargar la información del backend.");
-                    setPublicRouteReady(false);
-                }
-            };
-            window.addEventListener("public-route-ready", handlePublicRouteReady);
-            window.addEventListener("public-route-error", handlePublicRouteError);
-
-            return () => {
-                window.removeEventListener("public-route-ready", handlePublicRouteReady);
-                window.removeEventListener("public-route-error", handlePublicRouteError);
-            };
-        }, [isChromeGatedRoute, pathname]);
-
-        if (isAdminRoute || isLoginRoute) {
+        if (isAdminRoute || isLoginRoute || isPerfilRoute) {
             return (
                 <Suspense fallback={isAdminRoute ? <AdminRouteLoading /> : <PageLoading />}>
                     <Outlet />
@@ -104,23 +68,16 @@ const rootRoute = createRootRoute({
 
         return (
             <div className="site-shell">
-                {waitingForPublicRoute ? null : <Navbar />}
-                {waitingForPublicRoute ? (
-                    <PageLoading
-                        message={publicRouteError || "Cargando información..."}
-                        detail={publicRouteError ? "Revise que el backend esté encendido y vuelva a intentar." : ""}
-                        isError={Boolean(publicRouteError)}
-                    />
-                ) : null}
+                <Navbar />
                 <section
                     id="center"
-                    className={`site-main ${pathname === "/" ? "site-main--home" : ""} ${waitingForPublicRoute ? "site-main--awaiting-ready" : ""}`}
+                    className={`site-main ${pathname === "/" ? "site-main--home" : ""}`}
                 >
                     <Suspense fallback={<PageLoading />}>
                         <Outlet />
                     </Suspense>
                 </section>
-                {waitingForPublicRoute ? null : <Footer />}
+                <Footer />
             </div>
         )
     },
@@ -185,6 +142,16 @@ const voluntariadoSolicitarRoute = createRoute({
     path: "/voluntariado/solicitar",
     component: SolicitarVoluntariado,
 })
+const perfilRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/perfil",
+    component: Perfil,
+})
+const adminPerfilRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/perfil",
+    component: AdminPerfil,
+})
 
 
 
@@ -201,7 +168,9 @@ const routeTree= rootRoute.addChildren([
     adminUsuariosRoute,
     productsRoute,
     checkoutRoute,
-    voluntariadoSolicitarRoute
+    voluntariadoSolicitarRoute,
+    perfilRoute,
+    adminPerfilRoute
    // voluntariadoMisSolicitudesRoute
 ])
 export const router = createRouter({
