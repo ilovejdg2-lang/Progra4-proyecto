@@ -1,7 +1,7 @@
 import { getActiveSessionUser } from "./sessionService";
 import { apiRequest } from "./apiClient";
 
-const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/usuarios`;
+const BASE_URL = `${import.meta.env.BACKEND_URL}/usuarios`;
 
 async function request(url, options = {}) {
   return apiRequest(url, {
