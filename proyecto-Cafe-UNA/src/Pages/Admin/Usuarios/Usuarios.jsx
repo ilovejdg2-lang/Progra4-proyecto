@@ -6,7 +6,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { X } from "lucide-react";
+import { Pencil, Power, X } from "lucide-react";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
 import {
@@ -216,6 +216,75 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando, puedeEditarRole
 }
 
 
+const accionBtnBase =
+  "inline-flex items-center justify-center gap-1.5 rounded-lg border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
+
+function AccionesUsuario({
+  usuario,
+  puedeCambiarEstado,
+  toggleando,
+  onEditar,
+  onToggle,
+  variant = "table",
+}) {
+  const esInactivo = usuario.estado !== "activo";
+  const esMovil = variant === "mobile";
+
+  const editarCls = `${accionBtnBase} border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 focus-visible:ring-amber-300`;
+  const toggleCls = `${accionBtnBase} ${
+    esInactivo
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300"
+      : "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300"
+  }`;
+
+  const toggleLabel = toggleando === usuario.id
+    ? "..."
+    : esInactivo
+      ? "Habilitar"
+      : "Inhabilitar";
+
+  if (esMovil) {
+    return (
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" onClick={onEditar} className={`${editarCls} min-h-10 px-2 py-2`}>
+          <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className="truncate">Editar</span>
+        </button>
+        <button
+          type="button"
+          onClick={onToggle}
+          disabled={toggleando === usuario.id || !puedeCambiarEstado}
+          title={!puedeCambiarEstado ? "Solo SuperAdmin puede cambiar estado." : ""}
+          className={`${toggleCls} min-h-10 px-2 py-2 disabled:cursor-not-allowed disabled:opacity-50`}
+        >
+          <Power className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className="truncate">{toggleLabel}</span>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid w-[11.5rem] grid-cols-2 gap-1.5">
+      <button type="button" onClick={onEditar} className={`${editarCls} h-9 px-2.5`}>
+        <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
+        <span>Editar</span>
+      </button>
+      <button
+        type="button"
+        onClick={onToggle}
+        disabled={toggleando === usuario.id || !puedeCambiarEstado}
+        title={!puedeCambiarEstado ? "Solo SuperAdmin puede cambiar estado." : ""}
+        className={`${toggleCls} h-9 px-2.5 disabled:cursor-not-allowed disabled:opacity-50`}
+      >
+        <Power className="size-3.5 shrink-0" aria-hidden="true" />
+        <span>{toggleLabel}</span>
+      </button>
+    </div>
+  );
+}
+
+
 // ─── Página principal ─────────────────────────────────────────────────────────
 const AdminUsuarios = () => {
   const actor = (() => {
@@ -369,30 +438,13 @@ const AdminUsuarios = () => {
         const puedeCambiarEstado = esSuperAdmin && !esMismoUsuario;
 
         return (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setUsuarioEditar(usuario)}
-              className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition hover:bg-amber-100"
-            >
-              Editar
-            </button>
-            <button
-              onClick={() => handleToggle(usuario)}
-              disabled={toggleando === usuario.id || !puedeCambiarEstado || usuario.estado !== "activo"}
-              title={
-                !esSuperAdmin
-                  ? "Solo SuperAdmin puede cambiar estado."
-                  : esMismoUsuario
-                    ? "No puede inactivarse a sí mismo."
-                    : usuario.estado !== "activo"
-                      ? "Solo se permite inactivar usuarios activos."
-                      : ""
-              }
-              className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 disabled:opacity-50"
-            >
-              {toggleando === usuario.id ? "..." : "Inactivar"}
-            </button>
-          </div>
+          <AccionesUsuario
+            usuario={usuario}
+            puedeCambiarEstado={puedeCambiarEstado}
+            toggleando={toggleando}
+            onEditar={() => setUsuarioEditar(usuario)}
+            onToggle={() => handleToggle(usuario)}
+          />
         );
       },
     },
@@ -527,21 +579,14 @@ const AdminUsuarios = () => {
                       ))}
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => setUsuarioEditar(usuario)}
-                        className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition hover:bg-amber-100"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleToggle(usuario)}
-                        disabled={toggleando === usuario.id || !puedeCambiarEstado || usuario.estado !== "activo"}
-                        className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 disabled:opacity-50"
-                      >
-                        {toggleando === usuario.id ? "..." : "Inactivar"}
-                      </button>
-                    </div>
+                    <AccionesUsuario
+                      usuario={usuario}
+                      puedeCambiarEstado={puedeCambiarEstado}
+                      toggleando={toggleando}
+                      onEditar={() => setUsuarioEditar(usuario)}
+                      onToggle={() => handleToggle(usuario)}
+                      variant="mobile"
+                    />
                   </article>
                 );
               })}

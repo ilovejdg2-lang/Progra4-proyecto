@@ -5,6 +5,7 @@ import {
   iniciarSesion,
   mapAuthenticatedUser,
   registrarUsuario,
+  verificarRegistro,
   solicitarRecuperacion,
   restablecerPassword,
 } from '../../services/authService';
@@ -75,7 +76,9 @@ const Login = () => {
     correo: '',
     password: '',
     confirmPassword: '',
+    token: '',
   });
+  const [registerStep, setRegisterStep] = useState('form');
 
   const [logoUrl, setLogoUrl] = useState('');
 
@@ -100,7 +103,6 @@ const Login = () => {
     nuevaPassword: '',
     confirmPassword: '',
   });
-  const [devToken, setDevToken] = useState('');
   const successLooksLikeError = successMessage.toLowerCase().includes('no hay ningún usuario')
     || successMessage.toLowerCase().includes('no hay ningun usuario');
 
@@ -185,7 +187,8 @@ const Login = () => {
     setMode(nextMode);
     setFormError('');
     setSuccessMessage('');
-    setDevToken('');
+    setRegisterStep('form');
+    setRegisterForm({ nombre: '', correo: '', password: '', confirmPassword: '', token: '' });
   };
 
   const handleRegister = async (event) => {
@@ -210,16 +213,42 @@ const Login = () => {
 
     setIsLoading(true);
     try {
-      await registrarUsuario({
+      const result = await registrarUsuario({
         nombre: registerForm.nombre.trim(),
         correo: registerForm.correo.trim().toLowerCase(),
         password: registerForm.password,
       });
-      setSuccessMessage('Cuenta creada correctamente. Ya puede iniciar sesión.');
-      setRegisterForm({ nombre: '', correo: '', password: '', confirmPassword: '' });
-      setMode('login');
+      setSuccessMessage(result?.message || 'Revisa tu correo e ingresa el codigo de verificacion.');
+      setRegisterStep('verify');
     } catch (err) {
       setFormError(err.message || 'No se pudo registrar la cuenta.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyRegistration = async (event) => {
+    event.preventDefault();
+    setFormError('');
+    setSuccessMessage('');
+
+    if (!registerForm.correo.trim() || !registerForm.token.trim()) {
+      setFormError('Ingrese el codigo recibido en su correo.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await verificarRegistro({
+        correo: registerForm.correo.trim().toLowerCase(),
+        token: registerForm.token.trim(),
+      });
+      setSuccessMessage(result?.message || 'Cuenta creada correctamente. Ya puede iniciar sesion.');
+      setRegisterForm({ nombre: '', correo: '', password: '', confirmPassword: '', token: '' });
+      setRegisterStep('form');
+      setMode('login');
+    } catch (err) {
+      setFormError(err.message || 'No se pudo verificar el codigo.');
     } finally {
       setIsLoading(false);
     }
@@ -229,7 +258,6 @@ const Login = () => {
     event.preventDefault();
     setFormError('');
     setSuccessMessage('');
-    setDevToken('');
 
     if (!recoverForm.identifier.trim()) {
       setFormError('Ingrese su correo o usuario para recuperar la contraseña.');
@@ -239,11 +267,6 @@ const Login = () => {
     setIsLoading(true);
     try {
       const result = await solicitarRecuperacion(recoverForm.identifier.trim());
-      if (result?.found && result?.devToken) {
-        setDevToken(result.devToken);
-      } else {
-        setDevToken('');
-      }
       if (result?.found) {
         setSuccessMessage(result?.message || 'Solicitud enviada.');
         setRecoverForm((prev) => ({ ...prev, token: '', nuevaPassword: '', confirmPassword: '' }));
@@ -285,7 +308,6 @@ const Login = () => {
       });
       setSuccessMessage(result?.message || 'Contraseña actualizada correctamente.');
       setRecoverForm({ identifier: '', token: '', nuevaPassword: '', confirmPassword: '' });
-      setDevToken('');
       setMode('login');
     } catch (err) {
       setFormError(err.message || 'No se pudo restablecer la contraseña.');
@@ -328,6 +350,8 @@ const Login = () => {
           </p>
         ) : null}
         {mode === 'recover' && formError ? <p className="login-error-banner">{formError}</p> : null}
+        {mode === 'login' && formError ? <p className="login-error-banner">{formError}</p> : null}
+        {mode === 'register' && formError ? <p className="login-error-banner">{formError}</p> : null}
         {mode === 'login' ? (
           <form className="login-form" onSubmit={handleSubmit} noValidate>
           <div className="login-field">
@@ -364,13 +388,13 @@ const Login = () => {
                 setPassword(e.target.value);
                 clearFieldError('password');
               }}
-              className={fieldErrors.password || formError ? 'input-error' : ''}
-              ariaInvalid={Boolean(fieldErrors.password || formError)}
-              ariaDescribedBy={fieldErrors.password || formError ? 'password-error' : undefined}
+              className={fieldErrors.password ? 'input-error' : ''}
+              ariaInvalid={Boolean(fieldErrors.password)}
+              ariaDescribedBy={fieldErrors.password ? 'password-error' : undefined}
             />
-            {(fieldErrors.password || formError) && (
+            {fieldErrors.password && (
               <p id="password-error" className="login-field-error">
-                {fieldErrors.password || formError}
+                {fieldErrors.password}
               </p>
             )}
             <button type="button" className="login-forgot-link" onClick={() => switchMode('recover')}>
@@ -385,6 +409,7 @@ const Login = () => {
         ) : null}
 
         {mode === 'register' ? (
+          registerStep === 'form' ? (
           <form className="login-form" onSubmit={handleRegister} noValidate>
             <div className="login-field">
               <label htmlFor="nombre">Nombre</label>
@@ -428,14 +453,36 @@ const Login = () => {
                 onChange={(e) => setRegisterForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
               />
             </div>
-            {formError ? <p className="login-field-error">{formError}</p> : null}
             <button type="submit" className="login-button" disabled={isLoading}>
-              {isLoading ? 'Creando cuenta...' : 'REGISTRARME'}
+              {isLoading ? 'Enviando código...' : 'REGISTRARME'}
             </button>
             <button type="button" className="login-alt-link" onClick={() => switchMode('login')}>
               Volver a iniciar sesión
             </button>
           </form>
+          ) : (
+          <form className="login-form" onSubmit={handleVerifyRegistration} noValidate>
+            <p className="login-verify-hint">
+              Enviamos un codigo a <strong>{registerForm.correo}</strong>. Ingresalo para activar tu cuenta.
+            </p>
+            <div className="login-field">
+              <label htmlFor="registerToken">Codigo recibido</label>
+              <input
+                id="registerToken"
+                type="text"
+                value={registerForm.token}
+                onChange={(e) => setRegisterForm((prev) => ({ ...prev, token: e.target.value }))}
+                required
+              />
+            </div>
+            <button type="submit" className="login-button" disabled={isLoading}>
+              {isLoading ? 'Verificando...' : 'VERIFICAR CUENTA'}
+            </button>
+            <button type="button" className="login-alt-link" onClick={() => setRegisterStep('form')}>
+              Volver al formulario
+            </button>
+          </form>
+          )
         ) : null}
 
         {mode === 'recover' ? (
@@ -455,12 +502,6 @@ const Login = () => {
                 ENVIAR
               </button>
             </form>
-
-            {devToken ? (
-              <p className="login-dev-token">
-                Código de recuperación (modo desarrollo): <strong>{devToken}</strong>
-              </p>
-            ) : null}
 
             <form className="login-form login-form--compact" onSubmit={handleResetPassword} noValidate>
               <div className="login-field">

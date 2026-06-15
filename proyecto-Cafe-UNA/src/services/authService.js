@@ -52,6 +52,13 @@ export async function registrarUsuario(payload) {
   });
 }
 
+export async function verificarRegistro(payload) {
+  return request(`${AUTH_BASE_URL}/verify-registration`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function solicitarRecuperacion(identifier) {
   return request(`${AUTH_BASE_URL}/forgot-password`, {
     method: "POST",
