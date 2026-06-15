@@ -27,8 +27,12 @@ function obtenerActorRoles() {
 }
 
 async function request(url, options = {}) {
+  const method = (options.method || "GET").toUpperCase();
+  const isPublicRead = method === "GET";
+
   return apiRequest(url, {
     ...options,
+    skipAuth: isPublicRead ? true : options.skipAuth,
     errorPrefix: "Error en productos",
     timeoutMessage: "Tiempo de espera agotado al consultar productos.",
   });

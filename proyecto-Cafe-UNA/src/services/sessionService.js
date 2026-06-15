@@ -1,9 +1,15 @@
 const USER_STORAGE_KEY = 'user';
 const SESSION_DURATION_MS = 60 * 60 * 1000;
+export const SESSION_UPDATED_EVENT = 'session-updated';
+
+function notifySessionChange() {
+  window.dispatchEvent(new Event('storage'));
+  window.dispatchEvent(new Event(SESSION_UPDATED_EVENT));
+}
 
 export function clearSession() {
   localStorage.removeItem(USER_STORAGE_KEY);
-  window.dispatchEvent(new Event('storage'));
+  notifySessionChange();
 }
 
 export function getStoredUser() {
@@ -35,6 +41,27 @@ export function saveAuthenticatedUser(user) {
     expiresAt: Date.now() + SESSION_DURATION_MS,
   };
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(sessionUser));
-  window.dispatchEvent(new Event('storage'));
+  notifySessionChange();
   return sessionUser;
+}
+
+export function applyPerfilToSession(perfil) {
+  if (!perfil) return null;
+
+  return updateSessionUser({
+    name: perfil.nombre,
+    username: perfil.nombre,
+    email: perfil.correo,
+    correo: perfil.correo,
+    fotoPerfilUrl: perfil.fotoPerfilUrl || "",
+    fotoBannerUrl: perfil.fotoBannerUrl || "",
+    fotoPerfilPosicion: perfil.fotoPerfilPosicion || "",
+    fotoBannerPosicion: perfil.fotoBannerPosicion || "",
+  });
+}
+
+export function updateSessionUser(partial) {
+  const current = getStoredUser();
+  if (!current) return null;
+  return saveAuthenticatedUser({ ...current, ...partial });
 }

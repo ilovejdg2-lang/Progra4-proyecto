@@ -7,12 +7,6 @@ import './AboutUs.css';
 
 const emptyTexto = { title: '', description: '' };
 
-function notifyRouteError(message) {
-  window.setTimeout(() => {
-    window.dispatchEvent(new CustomEvent('public-route-error', { detail: { pathname: '/AboutUs', message } }));
-  }, 0);
-}
-
 const AboutUs = () => {
   const [historiaTitulo, setHistoriaTitulo] = useState('');
   const [historia, setHistoria] = useState('');
@@ -44,9 +38,7 @@ const AboutUs = () => {
       .catch((err) => {
         console.error('No se pudo cargar la informacion de sobre nosotros.', err);
         if (activo) {
-          const message = err?.message || 'No se pudo cargar la información de Sobre Nosotros.';
-          setLoadError(message);
-          notifyRouteError(message);
+          setLoadError(err?.message || 'No se pudo cargar la información de Sobre Nosotros.');
         }
       })
       .finally(() => {
@@ -63,26 +55,21 @@ const AboutUs = () => {
   const hasMission = Boolean(missionData.title || missionData.description);
   const hasVision = Boolean(visionData.title || visionData.description);
 
-  useEffect(() => {
-    if (!loading && !loadError) {
-      window.setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('public-route-ready', { detail: { pathname: '/AboutUs' } }));
-      }, 0);
-    }
-  }, [loadError, loading]);
-
-  if (loading || loadError) {
+  if (loading) {
     return (
       <PageLoading
-        message={loadError || 'Cargando sobre nosotros...'}
-        detail={loadError ? 'Revise que el backend esté encendido y vuelva a intentar.' : ''}
-        isError={Boolean(loadError)}
+        message="Cargando sobre nosotros..."
       />
     );
   }
 
   return (
     <main className="about-page">
+      {loadError ? (
+        <p className="about-page__load-error" role="status">
+          No se pudo cargar todo el contenido. Revise que el backend esté encendido.
+        </p>
+      ) : null}
       {hasHistoria ? (
         <section className="about-page__intro" aria-labelledby="about-historia-title">
           {historiaTitulo ? (

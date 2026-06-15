@@ -8,6 +8,7 @@ import { normalizeImageUrl } from '../../lib/imageUtils';
 import { obtenerSolicitudes, obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService';
 import { clearSession, getActiveSessionUser } from '../../services/sessionService';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
+import { DEFAULT_NAV_LINKS } from '../../lib/defaultSiteLinks';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 const CART_STORAGE_KEY = 'cart';
@@ -428,6 +429,7 @@ const Navbar = () => {
         isTransparent && !useSolidNavbar ? (logoClaroUrl || logoUrl) : logoUrl,
         { width: 480 }
     );
+    const navLinks = enlacesNavbar.length > 0 ? enlacesNavbar : DEFAULT_NAV_LINKS;
 
     return (
         <nav
@@ -464,7 +466,7 @@ const Navbar = () => {
             </div>
 
             <div className="navbar__menu">
-                {enlacesNavbar.map((enlace) => (
+                {navLinks.map((enlace) => (
                     <SiteNavLink
                         key={enlace.id ?? enlace.ruta}
                         enlace={enlace}
@@ -672,7 +674,15 @@ const Navbar = () => {
                     </button>
                     {showDropdown && user && (
                         <div className="dropdown">
-                        <p>{userDisplayName}</p>
+                        <div className="dropdown__user">
+                          <p className="dropdown__name">{userDisplayName}</p>
+                          <p className="dropdown__email">{user?.email || user?.correo}</p>
+                        </div>
+                        {user.role !== 'admin' ? (
+                          <Link to="/perfil" onClick={() => setShowDropdown(false)}>
+                            Mi perfil
+                          </Link>
+                        ) : null}
                         {user.role === 'admin' && (
                             <Link to="/admin" onClick={() => setShowDropdown(false)}>Panel Administrativo</Link>
                         )}
@@ -712,7 +722,7 @@ const Navbar = () => {
                         </button>
                     </header>
                     <nav className="navbar__mobile-links">
-                        {enlacesNavbar.map((enlace) => (
+                        {navLinks.map((enlace) => (
                             <SiteNavLink
                                 key={`mobile-${enlace.id ?? enlace.ruta}`}
                                 enlace={enlace}

@@ -172,14 +172,6 @@ const Products = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (!loading) {
-      window.setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('public-route-ready', { detail: { pathname: '/productos' } }));
-      }, 0);
-    }
-  }, [loading]);
-
   if (loading) {
     return (
       <PageLoading message="Cargando productos..." />
