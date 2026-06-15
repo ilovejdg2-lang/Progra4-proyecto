@@ -139,6 +139,33 @@ export async function obtenerEnlaces(seccion) {
   return getCache(key) ?? setCache(key, promise);
 }
 
+export async function crearEnlace(item) {
+  const result = await request(`${BASE_URL}/enlaces`, {
+    method: "POST",
+    body: JSON.stringify(item),
+  });
+  clearInfoCache();
+  return result;
+}
+
+export async function actualizarEnlace(id, cambios) {
+  const result = await request(`${BASE_URL}/enlaces/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(cambios),
+  });
+  clearInfoCache();
+  return result;
+}
+
+export async function eliminarEnlace(id) {
+  await request(`${BASE_URL}/enlaces/${id}`, {
+    method: "DELETE",
+    body: JSON.stringify({ actorRoles: obtenerActorRoles() }),
+  });
+  clearInfoCache();
+  return true;
+}
+
 export async function obtenerInformacionSobreNosotros() {
   const [historia, mission, vision, gallery] = await Promise.all([
     obtenerSeccion("historia").catch(() => ({})),
