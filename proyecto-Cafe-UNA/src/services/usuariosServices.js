@@ -4,8 +4,12 @@ import { apiRequest } from "./apiClient";
 const BASE_URL = `${import.meta.env.BACKEND_URL}/usuarios`;
 
 async function request(url, options = {}) {
+  const method = (options.method || "GET").toUpperCase();
+  const isPublicRead = method === "GET";
+
   return apiRequest(url, {
     ...options,
+    skipAuth: isPublicRead ? true : options.skipAuth,
     errorPrefix: "Error en usuarios",
     timeoutMessage: "Tiempo de espera agotado al consultar usuarios.",
   });
@@ -28,7 +32,36 @@ export async function obtenerUsuarioPorId(id) {
   return request(`${BASE_URL}/${id}`);
 }
 
-// ─── CREATE: agregar nuevo usuario ───────────────────────────────────────────
+// ─── CREATE: agregar nuevo usuario (con verificación de correo) ───────────────
+export async function solicitarCreacionUsuario(nuevoUsuario) {
+  return request(`${BASE_URL}/solicitar-creacion`, {
+    method: "POST",
+    body: JSON.stringify(nuevoUsuario),
+  });
+}
+
+export async function confirmarCreacionUsuario({ correo, token }) {
+  return request(`${BASE_URL}/confirmar-creacion`, {
+    method: "POST",
+    body: JSON.stringify({ correo, token }),
+  });
+}
+
+export async function solicitarCambioCorreoUsuario(id, nuevoCorreo) {
+  return request(`${BASE_URL}/${id}/solicitar-cambio-correo`, {
+    method: "PUT",
+    body: JSON.stringify({ nuevoCorreo }),
+  });
+}
+
+export async function confirmarCambioCorreoUsuario(id, { nuevoCorreo, token }) {
+  return request(`${BASE_URL}/${id}/confirmar-cambio-correo`, {
+    method: "PUT",
+    body: JSON.stringify({ nuevoCorreo, token }),
+  });
+}
+
+// ─── CREATE: agregar nuevo usuario (deprecado, usar solicitar+confirmar) ────
 export async function crearUsuario(nuevoUsuario) {
   return request(BASE_URL, {
     method: "POST",

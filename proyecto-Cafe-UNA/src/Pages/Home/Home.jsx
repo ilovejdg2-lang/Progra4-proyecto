@@ -98,11 +98,6 @@ function waitForImage(src, timeoutMs = 8000) {
   });
 }
 
-function notifyRouteError(message) {
-  window.setTimeout(() => {
-    window.dispatchEvent(new CustomEvent('public-route-error', { detail: { pathname: '/', message } }));
-  }, 0);
-}
 
 const Home = () => {
   const [hero, setHero] = useState({});
@@ -132,9 +127,9 @@ const Home = () => {
       .catch((err) => {
         console.error('No se pudo cargar la informacion del hero.', err);
         if (activo) {
-          const message = err?.message || 'No se pudo cargar la información del inicio.';
-          setLoadError(message);
-          notifyRouteError(message);
+          setHero({});
+          setHeroLoaded(true);
+          setLoadError(err?.message || '');
         }
       });
 
@@ -218,7 +213,7 @@ const Home = () => {
   const heroHasContent = Boolean(
     hero?.backgroundImage || hero?.title || hero?.subtitle || hero?.buttonText
   );
-  const homeReady = heroLoaded && !loadError;
+  const homeReady = heroLoaded;
   const spotlightTitle = missionSpotlight.title || missionSpotlightDefault.title;
   const spotlightDescription = missionSpotlight.description || missionSpotlightDefault.description;
   const spotlightImageUrl = normalizeImageUrl(spotlightImage || spotlightImageDefault, { width: 900 });
@@ -232,26 +227,21 @@ const Home = () => {
     };
   }, [heroLoaded]);
 
-  useEffect(() => {
-    if (homeReady) {
-      window.setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('public-route-ready', { detail: { pathname: '/' } }));
-      }, 0);
-    }
-  }, [homeReady]);
-
   if (!homeReady) {
     return (
       <PageLoading
-        message={loadError || 'Cargando inicio...'}
-        detail={loadError ? 'Revise que el backend esté encendido y vuelva a intentar.' : ''}
-        isError={Boolean(loadError)}
+        message="Cargando inicio..."
       />
     );
   }
 
   return (
     <>
+      {loadError ? (
+        <p className="home-page__load-error" role="status">
+          Algunos datos del inicio no se pudieron cargar. Puede seguir navegando el sitio.
+        </p>
+      ) : null}
       <Hero data={hero} />
       <main className="home-page">
         <section className="home-page__mission-spotlight" aria-labelledby="mission-spotlight-title">

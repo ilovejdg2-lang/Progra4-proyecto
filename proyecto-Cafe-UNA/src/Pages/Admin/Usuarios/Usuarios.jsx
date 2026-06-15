@@ -11,9 +11,12 @@ import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
 import {
   obtenerUsuarios,
-  crearUsuario,
   actualizarUsuario,
   toggleEstadoUsuario,
+  solicitarCreacionUsuario,
+  confirmarCreacionUsuario,
+  solicitarCambioCorreoUsuario,
+  confirmarCambioCorreoUsuario,
 } from "../../../services/usuariosServices";
 import { getActiveSessionUser } from "../../../services/sessionService";
 
@@ -57,30 +60,96 @@ function BadgeRol({ rol }) {
 // ─── Formulario de usuario (crear / editar) ───────────────────────────────────
 const ROLES_DISPONIBLES = ["SuperAdmin", "Admin", "Usuario", "Cliente"];
 
-function FormUsuario({ inicial, onGuardar, onCancelar, cargando, puedeEditarRoles = false }) {
+function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, setCargando, puedeEditarRoles = false }) {
   const actor = (() => {
     return getActiveSessionUser();
   })();
   const actorId = Number(actor?.id) || null;
   const editandoPropioUsuario = Boolean(inicial?.id) && actorId !== null && Number(inicial.id) === actorId;
+  const correoOriginal = (inicial?.correo ?? "").trim().toLowerCase();
+
+  const [pasoCreacion, setPasoCreacion] = useState("datos");
+  const [codigoVerificacion, setCodigoVerificacion] = useState("");
+  const [correoVerificado, setCorreoVerificado] = useState(true);
+  const [mensajeCorreo, setMensajeCorreo] = useState("");
+  const [errorCorreo, setErrorCorreo] = useState("");
+  const [verificandoCorreo, setVerificandoCorreo] = useState(false);
+  const [correoForm, setCorreoForm] = useState(inicial?.correo ?? "");
 
   const form = useForm({
     defaultValues: {
       nombre: inicial?.nombre ?? "",
       correo: inicial?.correo ?? "",
-      passwordHash: inicial?.passwordHash ?? "",
+      passwordHash: "",
+      passwordActual: "",
       roles: inicial?.roles ?? ["Usuario"],
     },
-    onSubmit: ({ value }) => {
+    onSubmit: async ({ value }) => {
+      const correoActual = value.correo.trim().toLowerCase();
       const payload = {
-        ...value,
         nombre: value.nombre.trim(),
-        correo: value.correo.trim(),
+        correo: correoActual,
         roles: Array.isArray(value.roles) && value.roles.length > 0 ? value.roles : ["Usuario"],
       };
 
       if (!payload.nombre || !payload.correo) return;
-      onGuardar(payload);
+
+      if (!inicial) {
+        if (pasoCreacion === "datos") {
+          if (!value.passwordHash?.trim()) {
+            setErrorCorreo("La contraseña es obligatoria.");
+            return;
+          }
+          setCargando(true);
+          setErrorCorreo("");
+          try {
+            const result = await solicitarCreacionUsuario({
+              ...payload,
+              passwordHash: value.passwordHash,
+            });
+            setMensajeCorreo(result?.message || "Código enviado al correo.");
+            setPasoCreacion("codigo");
+          } catch (err) {
+            setErrorCorreo(err?.message || "No se pudo enviar el código.");
+          } finally {
+            setCargando(false);
+          }
+          return;
+        }
+
+        setCargando(true);
+        setErrorCorreo("");
+        try {
+          const nuevo = await confirmarCreacionUsuario({
+            correo: correoActual,
+            token: codigoVerificacion.trim(),
+          });
+          onCreado(nuevo);
+        } catch (err) {
+          setErrorCorreo(err?.message || "No se pudo crear el usuario.");
+        } finally {
+          setCargando(false);
+        }
+        return;
+      }
+
+      if (correoActual !== correoOriginal && !correoVerificado) {
+        setErrorCorreo("Debe verificar el nuevo correo antes de guardar.");
+        return;
+      }
+
+      const cambios = { ...payload };
+      if (value.passwordHash?.trim()) {
+        cambios.passwordHash = value.passwordHash;
+        cambios.passwordActual = value.passwordActual;
+      }
+
+      setCargando(true);
+      try {
+        await onActualizado(cambios);
+      } finally {
+        setCargando(false);
+      }
     },
   });
 
@@ -88,6 +157,66 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando, puedeEditarRole
     e.preventDefault();
     e.stopPropagation();
     form.handleSubmit();
+  }
+
+  const correoCambio = Boolean(inicial) && correoForm.trim().toLowerCase() !== correoOriginal;
+
+  useEffect(() => {
+    if (!inicial) {
+      setCorreoVerificado(false);
+      return;
+    }
+    setCorreoVerificado(!correoCambio);
+  }, [correoCambio, inicial]);
+
+  async function handleSolicitarCodigoCorreo() {
+    const correo = correoForm.trim().toLowerCase();
+    if (!correo) {
+      setErrorCorreo("Ingrese el nuevo correo.");
+      return;
+    }
+
+    setVerificandoCorreo(true);
+    setErrorCorreo("");
+    setMensajeCorreo("");
+
+    try {
+      const result = await solicitarCambioCorreoUsuario(inicial.id, correo);
+      setMensajeCorreo(result?.message || "Código enviado al nuevo correo.");
+    } catch (err) {
+      setErrorCorreo(err?.message || "No se pudo enviar el código.");
+    } finally {
+      setVerificandoCorreo(false);
+    }
+  }
+
+  async function handleConfirmarCodigoCorreo() {
+    const correo = correoForm.trim().toLowerCase();
+    const token = codigoVerificacion.trim();
+    if (!correo || !token) {
+      setErrorCorreo("Ingrese el correo y el código recibido.");
+      return;
+    }
+
+    setVerificandoCorreo(true);
+    setErrorCorreo("");
+    setMensajeCorreo("");
+
+    try {
+      const actualizado = await confirmarCambioCorreoUsuario(inicial.id, { nuevoCorreo: correo, token });
+      setCorreoVerificado(true);
+      setCodigoVerificacion("");
+      setMensajeCorreo("Correo verificado y actualizado.");
+      form.setFieldValue("correo", actualizado?.correo || correo);
+      setCorreoForm(actualizado?.correo || correo);
+      if (actualizado?.id) {
+        onActualizado({ ...actualizado, soloActualizarLista: true });
+      }
+    } catch (err) {
+      setErrorCorreo(err?.message || "No se pudo verificar el correo.");
+    } finally {
+      setVerificandoCorreo(false);
+    }
   }
 
   const inputCls =
@@ -105,6 +234,7 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando, puedeEditarRole
               onBlur={field.handleBlur}
               onChange={(event) => field.handleChange(event.target.value)}
               required
+              disabled={!inicial && pasoCreacion === "codigo"}
             />
           )}
         </form.Field>
@@ -118,82 +248,154 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando, puedeEditarRole
               className={inputCls}
               value={field.state.value}
               onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.target.value)}
+              onChange={(event) => {
+                field.handleChange(event.target.value);
+                setCorreoForm(event.target.value);
+              }}
               required
+              disabled={!inicial && pasoCreacion === "codigo"}
             />
           )}
         </form.Field>
+        {inicial && correoCambio ? (
+          <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs text-slate-700">
+              El correo cambió. Debe verificar el nuevo correo antes de guardar otros cambios.
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <button
+                type="button"
+                onClick={handleSolicitarCodigoCorreo}
+                disabled={verificandoCorreo}
+                className="w-full rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 sm:w-auto sm:py-1.5"
+              >
+                Enviar código
+              </button>
+            </div>
+            <input
+              className={inputCls}
+              value={codigoVerificacion}
+              onChange={(e) => setCodigoVerificacion(e.target.value)}
+              placeholder="Código de verificación"
+            />
+            <button
+              type="button"
+              onClick={handleConfirmarCodigoCorreo}
+              disabled={verificandoCorreo}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-50 sm:w-auto sm:py-1.5"
+            >
+              Verificar correo
+            </button>
+          </div>
+        ) : null}
+        {mensajeCorreo ? <p className="mt-2 text-xs text-emerald-700">{mensajeCorreo}</p> : null}
+        {errorCorreo ? <p className="mt-2 text-xs text-red-600">{errorCorreo}</p> : null}
       </div>
-      {!inicial || editandoPropioUsuario ? (
+      {!inicial && pasoCreacion === "codigo" ? (
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
-            Contraseña {inicial && <span className="text-slate-400">(secreta)</span>}
-          </label>
-          <form.Field name="passwordHash">
-            {(field) => (
-              <input
-                type="password"
-                className={inputCls}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(event) => field.handleChange(event.target.value)}
-                required={!inicial}
-                placeholder={inicial ? "••••••••" : ""}
-              />
-            )}
-          </form.Field>
+          <label className="mb-1 block text-xs font-medium text-slate-600">Código de verificación</label>
+          <input
+            className={inputCls}
+            value={codigoVerificacion}
+            onChange={(e) => setCodigoVerificacion(e.target.value)}
+            placeholder="6 dígitos"
+            required
+          />
         </div>
-      ) : (
-        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-          Solo puede cambiar su propia contraseña.
-        </p>
-      )}
-      <div>
-        <label className="mb-2 block text-xs font-medium text-slate-600">Roles</label>
-        {puedeEditarRoles ? (
-          <form.Field name="roles">
-            {(field) => {
-              const selectedRoles = Array.isArray(field.state.value) ? field.state.value : [];
-              const toggleRol = (rol) => {
-                field.handleChange(
-                  selectedRoles.includes(rol)
-                    ? selectedRoles.filter((actual) => actual !== rol)
-                    : [...selectedRoles, rol],
-                );
-              };
-
-              return (
-                <div className="flex flex-wrap gap-2">
-                  {ROLES_DISPONIBLES.map((rol) => (
-                    <button
-                      key={rol}
-                      type="button"
-                      onClick={() => toggleRol(rol)}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                        selectedRoles.includes(rol)
-                          ? `${colorRol[rol] ?? "bg-slate-800 text-white"}`
-                          : "border border-slate-200 bg-white text-slate-500 hover:border-slate-300"
-                      }`}
-                    >
-                      {rol}
-                    </button>
-                  ))}
-                </div>
-              );
-            }}
-          </form.Field>
-        ) : (
-          <form.Field name="roles">
-            {(field) => (
-              <div className="flex flex-wrap gap-2">
-                {(Array.isArray(field.state.value) ? field.state.value : []).map((rol) => (
-                  <BadgeRol key={rol} rol={rol} />
-                ))}
+      ) : null}
+      {(!inicial && pasoCreacion === "datos") || inicial ? (
+        <>
+          {!inicial || editandoPropioUsuario ? (
+            <>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600">
+                  Contraseña {inicial && <span className="text-slate-400">(opcional)</span>}
+                </label>
+                <form.Field name="passwordHash">
+                  {(field) => (
+                    <input
+                      type="password"
+                      className={inputCls}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(event) => field.handleChange(event.target.value)}
+                      required={!inicial}
+                      placeholder={inicial ? "Dejar vacío para no cambiar" : ""}
+                    />
+                  )}
+                </form.Field>
               </div>
+              {inicial ? (
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-slate-600">Contraseña actual</label>
+                  <form.Field name="passwordActual">
+                    {(field) => (
+                      <input
+                        type="password"
+                        className={inputCls}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) => field.handleChange(event.target.value)}
+                        placeholder="Requerida si cambia la contraseña"
+                      />
+                    )}
+                  </form.Field>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+              Solo puede cambiar su propia contraseña.
+            </p>
+          )}
+          <div>
+            <label className="mb-2 block text-xs font-medium text-slate-600">Roles</label>
+            {puedeEditarRoles ? (
+              <form.Field name="roles">
+                {(field) => {
+                  const selectedRoles = Array.isArray(field.state.value) ? field.state.value : [];
+                  const toggleRol = (rol) => {
+                    field.handleChange(
+                      selectedRoles.includes(rol)
+                        ? selectedRoles.filter((actual) => actual !== rol)
+                        : [...selectedRoles, rol],
+                    );
+                  };
+
+                  return (
+                    <div className="flex flex-wrap gap-2">
+                      {ROLES_DISPONIBLES.map((rol) => (
+                        <button
+                          key={rol}
+                          type="button"
+                          onClick={() => toggleRol(rol)}
+                          className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                            selectedRoles.includes(rol)
+                              ? `${colorRol[rol] ?? "bg-slate-800 text-white"}`
+                              : "border border-slate-200 bg-white text-slate-500 hover:border-slate-300"
+                          }`}
+                        >
+                          {rol}
+                        </button>
+                      ))}
+                    </div>
+                  );
+                }}
+              </form.Field>
+            ) : (
+              <form.Field name="roles">
+                {(field) => (
+                  <div className="flex flex-wrap gap-2">
+                    {(Array.isArray(field.state.value) ? field.state.value : []).map((rol) => (
+                      <BadgeRol key={rol} rol={rol} />
+                    ))}
+                  </div>
+                )}
+              </form.Field>
             )}
-          </form.Field>
-        )}
-      </div>
+          </div>
+        </>
+      ) : null}
 
       <div className="flex flex-col-reverse justify-end gap-2 pt-2 sm:flex-row">
         <button
@@ -205,10 +407,16 @@ function FormUsuario({ inicial, onGuardar, onCancelar, cargando, puedeEditarRole
         </button>
         <button
           type="submit"
-          disabled={cargando}
+          disabled={cargando || verificandoCorreo}
           className="w-full rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-50 sm:w-auto"
         >
-          {cargando ? "Guardando…" : inicial ? "Guardar cambios" : "Crear usuario"}
+          {cargando || verificandoCorreo
+            ? "Procesando…"
+            : !inicial
+              ? pasoCreacion === "datos"
+                ? "Enviar código al correo"
+                : "Crear usuario"
+              : "Guardar cambios"}
         </button>
       </div>
     </form>
@@ -335,30 +543,31 @@ const AdminUsuarios = () => {
     };
   }, []);
 
-  async function handleCrear(form) {
-    try {
-      setGuardando(true);
-      const nuevo = await crearUsuario(form);
-      setUsuarios((prev) => [...prev, nuevo]);
-      setModalCrear(false);
-    } catch {
-      alert("Error al crear usuario.");
-    } finally {
-      setGuardando(false);
-    }
+  async function handleCrear(usuario) {
+    setUsuarios((prev) => [...prev, usuario]);
+    setModalCrear(false);
   }
 
   async function handleEditar(form) {
+    if (form?.soloActualizarLista) {
+      setUsuarios((prev) => prev.map((u) => (u.id === form.id ? form : u)));
+      setUsuarioEditar(form);
+      return;
+    }
+
     try {
       setGuardando(true);
       const cambios = { ...form };
-      // Si la contraseña quedó vacía, no la actualizamos
-      if (!cambios.passwordHash) delete cambios.passwordHash;
+      if (!cambios.passwordHash) {
+        delete cambios.passwordHash;
+        delete cambios.passwordActual;
+      }
       const actualizado = await actualizarUsuario(usuarioEditar.id, cambios);
       setUsuarios((prev) => prev.map((u) => (u.id === actualizado.id ? actualizado : u)));
       setUsuarioEditar(null);
-    } catch {
-      alert("Error al editar usuario.");
+    } catch (err) {
+      alert(err?.message || "Error al editar usuario.");
+      throw err;
     } finally {
       setGuardando(false);
     }
@@ -466,16 +675,25 @@ const AdminUsuarios = () => {
       {/* Modales */}
       {modalCrear && (
         <Modal titulo="Nuevo usuario" onClose={() => setModalCrear(false)}>
-          <FormUsuario onGuardar={handleCrear} onCancelar={() => setModalCrear(false)} cargando={guardando} puedeEditarRoles={esSuperAdmin} />
+          <FormUsuario
+            onCreado={handleCrear}
+            onActualizado={handleEditar}
+            onCancelar={() => setModalCrear(false)}
+            cargando={guardando}
+            setCargando={setGuardando}
+            puedeEditarRoles={esSuperAdmin}
+          />
         </Modal>
       )}
       {usuarioEditar && (
         <Modal titulo="Editar usuario" onClose={() => setUsuarioEditar(null)}>
           <FormUsuario
             inicial={usuarioEditar}
-            onGuardar={handleEditar}
+            onCreado={handleCrear}
+            onActualizado={handleEditar}
             onCancelar={() => setUsuarioEditar(null)}
             cargando={guardando}
+            setCargando={setGuardando}
             puedeEditarRoles={esSuperAdmin}
           />
         </Modal>
