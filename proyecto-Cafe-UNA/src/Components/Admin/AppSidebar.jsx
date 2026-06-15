@@ -12,6 +12,7 @@ import {
   LogOut,
   Package,
   Settings,
+  UserRound,
   Users,
 } from "lucide-react";
 
@@ -37,18 +38,27 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from "./ui/Sidebar";
-import { normalizeImageUrl } from "../../lib/imageUtils";
+import { normalizeImageUrl, getImageObjectPosition } from "../../lib/imageUtils";
 import { obtenerNavbar } from "../../services/informacionService";
-import { clearSession, getActiveSessionUser } from "../../services/sessionService";
+import { obtenerPerfil } from "../../services/perfilService";
+import {
+  applyPerfilToSession,
+  clearSession,
+  getActiveSessionUser,
+  SESSION_UPDATED_EVENT,
+} from "../../services/sessionService";
 
 const GENERAL_OPEN_KEY = "admin-sidebar-general-open";
 const INVENTORY_OPEN_KEY = "admin-sidebar-inventory-open";
 
 export function AppSidebar() {
-  const user = getActiveSessionUser();
+  const [user, setUser] = useState(() => getActiveSessionUser());
   const { setOpenMobile } = useSidebar();
-  const displayName = user?.username?.includes("@") ? user?.name : user?.username || user?.name || "Usuario";
+  const displayName = user?.name || user?.username || "Usuario";
   const displayEmail = user?.email || user?.correo || "";
+  const avatarUrl = user?.fotoPerfilUrl?.trim()
+    ? normalizeImageUrl(user.fotoPerfilUrl.trim(), { width: 96 })
+    : "";
 
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
@@ -63,6 +73,36 @@ export function AppSidebar() {
     return savedValue === null ? isGeneralRoute : savedValue === "true";
   });
   const [logoUrl, setLogoUrl] = useState("");
+
+  useEffect(() => {
+    const syncUser = () => setUser(getActiveSessionUser());
+    syncUser();
+    window.addEventListener("storage", syncUser);
+    window.addEventListener(SESSION_UPDATED_EVENT, syncUser);
+    return () => {
+      window.removeEventListener("storage", syncUser);
+      window.removeEventListener(SESSION_UPDATED_EVENT, syncUser);
+    };
+  }, []);
+
+  useEffect(() => {
+    const current = getActiveSessionUser();
+    if (!current?.id) return undefined;
+
+    let activo = true;
+
+    obtenerPerfil()
+      .then((perfil) => {
+        if (!activo || !perfil) return;
+        const updated = applyPerfilToSession(perfil);
+        if (updated) setUser(updated);
+      })
+      .catch(() => {});
+
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   useEffect(() => {
     setOpenMobile(false);
@@ -117,8 +157,9 @@ export function AppSidebar() {
         <Link
           to="/"
           className="block"
+          title="Ir al inicio"
+          aria-label="Ir al inicio de Café UNA"
           onClick={() => {
-            clearSidebarState();
             closeMobileSidebar();
           }}
         >
@@ -221,6 +262,14 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link to="/admin/perfil" onClick={closeMobileSidebar}>
+                  <UserRound />
+                  <span>Mi perfil</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
@@ -230,9 +279,25 @@ export function AppSidebar() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex w-full items-center justify-between rounded-md px-2 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-950"
+              className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-950"
             >
-              <span className="truncate">{displayName}</span>
+              {avatarUrl ? (
+                <img
+                  key={avatarUrl}
+                  src={avatarUrl}
+                  alt=""
+                  className="size-8 rounded-full object-cover"
+                  style={{ objectPosition: getImageObjectPosition(user?.fotoPerfilPosicion) }}
+                />
+              ) : (
+                <span className="inline-flex size-8 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-700">
+                  {displayName.slice(0, 2).toUpperCase()}
+                </span>
+              )}
+              <span className="min-w-0 flex-1 text-left">
+                <span className="block truncate">{displayName}</span>
+                {displayEmail ? <span className="block truncate text-xs font-normal text-slate-500">{displayEmail}</span> : null}
+              </span>
               <ChevronDown className="size-4 shrink-0" />
             </button>
           </DropdownMenuTrigger>
@@ -241,6 +306,12 @@ export function AppSidebar() {
               <div className="truncate font-medium text-slate-700">{displayName}</div>
               {displayEmail ? <div className="truncate">{displayEmail}</div> : null}
             </div>
+            <DropdownMenuItem asChild>
+              <Link to="/admin/perfil" className="cursor-pointer">
+                <UserRound className="size-4" />
+                <span>Mi perfil</span>
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={handleLogout} className="text-red-600 focus:text-red-700">
               <LogOut className="size-4" />
               <span>Cerrar sesión</span>

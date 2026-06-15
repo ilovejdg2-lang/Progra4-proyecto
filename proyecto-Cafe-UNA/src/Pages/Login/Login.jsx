@@ -79,6 +79,7 @@ const Login = () => {
     token: '',
   });
   const [registerStep, setRegisterStep] = useState('form');
+  const [registerEmailSent, setRegisterEmailSent] = useState(true);
 
   const [logoUrl, setLogoUrl] = useState('');
 
@@ -172,8 +173,7 @@ const Login = () => {
 
       const authenticatedUser = mapAuthenticatedUser(token);
       saveAuthenticatedUser(authenticatedUser);
-      const redirectTo = sessionStorage.getItem('postLoginRedirect')
-        || (authenticatedUser.role === 'admin' ? '/admin' : '/');
+      const redirectTo = sessionStorage.getItem('postLoginRedirect') || '/';
       sessionStorage.removeItem('postLoginRedirect');
       window.location.href = redirectTo;
     } catch (err) {
@@ -218,10 +218,37 @@ const Login = () => {
         correo: registerForm.correo.trim().toLowerCase(),
         password: registerForm.password,
       });
+      setRegisterEmailSent(result?.emailSent !== false);
       setSuccessMessage(result?.message || 'Revisa tu correo e ingresa el codigo de verificacion.');
       setRegisterStep('verify');
     } catch (err) {
       setFormError(err.message || 'No se pudo registrar la cuenta.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendRegistrationCode = async () => {
+    setFormError('');
+    setSuccessMessage('');
+
+    if (!registerForm.nombre.trim() || !registerForm.correo.trim() || !registerForm.password) {
+      setFormError('Complete el formulario de registro antes de reenviar el codigo.');
+      setRegisterStep('form');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await registrarUsuario({
+        nombre: registerForm.nombre.trim(),
+        correo: registerForm.correo.trim().toLowerCase(),
+        password: registerForm.password,
+      });
+      setRegisterEmailSent(result?.emailSent !== false);
+      setSuccessMessage(result?.message || 'Codigo reenviado. Revise su correo y la carpeta de spam.');
+    } catch (err) {
+      setFormError(err.message || 'No se pudo reenviar el codigo.');
     } finally {
       setIsLoading(false);
     }
@@ -463,7 +490,16 @@ const Login = () => {
           ) : (
           <form className="login-form" onSubmit={handleVerifyRegistration} noValidate>
             <p className="login-verify-hint">
-              Enviamos un codigo a <strong>{registerForm.correo}</strong>. Ingresalo para activar tu cuenta.
+              {registerEmailSent ? (
+                <>
+                  Enviamos un codigo a <strong>{registerForm.correo}</strong>. Ingresalo para activar tu cuenta.
+                  {' '}Si no lo ve, revise la carpeta de <strong>spam</strong> o <strong>correo no deseado</strong> (comun en Yahoo y Gmail).
+                </>
+              ) : (
+                <>
+                  No pudimos enviar el correo a <strong>{registerForm.correo}</strong>. Espere 3 minutos y use <strong>Reenviar codigo</strong>.
+                </>
+              )}
             </p>
             <div className="login-field">
               <label htmlFor="registerToken">Codigo recibido</label>
@@ -477,6 +513,14 @@ const Login = () => {
             </div>
             <button type="submit" className="login-button" disabled={isLoading}>
               {isLoading ? 'Verificando...' : 'VERIFICAR CUENTA'}
+            </button>
+            <button
+              type="button"
+              className="login-alt-link"
+              onClick={handleResendRegistrationCode}
+              disabled={isLoading}
+            >
+              Reenviar codigo
             </button>
             <button type="button" className="login-alt-link" onClick={() => setRegisterStep('form')}>
               Volver al formulario

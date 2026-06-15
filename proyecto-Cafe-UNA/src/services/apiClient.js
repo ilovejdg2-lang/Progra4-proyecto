@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getActiveSessionUser } from "./sessionService";
+import { clearSession, getActiveSessionUser } from "./sessionService";
 
 export async function apiRequest(url, options = {}) {
   const {
@@ -9,23 +9,25 @@ export async function apiRequest(url, options = {}) {
     headers,
     method = "GET",
     skipAuth = false,
-    timeout = 10000,
+    timeout = 45000,
     timeoutMessage = "Tiempo de espera agotado al consultar el servidor.",
     ...config
   } = options;
 
+  const sessionUser = skipAuth ? null : getActiveSessionUser();
+
   try {
-    const sessionUser = skipAuth ? null : getActiveSessionUser();
     const authHeaders = sessionUser?.token
       ? { Authorization: `Bearer ${sessionUser.token}` }
       : {};
 
+    const isGet = (method || "GET").toUpperCase() === "GET";
     const response = await axios({
       url,
       method,
       data: data ?? parseBody(body),
       headers: {
-        "Content-Type": "application/json",
+        ...(isGet ? {} : { "Content-Type": "application/json" }),
         ...authHeaders,
         ...(headers || {}),
       },
@@ -36,12 +38,27 @@ export async function apiRequest(url, options = {}) {
     return response.status === 204 ? null : response.data;
   } catch (error) {
     if (error.code === "ECONNABORTED") {
-      throw new Error(timeoutMessage, { cause: error });
+      throw new Error(
+        timeoutMessage || "El servidor tardó demasiado en responder. Intente de nuevo.",
+        { cause: error },
+      );
     }
 
     if (error.response) {
       if (error.response.status === 401 && skipAuth) {
         throw new Error("Credenciales incorrectas", { cause: error });
+      }
+
+      if (error.response.status === 401 && sessionUser?.token) {
+        clearSession();
+        throw new Error("Su sesión expiró. Inicie sesión de nuevo.", { cause: error });
+      }
+
+      if (error.response.status >= 500 && skipAuth) {
+        throw new Error(
+          "El servidor de autenticación falló. Redespliegue el backend en MonsterASP e intente de nuevo.",
+          { cause: error },
+        );
       }
 
       const responseData = error.response.data;

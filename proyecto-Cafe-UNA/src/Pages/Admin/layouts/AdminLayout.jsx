@@ -22,11 +22,11 @@ export function AdminLayout({ children }) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <main className="min-h-svh flex-1 bg-white">
+      <main className="min-h-svh min-w-0 flex-1 overflow-x-hidden bg-white">
         <div className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4">
           <SidebarTrigger />
         </div>
-        <div className="p-4 md:p-6">{children}</div>
+        <div className="min-w-0 p-4 md:p-6">{children}</div>
       </main>
     </SidebarProvider>
   );
