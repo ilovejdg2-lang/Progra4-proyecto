@@ -1,11 +1,11 @@
 {
-  "name": "proyecto-cafe-una",
+  "name": "cafeuna",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/generate-redirects.mjs && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

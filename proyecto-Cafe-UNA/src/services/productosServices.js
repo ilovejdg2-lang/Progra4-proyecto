@@ -1,7 +1,7 @@
 import { getActiveSessionUser } from "./sessionService";
 import { apiRequest } from "./apiClient";
 
-const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/productos`;
+const BASE_URL = `${import.meta.env.BACKEND_URL}/productos`;
 const IVA_RATE = 0.13;
 const CACHE_TTL_MS = 15000;
 let productosCache = {
