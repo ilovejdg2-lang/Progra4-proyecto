@@ -1,7 +1,7 @@
 import { getActiveSessionUser } from "./sessionService";
 import { apiRequest } from "./apiClient";
 
-const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/voluntariado/solicitudes`;
+const BASE_URL = `${import.meta.env.BACKEND_URL}/voluntariado/solicitudes`;
 
 function obtenerActorRoles() {
   try {
