@@ -1,6 +1,6 @@
 import { apiRequest } from "./apiClient";
 
-const AUTH_BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/auth`;
+const AUTH_BASE_URL = `${import.meta.env.BACKEND_URL}/auth`;
 
 async function request(url, options = {}) {
   return apiRequest(url, {

@@ -1,0 +1,20 @@
+# Café UNA — sitio Netlify
+# URL sugerida: https://cafeuna.netlify.app
+# En Netlify: Site configuration → General → Site details → Site name = cafeuna
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  # BACKEND_URL en GitHub Secrets / Netlify Environment variables
+  # Ejemplo: http://cafeunaof.runasp.net/api
+
+# El proxy /api/* se genera en public/_redirects durante npm run build (scripts/generate-redirects.mjs)
+
+# React Router / TanStack Router — SPA fallback (debe ir al final)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
