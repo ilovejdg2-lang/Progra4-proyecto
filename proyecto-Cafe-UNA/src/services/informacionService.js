@@ -1,7 +1,7 @@
 import { getActiveSessionUser } from "./sessionService";
 import { apiRequest } from "./apiClient";
 
-const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/informacion`;
+const BASE_URL = `${import.meta.env.BACKEND_URL}/informacion`;
 const CACHE_TTL_MS = 15000;
 const cache = new Map();
 
