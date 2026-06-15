@@ -1,6 +1,6 @@
 import { apiRequest } from "./apiClient";
 
-const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/cedula`;
+const BASE_URL = `${import.meta.env.BACKEND_URL}/cedula`;
 
 export async function consultarCedula(numero) {
   const normalizado = String(numero ?? "").replace(/\D/g, "");
