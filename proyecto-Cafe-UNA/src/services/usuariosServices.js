@@ -47,10 +47,10 @@ export async function confirmarCreacionUsuario({ correo, token }) {
   });
 }
 
-export async function solicitarCambioCorreoUsuario(id, nuevoCorreo) {
+export async function solicitarCambioCorreoUsuario(id, { nuevoCorreo, passwordActual }) {
   return request(`${BASE_URL}/${id}/solicitar-cambio-correo`, {
     method: "PUT",
-    body: JSON.stringify({ nuevoCorreo }),
+    body: JSON.stringify({ nuevoCorreo, passwordActual }),
   });
 }
 

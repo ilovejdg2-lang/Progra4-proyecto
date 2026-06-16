@@ -165,6 +165,24 @@ body.admin-route-active .page-loading {
   font-weight: 600;
 }
 
+.page-loading__retry {
+  margin-top: 0.35rem;
+  border: 1px solid rgba(77, 43, 31, 0.2);
+  border-radius: 999px;
+  background: #fff;
+  color: #4d2b1f;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.page-loading__retry:hover {
+  background: #faf6f3;
+  border-color: rgba(77, 43, 31, 0.35);
+}
+
 .app-loading-screen__spinner,
 .page-loading__spinner {
   width: 2.25rem;

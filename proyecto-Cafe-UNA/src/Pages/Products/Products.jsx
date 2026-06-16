@@ -3,6 +3,7 @@ import { ShoppingCart } from 'lucide-react';
 import './Products.css';
 import PageLoading from '../../Components/PageLoading/PageLoading';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import { contactSupportMessage, sanitizeUserFacingError } from '../../lib/formLimits';
 import { calcularPrecioConIVA, obtenerProductos } from '../../services/productosServices';
 
 const PRODUCTS_PER_PAGE = 8;
@@ -67,7 +68,7 @@ const Products = () => {
         setProducts(data);
       } catch (err) {
         console.error('No se pudo cargar el catálogo de productos.', err);
-        setError(err?.message || 'No se pudo cargar el catálogo.');
+        setError(sanitizeUserFacingError(err?.message || 'No se pudo cargar el catálogo.'));
         setProducts([]);
       } finally {
         setLoading(false);
@@ -178,6 +179,17 @@ const Products = () => {
     );
   }
 
+  if (error) {
+    return (
+      <PageLoading
+        isError
+        message={error}
+        detail={contactSupportMessage()}
+        onRetry={() => window.location.reload()}
+      />
+    );
+  }
+
   return (
     <main className="products-page">
       <section className="products-page__hero">
@@ -188,11 +200,10 @@ const Products = () => {
       </section>
 
       <section className="products-page__grid" aria-label="Lista de productos de cafe">
-        {error && <p>Error: {error}</p>}
-        {!loading && !error && productCards.length === 0 && (
+        {productCards.length === 0 && (
           <p>No hay productos disponibles en este momento.</p>
         )}
-        {!loading && !error && productCards.map((card) => {
+        {productCards.map((card) => {
           const { product, precioNormal, precioConIVA, stockDisponible, estaAgotado } = card;
 
           return (
