@@ -14,7 +14,13 @@ function removeGlobalLoading() {
   }
 }
 
-const PageLoading = ({ message = 'Cargando página...', detail = '', isError = false }) => {
+const PageLoading = ({
+  message = 'Cargando página...',
+  detail = '',
+  isError = false,
+  onRetry,
+  retryLabel = 'Reintentar',
+}) => {
   useLayoutEffect(() => {
     addGlobalLoading();
 
@@ -28,6 +34,11 @@ const PageLoading = ({ message = 'Cargando página...', detail = '', isError = f
       {isError ? null : <span className="page-loading__spinner" aria-hidden="true" />}
       <p>{message}</p>
       {detail ? <span className="page-loading__detail">{detail}</span> : null}
+      {isError && onRetry ? (
+        <button type="button" className="page-loading__retry" onClick={onRetry}>
+          {retryLabel}
+        </button>
+      ) : null}
     </div>
   );
 };

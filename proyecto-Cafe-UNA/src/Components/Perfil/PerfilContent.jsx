@@ -10,6 +10,15 @@ import {
 } from "../../services/perfilService";
 import { applyPerfilToSession, getActiveSessionUser } from "../../services/sessionService";
 import { formatImagePosition, getImageObjectPosition, normalizeImageUrl, parseImagePosition } from "../../lib/imageUtils";
+import {
+  MAX_NOMBRE_USUARIO,
+  MAX_PASSWORD,
+  contactSupportMessage,
+  sanitizeUserFacingError,
+  validateNombreUsuario,
+  validatePassword,
+} from "../../lib/formLimits";
+import PageLoading from "../PageLoading/PageLoading";
 import "./PerfilContent.css";
 
 const DEFAULT_BANNER =
@@ -17,7 +26,7 @@ const DEFAULT_BANNER =
 
 const FEEDBACK_AUTO_HIDE_MS = 4000;
 
-function PerfilPasswordField({ label, value, onChange, visible, onToggle, autoFocus = false }) {
+function PerfilPasswordField({ label, value, onChange, visible, onToggle, autoFocus = false, error = "" }) {
   const Icon = visible ? Eye : EyeOff;
 
   return (
@@ -30,6 +39,9 @@ function PerfilPasswordField({ label, value, onChange, visible, onToggle, autoFo
           onChange={onChange}
           required
           autoFocus={autoFocus}
+          maxLength={MAX_PASSWORD}
+          className={error ? "input-error" : ""}
+          aria-invalid={Boolean(error)}
         />
         <button
           type="button"
@@ -40,6 +52,7 @@ function PerfilPasswordField({ label, value, onChange, visible, onToggle, autoFo
           <Icon size={18} aria-hidden="true" />
         </button>
       </div>
+      {error ? <p className="perfil-field-error">{error}</p> : null}
     </label>
   );
 }
@@ -249,15 +262,29 @@ export function PerfilContent({ variant = "standalone" }) {
     nombre: "",
     step: "view",
   });
+  const [nombreError, setNombreError] = useState("");
+  const [passwordErrors, setPasswordErrors] = useState({
+    passwordActual: "",
+    passwordNueva: "",
+    confirmPassword: "",
+  });
   const [emailForm, setEmailForm] = useState({
     nuevoCorreo: "",
     token: "",
+    passwordActual: "",
     step: "view",
+  });
+  const [emailErrors, setEmailErrors] = useState({
+    nuevoCorreo: "",
+    passwordActual: "",
+    token: "",
+    formulario: "",
   });
   const [showPasswords, setShowPasswords] = useState({
     actual: false,
     nueva: false,
     confirm: false,
+    email: false,
   });
 
   function resetPasswordVisibility() {
@@ -266,6 +293,7 @@ export function PerfilContent({ variant = "standalone" }) {
 
   function openPasswordEdit() {
     resetPasswordVisibility();
+    setPasswordErrors({ passwordActual: "", passwordNueva: "", confirmPassword: "" });
     setPasswordForm({
       passwordActual: "",
       passwordNueva: "",
@@ -302,7 +330,7 @@ export function PerfilContent({ variant = "standalone" }) {
       });
       applyPerfilToSession(data);
     } catch (err) {
-      setError(err.message || "No se pudo cargar el perfil.");
+      setError(sanitizeUserFacingError(err.message || "No se pudo cargar el perfil."));
     } finally {
       setCargando(false);
     }
@@ -314,16 +342,6 @@ export function PerfilContent({ variant = "standalone" }) {
       setError("Inicie sesión para ver su perfil.");
       return;
     }
-
-    setForm((prev) => ({
-      ...prev,
-      nombre: sessionUser?.name || sessionUser?.username || prev.nombre,
-      correo: sessionUser?.email || sessionUser?.correo || prev.correo,
-      fotoPerfilUrl: sessionUser?.fotoPerfilUrl || prev.fotoPerfilUrl,
-      fotoBannerUrl: sessionUser?.fotoBannerUrl || prev.fotoBannerUrl,
-      fotoPerfilPosicion: sessionUser?.fotoPerfilPosicion || prev.fotoPerfilPosicion,
-      fotoBannerPosicion: sessionUser?.fotoBannerPosicion || prev.fotoBannerPosicion,
-    }));
 
     cargarPerfil();
   }, [sessionUserId]);
@@ -351,11 +369,13 @@ export function PerfilContent({ variant = "standalone" }) {
     event.preventDefault();
     setError("");
     setMensaje("");
+    setNombreError("");
     setGuardando(true);
 
     const nombre = nombreForm.nombre.trim();
-    if (!nombre) {
-      setError("Ingrese un nombre válido.");
+    const nombreValidation = validateNombreUsuario(nombre);
+    if (nombreValidation) {
+      setNombreError(nombreValidation);
       setGuardando(false);
       return;
     }
@@ -381,7 +401,7 @@ export function PerfilContent({ variant = "standalone" }) {
       setNombreForm({ nombre: actualizado.nombre, step: "view" });
       setMensaje("Nombre actualizado correctamente.");
     } catch (err) {
-      setError(err.message || "No se pudo guardar el perfil.");
+      setNombreError(sanitizeUserFacingError(err.message || "No se pudo guardar el nombre."));
     } finally {
       setGuardando(false);
     }
@@ -443,20 +463,31 @@ export function PerfilContent({ variant = "standalone" }) {
     event.preventDefault();
     setError("");
     setMensaje("");
+    setEmailErrors({ nuevoCorreo: "", passwordActual: "", token: "", formulario: "" });
 
     const nuevoCorreo = emailForm.nuevoCorreo.trim().toLowerCase();
     if (!nuevoCorreo) {
-      setError("Ingrese el nuevo correo.");
+      setEmailErrors((prev) => ({ ...prev, nuevoCorreo: "Ingrese el nuevo correo." }));
+      return;
+    }
+    if (!emailForm.passwordActual) {
+      setEmailErrors((prev) => ({ ...prev, passwordActual: "Ingrese su contraseña actual." }));
       return;
     }
 
     setGuardando(true);
     try {
-      const result = await solicitarCambioCorreo(nuevoCorreo);
-      setEmailForm((prev) => ({ ...prev, step: "verify" }));
+      const result = await solicitarCambioCorreo(nuevoCorreo, emailForm.passwordActual);
+      setEmailForm((prev) => ({ ...prev, step: "verify", passwordActual: "" }));
+      setShowPasswords((prev) => ({ ...prev, email: false }));
       setMensaje(result?.message || "Se envió el código al nuevo correo.");
     } catch (err) {
-      setError(err.message || "No se pudo solicitar el cambio de correo.");
+      const message = sanitizeUserFacingError(err.message || "No se pudo solicitar el cambio de correo.");
+      if (message.toLowerCase().includes("contraseña")) {
+        setEmailErrors((prev) => ({ ...prev, passwordActual: message }));
+      } else {
+        setEmailErrors((prev) => ({ ...prev, formulario: message }));
+      }
     } finally {
       setGuardando(false);
     }
@@ -466,10 +497,15 @@ export function PerfilContent({ variant = "standalone" }) {
     event.preventDefault();
     setError("");
     setMensaje("");
+    setEmailErrors({ nuevoCorreo: "", passwordActual: "", token: "", formulario: "" });
 
     const nuevoCorreo = emailForm.nuevoCorreo.trim().toLowerCase();
     if (!nuevoCorreo || !emailForm.token.trim()) {
-      setError("Ingrese el nuevo correo y el código recibido.");
+      setEmailErrors((prev) => ({
+        ...prev,
+        token: !emailForm.token.trim() ? "Ingrese el código recibido." : "",
+        nuevoCorreo: !nuevoCorreo ? "Ingrese el nuevo correo." : "",
+      }));
       return;
     }
 
@@ -482,10 +518,15 @@ export function PerfilContent({ variant = "standalone" }) {
       setPerfil(actualizado);
       setForm((prev) => ({ ...prev, correo: actualizado.correo }));
       syncSession(actualizado);
-      setEmailForm({ nuevoCorreo: "", token: "", step: "view" });
+      setEmailForm({ nuevoCorreo: "", token: "", passwordActual: "", step: "view" });
       setMensaje("Correo actualizado correctamente.");
     } catch (err) {
-      setError(err.message || "No se pudo confirmar el cambio de correo.");
+      const message = sanitizeUserFacingError(err.message || "No se pudo confirmar el cambio de correo.");
+      if (message.toLowerCase().includes("código")) {
+        setEmailErrors((prev) => ({ ...prev, token: message }));
+      } else {
+        setEmailErrors((prev) => ({ ...prev, formulario: message }));
+      }
     } finally {
       setGuardando(false);
     }
@@ -495,17 +536,20 @@ export function PerfilContent({ variant = "standalone" }) {
     event.preventDefault();
     setError("");
     setMensaje("");
+    setPasswordErrors({ passwordActual: "", passwordNueva: "", confirmPassword: "" });
 
-    if (!passwordForm.passwordActual || !passwordForm.passwordNueva) {
-      setError("Complete la contraseña actual y la nueva.");
-      return;
+    const nextErrors = {
+      passwordActual: passwordForm.passwordActual ? "" : "Ingrese su contraseña actual.",
+      passwordNueva: validatePassword(passwordForm.passwordNueva),
+      confirmPassword: "",
+    };
+
+    if (passwordForm.passwordNueva && passwordForm.passwordNueva !== passwordForm.confirmPassword) {
+      nextErrors.confirmPassword = "Las contraseñas nuevas no coinciden.";
     }
-    if (passwordForm.passwordNueva.length < 6) {
-      setError("La contraseña nueva debe tener al menos 6 caracteres.");
-      return;
-    }
-    if (passwordForm.passwordNueva !== passwordForm.confirmPassword) {
-      setError("Las contraseñas nuevas no coinciden.");
+
+    if (nextErrors.passwordActual || nextErrors.passwordNueva || nextErrors.confirmPassword) {
+      setPasswordErrors(nextErrors);
       return;
     }
 
@@ -519,7 +563,10 @@ export function PerfilContent({ variant = "standalone" }) {
       resetPasswordVisibility();
       setMensaje(result?.message || "Contraseña actualizada correctamente.");
     } catch (err) {
-      setError(err.message || "No se pudo cambiar la contraseña.");
+      setPasswordErrors((prev) => ({
+        ...prev,
+        passwordNueva: sanitizeUserFacingError(err.message || "No se pudo cambiar la contraseña."),
+      }));
     } finally {
       setGuardando(false);
     }
@@ -527,20 +574,21 @@ export function PerfilContent({ variant = "standalone" }) {
 
   if (cargando) {
     return (
-      <div className={`perfil-page perfil-page--loading perfil-page--${variant}`}>
-        <span className="perfil-page__spinner" aria-hidden="true" />
-        <p>Cargando perfil...</p>
+      <div className={`perfil-page perfil-page--${variant}`}>
+        <PageLoading message="Cargando perfil..." />
       </div>
     );
   }
 
-  if (error && !perfil && !form.nombre && !form.correo) {
+  if (!perfil) {
     return (
-      <div className={`perfil-page perfil-page--error perfil-page--${variant}`}>
-        <p className="perfil-feedback perfil-feedback--error">{error}</p>
-        <button type="button" className="perfil-button" onClick={cargarPerfil}>
-          Reintentar
-        </button>
+      <div className={`perfil-page perfil-page--${variant}`}>
+        <PageLoading
+          isError
+          message={error || "No se pudo cargar el perfil."}
+          detail={contactSupportMessage()}
+          onRetry={sessionUserId ? cargarPerfil : undefined}
+        />
       </div>
     );
   }
@@ -622,7 +670,10 @@ export function PerfilContent({ variant = "standalone" }) {
             <button
               type="button"
               className="perfil-link-action"
-              onClick={() => setNombreForm({ nombre: form.nombre, step: "edit" })}
+              onClick={() => {
+                setNombreError("");
+                setNombreForm({ nombre: form.nombre, step: "edit" });
+              }}
             >
               Cambiar nombre
               <ChevronRight size={16} />
@@ -633,10 +684,16 @@ export function PerfilContent({ variant = "standalone" }) {
                 <span>Nuevo nombre</span>
                 <input
                   value={nombreForm.nombre}
-                  onChange={(e) => setNombreForm((prev) => ({ ...prev, nombre: e.target.value }))}
+                  onChange={(e) => {
+                    setNombreError("");
+                    setNombreForm((prev) => ({ ...prev, nombre: e.target.value }));
+                  }}
+                  maxLength={MAX_NOMBRE_USUARIO}
+                  className={nombreError ? "input-error" : ""}
                   required
                   autoFocus
                 />
+                {nombreError ? <p className="perfil-field-error">{nombreError}</p> : null}
               </label>
 
               <div className="perfil-card__actions">
@@ -667,7 +724,10 @@ export function PerfilContent({ variant = "standalone" }) {
             <button
               type="button"
               className="perfil-link-action"
-              onClick={() => setEmailForm((prev) => ({ ...prev, step: "edit" }))}
+              onClick={() => {
+                setEmailErrors({ nuevoCorreo: "", passwordActual: "", token: "", formulario: "" });
+                setEmailForm((prev) => ({ ...prev, step: "edit" }));
+              }}
             >
               Cambiar correo
               <ChevronRight size={16} />
@@ -679,31 +739,64 @@ export function PerfilContent({ variant = "standalone" }) {
                 <input
                   type="email"
                   value={emailForm.nuevoCorreo}
-                  onChange={(e) => setEmailForm((prev) => ({ ...prev, nuevoCorreo: e.target.value }))}
+                  onChange={(e) => {
+                    setEmailErrors((prev) => ({ ...prev, nuevoCorreo: "", formulario: "" }));
+                    setEmailForm((prev) => ({ ...prev, nuevoCorreo: e.target.value }));
+                  }}
+                  className={emailErrors.nuevoCorreo ? "input-error" : ""}
                   required
                   disabled={emailForm.step === "verify"}
                   autoFocus={emailForm.step === "edit"}
                 />
+                {emailErrors.nuevoCorreo ? <p className="perfil-field-error">{emailErrors.nuevoCorreo}</p> : null}
               </label>
+
+              {emailForm.step === "edit" ? (
+                <PerfilPasswordField
+                  label="Contraseña actual"
+                  value={emailForm.passwordActual}
+                  onChange={(e) => {
+                    setEmailErrors((prev) => ({ ...prev, passwordActual: "", formulario: "" }));
+                    setEmailForm((prev) => ({
+                      ...prev,
+                      passwordActual: e.target.value.slice(0, MAX_PASSWORD),
+                    }));
+                  }}
+                  visible={showPasswords.email}
+                  onToggle={() => setShowPasswords((prev) => ({ ...prev, email: !prev.email }))}
+                  error={emailErrors.passwordActual}
+                />
+              ) : null}
 
               {emailForm.step === "verify" ? (
                 <label className="perfil-field">
                   <span>Código de verificación</span>
                   <input
                     value={emailForm.token}
-                    onChange={(e) => setEmailForm((prev) => ({ ...prev, token: e.target.value }))}
+                    onChange={(e) => {
+                      setEmailErrors((prev) => ({ ...prev, token: "", formulario: "" }));
+                      setEmailForm((prev) => ({ ...prev, token: e.target.value }));
+                    }}
+                    className={emailErrors.token ? "input-error" : ""}
                     placeholder="6 dígitos"
                     required
                     autoFocus
                   />
+                  {emailErrors.token ? <p className="perfil-field-error">{emailErrors.token}</p> : null}
                 </label>
               ) : null}
+
+              {emailErrors.formulario ? <p className="perfil-field-error">{emailErrors.formulario}</p> : null}
 
               <div className="perfil-card__actions">
                 <button
                   type="button"
                   className="perfil-button perfil-button--ghost"
-                  onClick={() => setEmailForm({ nuevoCorreo: "", token: "", step: "view" })}
+                  onClick={() => {
+                    setEmailErrors({ nuevoCorreo: "", passwordActual: "", token: "", formulario: "" });
+                    setEmailForm({ nuevoCorreo: "", token: "", passwordActual: "", step: "view" });
+                    setShowPasswords((prev) => ({ ...prev, email: false }));
+                  }}
                 >
                   Cancelar
                 </button>
@@ -738,26 +831,38 @@ export function PerfilContent({ variant = "standalone" }) {
                 <PerfilPasswordField
                   label="Contraseña actual"
                   value={passwordForm.passwordActual}
-                  onChange={(e) => setPasswordForm((prev) => ({ ...prev, passwordActual: e.target.value }))}
+                  onChange={(e) => {
+                    setPasswordErrors((prev) => ({ ...prev, passwordActual: "" }));
+                    setPasswordForm((prev) => ({ ...prev, passwordActual: e.target.value }));
+                  }}
                   visible={showPasswords.actual}
                   onToggle={() => setShowPasswords((prev) => ({ ...prev, actual: !prev.actual }))}
                   autoFocus
+                  error={passwordErrors.passwordActual}
                 />
 
                 <PerfilPasswordField
                   label="Contraseña nueva"
                   value={passwordForm.passwordNueva}
-                  onChange={(e) => setPasswordForm((prev) => ({ ...prev, passwordNueva: e.target.value }))}
+                  onChange={(e) => {
+                    setPasswordErrors((prev) => ({ ...prev, passwordNueva: "" }));
+                    setPasswordForm((prev) => ({ ...prev, passwordNueva: e.target.value }));
+                  }}
                   visible={showPasswords.nueva}
                   onToggle={() => setShowPasswords((prev) => ({ ...prev, nueva: !prev.nueva }))}
+                  error={passwordErrors.passwordNueva}
                 />
 
                 <PerfilPasswordField
                   label="Confirmar contraseña nueva"
                   value={passwordForm.confirmPassword}
-                  onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                  onChange={(e) => {
+                    setPasswordErrors((prev) => ({ ...prev, confirmPassword: "" }));
+                    setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }));
+                  }}
                   visible={showPasswords.confirm}
                   onToggle={() => setShowPasswords((prev) => ({ ...prev, confirm: !prev.confirm }))}
+                  error={passwordErrors.confirmPassword}
                 />
               </div>
 

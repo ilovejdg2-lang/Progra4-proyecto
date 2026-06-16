@@ -54,10 +54,10 @@ export async function actualizarPerfil(payload) {
   return normalizePerfil(data);
 }
 
-export async function solicitarCambioCorreo(nuevoCorreo) {
+export async function solicitarCambioCorreo(nuevoCorreo, passwordActual) {
   return request(`${BASE_URL}/solicitar-cambio-correo`, {
     method: "POST",
-    body: JSON.stringify({ nuevoCorreo }),
+    body: JSON.stringify({ nuevoCorreo, passwordActual }),
   });
 }
 

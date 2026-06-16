@@ -3,6 +3,7 @@ import { ArrowRight, ExternalLink, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Hero from '../../Components/Hero/Hero';
 import PageLoading from '../../Components/PageLoading/PageLoading';
+import { contactSupportMessage, sanitizeUserFacingError } from '../../lib/formLimits';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { obtenerHero, obtenerSeccion, obtenerTarjetasInicio } from '../../services/informacionService';
 import { obtenerProductos } from '../../services/productosServices';
@@ -71,117 +72,97 @@ function waitForImage(src, timeoutMs = 8000) {
 
 const Home = () => {
   const [hero, setHero] = useState({});
-  const [heroLoaded, setHeroLoaded] = useState(false);
+  const [pageStatus, setPageStatus] = useState('loading');
+  const [loadError, setLoadError] = useState('');
   const [aboutTeaser, setAboutTeaser] = useState({ title: '', description: '', image: '' });
   const [featuredSection, setFeaturedSection] = useState({ title: '', description: '' });
   const [iniciativasSection, setIniciativasSection] = useState({ eyebrow: '', title: '', description: '' });
   const [locationSection, setLocationSection] = useState({ eyebrow: '', title: '', description: '', linkUrl: '' });
   const [tarjetasInicio, setTarjetasInicio] = useState([]);
   const [products, setProducts] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
-  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     let activo = true;
 
-    obtenerHero()
-      .then(async (heroInfo) => {
+    async function cargarInicio() {
+      setPageStatus('loading');
+      setLoadError('');
+
+      try {
+        const [
+          heroInfo,
+          spotlight,
+          featured,
+          iniciativas,
+          location,
+          tarjetas,
+          productList,
+        ] = await Promise.all([
+          obtenerHero(),
+          obtenerSeccion('homeSpotlight'),
+          obtenerSeccion('homeFeatured'),
+          obtenerSeccion('homeIniciativas'),
+          obtenerSeccion('homeLocation'),
+          obtenerTarjetasInicio(),
+          obtenerProductos().catch(() => []),
+        ]);
+
         if (!activo) return;
+
         const nextHero = heroInfo ?? {};
         const backgroundUrl = normalizeImageUrl(nextHero.backgroundImage, { width: 1920 });
-
         await waitForImage(backgroundUrl);
+
         if (!activo) return;
 
         setHero(nextHero);
-        setHeroLoaded(true);
-      })
-      .catch((err) => {
-        console.error('No se pudo cargar la informacion del hero.', err);
-        if (activo) {
-          setHero({});
-          setHeroLoaded(true);
-          setLoadError(err?.message || '');
-        }
-      });
-
-    return () => {
-      activo = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let activo = true;
-
-    Promise.all([
-      obtenerSeccion('homeSpotlight').catch(() => ({})),
-      obtenerSeccion('homeFeatured').catch(() => ({})),
-      obtenerSeccion('homeIniciativas').catch(() => ({})),
-      obtenerSeccion('homeLocation').catch(() => ({})),
-      obtenerTarjetasInicio().catch(() => []),
-    ]).then(([spotlight, featured, iniciativas, location, tarjetas]) => {
-      if (!activo) return;
-
-      setAboutTeaser({
-        title: typeof spotlight?.title === 'string' ? spotlight.title.trim() : '',
-        description: typeof spotlight?.description === 'string' ? spotlight.description.trim() : '',
-        image: typeof spotlight?.image === 'string' ? spotlight.image.trim() : '',
-      });
-      setFeaturedSection({
-        title: typeof featured?.title === 'string' ? featured.title.trim() : '',
-        description: typeof featured?.description === 'string' ? featured.description.trim() : '',
-      });
-      setIniciativasSection({
-        eyebrow: typeof iniciativas?.eyebrow === 'string' ? iniciativas.eyebrow.trim() : '',
-        title: typeof iniciativas?.title === 'string' ? iniciativas.title.trim() : '',
-        description: typeof iniciativas?.description === 'string' ? iniciativas.description.trim() : '',
-      });
-      setLocationSection({
-        eyebrow: typeof location?.eyebrow === 'string' ? location.eyebrow.trim() : '',
-        title: typeof location?.title === 'string' ? location.title.trim() : '',
-        description: typeof location?.description === 'string' ? location.description.trim() : '',
-        linkUrl:
-          typeof location?.linkUrl === 'string'
-            ? location.linkUrl.trim()
-            : typeof location?.LinkUrl === 'string'
-              ? location.LinkUrl.trim()
-              : '',
-      });
-      setTarjetasInicio(
-        Array.isArray(tarjetas)
-          ? tarjetas.map((item) => ({
-              clave: item.clave || item.Clave || '',
-              etiqueta: item.etiqueta || item.Etiqueta || '',
-              titulo: item.titulo || item.Titulo || '',
-              descripcion: item.descripcion || item.Descripcion || '',
-              ruta: item.ruta || item.Ruta || '',
-            }))
-          : [],
-      );
-    });
-
-    return () => {
-      activo = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let activo = true;
-
-    obtenerProductos()
-      .then((list) => {
+        setAboutTeaser({
+          title: typeof spotlight?.title === 'string' ? spotlight.title.trim() : '',
+          description: typeof spotlight?.description === 'string' ? spotlight.description.trim() : '',
+          image: typeof spotlight?.image === 'string' ? spotlight.image.trim() : '',
+        });
+        setFeaturedSection({
+          title: typeof featured?.title === 'string' ? featured.title.trim() : '',
+          description: typeof featured?.description === 'string' ? featured.description.trim() : '',
+        });
+        setIniciativasSection({
+          eyebrow: typeof iniciativas?.eyebrow === 'string' ? iniciativas.eyebrow.trim() : '',
+          title: typeof iniciativas?.title === 'string' ? iniciativas.title.trim() : '',
+          description: typeof iniciativas?.description === 'string' ? iniciativas.description.trim() : '',
+        });
+        setLocationSection({
+          eyebrow: typeof location?.eyebrow === 'string' ? location.eyebrow.trim() : '',
+          title: typeof location?.title === 'string' ? location.title.trim() : '',
+          description: typeof location?.description === 'string' ? location.description.trim() : '',
+          linkUrl:
+            typeof location?.linkUrl === 'string'
+              ? location.linkUrl.trim()
+              : typeof location?.LinkUrl === 'string'
+                ? location.LinkUrl.trim()
+                : '',
+        });
+        setTarjetasInicio(
+          Array.isArray(tarjetas)
+            ? tarjetas.map((item) => ({
+                clave: item.clave || item.Clave || '',
+                etiqueta: item.etiqueta || item.Etiqueta || '',
+                titulo: item.titulo || item.Titulo || '',
+                descripcion: item.descripcion || item.Descripcion || '',
+                ruta: item.ruta || item.Ruta || '',
+              }))
+            : [],
+        );
+        setProducts(Array.isArray(productList) ? productList : []);
+        setPageStatus('ready');
+      } catch (err) {
+        console.error('No se pudo cargar la página de inicio.', err);
         if (!activo) return;
-        setProducts(Array.isArray(list) ? list : []);
-      })
-      .catch((err) => {
-        console.error('No se pudo cargar los productos para la galería.', err);
-        if (activo) {
-          setProducts([]);
-        }
-      })
-      .finally(() => {
-        if (activo) setLoadingProducts(false);
-      });
+        setLoadError(sanitizeUserFacingError(err?.message || 'No se pudo cargar el inicio.'));
+        setPageStatus('error');
+      }
+    }
+
+    cargarInicio();
 
     return () => {
       activo = false;
@@ -212,10 +193,6 @@ const Home = () => {
     }
   }, []);
 
-  const heroHasContent = Boolean(
-    hero?.backgroundImage || hero?.title || hero?.subtitle || hero?.buttonText
-  );
-  const homeReady = heroLoaded;
   const aboutTeaserImageUrl = normalizeImageUrl(aboutTeaser.image, { width: 900 });
   const featuredProducts = products
     .filter((product) => product.estado !== 'Deshabilitado' && product.esDestacado)
@@ -239,13 +216,13 @@ const Home = () => {
   });
 
   useEffect(() => {
-    document.body.classList.toggle('home-hero-ready', heroLoaded);
+    document.body.classList.toggle('home-hero-ready', pageStatus === 'ready');
     return () => {
       document.body.classList.remove('home-hero-ready');
     };
-  }, [heroLoaded]);
+  }, [pageStatus]);
 
-  if (!homeReady) {
+  if (pageStatus === 'loading') {
     return (
       <PageLoading
         message="Cargando inicio..."
@@ -253,13 +230,19 @@ const Home = () => {
     );
   }
 
+  if (pageStatus === 'error') {
+    return (
+      <PageLoading
+        isError
+        message={loadError || 'No se pudo cargar el inicio.'}
+        detail={contactSupportMessage()}
+        onRetry={() => window.location.reload()}
+      />
+    );
+  }
+
   return (
     <>
-      {loadError ? (
-        <p className="home-page__load-error" role="status">
-          Algunos datos del inicio no se pudieron cargar. Puede seguir navegando el sitio.
-        </p>
-      ) : null}
       <Hero data={hero} />
       <main className="home-page">
         <section className="home-page__mission-spotlight" aria-labelledby="about-teaser-title">
@@ -302,40 +285,35 @@ const Home = () => {
             <p className="curated-collections__intro">{featuredSection.description}</p>
           </header>
 
-          {!loadingProducts && featuredProducts.length === 0 ? (
+          {featuredProducts.length === 0 ? (
             <p className="curated-collections__empty">Aún no hay cafés destacados. Márcalos en el panel de productos.</p>
           ) : (
             <div
               className="curated-collections__grid"
-              aria-busy={loadingProducts}
               aria-label="Selección destacada de cafés"
             >
-              {(loadingProducts ? Array.from({ length: 3 }) : featuredProducts).map((p, idx) => (
+              {featuredProducts.map((p, idx) => (
                 <article
-                  key={p?.id ?? p?.nombre ?? `placeholder-${idx}`}
-                  className={`curated-collections__card${idx === 1 ? ' curated-collections__card--offset' : ''}${p ? '' : ' curated-collections__card--loading'}`}
+                  key={p?.id ?? p?.nombre ?? `featured-${idx}`}
+                  className={`curated-collections__card${idx === 1 ? ' curated-collections__card--offset' : ''}`}
                 >
-                  {p ? (
-                    <Link to="/productos" className="curated-collections__card-link">
-                      <img
-                        src={normalizeImageUrl(p.imagen, { width: 800 }) || p.imagen}
-                        alt={p.nombre || 'Café'}
-                        loading="lazy"
-                        width="800"
-                        height="1000"
-                      />
-                      <div className="curated-collections__overlay" aria-hidden="true" />
-                      <div className="curated-collections__content">
-                        <span className="curated-collections__pill">
-                          {p.peso ? String(p.peso).toUpperCase() : COLLECTION_LABELS[idx % COLLECTION_LABELS.length]}
-                        </span>
-                        <h3>{p.nombre}</h3>
-                        {p.descripcion ? <p>{p.descripcion}</p> : null}
-                      </div>
-                    </Link>
-                  ) : (
-                    <div className="curated-collections__skeleton" aria-hidden="true" />
-                  )}
+                  <Link to="/productos" className="curated-collections__card-link">
+                    <img
+                      src={normalizeImageUrl(p.imagen, { width: 800 }) || p.imagen}
+                      alt={p.nombre || 'Café'}
+                      loading="lazy"
+                      width="800"
+                      height="1000"
+                    />
+                    <div className="curated-collections__overlay" aria-hidden="true" />
+                    <div className="curated-collections__content">
+                      <span className="curated-collections__pill">
+                        {p.peso ? String(p.peso).toUpperCase() : COLLECTION_LABELS[idx % COLLECTION_LABELS.length]}
+                      </span>
+                      <h3>{p.nombre}</h3>
+                      {p.descripcion ? <p>{p.descripcion}</p> : null}
+                    </div>
+                  </Link>
                 </article>
               ))}
             </div>
