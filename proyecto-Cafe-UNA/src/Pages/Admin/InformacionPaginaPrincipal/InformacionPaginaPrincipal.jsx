@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Image, LayoutTemplate, Link2, PanelBottom, Plus, Trash2, X } from "lucide-react";
+import { Image, LayoutTemplate, Link2, PanelBottom, Plus, Sparkles, Trash2, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
@@ -14,6 +14,7 @@ import {
   obtenerFooter,
   obtenerHero,
   obtenerNavbar,
+  obtenerSeccion,
 } from "../../../services/informacionService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 
@@ -22,6 +23,12 @@ const heroInicial = {
   subtitle: "",
   buttonText: "",
   backgroundImage: "",
+};
+
+const homeSpotlightInicial = {
+  title: "",
+  description: "",
+  image: "",
 };
 
 const navbarInicial = {
@@ -155,6 +162,97 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
               placeholder="https://..."
             />
           </div>
+        </AdminModalBody>
+
+        <AdminModalFooter>
+          <button
+            type="button"
+            onClick={onCerrar}
+            className="w-full rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={guardando}
+            className="w-full rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
+            {guardando ? "Guardando..." : "Guardar cambios"}
+          </button>
+        </AdminModalFooter>
+      </form>
+    </AdminModal>
+  );
+}
+
+function ModalHomeSpotlight({ data, onCerrar, onGuardar, guardando }) {
+  const [form, setForm] = useState(() => ({ ...homeSpotlightInicial, ...data }));
+
+  const cambiarCampo = (event) => {
+    const { name, value } = event.target;
+    setForm((actual) => ({ ...actual, [name]: value }));
+  };
+
+  const enviar = (event) => {
+    event.preventDefault();
+    onGuardar(form);
+  };
+
+  return (
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-2xl" labelledBy="admin-home-spotlight-modal-title">
+      <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
+        <AdminModalHeader>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700">
+              <Sparkles className="size-5" />
+            </span>
+            <h2 id="admin-home-spotlight-modal-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">
+              Invitacion a Sobre nosotros
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onCerrar}
+            className="rounded-full bg-stone-100 p-2 text-slate-600 transition hover:bg-stone-200"
+            aria-label="Cerrar"
+          >
+            <X className="size-5" />
+          </button>
+        </AdminModalHeader>
+
+        <AdminModalBody className="space-y-5">
+          <p className="text-sm text-slate-600">
+            Bloque del inicio que invita a visitar Sobre nosotros. No usa la mision ni la galeria.
+          </p>
+
+          <CampoTexto
+            label="Titulo"
+            name="title"
+            value={form.title}
+            onChange={cambiarCampo}
+            required
+          />
+
+          <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+            Texto breve
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={cambiarCampo}
+              rows={4}
+              className="resize-none rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+              required
+            />
+          </label>
+
+          <CampoTexto
+            label="Imagen URL"
+            name="image"
+            value={form.image}
+            onChange={cambiarCampo}
+            placeholder="https://..."
+            hint="Imagen propia del bloque. No se toma de la galeria."
+          />
         </AdminModalBody>
 
         <AdminModalFooter>
@@ -579,6 +677,7 @@ const AdminInformacionPaginaPrincipal = () => {
   const esSuperAdmin = actorRoles.some((rol) => String(rol).toLowerCase() === "superadmin");
 
   const [hero, setHero] = useState(heroInicial);
+  const [homeSpotlight, setHomeSpotlight] = useState(homeSpotlightInicial);
   const [navbar, setNavbar] = useState(navbarInicial);
   const [footer, setFooter] = useState(footerInicial);
   const [enlacesNavbar, setEnlacesNavbar] = useState([]);
@@ -593,15 +692,23 @@ const AdminInformacionPaginaPrincipal = () => {
 
     Promise.all([
       obtenerHero().catch(() => null),
+      obtenerSeccion("homeSpotlight").catch(() => null),
       obtenerNavbar().catch(() => null),
       obtenerFooter().catch(() => null),
       obtenerEnlaces("Navbar").catch(() => []),
       obtenerEnlaces("FooterExplorar").catch(() => []),
     ])
-      .then(([heroData, navbarData, footerData, navbarEnlaces, footerEnlaces]) => {
+      .then(([heroData, homeSpotlightData, navbarData, footerData, navbarEnlaces, footerEnlaces]) => {
         if (!activo) return;
 
         if (heroData) setHero({ ...heroInicial, ...heroData });
+        if (homeSpotlightData) {
+          setHomeSpotlight({
+            title: homeSpotlightData.title || "",
+            description: homeSpotlightData.description || "",
+            image: homeSpotlightData.image || "",
+          });
+        }
         if (navbarData) setNavbar({ ...navbarInicial, ...navbarData });
         if (footerData) setFooter({ ...footerInicial, ...footerData });
         setEnlacesNavbar(Array.isArray(navbarEnlaces) ? navbarEnlaces : []);
@@ -628,6 +735,23 @@ const AdminInformacionPaginaPrincipal = () => {
       setEditando(null);
     } catch (err) {
       alert(err.message || "No se pudo guardar el hero.");
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const guardarHomeSpotlight = async (form) => {
+    try {
+      setGuardando(true);
+      const actualizado = await actualizarSeccion("homeSpotlight", form);
+      setHomeSpotlight({
+        title: actualizado?.title || form.title,
+        description: actualizado?.description || form.description,
+        image: actualizado?.image || form.image,
+      });
+      setEditando(null);
+    } catch (err) {
+      alert(err.message || "No se pudo guardar la invitacion a Sobre nosotros.");
     } finally {
       setGuardando(false);
     }
@@ -721,6 +845,10 @@ const AdminInformacionPaginaPrincipal = () => {
     }
   };
 
+  const resumenHomeSpotlight = homeSpotlight.title || homeSpotlight.description
+    ? `${homeSpotlight.title || "Sin titulo"} · invita a Sobre nosotros`
+    : "Bloque del inicio para dirigir visitantes a Sobre nosotros.";
+
   const resumenNavbar = navbar.logoUrl || navbar.logoClaroUrl
     ? "Logos configurados para la barra superior del sitio."
     : "Sin logos configurados.";
@@ -764,6 +892,14 @@ const AdminInformacionPaginaPrincipal = () => {
             />
 
             <TarjetaSeccion
+              etiqueta="Inicio"
+              titulo="Invitacion a Sobre nosotros"
+              descripcion={resumenHomeSpotlight}
+              icono={Sparkles}
+              onEditar={() => setEditando("homeSpotlight")}
+            />
+
+            <TarjetaSeccion
               etiqueta="Navbar"
               titulo="Barra de navegacion"
               descripcion={resumenNavbar}
@@ -800,6 +936,15 @@ const AdminInformacionPaginaPrincipal = () => {
 
       {editando === "hero" ? (
         <ModalHero hero={hero} onCerrar={() => setEditando(null)} onGuardar={guardarHero} guardando={guardando} />
+      ) : null}
+
+      {editando === "homeSpotlight" ? (
+        <ModalHomeSpotlight
+          data={homeSpotlight}
+          onCerrar={() => setEditando(null)}
+          onGuardar={guardarHomeSpotlight}
+          guardando={guardando}
+        />
       ) : null}
 
       {editando === "navbar" ? (
