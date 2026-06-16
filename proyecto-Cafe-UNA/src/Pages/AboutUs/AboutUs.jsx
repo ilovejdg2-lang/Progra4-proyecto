@@ -33,7 +33,7 @@ const AboutUs = () => {
           title: typeof info.vision?.title === 'string' ? info.vision.title.trim() : '',
           description: typeof info.vision?.description === 'string' ? info.vision.description.trim() : '',
         });
-        setGalleryData(Array.isArray(info.gallery) ? info.gallery.slice(0, 3) : []);
+        setGalleryData(Array.isArray(info.gallery) ? info.gallery : []);
       })
       .catch((err) => {
         console.error('No se pudo cargar la informacion de sobre nosotros.', err);
@@ -50,7 +50,7 @@ const AboutUs = () => {
     };
   }, []);
 
-  const galleryItems = galleryData.slice(0, 3);
+  const galleryItems = galleryData;
   const hasHistoria = Boolean(historiaTitulo || historia);
   const hasMission = Boolean(missionData.title || missionData.description);
   const hasVision = Boolean(visionData.title || visionData.description);
