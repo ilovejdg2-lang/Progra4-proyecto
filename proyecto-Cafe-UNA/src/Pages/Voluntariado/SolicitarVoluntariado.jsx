@@ -180,8 +180,8 @@ function SolicitarVoluntariado() {
       const esErrorServicio = /suscripci[oó]n|plan|api key|configurad|demasiadas consultas|espere \d+/i.test(error.message);
       setAvisoCedula(
         esErrorServicio
-          ? error.message
-          : `${error.message} Complete el nombre y residencia manualmente.`
+          ? `${error.message} Puede completar el nombre y residencia manualmente.`
+          : `${error.message} Complete el nombre y residencia manualmente.`,
       );
     } finally {
       setConsultandoCedula(false);
