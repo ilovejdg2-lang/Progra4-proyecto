@@ -19,6 +19,13 @@ import {
   confirmarCambioCorreoUsuario,
 } from "../../../services/usuariosServices";
 import { getActiveSessionUser } from "../../../services/sessionService";
+import {
+  MAX_NOMBRE_USUARIO,
+  MAX_PASSWORD,
+  sanitizeUserFacingError,
+  validateNombreUsuario,
+  validatePassword,
+} from "../../../lib/formLimits";
 
 function Modal({ titulo, onClose, children }) {
   return (
@@ -70,11 +77,19 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 
   const [pasoCreacion, setPasoCreacion] = useState("datos");
   const [codigoVerificacion, setCodigoVerificacion] = useState("");
+  const [passwordCorreoUsuario, setPasswordCorreoUsuario] = useState("");
+  const [errorPasswordCorreo, setErrorPasswordCorreo] = useState("");
   const [correoVerificado, setCorreoVerificado] = useState(true);
   const [mensajeCorreo, setMensajeCorreo] = useState("");
   const [errorCorreo, setErrorCorreo] = useState("");
   const [verificandoCorreo, setVerificandoCorreo] = useState(false);
   const [correoForm, setCorreoForm] = useState(inicial?.correo ?? "");
+  const [fieldErrors, setFieldErrors] = useState({
+    nombre: "",
+    passwordHash: "",
+    passwordActual: "",
+    formulario: "",
+  });
 
   const form = useForm({
     defaultValues: {
@@ -92,14 +107,31 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
         roles: Array.isArray(value.roles) && value.roles.length > 0 ? value.roles : ["Usuario"],
       };
 
-      if (!payload.nombre || !payload.correo) return;
+      const nextErrors = {
+        nombre: validateNombreUsuario(value.nombre),
+        passwordHash: "",
+        passwordActual: "",
+        formulario: "",
+      };
+
+      if (!payload.correo) {
+        setErrorCorreo("Ingrese el correo.");
+        return;
+      }
+
+      if (nextErrors.nombre) {
+        setFieldErrors(nextErrors);
+        return;
+      }
 
       if (!inicial) {
         if (pasoCreacion === "datos") {
-          if (!value.passwordHash?.trim()) {
-            setErrorCorreo("La contraseña es obligatoria.");
+          const passwordError = validatePassword(value.passwordHash);
+          if (passwordError) {
+            setFieldErrors({ ...nextErrors, passwordHash: passwordError });
             return;
           }
+          setFieldErrors(nextErrors);
           setCargando(true);
           setErrorCorreo("");
           try {
@@ -110,7 +142,10 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
             setMensajeCorreo(result?.message || "Código enviado al correo.");
             setPasoCreacion("codigo");
           } catch (err) {
-            setErrorCorreo(err?.message || "No se pudo enviar el código.");
+            setFieldErrors({
+              ...nextErrors,
+              formulario: sanitizeUserFacingError(err?.message || "No se pudo enviar el código."),
+            });
           } finally {
             setCargando(false);
           }
@@ -126,7 +161,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
           });
           onCreado(nuevo);
         } catch (err) {
-          setErrorCorreo(err?.message || "No se pudo crear el usuario.");
+          setErrorCorreo(sanitizeUserFacingError(err?.message || "No se pudo crear el usuario."));
         } finally {
           setCargando(false);
         }
@@ -140,13 +175,30 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 
       const cambios = { ...payload };
       if (value.passwordHash?.trim()) {
+        const passwordError = validatePassword(value.passwordHash, { required: true });
+        if (passwordError) {
+          setFieldErrors({ ...nextErrors, passwordHash: passwordError });
+          return;
+        }
+        if (!value.passwordActual?.trim()) {
+          setFieldErrors({ ...nextErrors, passwordActual: "Ingrese su contraseña actual." });
+          return;
+        }
         cambios.passwordHash = value.passwordHash;
         cambios.passwordActual = value.passwordActual;
       }
 
+      setFieldErrors(nextErrors);
       setCargando(true);
       try {
         await onActualizado(cambios);
+      } catch (err) {
+        const message = sanitizeUserFacingError(err?.message || "No se pudo guardar el usuario.");
+        if (value.passwordHash?.trim()) {
+          setFieldErrors((prev) => ({ ...prev, passwordHash: message }));
+        } else {
+          setFieldErrors((prev) => ({ ...prev, formulario: message }));
+        }
       } finally {
         setCargando(false);
       }
@@ -167,6 +219,10 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
       return;
     }
     setCorreoVerificado(!correoCambio);
+    if (!correoCambio) {
+      setPasswordCorreoUsuario("");
+      setErrorPasswordCorreo("");
+    }
   }, [correoCambio, inicial]);
 
   async function handleSolicitarCodigoCorreo() {
@@ -175,16 +231,34 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
       setErrorCorreo("Ingrese el nuevo correo.");
       return;
     }
+    if (!passwordCorreoUsuario) {
+      setErrorPasswordCorreo(
+        editandoPropioUsuario
+          ? "Ingrese su contraseña actual."
+          : "Ingrese la contraseña de esta cuenta.",
+      );
+      return;
+    }
 
     setVerificandoCorreo(true);
     setErrorCorreo("");
+    setErrorPasswordCorreo("");
     setMensajeCorreo("");
 
     try {
-      const result = await solicitarCambioCorreoUsuario(inicial.id, correo);
+      const result = await solicitarCambioCorreoUsuario(inicial.id, {
+        nuevoCorreo: correo,
+        passwordActual: passwordCorreoUsuario,
+      });
+      setPasswordCorreoUsuario("");
       setMensajeCorreo(result?.message || "Código enviado al nuevo correo.");
     } catch (err) {
-      setErrorCorreo(err?.message || "No se pudo enviar el código.");
+      const message = sanitizeUserFacingError(err?.message || "No se pudo enviar el código.");
+      if (message.toLowerCase().includes("contraseña")) {
+        setErrorPasswordCorreo(message);
+      } else {
+        setErrorCorreo(message);
+      }
     } finally {
       setVerificandoCorreo(false);
     }
@@ -228,14 +302,21 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
         <label className="mb-1 block text-xs font-medium text-slate-600">Nombre</label>
         <form.Field name="nombre">
           {(field) => (
-            <input
-              className={inputCls}
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.target.value)}
-              required
-              disabled={!inicial && pasoCreacion === "codigo"}
-            />
+            <>
+              <input
+                className={`${inputCls} ${fieldErrors.nombre ? "border-red-500 focus:border-red-500 focus:ring-red-100" : ""}`}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => {
+                  setFieldErrors((prev) => ({ ...prev, nombre: "" }));
+                  field.handleChange(event.target.value.slice(0, MAX_NOMBRE_USUARIO));
+                }}
+                maxLength={MAX_NOMBRE_USUARIO}
+                required
+                disabled={!inicial && pasoCreacion === "codigo"}
+              />
+              {fieldErrors.nombre ? <p className="mt-1 text-xs text-red-600">{fieldErrors.nombre}</p> : null}
+            </>
           )}
         </form.Field>
       </div>
@@ -262,6 +343,21 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
             <p className="text-xs text-slate-700">
               El correo cambió. Debe verificar el nuevo correo antes de guardar otros cambios.
             </p>
+            <label className="block text-xs font-medium text-slate-600">
+              {editandoPropioUsuario ? "Su contraseña actual" : "Contraseña de esta cuenta"}
+              <input
+                type="password"
+                className={`${inputCls} mt-1 ${errorPasswordCorreo ? "border-red-500 focus:border-red-500 focus:ring-red-100" : ""}`}
+                value={passwordCorreoUsuario}
+                onChange={(e) => {
+                  setErrorPasswordCorreo("");
+                  setPasswordCorreoUsuario(e.target.value.slice(0, MAX_PASSWORD));
+                }}
+                maxLength={MAX_PASSWORD}
+                placeholder={editandoPropioUsuario ? "Requerida para cambiar el correo" : "Contraseña del usuario"}
+              />
+              {errorPasswordCorreo ? <p className="mt-1 text-xs text-red-600">{errorPasswordCorreo}</p> : null}
+            </label>
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <button
                 type="button"
@@ -313,15 +409,24 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                 </label>
                 <form.Field name="passwordHash">
                   {(field) => (
-                    <input
-                      type="password"
-                      className={inputCls}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      required={!inicial}
-                      placeholder={inicial ? "Dejar vacío para no cambiar" : ""}
-                    />
+                    <>
+                      <input
+                        type="password"
+                        className={`${inputCls} ${fieldErrors.passwordHash ? "border-red-500 focus:border-red-500 focus:ring-red-100" : ""}`}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) => {
+                          setFieldErrors((prev) => ({ ...prev, passwordHash: "" }));
+                          field.handleChange(event.target.value.slice(0, MAX_PASSWORD));
+                        }}
+                        maxLength={MAX_PASSWORD}
+                        required={!inicial}
+                        placeholder={inicial ? "Dejar vacío para no cambiar" : ""}
+                      />
+                      {fieldErrors.passwordHash ? (
+                        <p className="mt-1 text-xs text-red-600">{fieldErrors.passwordHash}</p>
+                      ) : null}
+                    </>
                   )}
                 </form.Field>
               </div>
@@ -330,14 +435,23 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                   <label className="mb-1 block text-xs font-medium text-slate-600">Contraseña actual</label>
                   <form.Field name="passwordActual">
                     {(field) => (
-                      <input
-                        type="password"
-                        className={inputCls}
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(event) => field.handleChange(event.target.value)}
-                        placeholder="Requerida si cambia la contraseña"
-                      />
+                      <>
+                        <input
+                          type="password"
+                          className={`${inputCls} ${fieldErrors.passwordActual ? "border-red-500 focus:border-red-500 focus:ring-red-100" : ""}`}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(event) => {
+                            setFieldErrors((prev) => ({ ...prev, passwordActual: "" }));
+                            field.handleChange(event.target.value.slice(0, MAX_PASSWORD));
+                          }}
+                          maxLength={MAX_PASSWORD}
+                          placeholder="Requerida si cambia la contraseña"
+                        />
+                        {fieldErrors.passwordActual ? (
+                          <p className="mt-1 text-xs text-red-600">{fieldErrors.passwordActual}</p>
+                        ) : null}
+                      </>
                     )}
                   </form.Field>
                 </div>
@@ -396,6 +510,8 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
           </div>
         </>
       ) : null}
+
+      {fieldErrors.formulario ? <p className="text-xs text-red-600">{fieldErrors.formulario}</p> : null}
 
       <div className="flex flex-col-reverse justify-end gap-2 pt-2 sm:flex-row">
         <button
@@ -582,7 +698,6 @@ const AdminUsuarios = () => {
       setUsuarios((prev) => prev.map((u) => (u.id === actualizado.id ? actualizado : u)));
       setUsuarioEditar(null);
     } catch (err) {
-      alert(err?.message || "Error al editar usuario.");
       throw err;
     } finally {
       setGuardando(false);

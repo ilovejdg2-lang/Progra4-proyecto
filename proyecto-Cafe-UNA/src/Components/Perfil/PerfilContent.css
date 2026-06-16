@@ -163,6 +163,8 @@
   pointer-events: none;
   color: #fff;
   padding-bottom: 0.35rem;
+  min-width: 0;
+  flex: 1;
 }
 
 .perfil-hero__avatar {
@@ -200,6 +202,10 @@
   font-size: clamp(1.5rem, 2vw, 2rem);
   font-weight: 700;
   color: #fff;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+  max-width: 100%;
 }
 
 .perfil-hero__email {
@@ -347,6 +353,17 @@
   font-size: 0.78rem;
   font-weight: 600;
   color: #64748b;
+}
+
+.perfil-field-error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #dc2626;
+  line-height: 1.35;
+}
+
+.perfil-field input.input-error {
+  border-color: #dc2626;
 }
 
 .perfil-field input {
@@ -690,6 +707,8 @@
     font-size: 1.35rem;
     line-height: 1.2;
     color: #fff;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .perfil-hero__email {
