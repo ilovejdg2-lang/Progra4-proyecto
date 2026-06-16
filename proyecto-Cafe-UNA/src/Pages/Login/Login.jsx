@@ -11,6 +11,13 @@ import {
 } from '../../services/authService';
 import { obtenerNavbar } from '../../services/informacionService';
 import { normalizeImageUrl } from '../../lib/imageUtils';
+import {
+  MAX_NOMBRE_USUARIO,
+  MAX_PASSWORD,
+  sanitizeUserFacingError,
+  validateNombreUsuario,
+  validatePassword,
+} from '../../lib/formLimits';
 import { saveAuthenticatedUser } from '../../services/sessionService';
 import './Login.css';
 
@@ -60,6 +67,16 @@ const Login = () => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState({ identifier: '', password: '' });
+  const [registerFieldErrors, setRegisterFieldErrors] = useState({
+    nombre: '',
+    correo: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [recoverFieldErrors, setRecoverFieldErrors] = useState({
+    nuevaPassword: '',
+    confirmPassword: '',
+  });
   const [formError, setFormError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -143,6 +160,8 @@ const Login = () => {
 
     if (!password) {
       nextErrors.password = 'Ingrese su contraseña.';
+    } else if (password.length > MAX_PASSWORD) {
+      nextErrors.password = `La contraseña no puede tener más de ${MAX_PASSWORD} caracteres.`;
     }
 
     setFieldErrors(nextErrors);
@@ -177,7 +196,7 @@ const Login = () => {
       sessionStorage.removeItem('postLoginRedirect');
       window.location.href = redirectTo;
     } catch (err) {
-      setFormError(err.message || 'Ocurrió un error al iniciar sesión.');
+      setFormError(sanitizeUserFacingError(err.message || 'Ocurrió un error al iniciar sesión.'));
     } finally {
       setIsLoading(false);
     }
@@ -188,7 +207,26 @@ const Login = () => {
     setFormError('');
     setSuccessMessage('');
     setRegisterStep('form');
+    setFieldErrors({ identifier: '', password: '' });
+    setRegisterFieldErrors({ nombre: '', correo: '', password: '', confirmPassword: '' });
+    setRecoverFieldErrors({ nuevaPassword: '', confirmPassword: '' });
     setRegisterForm({ nombre: '', correo: '', password: '', confirmPassword: '', token: '' });
+  };
+
+  const validateRegisterForm = () => {
+    const nextErrors = {
+      nombre: validateNombreUsuario(registerForm.nombre),
+      correo: registerForm.correo.trim() ? '' : 'Ingrese su correo.',
+      password: validatePassword(registerForm.password),
+      confirmPassword: '',
+    };
+
+    if (registerForm.password && registerForm.password !== registerForm.confirmPassword) {
+      nextErrors.confirmPassword = 'Las contraseñas no coinciden.';
+    }
+
+    setRegisterFieldErrors(nextErrors);
+    return !Object.values(nextErrors).some(Boolean);
   };
 
   const handleRegister = async (event) => {
@@ -196,18 +234,7 @@ const Login = () => {
     setFormError('');
     setSuccessMessage('');
 
-    if (!registerForm.nombre.trim() || !registerForm.correo.trim() || !registerForm.password) {
-      setFormError('Complete todos los campos para registrarse.');
-      return;
-    }
-
-    if (registerForm.password.length < 6) {
-      setFormError('La contraseña debe tener al menos 6 caracteres.');
-      return;
-    }
-
-    if (registerForm.password !== registerForm.confirmPassword) {
-      setFormError('Las contraseñas no coinciden.');
+    if (!validateRegisterForm()) {
       return;
     }
 
@@ -222,7 +249,7 @@ const Login = () => {
       setSuccessMessage(result?.message || 'Revisa tu correo e ingresa el codigo de verificacion.');
       setRegisterStep('verify');
     } catch (err) {
-      setFormError(err.message || 'No se pudo registrar la cuenta.');
+      setFormError(sanitizeUserFacingError(err.message || 'No se pudo registrar la cuenta.'));
     } finally {
       setIsLoading(false);
     }
@@ -234,6 +261,11 @@ const Login = () => {
 
     if (!registerForm.nombre.trim() || !registerForm.correo.trim() || !registerForm.password) {
       setFormError('Complete el formulario de registro antes de reenviar el codigo.');
+      setRegisterStep('form');
+      return;
+    }
+
+    if (!validateRegisterForm()) {
       setRegisterStep('form');
       return;
     }
@@ -312,20 +344,23 @@ const Login = () => {
     setFormError('');
     setSuccessMessage('');
 
-    if (!recoverForm.token.trim() || !recoverForm.nuevaPassword) {
-      setFormError('Ingrese el código y la nueva contraseña.');
+    const nextErrors = {
+      nuevaPassword: !recoverForm.token.trim()
+        ? 'Ingrese el código recibido en su correo.'
+        : validatePassword(recoverForm.nuevaPassword),
+      confirmPassword: '',
+    };
+
+    if (recoverForm.nuevaPassword && recoverForm.nuevaPassword !== recoverForm.confirmPassword) {
+      nextErrors.confirmPassword = 'Las contraseñas no coinciden.';
+    }
+
+    if (nextErrors.nuevaPassword || nextErrors.confirmPassword) {
+      setRecoverFieldErrors(nextErrors);
       return;
     }
 
-    if (recoverForm.nuevaPassword.length < 6) {
-      setFormError('La nueva contraseña debe tener al menos 6 caracteres.');
-      return;
-    }
-
-    if (recoverForm.nuevaPassword !== recoverForm.confirmPassword) {
-      setFormError('Las contraseñas no coinciden.');
-      return;
-    }
+    setRecoverFieldErrors({ nuevaPassword: '', confirmPassword: '' });
 
     setIsLoading(true);
     try {
@@ -412,7 +447,7 @@ const Login = () => {
               autoComplete="current-password"
               value={password}
               onChange={(e) => {
-                setPassword(e.target.value);
+                setPassword(e.target.value.slice(0, MAX_PASSWORD));
                 clearFieldError('password');
               }}
               className={fieldErrors.password ? 'input-error' : ''}
@@ -444,9 +479,17 @@ const Login = () => {
                 id="nombre"
                 type="text"
                 value={registerForm.nombre}
-                onChange={(e) => setRegisterForm((prev) => ({ ...prev, nombre: e.target.value }))}
+                onChange={(e) => {
+                  setRegisterFieldErrors((prev) => ({ ...prev, nombre: '' }));
+                  setRegisterForm((prev) => ({ ...prev, nombre: e.target.value.slice(0, MAX_NOMBRE_USUARIO) }));
+                }}
+                maxLength={MAX_NOMBRE_USUARIO}
+                className={registerFieldErrors.nombre ? 'input-error' : ''}
                 required
               />
+              {registerFieldErrors.nombre ? (
+                <p className="login-field-error">{registerFieldErrors.nombre}</p>
+              ) : null}
             </div>
             <div className="login-field">
               <label htmlFor="correoRegistro">Correo</label>
@@ -454,9 +497,16 @@ const Login = () => {
                 id="correoRegistro"
                 type="email"
                 value={registerForm.correo}
-                onChange={(e) => setRegisterForm((prev) => ({ ...prev, correo: e.target.value }))}
+                onChange={(e) => {
+                  setRegisterFieldErrors((prev) => ({ ...prev, correo: '' }));
+                  setRegisterForm((prev) => ({ ...prev, correo: e.target.value }));
+                }}
+                className={registerFieldErrors.correo ? 'input-error' : ''}
                 required
               />
+              {registerFieldErrors.correo ? (
+                <p className="login-field-error">{registerFieldErrors.correo}</p>
+              ) : null}
             </div>
             <div className="login-field">
               <label htmlFor="passwordRegistro">Contraseña</label>
@@ -466,8 +516,17 @@ const Login = () => {
                 onToggle={() => togglePasswordVisibility('register')}
                 autoComplete="new-password"
                 value={registerForm.password}
-                onChange={(e) => setRegisterForm((prev) => ({ ...prev, password: e.target.value }))}
+                onChange={(e) => {
+                  setRegisterFieldErrors((prev) => ({ ...prev, password: '' }));
+                  setRegisterForm((prev) => ({ ...prev, password: e.target.value.slice(0, MAX_PASSWORD) }));
+                }}
+                className={registerFieldErrors.password ? 'input-error' : ''}
+                ariaInvalid={Boolean(registerFieldErrors.password)}
+                ariaDescribedBy={registerFieldErrors.password ? 'password-registro-error' : undefined}
               />
+              {registerFieldErrors.password ? (
+                <p id="password-registro-error" className="login-field-error">{registerFieldErrors.password}</p>
+              ) : null}
             </div>
             <div className="login-field">
               <label htmlFor="confirmPasswordRegistro">Confirmar contraseña</label>
@@ -477,8 +536,17 @@ const Login = () => {
                 onToggle={() => togglePasswordVisibility('registerConfirm')}
                 autoComplete="new-password"
                 value={registerForm.confirmPassword}
-                onChange={(e) => setRegisterForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                onChange={(e) => {
+                  setRegisterFieldErrors((prev) => ({ ...prev, confirmPassword: '' }));
+                  setRegisterForm((prev) => ({ ...prev, confirmPassword: e.target.value.slice(0, MAX_PASSWORD) }));
+                }}
+                className={registerFieldErrors.confirmPassword ? 'input-error' : ''}
+                ariaInvalid={Boolean(registerFieldErrors.confirmPassword)}
+                ariaDescribedBy={registerFieldErrors.confirmPassword ? 'confirm-password-registro-error' : undefined}
               />
+              {registerFieldErrors.confirmPassword ? (
+                <p id="confirm-password-registro-error" className="login-field-error">{registerFieldErrors.confirmPassword}</p>
+              ) : null}
             </div>
             <button type="submit" className="login-button" disabled={isLoading}>
               {isLoading ? 'Enviando código...' : 'REGISTRARME'}
@@ -566,8 +634,17 @@ const Login = () => {
                   onToggle={() => togglePasswordVisibility('recoverNew')}
                   autoComplete="new-password"
                   value={recoverForm.nuevaPassword}
-                  onChange={(e) => setRecoverForm((prev) => ({ ...prev, nuevaPassword: e.target.value }))}
+                  onChange={(e) => {
+                    setRecoverFieldErrors((prev) => ({ ...prev, nuevaPassword: '' }));
+                    setRecoverForm((prev) => ({ ...prev, nuevaPassword: e.target.value.slice(0, MAX_PASSWORD) }));
+                  }}
+                  className={recoverFieldErrors.nuevaPassword ? 'input-error' : ''}
+                  ariaInvalid={Boolean(recoverFieldErrors.nuevaPassword)}
+                  ariaDescribedBy={recoverFieldErrors.nuevaPassword ? 'recover-password-error' : undefined}
                 />
+                {recoverFieldErrors.nuevaPassword ? (
+                  <p id="recover-password-error" className="login-field-error">{recoverFieldErrors.nuevaPassword}</p>
+                ) : null}
               </div>
               <div className="login-field">
                 <label htmlFor="confirmNewPassword">Confirmar nueva contraseña</label>
@@ -577,8 +654,17 @@ const Login = () => {
                   onToggle={() => togglePasswordVisibility('recoverConfirm')}
                   autoComplete="new-password"
                   value={recoverForm.confirmPassword}
-                  onChange={(e) => setRecoverForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                  onChange={(e) => {
+                    setRecoverFieldErrors((prev) => ({ ...prev, confirmPassword: '' }));
+                    setRecoverForm((prev) => ({ ...prev, confirmPassword: e.target.value.slice(0, MAX_PASSWORD) }));
+                  }}
+                  className={recoverFieldErrors.confirmPassword ? 'input-error' : ''}
+                  ariaInvalid={Boolean(recoverFieldErrors.confirmPassword)}
+                  ariaDescribedBy={recoverFieldErrors.confirmPassword ? 'recover-confirm-password-error' : undefined}
                 />
+                {recoverFieldErrors.confirmPassword ? (
+                  <p id="recover-confirm-password-error" className="login-field-error">{recoverFieldErrors.confirmPassword}</p>
+                ) : null}
               </div>
               <button type="submit" className="login-button" disabled={isLoading}>
                 ACTUALIZAR

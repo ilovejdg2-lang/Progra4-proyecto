@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Coffee, Eye } from 'lucide-react';
 import OptimizedImage from '../../Components/OptimizedImage/OptimizedImage';
 import PageLoading from '../../Components/PageLoading/PageLoading';
+import { contactSupportMessage, sanitizeUserFacingError } from '../../lib/formLimits';
 import { obtenerInformacionSobreNosotros } from '../../services/informacionService';
 import './AboutUs.css';
 
@@ -16,13 +17,12 @@ const AboutUs = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
 
-  useEffect(() => {
-    let activo = true;
+  const cargarPagina = () => {
+    setLoading(true);
+    setLoadError('');
 
     obtenerInformacionSobreNosotros()
       .then((info) => {
-        if (!activo) return;
-
         setHistoriaTitulo(typeof info.historia?.title === 'string' ? info.historia.title.trim() : '');
         setHistoria(typeof info.historia?.description === 'string' ? info.historia.description.trim() : '');
         setMissionData({
@@ -37,17 +37,15 @@ const AboutUs = () => {
       })
       .catch((err) => {
         console.error('No se pudo cargar la informacion de sobre nosotros.', err);
-        if (activo) {
-          setLoadError(err?.message || 'No se pudo cargar la información de Sobre Nosotros.');
-        }
+        setLoadError(sanitizeUserFacingError(err?.message || 'No se pudo cargar la información de Sobre Nosotros.'));
       })
       .finally(() => {
-        if (activo) setLoading(false);
+        setLoading(false);
       });
+  };
 
-    return () => {
-      activo = false;
-    };
+  useEffect(() => {
+    cargarPagina();
   }, []);
 
   const galleryItems = galleryData;
@@ -63,13 +61,19 @@ const AboutUs = () => {
     );
   }
 
+  if (loadError) {
+    return (
+      <PageLoading
+        isError
+        message={loadError}
+        detail={contactSupportMessage()}
+        onRetry={cargarPagina}
+      />
+    );
+  }
+
   return (
     <main className="about-page">
-      {loadError ? (
-        <p className="about-page__load-error" role="status">
-          No se pudo cargar todo el contenido. Revise que el backend esté encendido.
-        </p>
-      ) : null}
       {hasHistoria ? (
         <section className="about-page__intro" aria-labelledby="about-historia-title">
           {historiaTitulo ? (
