@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Pencil, Power, Trash2, X } from "lucide-react";
+import { Pencil, Power, Star, Trash2, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
@@ -22,7 +22,14 @@ const FORM_VACIO = {
   stock: "",
   estado: "Habilitado",
   peso: "",
+  esDestacado: false,
 };
+
+const MAX_PRODUCTOS_DESTACADOS = 3;
+
+function contarDestacados(productos, excluirId = null) {
+  return productos.filter((item) => item.esDestacado && item.id !== excluirId).length;
+}
 
 function Modal({ titulo, onClose, children, ancho = "max-w-2xl" }) {
   return (
@@ -43,7 +50,7 @@ function Modal({ titulo, onClose, children, ancho = "max-w-2xl" }) {
   );
 }
 
-function FormProducto({ inicial, onGuardar, onCancelar, cargando }) {
+function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtros = 0 }) {
   const [form, setForm] = useState(() => ({
     ...FORM_VACIO,
     ...inicial,
@@ -51,13 +58,22 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando }) {
     precioConIVA: calcularPrecioConIVA(inicial?.precioNormal ?? inicial?.precioConIVA ?? 0),
     stock: inicial?.stock ?? "",
     estado: inicial?.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado",
+    esDestacado: Boolean(inicial?.esDestacado),
   }));
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
+    const { name, value, type, checked } = event.target;
+
+    if (name === "esDestacado" && checked && destacadosOtros >= MAX_PRODUCTOS_DESTACADOS) {
+      alert(`Solo puedes destacar hasta ${MAX_PRODUCTOS_DESTACADOS} productos en el inicio.`);
+      return;
+    }
+
     setForm((prev) => ({
       ...prev,
-      [name]: name === "precioNormal" || name === "precioConIVA" || name === "stock"
+      [name]: type === "checkbox"
+        ? checked
+        : name === "precioNormal" || name === "precioConIVA" || name === "stock"
         ? value === ""
           ? ""
           : Number(value)
@@ -133,6 +149,22 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando }) {
             <option value="Deshabilitado">Deshabilitado</option>
           </select>
         </label>
+
+        <label className="flex items-center gap-3 text-sm font-medium text-slate-700 md:col-span-2">
+          <input
+            type="checkbox"
+            name="esDestacado"
+            checked={Boolean(form.esDestacado)}
+            onChange={handleChange}
+            disabled={!form.esDestacado && destacadosOtros >= MAX_PRODUCTOS_DESTACADOS}
+            className="size-4 rounded border-slate-300 text-amber-700 focus:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+          />
+          Mostrar como destacado en el inicio
+        </label>
+        <p className="text-xs text-slate-500 md:col-span-2">
+          Maximo {MAX_PRODUCTOS_DESTACADOS} productos destacados en el inicio
+          ({Math.min(destacadosOtros + (form.esDestacado ? 1 : 0), MAX_PRODUCTOS_DESTACADOS)}/{MAX_PRODUCTOS_DESTACADOS}).
+        </p>
       </div>
 
       <div className="flex flex-col-reverse justify-end gap-3 pt-2 sm:flex-row">
@@ -344,11 +376,30 @@ const AdminInventarioProducto = () => {
     }
   };
 
+  const handleToggleDestacado = async (producto) => {
+    if (!producto.esDestacado && contarDestacados(productos) >= MAX_PRODUCTOS_DESTACADOS) {
+      alert(`Solo puedes destacar hasta ${MAX_PRODUCTOS_DESTACADOS} productos en el inicio.`);
+      return;
+    }
+
+    try {
+      const actualizado = await actualizarProducto(producto.id, {
+        esDestacado: !producto.esDestacado,
+      });
+      setProductos((prev) => prev.map((item) => (item.id === actualizado.id ? actualizado : item)));
+    } catch (err) {
+      alert(err?.message || "No se pudo cambiar el estado destacado.");
+    }
+  };
+
+  const destacadosEnUso = contarDestacados(productos);
+
   return (
     <AdminLayout>
       {modalCrear && (
         <Modal titulo="Nuevo producto" onClose={() => setModalCrear(false)}>
           <FormProducto
+            destacadosOtros={destacadosEnUso}
             onGuardar={handleCrear}
             onCancelar={() => setModalCrear(false)}
             cargando={guardando}
@@ -360,6 +411,7 @@ const AdminInventarioProducto = () => {
         <Modal titulo="Editar producto" onClose={() => setProductoEditar(null)}>
           <FormProducto
             inicial={productoEditar}
+            destacadosOtros={contarDestacados(productos, productoEditar.id)}
             onGuardar={handleEditar}
             onCancelar={() => setProductoEditar(null)}
             cargando={guardando}
@@ -372,6 +424,9 @@ const AdminInventarioProducto = () => {
           <div>
             <h1 className="text-xl font-semibold text-slate-950 sm:text-2xl">Productos</h1>
             <p className="mt-1 text-sm text-slate-500">Administración de inventario</p>
+            <p className="mt-1 text-xs text-slate-400">
+              Destacados en inicio: {destacadosEnUso}/{MAX_PRODUCTOS_DESTACADOS}
+            </p>
           </div>
 
           <button
@@ -405,6 +460,7 @@ const AdminInventarioProducto = () => {
                     <th className="px-6 py-4">Precio</th>
                     <th className="px-6 py-4">Stock</th>
                     <th className="px-6 py-4">Estado</th>
+                    <th className="px-6 py-4">Destacado</th>
                     <th className="px-6 py-4 w-48">Acciones</th>
                   </tr>
                 </thead>
@@ -442,6 +498,22 @@ const AdminInventarioProducto = () => {
                         >
                           {producto.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado"}
                         </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleDestacado(producto)}
+                          disabled={!producto.esDestacado && destacadosEnUso >= MAX_PRODUCTOS_DESTACADOS}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                            producto.esDestacado
+                              ? "bg-amber-50 text-amber-800 hover:bg-amber-100"
+                              : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                          }`}
+                          aria-pressed={producto.esDestacado}
+                        >
+                          <Star className={`size-3.5 ${producto.esDestacado ? "fill-current" : ""}`} aria-hidden="true" />
+                          {producto.esDestacado ? "Si" : "No"}
+                        </button>
                       </td>
                       <td className="px-6 py-4 align-top">
                         <AccionesProducto
@@ -495,6 +567,20 @@ const AdminInventarioProducto = () => {
                     <span><strong className="text-slate-800">Stock:</strong> {producto.stock}</span>
                     {producto.peso ? <span><strong className="text-slate-800">Peso:</strong> {producto.peso}</span> : null}
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleToggleDestacado(producto)}
+                    disabled={!producto.esDestacado && destacadosEnUso >= MAX_PRODUCTOS_DESTACADOS}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                      producto.esDestacado
+                        ? "bg-amber-50 text-amber-800"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    <Star className={`size-3.5 ${producto.esDestacado ? "fill-current" : ""}`} aria-hidden="true" />
+                    {producto.esDestacado ? "Destacado en inicio" : "Marcar como destacado"}
+                  </button>
 
                   <AccionesProducto
                     producto={producto}
