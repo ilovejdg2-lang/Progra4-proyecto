@@ -12,6 +12,14 @@ import {
   calcularPrecioConIVA,
 } from "../../../services/productosServices";
 import { getActiveSessionUser } from "../../../services/sessionService";
+import {
+  contactSupportMessage,
+  hasFieldErrors,
+  MAX_PRODUCTO_DESCRIPCION,
+  MAX_PRODUCTO_NOMBRE,
+  sanitizeUserFacingError,
+  validateProductoForm,
+} from "../../../lib/formLimits";
 
 const FORM_VACIO = {
   nombre: "",
@@ -60,6 +68,8 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
     estado: inicial?.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado",
     esDestacado: Boolean(inicial?.esDestacado),
   }));
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [submitError, setSubmitError] = useState("");
 
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
@@ -82,27 +92,64 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
         ? calcularPrecioConIVA(value === "" ? 0 : Number(value))
         : prev.precioConIVA,
     }));
+
+    if (name === "nombre" || name === "descripcion") {
+      setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+    setSubmitError("");
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    onGuardar({
-      ...form,
-      precioNormal: Number(form.precioNormal) || 0,
-      precioConIVA: calcularPrecioConIVA(form.precioNormal),
-      stock: Number(form.stock) || 0,
-    });
+    const errors = validateProductoForm(form);
+    if (hasFieldErrors(errors)) {
+      setFieldErrors(errors);
+      setSubmitError("");
+      return;
+    }
+
+    setFieldErrors({});
+    setSubmitError("");
+
+    try {
+      await onGuardar({
+        ...form,
+        precioNormal: Number(form.precioNormal) || 0,
+        precioConIVA: calcularPrecioConIVA(form.precioNormal),
+        stock: Number(form.stock) || 0,
+      });
+    } catch (err) {
+      const message = sanitizeUserFacingError(err?.message || "No se pudo guardar el producto.");
+      if (message.toLowerCase().includes("nombre")) {
+        setFieldErrors((prev) => ({ ...prev, nombre: message }));
+      } else if (message.toLowerCase().includes("descripción") || message.toLowerCase().includes("descripcion")) {
+        setFieldErrors((prev) => ({ ...prev, descripcion: message }));
+      } else {
+        setSubmitError(message);
+      }
+    }
   };
 
   const inputCls =
     "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
+  const inputErrorCls = "border-red-500 focus:border-red-500 focus:ring-red-100";
+  const fieldErrorCls = "text-xs text-red-600";
+  const textareaCls = `${inputCls} min-h-[6rem] resize-y break-words whitespace-pre-wrap overflow-x-hidden`;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
           Nombre
-          <input name="nombre" value={form.nombre} onChange={handleChange} className={inputCls} required />
+          <input
+            name="nombre"
+            value={form.nombre}
+            onChange={handleChange}
+            maxLength={MAX_PRODUCTO_NOMBRE}
+            className={`${inputCls} ${fieldErrors.nombre ? inputErrorCls : ""}`}
+            required
+          />
+          {fieldErrors.nombre ? <span className={fieldErrorCls}>{fieldErrors.nombre}</span> : null}
         </label>
 
         <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
@@ -112,9 +159,11 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
             value={form.descripcion}
             onChange={handleChange}
             rows={4}
-            className={inputCls}
+            maxLength={MAX_PRODUCTO_DESCRIPCION}
+            className={`${textareaCls} ${fieldErrors.descripcion ? inputErrorCls : ""}`}
             required
           />
+          {fieldErrors.descripcion ? <span className={fieldErrorCls}>{fieldErrors.descripcion}</span> : null}
         </label>
 
         <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
@@ -166,6 +215,8 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
           ({Math.min(destacadosOtros + (form.esDestacado ? 1 : 0), MAX_PRODUCTOS_DESTACADOS)}/{MAX_PRODUCTOS_DESTACADOS}).
         </p>
       </div>
+
+      {submitError ? <p className={fieldErrorCls}>{submitError}</p> : null}
 
       <div className="flex flex-col-reverse justify-end gap-3 pt-2 sm:flex-row">
         <button
@@ -278,8 +329,8 @@ const AdminInventarioProducto = () => {
       setError(null);
       const data = await obtenerProductos();
       setProductos(data);
-    } catch {
-      setError("No se pudieron cargar los productos.");
+    } catch (err) {
+      setError(sanitizeUserFacingError(err?.message || "No se pudieron cargar los productos."));
     } finally {
       setCargando(false);
     }
@@ -316,26 +367,26 @@ const AdminInventarioProducto = () => {
   }, []);
 
   const handleCrear = async (form) => {
+    setGuardando(true);
     try {
-      setGuardando(true);
       const nuevo = await crearProducto(form);
       setProductos((prev) => [...prev, nuevo]);
       setModalCrear(false);
-    } catch {
-      alert("No se pudo crear el producto.");
+    } catch (err) {
+      throw err;
     } finally {
       setGuardando(false);
     }
   };
 
   const handleEditar = async (form) => {
+    setGuardando(true);
     try {
-      setGuardando(true);
       const actualizado = await actualizarProducto(productoEditar.id, form);
       setProductos((prev) => prev.map((producto) => (producto.id === actualizado.id ? actualizado : producto)));
       setProductoEditar(null);
-    } catch {
-      alert("No se pudo actualizar el producto.");
+    } catch (err) {
+      throw err;
     } finally {
       setGuardando(false);
     }
@@ -420,6 +471,25 @@ const AdminInventarioProducto = () => {
       )}
 
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        {cargando ? (
+          <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 px-4 py-14 text-center sm:px-6">
+            <span className="admin-route-loading__spinner" aria-hidden="true" />
+            <p className="text-sm font-semibold text-slate-600">Cargando productos...</p>
+          </div>
+        ) : error ? (
+          <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 px-4 py-14 text-center sm:px-6">
+            <p className="max-w-md text-sm font-semibold text-red-600">{error}</p>
+            <p className="max-w-md text-xs text-slate-500">{contactSupportMessage()}</p>
+            <button
+              type="button"
+              onClick={cargarProductos}
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Reintentar
+            </button>
+          </div>
+        ) : (
+          <>
         <div className="flex flex-col gap-4 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <div>
             <h1 className="text-xl font-semibold text-slate-950 sm:text-2xl">Productos</h1>
@@ -438,16 +508,7 @@ const AdminInventarioProducto = () => {
           </button>
         </div>
 
-        {cargando ? (
-          <div className="px-4 py-14 text-center text-sm text-slate-500 sm:px-6">Cargando productos...</div>
-        ) : error ? (
-          <div className="px-4 py-14 text-center text-sm text-red-500 sm:px-6">
-            <p>{error}</p>
-            <button type="button" onClick={cargarProductos} className="mt-3 font-semibold text-slate-700 underline">
-              Reintentar
-            </button>
-          </div>
-        ) : productos.length === 0 ? (
+        {productos.length === 0 ? (
           <div className="px-4 py-14 text-center text-sm text-slate-500 sm:px-6">No hay productos registrados.</div>
         ) : (
           <>
@@ -593,6 +654,8 @@ const AdminInventarioProducto = () => {
                 </article>
               ))}
             </div>
+          </>
+        )}
           </>
         )}
       </section>
