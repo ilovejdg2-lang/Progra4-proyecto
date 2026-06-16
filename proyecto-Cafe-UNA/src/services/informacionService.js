@@ -170,6 +170,21 @@ export async function eliminarEnlace(id) {
   return true;
 }
 
+export async function obtenerTarjetasInicio() {
+  const key = "tarjetas-inicio";
+  const promise = request(`${BASE_URL}/tarjetas-inicio`).then((data) => (Array.isArray(data) ? data : []));
+  return getCache(key) ?? setCache(key, promise);
+}
+
+export async function actualizarTarjetasInicio(tarjetas) {
+  const result = await request(`${BASE_URL}/tarjetas-inicio`, {
+    method: "PATCH",
+    body: JSON.stringify({ tarjetas }),
+  });
+  clearInfoCache();
+  return Array.isArray(result) ? result : [];
+}
+
 export async function obtenerInformacionSobreNosotros() {
   const [historia, mission, vision, gallery] = await Promise.all([
     obtenerSeccion("historia").catch(() => ({})),

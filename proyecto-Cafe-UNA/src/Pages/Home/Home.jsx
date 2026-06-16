@@ -4,17 +4,12 @@ import { useEffect, useState } from 'react';
 import Hero from '../../Components/Hero/Hero';
 import PageLoading from '../../Components/PageLoading/PageLoading';
 import { normalizeImageUrl } from '../../lib/imageUtils';
-import { obtenerFooter, obtenerHero, obtenerSeccion } from '../../services/informacionService';
+import { obtenerHero, obtenerSeccion, obtenerTarjetasInicio } from '../../services/informacionService';
 import { obtenerProductos } from '../../services/productosServices';
 import './Home.css';
 
-const cards = [
-  {
-    id: 'donaciones',
-    etiqueta: 'Donaciones',
-    titulo: 'Cada aporte transforma una vida',
-    descripcion:
-      'Tu contribución financia iniciativas sostenibles, investigaciones y programas de bienestar que impactan a toda la comunidad universitaria.',
+const CARD_VISUALS = {
+  donaciones: {
     icono: (
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -24,12 +19,7 @@ const cards = [
     accentBg: '#fff6f0',
     borderColor: '#efc4ad',
   },
-  {
-    id: 'visitas',
-    etiqueta: 'Visitas',
-    titulo: 'Conocé el corazón del proyecto',
-    descripcion:
-      'Agendá una visita guiada a nuestras instalaciones y viví de cerca la experiencia del Café UNA, sus cultivos y su gente.',
+  visitas: {
     icono: (
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -40,13 +30,7 @@ const cards = [
     accentBg: '#f0fbf6',
     borderColor: '#a9dec8',
   },
-  {
-    id: 'voluntariado',
-    to: '/voluntariado/solicitar',
-    etiqueta: 'Voluntariado',
-    titulo: 'Sumá tu energía a nuestra misión',
-    descripcion:
-      'Formá parte del equipo de voluntarios que sostiene las actividades del Café UNA. Tu tiempo y dedicación dejan huella.',
+  voluntariado: {
     icono: (
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -58,24 +42,11 @@ const cards = [
     accentColor: '#67521d',
     accentBg: '#fff9eb',
     borderColor: '#dfc98d',
+    to: '/voluntariado/solicitar',
   },
-];
-
-const COLLECTION_LABELS = ['ORIGEN', 'EXPERIENCIA', 'ARTESANÍA'];
-
-const featuredIntroDefault =
-  'Explorá todos nuestros productos y elegí el café que mejor encaje con tu gusto, tu rutina y tu forma de disfrutarlo.';
-
-const aboutTeaserDefault = {
-  title: 'Conocé más sobre Café UNA',
-  description:
-    'Descubrí nuestra historia, propósito y el impacto que construimos junto a productores locales y la comunidad universitaria.',
-  image:
-    'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=900&q=80',
 };
 
-const mapsUrlDefault =
-  'https://www.google.com/maps/place/Finca+Experimental+Santa+Luc%C3%ADa+-+Universidad+Nacional/@10.0232398,-84.11705,17z/data=!4m14!1m7!3m6!1s0x8fa0faa5f69f073d:0x656b2da8f85723be!2sFinca+Experimental+Santa+Luc%C3%ADa+-+Universidad+Nacional!8m2!3d10.0232346!4d-84.1121791!16s%2Fg%2F1pp2tywc7!3m5!1s0x8fa0faa5f69f073d:0x656b2da8f85723be!8m2!3d10.0232346!4d-84.1121791!16s%2Fg%2F1pp2tywc7?entry=ttu&g_ep=EgoyMDI2MDUyNS4wIKXMDSoASAFQAw%3D%3D';
+const COLLECTION_LABELS = ['ORIGEN', 'EXPERIENCIA', 'ARTESANÍA'];
 
 const mapsEmbedUrl =
   'https://www.google.com/maps?q=Finca%20Experimental%20Santa%20Lucia%20Universidad%20Nacional%20Heredia&output=embed';
@@ -102,7 +73,10 @@ const Home = () => {
   const [hero, setHero] = useState({});
   const [heroLoaded, setHeroLoaded] = useState(false);
   const [aboutTeaser, setAboutTeaser] = useState({ title: '', description: '', image: '' });
-  const [mapsUrl, setMapsUrl] = useState('');
+  const [featuredSection, setFeaturedSection] = useState({ title: '', description: '' });
+  const [iniciativasSection, setIniciativasSection] = useState({ eyebrow: '', title: '', description: '' });
+  const [locationSection, setLocationSection] = useState({ eyebrow: '', title: '', description: '', linkUrl: '' });
+  const [tarjetasInicio, setTarjetasInicio] = useState([]);
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -141,8 +115,11 @@ const Home = () => {
 
     Promise.all([
       obtenerSeccion('homeSpotlight').catch(() => ({})),
-      obtenerFooter().catch(() => null),
-    ]).then(([spotlight, footer]) => {
+      obtenerSeccion('homeFeatured').catch(() => ({})),
+      obtenerSeccion('homeIniciativas').catch(() => ({})),
+      obtenerSeccion('homeLocation').catch(() => ({})),
+      obtenerTarjetasInicio().catch(() => []),
+    ]).then(([spotlight, featured, iniciativas, location, tarjetas]) => {
       if (!activo) return;
 
       setAboutTeaser({
@@ -150,7 +127,37 @@ const Home = () => {
         description: typeof spotlight?.description === 'string' ? spotlight.description.trim() : '',
         image: typeof spotlight?.image === 'string' ? spotlight.image.trim() : '',
       });
-      setMapsUrl(typeof footer?.mapsUrl === 'string' ? footer.mapsUrl.trim() : '');
+      setFeaturedSection({
+        title: typeof featured?.title === 'string' ? featured.title.trim() : '',
+        description: typeof featured?.description === 'string' ? featured.description.trim() : '',
+      });
+      setIniciativasSection({
+        eyebrow: typeof iniciativas?.eyebrow === 'string' ? iniciativas.eyebrow.trim() : '',
+        title: typeof iniciativas?.title === 'string' ? iniciativas.title.trim() : '',
+        description: typeof iniciativas?.description === 'string' ? iniciativas.description.trim() : '',
+      });
+      setLocationSection({
+        eyebrow: typeof location?.eyebrow === 'string' ? location.eyebrow.trim() : '',
+        title: typeof location?.title === 'string' ? location.title.trim() : '',
+        description: typeof location?.description === 'string' ? location.description.trim() : '',
+        linkUrl:
+          typeof location?.linkUrl === 'string'
+            ? location.linkUrl.trim()
+            : typeof location?.LinkUrl === 'string'
+              ? location.LinkUrl.trim()
+              : '',
+      });
+      setTarjetasInicio(
+        Array.isArray(tarjetas)
+          ? tarjetas.map((item) => ({
+              clave: item.clave || item.Clave || '',
+              etiqueta: item.etiqueta || item.Etiqueta || '',
+              titulo: item.titulo || item.Titulo || '',
+              descripcion: item.descripcion || item.Descripcion || '',
+              ruta: item.ruta || item.Ruta || '',
+            }))
+          : [],
+      );
     });
 
     return () => {
@@ -209,14 +216,27 @@ const Home = () => {
     hero?.backgroundImage || hero?.title || hero?.subtitle || hero?.buttonText
   );
   const homeReady = heroLoaded;
-  const aboutTeaserTitle = aboutTeaser.title || aboutTeaserDefault.title;
-  const aboutTeaserDescription = aboutTeaser.description || aboutTeaserDefault.description;
-  const aboutTeaserImageUrl = normalizeImageUrl(
-    aboutTeaser.image || aboutTeaserDefault.image,
-    { width: 900 },
-  );
-  const activeMapsUrl = mapsUrl || mapsUrlDefault;
-  const featuredProducts = products.filter((product) => product.estado !== 'Deshabilitado');
+  const aboutTeaserImageUrl = normalizeImageUrl(aboutTeaser.image, { width: 900 });
+  const featuredProducts = products
+    .filter((product) => product.estado !== 'Deshabilitado' && product.esDestacado)
+    .slice(0, 3);
+
+  const iniciativasCards = tarjetasInicio.map((tarjeta) => {
+    const clave = (tarjeta.clave || '').toLowerCase();
+    const visual = CARD_VISUALS[clave] || {};
+
+    return {
+      id: clave || tarjeta.clave,
+      etiqueta: tarjeta.etiqueta,
+      titulo: tarjeta.titulo,
+      descripcion: tarjeta.descripcion,
+      to: tarjeta.ruta || visual.to || '',
+      icono: visual.icono,
+      accentColor: visual.accentColor,
+      accentBg: visual.accentBg,
+      borderColor: visual.borderColor,
+    };
+  });
 
   useEffect(() => {
     document.body.classList.toggle('home-hero-ready', heroLoaded);
@@ -246,21 +266,23 @@ const Home = () => {
           <div className="mission-spotlight-shell">
             <article className="mission-spotlight-card">
               <h2 id="about-teaser-title" className="mission-spotlight-card__title">
-                {aboutTeaserTitle}
+                {aboutTeaser.title}
               </h2>
 
               <div className="mission-spotlight-card__body">
-                <div className="mission-spotlight-card__media">
-                  <img
-                    src={aboutTeaserImageUrl}
-                    alt=""
-                    loading="lazy"
-                  />
-                </div>
+                {aboutTeaserImageUrl ? (
+                  <div className="mission-spotlight-card__media">
+                    <img
+                      src={aboutTeaserImageUrl}
+                      alt=""
+                      loading="lazy"
+                    />
+                  </div>
+                ) : null}
 
                 <div className="mission-spotlight-card__content">
                   <p className="mission-spotlight-card__description">
-                    {aboutTeaserDescription}
+                    {aboutTeaser.description}
                   </p>
                   <Link to="/AboutUs" className="mission-spotlight-card__link">
                     Conoce nuestra historia completa
@@ -276,19 +298,19 @@ const Home = () => {
 
         <section className="home-page__featured curated-collections">
           <header className="curated-collections__header">
-            <h2 className="curated-collections__title">Descubrí nuestra selección de cafés</h2>
-            <p className="curated-collections__intro">{featuredIntroDefault}</p>
+            <h2 className="curated-collections__title">{featuredSection.title}</h2>
+            <p className="curated-collections__intro">{featuredSection.description}</p>
           </header>
 
           {!loadingProducts && featuredProducts.length === 0 ? (
-            <p className="curated-collections__empty">Pronto tendremos nuevos cafés disponibles.</p>
+            <p className="curated-collections__empty">Aún no hay cafés destacados. Márcalos en el panel de productos.</p>
           ) : (
             <div
               className="curated-collections__grid"
               aria-busy={loadingProducts}
               aria-label="Selección destacada de cafés"
             >
-              {(loadingProducts ? Array.from({ length: 3 }) : featuredProducts.slice(0, 3)).map((p, idx) => (
+              {(loadingProducts ? Array.from({ length: 3 }) : featuredProducts).map((p, idx) => (
                 <article
                   key={p?.id ?? p?.nombre ?? `placeholder-${idx}`}
                   className={`curated-collections__card${idx === 1 ? ' curated-collections__card--offset' : ''}${p ? '' : ' curated-collections__card--loading'}`}
@@ -329,18 +351,18 @@ const Home = () => {
 
         <section id="iniciativas" className="home-page__iniciativas">
           <div className="iniciativas-header">
-            <span className="iniciativas-eyebrow">Participá con nosotros</span>
+            <span className="iniciativas-eyebrow">{iniciativasSection.eyebrow}</span>
             <h2 className="iniciativas-titulo">
-              Cada aporte, visita o colaboración deja una huella especial.
+              {iniciativasSection.title}
               <br />
             </h2>
             <p className="iniciativas-subtitulo">
-              Elegí cómo querés involucrarte con el Café UNA y completá el formulario correspondiente.
+              {iniciativasSection.description}
             </p>
           </div>
 
           <div className="iniciativas-grid">
-            {cards.map((card) => (
+            {iniciativasCards.map((card) => (
               <div
                 key={card.id}
                 className="iniciativa-card"
@@ -385,16 +407,16 @@ const Home = () => {
             <div className="location-card__copy">
               <span className="location-card__eyebrow">
                 <MapPin size={16} strokeWidth={2.4} aria-hidden="true" />
-                Nuestra ubicacion
+                {locationSection.eyebrow}
               </span>
-              <h2 id="location-title">Visitanos en la Finca Experimental Santa Lucia</h2>
-              <p>
-                Estamos en Heredia, Barva. Abrilo en Google Maps para ver la ruta y llegar con facilidad.
-              </p>
-              <a href={activeMapsUrl} target="_blank" rel="noreferrer" className="location-card__button">
-                Ver en Google Maps
-                <ExternalLink size={16} strokeWidth={2.4} aria-hidden="true" />
-              </a>
+              <h2 id="location-title">{locationSection.title}</h2>
+              <p>{locationSection.description}</p>
+              {locationSection.linkUrl ? (
+                <a href={locationSection.linkUrl} target="_blank" rel="noreferrer" className="location-card__button">
+                  Ver en Google Maps
+                  <ExternalLink size={16} strokeWidth={2.4} aria-hidden="true" />
+                </a>
+              ) : null}
             </div>
 
             <div className="location-card__map">
@@ -405,7 +427,9 @@ const Home = () => {
                 referrerPolicy="no-referrer-when-downgrade"
                 aria-hidden="true"
               />
-              <a href={activeMapsUrl} target="_blank" rel="noreferrer" className="location-card__map-link" aria-label="Abrir ubicacion en Google Maps" />
+              {locationSection.linkUrl ? (
+                <a href={locationSection.linkUrl} target="_blank" rel="noreferrer" className="location-card__map-link" aria-label="Abrir ubicacion en Google Maps" />
+              ) : null}
             </div>
           </div>
         </section>
