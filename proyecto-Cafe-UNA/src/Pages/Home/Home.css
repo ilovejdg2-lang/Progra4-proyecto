@@ -254,43 +254,31 @@
 }
 
 @media (max-width: 980px) {
-  .curated-collections__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .curated-collections__card--offset {
     margin-top: 0;
-  }
-
-  .curated-collections__card:last-child {
-    grid-column: 1 / -1;
-    max-width: min(100%, 480px);
-    justify-self: center;
-    width: 100%;
   }
 }
 
 @media (max-width: 768px) {
   .curated-collections__grid {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    gap: 1.15rem;
-    width: 100%;
-    margin: 0;
-    padding: 0.25rem 0 0.75rem;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .curated-collections__grid::-webkit-scrollbar {
-    display: none;
+    grid-template-columns: 1fr;
+    display: grid;
+    overflow-x: visible;
+    scroll-snap-type: none;
+    padding: 0;
   }
 
   .curated-collections__card {
-    flex: 0 0 min(72vw, 300px);
-    min-height: clamp(280px, 82vw, 340px);
-    scroll-snap-align: center;
+    flex: none;
+    width: 100%;
+    min-height: clamp(300px, 52vw, 400px);
+    scroll-snap-align: none;
+  }
+
+  .curated-collections__card:last-child {
+    grid-column: auto;
+    max-width: none;
+    justify-self: stretch;
   }
 }
 
@@ -348,9 +336,12 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: calc(82svh - var(--navbar-height));
-  padding: 0;
+  padding: clamp(2.5rem, 5vw, 4rem) 0;
   scroll-margin-top: calc(var(--navbar-height) + 1rem);
+}
+
+.mission-spotlight-shell {
+  width: 100%;
 }
 
 .mission-spotlight-card {
@@ -375,6 +366,16 @@
   text-align: center;
 }
 
+.mission-spotlight-card__body {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1.25rem, 2.5vw, 2rem);
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
 .mission-spotlight-card__media {
   width: min(100%, 330px);
 }
@@ -388,18 +389,12 @@
   display: block;
 }
 
-.mission-spotlight-card__body {
-  display: grid;
-  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-}
-
 .mission-spotlight-card__content {
   display: grid;
   gap: 0.9rem;
   align-content: center;
+  justify-items: start;
+  text-align: left;
   max-width: 520px;
 }
 
@@ -707,15 +702,6 @@
 ========================= */
 
 @media (max-width: 980px) {
-  .mission-spotlight-card {
-    width: min(100%, 720px);
-  }
-
-  .mission-spotlight-card__body {
-    grid-template-columns: 1fr;
-    justify-items: center;
-  }
-
   .iniciativas-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -748,7 +734,7 @@
   }
 
   .home-page__mission-spotlight {
-    min-height: calc(78svh - var(--navbar-height));
+    padding: 2.25rem 0;
   }
 
   .location-card__map,
@@ -763,6 +749,11 @@
   .mission-spotlight-card {
     gap: 1.3rem;
     width: min(100%, 620px);
+  }
+
+  .mission-spotlight-card__body {
+    grid-template-columns: 1fr;
+    justify-items: center;
   }
 
   .mission-spotlight-card__content {
@@ -800,8 +791,7 @@
   }
 
   .home-page__mission-spotlight {
-    min-height: auto;
-    padding-block: 2rem;
+    padding-block: 1.75rem;
   }
 
   .mission-spotlight-card__body {
