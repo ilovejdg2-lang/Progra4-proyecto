@@ -515,6 +515,8 @@
   margin: 0;
   font-weight: 700;
   color: #0f172a;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .dropdown__email {

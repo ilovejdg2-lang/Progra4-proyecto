@@ -1,4 +1,5 @@
 import axios from "axios";
+import { sanitizeUserFacingError } from "../lib/formLimits";
 import { clearSession, getActiveSessionUser } from "./sessionService";
 
 export async function apiRequest(url, options = {}) {
@@ -55,20 +56,20 @@ export async function apiRequest(url, options = {}) {
       }
 
       const responseData = error.response.data;
-      const message = typeof responseData === "string"
+      const rawMessage = typeof responseData === "string"
         ? responseData
         : responseData?.message || `${errorPrefix} (${error.response.status})`;
-      throw new Error(message, { cause: error });
+      throw new Error(sanitizeUserFacingError(rawMessage), { cause: error });
     }
 
     if (error.code === "ERR_NETWORK") {
-      throw new Error(
-        "No se pudo conectar con el servidor. Verifica que el backend esté corriendo.",
-        { cause: error },
-      );
+      throw new Error(sanitizeUserFacingError(""), { cause: error });
     }
 
-    throw new Error(error.message || "Error de red al conectar con el servidor.", { cause: error });
+    throw new Error(
+      sanitizeUserFacingError(error.message || "No se pudo completar la acción."),
+      { cause: error },
+    );
   }
 }
 
