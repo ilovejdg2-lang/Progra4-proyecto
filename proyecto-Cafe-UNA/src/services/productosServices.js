@@ -47,6 +47,7 @@ function normalizarProducto(producto) {
   const precioNormal = Number(producto?.precioNormal ?? producto?.priceWithoutIva ?? producto?.price ?? 0) || 0;
   const stock = Number(producto?.stock ?? 0) || 0;
   const estado = producto?.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado";
+  const esDestacado = Boolean(producto?.esDestacado ?? producto?.EsDestacado);
 
   return {
     ...producto,
@@ -54,6 +55,7 @@ function normalizarProducto(producto) {
     precioConIVA: calcularPrecioConIVA(precioNormal),
     stock,
     estado,
+    esDestacado,
   };
 }
 

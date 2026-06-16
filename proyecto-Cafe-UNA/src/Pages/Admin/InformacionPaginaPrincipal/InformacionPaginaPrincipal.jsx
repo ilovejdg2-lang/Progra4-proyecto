@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Image, LayoutTemplate, Link2, PanelBottom, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { Coffee, ClipboardList, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Sparkles, Trash2, Users, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
@@ -8,6 +8,7 @@ import {
   actualizarFooter,
   actualizarNavbar,
   actualizarSeccion,
+  actualizarTarjetasInicio,
   crearEnlace,
   eliminarEnlace,
   obtenerEnlaces,
@@ -15,6 +16,7 @@ import {
   obtenerHero,
   obtenerNavbar,
   obtenerSeccion,
+  obtenerTarjetasInicio,
 } from "../../../services/informacionService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 
@@ -25,10 +27,77 @@ const heroInicial = {
   backgroundImage: "",
 };
 
-const homeSpotlightInicial = {
+const seccionInicioVacia = {
+  eyebrow: "",
   title: "",
   description: "",
   image: "",
+  linkUrl: "",
+};
+
+const CONFIG_SECCIONES_INICIO = {
+  homeSpotlight: {
+    etiqueta: "Inicio",
+    tituloTarjeta: "Conocé más sobre Café UNA",
+    modalTitle: "Conocé más sobre Café UNA",
+    ayuda: "Bloque del inicio que invita a visitar Sobre nosotros. No usa la mision ni la galeria.",
+    icon: Sparkles,
+    showEyebrow: false,
+    showImage: true,
+    titleLabel: "Titulo",
+    descriptionLabel: "Texto breve",
+  },
+  homeFeatured: {
+    etiqueta: "Inicio",
+    tituloTarjeta: "Descubrí nuestra selección de cafés",
+    modalTitle: "Descubrí nuestra selección de cafés",
+    ayuda: "Encabezado de la seccion de productos destacados en el inicio.",
+    icon: Coffee,
+    showEyebrow: false,
+    showImage: false,
+    titleLabel: "Titulo",
+    descriptionLabel: "Texto introductorio",
+  },
+  homeIniciativas: {
+    etiqueta: "Inicio",
+    tituloTarjeta: "Participá con nosotros",
+    modalTitle: "Cada aporte, visita o colaboración deja una huella especial",
+    ayuda: "Texto principal de la seccion de iniciativas (donaciones, visitas y voluntariado).",
+    icon: Users,
+    showEyebrow: true,
+    showImage: false,
+    eyebrowLabel: "Etiqueta superior",
+    titleLabel: "Titulo principal",
+    descriptionLabel: "Subtitulo",
+  },
+  homeLocation: {
+    etiqueta: "Inicio",
+    tituloTarjeta: "Visitanos en la Finca Experimental Santa Lucia",
+    modalTitle: "Visitanos en la Finca Experimental Santa Lucia",
+    ayuda: "Texto y enlace de Google Maps de la seccion de ubicacion en el inicio.",
+    icon: MapPin,
+    showEyebrow: true,
+    showImage: false,
+    showLinkUrl: true,
+    eyebrowLabel: "Etiqueta superior",
+    titleLabel: "Titulo",
+    descriptionLabel: "Descripcion",
+    linkUrlLabel: "Enlace de Google Maps",
+  },
+};
+
+const TARJETAS_INICIO_LABELS = {
+  donaciones: "Donaciones",
+  visitas: "Visitas",
+  voluntariado: "Voluntariado",
+};
+
+const tarjetaInicioVacia = {
+  clave: "",
+  etiqueta: "",
+  titulo: "",
+  descripcion: "",
+  ruta: "",
 };
 
 const navbarInicial = {
@@ -185,8 +254,8 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
   );
 }
 
-function ModalHomeSpotlight({ data, onCerrar, onGuardar, guardando }) {
-  const [form, setForm] = useState(() => ({ ...homeSpotlightInicial, ...data }));
+function ModalSeccionInicio({ config, data, onCerrar, onGuardar, guardando }) {
+  const [form, setForm] = useState(() => ({ ...seccionInicioVacia, ...data }));
 
   const cambiarCampo = (event) => {
     const { name, value } = event.target;
@@ -199,15 +268,15 @@ function ModalHomeSpotlight({ data, onCerrar, onGuardar, guardando }) {
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-2xl" labelledBy="admin-home-spotlight-modal-title">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-2xl" labelledBy="admin-seccion-inicio-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
           <div className="flex min-w-0 items-center gap-3">
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700">
-              <Sparkles className="size-5" />
+              <config.icon className="size-5" />
             </span>
-            <h2 id="admin-home-spotlight-modal-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">
-              Invitacion a Sobre nosotros
+            <h2 id="admin-seccion-inicio-modal-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">
+              {config.modalTitle}
             </h2>
           </div>
           <button
@@ -221,12 +290,19 @@ function ModalHomeSpotlight({ data, onCerrar, onGuardar, guardando }) {
         </AdminModalHeader>
 
         <AdminModalBody className="space-y-5">
-          <p className="text-sm text-slate-600">
-            Bloque del inicio que invita a visitar Sobre nosotros. No usa la mision ni la galeria.
-          </p>
+          <p className="text-sm text-slate-600">{config.ayuda}</p>
+
+          {config.showEyebrow ? (
+            <CampoTexto
+              label={config.eyebrowLabel || "Etiqueta superior"}
+              name="eyebrow"
+              value={form.eyebrow}
+              onChange={cambiarCampo}
+            />
+          ) : null}
 
           <CampoTexto
-            label="Titulo"
+            label={config.titleLabel || "Titulo"}
             name="title"
             value={form.title}
             onChange={cambiarCampo}
@@ -234,7 +310,7 @@ function ModalHomeSpotlight({ data, onCerrar, onGuardar, guardando }) {
           />
 
           <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-            Texto breve
+            {config.descriptionLabel || "Descripcion"}
             <textarea
               name="description"
               value={form.description}
@@ -245,14 +321,154 @@ function ModalHomeSpotlight({ data, onCerrar, onGuardar, guardando }) {
             />
           </label>
 
-          <CampoTexto
-            label="Imagen URL"
-            name="image"
-            value={form.image}
-            onChange={cambiarCampo}
-            placeholder="https://..."
-            hint="Imagen propia del bloque. No se toma de la galeria."
-          />
+          {config.showImage ? (
+            <CampoTexto
+              label="Imagen URL"
+              name="image"
+              value={form.image}
+              onChange={cambiarCampo}
+              placeholder="https://..."
+              hint="Imagen propia del bloque. No se toma de la galeria."
+            />
+          ) : null}
+
+          {config.showLinkUrl ? (
+            <CampoTexto
+              label={config.linkUrlLabel || "Enlace"}
+              name="linkUrl"
+              value={form.linkUrl}
+              onChange={cambiarCampo}
+              placeholder="https://www.google.com/maps/..."
+              hint="URL que abre el boton Ver en Google Maps y el mapa interactivo."
+            />
+          ) : null}
+        </AdminModalBody>
+
+        <AdminModalFooter>
+          <button
+            type="button"
+            onClick={onCerrar}
+            className="w-full rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={guardando}
+            className="w-full rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
+            {guardando ? "Guardando..." : "Guardar cambios"}
+          </button>
+        </AdminModalFooter>
+      </form>
+    </AdminModal>
+  );
+}
+
+function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
+  const [form, setForm] = useState(() =>
+    tarjetas.map((tarjeta) => ({
+      ...tarjetaInicioVacia,
+      ...tarjeta,
+      clave: tarjeta.clave || tarjeta.Clave || "",
+      etiqueta: tarjeta.etiqueta || tarjeta.Etiqueta || "",
+      titulo: tarjeta.titulo || tarjeta.Titulo || "",
+      descripcion: tarjeta.descripcion || tarjeta.Descripcion || "",
+      ruta: tarjeta.ruta || tarjeta.Ruta || "",
+    })),
+  );
+
+  const cambiarCampo = (index, name, value) => {
+    setForm((actual) =>
+      actual.map((tarjeta, idx) => (idx === index ? { ...tarjeta, [name]: value } : tarjeta)),
+    );
+  };
+
+  const enviar = (event) => {
+    event.preventDefault();
+    onGuardar(
+      form.map((tarjeta) => ({
+        clave: tarjeta.clave,
+        etiqueta: tarjeta.etiqueta,
+        titulo: tarjeta.titulo,
+        descripcion: tarjeta.descripcion,
+        ruta: tarjeta.ruta,
+      })),
+    );
+  };
+
+  return (
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-3xl" labelledBy="admin-tarjetas-inicio-modal-title">
+      <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
+        <AdminModalHeader>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
+              <ClipboardList className="size-5" />
+            </span>
+            <h2 id="admin-tarjetas-inicio-modal-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">
+              Mini formularios del inicio
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onCerrar}
+            className="rounded-full bg-stone-100 p-2 text-slate-600 transition hover:bg-stone-200"
+            aria-label="Cerrar"
+          >
+            <X className="size-5" />
+          </button>
+        </AdminModalHeader>
+
+        <AdminModalBody className="space-y-6">
+          <p className="text-sm text-slate-600">
+            Editá las tres tarjetas de donaciones, visitas y voluntariado que aparecen en el inicio.
+          </p>
+
+          {form.map((tarjeta, index) => (
+            <div key={tarjeta.clave || index} className="space-y-4 rounded-2xl border border-slate-200 p-4 sm:p-5">
+              <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500">
+                {TARJETAS_INICIO_LABELS[tarjeta.clave] || tarjeta.clave}
+              </h3>
+
+              <CampoTexto
+                label="Etiqueta"
+                name={`etiqueta-${index}`}
+                value={tarjeta.etiqueta}
+                onChange={(event) => cambiarCampo(index, "etiqueta", event.target.value)}
+                required
+              />
+
+              <CampoTexto
+                label="Titulo"
+                name={`titulo-${index}`}
+                value={tarjeta.titulo}
+                onChange={(event) => cambiarCampo(index, "titulo", event.target.value)}
+                required
+              />
+
+              <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                Descripcion
+                <textarea
+                  value={tarjeta.descripcion}
+                  onChange={(event) => cambiarCampo(index, "descripcion", event.target.value)}
+                  rows={3}
+                  className="resize-none rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                  required
+                />
+              </label>
+
+              {tarjeta.clave === "voluntariado" ? (
+                <CampoTexto
+                  label="Ruta del formulario"
+                  name={`ruta-${index}`}
+                  value={tarjeta.ruta}
+                  onChange={(event) => cambiarCampo(index, "ruta", event.target.value)}
+                  placeholder="/voluntariado/solicitar"
+                  hint="Ruta interna del boton Completar formulario."
+                />
+              ) : null}
+            </div>
+          ))}
         </AdminModalBody>
 
         <AdminModalFooter>
@@ -665,6 +881,37 @@ function TarjetaSeccion({ etiqueta, titulo, descripcion, icono: Icon, onEditar }
   );
 }
 
+function mapSeccionInicio(data) {
+  return {
+    eyebrow: typeof data?.eyebrow === "string" ? data.eyebrow.trim() : "",
+    title: typeof data?.title === "string" ? data.title.trim() : "",
+    description: typeof data?.description === "string" ? data.description.trim() : "",
+    image: typeof data?.image === "string" ? data.image.trim() : "",
+    linkUrl:
+      typeof data?.linkUrl === "string"
+        ? data.linkUrl.trim()
+        : typeof data?.LinkUrl === "string"
+          ? data.LinkUrl.trim()
+          : "",
+  };
+}
+
+function resumenSeccionInicio(data, config) {
+  if (data.title) return data.title;
+  if (data.description) return data.description;
+  return `Sin contenido guardado para "${config.tituloTarjeta}".`;
+}
+
+function mapTarjetaInicio(item) {
+  return {
+    clave: item?.clave || item?.Clave || "",
+    etiqueta: item?.etiqueta || item?.Etiqueta || "",
+    titulo: item?.titulo || item?.Titulo || "",
+    descripcion: item?.descripcion || item?.Descripcion || "",
+    ruta: item?.ruta || item?.Ruta || "",
+  };
+}
+
 const AdminInformacionPaginaPrincipal = () => {
   const actor = (() => {
     try {
@@ -677,11 +924,17 @@ const AdminInformacionPaginaPrincipal = () => {
   const esSuperAdmin = actorRoles.some((rol) => String(rol).toLowerCase() === "superadmin");
 
   const [hero, setHero] = useState(heroInicial);
-  const [homeSpotlight, setHomeSpotlight] = useState(homeSpotlightInicial);
+  const [seccionesInicio, setSeccionesInicio] = useState({
+    homeSpotlight: { ...seccionInicioVacia },
+    homeFeatured: { ...seccionInicioVacia },
+    homeIniciativas: { ...seccionInicioVacia },
+    homeLocation: { ...seccionInicioVacia },
+  });
   const [navbar, setNavbar] = useState(navbarInicial);
   const [footer, setFooter] = useState(footerInicial);
   const [enlacesNavbar, setEnlacesNavbar] = useState([]);
   const [enlacesFooter, setEnlacesFooter] = useState([]);
+  const [tarjetasInicio, setTarjetasInicio] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [editando, setEditando] = useState(null);
@@ -693,22 +946,26 @@ const AdminInformacionPaginaPrincipal = () => {
     Promise.all([
       obtenerHero().catch(() => null),
       obtenerSeccion("homeSpotlight").catch(() => null),
+      obtenerSeccion("homeFeatured").catch(() => null),
+      obtenerSeccion("homeIniciativas").catch(() => null),
+      obtenerSeccion("homeLocation").catch(() => null),
+      obtenerTarjetasInicio().catch(() => []),
       obtenerNavbar().catch(() => null),
       obtenerFooter().catch(() => null),
       obtenerEnlaces("Navbar").catch(() => []),
       obtenerEnlaces("FooterExplorar").catch(() => []),
     ])
-      .then(([heroData, homeSpotlightData, navbarData, footerData, navbarEnlaces, footerEnlaces]) => {
+      .then(([heroData, homeSpotlightData, homeFeaturedData, homeIniciativasData, homeLocationData, tarjetasData, navbarData, footerData, navbarEnlaces, footerEnlaces]) => {
         if (!activo) return;
 
         if (heroData) setHero({ ...heroInicial, ...heroData });
-        if (homeSpotlightData) {
-          setHomeSpotlight({
-            title: homeSpotlightData.title || "",
-            description: homeSpotlightData.description || "",
-            image: homeSpotlightData.image || "",
-          });
-        }
+        setSeccionesInicio({
+          homeSpotlight: mapSeccionInicio(homeSpotlightData),
+          homeFeatured: mapSeccionInicio(homeFeaturedData),
+          homeIniciativas: mapSeccionInicio(homeIniciativasData),
+          homeLocation: mapSeccionInicio(homeLocationData),
+        });
+        setTarjetasInicio(Array.isArray(tarjetasData) ? tarjetasData.map(mapTarjetaInicio) : []);
         if (navbarData) setNavbar({ ...navbarInicial, ...navbarData });
         if (footerData) setFooter({ ...footerInicial, ...footerData });
         setEnlacesNavbar(Array.isArray(navbarEnlaces) ? navbarEnlaces : []);
@@ -740,18 +997,30 @@ const AdminInformacionPaginaPrincipal = () => {
     }
   };
 
-  const guardarHomeSpotlight = async (form) => {
+  const guardarSeccionInicio = async (clave, form) => {
     try {
       setGuardando(true);
-      const actualizado = await actualizarSeccion("homeSpotlight", form);
-      setHomeSpotlight({
-        title: actualizado?.title || form.title,
-        description: actualizado?.description || form.description,
-        image: actualizado?.image || form.image,
-      });
+      const actualizado = await actualizarSeccion(clave, form);
+      setSeccionesInicio((actual) => ({
+        ...actual,
+        [clave]: mapSeccionInicio(actualizado ?? form),
+      }));
       setEditando(null);
     } catch (err) {
-      alert(err.message || "No se pudo guardar la invitacion a Sobre nosotros.");
+      alert(err.message || "No se pudo guardar la seccion del inicio.");
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const guardarTarjetasInicio = async (tarjetas) => {
+    try {
+      setGuardando(true);
+      const actualizadas = await actualizarTarjetasInicio(tarjetas);
+      setTarjetasInicio(Array.isArray(actualizadas) ? actualizadas.map(mapTarjetaInicio) : []);
+      setEditando(null);
+    } catch (err) {
+      alert(err.message || "No se pudieron guardar los mini formularios.");
     } finally {
       setGuardando(false);
     }
@@ -845,9 +1114,9 @@ const AdminInformacionPaginaPrincipal = () => {
     }
   };
 
-  const resumenHomeSpotlight = homeSpotlight.title || homeSpotlight.description
-    ? `${homeSpotlight.title || "Sin titulo"} · invita a Sobre nosotros`
-    : "Bloque del inicio para dirigir visitantes a Sobre nosotros.";
+  const resumenTarjetasInicio = tarjetasInicio.length
+    ? tarjetasInicio.map((tarjeta) => tarjeta.titulo || TARJETAS_INICIO_LABELS[tarjeta.clave] || tarjeta.clave).join(" · ")
+    : "Donaciones, visitas y voluntariado (sin textos cargados).";
 
   const resumenNavbar = navbar.logoUrl || navbar.logoClaroUrl
     ? "Logos configurados para la barra superior del sitio."
@@ -891,12 +1160,23 @@ const AdminInformacionPaginaPrincipal = () => {
               onEditar={() => setEditando("hero")}
             />
 
+            {Object.entries(CONFIG_SECCIONES_INICIO).map(([clave, config]) => (
+              <TarjetaSeccion
+                key={clave}
+                etiqueta={config.etiqueta}
+                titulo={config.tituloTarjeta}
+                descripcion={resumenSeccionInicio(seccionesInicio[clave], config)}
+                icono={config.icon}
+                onEditar={() => setEditando(clave)}
+              />
+            ))}
+
             <TarjetaSeccion
               etiqueta="Inicio"
-              titulo="Invitacion a Sobre nosotros"
-              descripcion={resumenHomeSpotlight}
-              icono={Sparkles}
-              onEditar={() => setEditando("homeSpotlight")}
+              titulo="Mini formularios"
+              descripcion={resumenTarjetasInicio}
+              icono={ClipboardList}
+              onEditar={() => setEditando("tarjetas-inicio")}
             />
 
             <TarjetaSeccion
@@ -938,11 +1218,21 @@ const AdminInformacionPaginaPrincipal = () => {
         <ModalHero hero={hero} onCerrar={() => setEditando(null)} onGuardar={guardarHero} guardando={guardando} />
       ) : null}
 
-      {editando === "homeSpotlight" ? (
-        <ModalHomeSpotlight
-          data={homeSpotlight}
+      {editando && CONFIG_SECCIONES_INICIO[editando] ? (
+        <ModalSeccionInicio
+          config={CONFIG_SECCIONES_INICIO[editando]}
+          data={seccionesInicio[editando]}
           onCerrar={() => setEditando(null)}
-          onGuardar={guardarHomeSpotlight}
+          onGuardar={(form) => guardarSeccionInicio(editando, form)}
+          guardando={guardando}
+        />
+      ) : null}
+
+      {editando === "tarjetas-inicio" ? (
+        <ModalTarjetasInicio
+          tarjetas={tarjetasInicio}
+          onCerrar={() => setEditando(null)}
+          onGuardar={guardarTarjetasInicio}
           guardando={guardando}
         />
       ) : null}
