@@ -427,6 +427,22 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 const accionBtnBase =
   "inline-flex items-center justify-center gap-1.5 rounded-lg border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
 
+function mapUsuario(item) {
+  const estado = String(item?.estado ?? item?.Estado ?? "").trim().toLowerCase();
+  return {
+    ...item,
+    id: item?.id ?? item?.Id,
+    nombre: item?.nombre ?? item?.Nombre ?? "",
+    correo: item?.correo ?? item?.Correo ?? "",
+    estado: estado === "activo" ? "activo" : "inactivo",
+    roles: Array.isArray(item?.roles) ? item.roles : Array.isArray(item?.Roles) ? item.Roles : [],
+  };
+}
+
+function esUsuarioActivo(estado) {
+  return String(estado ?? "").trim().toLowerCase() === "activo";
+}
+
 function AccionesUsuario({
   usuario,
   puedeCambiarEstado,
@@ -435,7 +451,7 @@ function AccionesUsuario({
   onToggle,
   variant = "table",
 }) {
-  const esInactivo = usuario.estado !== "activo";
+  const esInactivo = !esUsuarioActivo(usuario.estado);
   const esMovil = variant === "mobile";
 
   const editarCls = `${accionBtnBase} border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 focus-visible:ring-amber-300`;
@@ -516,7 +532,7 @@ const AdminUsuarios = () => {
       setCargando(true);
       setError(null);
       const data = await obtenerUsuarios();
-      setUsuarios(data);
+      setUsuarios(Array.isArray(data) ? data.map(mapUsuario) : []);
     } catch {
       setError("No se pudieron cargar los usuarios.");
     } finally {
@@ -529,7 +545,7 @@ const AdminUsuarios = () => {
 
     obtenerUsuarios()
       .then((data) => {
-        if (activo) setUsuarios(data);
+        if (activo) setUsuarios(Array.isArray(data) ? data.map(mapUsuario) : []);
       })
       .catch(() => {
         if (activo) setError("No se pudieron cargar los usuarios.");
@@ -586,8 +602,9 @@ const AdminUsuarios = () => {
 
     try {
       setToggleando(usuario.id);
-      const actualizado = await toggleEstadoUsuario(usuario.id);
-      setUsuarios((prev) => prev.map((u) => (u.id === actualizado.id ? actualizado : u)));
+      const nuevoEstado = esUsuarioActivo(usuario.estado) ? "inactivo" : "activo";
+      const actualizado = await toggleEstadoUsuario(usuario.id, nuevoEstado);
+      setUsuarios((prev) => prev.map((u) => (u.id === actualizado.id ? mapUsuario(actualizado) : u)));
     } catch (err) {
       alert(err?.message || "Error al cambiar el estado.");
     } finally {
@@ -627,12 +644,12 @@ const AdminUsuarios = () => {
         const estado = getValue();
         return (
           <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            estado === "activo"
+            estado === "activo" || esUsuarioActivo(estado)
               ? "bg-green-50 text-green-700"
               : "bg-red-50 text-red-600"
           }`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${estado === "activo" ? "bg-green-500" : "bg-red-400"}`} />
-            {estado === "activo" ? "Activo" : "Inactivo"}
+            <span className={`h-1.5 w-1.5 rounded-full ${esUsuarioActivo(estado) ? "bg-green-500" : "bg-red-400"}`} />
+            {esUsuarioActivo(estado) ? "Activo" : "Inactivo"}
           </span>
         );
       },
@@ -786,8 +803,8 @@ const AdminUsuarios = () => {
                           ? "bg-green-50 text-green-700"
                           : "bg-red-50 text-red-600"
                       }`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${usuario.estado === "activo" ? "bg-green-500" : "bg-red-400"}`} />
-                        {usuario.estado === "activo" ? "Activo" : "Inactivo"}
+                        <span className={`h-1.5 w-1.5 rounded-full ${esUsuarioActivo(usuario.estado) ? "bg-green-500" : "bg-red-400"}`} />
+                        {esUsuarioActivo(usuario.estado) ? "Activo" : "Inactivo"}
                       </span>
                     </div>
 
