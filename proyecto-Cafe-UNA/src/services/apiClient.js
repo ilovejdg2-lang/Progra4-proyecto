@@ -54,13 +54,6 @@ export async function apiRequest(url, options = {}) {
         throw new Error("Su sesión expiró. Inicie sesión de nuevo.", { cause: error });
       }
 
-      if (error.response.status >= 500 && skipAuth) {
-        throw new Error(
-          "El servidor de autenticación falló. Redespliegue el backend en MonsterASP e intente de nuevo.",
-          { cause: error },
-        );
-      }
-
       const responseData = error.response.data;
       const message = typeof responseData === "string"
         ? responseData
