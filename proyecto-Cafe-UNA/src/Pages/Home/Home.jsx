@@ -66,14 +66,13 @@ const COLLECTION_LABELS = ['ORIGEN', 'EXPERIENCIA', 'ARTESANÍA'];
 const featuredIntroDefault =
   'Explorá todos nuestros productos y elegí el café que mejor encaje con tu gusto, tu rutina y tu forma de disfrutarlo.';
 
-const missionSpotlightDefault = {
+const aboutTeaserDefault = {
   title: 'Conocé más sobre Café UNA',
   description:
     'Descubrí nuestra historia, propósito y el impacto que construimos junto a productores locales y la comunidad universitaria.',
+  image:
+    'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=900&q=80',
 };
-
-const spotlightImageDefault =
-  'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=900&q=80';
 
 const mapsUrlDefault =
   'https://www.google.com/maps/place/Finca+Experimental+Santa+Luc%C3%ADa+-+Universidad+Nacional/@10.0232398,-84.11705,17z/data=!4m14!1m7!3m6!1s0x8fa0faa5f69f073d:0x656b2da8f85723be!2sFinca+Experimental+Santa+Luc%C3%ADa+-+Universidad+Nacional!8m2!3d10.0232346!4d-84.1121791!16s%2Fg%2F1pp2tywc7!3m5!1s0x8fa0faa5f69f073d:0x656b2da8f85723be!8m2!3d10.0232346!4d-84.1121791!16s%2Fg%2F1pp2tywc7?entry=ttu&g_ep=EgoyMDI2MDUyNS4wIKXMDSoASAFQAw%3D%3D';
@@ -102,8 +101,7 @@ function waitForImage(src, timeoutMs = 8000) {
 const Home = () => {
   const [hero, setHero] = useState({});
   const [heroLoaded, setHeroLoaded] = useState(false);
-  const [missionSpotlight, setMissionSpotlight] = useState({ title: '', description: '' });
-  const [spotlightImage, setSpotlightImage] = useState('');
+  const [aboutTeaser, setAboutTeaser] = useState({ title: '', description: '', image: '' });
   const [mapsUrl, setMapsUrl] = useState('');
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -142,19 +140,16 @@ const Home = () => {
     let activo = true;
 
     Promise.all([
-      obtenerSeccion('mission').catch(() => ({})),
-      obtenerSeccion('gallery').catch(() => []),
+      obtenerSeccion('homeSpotlight').catch(() => ({})),
       obtenerFooter().catch(() => null),
-    ]).then(([mission, gallery, footer]) => {
+    ]).then(([spotlight, footer]) => {
       if (!activo) return;
 
-      setMissionSpotlight({
-        title: typeof mission?.title === 'string' ? mission.title.trim() : '',
-        description: typeof mission?.description === 'string' ? mission.description.trim() : '',
+      setAboutTeaser({
+        title: typeof spotlight?.title === 'string' ? spotlight.title.trim() : '',
+        description: typeof spotlight?.description === 'string' ? spotlight.description.trim() : '',
+        image: typeof spotlight?.image === 'string' ? spotlight.image.trim() : '',
       });
-
-      const firstImage = Array.isArray(gallery) ? gallery.find((item) => item?.image)?.image : '';
-      setSpotlightImage(typeof firstImage === 'string' ? firstImage.trim() : '');
       setMapsUrl(typeof footer?.mapsUrl === 'string' ? footer.mapsUrl.trim() : '');
     });
 
@@ -214,9 +209,12 @@ const Home = () => {
     hero?.backgroundImage || hero?.title || hero?.subtitle || hero?.buttonText
   );
   const homeReady = heroLoaded;
-  const spotlightTitle = missionSpotlight.title || missionSpotlightDefault.title;
-  const spotlightDescription = missionSpotlight.description || missionSpotlightDefault.description;
-  const spotlightImageUrl = normalizeImageUrl(spotlightImage || spotlightImageDefault, { width: 900 });
+  const aboutTeaserTitle = aboutTeaser.title || aboutTeaserDefault.title;
+  const aboutTeaserDescription = aboutTeaser.description || aboutTeaserDefault.description;
+  const aboutTeaserImageUrl = normalizeImageUrl(
+    aboutTeaser.image || aboutTeaserDefault.image,
+    { width: 900 },
+  );
   const activeMapsUrl = mapsUrl || mapsUrlDefault;
   const featuredProducts = products.filter((product) => product.estado !== 'Deshabilitado');
 
@@ -244,25 +242,25 @@ const Home = () => {
       ) : null}
       <Hero data={hero} />
       <main className="home-page">
-        <section className="home-page__mission-spotlight" aria-labelledby="mission-spotlight-title">
+        <section className="home-page__mission-spotlight" aria-labelledby="about-teaser-title">
           <div className="mission-spotlight-shell">
             <article className="mission-spotlight-card">
-              <h2 id="mission-spotlight-title" className="mission-spotlight-card__title">
-                {spotlightTitle}
+              <h2 id="about-teaser-title" className="mission-spotlight-card__title">
+                {aboutTeaserTitle}
               </h2>
 
               <div className="mission-spotlight-card__body">
                 <div className="mission-spotlight-card__media">
                   <img
-                    src={spotlightImageUrl}
-                    alt={spotlightTitle}
+                    src={aboutTeaserImageUrl}
+                    alt=""
                     loading="lazy"
                   />
                 </div>
 
                 <div className="mission-spotlight-card__content">
                   <p className="mission-spotlight-card__description">
-                    {spotlightDescription}
+                    {aboutTeaserDescription}
                   </p>
                   <Link to="/AboutUs" className="mission-spotlight-card__link">
                     Conoce nuestra historia completa
