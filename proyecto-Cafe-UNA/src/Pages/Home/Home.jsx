@@ -12,6 +12,7 @@ import { collectHomeImageUrls } from '../../lib/homeImageUrls';
 import { isPageInstantReady, markPageRevealed } from '../../lib/pageSessionState';
 import { removeHomeInitialLoader, setHomePageLoading } from '../../lib/homePageLoading';
 import { runHomeScrollWhenReady } from '../../lib/homeScrollTarget';
+import { productoPuedeDestacarse } from '../../lib/productoDisponibilidad';
 import { readPageCache, readStalePageCache } from '../../lib/pageDataCache';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { toGoogleMapsEmbedUrl } from '../../lib/googleMaps';
@@ -140,7 +141,7 @@ const Home = () => {
   const aboutTeaserImageUrl = normalizeImageUrl(aboutTeaser.image, { width: 900 });
   const featuredProducts = useMemo(
     () => products
-      .filter((product) => product.estado !== 'Deshabilitado' && product.esDestacado)
+      .filter((product) => product.esDestacado && productoPuedeDestacarse(product))
       .slice(0, 3),
     [products],
   );
@@ -241,13 +242,13 @@ const Home = () => {
             <p className="curated-collections__empty">Aún no hay cafés destacados. Márcalos en el panel de productos.</p>
           ) : (
             <div
-              className="curated-collections__grid"
+              className={`curated-collections__grid curated-collections__grid--count-${featuredProducts.length}`}
               aria-label="Selección destacada de cafés"
             >
               {featuredProducts.map((p, idx) => (
                 <article
                   key={p?.id ?? p?.nombre ?? `featured-${idx}`}
-                  className={`curated-collections__card${idx === 1 ? ' curated-collections__card--offset' : ''}`}
+                  className={`curated-collections__card${featuredProducts.length === 3 && idx === 1 ? ' curated-collections__card--offset' : ''}`}
                 >
                   <Link to="/productos" className="curated-collections__card-link">
                     <img
