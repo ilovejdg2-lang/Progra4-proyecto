@@ -735,7 +735,7 @@ const Navbar = () => {
 
             <div
                 className={`navbar__mobile-drawer ${isMobileMenuOpen ? 'is-open' : ''}`}
-                aria-hidden={!isMobileMenuOpen}
+                inert={!isMobileMenuOpen || undefined}
             >
                 <button
                     type="button"
