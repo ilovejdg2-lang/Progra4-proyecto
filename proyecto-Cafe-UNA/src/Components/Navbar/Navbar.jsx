@@ -5,6 +5,7 @@ import { calcularPrecioConIVA } from '../../services/productosServices';
 import { Bell, Menu, Minus, Plus, ShoppingCart, Trash2, User, X } from 'lucide-react';
 import { obtenerEnlaces, obtenerNavbar } from '../../services/informacionService';
 import { normalizeImageUrl } from '../../lib/imageUtils';
+import { readPageCache } from '../../lib/pageDataCache';
 import { obtenerSolicitudes, obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService';
 import { clearSession, getActiveSessionUser } from '../../services/sessionService';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
@@ -42,6 +43,35 @@ const canSeeAllSolicitudes = (user) => {
 const isSolicitudPendiente = (solicitud) =>
     String(solicitud?.estado || '').trim().toLowerCase() === 'pendiente';
 
+function getCachedNavbarLogos() {
+    const home = readPageCache('home');
+    return {
+        logoUrl: typeof home?.navbar?.logoUrl === 'string' ? home.navbar.logoUrl.trim() : '',
+        logoClaroUrl: typeof home?.navbar?.logoClaroUrl === 'string' ? home.navbar.logoClaroUrl.trim() : '',
+    };
+}
+
+function getCachedNavbarLinks() {
+    const home = readPageCache('home');
+    if (Array.isArray(home?.enlacesNavbar) && home.enlacesNavbar.length > 0) {
+        return filterNavLinks(home.enlacesNavbar);
+    }
+
+    const adminMain = readPageCache('admin-main');
+    if (Array.isArray(adminMain?.enlacesNavbar) && adminMain.enlacesNavbar.length > 0) {
+        return filterNavLinks(adminMain.enlacesNavbar);
+    }
+
+    return [];
+}
+
+function filterNavLinks(enlaces) {
+    return enlaces.filter((enlace) => {
+        const ruta = String(enlace?.ruta ?? enlace?.Ruta ?? '').trim();
+        return ruta !== '/' && ruta !== '';
+    });
+}
+
 const Navbar = () => {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
@@ -55,9 +85,10 @@ const Navbar = () => {
     const [solicitudes, setSolicitudes] = useState([]);
     const [notificationsLoading, setNotificationsLoading] = useState(false);
     const [notificationsError, setNotificationsError] = useState('');
-    const [enlacesNavbar, setEnlacesNavbar] = useState([]);
-    const [logoUrl, setLogoUrl] = useState('');
-    const [logoClaroUrl, setLogoClaroUrl] = useState('');
+    const [enlacesNavbar, setEnlacesNavbar] = useState(() => getCachedNavbarLinks());
+    const cachedLogos = getCachedNavbarLogos();
+    const [logoUrl, setLogoUrl] = useState(cachedLogos.logoUrl);
+    const [logoClaroUrl, setLogoClaroUrl] = useState(cachedLogos.logoClaroUrl);
     const cartContainerRef = useRef(null);
     const notificationsRef = useRef(null);
     const cartCloseTimerRef = useRef(null);
@@ -77,7 +108,7 @@ const Navbar = () => {
         ])
             .then(([enlaces, navbar]) => {
                 if (!activo) return;
-                setEnlacesNavbar(Array.isArray(enlaces) ? enlaces : []);
+                setEnlacesNavbar(filterNavLinks(Array.isArray(enlaces) ? enlaces : []));
                 setLogoUrl(typeof navbar?.logoUrl === 'string' ? navbar.logoUrl.trim() : '');
                 setLogoClaroUrl(typeof navbar?.logoClaroUrl === 'string' ? navbar.logoClaroUrl.trim() : '');
             })
@@ -429,7 +460,7 @@ const Navbar = () => {
         isTransparent && !useSolidNavbar ? (logoClaroUrl || logoUrl) : logoUrl,
         { width: 480 }
     );
-    const navLinks = enlacesNavbar.length > 0 ? enlacesNavbar : DEFAULT_NAV_LINKS;
+    const navLinks = filterNavLinks(enlacesNavbar.length > 0 ? enlacesNavbar : DEFAULT_NAV_LINKS);
 
     return (
         <nav

@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
+import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
+import { useAdminPageLoadingGate } from "../../../hooks/usePublicPageLoadingGate";
 import {
   actualizarSolicitud,
   eliminarSolicitud,
@@ -417,6 +419,7 @@ const AdminVoluntariado = () => {
   const [viendo, setViendo] = useState(null);
   const [editando, setEditando] = useState(null);
   const [eliminando, setEliminando] = useState(null);
+  const showLoading = useAdminPageLoadingGate('/admin/voluntariado', !cargando);
 
   const resumen = useMemo(() => {
     return solicitudes.reduce((acc, solicitud) => {
@@ -498,6 +501,10 @@ const AdminVoluntariado = () => {
       setEliminando(null);
     }
   };
+
+  if (showLoading) {
+    return <AdminRouteLoading />;
+  }
 
   return (
     <AdminLayout>

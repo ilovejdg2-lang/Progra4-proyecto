@@ -1,57 +1,23 @@
 /* eslint-disable react-refresh/only-export-components */
-import { StrictMode, useEffect, useState } from 'react'
+import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { RouterProvider } from '@tanstack/react-router'
 import { router } from './router'
 import { getActiveSessionUser } from './services/sessionService'
 
-function AppStartupGate() {
-  const [ready, setReady] = useState(false);
-
+function SessionSync() {
   useEffect(() => {
-    let mounted = true;
     getActiveSessionUser();
     const sessionIntervalId = window.setInterval(getActiveSessionUser, 30_000);
-    const timeoutId = window.setTimeout(() => {
-      if (mounted) setReady(true);
-    }, 2500);
-
-    const waitForWindowLoad = new Promise((resolve) => {
-      if (document.readyState === 'complete') {
-        resolve();
-        return;
-      }
-      window.addEventListener('load', resolve, { once: true });
-    });
-
-    const waitForFonts = document.fonts?.ready?.catch(() => undefined) ?? Promise.resolve();
-
-    Promise.all([waitForWindowLoad, waitForFonts]).finally(() => {
-      window.clearTimeout(timeoutId);
-      if (mounted) setReady(true);
-    });
-
-    return () => {
-      mounted = false;
-      window.clearInterval(sessionIntervalId);
-      window.clearTimeout(timeoutId);
-    };
+    return () => window.clearInterval(sessionIntervalId);
   }, []);
-
-  if (!ready) {
-    return (
-      <div className="app-loading-screen" role="status" aria-live="polite">
-        <p>Cargando...</p>
-      </div>
-    );
-  }
 
   return <RouterProvider router={router} />;
 }
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <AppStartupGate />
+    <SessionSync />
   </StrictMode>,
 )

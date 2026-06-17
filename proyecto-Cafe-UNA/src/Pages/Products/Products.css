@@ -14,6 +14,10 @@
   background: #ffffff;
 }
 
+.products-page > .page-back-link {
+  margin-bottom: 0;
+}
+
 .products-page__hero {
   padding: 1.8rem;
   /* Removed card background, border and shadow to match page flow */
