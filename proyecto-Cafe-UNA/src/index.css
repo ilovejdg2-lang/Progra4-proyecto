@@ -435,6 +435,10 @@ a[class*="btn"],
   border-radius: var(--ui-radius) !important;
 }
 
+.navbar {
+  border-radius: 0 !important;
+}
+
 @media (max-width: 1024px) {
   :root {
     font-size: 16px;
