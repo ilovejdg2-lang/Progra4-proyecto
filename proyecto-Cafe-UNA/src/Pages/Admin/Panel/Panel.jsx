@@ -1,9 +1,16 @@
 import { AdminLayout } from "../layouts/AdminLayout";
+import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
+import { useAdminPageLoadingGate } from "../../../hooks/usePublicPageLoadingGate";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import "./Panel.css";
 
 const AdminPanel = () => {
   const user = getActiveSessionUser();
+  const showLoading = useAdminPageLoadingGate('/admin', true);
+
+  if (showLoading) {
+    return <AdminRouteLoading />;
+  }
 
   return (
     <AdminLayout>

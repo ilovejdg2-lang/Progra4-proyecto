@@ -2,6 +2,14 @@ import { getActiveSessionUser } from "./sessionService";
 import { apiRequest } from "./apiClient";
 
 const BASE_URL = `${import.meta.env.BACKEND_URL}/usuarios`;
+const CACHE_TTL_MS = 10 * 60 * 1000;
+let usuariosCache = { expiresAt: 0, data: null };
+let usuariosInflight = null;
+
+function clearUsuariosCache() {
+  usuariosCache = { expiresAt: 0, data: null };
+  usuariosInflight = null;
+}
 
 async function request(url, options = {}) {
   const method = (options.method || "GET").toUpperCase();
@@ -17,8 +25,27 @@ async function request(url, options = {}) {
 
 // ─── READ: obtener todos los usuarios ────────────────────────────────────────
 export async function obtenerUsuarios() {
-  const data = await request(BASE_URL);
-  return Array.isArray(data) ? data : [];
+  if (usuariosCache.expiresAt > Date.now() && Array.isArray(usuariosCache.data)) {
+    return usuariosCache.data;
+  }
+
+  if (usuariosInflight) {
+    return usuariosInflight;
+  }
+
+  usuariosInflight = request(BASE_URL)
+    .then((data) => {
+      const list = Array.isArray(data) ? data : [];
+      usuariosCache = { expiresAt: Date.now() + CACHE_TTL_MS, data: list };
+      usuariosInflight = null;
+      return list;
+    })
+    .catch((error) => {
+      usuariosInflight = null;
+      throw error;
+    });
+
+  return usuariosInflight;
 }
 
 // ─── READ: obtener sólo usuarios activos ────────────────────────────────────
@@ -34,6 +61,7 @@ export async function obtenerUsuarioPorId(id) {
 
 // ─── CREATE: agregar nuevo usuario (con verificación de correo) ───────────────
 export async function solicitarCreacionUsuario(nuevoUsuario) {
+  clearUsuariosCache();
   return request(`${BASE_URL}/solicitar-creacion`, {
     method: "POST",
     body: JSON.stringify(nuevoUsuario),
@@ -41,6 +69,7 @@ export async function solicitarCreacionUsuario(nuevoUsuario) {
 }
 
 export async function confirmarCreacionUsuario({ correo, token }) {
+  clearUsuariosCache();
   return request(`${BASE_URL}/confirmar-creacion`, {
     method: "POST",
     body: JSON.stringify({ correo, token }),
@@ -63,6 +92,7 @@ export async function confirmarCambioCorreoUsuario(id, { nuevoCorreo, token }) {
 
 // ─── CREATE: agregar nuevo usuario (deprecado, usar solicitar+confirmar) ────
 export async function crearUsuario(nuevoUsuario) {
+  clearUsuariosCache();
   return request(BASE_URL, {
     method: "POST",
     body: JSON.stringify(nuevoUsuario),
@@ -71,6 +101,7 @@ export async function crearUsuario(nuevoUsuario) {
 
 // ─── UPDATE: actualizar campos de un usuario ────────────────────────────────
 export async function actualizarUsuario(id, cambios) {
+  clearUsuariosCache();
   const actor = getActiveSessionUser();
 
   return request(`${BASE_URL}/${id}`, {
@@ -93,6 +124,7 @@ export async function actualizarUsuario(id, cambios) {
  * @returns {Promise<object>} usuario actualizado
  */
 export async function toggleEstadoUsuario(id, forzar = null) {
+  clearUsuariosCache();
   const actor = getActiveSessionUser();
 
   return request(`${BASE_URL}/${id}/estado`, {

@@ -8,8 +8,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  # BACKEND_URL en GitHub Secrets / Netlify Environment variables
-  # Ejemplo: http://cafeunaof.runasp.net/api
+  # BACKEND_URL: configurar en Netlify → Environment variables (no commitear en el repo)
 
 # El proxy /api/* se genera en public/_redirects durante npm run build (scripts/generate-redirects.mjs)
 
@@ -18,3 +17,28 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/favicon.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

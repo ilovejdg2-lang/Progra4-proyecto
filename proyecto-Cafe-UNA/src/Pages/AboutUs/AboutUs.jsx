@@ -1,59 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { Coffee, Eye } from 'lucide-react';
 import OptimizedImage from '../../Components/OptimizedImage/OptimizedImage';
+import BackToHomeLink, { HOME_SCROLL_SECTIONS } from '../../Components/BackToHomeLink/BackToHomeLink';
 import PageLoading from '../../Components/PageLoading/PageLoading';
+import { usePublicPageLoadingGate } from '../../hooks/usePublicPageLoadingGate';
+import { useCachedPageData } from '../../hooks/useCachedPageData';
 import { contactSupportMessage, sanitizeUserFacingError } from '../../lib/formLimits';
-import { obtenerInformacionSobreNosotros } from '../../services/informacionService';
+import { fetchAboutPageData } from '../../lib/aboutPageData';
 import './AboutUs.css';
 
-const emptyTexto = { title: '', description: '' };
-
 const AboutUs = () => {
-  const [historiaTitulo, setHistoriaTitulo] = useState('');
-  const [historia, setHistoria] = useState('');
-  const [missionData, setMissionData] = useState(emptyTexto);
-  const [visionData, setVisionData] = useState(emptyTexto);
-  const [galleryData, setGalleryData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
+  const loadAbout = useCallback(() => fetchAboutPageData(), []);
+  const { data, status, error: loadError, reload } = useCachedPageData('about', loadAbout);
+  const showLoading = usePublicPageLoadingGate('about', status === 'ready');
 
-  const cargarPagina = () => {
-    setLoading(true);
-    setLoadError('');
+  const historiaTitulo = data?.historiaTitulo ?? '';
+  const historia = data?.historia ?? '';
+  const missionData = data?.missionData ?? { title: '', description: '' };
+  const visionData = data?.visionData ?? { title: '', description: '' };
+  const galleryItems = data?.galleryData ?? [];
 
-    obtenerInformacionSobreNosotros()
-      .then((info) => {
-        setHistoriaTitulo(typeof info.historia?.title === 'string' ? info.historia.title.trim() : '');
-        setHistoria(typeof info.historia?.description === 'string' ? info.historia.description.trim() : '');
-        setMissionData({
-          title: typeof info.mission?.title === 'string' ? info.mission.title.trim() : '',
-          description: typeof info.mission?.description === 'string' ? info.mission.description.trim() : '',
-        });
-        setVisionData({
-          title: typeof info.vision?.title === 'string' ? info.vision.title.trim() : '',
-          description: typeof info.vision?.description === 'string' ? info.vision.description.trim() : '',
-        });
-        setGalleryData(Array.isArray(info.gallery) ? info.gallery : []);
-      })
-      .catch((err) => {
-        console.error('No se pudo cargar la informacion de sobre nosotros.', err);
-        setLoadError(sanitizeUserFacingError(err?.message || 'No se pudo cargar la información de Sobre Nosotros.'));
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    cargarPagina();
-  }, []);
-
-  const galleryItems = galleryData;
   const hasHistoria = Boolean(historiaTitulo || historia);
   const hasMission = Boolean(missionData.title || missionData.description);
   const hasVision = Boolean(visionData.title || visionData.description);
 
-  if (loading) {
+  if (showLoading) {
     return (
       <PageLoading
         message="Cargando sobre nosotros..."
@@ -61,19 +32,20 @@ const AboutUs = () => {
     );
   }
 
-  if (loadError) {
+  if (status === 'error') {
     return (
       <PageLoading
         isError
-        message={loadError}
+        message={sanitizeUserFacingError(loadError) || 'No se pudo cargar la información de Sobre Nosotros.'}
         detail={contactSupportMessage()}
-        onRetry={cargarPagina}
+        onRetry={reload}
       />
     );
   }
 
   return (
     <main className="about-page">
+      <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.about} />
       {hasHistoria ? (
         <section className="about-page__intro" aria-labelledby="about-historia-title">
           {historiaTitulo ? (

@@ -10,19 +10,21 @@ export async function apiRequest(url, options = {}) {
     headers,
     method = "GET",
     skipAuth = false,
-    timeout = 45000,
+    timeout,
     timeoutMessage = "Tiempo de espera agotado al consultar el servidor.",
     ...config
   } = options;
 
   const sessionUser = skipAuth ? null : getActiveSessionUser();
 
+  const isGet = (method || "GET").toUpperCase() === "GET";
+  const requestTimeout = typeof timeout === "number" ? timeout : (isGet ? 20000 : 30000);
+
   try {
     const authHeaders = sessionUser?.token
       ? { Authorization: `Bearer ${sessionUser.token}` }
       : {};
 
-    const isGet = (method || "GET").toUpperCase() === "GET";
     const response = await axios({
       url,
       method,
@@ -32,7 +34,7 @@ export async function apiRequest(url, options = {}) {
         ...authHeaders,
         ...(headers || {}),
       },
-      timeout,
+      timeout: requestTimeout,
       ...config,
     });
 

@@ -1,10 +1,14 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { ShoppingCart } from 'lucide-react';
+import BackToHomeLink, { HOME_SCROLL_SECTIONS } from '../../Components/BackToHomeLink/BackToHomeLink';
 import './Products.css';
 import PageLoading from '../../Components/PageLoading/PageLoading';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import { usePublicPageLoadingGate } from '../../hooks/usePublicPageLoadingGate';
+import { useCachedPageData } from '../../hooks/useCachedPageData';
 import { contactSupportMessage, sanitizeUserFacingError } from '../../lib/formLimits';
-import { calcularPrecioConIVA, obtenerProductos } from '../../services/productosServices';
+import { fetchProductsPageData } from '../../lib/productsPageData';
+import { calcularPrecioConIVA } from '../../services/productosServices';
 
 const PRODUCTS_PER_PAGE = 8;
 const CART_STORAGE_KEY = 'cart';
@@ -21,9 +25,11 @@ function getStoredCart() {
 }
 
 const Products = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const loadProducts = useCallback(() => fetchProductsPageData(), []);
+  const { data, status, error: loadError, reload } = useCachedPageData('products', loadProducts);
+  const products = data?.products ?? [];
+  const showLoading = usePublicPageLoadingGate('products', status === 'ready');
+
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
@@ -60,23 +66,6 @@ const Products = () => {
       return Math.min(Math.max(nextValue, 1), selectedProduct.stockDisponible);
     });
   };
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const data = await obtenerProductos();
-        setProducts(data);
-      } catch (err) {
-        console.error('No se pudo cargar el catálogo de productos.', err);
-        setError(sanitizeUserFacingError(err?.message || 'No se pudo cargar el catálogo.'));
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
 
   const visibleProducts = useMemo(
     () => products.filter((product) => product.estado !== 'Deshabilitado'),
@@ -173,25 +162,26 @@ const Products = () => {
     }
   }, []);
 
-  if (loading) {
+  if (showLoading) {
     return (
       <PageLoading message="Cargando productos..." />
     );
   }
 
-  if (error) {
+  if (status === 'error') {
     return (
       <PageLoading
         isError
-        message={error}
+        message={sanitizeUserFacingError(loadError) || 'No se pudo cargar el catálogo.'}
         detail={contactSupportMessage()}
-        onRetry={() => window.location.reload()}
+        onRetry={reload}
       />
     );
   }
 
   return (
     <main className="products-page">
+      <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.products} />
       <section className="products-page__hero">
         <h1>Catálogo de Cafés</h1>
         <p>

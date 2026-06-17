@@ -1,16 +1,20 @@
+import { invalidateAllPageCaches } from "../lib/pageDataCache";
 import { getActiveSessionUser } from "./sessionService";
 import { apiRequest } from "./apiClient";
 
 const BASE_URL = `${import.meta.env.BACKEND_URL}/productos`;
 const IVA_RATE = 0.13;
-const CACHE_TTL_MS = 15000;
+const CACHE_TTL_MS = 30 * 60 * 1000;
 let productosCache = {
   expiresAt: 0,
-  promise: null,
+  data: null,
 };
+let productosInflight = null;
 
 function limpiarProductosCache() {
-  productosCache = { expiresAt: 0, promise: null };
+  productosCache = { expiresAt: 0, data: null };
+  productosInflight = null;
+  invalidateAllPageCaches();
 }
 
 function obtenerActorRoles() {
@@ -62,26 +66,35 @@ function normalizarProducto(producto) {
 // ─── READ: obtener todos los productos ──────────────────────────────────────
 export async function obtenerProductos() {
   const now = Date.now();
-  if (productosCache.promise && productosCache.expiresAt > now) {
-    return productosCache.promise;
+  if (productosCache.data && productosCache.expiresAt > now) {
+    return productosCache.data;
   }
 
-  productosCache.promise = request(BASE_URL)
+  if (productosInflight) {
+    return productosInflight;
+  }
+
+  productosInflight = request(BASE_URL)
     .then((data) => {
       const list = Array.isArray(data)
         ? data
         : Array.isArray(data?.value)
           ? data.value
           : [];
-      return list.map(normalizarProducto);
+      const normalized = list.map(normalizarProducto);
+      productosCache = {
+        expiresAt: Date.now() + CACHE_TTL_MS,
+        data: normalized,
+      };
+      productosInflight = null;
+      return normalized;
     })
     .catch((error) => {
-      limpiarProductosCache();
+      productosInflight = null;
       throw error;
     });
-  productosCache.expiresAt = now + CACHE_TTL_MS;
 
-  return productosCache.promise;
+  return productosInflight;
 }
 
 // ─── READ: obtener un producto por id ───────────────────────────────────────

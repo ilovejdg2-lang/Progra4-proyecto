@@ -90,17 +90,19 @@ export function AppSidebar() {
     if (!current?.id) return undefined;
 
     let activo = true;
-
-    obtenerPerfil()
-      .then((perfil) => {
-        if (!activo || !perfil) return;
-        const updated = applyPerfilToSession(perfil);
-        if (updated) setUser(updated);
-      })
-      .catch(() => {});
+    const timeoutId = window.setTimeout(() => {
+      obtenerPerfil()
+        .then((perfil) => {
+          if (!activo || !perfil) return;
+          const updated = applyPerfilToSession(perfil);
+          if (updated) setUser(updated);
+        })
+        .catch(() => {});
+    }, 400);
 
     return () => {
       activo = false;
+      window.clearTimeout(timeoutId);
     };
   }, []);
 
