@@ -1,12 +1,11 @@
-import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { ShoppingCart } from 'lucide-react';
-import BackToHomeLink, { HOME_SCROLL_SECTIONS } from '../../Components/BackToHomeLink/BackToHomeLink';
+import BackToHomeLink from '../../Components/BackToHomeLink/BackToHomeLink';
+import { HOME_SCROLL_SECTIONS } from '../../lib/homeScrollTarget';
 import './Products.css';
-import PageLoading from '../../Components/PageLoading/PageLoading';
+import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
-import { usePublicPageLoadingGate } from '../../hooks/usePublicPageLoadingGate';
-import { useCachedPageData } from '../../hooks/useCachedPageData';
-import { contactSupportMessage, sanitizeUserFacingError } from '../../lib/formLimits';
+import { useCachedPublicPage } from '../../hooks/useCachedPublicPage';
 import { fetchProductsPageData } from '../../lib/productsPageData';
 import { calcularPrecioConIVA } from '../../services/productosServices';
 
@@ -25,10 +24,15 @@ function getStoredCart() {
 }
 
 const Products = () => {
-  const loadProducts = useCallback(() => fetchProductsPageData(), []);
-  const { data, status, error: loadError, reload } = useCachedPageData('products', loadProducts);
+  const {
+    data,
+    showLoading,
+    isError,
+    error: loadError,
+    reload,
+    loadingMessage,
+  } = useCachedPublicPage('products', fetchProductsPageData);
   const products = data?.products ?? [];
-  const showLoading = usePublicPageLoadingGate('products', status === 'ready');
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -162,24 +166,15 @@ const Products = () => {
     }
   }, []);
 
-  if (showLoading) {
-    return (
-      <PageLoading message="Cargando productos..." />
-    );
-  }
-
-  if (status === 'error') {
-    return (
-      <PageLoading
-        isError
-        message={sanitizeUserFacingError(loadError) || 'No se pudo cargar el catálogo.'}
-        detail={contactSupportMessage()}
-        onRetry={reload}
-      />
-    );
-  }
-
   return (
+    <PublicPageGate
+      showLoading={showLoading}
+      loadingMessage={loadingMessage}
+      isError={isError}
+      error={loadError}
+      errorMessage="No se pudo cargar el catálogo."
+      onRetry={reload}
+    >
     <main className="products-page">
       <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.products} />
       <section className="products-page__hero">
@@ -341,6 +336,7 @@ const Products = () => {
         </div>
       ) : null}
     </main>
+    </PublicPageGate>
   );
 };
 

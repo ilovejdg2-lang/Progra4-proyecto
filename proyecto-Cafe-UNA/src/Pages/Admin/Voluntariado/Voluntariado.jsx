@@ -19,8 +19,8 @@ import {
 } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
-import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
-import { useAdminPageLoadingGate } from "../../../hooks/usePublicPageLoadingGate";
+import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
+import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import {
   actualizarSolicitud,
   eliminarSolicitud,
@@ -419,7 +419,7 @@ const AdminVoluntariado = () => {
   const [viendo, setViendo] = useState(null);
   const [editando, setEditando] = useState(null);
   const [eliminando, setEliminando] = useState(null);
-  const showLoading = useAdminPageLoadingGate('/admin/voluntariado', !cargando);
+  const { showLoading, loadingMessage } = useAdminPageGate('/admin/voluntariado', !cargando);
 
   const resumen = useMemo(() => {
     return solicitudes.reduce((acc, solicitud) => {
@@ -502,11 +502,8 @@ const AdminVoluntariado = () => {
     }
   };
 
-  if (showLoading) {
-    return <AdminRouteLoading />;
-  }
-
   return (
+    <AdminPageGate showLoading={showLoading} message={loadingMessage}>
     <AdminLayout>
       <section className="space-y-6">
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
@@ -699,6 +696,7 @@ const AdminVoluntariado = () => {
         <ModalEditar solicitud={editando} onGuardar={handleActualizar} onCerrar={() => setEditando(null)} />
       ) : null}
     </AdminLayout>
+    </AdminPageGate>
   );
 };
 

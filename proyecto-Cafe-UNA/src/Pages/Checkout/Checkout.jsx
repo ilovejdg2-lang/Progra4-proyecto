@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, Coffee, CreditCard, ShoppingBasket } from 'lucide-react';
-import PageLoading from '../../Components/PageLoading/PageLoading';
+import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { usePublicPageLoadingGate } from '../../hooks/usePublicPageLoadingGate';
+import { getLoadingMessageForCacheKey } from '../../lib/pageLoadingMessages';
 import './Checkout.css';
 import { ajustarStockProductos, calcularPrecioConIVA } from '../../services/productosServices';
 import { getActiveSessionUser } from '../../services/sessionService';
@@ -37,6 +38,7 @@ const Checkout = () => {
   const [paymentError, setPaymentError] = useState(null);
 
   const showLoading = usePublicPageLoadingGate('checkout', true);
+  const loadingMessage = getLoadingMessageForCacheKey('checkout');
 
   useEffect(() => {
     // Oculta la chrome (navbar + footer) mientras esta pagina este montada
@@ -129,12 +131,9 @@ const Checkout = () => {
     }
   };
 
-  if (showLoading) {
-    return <PageLoading message="Cargando checkout..." />;
-  }
-
-  if (paid) {
-    return (
+  return (
+    <PublicPageGate showLoading={showLoading} loadingMessage={loadingMessage}>
+      {paid ? (
       <main className="checkout-page">
         <section className="checkout-success-card" aria-live="polite">
           <div className="checkout-success-card__top">
@@ -156,10 +155,7 @@ const Checkout = () => {
           <p className="checkout-success-card__brand">Café UNA</p>
         </section>
       </main>
-    );
-  }
-
-  return (
+      ) : (
     <main className="checkout-page">
       <section className="checkout-page__summary">
         <header className="checkout-page__header">
@@ -226,6 +222,8 @@ const Checkout = () => {
         )}
       </section>
     </main>
+      )}
+    </PublicPageGate>
   );
 };
 

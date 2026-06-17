@@ -1,7 +1,7 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -39,6 +39,7 @@ import {
   useSidebar,
 } from "./ui/Sidebar";
 import { normalizeImageUrl, getImageObjectPosition } from "../../lib/imageUtils";
+import { useHomeBrandNavigation } from "../../hooks/useHomeBrandNavigation";
 import { obtenerNavbar } from "../../services/informacionService";
 import { obtenerPerfil } from "../../services/perfilService";
 import {
@@ -52,6 +53,7 @@ const GENERAL_OPEN_KEY = "admin-sidebar-general-open";
 const INVENTORY_OPEN_KEY = "admin-sidebar-inventory-open";
 
 export function AppSidebar() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(() => getActiveSessionUser());
   const { setOpenMobile } = useSidebar();
   const displayName = user?.name || user?.username || "Usuario";
@@ -63,6 +65,7 @@ export function AppSidebar() {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
+  const onBrandClick = useHomeBrandNavigation();
 
   const isGeneralRoute =
     pathname === "/admin/informacion-pagina-principal" || pathname === "/admin/sobre-nosotros";
@@ -161,8 +164,9 @@ export function AppSidebar() {
           className="block"
           title="Ir al inicio"
           aria-label="Ir al inicio de Café UNA"
-          onClick={() => {
+          onClick={(event) => {
             closeMobileSidebar();
+            onBrandClick(event);
           }}
         >
           {logoUrl ? (

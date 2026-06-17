@@ -4,8 +4,8 @@ import { Pencil, Power, Star, Trash2, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
-import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
-import { useAdminPageLoadingGate } from "../../../hooks/usePublicPageLoadingGate";
+import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
+import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import {
   actualizarProducto,
   crearProducto,
@@ -324,7 +324,7 @@ const AdminInventarioProducto = () => {
   const [modalCrear, setModalCrear] = useState(false);
   const [productoEditar, setProductoEditar] = useState(null);
   const [guardando, setGuardando] = useState(false);
-  const showLoading = useAdminPageLoadingGate('/admin/producto', !cargando);
+  const { showLoading, loadingMessage } = useAdminPageGate('/admin/producto', !cargando);
 
   const cargarProductos = async () => {
     try {
@@ -448,11 +448,8 @@ const AdminInventarioProducto = () => {
 
   const destacadosEnUso = contarDestacados(productos);
 
-  if (showLoading) {
-    return <AdminRouteLoading />;
-  }
-
   return (
+    <AdminPageGate showLoading={showLoading} message={loadingMessage}>
     <AdminLayout>
       {modalCrear && (
         <Modal titulo="Nuevo producto" onClose={() => setModalCrear(false)}>
@@ -667,6 +664,7 @@ const AdminInventarioProducto = () => {
         )}
       </section>
     </AdminLayout>
+    </AdminPageGate>
   );
 };
 
