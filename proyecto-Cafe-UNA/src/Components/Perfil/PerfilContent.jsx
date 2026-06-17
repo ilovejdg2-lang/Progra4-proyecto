@@ -351,7 +351,7 @@ export function PerfilContent({ variant = "standalone" }) {
   }, [mensaje]);
 
   const bannerSrc = form.fotoBannerUrl
-    ? normalizeImageUrl(form.fotoBannerUrl, { width: 1600 })
+    ? normalizeImageUrl(form.fotoBannerUrl, { width: 1200 })
     : null;
   const avatarSrc = form.fotoPerfilUrl
     ? normalizeImageUrl(form.fotoPerfilUrl, { width: 320 })
@@ -606,6 +606,10 @@ export function PerfilContent({ variant = "standalone" }) {
             src={bannerSrc}
             alt=""
             className="perfil-hero__banner"
+            width={1600}
+            height={420}
+            decoding="async"
+            fetchPriority="high"
             style={{ objectPosition: bannerPosition }}
           />
           ) : (
@@ -632,6 +636,9 @@ export function PerfilContent({ variant = "standalone" }) {
                 src={avatarSrc}
                 alt=""
                 className="perfil-hero__avatar"
+                width={160}
+                height={160}
+                decoding="async"
                 style={{ objectPosition: avatarPosition }}
               />
             ) : (

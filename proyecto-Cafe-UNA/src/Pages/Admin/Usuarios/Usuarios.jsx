@@ -808,40 +808,13 @@ const AdminUsuarios = () => {
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
     <AdminLayout>
-      {/* Modales */}
-      {modalCrear && (
-        <Modal titulo="Nuevo usuario" onClose={() => setModalCrear(false)}>
-          <FormUsuario
-            onCreado={handleCrear}
-            onActualizado={handleEditar}
-            onCancelar={() => setModalCrear(false)}
-            cargando={guardando}
-            setCargando={setGuardando}
-            puedeEditarRoles={esSuperAdmin}
-          />
-        </Modal>
-      )}
-      {usuarioEditar && (
-        <Modal titulo="Editar usuario" onClose={() => setUsuarioEditar(null)}>
-          <FormUsuario
-            inicial={usuarioEditar}
-            onCreado={handleCrear}
-            onActualizado={handleEditar}
-            onCancelar={() => setUsuarioEditar(null)}
-            cargando={guardando}
-            setCargando={setGuardando}
-            puedeEditarRoles={esSuperAdmin}
-          />
-        </Modal>
-      )}
-
       {/* Contenido */}
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
         {/* Header */}
         <div className="flex flex-col gap-4 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <div>
             <h1 className="text-xl font-semibold text-slate-900">Administrar usuarios</h1>
-            <p className="mt-0.5 text-sm text-slate-500">Gestión de acceso y roles</p>
+            <p className="mt-0.5 text-sm text-slate-600">Gestión de acceso y roles</p>
           </div>
           <button
             onClick={() => setModalCrear(true)}
@@ -853,23 +826,23 @@ const AdminUsuarios = () => {
 
         {/* Tabla */}
         {cargando ? (
-          <div className="flex items-center justify-center py-16 text-sm text-slate-400">
+          <div className="flex items-center justify-center py-16 text-sm text-slate-600">
             Cargando usuarios…
           </div>
         ) : error ? (
           <div className="flex flex-col items-center gap-3 py-16 text-sm text-red-500">
             {error}
-            <button onClick={cargar} className="text-slate-500 underline">Reintentar</button>
+            <button onClick={cargar} className="text-slate-600 underline">Reintentar</button>
           </div>
         ) : usuarios.length === 0 ? (
-          <div className="py-16 text-center text-sm text-slate-400">No hay usuarios registrados.</div>
+          <div className="py-16 text-center text-sm text-slate-600">No hay usuarios registrados.</div>
         ) : (
           <>
             <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-sm">
                 <thead>
                   {table.getHeaderGroups().map((headerGroup) => (
-                    <tr key={headerGroup.id} className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <tr key={headerGroup.id} className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
                       {headerGroup.headers.map((header) => (
                         <th key={header.id} className="px-6 py-3">
                           {header.column.getCanSort() ? (
@@ -948,6 +921,32 @@ const AdminUsuarios = () => {
           </>
         )}
       </section>
+
+      {modalCrear ? (
+        <Modal titulo="Nuevo usuario" onClose={() => setModalCrear(false)}>
+          <FormUsuario
+            onCreado={handleCrear}
+            onActualizado={handleEditar}
+            onCancelar={() => setModalCrear(false)}
+            cargando={guardando}
+            setCargando={setGuardando}
+            puedeEditarRoles={esSuperAdmin}
+          />
+        </Modal>
+      ) : null}
+      {usuarioEditar ? (
+        <Modal titulo="Editar usuario" onClose={() => setUsuarioEditar(null)}>
+          <FormUsuario
+            inicial={usuarioEditar}
+            onCreado={handleCrear}
+            onActualizado={handleEditar}
+            onCancelar={() => setUsuarioEditar(null)}
+            cargando={guardando}
+            setCargando={setGuardando}
+            puedeEditarRoles={esSuperAdmin}
+          />
+        </Modal>
+      ) : null}
     </AdminLayout>
     </AdminPageGate>
   );
