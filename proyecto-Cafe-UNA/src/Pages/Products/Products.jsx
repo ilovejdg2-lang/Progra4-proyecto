@@ -7,6 +7,7 @@ import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { useCachedPublicPage } from '../../hooks/useCachedPublicPage';
 import { fetchProductsPageData } from '../../lib/productsPageData';
+import { normalizeImageUrl } from '../../lib/imageUtils';
 import { calcularPrecioConIVA } from '../../services/productosServices';
 
 const PRODUCTS_PER_PAGE = 8;
@@ -195,17 +196,17 @@ const Products = () => {
           <article
             className="products-page__card"
             key={product.id}
-            onClick={() => openProduct(card)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProduct(card); } }}
           >
             {product.imagen ? (
               <div className="products-page__card-media">
                 <img
                   className="products-page__card-image"
-                  src={product.imagen}
+                  src={normalizeImageUrl(product.imagen, { width: 640 }) || product.imagen}
                   alt={product.nombre}
+                  width={640}
+                  height={480}
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
             ) : (
