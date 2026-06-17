@@ -134,13 +134,6 @@ const Home = () => {
   }, [isFullyVisible]);
 
   useEffect(() => {
-    document.body.classList.toggle('home-hero-ready', isFullyVisible);
-    return () => {
-      document.body.classList.remove('home-hero-ready');
-    };
-  }, [isFullyVisible]);
-
-  useEffect(() => {
     return runHomeScrollWhenReady(isFullyVisible);
   }, [isFullyVisible]);
 
@@ -364,6 +357,8 @@ const Home = () => {
                 <iframe
                   title="Mapa de ubicación"
                   src={locationMapEmbedUrl}
+                  width="640"
+                  height="400"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                   aria-hidden="true"
