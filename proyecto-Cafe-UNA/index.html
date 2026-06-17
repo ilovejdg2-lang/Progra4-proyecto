@@ -3,16 +3,151 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="google" content="notranslate" />
+    <meta
+      name="description"
+      content="Café UNA — café de la Universidad Nacional, Costa Rica. Catálogo, voluntariado y experiencias en la Finca Experimental Santa Lucía."
+    />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Café UNA</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
+      />
+    </noscript>
+    <script>
+      (function () {
+        var path = location.pathname;
+        if (path.length > 1 && path.charAt(path.length - 1) === '/') {
+          path = path.slice(0, -1);
+        }
+        if (path.indexOf('/admin') === 0) {
+          document.documentElement.classList.add('admin-boot-loading');
+          return;
+        }
+
+        document.documentElement.classList.add('site-boot-loading');
+
+        if (path === '/' || path === '') {
+          document.documentElement.classList.add('home-page-loading');
+        }
+      })();
+    </script>
+    <style>
+      html.site-boot-loading,
+      html.site-boot-loading body,
+      html.admin-boot-loading,
+      html.admin-boot-loading body,
+      html.home-page-loading,
+      html.home-page-loading body {
+        overflow: hidden;
+        background: #ffffff;
+      }
+
+      html.site-boot-loading #root,
+      html.admin-boot-loading #root,
+      html.home-page-loading #root {
+        visibility: hidden;
+      }
+
+      #site-initial-loader {
+        display: none;
+      }
+
+      html.site-boot-loading #site-initial-loader,
+      html.admin-boot-loading #site-initial-loader,
+      body.site-boot-loading #site-initial-loader,
+      body.admin-boot-loading #site-initial-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 100001;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        background: #ffffff;
+        color: #4d2b1f;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 1rem;
+      }
+
+      html.admin-boot-loading #site-initial-loader,
+      html.admin-boot-loading #site-boot-message {
+        color: #334155;
+      }
+
+      .site-initial-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(107, 68, 35, 0.15);
+        border-top-color: #6b4423;
+        border-radius: 50%;
+        animation: site-initial-spin 0.8s linear infinite;
+      }
+
+      html.admin-boot-loading .site-initial-spinner {
+        border-color: rgba(51, 65, 85, 0.16);
+        border-top-color: #334155;
+      }
+
+      @keyframes site-initial-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="site-initial-loader" role="status" aria-live="polite">
+      <div class="site-initial-spinner" aria-hidden="true"></div>
+      <p id="site-boot-message" style="margin:0;">Cargando página...</p>
+    </div>
+    <script>
+      (function () {
+        var path = location.pathname;
+        if (path.length > 1 && path.charAt(path.length - 1) === '/') {
+          path = path.slice(0, -1);
+        }
+
+        var message = 'Cargando página...';
+
+        if (path.indexOf('/admin') === 0) {
+          document.documentElement.classList.add('admin-boot-loading');
+          document.body.classList.add('admin-boot-loading');
+          message = 'Cargando panel administrativo...';
+        } else {
+          document.documentElement.classList.add('site-boot-loading');
+          document.body.classList.add('site-boot-loading');
+
+          if (path === '/' || path === '') {
+            document.documentElement.classList.add('home-page-loading');
+            document.body.classList.add('home-page-loading');
+            message = 'Cargando inicio...';
+          } else if (path === '/productos') message = 'Cargando productos...';
+          else if (path === '/AboutUs') message = 'Cargando sobre nosotros...';
+          else if (path.indexOf('/voluntariado') === 0) message = 'Cargando voluntariado...';
+          else if (path === '/checkout') message = 'Cargando checkout...';
+          else if (path === '/login') message = 'Cargando...';
+          else if (path === '/perfil') message = 'Cargando perfil...';
+        }
+
+        var label = document.getElementById('site-boot-message');
+        if (label) label.textContent = message;
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import BackToHomeLink, { HOME_SCROLL_SECTIONS } from "../../Components/BackToHomeLink/BackToHomeLink";
+import PageLoading from "../../Components/PageLoading/PageLoading";
+import { usePagePaintReady } from "../../hooks/usePagePaintReady";
+import { usePublicPageLoadingGate } from "../../hooks/usePublicPageLoadingGate";
 import { getActiveSessionUser } from "../../services/sessionService";
 import { crearSolicitud } from "../../services/voluntariadoService";
 import { consultarCedula } from "../../services/cedulaService";
@@ -67,20 +71,14 @@ function SolicitarVoluntariado() {
   const [consultandoCedula, setConsultandoCedula] = useState(false);
   const [avisoCedula, setAvisoCedula] = useState(null);
 
+  const { ref: pageRef, paintReady, showPrepaint } = usePagePaintReady('voluntariado');
+  const showLoading = usePublicPageLoadingGate('voluntariado', paintReady);
+
   const esGrupal = formulario.modalidad === "grupal";
   const esTipoOtro = formulario.tipo === "Otro";
   const esNacionalCr = formulario.esNacional === "si";
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      window.dispatchEvent(new CustomEvent("public-route-ready", { detail: { pathname: "/voluntariado/solicitar" } }));
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, []);
-
-  useEffect(() => {
-    if (!esNacionalCr || consultandoCedula) return;
     const digitos = normalizarCedulaCr(formulario.identificacion);
     if (digitos.length !== 9 || formulario.nombre?.trim()) return;
     consultarDatosCedula(digitos);
@@ -399,15 +397,14 @@ function SolicitarVoluntariado() {
   };
 
   return (
-    <div className="voluntariado-page">
-      <Link
-        to="/"
-        className="back-arrow"
-        onClick={() => sessionStorage.setItem('scrollToIniciativas', '1')}
+    <>
+      {showLoading ? <PageLoading message="Cargando voluntariado..." /> : null}
+      <div
+        ref={pageRef}
+        className={`voluntariado-page${showPrepaint ? ' voluntariado-page--prepaint' : ''}`}
+        aria-hidden={showLoading || undefined}
       >
-        <i className="fas fa-arrow-left" aria-hidden="true" />
-        Volver al inicio
-      </Link>
+      <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.voluntariado} />
 
       <section id="voluntariado" className="voluntariado-section">
         <div className="voluntariado-header">
@@ -810,6 +807,7 @@ function SolicitarVoluntariado() {
         )}
       </section>
     </div>
+    </>
   );
 }
 export default SolicitarVoluntariado;
