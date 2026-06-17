@@ -3,8 +3,8 @@ import { BookOpenText, Eye, Image, ImagePlus, Target, Trash2, X } from "lucide-r
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
-import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
-import { useAdminPageLoadingGate } from "../../../hooks/usePublicPageLoadingGate";
+import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
+import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useCachedPageData } from "../../../hooks/useCachedPageData";
 import { fetchAboutAdminPageData } from "../../../lib/aboutAdminPageData";
 import {
@@ -316,7 +316,7 @@ const AdminInformacionSobreNosotros = () => {
   const esSuperAdmin = actorRoles.includes("SuperAdmin");
   const loadAbout = useCallback(() => fetchAboutAdminPageData(), []);
   const { data, status, error: loadError, reload } = useCachedPageData("about-admin", loadAbout);
-  const showLoading = useAdminPageLoadingGate('/admin/sobre-nosotros', status === 'ready');
+  const { showLoading, loadingMessage } = useAdminPageGate('/admin/sobre-nosotros', status === 'ready');
 
   const [info, setInfo] = useState(infoInicial);
   const [guardando, setGuardando] = useState(false);
@@ -331,10 +331,6 @@ const AdminInformacionSobreNosotros = () => {
 
   const cargando = status === "loading";
   const error = status === "error" ? loadError || "No se pudo cargar la informacion de sobre nosotros." : "";
-
-  if (showLoading) {
-    return <AdminRouteLoading />;
-  }
 
   const guardarTexto = async (tipo, form) => {
     try {
@@ -386,6 +382,7 @@ const AdminInformacionSobreNosotros = () => {
   };
 
   return (
+    <AdminPageGate showLoading={showLoading} message={loadingMessage}>
     <AdminLayout>
       <section className="space-y-5">
         <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Secciones de sobre nosotros</p>
@@ -470,6 +467,7 @@ const AdminInformacionSobreNosotros = () => {
         <ModalGaleria info={info} onCerrar={() => setEditandoGaleria(false)} onGuardar={guardarGaleria} guardando={guardando} puedeEliminar={esSuperAdmin} />
       ) : null}
     </AdminLayout>
+    </AdminPageGate>
   );
 };
 

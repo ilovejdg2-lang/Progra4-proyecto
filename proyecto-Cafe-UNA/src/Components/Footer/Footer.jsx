@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Mail, MapPin, Phone, Share2 } from 'lucide-react';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
+import { useHomeBrandNavigation } from '../../hooks/useHomeBrandNavigation';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { obtenerEnlaces, obtenerFooter } from '../../services/informacionService';
-import { DEFAULT_FOOTER_LINKS } from '../../lib/defaultSiteLinks';
 import './Footer.css';
 
 function telefonoHref(telefono) {
@@ -14,6 +14,7 @@ function telefonoHref(telefono) {
 }
 
 const Footer = () => {
+  const onBrandClick = useHomeBrandNavigation();
   const [footer, setFooter] = useState(null);
   const [enlacesExplorar, setEnlacesExplorar] = useState([]);
 
@@ -36,7 +37,7 @@ const Footer = () => {
 
   const telHref = telefonoHref(footer?.telefono);
   const footerLogoSrc = normalizeImageUrl(footer?.logoClaroUrl || footer?.logoUrl, { width: 320 });
-  const explorarLinks = enlacesExplorar.length > 0 ? enlacesExplorar : DEFAULT_FOOTER_LINKS;
+  const explorarLinks = enlacesExplorar;
   const hasContact = Boolean(
     telHref || footer?.correo || footer?.facebookUrl || footer?.instagramUrl || footer?.mapsUrl
   );
@@ -44,22 +45,35 @@ const Footer = () => {
   return (
     <footer className="footer">
       <div className="footer__top">
-        <Link to="/" className="footer__brand" aria-label="Ir al inicio">
+        <Link
+          to="/"
+          className="footer__brand"
+          aria-label="Ir al inicio"
+          onClick={onBrandClick}
+        >
           {footerLogoSrc ? (
-            <img src={footerLogoSrc} alt="Cafe UNA" className="footer__logo" />
+            <img
+              src={footerLogoSrc}
+              alt="Cafe UNA"
+              className="footer__logo"
+              width={160}
+              height={46}
+              decoding="async"
+            />
           ) : null}
           <div className="footer__brand-copy">
-            <strong>Cafe UNA</strong>
             {footer?.fraseMarca ? <span>{footer.fraseMarca}</span> : null}
           </div>
         </Link>
 
+        {explorarLinks.length > 0 ? (
         <nav className="footer__column" aria-label="Explorar">
           <h2>Explorar</h2>
           {explorarLinks.map((enlace) => (
             <SiteNavLink key={enlace.id ?? enlace.ruta} enlace={enlace} />
           ))}
         </nav>
+        ) : null}
 
         {hasContact ? (
           <section className="footer__column footer__contact" aria-label="Contacto">

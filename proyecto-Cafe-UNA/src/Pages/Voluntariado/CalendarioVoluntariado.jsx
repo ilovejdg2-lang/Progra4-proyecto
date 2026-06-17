@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const MESES = [
   "Enero",
@@ -97,13 +98,13 @@ function CalendarioVoluntariado({
     <div className="calendario-voluntariado calendario-voluntariado--compacto">
       <div className="calendario-voluntariado__nav">
         <button type="button" onClick={mesAnterior} aria-label="Mes anterior">
-          <i className="fas fa-chevron-left" aria-hidden="true" />
+          <ChevronLeft size={16} strokeWidth={2.4} aria-hidden="true" />
         </button>
         <span>
           {MESES[mesActual.getMonth()]} {mesActual.getFullYear()}
         </span>
         <button type="button" onClick={mesSiguiente} aria-label="Mes siguiente">
-          <i className="fas fa-chevron-right" aria-hidden="true" />
+          <ChevronRight size={16} strokeWidth={2.4} aria-hidden="true" />
         </button>
       </div>
 
@@ -153,11 +154,11 @@ function CalendarioVoluntariado({
   );
 }
 
-function SectionCard({ icon, title, hint, children }) {
+function SectionCard({ icon: Icon, title, hint, children }) {
   return (
     <div className="section-card">
       <div className="section-card__header">
-        {icon ? <i className={`${icon} section-card__icon-inline`} aria-hidden="true" /> : null}
+        {Icon ? <Icon className="section-card__icon-inline" size={16} strokeWidth={2} aria-hidden="true" /> : null}
         <div className="section-card__titles">
           <h4>{title}</h4>
           {hint ? <span className="section-card__hint">{hint}</span> : null}
