@@ -1,4 +1,5 @@
 import { normalizeImageUrl } from './imageUtils';
+import { productoPuedeDestacarse } from './productoDisponibilidad';
 
 export function collectHomeImageUrls(data) {
   if (!data) return [];
@@ -18,7 +19,7 @@ export function collectHomeImageUrls(data) {
   if (aboutUrl) urls.push(aboutUrl);
 
   const featured = (Array.isArray(data.products) ? data.products : [])
-    .filter((product) => product.estado !== 'Deshabilitado' && product.esDestacado)
+    .filter((product) => product.esDestacado && productoPuedeDestacarse(product))
     .slice(0, 3);
 
   featured.forEach((product) => {
