@@ -47,6 +47,13 @@ export async function apiRequest(url, options = {}) {
       );
     }
 
+    if (error.code === "ERR_NETWORK") {
+      throw new Error(
+        "No se pudo conectar con el servidor. Verifique que el backend esté en ejecución.",
+        { cause: error },
+      );
+    }
+
     if (error.response) {
       if (error.response.status === 401 && skipAuth) {
         throw new Error("Credenciales incorrectas", { cause: error });
@@ -62,10 +69,6 @@ export async function apiRequest(url, options = {}) {
         ? responseData
         : responseData?.message || `${errorPrefix} (${error.response.status})`;
       throw new Error(sanitizeUserFacingError(rawMessage), { cause: error });
-    }
-
-    if (error.code === "ERR_NETWORK") {
-      throw new Error(sanitizeUserFacingError(""), { cause: error });
     }
 
     throw new Error(

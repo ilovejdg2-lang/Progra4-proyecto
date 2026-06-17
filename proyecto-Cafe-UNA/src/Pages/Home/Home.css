@@ -801,9 +801,98 @@
     font-size: clamp(1.9rem, 8vw, 2.5rem);
   }
 
+  /* Formularios: 2 arriba + 1 centrada abajo, las 3 del mismo ancho */
+  .iniciativas-grid {
+    --iniciativa-gap: 0.75rem;
+    --iniciativa-card-width: calc((100% - var(--iniciativa-gap)) / 2);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: center;
+    gap: var(--iniciativa-gap);
+    align-items: stretch;
+  }
+
   .iniciativa-card {
-    min-height: auto;
-    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    min-height: clamp(255px, 66vw, 320px);
+    height: 100%;
+    padding: clamp(0.85rem, 3vw, 1.05rem) clamp(0.7rem, 2.5vw, 0.95rem);
+    gap: clamp(0.5rem, 2vw, 0.75rem);
+    border-radius: 16px;
+  }
+
+  .iniciativa-card:nth-child(3) {
+    grid-column: 1 / -1;
+    width: var(--iniciativa-card-width);
+    max-width: var(--iniciativa-card-width);
+    justify-self: center;
+  }
+
+  .iniciativa-card:nth-child(n + 4) {
+    grid-column: auto;
+    width: 100%;
+    max-width: 100%;
+    justify-self: stretch;
+  }
+
+  .iniciativa-card__top {
+    flex-direction: row;
+    align-items: center;
+    gap: clamp(0.35rem, 2vw, 0.55rem);
+    min-width: 0;
+  }
+
+  .iniciativa-card__icono {
+    width: clamp(32px, 9vw, 38px);
+    height: clamp(32px, 9vw, 38px);
+    flex: 0 0 clamp(32px, 9vw, 38px);
+  }
+
+  .iniciativa-card__icono svg {
+    width: clamp(16px, 4.5vw, 20px);
+    height: clamp(16px, 4.5vw, 20px);
+  }
+
+  .iniciativa-card__etiqueta {
+    font-size: clamp(7px, 2.2vw, 9px);
+    letter-spacing: clamp(1px, 0.4vw, 1.5px);
+    padding: clamp(3px, 1vw, 5px) clamp(6px, 2vw, 9px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .iniciativa-card__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .iniciativa-card__titulo {
+    font-size: clamp(0.82rem, 3.4vw, 1rem);
+    line-height: 1.2;
+    margin-bottom: clamp(0.3rem, 1.5vw, 0.5rem);
+  }
+
+  .iniciativa-card__desc {
+    font-size: clamp(0.72rem, 2.8vw, 0.86rem);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .iniciativa-card__btn {
+    min-height: clamp(38px, 10vw, 44px);
+    padding: clamp(0.55rem, 2vw, 0.7rem) clamp(0.6rem, 2.5vw, 0.85rem);
+    font-size: clamp(0.72rem, 2.8vw, 0.86rem);
+    margin-top: auto;
   }
 }
 
@@ -831,26 +920,11 @@
     min-height: 260px;
   }
 
-  .iniciativas-grid {
-    grid-template-columns: 1fr;
-  }
-
   .iniciativas-eyebrow {
     letter-spacing: 1.5px;
   }
 
   .iniciativas-titulo br {
     display: none;
-  }
-
-  .iniciativa-card__top {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .iniciativa-card__btn {
-    min-height: 46px;
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
   }
 }
