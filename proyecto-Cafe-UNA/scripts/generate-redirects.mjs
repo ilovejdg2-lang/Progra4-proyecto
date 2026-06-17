@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { normalizeBackendUrl } from './normalizeBackendUrl.mjs'
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..')
 const publicDir = join(rootDir, 'public')
@@ -17,7 +18,7 @@ function readBackendUrlFromEnvFile() {
   }
 }
 
-const backendUrl = (process.env.BACKEND_URL || readBackendUrlFromEnvFile())?.replace(/\/$/, '')
+const backendUrl = normalizeBackendUrl(process.env.BACKEND_URL || readBackendUrlFromEnvFile())
 
 if (!backendUrl) {
   console.log('BACKEND_URL no definida: omitiendo public/_redirects (ok en desarrollo local).')

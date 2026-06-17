@@ -6,14 +6,20 @@ import {
     Outlet,
     useRouterState,
 } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect } from "react";
 
+import AdminRouteLoading from "./Components/Admin/AdminRouteLoading";
 import Footer from "./Components/Footer/Footer";
 import Navbar from './Components/Navbar/Navbar';
 import PageLoading from "./Components/PageLoading/PageLoading";
+import AboutUs from "./Pages/AboutUs/AboutUs";
+import Home from "./Pages/Home/Home";
+import Products from "./Pages/Products/Products";
+import SolicitarVoluntariado from "./Pages/Voluntariado/SolicitarVoluntariado";
+import { getRouteCacheKey, isPageInstantReady } from "./lib/pageSessionState";
+import { clearHomePageLoading, setHomePageLoading } from "./lib/homePageLoading";
+import { finishAdminBootLoading, finishSiteBootLoading, getSiteBootMessage } from "./lib/siteBootLoading";
 
-const Home = lazy(() => import("./Pages/Home/Home"));
-const AboutUs = lazy(() => import("./Pages/AboutUs/AboutUs"));
 const Login = lazy(() => import("./Pages/Login/Login"));
 const AdminPanel = lazy(() => import("./Pages/Admin/Panel/Panel"));
 const AdminInformacionPaginaPrincipal = lazy(() => import("./Pages/Admin/InformacionPaginaPrincipal/InformacionPaginaPrincipal"));
@@ -21,19 +27,74 @@ const AdminInformacionSobreNosotros = lazy(() => import("./Pages/Admin/Informaci
 const AdminInventarioProducto = lazy(() => import("./Pages/Admin/InventarioProducto/InventarioProducto"));
 const AdminVoluntariado = lazy(() => import("./Pages/Admin/Voluntariado/Voluntariado"));
 const AdminUsuarios = lazy(() => import("./Pages/Admin/Usuarios/Usuarios"));
-const Products = lazy(() => import("./Pages/Products/Products"));
 const Checkout = lazy(() => import("./Pages/Checkout/Checkout"));
-const SolicitarVoluntariado = lazy(() => import("./Pages/Voluntariado/SolicitarVoluntariado"));
 const Perfil = lazy(() => import("./Pages/Perfil/Perfil"));
 const AdminPerfil = lazy(() => import("./Pages/Admin/Perfil/AdminPerfil"));
 
-function AdminRouteLoading() {
-    return (
-        <div className="admin-route-loading" role="status" aria-live="polite">
-            <span className="admin-route-loading__spinner" aria-hidden="true" />
-            <p>Cargando panel administrativo...</p>
-        </div>
-    );
+function HomeRouteLoading() {
+    if (isPageInstantReady('home')) {
+        return null;
+    }
+
+    return <PageLoading message="Cargando inicio..." />;
+}
+
+function SiteRouteLoading({ message = 'Cargando página...', cacheKey }) {
+    if (cacheKey && isPageInstantReady(cacheKey)) {
+        return null;
+    }
+
+    return <PageLoading message={message} />;
+}
+
+function AdminRouteLoadingGate({ cacheKey }) {
+    if (cacheKey && isPageInstantReady(cacheKey)) {
+        return null;
+    }
+
+    return <AdminRouteLoading />;
+}
+
+function getRouteLoadingMessage(pathname) {
+    return getSiteBootMessage(pathname);
+}
+
+function PublicRouteOutlet() {
+    const pathname = useRouterState({
+        select: (state) => state.location.pathname,
+    });
+    const cacheKey = getRouteCacheKey(pathname);
+    const isHomeRoute = cacheKey === 'home';
+
+    useLayoutEffect(() => {
+        const key = isHomeRoute ? 'home' : cacheKey;
+        if (key && !isPageInstantReady(key)) return;
+        finishSiteBootLoading();
+    }, [cacheKey, isHomeRoute]);
+
+    return <Outlet />;
+}
+
+function AdminRouteOutlet() {
+    const pathname = useRouterState({
+        select: (state) => state.location.pathname,
+    });
+    const cacheKey = getRouteCacheKey(pathname);
+
+    useLayoutEffect(() => {
+        if (cacheKey && !isPageInstantReady(cacheKey)) return;
+        finishAdminBootLoading();
+    }, [cacheKey]);
+
+    return <Outlet />;
+}
+
+function ChromelessRouteOutlet() {
+    useLayoutEffect(() => {
+        finishSiteBootLoading();
+    }, []);
+
+    return <Outlet />;
 }
 
 const rootRoute = createRootRoute({
@@ -41,15 +102,31 @@ const rootRoute = createRootRoute({
         const pathname = useRouterState({
             select: (state) => state.location.pathname,
         });
+        const cacheKey = getRouteCacheKey(pathname);
+        const isHomeRoute = cacheKey === 'home';
         const isAdminRoute = pathname.startsWith("/admin");
         const isLoginRoute = pathname === "/login";
         const isPerfilRoute = pathname === "/perfil";
+
+        useLayoutEffect(() => {
+            if (!isHomeRoute) {
+                clearHomePageLoading();
+                return;
+            }
+
+            if (isPageInstantReady('home')) {
+                clearHomePageLoading();
+            } else {
+                setHomePageLoading(true);
+            }
+        }, [isHomeRoute]);
 
         useEffect(() => {
             document.body.classList.toggle("admin-route-active", isAdminRoute);
             document.body.classList.toggle("perfil-route-active", isPerfilRoute);
             if (isAdminRoute || isPerfilRoute) {
                 document.body.classList.remove("app-route-loading", "home-hero-ready");
+                clearHomePageLoading();
             }
 
             return () => {
@@ -60,8 +137,12 @@ const rootRoute = createRootRoute({
 
         if (isAdminRoute || isLoginRoute || isPerfilRoute) {
             return (
-                <Suspense fallback={isAdminRoute ? <AdminRouteLoading /> : <PageLoading />}>
-                    <Outlet />
+                <Suspense fallback={
+                    isAdminRoute
+                        ? <AdminRouteLoadingGate cacheKey={cacheKey} />
+                        : <PageLoading message={getRouteLoadingMessage(pathname)} />
+                }>
+                    {isAdminRoute ? <AdminRouteOutlet /> : <ChromelessRouteOutlet />}
                 </Suspense>
             );
         }
@@ -71,10 +152,14 @@ const rootRoute = createRootRoute({
                 <Navbar />
                 <section
                     id="center"
-                    className={`site-main ${pathname === "/" ? "site-main--home" : ""}`}
+                    className={`site-main ${isHomeRoute ? "site-main--home" : ""}`}
                 >
-                    <Suspense fallback={<PageLoading />}>
-                        <Outlet />
+                    <Suspense fallback={
+                        isHomeRoute
+                            ? <HomeRouteLoading />
+                            : <SiteRouteLoading message={getRouteLoadingMessage(pathname)} cacheKey={cacheKey} />
+                    }>
+                        <PublicRouteOutlet />
                     </Suspense>
                 </section>
                 <Footer />

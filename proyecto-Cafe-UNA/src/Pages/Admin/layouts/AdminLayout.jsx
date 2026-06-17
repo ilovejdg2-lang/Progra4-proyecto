@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 
+import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
 import { AppSidebar } from "../../../Components/Admin/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "../../../Components/Admin/ui/Sidebar";
 import { getActiveSessionUser } from "../../../services/sessionService";
@@ -16,7 +17,7 @@ export function AdminLayout({ children }) {
   }, [navigate, user]);
 
   if (!user || user.role !== "admin") {
-    return null;
+    return <AdminRouteLoading message="Verificando acceso..." />;
   }
 
   return (

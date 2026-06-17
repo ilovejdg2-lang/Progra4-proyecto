@@ -1,14 +1,51 @@
 import { Link } from "@tanstack/react-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import "./Hero.css";
 
-const Hero = ({ data = {} }) => {
+const Hero = ({ data = {}, onBackgroundReady }) => {
   const backgroundUrl = normalizeImageUrl(data?.backgroundImage, { width: 1920 });
+  const [bgReady, setBgReady] = useState(!backgroundUrl);
+  const imgRef = useRef(null);
+
+  const notifyReady = useCallback(() => {
+    setBgReady(true);
+    onBackgroundReady?.();
+  }, [onBackgroundReady]);
+
+  useEffect(() => {
+    setBgReady(!backgroundUrl);
+    if (!backgroundUrl) {
+      onBackgroundReady?.();
+      return;
+    }
+
+    const img = imgRef.current;
+    if (img?.complete && img.naturalWidth > 0) {
+      notifyReady();
+    }
+  }, [backgroundUrl, notifyReady, onBackgroundReady]);
+
+  const handleBackgroundLoad = async (event) => {
+    try {
+      if (typeof event.currentTarget.decode === 'function') {
+        await event.currentTarget.decode();
+      }
+    } catch {
+      // ignore
+    }
+    notifyReady();
+  };
+
+  const handleBackgroundError = () => {
+    notifyReady();
+  };
 
   return (
-    <section className="hero">
+    <section className={`hero${bgReady ? ' hero--bg-ready' : ''}`}>
       {backgroundUrl ? (
         <img
+          ref={imgRef}
           key={backgroundUrl}
           src={backgroundUrl}
           alt=""
@@ -18,7 +55,10 @@ const Hero = ({ data = {} }) => {
           loading="eager"
           decoding="async"
           fetchPriority="high"
+          referrerPolicy="no-referrer"
           aria-hidden="true"
+          onLoad={handleBackgroundLoad}
+          onError={handleBackgroundError}
         />
       ) : null}
       {backgroundUrl ? <div className="hero__overlay" aria-hidden="true" /> : null}

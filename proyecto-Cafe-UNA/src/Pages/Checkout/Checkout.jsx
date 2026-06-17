@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, Coffee, CreditCard, ShoppingBasket } from 'lucide-react';
+import PageLoading from '../../Components/PageLoading/PageLoading';
+import { usePublicPageLoadingGate } from '../../hooks/usePublicPageLoadingGate';
 import './Checkout.css';
 import { ajustarStockProductos, calcularPrecioConIVA } from '../../services/productosServices';
 import { getActiveSessionUser } from '../../services/sessionService';
@@ -33,6 +35,8 @@ const Checkout = () => {
   const [paid, setPaid] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
+
+  const showLoading = usePublicPageLoadingGate('checkout', true);
 
   useEffect(() => {
     // Oculta la chrome (navbar + footer) mientras esta pagina este montada
@@ -124,6 +128,10 @@ const Checkout = () => {
       setProcessingPayment(false);
     }
   };
+
+  if (showLoading) {
+    return <PageLoading message="Cargando checkout..." />;
+  }
 
   if (paid) {
     return (

@@ -15,6 +15,15 @@
   background: #ffffff;
 }
 
+.home-page--prepaint {
+  visibility: hidden;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
 .home-page__mission-spotlight,
 .home-page__featured,
 .home-page__iniciativas {
@@ -536,6 +545,7 @@
 
 .home-page__iniciativas {
   padding: 0;
+  scroll-margin-top: calc(var(--navbar-height) + 1rem);
 }
 
 .iniciativas-header {
