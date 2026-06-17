@@ -38,6 +38,9 @@ const AboutUs = () => {
     >
       <main className="about-page">
         <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.about} />
+        {!hasHistoria ? (
+          <h1 className="about-page__title about-page__title--sr">Sobre nosotros</h1>
+        ) : null}
         {hasHistoria ? (
           <section className="about-page__intro" aria-labelledby="about-historia-title">
             {historiaTitulo ? (
@@ -72,13 +75,14 @@ const AboutUs = () => {
         {galleryItems.length > 0 ? (
           <section className="about-page__gallery" aria-label="Galería de fotos">
             <div className="about-page__gallery-grid">
-              {galleryItems.map((item) => (
+              {galleryItems.map((item, index) => (
                 <figure key={item.id} className="about-page__gallery-item">
                   <OptimizedImage
                     src={item.image}
                     alt={item.title || 'Imagen de galería'}
                     width={800}
                     height={520}
+                    priority={index === 0}
                     className="about-page__gallery-media"
                   />
                 </figure>

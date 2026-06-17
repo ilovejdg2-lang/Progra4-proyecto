@@ -230,7 +230,7 @@ body.admin-route-active .page-loading {
   scroll-padding-top: 0;
 }
 
-body:not(.home-hero-ready) .navbar.navbar--transparent + .site-main {
+body:not(.home-hero-ready) .navbar.navbar--transparent + .site-main:not(.site-main--home) {
   padding-top: var(--navbar-height);
   scroll-padding-top: calc(var(--navbar-height) + 8px);
 }

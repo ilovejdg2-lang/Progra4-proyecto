@@ -9,6 +9,9 @@ import { getActiveSessionUser } from './services/sessionService'
 function SessionSync() {
   useEffect(() => {
     getActiveSessionUser();
+    const user = getActiveSessionUser();
+    if (!user) return undefined;
+
     const sessionIntervalId = window.setInterval(getActiveSessionUser, 30_000);
     return () => window.clearInterval(sessionIntervalId);
   }, []);
