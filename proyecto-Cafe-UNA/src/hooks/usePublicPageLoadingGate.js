@@ -37,10 +37,3 @@ export function usePublicPageLoadingGate(cacheKey, isReady) {
   if (!isReady) return true;
   return !revealed;
 }
-
-/**
- * Igual que usePublicPageLoadingGate pero acepta pathname (ej. /admin/producto).
- */
-export function useAdminPageLoadingGate(pathname, isReady) {
-  return usePublicPageLoadingGate(pathname, isReady);
-}

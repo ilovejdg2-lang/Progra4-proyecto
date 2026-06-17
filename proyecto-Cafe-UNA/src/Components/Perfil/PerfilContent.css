@@ -107,6 +107,10 @@
   pointer-events: none;
 }
 
+.perfil-hero__banner--placeholder {
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+}
+
 .perfil-hero__change {
   position: absolute;
   inset: auto 1rem 1rem auto;

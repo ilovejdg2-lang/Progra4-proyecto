@@ -5,11 +5,11 @@ import { calcularPrecioConIVA } from '../../services/productosServices';
 import { Bell, Menu, Minus, Plus, ShoppingCart, Trash2, User, X } from 'lucide-react';
 import { obtenerEnlaces, obtenerNavbar } from '../../services/informacionService';
 import { normalizeImageUrl } from '../../lib/imageUtils';
+import { useHomeBrandNavigation } from '../../hooks/useHomeBrandNavigation';
 import { readPageCache } from '../../lib/pageDataCache';
 import { obtenerSolicitudes, obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService';
 import { clearSession, getActiveSessionUser } from '../../services/sessionService';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
-import { DEFAULT_NAV_LINKS } from '../../lib/defaultSiteLinks';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 const CART_STORAGE_KEY = 'cart';
@@ -380,6 +380,13 @@ const Navbar = () => {
         setIsMobileMenuOpen(false);
     };
 
+    const onBrandClick = useHomeBrandNavigation();
+
+    const handleBrandClick = (event) => {
+        closeMobileMenu();
+        onBrandClick(event);
+    };
+
     const handleMobileMenuToggle = () => {
         const nextState = !isMobileMenuOpen;
         setIsMobileMenuOpen(nextState);
@@ -460,7 +467,7 @@ const Navbar = () => {
         isTransparent && !useSolidNavbar ? (logoClaroUrl || logoUrl) : logoUrl,
         { width: 480 }
     );
-    const navLinks = filterNavLinks(enlacesNavbar.length > 0 ? enlacesNavbar : DEFAULT_NAV_LINKS);
+    const navLinks = filterNavLinks(enlacesNavbar);
 
     return (
         <nav
@@ -483,12 +490,15 @@ const Navbar = () => {
                     )}
                 </button>
 
-                <Link to="/" className="navbar__brand" aria-label="Ir a inicio" onClick={closeMobileMenu}>
+                <Link to="/" className="navbar__brand" aria-label="Ir al inicio" onClick={handleBrandClick}>
                     {brandLogoSrc ? (
                         <img
                             src={brandLogoSrc}
                             alt="Café UNA"
                             className="navbar__brand-logo"
+                            width={240}
+                            height={52}
+                            decoding="async"
                         />
                     ) : (
                         <span className="navbar__brand-text">Café UNA</span>
