@@ -42,7 +42,7 @@ const Hero = ({ data = {}, onBackgroundReady }) => {
   };
 
   return (
-    <section className={`hero${bgReady ? ' hero--bg-ready' : ''}`}>
+    <section id="hero" className={`hero${bgReady ? ' hero--bg-ready' : ''}`}>
       {backgroundUrl ? (
         <img
           ref={imgRef}

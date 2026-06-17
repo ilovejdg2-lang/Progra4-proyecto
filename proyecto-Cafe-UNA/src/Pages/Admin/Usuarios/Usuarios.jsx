@@ -8,8 +8,8 @@ import {
 } from "@tanstack/react-table";
 import { Pencil, Power, X } from "lucide-react";
 import { AdminLayout } from "../layouts/AdminLayout";
-import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
-import { useAdminPageLoadingGate } from "../../../hooks/usePublicPageLoadingGate";
+import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
+import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
 import {
   obtenerUsuarios,
@@ -644,7 +644,7 @@ const AdminUsuarios = () => {
   const [guardando, setGuardando] = useState(false);
   const [toggleando, setToggleando] = useState(null); // id en proceso
   const [sorting, setSorting] = useState([]);
-  const showLoading = useAdminPageLoadingGate('/admin/usuarios', !cargando);
+  const { showLoading, loadingMessage } = useAdminPageGate('/admin/usuarios', !cargando);
 
   async function cargar() {
     try {
@@ -805,11 +805,8 @@ const AdminUsuarios = () => {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  if (showLoading) {
-    return <AdminRouteLoading />;
-  }
-
   return (
+    <AdminPageGate showLoading={showLoading} message={loadingMessage}>
     <AdminLayout>
       {/* Modales */}
       {modalCrear && (
@@ -952,6 +949,7 @@ const AdminUsuarios = () => {
         )}
       </section>
     </AdminLayout>
+    </AdminPageGate>
   );
 };
 

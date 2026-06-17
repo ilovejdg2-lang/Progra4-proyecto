@@ -1,6 +1,15 @@
+import { normalizePathname } from './paths';
+
 const STORAGE_KEY = 'homeScrollTarget';
 
 let pendingTarget = null;
+
+export const HOME_SCROLL_SECTIONS = {
+  hero: 'hero',
+  about: 'sobre-nosotros',
+  products: 'productos',
+  voluntariado: 'iniciativas',
+};
 
 export function setHomeScrollTarget(sectionId) {
   if (!sectionId) {
@@ -40,17 +49,46 @@ export function clearHomeScrollTarget() {
   }
 }
 
+export function navigateToHomeSection(navigate, sectionId) {
+  if (sectionId) {
+    setHomeScrollTarget(sectionId);
+  } else {
+    clearHomeScrollTarget();
+  }
+
+  navigate({ to: '/' });
+}
+
 export function scrollToHomeSection(sectionId) {
   if (!sectionId) return false;
 
   const element = document.getElementById(sectionId);
-  if (!element) return false;
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return true;
+  }
 
-  element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  return true;
+  if (sectionId === HOME_SCROLL_SECTIONS.hero) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return true;
+  }
+
+  return false;
 }
 
-export function runHomeScrollWhenReady(isReady, onDone) {
+export function goToHomeHero(navigate, pathname = window.location.pathname) {
+  clearHomeScrollTarget();
+
+  if (normalizePathname(pathname) === '/') {
+    scrollToHomeSection(HOME_SCROLL_SECTIONS.hero);
+    return;
+  }
+
+  setHomeScrollTarget(HOME_SCROLL_SECTIONS.hero);
+  navigate({ to: '/' });
+}
+
+export function runHomeScrollWhenReady(isReady) {
   if (!isReady) return undefined;
 
   const target = peekHomeScrollTarget();
@@ -64,7 +102,6 @@ export function runHomeScrollWhenReady(isReady, onDone) {
 
     if (scrollToHomeSection(target)) {
       clearHomeScrollTarget();
-      onDone?.();
       return;
     }
 

@@ -1,19 +1,17 @@
 import { AdminLayout } from "../layouts/AdminLayout";
-import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
+import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { PerfilContent } from "../../../Components/Perfil/PerfilContent";
-import { useAdminPageLoadingGate } from "../../../hooks/usePublicPageLoadingGate";
+import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 
 const AdminPerfil = () => {
-  const showLoading = useAdminPageLoadingGate('/admin/perfil', true);
-
-  if (showLoading) {
-    return <AdminRouteLoading />;
-  }
+  const { showLoading, loadingMessage } = useAdminPageGate('/admin/perfil', true);
 
   return (
-    <AdminLayout>
-      <PerfilContent variant="admin" />
-    </AdminLayout>
+    <AdminPageGate showLoading={showLoading} message={loadingMessage}>
+      <AdminLayout>
+        <PerfilContent variant="admin" />
+      </AdminLayout>
+    </AdminPageGate>
   );
 };
 
