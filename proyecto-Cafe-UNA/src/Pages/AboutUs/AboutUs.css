@@ -23,6 +23,10 @@
   color: #1a1a1a;
 }
 
+.about-page > .page-back-link {
+  margin-bottom: 0;
+}
+
 .about-page__intro {
   display: flex;
   flex-direction: column;

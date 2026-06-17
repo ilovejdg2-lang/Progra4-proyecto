@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Coffee, ClipboardList, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Sparkles, Trash2, Users, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
+import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
+import { useAdminPageLoadingGate } from "../../../hooks/usePublicPageLoadingGate";
+import { useCachedPageData } from "../../../hooks/useCachedPageData";
+import { fetchAdminMainPageData } from "../../../lib/adminMainPageData";
 import {
   actualizarEnlace,
   actualizarFooter,
@@ -12,9 +16,6 @@ import {
   crearEnlace,
   eliminarEnlace,
   obtenerEnlaces,
-  obtenerFooter,
-  obtenerHero,
-  obtenerNavbar,
   obtenerSeccion,
   obtenerTarjetasInicio,
 } from "../../../services/informacionService";
@@ -935,54 +936,40 @@ const AdminInformacionPaginaPrincipal = () => {
   const [enlacesNavbar, setEnlacesNavbar] = useState([]);
   const [enlacesFooter, setEnlacesFooter] = useState([]);
   const [tarjetasInicio, setTarjetasInicio] = useState([]);
-  const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [editando, setEditando] = useState(null);
-  const [error, setError] = useState("");
+
+  const loadMain = useCallback(() => fetchAdminMainPageData(), []);
+  const { data, status, error: loadError, reload } = useCachedPageData("admin-main", loadMain);
+  const showLoading = useAdminPageLoadingGate('/admin/informacion-pagina-principal', status === 'ready');
 
   useEffect(() => {
-    let activo = true;
+    if (!data) return;
 
-    Promise.all([
-      obtenerHero().catch(() => null),
-      obtenerSeccion("homeSpotlight").catch(() => null),
-      obtenerSeccion("homeFeatured").catch(() => null),
-      obtenerSeccion("homeIniciativas").catch(() => null),
-      obtenerSeccion("homeLocation").catch(() => null),
-      obtenerTarjetasInicio().catch(() => []),
-      obtenerNavbar().catch(() => null),
-      obtenerFooter().catch(() => null),
-      obtenerEnlaces("Navbar").catch(() => []),
-      obtenerEnlaces("FooterExplorar").catch(() => []),
-    ])
-      .then(([heroData, homeSpotlightData, homeFeaturedData, homeIniciativasData, homeLocationData, tarjetasData, navbarData, footerData, navbarEnlaces, footerEnlaces]) => {
-        if (!activo) return;
+    if (data.hero) setHero({ ...heroInicial, ...data.hero });
+    setSeccionesInicio(data.seccionesInicio ?? {
+      homeSpotlight: { ...seccionInicioVacia },
+      homeFeatured: { ...seccionInicioVacia },
+      homeIniciativas: { ...seccionInicioVacia },
+      homeLocation: { ...seccionInicioVacia },
+    });
+    setTarjetasInicio(Array.isArray(data.tarjetasInicio) ? data.tarjetasInicio : []);
+    if (data.navbar) setNavbar({ ...navbarInicial, ...data.navbar });
+    if (data.footer) setFooter({ ...footerInicial, ...data.footer });
+    setEnlacesNavbar(Array.isArray(data.enlacesNavbar) ? data.enlacesNavbar : []);
+    setEnlacesFooter(Array.isArray(data.enlacesFooter) ? data.enlacesFooter : []);
+  }, [data]);
 
-        if (heroData) setHero({ ...heroInicial, ...heroData });
-        setSeccionesInicio({
-          homeSpotlight: mapSeccionInicio(homeSpotlightData),
-          homeFeatured: mapSeccionInicio(homeFeaturedData),
-          homeIniciativas: mapSeccionInicio(homeIniciativasData),
-          homeLocation: mapSeccionInicio(homeLocationData),
-        });
-        setTarjetasInicio(Array.isArray(tarjetasData) ? tarjetasData.map(mapTarjetaInicio) : []);
-        if (navbarData) setNavbar({ ...navbarInicial, ...navbarData });
-        if (footerData) setFooter({ ...footerInicial, ...footerData });
-        setEnlacesNavbar(Array.isArray(navbarEnlaces) ? navbarEnlaces : []);
-        setEnlacesFooter(Array.isArray(footerEnlaces) ? footerEnlaces : []);
+  const cargando = status === "loading";
+  const error = status === "error"
+    ? loadError || "No se pudo cargar la informacion principal."
+    : data?.hasError
+      ? "No se pudo cargar la informacion principal."
+      : "";
 
-        if (!heroData && !navbarData && !footerData) {
-          setError("No se pudo cargar la informacion principal.");
-        }
-      })
-      .finally(() => {
-        if (activo) setCargando(false);
-      });
-
-    return () => {
-      activo = false;
-    };
-  }, []);
+  if (showLoading) {
+    return <AdminRouteLoading />;
+  }
 
   const guardarHero = async (form) => {
     try {
@@ -1149,6 +1136,13 @@ const AdminInformacionPaginaPrincipal = () => {
         ) : error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-sm font-semibold text-red-700">
             {error}
+            <button
+              type="button"
+              onClick={reload}
+              className="mt-4 block rounded-lg bg-red-700 px-4 py-2 text-white"
+            >
+              Reintentar
+            </button>
           </div>
         ) : (
           <div className="space-y-5">

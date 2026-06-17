@@ -1,12 +1,19 @@
 import { Link } from '@tanstack/react-router';
 import { ArrowRight, ExternalLink, MapPin } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Hero from '../../Components/Hero/Hero';
 import PageLoading from '../../Components/PageLoading/PageLoading';
+import { useCachedPageData } from '../../hooks/useCachedPageData';
+import { useHomeVisualReady } from '../../hooks/usePreloadImages';
 import { contactSupportMessage, sanitizeUserFacingError } from '../../lib/formLimits';
+import { fetchHomePageData } from '../../lib/homePageData';
+import { collectHomeImageUrls } from '../../lib/homeImageUrls';
+import { isPageInstantReady, markPageRevealed } from '../../lib/pageSessionState';
+import { removeHomeInitialLoader, setHomePageLoading } from '../../lib/homePageLoading';
+import { runHomeScrollWhenReady } from '../../lib/homeScrollTarget';
+import { readPageCache, readStalePageCache } from '../../lib/pageDataCache';
 import { normalizeImageUrl } from '../../lib/imageUtils';
-import { obtenerHero, obtenerSeccion, obtenerTarjetasInicio } from '../../services/informacionService';
-import { obtenerProductos } from '../../services/productosServices';
 import './Home.css';
 
 const CARD_VISUALS = {
@@ -52,153 +59,100 @@ const COLLECTION_LABELS = ['ORIGEN', 'EXPERIENCIA', 'ARTESANÍA'];
 const mapsEmbedUrl =
   'https://www.google.com/maps?q=Finca%20Experimental%20Santa%20Lucia%20Universidad%20Nacional%20Heredia&output=embed';
 
-function waitForImage(src, timeoutMs = 8000) {
-  if (!src) return Promise.resolve();
-
-  return new Promise((resolve) => {
-    const image = new Image();
-    const timeoutId = window.setTimeout(resolve, timeoutMs);
-    const done = () => {
-      window.clearTimeout(timeoutId);
-      resolve();
-    };
-
-    image.onload = done;
-    image.onerror = done;
-    image.src = src;
-  });
+function getPreloadSource(pageStatus, data) {
+  if (pageStatus === 'ready' && data) return data;
+  if (pageStatus === 'loading') {
+    return readPageCache('home') ?? readStalePageCache('home');
+  }
+  return null;
 }
 
-
 const Home = () => {
-  const [hero, setHero] = useState({});
-  const [pageStatus, setPageStatus] = useState('loading');
-  const [loadError, setLoadError] = useState('');
-  const [aboutTeaser, setAboutTeaser] = useState({ title: '', description: '', image: '' });
-  const [featuredSection, setFeaturedSection] = useState({ title: '', description: '' });
-  const [iniciativasSection, setIniciativasSection] = useState({ eyebrow: '', title: '', description: '' });
-  const [locationSection, setLocationSection] = useState({ eyebrow: '', title: '', description: '', linkUrl: '' });
-  const [tarjetasInicio, setTarjetasInicio] = useState([]);
-  const [products, setProducts] = useState([]);
+  const showLoadingGate = !isPageInstantReady('home');
+
+  const loadHome = useCallback(() => fetchHomePageData(), []);
+  const { data, status: pageStatus, error: loadError, reload } = useCachedPageData('home', loadHome);
+
+  const hero = data?.hero ?? {};
+  const aboutTeaser = data?.aboutTeaser ?? { title: '', description: '', image: '' };
+  const featuredSection = data?.featuredSection ?? { title: '', description: '' };
+  const iniciativasSection = data?.iniciativasSection ?? { eyebrow: '', title: '', description: '' };
+  const locationSection = data?.locationSection ?? { eyebrow: '', title: '', description: '', linkUrl: '' };
+  const tarjetasInicio = data?.tarjetasInicio ?? [];
+  const products = data?.products ?? [];
+
+  const preloadSource = getPreloadSource(pageStatus, data);
+  const imageUrls = useMemo(
+    () => collectHomeImageUrls(preloadSource),
+    [preloadSource],
+  );
+
+  const canPreloadVisuals = showLoadingGate
+    && (pageStatus === 'ready' || (pageStatus === 'loading' && imageUrls.length > 0));
+  const visualReady = useHomeVisualReady(imageUrls, canPreloadVisuals);
+  const [paintReady, setPaintReady] = useState(!showLoadingGate);
 
   useEffect(() => {
-    let activo = true;
-
-    async function cargarInicio() {
-      setPageStatus('loading');
-      setLoadError('');
-
-      try {
-        const [
-          heroInfo,
-          spotlight,
-          featured,
-          iniciativas,
-          location,
-          tarjetas,
-          productList,
-        ] = await Promise.all([
-          obtenerHero(),
-          obtenerSeccion('homeSpotlight'),
-          obtenerSeccion('homeFeatured'),
-          obtenerSeccion('homeIniciativas'),
-          obtenerSeccion('homeLocation'),
-          obtenerTarjetasInicio(),
-          obtenerProductos().catch(() => []),
-        ]);
-
-        if (!activo) return;
-
-        const nextHero = heroInfo ?? {};
-        const backgroundUrl = normalizeImageUrl(nextHero.backgroundImage, { width: 1920 });
-        await waitForImage(backgroundUrl);
-
-        if (!activo) return;
-
-        setHero(nextHero);
-        setAboutTeaser({
-          title: typeof spotlight?.title === 'string' ? spotlight.title.trim() : '',
-          description: typeof spotlight?.description === 'string' ? spotlight.description.trim() : '',
-          image: typeof spotlight?.image === 'string' ? spotlight.image.trim() : '',
-        });
-        setFeaturedSection({
-          title: typeof featured?.title === 'string' ? featured.title.trim() : '',
-          description: typeof featured?.description === 'string' ? featured.description.trim() : '',
-        });
-        setIniciativasSection({
-          eyebrow: typeof iniciativas?.eyebrow === 'string' ? iniciativas.eyebrow.trim() : '',
-          title: typeof iniciativas?.title === 'string' ? iniciativas.title.trim() : '',
-          description: typeof iniciativas?.description === 'string' ? iniciativas.description.trim() : '',
-        });
-        setLocationSection({
-          eyebrow: typeof location?.eyebrow === 'string' ? location.eyebrow.trim() : '',
-          title: typeof location?.title === 'string' ? location.title.trim() : '',
-          description: typeof location?.description === 'string' ? location.description.trim() : '',
-          linkUrl:
-            typeof location?.linkUrl === 'string'
-              ? location.linkUrl.trim()
-              : typeof location?.LinkUrl === 'string'
-                ? location.LinkUrl.trim()
-                : '',
-        });
-        setTarjetasInicio(
-          Array.isArray(tarjetas)
-            ? tarjetas.map((item) => ({
-                clave: item.clave || item.Clave || '',
-                etiqueta: item.etiqueta || item.Etiqueta || '',
-                titulo: item.titulo || item.Titulo || '',
-                descripcion: item.descripcion || item.Descripcion || '',
-                ruta: item.ruta || item.Ruta || '',
-              }))
-            : [],
-        );
-        setProducts(Array.isArray(productList) ? productList : []);
-        setPageStatus('ready');
-      } catch (err) {
-        console.error('No se pudo cargar la página de inicio.', err);
-        if (!activo) return;
-        setLoadError(sanitizeUserFacingError(err?.message || 'No se pudo cargar el inicio.'));
-        setPageStatus('error');
-      }
+    if (!showLoadingGate) {
+      setPaintReady(true);
+      return;
     }
 
-    cargarInicio();
-
-    return () => {
-      activo = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    const href = normalizeImageUrl(hero.backgroundImage, { width: 1920 });
-    if (!href) return;
-
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = 'image';
-    link.href = href;
-    document.head.appendChild(link);
-
-    return () => {
-      document.head.removeChild(link);
-    };
-  }, [hero.backgroundImage]);
-
-  useEffect(() => {
-    if (sessionStorage.getItem('scrollToIniciativas')) {
-      sessionStorage.removeItem('scrollToIniciativas');
-      window.setTimeout(() => {
-        document.getElementById('iniciativas')?.scrollIntoView({ behavior: 'smooth' });
-      }, 150);
+    if (pageStatus !== 'ready' || !visualReady) {
+      setPaintReady(false);
     }
+  }, [showLoadingGate, pageStatus, visualReady]);
+
+  const handleHeroBackgroundReady = useCallback(() => {
+    setPaintReady(true);
   }, []);
+
+  const isFullyVisible = showLoadingGate
+    ? pageStatus === 'ready' && visualReady && paintReady
+    : pageStatus === 'ready';
+
+  const prepaintHero = showLoadingGate
+    && pageStatus === 'ready'
+    && visualReady
+    && !paintReady;
+
+  useLayoutEffect(() => {
+    if (pageStatus === 'error') {
+      setHomePageLoading(false);
+      return undefined;
+    }
+
+    setHomePageLoading(showLoadingGate && !isFullyVisible);
+  }, [isFullyVisible, pageStatus, showLoadingGate]);
+
+  useEffect(() => {
+    if (isFullyVisible) {
+      removeHomeInitialLoader();
+      markPageRevealed('home');
+      setHomePageLoading(false);
+    }
+  }, [isFullyVisible]);
+
+  useEffect(() => {
+    document.body.classList.toggle('home-hero-ready', isFullyVisible);
+    return () => {
+      document.body.classList.remove('home-hero-ready');
+    };
+  }, [isFullyVisible]);
+
+  useEffect(() => {
+    return runHomeScrollWhenReady(isFullyVisible);
+  }, [isFullyVisible]);
 
   const aboutTeaserImageUrl = normalizeImageUrl(aboutTeaser.image, { width: 900 });
-  const featuredProducts = products
-    .filter((product) => product.estado !== 'Deshabilitado' && product.esDestacado)
-    .slice(0, 3);
+  const featuredProducts = useMemo(
+    () => products
+      .filter((product) => product.estado !== 'Deshabilitado' && product.esDestacado)
+      .slice(0, 3),
+    [products],
+  );
 
-  const iniciativasCards = tarjetasInicio.map((tarjeta) => {
+  const iniciativasCards = useMemo(() => tarjetasInicio.map((tarjeta) => {
     const clave = (tarjeta.clave || '').toLowerCase();
     const visual = CARD_VISUALS[clave] || {};
 
@@ -213,39 +167,40 @@ const Home = () => {
       accentBg: visual.accentBg,
       borderColor: visual.borderColor,
     };
-  });
+  }), [tarjetasInicio]);
 
-  useEffect(() => {
-    document.body.classList.toggle('home-hero-ready', pageStatus === 'ready');
-    return () => {
-      document.body.classList.remove('home-hero-ready');
-    };
-  }, [pageStatus]);
-
-  if (pageStatus === 'loading') {
-    return (
+  if (pageStatus === 'error') {
+    return createPortal(
       <PageLoading
-        message="Cargando inicio..."
-      />
+        isError
+        message={sanitizeUserFacingError(loadError) || 'No se pudo cargar el inicio.'}
+        detail={contactSupportMessage()}
+        onRetry={reload}
+      />,
+      document.body,
     );
   }
 
-  if (pageStatus === 'error') {
-    return (
+  if (!isFullyVisible && !prepaintHero) {
+    return createPortal(
       <PageLoading
-        isError
-        message={loadError || 'No se pudo cargar el inicio.'}
-        detail={contactSupportMessage()}
-        onRetry={() => window.location.reload()}
-      />
+        message="Cargando inicio..."
+      />,
+      document.body,
     );
   }
 
   return (
     <>
-      <Hero data={hero} />
+      {showLoadingGate && !isFullyVisible ? createPortal(
+        <PageLoading message="Cargando inicio..." />,
+        document.body,
+      ) : null}
+      <div className={prepaintHero ? 'home-page--prepaint' : undefined} aria-hidden={prepaintHero}>
+      <Hero data={hero} onBackgroundReady={handleHeroBackgroundReady} />
+      {isFullyVisible ? (
       <main className="home-page">
-        <section className="home-page__mission-spotlight" aria-labelledby="about-teaser-title">
+        <section id="sobre-nosotros" className="home-page__mission-spotlight" aria-labelledby="about-teaser-title">
           <div className="mission-spotlight-shell">
             <article className="mission-spotlight-card">
               <h2 id="about-teaser-title" className="mission-spotlight-card__title">
@@ -258,7 +213,11 @@ const Home = () => {
                     <img
                       src={aboutTeaserImageUrl}
                       alt=""
-                      loading="lazy"
+                      width={900}
+                      height={600}
+                      loading="eager"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
                     />
                   </div>
                 ) : null}
@@ -279,7 +238,7 @@ const Home = () => {
           </div>
         </section>
 
-        <section className="home-page__featured curated-collections">
+        <section id="productos" className="home-page__featured curated-collections">
           <header className="curated-collections__header">
             <h2 className="curated-collections__title">{featuredSection.title}</h2>
             <p className="curated-collections__intro">{featuredSection.description}</p>
@@ -301,9 +260,10 @@ const Home = () => {
                     <img
                       src={normalizeImageUrl(p.imagen, { width: 800 }) || p.imagen}
                       alt={p.nombre || 'Café'}
-                      loading="lazy"
+                      loading="eager"
                       width="800"
                       height="1000"
+                      referrerPolicy="no-referrer"
                     />
                     <div className="curated-collections__overlay" aria-hidden="true" />
                     <div className="curated-collections__content">
@@ -412,6 +372,8 @@ const Home = () => {
           </div>
         </section>
       </main>
+      ) : null}
+      </div>
     </>
   );
 };

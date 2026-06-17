@@ -23,32 +23,20 @@
   font-family: var(--sans);
 }
 
-/* =========================
-   VOLVER AL INICIO
-========================= */
+.voluntariado-page--prepaint {
+  visibility: hidden;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
 
-.back-arrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
+.voluntariado-page > .page-back-link {
   max-width: 1150px;
   width: 100%;
   margin: 0 auto 20px;
   padding: 0 25px;
-  color: var(--verde-principal);
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.back-arrow:hover {
-  color: var(--verde-hover);
-  transform: translateX(-3px);
-}
-
-.back-arrow i {
-  font-size: 15px;
 }
 
 /* =========================
@@ -948,7 +936,7 @@
     padding-top: 16px;
   }
 
-  .back-arrow {
+  .voluntariado-page > .page-back-link {
     margin-bottom: 16px;
   }
 
