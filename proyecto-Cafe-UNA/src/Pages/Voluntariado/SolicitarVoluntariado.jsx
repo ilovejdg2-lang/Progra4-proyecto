@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Check, HandHeart, Lock, Mail, Sprout, User, Users } from "lucide-react";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
@@ -54,6 +54,21 @@ function obtenerCorreoUsuario(user) {
   return String(user?.email || user?.correo || "").trim().toLowerCase();
 }
 
+function obtenerCampoCedula(datos, ...claves) {
+  if (!datos || typeof datos !== "object") return "";
+  for (const clave of claves) {
+    const valor = datos[clave];
+    if (typeof valor === "string" && valor.trim()) {
+      return valor.trim();
+    }
+  }
+  return "";
+}
+
+function esAvisoCedulaInformativo(mensaje) {
+  return /cargad[oa]s?\s+autom[aá]ticamente/i.test(mensaje) || /datos cargados/i.test(mensaje);
+}
+
 function crearFormularioInicial(user) {
   return {
     ...FORM_INICIAL,
@@ -71,6 +86,7 @@ function SolicitarVoluntariado() {
   const [errorApi, setErrorApi] = useState(null);
   const [consultandoCedula, setConsultandoCedula] = useState(false);
   const [avisoCedula, setAvisoCedula] = useState(null);
+  const [nombreAutocargado, setNombreAutocargado] = useState(false);
 
   const {
     ref: pageRef,
@@ -83,11 +99,21 @@ function SolicitarVoluntariado() {
   const esGrupal = formulario.modalidad === "grupal";
   const esTipoOtro = formulario.tipo === "Otro";
   const esNacionalCr = formulario.esNacional === "si";
+  const consultaCedulaRef = useRef({ digitos: "", enCurso: false });
 
   useEffect(() => {
+    if (!esNacionalCr) return;
+
     const digitos = normalizarCedulaCr(formulario.identificacion);
-    if (digitos.length !== 9 || formulario.nombre?.trim()) return;
-    consultarDatosCedula(digitos);
+    if (digitos.length !== 9) return;
+    if (consultaCedulaRef.current.enCurso) return;
+    if (consultaCedulaRef.current.digitos === digitos) return;
+
+    const timeoutId = window.setTimeout(() => {
+      consultarDatosCedula(digitos);
+    }, 350);
+
+    return () => window.clearTimeout(timeoutId);
   }, [formulario.identificacion, esNacionalCr]);
 
   const limpiarError = (campo) => {
@@ -114,6 +140,8 @@ function SolicitarVoluntariado() {
     if (e.target.name === "identificacion") {
       if (formulario.esNacional === "si") {
         valor = valor.replace(/\D/g, "").slice(0, 9);
+        consultaCedulaRef.current = { digitos: "", enCurso: false };
+        setNombreAutocargado(false);
         setFormulario((prev) => ({
           ...prev,
           identificacion: valor,
@@ -146,6 +174,7 @@ function SolicitarVoluntariado() {
       pais: valor === "si" ? "Costa Rica" : prev.pais === "Costa Rica" ? "" : prev.pais,
     }));
     setAvisoCedula(null);
+    setNombreAutocargado(false);
     limpiarError("esNacional");
     limpiarError("identificacion");
 
@@ -157,35 +186,66 @@ function SolicitarVoluntariado() {
     }
   };
 
-  const consultarDatosCedula = async (digitos) => {
+  const consultarDatosCedula = async (digitos, { forzar = false } = {}) => {
+    if (!esNacionalCr || digitos.length !== 9) return;
+    if (consultaCedulaRef.current.enCurso) return;
+    if (!forzar && consultaCedulaRef.current.digitos === digitos) return;
+
+    consultaCedulaRef.current = { digitos, enCurso: true };
     setConsultandoCedula(true);
     setAvisoCedula(null);
 
     try {
       const datos = await consultarCedula(digitos);
+      const nombre = obtenerCampoCedula(datos, "nombre", "Nombre");
+      const residencia = obtenerCampoCedula(datos, "residencia", "Residencia");
 
-      if (!datos?.nombre?.trim()) {
+      if (!nombre) {
+        consultaCedulaRef.current = { digitos: "", enCurso: false };
+        setNombreAutocargado(false);
+        setFormulario((prev) => ({
+          ...prev,
+          nombre: "",
+          residencia: "",
+        }));
         setAvisoCedula("No se encontraron datos para esta cédula. Complete el nombre y residencia manualmente.");
         return;
       }
 
+      consultaCedulaRef.current = { digitos, enCurso: false };
+      setNombreAutocargado(true);
       setFormulario((prev) => ({
         ...prev,
         identificacion: digitos,
-        nombre: datos.nombre.trim(),
-        residencia: datos.residencia?.trim() || prev.residencia,
+        nombre,
+        residencia: residencia || prev.residencia,
         pais: "Costa Rica",
       }));
-      setAvisoCedula("Datos cargados automáticamente. Puede editarlos si es necesario.");
+      setAvisoCedula(
+        residencia
+          ? "Datos cargados automáticamente. Puede editarlos si es necesario."
+          : "Nombre cargado automáticamente.",
+      );
       limpiarError("nombre");
       limpiarError("residencia");
       limpiarError("identificacion");
     } catch (error) {
-      const esErrorServicio = /suscripci[oó]n|plan|api key|configurad|demasiadas consultas|espere \d+/i.test(error.message);
+      consultaCedulaRef.current = { digitos: "", enCurso: false };
+      setNombreAutocargado(false);
+      setFormulario((prev) => ({
+        ...prev,
+        nombre: "",
+        residencia: "",
+      }));
+      const mensajeBase = error?.message?.trim() || "No se pudo consultar la cédula.";
+      const yaIndicaManual = /manualmente|completar el nombre/i.test(mensajeBase);
+      const esConexion = error?.cause?.code === "ERR_NETWORK" || /conectar con el servidor/i.test(mensajeBase);
       setAvisoCedula(
-        esErrorServicio
-          ? `${error.message} Puede completar el nombre y residencia manualmente.`
-          : `${error.message} Complete el nombre y residencia manualmente.`,
+        yaIndicaManual
+          ? mensajeBase
+          : esConexion
+            ? `${mensajeBase} Mientras tanto, complete el nombre y residencia manualmente.`
+            : `${mensajeBase} Complete el nombre y residencia manualmente.`,
       );
     } finally {
       setConsultandoCedula(false);
@@ -213,7 +273,7 @@ function SolicitarVoluntariado() {
       return;
     }
 
-    await consultarDatosCedula(digitos);
+    await consultarDatosCedula(digitos, { forzar: true });
   };
 
   const handleTipoVoluntariado = (tipo) => {
@@ -326,6 +386,7 @@ function SolicitarVoluntariado() {
     setErrores({});
     setErrorApi(null);
     setAvisoCedula(null);
+    setNombreAutocargado(false);
   };
 
   const handleSubmit = async (e) => {
@@ -339,7 +400,7 @@ function SolicitarVoluntariado() {
     if (!validarFormulario()) return;
 
     if (esNacionalCr && !formulario.nombre?.trim()) {
-      setAvisoCedula("Debe verificar su cédula antes de enviar la solicitud.");
+      setAvisoCedula("Ingrese su nombre completo o verifique la cédula.");
       return;
     }
 
@@ -510,6 +571,36 @@ function SolicitarVoluntariado() {
 
                   <div className="campo full">
                     <label>
+                      {esNacionalCr ? "Número de cédula" : "Documento de identificación"}{" "}
+                      <span className="req">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="identificacion"
+                      placeholder={esNacionalCr ? "Cédula de 9 dígitos" : "Pasaporte o documento de identidad"}
+                      value={formulario.identificacion}
+                      onChange={handleChange}
+                      onBlur={esNacionalCr ? handleIdentificacionBlur : undefined}
+                      maxLength={esNacionalCr ? 9 : 30}
+                      inputMode={esNacionalCr ? "numeric" : "text"}
+                      autoComplete="off"
+                      disabled={!formulario.esNacional}
+                    />
+                    {consultandoCedula && (
+                      <span className="mensaje-info">Consultando datos de la cédula...</span>
+                    )}
+                    {!consultandoCedula && avisoCedula && (
+                      <span className={esAvisoCedulaInformativo(avisoCedula) ? "mensaje-info" : "mensaje-error"}>
+                        {avisoCedula}
+                      </span>
+                    )}
+                    {errores.identificacion && (
+                      <span className="mensaje-error">{errores.identificacion}</span>
+                    )}
+                  </div>
+
+                  <div className="campo">
+                    <label>
                       Nombre completo <span className="req">*</span>
                     </label>
                     {esNacionalCr ? (
@@ -517,16 +608,26 @@ function SolicitarVoluntariado() {
                         <input
                           type="text"
                           name="nombre"
-                          placeholder={consultandoCedula ? "Consultando..." : "Se completará con su cédula"}
+                          placeholder={
+                            consultandoCedula
+                              ? "Consultando..."
+                              : nombreAutocargado
+                                ? ""
+                                : "Ingrese su nombre completo"
+                          }
                           value={formulario.nombre}
-                          readOnly
-                          className="input-solo-lectura"
+                          onChange={handleChange}
                           maxLength={80}
                           disabled={!formulario.esNacional}
                         />
-                        {!formulario.nombre?.trim() && !consultandoCedula && formulario.identificacion.length > 0 && (
+                        {nombreAutocargado && (
                           <span className="mensaje-info">
-                            Espere a que se cargue su nombre o verifique la cédula.
+                            Puede corregir el nombre si no coincide.
+                          </span>
+                        )}
+                        {!formulario.nombre?.trim() && !consultandoCedula && formulario.identificacion.length === 9 && (
+                          <span className="mensaje-info">
+                            Si no se cargan los datos, complete el nombre manualmente.
                           </span>
                         )}
                       </>
@@ -546,31 +647,19 @@ function SolicitarVoluntariado() {
 
                   <div className="campo">
                     <label>
-                      {esNacionalCr ? "Número de cédula" : "Documento de identificación"}{" "}
-                      <span className="req">*</span>
+                      Institución educativa <span className="req">*</span>
                     </label>
                     <input
                       type="text"
-                      name="identificacion"
-                      placeholder={esNacionalCr ? "504680314" : "Pasaporte o documento de identidad"}
-                      value={formulario.identificacion}
+                      name="institucion"
+                      placeholder="Ej. Universidad Nacional"
+                      value={formulario.institucion}
                       onChange={handleChange}
-                      onBlur={esNacionalCr ? handleIdentificacionBlur : undefined}
-                      maxLength={esNacionalCr ? 9 : 30}
-                      inputMode={esNacionalCr ? "numeric" : "text"}
-                      autoComplete="off"
+                      maxLength={120}
                       disabled={!formulario.esNacional}
                     />
-                    {consultandoCedula && (
-                      <span className="mensaje-info">Consultando datos en el TSE...</span>
-                    )}
-                    {!consultandoCedula && avisoCedula && (
-                      <span className={avisoCedula.includes("cargados") ? "mensaje-info" : "mensaje-error"}>
-                        {avisoCedula}
-                      </span>
-                    )}
-                    {errores.identificacion && (
-                      <span className="mensaje-error">{errores.identificacion}</span>
+                    {errores.institucion && (
+                      <span className="mensaje-error">{errores.institucion}</span>
                     )}
                   </div>
 
@@ -581,11 +670,9 @@ function SolicitarVoluntariado() {
                     <input
                       type="text"
                       name="residencia"
-                      placeholder="Ciudad, provincia"
+                      placeholder="Ciudad, cantón o provincia"
                       value={formulario.residencia}
                       onChange={handleChange}
-                      readOnly={esNacionalCr && Boolean(formulario.residencia?.trim())}
-                      className={esNacionalCr && formulario.residencia?.trim() ? "input-solo-lectura" : ""}
                       disabled={!formulario.esNacional}
                     />
                     {errores.residencia && (
@@ -608,24 +695,6 @@ function SolicitarVoluntariado() {
                       disabled={!formulario.esNacional}
                     />
                     {errores.pais && <span className="mensaje-error">{errores.pais}</span>}
-                  </div>
-
-                  <div className="campo">
-                    <label>
-                      Institución educativa <span className="req">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="institucion"
-                      placeholder="Ej. Universidad Nacional"
-                      value={formulario.institucion}
-                      onChange={handleChange}
-                      maxLength={120}
-                      disabled={!formulario.esNacional}
-                    />
-                    {errores.institucion && (
-                      <span className="mensaje-error">{errores.institucion}</span>
-                    )}
                   </div>
                 </div>
               </SectionCard>
