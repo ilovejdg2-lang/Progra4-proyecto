@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BookOpenText, Eye, Image, ImagePlus, Target, Trash2, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
+import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
+import { useAdminPageLoadingGate } from "../../../hooks/usePublicPageLoadingGate";
+import { useCachedPageData } from "../../../hooks/useCachedPageData";
+import { fetchAboutAdminPageData } from "../../../lib/aboutAdminPageData";
 import {
   actualizarGaleriaItem,
   actualizarSeccion,
@@ -310,31 +314,27 @@ const AdminInformacionSobreNosotros = () => {
   })();
   const actorRoles = Array.isArray(actor?.roles) ? actor.roles : [];
   const esSuperAdmin = actorRoles.includes("SuperAdmin");
+  const loadAbout = useCallback(() => fetchAboutAdminPageData(), []);
+  const { data, status, error: loadError, reload } = useCachedPageData("about-admin", loadAbout);
+  const showLoading = useAdminPageLoadingGate('/admin/sobre-nosotros', status === 'ready');
+
   const [info, setInfo] = useState(infoInicial);
-  const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [editandoTexto, setEditandoTexto] = useState(null);
   const [editandoGaleria, setEditandoGaleria] = useState(false);
-  const [error, setError] = useState("");
 
   useEffect(() => {
-    let activo = true;
+    if (data) {
+      setInfo(data);
+    }
+  }, [data]);
 
-    obtenerInformacionSobreNosotros()
-      .then((data) => {
-        if (activo) setInfo({ ...infoInicial, ...data, gallery: Array.isArray(data.gallery) ? data.gallery : [] });
-      })
-      .catch(() => {
-        if (activo) setError("No se pudo cargar la informacion de sobre nosotros.");
-      })
-      .finally(() => {
-        if (activo) setCargando(false);
-      });
+  const cargando = status === "loading";
+  const error = status === "error" ? loadError || "No se pudo cargar la informacion de sobre nosotros." : "";
 
-    return () => {
-      activo = false;
-    };
-  }, []);
+  if (showLoading) {
+    return <AdminRouteLoading />;
+  }
 
   const guardarTexto = async (tipo, form) => {
     try {
@@ -397,6 +397,13 @@ const AdminInformacionSobreNosotros = () => {
         ) : error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-sm font-semibold text-red-700">
             {error}
+            <button
+              type="button"
+              onClick={reload}
+              className="mt-4 block rounded-lg bg-red-700 px-4 py-2 text-white"
+            >
+              Reintentar
+            </button>
           </div>
         ) : (
           <>

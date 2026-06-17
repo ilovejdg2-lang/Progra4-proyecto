@@ -3,6 +3,14 @@ import { getActiveSessionUser } from "./sessionService";
 import { obtenerUsuarioPorId } from "./usuariosServices";
 
 const BASE_URL = `${import.meta.env.BACKEND_URL}/perfil`;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+let perfilCache = { expiresAt: 0, data: null };
+let perfilInflight = null;
+
+function clearPerfilCache() {
+  perfilCache = { expiresAt: 0, data: null };
+  perfilInflight = null;
+}
 
 function normalizePerfil(data) {
   if (!data) return null;
@@ -28,25 +36,44 @@ async function request(url, options = {}) {
 }
 
 export async function obtenerPerfil() {
-  try {
-    const data = await request(BASE_URL);
-    return normalizePerfil(data);
-  } catch (error) {
-    const sessionUser = getActiveSessionUser();
-    if (!sessionUser?.id) {
-      throw error;
-    }
-
-    try {
-      const fallback = await obtenerUsuarioPorId(sessionUser.id);
-      return normalizePerfil(fallback);
-    } catch {
-      throw error;
-    }
+  if (perfilCache.expiresAt > Date.now() && perfilCache.data) {
+    return perfilCache.data;
   }
+
+  if (perfilInflight) {
+    return perfilInflight;
+  }
+
+  perfilInflight = (async () => {
+    try {
+      const data = await request(BASE_URL);
+      const normalized = normalizePerfil(data);
+      perfilCache = { expiresAt: Date.now() + CACHE_TTL_MS, data: normalized };
+      return normalized;
+    } catch (error) {
+      const sessionUser = getActiveSessionUser();
+      if (!sessionUser?.id) {
+        throw error;
+      }
+
+      try {
+        const fallback = await obtenerUsuarioPorId(sessionUser.id);
+        const normalized = normalizePerfil(fallback);
+        perfilCache = { expiresAt: Date.now() + CACHE_TTL_MS, data: normalized };
+        return normalized;
+      } catch {
+        throw error;
+      }
+    } finally {
+      perfilInflight = null;
+    }
+  })();
+
+  return perfilInflight;
 }
 
 export async function actualizarPerfil(payload) {
+  clearPerfilCache();
   const data = await request(BASE_URL, {
     method: "PUT",
     body: JSON.stringify(payload),
@@ -62,6 +89,7 @@ export async function solicitarCambioCorreo(nuevoCorreo, passwordActual) {
 }
 
 export async function confirmarCambioCorreo({ nuevoCorreo, token }) {
+  clearPerfilCache();
   const data = await request(`${BASE_URL}/confirmar-cambio-correo`, {
     method: "PUT",
     body: JSON.stringify({ nuevoCorreo, token }),
