@@ -196,7 +196,7 @@ const Home = () => {
         <PageLoading message="Cargando inicio..." />,
         document.body,
       ) : null}
-      <div className={prepaintHero ? 'home-page--prepaint' : undefined} aria-hidden={prepaintHero}>
+      <div className={prepaintHero ? 'home-page--prepaint' : undefined} inert={prepaintHero || undefined}>
       <Hero data={hero} onBackgroundReady={handleHeroBackgroundReady} />
       {isFullyVisible ? (
       <main className="home-page">
@@ -360,18 +360,25 @@ const Home = () => {
             </div>
 
             {locationMapEmbedUrl ? (
-            <div className="location-card__map">
-              <iframe
-                title="Mapa de ubicación"
-                src={locationMapEmbedUrl}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                aria-hidden="true"
-              />
-              {locationMapUrl ? (
-              <a href={locationMapUrl} target="_blank" rel="noreferrer" className="location-card__map-link" aria-label="Abrir ubicacion en Google Maps" />
-              ) : null}
-            </div>
+              <div className="location-card__map">
+                <iframe
+                  title="Mapa de ubicación"
+                  src={locationMapEmbedUrl}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  aria-hidden="true"
+                  tabIndex={-1}
+                />
+                {locationMapUrl ? (
+                  <a
+                    href={locationMapUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="location-card__map-link"
+                    aria-label="Abrir ubicacion en Google Maps"
+                  />
+                ) : null}
+              </div>
             ) : null}
           </div>
         </section>
