@@ -469,40 +469,27 @@ const Navbar = () => {
     );
     const navLinks = filterNavLinks(enlacesNavbar);
 
+    const brandMark = brandLogoSrc ? (
+        <img
+            src={brandLogoSrc}
+            alt="Café UNA"
+            className="navbar__brand-logo"
+            width={240}
+            height={52}
+            decoding="async"
+        />
+    ) : (
+        <span className="navbar__brand-text">Café UNA</span>
+    );
+
     return (
         <nav
             ref={navbarRef}
-            className={`navbar ${isTransparent && !useSolidNavbar ? 'navbar--transparent' : 'navbar--solid'}`}
+            className={`navbar ${isTransparent && !useSolidNavbar ? 'navbar--transparent' : 'navbar--solid'}${isMobileMenuOpen ? ' navbar--menu-open' : ''}`}
         >
             <div className="navbar__start">
-                <button
-                    type="button"
-                    className="navbar__menu-toggle"
-                    aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-                    aria-expanded={isMobileMenuOpen}
-                    aria-controls="navbar-mobile-menu"
-                    onClick={handleMobileMenuToggle}
-                >
-                    {isMobileMenuOpen ? (
-                        <X size={24} strokeWidth={2.2} aria-hidden="true" />
-                    ) : (
-                        <Menu size={24} strokeWidth={2.2} aria-hidden="true" />
-                    )}
-                </button>
-
                 <Link to="/" className="navbar__brand" aria-label="Ir al inicio" onClick={handleBrandClick}>
-                    {brandLogoSrc ? (
-                        <img
-                            src={brandLogoSrc}
-                            alt="Café UNA"
-                            className="navbar__brand-logo"
-                            width={240}
-                            height={52}
-                            decoding="async"
-                        />
-                    ) : (
-                        <span className="navbar__brand-text">Café UNA</span>
-                    )}
+                    {brandMark}
                 </Link>
             </div>
 
@@ -731,6 +718,21 @@ const Navbar = () => {
                         </div>
                     )}
                 </div>
+
+                <button
+                    type="button"
+                    className="navbar__menu-toggle"
+                    aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+                    aria-expanded={isMobileMenuOpen}
+                    aria-controls="navbar-mobile-menu"
+                    onClick={handleMobileMenuToggle}
+                >
+                    {isMobileMenuOpen ? (
+                        <X size={24} strokeWidth={2.2} aria-hidden="true" />
+                    ) : (
+                        <Menu size={24} strokeWidth={2.2} aria-hidden="true" />
+                    )}
+                </button>
             </div>
 
             <div
@@ -752,7 +754,6 @@ const Navbar = () => {
                     aria-label="Menú de navegación"
                 >
                     <header className="navbar__mobile-header">
-                        <span>Café UNA</span>
                         <button
                             type="button"
                             className="navbar__mobile-close"
