@@ -22,6 +22,12 @@ import {
   sanitizeUserFacingError,
   validateProductoForm,
 } from "../../../lib/formLimits";
+import {
+  productoPuedeDestacarse,
+  productoPuedeDeshabilitarse,
+  productoSinStock,
+  productoEstaDeshabilitado,
+} from "../../../lib/productoDisponibilidad";
 
 const FORM_VACIO = {
   nombre: "",
@@ -39,6 +45,19 @@ const MAX_PRODUCTOS_DESTACADOS = 3;
 
 function contarDestacados(productos, excluirId = null) {
   return productos.filter((item) => item.esDestacado && item.id !== excluirId).length;
+}
+
+function puedeMarcarDestacado(form, destacadosOtros) {
+  const borrador = {
+    estado: form.estado,
+    stock: Number(form.stock) || 0,
+  };
+
+  if (!productoPuedeDestacarse(borrador)) {
+    return false;
+  }
+
+  return form.esDestacado || destacadosOtros < MAX_PRODUCTOS_DESTACADOS;
 }
 
 function Modal({ titulo, onClose, children, ancho = "max-w-2xl" }) {
@@ -76,24 +95,58 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
 
-    if (name === "esDestacado" && checked && destacadosOtros >= MAX_PRODUCTOS_DESTACADOS) {
-      alert(`Solo puedes destacar hasta ${MAX_PRODUCTOS_DESTACADOS} productos en el inicio.`);
+    if (name === "esDestacado" && checked) {
+      if (destacadosOtros >= MAX_PRODUCTOS_DESTACADOS) {
+        alert(`Solo puedes destacar hasta ${MAX_PRODUCTOS_DESTACADOS} productos en el inicio.`);
+        return;
+      }
+
+      const borrador = {
+        estado: form.estado,
+        stock: Number(form.stock) || 0,
+      };
+
+      if (!productoPuedeDestacarse(borrador)) {
+        if (productoEstaDeshabilitado(borrador)) {
+          alert("No puedes destacar un producto deshabilitado.");
+        } else {
+          alert("No puedes destacar un producto sin stock.");
+        }
+        return;
+      }
+    }
+
+    if (name === "estado" && value === "Deshabilitado" && form.esDestacado) {
+      alert("Quita el producto de destacados antes de deshabilitarlo.");
       return;
     }
 
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox"
-        ? checked
-        : name === "precioNormal" || name === "precioConIVA" || name === "stock"
-        ? value === ""
-          ? ""
-          : Number(value)
-        : value,
-      precioConIVA: name === "precioNormal"
-        ? calcularPrecioConIVA(value === "" ? 0 : Number(value))
-        : prev.precioConIVA,
-    }));
+    if (name === "stock" && Number(value) <= 0 && form.esDestacado) {
+      alert("Quita el producto de destacados antes de dejar el stock en cero.");
+      return;
+    }
+
+    setForm((prev) => {
+      const next = {
+        ...prev,
+        [name]: type === "checkbox"
+          ? checked
+          : name === "precioNormal" || name === "precioConIVA" || name === "stock"
+          ? value === ""
+            ? ""
+            : Number(value)
+          : value,
+        precioConIVA: name === "precioNormal"
+          ? calcularPrecioConIVA(value === "" ? 0 : Number(value))
+          : prev.precioConIVA,
+      };
+
+      if ((name === "estado" && value === "Deshabilitado") || (name === "stock" && Number(value) <= 0)) {
+        next.esDestacado = false;
+      }
+
+      return next;
+    });
 
     if (name === "nombre" || name === "descripcion") {
       setFieldErrors((prev) => ({ ...prev, [name]: "" }));
@@ -114,12 +167,33 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
     setSubmitError("");
 
     try {
-      await onGuardar({
+      const payload = {
         ...form,
         precioNormal: Number(form.precioNormal) || 0,
         precioConIVA: calcularPrecioConIVA(form.precioNormal),
         stock: Number(form.stock) || 0,
-      });
+      };
+
+      if (payload.esDestacado && !productoPuedeDestacarse(payload)) {
+        if (productoEstaDeshabilitado(payload)) {
+          setSubmitError("No puedes destacar un producto deshabilitado.");
+        } else {
+          setSubmitError("No puedes destacar un producto sin stock.");
+        }
+        return;
+      }
+
+      if (productoEstaDeshabilitado(payload) && payload.esDestacado) {
+        setSubmitError("Quita el producto de destacados antes de deshabilitarlo.");
+        return;
+      }
+
+      if (productoSinStock(payload) && payload.esDestacado) {
+        setSubmitError("Quita el producto de destacados antes de dejar el stock en cero.");
+        return;
+      }
+
+      await onGuardar(payload);
     } catch (err) {
       const message = sanitizeUserFacingError(err?.message || "No se pudo guardar el producto.");
       if (message.toLowerCase().includes("nombre")) {
@@ -137,6 +211,7 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
   const inputErrorCls = "border-red-500 focus:border-red-500 focus:ring-red-100";
   const fieldErrorCls = "text-xs text-red-600";
   const textareaCls = `${inputCls} min-h-[6rem] resize-y break-words whitespace-pre-wrap overflow-x-hidden`;
+  const destacadoDeshabilitado = !puedeMarcarDestacado(form, destacadosOtros);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -207,7 +282,7 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
             name="esDestacado"
             checked={Boolean(form.esDestacado)}
             onChange={handleChange}
-            disabled={!form.esDestacado && destacadosOtros >= MAX_PRODUCTOS_DESTACADOS}
+            disabled={destacadoDeshabilitado}
             className="size-4 rounded border-slate-300 text-amber-700 focus:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
           />
           Mostrar como destacado en el inicio
@@ -215,6 +290,9 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
         <p className="text-xs text-slate-500 md:col-span-2">
           Maximo {MAX_PRODUCTOS_DESTACADOS} productos destacados en el inicio
           ({Math.min(destacadosOtros + (form.esDestacado ? 1 : 0), MAX_PRODUCTOS_DESTACADOS)}/{MAX_PRODUCTOS_DESTACADOS}).
+          {productoEstaDeshabilitado(form) ? " Un producto deshabilitado no puede destacarse." : null}
+          {!productoEstaDeshabilitado(form) && productoSinStock(form) ? " Un producto sin stock no puede destacarse." : null}
+          {form.esDestacado ? " Quita el destacado antes de deshabilitarlo o dejar el stock en cero." : null}
         </p>
       </div>
 
@@ -248,12 +326,25 @@ function formatearPrecio(valor) {
   }).format(valor || 0);
 }
 
+function etiquetaEstadoProducto(producto) {
+  if (productoEstaDeshabilitado(producto)) {
+    return { texto: "Deshabilitado", clase: "bg-red-50 text-red-700" };
+  }
+
+  if (productoSinStock(producto)) {
+    return { texto: "Agotado", clase: "bg-amber-50 text-amber-800" };
+  }
+
+  return { texto: "Habilitado", clase: "bg-emerald-50 text-emerald-700" };
+}
+
 const accionBtnBase =
   "inline-flex items-center justify-center gap-1.5 rounded-lg border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
 
 function AccionesProducto({ producto, esSuperAdmin, onEditar, onToggleEstado, onEliminar, variant = "table" }) {
   const esDeshabilitado = producto.estado === "Deshabilitado";
   const esMovil = variant === "mobile";
+  const bloquearInhabilitar = producto.esDestacado && !esDeshabilitado;
 
   const editarCls = `${accionBtnBase} border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 focus-visible:ring-amber-300`;
   const toggleCls = `${accionBtnBase} ${
@@ -272,7 +363,13 @@ function AccionesProducto({ producto, esSuperAdmin, onEditar, onToggleEstado, on
         </button>
         {esSuperAdmin ? (
           <>
-            <button type="button" onClick={onToggleEstado} className={`${toggleCls} min-h-10 px-2 py-2`}>
+            <button
+              type="button"
+              onClick={onToggleEstado}
+              disabled={bloquearInhabilitar}
+              title={bloquearInhabilitar ? "Quita el destacado antes de deshabilitarlo" : undefined}
+              className={`${toggleCls} min-h-10 px-2 py-2 disabled:cursor-not-allowed disabled:opacity-50`}
+            >
               <Power className="size-3.5 shrink-0" aria-hidden="true" />
               <span className="truncate">{esDeshabilitado ? "Habilitar" : "Inhabilitar"}</span>
             </button>
@@ -294,7 +391,13 @@ function AccionesProducto({ producto, esSuperAdmin, onEditar, onToggleEstado, on
       </button>
       {esSuperAdmin ? (
         <>
-          <button type="button" onClick={onToggleEstado} className={`${toggleCls} h-9 px-2.5`}>
+          <button
+            type="button"
+            onClick={onToggleEstado}
+            disabled={bloquearInhabilitar}
+            title={bloquearInhabilitar ? "Quita el destacado antes de deshabilitarlo" : undefined}
+            className={`${toggleCls} h-9 px-2.5 disabled:cursor-not-allowed disabled:opacity-50`}
+          >
             <Power className="size-3.5 shrink-0" aria-hidden="true" />
             <span>{esDeshabilitado ? "Habilitar" : "Inhabilitar"}</span>
           </button>
@@ -419,6 +522,12 @@ const AdminInventarioProducto = () => {
     }
 
     const nuevoEstado = producto.estado === "Deshabilitado" ? "Habilitado" : "Deshabilitado";
+
+    if (nuevoEstado === "Deshabilitado" && !productoPuedeDeshabilitarse(producto)) {
+      alert("Quita el producto de destacados antes de deshabilitarlo.");
+      return;
+    }
+
     try {
       const actualizado = await actualizarProducto(producto.id, {
         ...producto,
@@ -431,9 +540,20 @@ const AdminInventarioProducto = () => {
   };
 
   const handleToggleDestacado = async (producto) => {
-    if (!producto.esDestacado && contarDestacados(productos) >= MAX_PRODUCTOS_DESTACADOS) {
-      alert(`Solo puedes destacar hasta ${MAX_PRODUCTOS_DESTACADOS} productos en el inicio.`);
-      return;
+    if (!producto.esDestacado) {
+      if (contarDestacados(productos) >= MAX_PRODUCTOS_DESTACADOS) {
+        alert(`Solo puedes destacar hasta ${MAX_PRODUCTOS_DESTACADOS} productos en el inicio.`);
+        return;
+      }
+
+      if (!productoPuedeDestacarse(producto)) {
+        if (productoEstaDeshabilitado(producto)) {
+          alert("No puedes destacar un producto deshabilitado.");
+        } else {
+          alert("No puedes destacar un producto sin stock.");
+        }
+        return;
+      }
     }
 
     try {
@@ -530,7 +650,10 @@ const AdminInventarioProducto = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {productos.map((producto) => (
+                  {productos.map((producto) => {
+                    const estadoProducto = etiquetaEstadoProducto(producto);
+
+                    return (
                     <tr key={producto.id} className="border-b border-slate-100 last:border-b-0">
                       <td className="px-6 py-4">
                         {producto.imagen ? (
@@ -555,20 +678,16 @@ const AdminInventarioProducto = () => {
                       <td className="px-6 py-4 text-slate-700">{producto.stock}</td>
                       <td className="px-6 py-4">
                         <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                            producto.estado === "Deshabilitado"
-                              ? "bg-red-50 text-red-700"
-                              : "bg-emerald-50 text-emerald-700"
-                          }`}
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${estadoProducto.clase}`}
                         >
-                          {producto.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado"}
+                          {estadoProducto.texto}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <button
                           type="button"
                           onClick={() => handleToggleDestacado(producto)}
-                          disabled={!producto.esDestacado && destacadosEnUso >= MAX_PRODUCTOS_DESTACADOS}
+                          disabled={!producto.esDestacado && (destacadosEnUso >= MAX_PRODUCTOS_DESTACADOS || !productoPuedeDestacarse(producto))}
                           className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                             producto.esDestacado
                               ? "bg-amber-50 text-amber-800 hover:bg-amber-100"
@@ -590,13 +709,17 @@ const AdminInventarioProducto = () => {
                         />
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             <div className="divide-y divide-slate-100 md:hidden">
-              {productos.map((producto) => (
+              {productos.map((producto) => {
+                const estadoProducto = etiquetaEstadoProducto(producto);
+
+                return (
                 <article key={producto.id} className="space-y-3 px-4 py-4">
                   <div className="flex items-start gap-3">
                     {producto.imagen ? (
@@ -614,13 +737,9 @@ const AdminInventarioProducto = () => {
                       <div className="flex items-start justify-between gap-2">
                         <h3 className="font-semibold text-slate-900">{producto.nombre}</h3>
                         <span
-                          className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                            producto.estado === "Deshabilitado"
-                              ? "bg-red-50 text-red-700"
-                              : "bg-emerald-50 text-emerald-700"
-                          }`}
+                          className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${estadoProducto.clase}`}
                         >
-                          {producto.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado"}
+                          {estadoProducto.texto}
                         </span>
                       </div>
                       <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{producto.descripcion}</p>
@@ -636,7 +755,7 @@ const AdminInventarioProducto = () => {
                   <button
                     type="button"
                     onClick={() => handleToggleDestacado(producto)}
-                    disabled={!producto.esDestacado && destacadosEnUso >= MAX_PRODUCTOS_DESTACADOS}
+                    disabled={!producto.esDestacado && (destacadosEnUso >= MAX_PRODUCTOS_DESTACADOS || !productoPuedeDestacarse(producto))}
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                       producto.esDestacado
                         ? "bg-amber-50 text-amber-800"
@@ -656,7 +775,8 @@ const AdminInventarioProducto = () => {
                     onEliminar={() => handleEliminar(producto)}
                   />
                 </article>
-              ))}
+                );
+              })}
             </div>
           </>
         )}
