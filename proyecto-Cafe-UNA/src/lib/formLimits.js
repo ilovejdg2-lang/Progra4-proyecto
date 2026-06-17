@@ -11,7 +11,7 @@ export function contactSupportMessage() {
 }
 
 const TECHNICAL_ERROR_PATTERN =
-  /monster|runasp|supabase|bad gateway|err_network|axios|502|503|backend|servidor de autenticación|tiempo de espera agotado|no se pudo conectar con el servidor|error en la solicitud \(\d+\)|internal server error|exception|stack trace/i;
+  /monster|runasp|supabase|bad gateway|err_network|axios|502|503|servidor de autenticación|tiempo de espera agotado|error en la solicitud \(\d+\)|internal server error|exception|stack trace/i;
 
 export function sanitizeUserFacingError(message) {
   if (!message || typeof message !== "string") {
