@@ -120,7 +120,7 @@ export function Sidebar({
           "fixed inset-0 z-50 md:hidden",
           openMobile ? "pointer-events-auto" : "pointer-events-none",
         )}
-        aria-hidden={!openMobile}
+        inert={!openMobile || undefined}
       >
         <button
           type="button"
