@@ -1,13 +1,13 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import BackToHomeLink from '../../Components/BackToHomeLink/BackToHomeLink';
+import OptimizedImage from '../../Components/OptimizedImage/OptimizedImage';
 import { HOME_SCROLL_SECTIONS } from '../../lib/homeScrollTarget';
 import './Products.css';
 import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { useCachedPublicPage } from '../../hooks/useCachedPublicPage';
 import { fetchProductsPageData } from '../../lib/productsPageData';
-import { normalizeImageUrl } from '../../lib/imageUtils';
 import { calcularPrecioConIVA } from '../../services/productosServices';
 
 const PRODUCTS_PER_PAGE = 8;
@@ -41,6 +41,7 @@ const Products = () => {
   const [confirmationMessage, setConfirmationMessage] = useState('');
   const [confirmationVisible, setConfirmationVisible] = useState(false);
   const confirmationTimerRef = useRef(null);
+  const productDialogRef = useRef(null);
 
   useBodyScrollLock(Boolean(selectedProduct));
 
@@ -58,7 +59,22 @@ const Products = () => {
   };
 
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') closeProduct(); };
+    const dialog = productDialogRef.current;
+    if (!dialog) return undefined;
+
+    if (selectedProduct) {
+      if (!dialog.open) dialog.showModal();
+    } else if (dialog.open) {
+      dialog.close();
+    }
+
+    return undefined;
+  }, [selectedProduct]);
+
+  useEffect(() => {
+    const onKey = (event) => {
+      if (event.key === 'Escape') closeProduct();
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
@@ -189,7 +205,7 @@ const Products = () => {
         {productCards.length === 0 && (
           <p>No hay productos disponibles en este momento.</p>
         )}
-        {productCards.map((card) => {
+        {productCards.map((card, index) => {
           const { product, precioNormal, precioConIVA, stockDisponible, estaAgotado } = card;
 
           return (
@@ -199,14 +215,13 @@ const Products = () => {
           >
             {product.imagen ? (
               <div className="products-page__card-media">
-                <img
-                  className="products-page__card-image"
-                  src={normalizeImageUrl(product.imagen, { width: 640 }) || product.imagen}
+                <OptimizedImage
+                  src={product.imagen}
                   alt={product.nombre}
                   width={640}
                   height={480}
-                  loading="lazy"
-                  decoding="async"
+                  priority={index < 4}
+                  className="products-page__card-image"
                 />
               </div>
             ) : (
@@ -269,17 +284,35 @@ const Products = () => {
         })}
       </nav>
 
-      {selectedProduct ? (
-        <div className="product-modal-overlay" onClick={closeProduct}>
-          <div className="product-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-            <button className="product-modal__close" onClick={closeProduct} aria-label="Cerrar">×</button>
+      <dialog
+        ref={productDialogRef}
+        className="product-modal"
+        aria-labelledby="product-modal-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          closeProduct();
+        }}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) closeProduct();
+        }}
+      >
+        {selectedProduct ? (
+          <>
+            <button type="button" className="product-modal__close" onClick={closeProduct} aria-label="Cerrar">×</button>
             <div className="product-modal__image">
               {selectedProduct.product.imagen && (
-                <img src={selectedProduct.product.imagen} alt={selectedProduct.product.nombre} />
+                <OptimizedImage
+                  src={selectedProduct.product.imagen}
+                  alt={selectedProduct.product.nombre}
+                  width={800}
+                  height={600}
+                  priority
+                  className="product-modal__image-media"
+                />
               )}
             </div>
             <div className="product-modal__content">
-              <h2>{selectedProduct.product.nombre}</h2>
+              <h2 id="product-modal-title">{selectedProduct.product.nombre}</h2>
               <p className="product-modal__price"><strong>CRC {selectedProduct.precioConIVA.toLocaleString('es-CR')}</strong></p>
               <p>{selectedProduct.product.descripcion}</p>
               <ul className="product-modal__meta">
@@ -333,9 +366,9 @@ const Products = () => {
                 <button type="button" className="products-page__page-button" onClick={closeProduct}>Cerrar</button>
               </div>
             </div>
-          </div>
-        </div>
-      ) : null}
+          </>
+        ) : null}
+      </dialog>
     </main>
     </PublicPageGate>
   );
