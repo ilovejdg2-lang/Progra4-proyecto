@@ -21,9 +21,6 @@ import {
 import PageLoading from "../PageLoading/PageLoading";
 import "./PerfilContent.css";
 
-const DEFAULT_BANNER =
-  "https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1600&q=80";
-
 const FEEDBACK_AUTO_HIDE_MS = 4000;
 
 function PerfilPasswordField({ label, value, onChange, visible, onToggle, autoFocus = false, error = "" }) {
@@ -353,7 +350,9 @@ export function PerfilContent({ variant = "standalone" }) {
     return () => window.clearTimeout(timer);
   }, [mensaje]);
 
-  const bannerSrc = normalizeImageUrl(form.fotoBannerUrl || DEFAULT_BANNER, { width: 1600 });
+  const bannerSrc = form.fotoBannerUrl
+    ? normalizeImageUrl(form.fotoBannerUrl, { width: 1600 })
+    : null;
   const avatarSrc = form.fotoPerfilUrl
     ? normalizeImageUrl(form.fotoPerfilUrl, { width: 320 })
     : null;
@@ -602,12 +601,16 @@ export function PerfilContent({ variant = "standalone" }) {
           onClick={() => openImageModal("banner")}
           aria-label="Cambiar banner"
         >
+          {bannerSrc ? (
           <img
             src={bannerSrc}
             alt=""
             className="perfil-hero__banner"
             style={{ objectPosition: bannerPosition }}
           />
+          ) : (
+          <div className="perfil-hero__banner perfil-hero__banner--placeholder" aria-hidden="true" />
+          )}
           <span className="perfil-hero__change">
             <Camera size={18} />
             Cambiar banner

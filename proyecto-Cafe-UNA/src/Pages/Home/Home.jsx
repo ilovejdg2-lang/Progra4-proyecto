@@ -14,6 +14,7 @@ import { removeHomeInitialLoader, setHomePageLoading } from '../../lib/homePageL
 import { runHomeScrollWhenReady } from '../../lib/homeScrollTarget';
 import { readPageCache, readStalePageCache } from '../../lib/pageDataCache';
 import { normalizeImageUrl } from '../../lib/imageUtils';
+import { toGoogleMapsEmbedUrl } from '../../lib/googleMaps';
 import './Home.css';
 
 const CARD_VISUALS = {
@@ -50,14 +51,8 @@ const CARD_VISUALS = {
     accentColor: '#67521d',
     accentBg: '#fff9eb',
     borderColor: '#dfc98d',
-    to: '/voluntariado/solicitar',
   },
 };
-
-const COLLECTION_LABELS = ['ORIGEN', 'EXPERIENCIA', 'ARTESANÍA'];
-
-const mapsEmbedUrl =
-  'https://www.google.com/maps?q=Finca%20Experimental%20Santa%20Lucia%20Universidad%20Nacional%20Heredia&output=embed';
 
 function getPreloadSource(pageStatus, data) {
   if (pageStatus === 'ready' && data) return data;
@@ -78,6 +73,11 @@ const Home = () => {
   const featuredSection = data?.featuredSection ?? { title: '', description: '' };
   const iniciativasSection = data?.iniciativasSection ?? { eyebrow: '', title: '', description: '' };
   const locationSection = data?.locationSection ?? { eyebrow: '', title: '', description: '', linkUrl: '' };
+  const locationMapUrl = locationSection.linkUrl?.trim() ?? '';
+  const locationMapEmbedUrl = useMemo(
+    () => toGoogleMapsEmbedUrl(locationMapUrl),
+    [locationMapUrl],
+  );
   const tarjetasInicio = data?.tarjetasInicio ?? [];
   const products = data?.products ?? [];
 
@@ -161,7 +161,7 @@ const Home = () => {
       etiqueta: tarjeta.etiqueta,
       titulo: tarjeta.titulo,
       descripcion: tarjeta.descripcion,
-      to: tarjeta.ruta || visual.to || '',
+      to: tarjeta.ruta || '',
       icono: visual.icono,
       accentColor: visual.accentColor,
       accentBg: visual.accentBg,
@@ -267,9 +267,11 @@ const Home = () => {
                     />
                     <div className="curated-collections__overlay" aria-hidden="true" />
                     <div className="curated-collections__content">
+                      {p.peso ? (
                       <span className="curated-collections__pill">
-                        {p.peso ? String(p.peso).toUpperCase() : COLLECTION_LABELS[idx % COLLECTION_LABELS.length]}
+                        {String(p.peso).toUpperCase()}
                       </span>
+                      ) : null}
                       <h3>{p.nombre}</h3>
                       {p.descripcion ? <p>{p.descripcion}</p> : null}
                     </div>
@@ -349,26 +351,28 @@ const Home = () => {
               </span>
               <h2 id="location-title">{locationSection.title}</h2>
               <p>{locationSection.description}</p>
-              {locationSection.linkUrl ? (
-                <a href={locationSection.linkUrl} target="_blank" rel="noreferrer" className="location-card__button">
+              {locationMapUrl ? (
+                <a href={locationMapUrl} target="_blank" rel="noreferrer" className="location-card__button">
                   Ver en Google Maps
                   <ExternalLink size={16} strokeWidth={2.4} aria-hidden="true" />
                 </a>
               ) : null}
             </div>
 
+            {locationMapEmbedUrl ? (
             <div className="location-card__map">
               <iframe
-                title="Mapa de Finca Experimental Santa Lucia"
-                src={mapsEmbedUrl}
+                title="Mapa de ubicación"
+                src={locationMapEmbedUrl}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 aria-hidden="true"
               />
-              {locationSection.linkUrl ? (
-                <a href={locationSection.linkUrl} target="_blank" rel="noreferrer" className="location-card__map-link" aria-label="Abrir ubicacion en Google Maps" />
+              {locationMapUrl ? (
+              <a href={locationMapUrl} target="_blank" rel="noreferrer" className="location-card__map-link" aria-label="Abrir ubicacion en Google Maps" />
               ) : null}
             </div>
+            ) : null}
           </div>
         </section>
       </main>

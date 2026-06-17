@@ -3,8 +3,8 @@ import { Coffee, ClipboardList, Image, LayoutTemplate, Link2, MapPin, PanelBotto
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
-import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
-import { useAdminPageLoadingGate } from "../../../hooks/usePublicPageLoadingGate";
+import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
+import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useCachedPageData } from "../../../hooks/useCachedPageData";
 import { fetchAdminMainPageData } from "../../../lib/adminMainPageData";
 import {
@@ -941,7 +941,7 @@ const AdminInformacionPaginaPrincipal = () => {
 
   const loadMain = useCallback(() => fetchAdminMainPageData(), []);
   const { data, status, error: loadError, reload } = useCachedPageData("admin-main", loadMain);
-  const showLoading = useAdminPageLoadingGate('/admin/informacion-pagina-principal', status === 'ready');
+  const { showLoading, loadingMessage } = useAdminPageGate('/admin/informacion-pagina-principal', status === 'ready');
 
   useEffect(() => {
     if (!data) return;
@@ -966,10 +966,6 @@ const AdminInformacionPaginaPrincipal = () => {
     : data?.hasError
       ? "No se pudo cargar la informacion principal."
       : "";
-
-  if (showLoading) {
-    return <AdminRouteLoading />;
-  }
 
   const guardarHero = async (form) => {
     try {
@@ -1123,6 +1119,7 @@ const AdminInformacionPaginaPrincipal = () => {
     : CONFIG_ENLACES["enlaces-footer"].descripcionVacia;
 
   return (
+    <AdminPageGate showLoading={showLoading} message={loadingMessage}>
     <AdminLayout>
       <section className="space-y-5">
         <div>
@@ -1261,6 +1258,7 @@ const AdminInformacionPaginaPrincipal = () => {
         />
       ) : null}
     </AdminLayout>
+    </AdminPageGate>
   );
 };
 

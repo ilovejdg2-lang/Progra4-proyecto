@@ -12,14 +12,14 @@ import AdminRouteLoading from "./Components/Admin/AdminRouteLoading";
 import Footer from "./Components/Footer/Footer";
 import Navbar from './Components/Navbar/Navbar';
 import PageLoading from "./Components/PageLoading/PageLoading";
-import AboutUs from "./Pages/AboutUs/AboutUs";
 import Home from "./Pages/Home/Home";
-import Products from "./Pages/Products/Products";
-import SolicitarVoluntariado from "./Pages/Voluntariado/SolicitarVoluntariado";
 import { getRouteCacheKey, isPageInstantReady } from "./lib/pageSessionState";
 import { clearHomePageLoading, setHomePageLoading } from "./lib/homePageLoading";
 import { finishAdminBootLoading, finishSiteBootLoading, getSiteBootMessage } from "./lib/siteBootLoading";
 
+const AboutUs = lazy(() => import("./Pages/AboutUs/AboutUs"));
+const Products = lazy(() => import("./Pages/Products/Products"));
+const SolicitarVoluntariado = lazy(() => import("./Pages/Voluntariado/SolicitarVoluntariado"));
 const Login = lazy(() => import("./Pages/Login/Login"));
 const AdminPanel = lazy(() => import("./Pages/Admin/Panel/Panel"));
 const AdminInformacionPaginaPrincipal = lazy(() => import("./Pages/Admin/InformacionPaginaPrincipal/InformacionPaginaPrincipal"));
