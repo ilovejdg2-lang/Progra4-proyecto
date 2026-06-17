@@ -1,4 +1,4 @@
-import { normalizePathname } from './siteBootLoading';
+import { normalizePathname } from './paths';
 
 const revealed = new Set();
 

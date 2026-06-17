@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import BackToHomeLink, { HOME_SCROLL_SECTIONS } from "../../Components/BackToHomeLink/BackToHomeLink";
+import { Check, HandHeart, Lock, Mail, Sprout, User, Users } from "lucide-react";
+import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
+import { HOME_SCROLL_SECTIONS } from "../../lib/homeScrollTarget";
 import PageLoading from "../../Components/PageLoading/PageLoading";
-import { usePagePaintReady } from "../../hooks/usePagePaintReady";
-import { usePublicPageLoadingGate } from "../../hooks/usePublicPageLoadingGate";
+import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
 import { getActiveSessionUser } from "../../services/sessionService";
 import { crearSolicitud } from "../../services/voluntariadoService";
 import { consultarCedula } from "../../services/cedulaService";
@@ -71,8 +72,13 @@ function SolicitarVoluntariado() {
   const [consultandoCedula, setConsultandoCedula] = useState(false);
   const [avisoCedula, setAvisoCedula] = useState(null);
 
-  const { ref: pageRef, paintReady, showPrepaint } = usePagePaintReady('voluntariado');
-  const showLoading = usePublicPageLoadingGate('voluntariado', paintReady);
+  const {
+    ref: pageRef,
+    showLoading,
+    showPrepaint,
+    inert,
+    loadingMessage,
+  } = usePaintPublicPage('voluntariado');
 
   const esGrupal = formulario.modalidad === "grupal";
   const esTipoOtro = formulario.tipo === "Otro";
@@ -398,18 +404,18 @@ function SolicitarVoluntariado() {
 
   return (
     <>
-      {showLoading ? <PageLoading message="Cargando voluntariado..." /> : null}
-      <div
+      {showLoading ? <PageLoading message={loadingMessage} /> : null}
+      <main
         ref={pageRef}
         className={`voluntariado-page${showPrepaint ? ' voluntariado-page--prepaint' : ''}`}
-        aria-hidden={showLoading || undefined}
+        inert={inert}
       >
       <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.voluntariado} />
 
       <section id="voluntariado" className="voluntariado-section">
         <div className="voluntariado-header">
           <span className="badge badge--voluntariado">Programa de Voluntariado</span>
-          <h2>Únete a nuestras iniciativas de voluntariado</h2>
+          <h1>Únete a nuestras iniciativas de voluntariado</h1>
           <p>
             Complete el siguiente formulario para aplicar al área de
             voluntariado de su interés.
@@ -419,7 +425,7 @@ function SolicitarVoluntariado() {
         {!usuario ? (
           <div className="auth-required-card">
             <div className="auth-required-card__icono">
-              <i className="fas fa-lock" aria-hidden="true" />
+              <Lock size={28} strokeWidth={1.8} aria-hidden="true" />
             </div>
             <h2>Inicie sesión para enviar su solicitud</h2>
             <p>
@@ -467,7 +473,7 @@ function SolicitarVoluntariado() {
             </div>
 
             <div className="form-secciones">
-              <SectionCard icon="fas fa-user" title="Información personal">
+              <SectionCard icon={User} title="Información personal">
                 <div className="form-grid">
                   <div className="campo full">
                     <p className="campo-pregunta">
@@ -624,7 +630,7 @@ function SolicitarVoluntariado() {
                 </div>
               </SectionCard>
 
-              <SectionCard icon="fas fa-envelope" title="Contacto al solicitante">
+              <SectionCard icon={Mail} title="Contacto al solicitante">
                     <div className="form-grid">
                       <div className="campo">
                         <label>
@@ -660,7 +666,7 @@ function SolicitarVoluntariado() {
 
               {esGrupal && (
                 <SectionCard
-                  icon="fas fa-users"
+                  icon={Users}
                   title="Participantes"
                   hint="Indique cuántas personas asistirán"
                 >
@@ -684,7 +690,7 @@ function SolicitarVoluntariado() {
                 </SectionCard>
               )}
 
-              <SectionCard icon="fas fa-hand-holding-heart" title="Información del voluntariado">
+              <SectionCard icon={HandHeart} title="Información del voluntariado">
                 <div className="form-grid">
                   <div className="campo">
                     <label>
@@ -743,7 +749,7 @@ function SolicitarVoluntariado() {
               </SectionCard>
 
               <SectionCard
-                icon="fas fa-seedling"
+                icon={Sprout}
                 title="Tipo de voluntariado"
                 hint="Seleccione una única opción"
               >
@@ -796,7 +802,7 @@ function SolicitarVoluntariado() {
         ) : (
           <div className="confirmacion">
             <div className="confirmacion__icono">
-              <i className="fas fa-check" aria-hidden="true" />
+              <Check size={28} strokeWidth={2.2} aria-hidden="true" />
             </div>
             <h2>Solicitud enviada</h2>
             <p>Su solicitud fue registrada correctamente.</p>
@@ -806,7 +812,7 @@ function SolicitarVoluntariado() {
           </div>
         )}
       </section>
-    </div>
+    </main>
     </>
   );
 }
