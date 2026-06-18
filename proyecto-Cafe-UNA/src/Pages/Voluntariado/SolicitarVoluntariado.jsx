@@ -146,7 +146,6 @@ function SolicitarVoluntariado() {
           ...prev,
           identificacion: valor,
           nombre: "",
-          residencia: "",
         }));
         setAvisoCedula(null);
         limpiarError(e.target.name);
@@ -198,7 +197,6 @@ function SolicitarVoluntariado() {
     try {
       const datos = await consultarCedula(digitos);
       const nombre = obtenerCampoCedula(datos, "nombre", "Nombre");
-      const residencia = obtenerCampoCedula(datos, "residencia", "Residencia");
 
       if (!nombre) {
         consultaCedulaRef.current = { digitos: "", enCurso: false };
@@ -206,9 +204,8 @@ function SolicitarVoluntariado() {
         setFormulario((prev) => ({
           ...prev,
           nombre: "",
-          residencia: "",
         }));
-        setAvisoCedula("No se encontraron datos para esta cédula. Complete el nombre y residencia manualmente.");
+        setAvisoCedula("No se encontraron datos para esta cédula. Complete el nombre manualmente.");
         return;
       }
 
@@ -218,16 +215,10 @@ function SolicitarVoluntariado() {
         ...prev,
         identificacion: digitos,
         nombre,
-        residencia: residencia || prev.residencia,
         pais: "Costa Rica",
       }));
-      setAvisoCedula(
-        residencia
-          ? "Datos cargados automáticamente. Puede editarlos si es necesario."
-          : "Nombre cargado automáticamente.",
-      );
+      setAvisoCedula("Nombre cargado automáticamente. Puede editarlo si es necesario.");
       limpiarError("nombre");
-      limpiarError("residencia");
       limpiarError("identificacion");
     } catch (error) {
       consultaCedulaRef.current = { digitos: "", enCurso: false };
@@ -235,7 +226,6 @@ function SolicitarVoluntariado() {
       setFormulario((prev) => ({
         ...prev,
         nombre: "",
-        residencia: "",
       }));
       const mensajeBase = error?.message?.trim() || "No se pudo consultar la cédula.";
       const yaIndicaManual = /manualmente|completar el nombre/i.test(mensajeBase);
@@ -244,8 +234,8 @@ function SolicitarVoluntariado() {
         yaIndicaManual
           ? mensajeBase
           : esConexion
-            ? `${mensajeBase} Mientras tanto, complete el nombre y residencia manualmente.`
-            : `${mensajeBase} Complete el nombre y residencia manualmente.`,
+            ? `${mensajeBase} Mientras tanto, complete el nombre manualmente.`
+            : `${mensajeBase} Complete el nombre manualmente.`,
       );
     } finally {
       setConsultandoCedula(false);
