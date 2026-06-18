@@ -9,6 +9,7 @@ import {
 import { lazy, Suspense, useEffect, useLayoutEffect } from "react";
 
 import AdminRouteLoading from "./Components/Admin/AdminRouteLoading";
+import CartAddedToast from "./Components/CartAddedToast/CartAddedToast";
 import Footer from "./Components/Footer/Footer";
 import Navbar from './Components/Navbar/Navbar';
 import PageLoading from "./Components/PageLoading/PageLoading";
@@ -19,6 +20,7 @@ import { finishAdminBootLoading, finishSiteBootLoading, getSiteBootMessage } fro
 
 const AboutUs = lazy(() => import("./Pages/AboutUs/AboutUs"));
 const Products = lazy(() => import("./Pages/Products/Products"));
+const ProductDetail = lazy(() => import("./Pages/ProductDetail/ProductDetail"));
 const SolicitarVoluntariado = lazy(() => import("./Pages/Voluntariado/SolicitarVoluntariado"));
 const Login = lazy(() => import("./Pages/Login/Login"));
 const AdminPanel = lazy(() => import("./Pages/Admin/Panel/Panel"));
@@ -163,6 +165,7 @@ const rootRoute = createRootRoute({
                     </Suspense>
                 </section>
                 <Footer />
+                <CartAddedToast />
             </div>
         )
     },
@@ -217,6 +220,11 @@ const productsRoute = createRoute({
     path: "/productos",
     component: Products,
 })
+const productDetailRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/productos/$productId",
+    component: ProductDetail,
+})
 const checkoutRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/checkout",
@@ -252,6 +260,7 @@ const routeTree= rootRoute.addChildren([
     adminVoluntariadoRoute,
     adminUsuariosRoute,
     productsRoute,
+    productDetailRoute,
     checkoutRoute,
     voluntariadoSolicitarRoute,
     perfilRoute,
