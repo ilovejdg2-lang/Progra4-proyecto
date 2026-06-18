@@ -1,5 +1,5 @@
 import { apiRequest } from "./apiClient";
-import { getActiveSessionUser } from "./sessionService";
+import { getActiveSessionUser, getStoredUser, isSessionExpired } from "./sessionService";
 import { obtenerUsuarioPorId } from "./usuariosServices";
 
 const BASE_URL = `${import.meta.env.BACKEND_URL}/perfil`;
@@ -11,6 +11,8 @@ function clearPerfilCache() {
   perfilCache = { expiresAt: 0, data: null };
   perfilInflight = null;
 }
+
+export { clearPerfilCache };
 
 function normalizePerfil(data) {
   if (!data) return null;
@@ -36,6 +38,12 @@ async function request(url, options = {}) {
 }
 
 export async function obtenerPerfil() {
+  const storedUser = getStoredUser();
+  if (!storedUser || isSessionExpired(storedUser)) {
+    clearPerfilCache();
+    return null;
+  }
+
   if (perfilCache.expiresAt > Date.now() && perfilCache.data) {
     return perfilCache.data;
   }
