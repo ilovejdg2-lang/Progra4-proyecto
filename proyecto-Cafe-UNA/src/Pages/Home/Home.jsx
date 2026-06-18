@@ -252,7 +252,9 @@ const Home = () => {
                   <article
                     key={p?.id ?? p?.nombre ?? `featured-${idx}`}
                     role="listitem"
-                    className="curated-collections__card"
+                    className={`curated-collections__card${
+                      featuredProducts.length === 3 && idx === 1 ? ' curated-collections__card--offset' : ''
+                    }`}
                   >
                   <Link to="/productos" className="curated-collections__card-link">
                     <img
