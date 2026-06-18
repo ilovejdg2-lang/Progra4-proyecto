@@ -5,10 +5,15 @@ import './index.css'
 import { RouterProvider } from '@tanstack/react-router'
 import { router } from './router'
 import { refreshSessionIfNeeded } from './services/apiClient'
-import { getActiveSessionUser, touchSession } from './services/sessionService'
+import { getActiveSessionUser, isLoggingOut, touchSession } from './services/sessionService'
 
 const ACTIVITY_THROTTLE_MS = 60_000;
 const SESSION_ACTIVITY_EVENTS = ['click', 'keydown', 'scroll', 'mousemove'];
+
+function runSessionRefresh() {
+  if (isLoggingOut()) return;
+  void refreshSessionIfNeeded().catch(() => {});
+}
 
 function SessionSync() {
   useEffect(() => {
@@ -18,6 +23,8 @@ function SessionSync() {
 
     let lastActivityAt = 0;
     const handleActivity = () => {
+      if (isLoggingOut()) return;
+
       const now = Date.now();
       if (now - lastActivityAt < ACTIVITY_THROTTLE_MS) {
         return;
@@ -29,7 +36,7 @@ function SessionSync() {
       }
 
       touchSession();
-      refreshSessionIfNeeded();
+      runSessionRefresh();
     };
 
     SESSION_ACTIVITY_EVENTS.forEach((eventName) => {
@@ -37,8 +44,9 @@ function SessionSync() {
     });
 
     const sessionIntervalId = window.setInterval(() => {
+      if (isLoggingOut()) return;
       getActiveSessionUser();
-      refreshSessionIfNeeded();
+      runSessionRefresh();
     }, 30_000);
 
     return () => {

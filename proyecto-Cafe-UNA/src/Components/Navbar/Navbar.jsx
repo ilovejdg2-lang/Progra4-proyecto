@@ -8,7 +8,8 @@ import { normalizeImageUrl } from '../../lib/imageUtils';
 import { useHomeBrandNavigation } from '../../hooks/useHomeBrandNavigation';
 import { readPageCache } from '../../lib/pageDataCache';
 import { obtenerSolicitudes, obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService';
-import { clearSession, getActiveSessionUser } from '../../services/sessionService';
+import { cancelPendingSessionRefresh } from '../../services/apiClient';
+import { beginLogout, clearSession, getActiveSessionUser } from '../../services/sessionService';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
@@ -455,10 +456,12 @@ const Navbar = () => {
     };
 
     const handleLogout = () => {
+        beginLogout();
+        cancelPendingSessionRefresh();
         clearSession();
         setUser(null);
         setShowDropdown(false);
-        window.location.href = '/';
+        window.location.replace('/');
     };
 
     const isTransparent = pathname === '/' && !isScrolled;
