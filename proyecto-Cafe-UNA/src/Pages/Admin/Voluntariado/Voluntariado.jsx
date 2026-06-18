@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft,
   Building2,
   Calendar,
   Clock,
@@ -91,76 +90,42 @@ const getInitials = (name = "") => {
   return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join("");
 };
 
-function DetailInput({ icon: Icon, label, name, value, onChange, type = "text", className = "" }) {
+function DetailField({ icon: Icon, label, value, className = "" }) {
   return (
-    <label className={`grid gap-1.5 border-b border-white/15 pb-3 ${className}`}>
-      <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-white/60">
-        <Icon className="size-3.5" />
+    <div className={`grid gap-2 ${className}`}>
+      <span className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+        <Icon className="size-4 text-slate-500" />
         {label}
       </span>
-      <input
-        type={type}
-        name={name}
-        value={value ?? ""}
-        onChange={onChange}
-        className="w-full border-0 bg-transparent p-0 text-sm font-bold leading-5 text-white outline-none placeholder:text-white/30"
-        placeholder="No indicado"
-      />
-    </label>
+      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900">
+        {value || "No indicado"}
+      </p>
+    </div>
   );
 }
 
-function DetailTextarea({ label, name, value, onChange, rows = 4 }) {
+function DetailBlock({ label, value }) {
   return (
-    <label className="grid gap-2">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-white/55">{label}</span>
-      <textarea
-        name={name}
-        value={value ?? ""}
-        onChange={onChange}
-        rows={rows}
-        className="min-h-[108px] resize-y rounded-lg border border-white/15 bg-white/[0.04] px-3 py-3 text-sm font-semibold leading-6 text-white outline-none transition placeholder:text-white/30 focus:border-white/35 focus:bg-white/[0.07]"
-        placeholder="Escriba aqui..."
-      />
-    </label>
+    <div className="grid gap-2 md:col-span-2">
+      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <div className="min-h-[4.5rem] whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold leading-6 text-slate-900">
+        {value || "No indicado"}
+      </div>
+    </div>
   );
 }
 
 function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
-  const [form, setForm] = useState(() => ({
-    estado: solicitud.estado || "Pendiente",
-    nombre: solicitud.nombre || "",
-    email: solicitud.email || "",
-    telefono: solicitud.telefono || "",
-    tipoVoluntariado: solicitud.tipoVoluntariado || "",
-    fechaSolicitud: solicitud.fechaSolicitud || "",
-    identificacion: solicitud.identificacion || "",
-    institucion: solicitud.institucion || "",
-    pais: solicitud.pais || "",
-    residencia: solicitud.residencia || "",
-    horario: solicitud.horario || "",
-    dias: solicitud.dias || "",
-    area: solicitud.area || "",
-    modalidad: solicitud.modalidad || "individual",
-    cantidadParticipantes: solicitud.cantidadParticipantes || 1,
-    descripcion: solicitud.descripcion || "",
-    motivacion: solicitud.motivacion || "",
-    observacionesAdmin: solicitud.observacionesAdmin || "",
-  }));
+  const [estado, setEstado] = useState(normalizarEstado(solicitud.estado));
+  const [observacionesAdmin, setObservacionesAdmin] = useState(solicitud.observacionesAdmin || "");
   const [guardando, setGuardando] = useState(false);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const guardarCambios = async (nuevoEstado = estado) => {
     setGuardando(true);
     try {
       await onGuardar(solicitud.id, {
-        ...form,
-        cantidadParticipantes: Number(form.cantidadParticipantes) || 1,
+        estado: nuevoEstado,
+        observacionesAdmin,
       });
       onCerrar();
     } finally {
@@ -168,86 +133,127 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
     }
   };
 
-  const setEstado = (estado) => {
-    setForm((prev) => ({ ...prev, estado }));
+  const cambiarEstado = async (nuevoEstado) => {
+    setEstado(nuevoEstado);
+    await guardarCambios(nuevoEstado);
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 p-4 text-white">
-      <form onSubmit={handleSubmit} className="mx-auto w-full max-w-[760px] space-y-5 rounded-xl bg-[#1f1f1d] p-5 shadow-2xl ring-1 ring-white/10">
-        <div className="flex items-center justify-between gap-3">
-          <button type="button" onClick={onCerrar} className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/[0.03] px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10">
-            <ArrowLeft className="size-3.5" />
-            Volver a solicitudes
-          </button>
-          <button type="button" onClick={onCerrar} className="rounded-lg p-2 text-white/60 transition hover:bg-white/10 hover:text-white" aria-label="Cerrar">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-950">Ver solicitud</h2>
+            <p className="text-sm text-slate-500">
+              Solicitud #{solicitud.id} · Recibida el {solicitud.fechaSolicitud || "sin fecha"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onCerrar}
+            className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            aria-label="Cerrar"
+          >
             <X className="size-4" />
           </button>
         </div>
 
-        <header className="flex items-center gap-4">
-          <div className="grid size-16 shrink-0 place-items-center rounded-full bg-blue-700 text-lg font-bold text-white">
-            {getInitials(form.nombre)}
-          </div>
-          <div className="min-w-0 flex-1">
-            <input
-              name="nombre"
-              value={form.nombre}
-              onChange={handleChange}
-              className="w-full border-0 bg-transparent p-0 text-xl font-extrabold leading-tight text-white outline-none placeholder:text-white/30"
-              placeholder="Nombre de solicitante"
-            />
-            <p className="mt-1 text-xs font-bold text-white/70">
-              Solicitud #{solicitud.id} - Recibida el {form.fechaSolicitud || "Sin fecha"}
-            </p>
-          </div>
-        </header>
-
-        <section className="rounded-lg border border-white/15 bg-white/[0.05] p-5">
-          <h3 className="mb-4 text-[11px] font-extrabold uppercase tracking-wide text-white/55">Solicitud completa</h3>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <DetailInput icon={UserRound} label="Nombre" name="nombre" value={form.nombre} onChange={handleChange} />
-            <DetailInput icon={Mail} label="Correo" name="email" type="email" value={form.email} onChange={handleChange} />
-            <DetailInput icon={Phone} label="Telefono" name="telefono" value={form.telefono} onChange={handleChange} />
-            <DetailInput icon={GraduationCap} label="Tipo de voluntariado" name="tipoVoluntariado" value={form.tipoVoluntariado} onChange={handleChange} />
-            <DetailInput icon={Calendar} label="Fecha de solicitud" name="fechaSolicitud" type="date" value={form.fechaSolicitud} onChange={handleChange} />
-            <DetailInput icon={Clock} label="Disponibilidad" name="horario" value={form.horario} onChange={handleChange} />
-            <DetailInput icon={Hash} label="Identificacion" name="identificacion" value={form.identificacion} onChange={handleChange} />
-            <DetailInput icon={Building2} label="Institucion" name="institucion" value={form.institucion} onChange={handleChange} />
-            <DetailInput icon={MapPin} label="Residencia" name="residencia" value={form.residencia} onChange={handleChange} />
-            <DetailInput icon={Users} label="Participantes" name="cantidadParticipantes" type="number" value={form.cantidadParticipantes} onChange={handleChange} />
-            <DetailInput icon={MapPin} label="Pais" name="pais" value={form.pais} onChange={handleChange} />
-            <DetailInput icon={Calendar} label="Dias disponibles" name="dias" value={form.dias} onChange={handleChange} />
-          </div>
-        </section>
-
-        <section className="rounded-lg border border-white/15 bg-white/[0.05] p-5">
-          <DetailTextarea label="Motivacion" name="motivacion" value={form.motivacion} onChange={handleChange} />
-        </section>
-
-        <section className="rounded-lg border border-white/15 bg-white/[0.05] p-5">
-          <h3 className="mb-4 text-[11px] font-extrabold uppercase tracking-wide text-white/55">Panel de administracion</h3>
-          <div className="grid gap-4">
-            <DetailTextarea label="Observaciones del administrador" name="observacionesAdmin" value={form.observacionesAdmin} onChange={handleChange} rows={3} />
-            <DetailTextarea label="Experiencia / descripcion" name="descripcion" value={form.descripcion} onChange={handleChange} rows={3} />
-            <label className="grid gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-white/55">Estado</span>
-              <select name="estado" value={form.estado} onChange={handleChange} className="rounded-lg border border-white/15 bg-[#252522] px-3 py-3 text-sm font-bold text-white outline-none transition focus:border-white/35">
-                {ESTADOS.map((estado) => (
-                  <option key={estado} value={estado}>{estado}</option>
-                ))}
-              </select>
-            </label>
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => setEstado("Aprobado")} className="rounded-lg border border-white/20 px-4 py-2 text-xs font-extrabold text-white transition hover:bg-emerald-700">Aprobar</button>
-              <button type="button" onClick={() => setEstado("Rechazado")} className="rounded-lg border border-white/20 px-4 py-2 text-xs font-extrabold text-white transition hover:bg-red-700">Rechazar</button>
-              <button type="submit" disabled={guardando} className="rounded-lg border border-white/30 bg-white/[0.04] px-4 py-2 text-xs font-extrabold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60">
-                {guardando ? "Guardando..." : "Guardar cambios"}
-              </button>
+        <div className="max-h-[68vh] overflow-y-auto px-6 py-5">
+          <header className="mb-6 flex items-center gap-4 border-b border-slate-100 pb-5">
+            <div className="grid size-14 shrink-0 place-items-center rounded-full bg-[#a7532d] text-base font-bold text-white">
+              {getInitials(solicitud.nombre)}
             </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-xl font-bold text-slate-950">{solicitud.nombre || "Sin nombre"}</h3>
+              <div className="mt-2">
+                <BadgeEstado estado={estado} />
+              </div>
+            </div>
+          </header>
+
+          <section className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Solicitud completa</h4>
+            <div className="grid gap-4 md:grid-cols-2">
+              <DetailField icon={UserRound} label="Nombre" value={solicitud.nombre} />
+              <DetailField icon={Mail} label="Correo" value={solicitud.email} />
+              <DetailField icon={Phone} label="Teléfono" value={solicitud.telefono} />
+              <DetailField icon={GraduationCap} label="Tipo de voluntariado" value={solicitud.tipoVoluntariado} />
+              <DetailField icon={Calendar} label="Fecha de solicitud" value={solicitud.fechaSolicitud} />
+              <DetailField icon={Clock} label="Disponibilidad" value={solicitud.horario} />
+              <DetailField icon={Hash} label="Identificación" value={solicitud.identificacion} />
+              <DetailField icon={Building2} label="Institución" value={solicitud.institucion} />
+              <DetailField icon={MapPin} label="Residencia" value={solicitud.residencia} />
+              <DetailField icon={Users} label="Participantes" value={String(solicitud.cantidadParticipantes || 1)} />
+              <DetailField icon={MapPin} label="País" value={solicitud.pais} />
+              <DetailField icon={Calendar} label="Días disponibles" value={solicitud.dias} />
+              <DetailField icon={GraduationCap} label="Modalidad" value={solicitud.modalidad === "grupal" ? "Grupal" : "Individual"} />
+              <DetailField icon={MapPin} label="Área de interés" value={solicitud.area} />
+              <DetailBlock label="Motivación" value={solicitud.motivacion} />
+              <DetailBlock label="Experiencia" value={solicitud.descripcion} />
+            </div>
+          </section>
+
+          <section className="mt-6 space-y-4 border-t border-slate-100 pt-6">
+            <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Panel de administración</h4>
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              Observaciones del administrador
+              <textarea
+                value={observacionesAdmin}
+                onChange={(event) => setObservacionesAdmin(event.target.value)}
+                rows={3}
+                className="resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                placeholder="Notas internas sobre esta solicitud..."
+              />
+            </label>
+          </section>
+        </div>
+
+        <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={guardando}
+              onClick={() => cambiarEstado("En revisión")}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Marcar en revisión
+            </button>
+            <button
+              type="button"
+              disabled={guardando}
+              onClick={() => cambiarEstado("Aprobado")}
+              className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Aprobar
+            </button>
+            <button
+              type="button"
+              disabled={guardando}
+              onClick={() => cambiarEstado("Rechazado")}
+              className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Rechazar
+            </button>
           </div>
-        </section>
-      </form>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={onCerrar}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Cerrar
+            </button>
+            <button
+              type="button"
+              disabled={guardando}
+              onClick={() => guardarCambios()}
+              className="rounded-lg bg-[#a7532d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8c3d1f] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {guardando ? "Guardando..." : "Guardar observaciones"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -475,6 +481,7 @@ const AdminVoluntariado = () => {
         ))
       );
       setEditando(null);
+      setViendo(null);
     } catch (err) {
       alert("Error al actualizar la solicitud. Intentá de nuevo.");
       console.error(err);
