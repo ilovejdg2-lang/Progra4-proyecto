@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import { ArrowRight, ExternalLink } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -8,6 +7,7 @@ import { useCachedPageData } from '../../hooks/useCachedPageData';
 import { useHomeVisualReady } from '../../hooks/usePreloadImages';
 import { contactSupportMessage, sanitizeUserFacingError } from '../../lib/formLimits';
 import { fetchHomePageData } from '../../lib/homePageData';
+import { HomeActionLink } from '../../lib/homeActionLink';
 import { collectHomeImageUrls } from '../../lib/homeImageUrls';
 import { isPageInstantReady, markPageRevealed } from '../../lib/pageSessionState';
 import { removeHomeInitialLoader, setHomePageLoading } from '../../lib/homePageLoading';
@@ -70,10 +70,10 @@ const Home = () => {
   const { data, status: pageStatus, error: loadError, reload } = useCachedPageData('home', loadHome);
 
   const hero = data?.hero ?? {};
-  const aboutTeaser = data?.aboutTeaser ?? { title: '', description: '', image: '' };
-  const featuredSection = data?.featuredSection ?? { title: '', description: '' };
-  const iniciativasSection = data?.iniciativasSection ?? { title: '', description: '' };
-  const locationSection = data?.locationSection ?? { eyebrow: '', title: '', description: '', linkUrl: '' };
+  const aboutTeaser = data?.aboutTeaser ?? { title: '', description: '', image: '', linkUrl: '', linkText: '' };
+  const featuredSection = data?.featuredSection ?? { title: '', description: '', linkUrl: '', linkText: '' };
+  const iniciativasSection = data?.iniciativasSection ?? { eyebrow: '', title: '', description: '' };
+  const locationSection = data?.locationSection ?? { eyebrow: '', title: '', description: '', linkUrl: '', linkText: '' };
   const locationMapUrl = locationSection.linkUrl?.trim() ?? '';
   const locationMapEmbedUrl = useMemo(
     () => toGoogleMapsEmbedUrl(locationMapUrl),
@@ -156,7 +156,8 @@ const Home = () => {
       etiqueta: tarjeta.etiqueta,
       titulo: tarjeta.titulo,
       descripcion: tarjeta.descripcion,
-      to: tarjeta.ruta || '',
+      ruta: tarjeta.ruta || '',
+      textoBoton: tarjeta.textoBoton || '',
       icono: visual.icono,
       accentColor: visual.accentColor,
       accentBg: visual.accentBg,
@@ -195,12 +196,15 @@ const Home = () => {
       <Hero data={hero} onBackgroundReady={handleHeroBackgroundReady} />
       {isFullyVisible ? (
       <main className="home-page">
+        {(aboutTeaser.title || aboutTeaser.description || aboutTeaserImageUrl) ? (
         <section id="sobre-nosotros" className="home-page__mission-spotlight" aria-labelledby="about-teaser-title">
           <div className="mission-spotlight-shell">
             <article className="mission-spotlight-card">
-              <h2 id="about-teaser-title" className="mission-spotlight-card__title">
-                {aboutTeaser.title}
-              </h2>
+              {aboutTeaser.title ? (
+                <h2 id="about-teaser-title" className="mission-spotlight-card__title">
+                  {aboutTeaser.title}
+                </h2>
+              ) : null}
 
               <div className="mission-spotlight-card__body">
                 {aboutTeaserImageUrl ? (
@@ -218,26 +222,38 @@ const Home = () => {
                 ) : null}
 
                 <div className="mission-spotlight-card__content">
-                  <p className="mission-spotlight-card__description">
-                    {aboutTeaser.description}
-                  </p>
-                  <Link to="/AboutUs" className="mission-spotlight-card__link">
-                    Conoce nuestra historia completa
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                  </Link>
+                  {aboutTeaser.description ? (
+                    <p className="mission-spotlight-card__description">
+                      {aboutTeaser.description}
+                    </p>
+                  ) : null}
+                  {aboutTeaser.linkText && aboutTeaser.linkUrl ? (
+                    <HomeActionLink href={aboutTeaser.linkUrl} className="mission-spotlight-card__link">
+                      {aboutTeaser.linkText}
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                      </svg>
+                    </HomeActionLink>
+                  ) : null}
                 </div>
               </div>
             </article>
           </div>
         </section>
+        ) : null}
 
+        {(featuredSection.title || featuredSection.description || featuredProducts.length > 0) ? (
         <section id="productos" className="home-page__featured curated-collections">
+          {(featuredSection.title || featuredSection.description) ? (
           <header className="curated-collections__header">
-            <h2 className="curated-collections__title">{featuredSection.title}</h2>
-            <p className="curated-collections__intro">{featuredSection.description}</p>
+            {featuredSection.title ? (
+              <h2 className="curated-collections__title">{featuredSection.title}</h2>
+            ) : null}
+            {featuredSection.description ? (
+              <p className="curated-collections__intro">{featuredSection.description}</p>
+            ) : null}
           </header>
+          ) : null}
 
           {featuredProducts.length === 0 ? (
             <p className="curated-collections__empty">Aún no hay cafés destacados. Márcalos en el panel de productos.</p>
@@ -256,7 +272,10 @@ const Home = () => {
                       featuredProducts.length === 3 && idx === 1 ? ' curated-collections__card--offset' : ''
                     }`}
                   >
-                  <Link to="/productos" className="curated-collections__card-link">
+                  <HomeActionLink
+                    href={p.id ? `/productos/${p.id}` : ''}
+                    className="curated-collections__card-link"
+                  >
                     <img
                       src={normalizeImageUrl(p.imagen, { width: 800 }) || p.imagen}
                       alt={p.nombre || 'Café'}
@@ -275,20 +294,23 @@ const Home = () => {
                       <h3>{p.nombre}</h3>
                       {p.descripcion ? <p>{p.descripcion}</p> : null}
                     </div>
-                  </Link>
+                  </HomeActionLink>
                 </article>
               ))}
               </div>
             </div>
           )}
 
+          {featuredSection.linkText && featuredSection.linkUrl ? (
           <footer className="curated-collections__footer">
-            <Link to="/productos" className="curated-collections__cta">
-              Conoce nuestro catálogo
+            <HomeActionLink href={featuredSection.linkUrl} className="curated-collections__cta">
+              {featuredSection.linkText}
               <ArrowRight size={18} aria-hidden="true" />
-            </Link>
+            </HomeActionLink>
           </footer>
+          ) : null}
         </section>
+        ) : null}
 
         <section id="iniciativas" className="home-page__iniciativas">
           {iniciativasSection.title || iniciativasSection.description ? (
@@ -323,21 +345,21 @@ const Home = () => {
                   <p className="iniciativa-card__desc">{card.descripcion}</p>
                 </div>
 
-                {card.to ? (
-                  <Link to={card.to} className="iniciativa-card__btn">
-                    Completar formulario
+                {card.textoBoton && card.ruta ? (
+                  <HomeActionLink href={card.ruta} className="iniciativa-card__btn">
+                    {card.textoBoton}
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
-                  </Link>
-                ) : (
+                  </HomeActionLink>
+                ) : card.textoBoton ? (
                   <span className="iniciativa-card__btn iniciativa-card__btn--decorativo">
-                    Completar formulario
+                    {card.textoBoton}
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
                   </span>
-                )}
+                ) : null}
               </div>
             ))}
           </div>
@@ -348,9 +370,9 @@ const Home = () => {
             <div className="location-card__copy">
               <h2 id="location-title">{locationSection.title}</h2>
               <p>{locationSection.description}</p>
-              {locationMapUrl ? (
+              {locationMapUrl && locationSection.linkText ? (
                 <a href={locationMapUrl} target="_blank" rel="noreferrer" className="location-card__button">
-                  Ver en Google Maps
+                  {locationSection.linkText}
                   <ExternalLink size={16} strokeWidth={2.4} aria-hidden="true" />
                 </a>
               ) : null}
