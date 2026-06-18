@@ -110,7 +110,7 @@ const Hero = ({ data = {}, onBackgroundReady }) => {
           {hasActions ? (
             <div className="hero__actions">
               {hero.primaryButtonText ? (
-                <Link to="/Products" className="hero__button hero__button--primary">
+                <Link to="/productos" className="hero__button hero__button--primary">
                   {hero.primaryButtonText}
                 </Link>
               ) : null}
