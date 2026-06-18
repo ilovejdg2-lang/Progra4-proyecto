@@ -44,32 +44,35 @@ const Hero = ({ data = {}, onBackgroundReady }) => {
   return (
     <section id="hero" className={`hero${bgReady ? ' hero--bg-ready' : ''}`}>
       {backgroundUrl ? (
-        <img
-          ref={imgRef}
-          key={backgroundUrl}
-          src={backgroundUrl}
-          alt=""
-          className="hero__bg"
-          width={1920}
-          height={1080}
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-          referrerPolicy="no-referrer"
-          aria-hidden="true"
-          onLoad={handleBackgroundLoad}
-          onError={handleBackgroundError}
-        />
+        <div className="hero__media" aria-hidden="true">
+          <img
+            ref={imgRef}
+            key={backgroundUrl}
+            src={backgroundUrl}
+            alt=""
+            className="hero__bg"
+            width={1920}
+            height={1080}
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            referrerPolicy="no-referrer"
+            onLoad={handleBackgroundLoad}
+            onError={handleBackgroundError}
+          />
+          <div className="hero__overlay" />
+        </div>
       ) : null}
-      {backgroundUrl ? <div className="hero__overlay" aria-hidden="true" /> : null}
-      <div className="hero__copy">
-        {data?.title ? <h1 className="hero__title">{data.title}</h1> : null}
-        {data?.subtitle ? <p className="hero__text">{data.subtitle}</p> : null}
-        {data?.buttonText ? (
-          <Link to="/AboutUs" className="hero__button">
-            {data.buttonText}
-          </Link>
-        ) : null}
+      <div className="hero__inner">
+        <div className="hero__copy">
+          {data?.title ? <h1 className="hero__title">{data.title}</h1> : null}
+          {data?.subtitle ? <p className="hero__text">{data.subtitle}</p> : null}
+          {data?.buttonText ? (
+            <Link to="/AboutUs" className="hero__button">
+              {data.buttonText}
+            </Link>
+          ) : null}
+        </div>
       </div>
     </section>
   );
