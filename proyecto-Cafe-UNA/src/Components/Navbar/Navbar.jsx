@@ -462,7 +462,7 @@ const Navbar = () => {
     };
 
     const isTransparent = pathname === '/' && !isScrolled;
-    const useSolidNavbar = isScrolled || isMobileMenuOpen;
+    const useSolidNavbar = isScrolled;
     const brandLogoSrc = normalizeImageUrl(
         isTransparent && !useSolidNavbar ? (logoClaroUrl || logoUrl) : logoUrl,
         { width: 480 }

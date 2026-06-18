@@ -377,19 +377,31 @@
 
 .navbar--menu-open {
   z-index: 26;
-  background: #ffffff !important;
-  backdrop-filter: none;
   border-radius: 0 !important;
 }
 
 .navbar--menu-open.navbar--solid {
+  background: #ffffff !important;
+  backdrop-filter: none;
   border-bottom-color: rgba(41, 31, 20, 0.08);
 }
 
-.navbar--menu-open .navbar__menu-toggle,
-.navbar--menu-open .navbar__icon-button {
+.navbar--menu-open.navbar--solid .navbar__menu-toggle,
+.navbar--menu-open.navbar--solid .navbar__icon-button {
   color: #1f2937;
   filter: none;
+}
+
+.navbar--menu-open.navbar--transparent {
+  background: transparent !important;
+  backdrop-filter: none;
+  border-bottom-color: transparent;
+}
+
+.navbar--menu-open.navbar--transparent .navbar__menu-toggle,
+.navbar--menu-open.navbar--transparent .navbar__icon-button {
+  color: #fff;
+  filter: drop-shadow(0 1px 4px rgba(10, 6, 4, 0.35));
 }
 
 .navbar__mobile-backdrop {
@@ -430,6 +442,7 @@
 
 .navbar__mobile-drawer.is-open .navbar__mobile-panel {
   transform: translateX(0);
+  pointer-events: auto;
 }
 
 .navbar__mobile-header {
@@ -459,26 +472,41 @@
 }
 
 .navbar__mobile-links {
-  display: grid;
-  gap: 0.35rem;
-  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: 0.25rem;
 }
 
 .navbar__mobile-link {
   display: block;
-  padding: 0.9rem 0.85rem;
-  border-radius: 12px;
-  color: #1f2937;
+  padding: 0.8rem 0;
+  border-radius: 0;
+  color: #3f352b;
   text-decoration: none;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: background-color 160ms ease, color 160ms ease;
+  font-size: 1.05rem;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(41, 31, 20, 0.08);
+  background: transparent;
+  transition: color 160ms ease;
+}
+
+.navbar__mobile-link:last-child {
+  border-bottom: none;
 }
 
 .navbar__mobile-link:hover,
+.navbar__mobile-link:focus-visible {
+  background: transparent;
+  color: #8c6f4d;
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+}
+
 .navbar__mobile-link.is-active {
-  background: #f3f4f6;
-  color: #111827;
+  background: transparent;
+  color: #8c6f4d;
+  font-weight: 700;
 }
 
 
