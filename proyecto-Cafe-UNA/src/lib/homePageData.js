@@ -1,5 +1,6 @@
 import { obtenerHero, obtenerNavbar, obtenerSeccion, obtenerTarjetasInicio, obtenerEnlaces } from '../services/informacionService';
 import { obtenerProductos } from '../services/productosServices';
+import { mapHero } from './heroData';
 
 function trimSection(section) {
   return {
@@ -45,7 +46,7 @@ export async function fetchHomePageData() {
   const locationData = trimSection(location);
 
   return {
-    hero: heroInfo ?? {},
+    hero: mapHero(heroInfo),
     navbar: {
       logoUrl: typeof navbarInfo?.logoUrl === 'string' ? navbarInfo.logoUrl.trim() : '',
       logoClaroUrl: typeof navbarInfo?.logoClaroUrl === 'string' ? navbarInfo.logoClaroUrl.trim() : '',
