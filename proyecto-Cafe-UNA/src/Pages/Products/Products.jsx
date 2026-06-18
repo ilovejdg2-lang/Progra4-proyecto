@@ -24,6 +24,12 @@ function getStoredCart() {
   }
 }
 
+function pulseButton(element) {
+  if (!element) return;
+  element.classList.add('is-pressed');
+  window.setTimeout(() => element.classList.remove('is-pressed'), 220);
+}
+
 const Products = () => {
   const {
     data,
@@ -38,9 +44,6 @@ const Products = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
-  const [confirmationMessage, setConfirmationMessage] = useState('');
-  const [confirmationVisible, setConfirmationVisible] = useState(false);
-  const confirmationTimerRef = useRef(null);
   const productDialogRef = useRef(null);
 
   useBodyScrollLock(Boolean(selectedProduct));
@@ -48,14 +51,11 @@ const Products = () => {
   const openProduct = (card) => {
     setSelectedProduct(card);
     setSelectedQuantity(1);
-    setConfirmationMessage('');
-    setConfirmationVisible(false);
   };
 
   const closeProduct = () => {
     setSelectedProduct(null);
     setSelectedQuantity(1);
-    setConfirmationVisible(false);
   };
 
   useEffect(() => {
@@ -158,30 +158,7 @@ const Products = () => {
 
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(parsedCart));
     window.dispatchEvent(new Event('cart-updated'));
-
-    setConfirmationMessage(`Se añadieron ${quantity} unidad${quantity === 1 ? '' : 'es'} de ${product.nombre} al carrito.`);
-    setConfirmationVisible(true);
-
-    if (confirmationTimerRef.current) {
-      window.clearTimeout(confirmationTimerRef.current);
-    }
-
-    confirmationTimerRef.current = window.setTimeout(() => {
-      setConfirmationVisible(false);
-    }, 2000);
-
-    window.setTimeout(() => {
-      setConfirmationMessage('');
-      confirmationTimerRef.current = null;
-    }, 2300);
   };
-
-  useEffect(() => () => {
-    if (confirmationTimerRef.current) {
-      window.clearTimeout(confirmationTimerRef.current);
-      confirmationTimerRef.current = null;
-    }
-  }, []);
 
   return (
     <PublicPageGate
@@ -251,13 +228,13 @@ const Products = () => {
                 onClick={(e) => {
                   e.stopPropagation();
                   handleBuy(product, 1);
+                  pulseButton(e.currentTarget);
                   e.currentTarget.blur();
                 }}
                 disabled={estaAgotado}
-                aria-label={`Compra rápida de ${product.nombre}`}
+                aria-label={`Añadir ${product.nombre} al carrito`}
               >
                 <ShoppingCart className="products-page__quick-buy-icon" aria-hidden="true" />
-                <span className="products-page__quick-buy-text">Compra rápida</span>
               </button>
             </div>
           </article>
@@ -304,8 +281,6 @@ const Products = () => {
                 <OptimizedImage
                   src={selectedProduct.product.imagen}
                   alt={selectedProduct.product.nombre}
-                  width={800}
-                  height={600}
                   priority
                   className="product-modal__image-media"
                 />
@@ -345,20 +320,15 @@ const Products = () => {
                 </div>
               </div>
 
-              {confirmationMessage ? (
-                <p
-                  className={`product-modal__confirmation ${confirmationVisible ? 'is-visible' : 'is-hiding'}`}
-                  aria-live="polite"
-                >
-                  {confirmationMessage}
-                </p>
-              ) : null}
-
               <div className="product-modal__actions">
                 <button
                   type="button"
                   className="products-page__buy-button"
-                  onClick={(e) => { e.stopPropagation(); handleBuy(selectedProduct.product, selectedQuantity); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleBuy(selectedProduct.product, selectedQuantity);
+                    pulseButton(e.currentTarget);
+                  }}
                   disabled={selectedProduct.estaAgotado}
                 >
                   {selectedProduct.estaAgotado ? 'Agotado' : 'Añadir al carrito'}
