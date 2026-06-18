@@ -1,5 +1,5 @@
 import { Coffee, Eye } from 'lucide-react';
-import OptimizedImage from '../../Components/OptimizedImage/OptimizedImage';
+import Gallery from '../../Components/Gallery/Gallery';
 import BackToHomeLink from '../../Components/BackToHomeLink/BackToHomeLink';
 import { HOME_SCROLL_SECTIONS } from '../../lib/homeScrollTarget';
 import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
@@ -44,7 +44,7 @@ const AboutUs = () => {
         {hasHistoria ? (
           <section className="about-page__intro" aria-labelledby="about-historia-title">
             {historiaTitulo ? (
-              <h1 id="about-historia-title" className="about-page__title">
+              <h1 id="about-historia-title" className="section-title about-page__title">
                 {historiaTitulo}
               </h1>
             ) : null}
@@ -73,22 +73,7 @@ const AboutUs = () => {
         ) : null}
 
         {galleryItems.length > 0 ? (
-          <section className="about-page__gallery" aria-label="Galería de fotos">
-            <div className="about-page__gallery-grid">
-              {galleryItems.map((item, index) => (
-                <figure key={item.id} className="about-page__gallery-item">
-                  <OptimizedImage
-                    src={item.image}
-                    alt={item.title || 'Imagen de galería'}
-                    width={800}
-                    height={520}
-                    priority={index === 0}
-                    className="about-page__gallery-media"
-                  />
-                </figure>
-              ))}
-            </div>
-          </section>
+          <Gallery items={galleryItems} pageSize={10} />
         ) : null}
       </main>
     </PublicPageGate>

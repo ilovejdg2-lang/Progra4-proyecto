@@ -1,11 +1,4 @@
-/* Full-bleed white page: parent layout uses body cream gradient by default */
-.site-main:has(.about-page),
-#center.site-main:has(.about-page) {
-  background: #ffffff;
-  place-items: stretch;
-  align-items: stretch;
-}
-
+/* Full-bleed white page */
 .about-page {
   position: relative;
   --about-accent: #6d4c3d;
@@ -37,12 +30,7 @@
 }
 
 .about-page__title {
-  margin: 0;
   font-size: clamp(2rem, 4vw, 2.75rem);
-  font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: 0.01em;
-  color: #111111;
 }
 
 .about-page__title--sr {
@@ -106,50 +94,9 @@
   color: var(--about-muted);
 }
 
-.about-page__gallery {
-  width: 100%;
-}
-
-.about-page__gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(0.75rem, 2vw, 1.25rem);
-}
-
-.about-page__gallery-empty {
-  margin: 0;
-  padding: 1rem;
-  border: 1px dashed #d8d8d8;
-  border-radius: 10px;
-  text-align: center;
-  color: var(--about-muted);
-  font-size: 0.95rem;
-}
-
-.about-page__gallery-item {
-  position: relative;
-  margin: 0;
-  overflow: hidden;
-  border-radius: 10px;
-  aspect-ratio: 4 / 5;
-}
-
-.about-page__gallery-media {
-  width: 100%;
-  height: 100%;
-}
-
 @media (max-width: 900px) {
   .about-page__values {
     grid-template-columns: 1fr;
-  }
-
-  .about-page__gallery-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .about-page__gallery-item {
-    aspect-ratio: 16 / 10;
   }
 }
 
