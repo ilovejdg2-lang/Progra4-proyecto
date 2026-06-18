@@ -1,4 +1,5 @@
 import { apiRequest } from "./apiClient";
+import { decodeJwtPayload } from "../lib/jwt";
 
 const AUTH_BASE_URL = `${import.meta.env.BACKEND_URL}/auth`;
 
@@ -18,13 +19,13 @@ export async function iniciarSesion({ identifier, password }) {
   });
 }
 
-function decodeJwtPayload(token) {
-  try {
-    const payload = token.split(".")[1];
-    return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
-  } catch {
-    return null;
-  }
+export async function renovarToken() {
+  return apiRequest(`${AUTH_BASE_URL}/refresh`, {
+    method: "POST",
+    skipRefresh: true,
+    errorPrefix: "Error de autenticación",
+    timeoutMessage: "Tiempo de espera agotado al renovar la sesión.",
+  });
 }
 
 export function mapAuthenticatedUser(token) {

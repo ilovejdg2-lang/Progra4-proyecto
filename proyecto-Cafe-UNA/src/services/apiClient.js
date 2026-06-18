@@ -1,6 +1,51 @@
 import axios from "axios";
+import { getTokenExpirationMs } from "../lib/jwt";
 import { sanitizeUserFacingError } from "../lib/formLimits";
-import { clearSession, getActiveSessionUser } from "./sessionService";
+import { clearSession, getActiveSessionUser, touchSession, updateSessionUser } from "./sessionService";
+
+const REFRESH_BEFORE_MS = 15 * 60 * 1000;
+let refreshPromise = null;
+
+async function ensureFreshToken(sessionUser) {
+  if (!sessionUser?.token) {
+    return sessionUser;
+  }
+
+  const tokenExp = getTokenExpirationMs(sessionUser.token);
+  if (!tokenExp || tokenExp - Date.now() > REFRESH_BEFORE_MS) {
+    return sessionUser;
+  }
+
+  if (!refreshPromise) {
+    refreshPromise = import("./authService")
+      .then(({ renovarToken }) => renovarToken())
+      .then((result) => {
+        const token = result?.token || result?.Token;
+        if (!token) {
+          throw new Error("No se pudo renovar la sesión.");
+        }
+        return updateSessionUser({ token });
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+}
+
+export async function refreshSessionIfNeeded() {
+  const user = getActiveSessionUser();
+  if (!user?.token) {
+    return null;
+  }
+
+  try {
+    return await ensureFreshToken(user);
+  } catch {
+    return user;
+  }
+}
 
 export async function apiRequest(url, options = {}) {
   const {
@@ -10,12 +55,16 @@ export async function apiRequest(url, options = {}) {
     headers,
     method = "GET",
     skipAuth = false,
+    skipRefresh = false,
     timeout,
     timeoutMessage = "Tiempo de espera agotado al consultar el servidor.",
     ...config
   } = options;
 
-  const sessionUser = skipAuth ? null : getActiveSessionUser();
+  let sessionUser = skipAuth ? null : getActiveSessionUser();
+  if (!skipAuth && !skipRefresh && sessionUser?.token) {
+    sessionUser = (await ensureFreshToken(sessionUser)) ?? sessionUser;
+  }
 
   const isGet = (method || "GET").toUpperCase() === "GET";
   const requestTimeout = typeof timeout === "number" ? timeout : (isGet ? 20000 : 30000);
@@ -37,6 +86,10 @@ export async function apiRequest(url, options = {}) {
       timeout: requestTimeout,
       ...config,
     });
+
+    if (!skipAuth && sessionUser?.token) {
+      touchSession();
+    }
 
     return response.status === 204 ? null : response.data;
   } catch (error) {
