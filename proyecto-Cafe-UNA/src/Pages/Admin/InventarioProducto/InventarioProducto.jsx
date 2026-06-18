@@ -283,7 +283,7 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
             checked={Boolean(form.esDestacado)}
             onChange={handleChange}
             disabled={destacadoDeshabilitado}
-            className="size-4 rounded border-slate-300 text-amber-700 focus:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="size-4 rounded border-slate-300 accent-[#a7532d] text-[#a7532d] focus:ring-[#a7532d] disabled:cursor-not-allowed disabled:opacity-50"
           />
           Mostrar como destacado en el inicio
         </label>
@@ -309,7 +309,7 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
         <button
           type="submit"
           disabled={cargando}
-          className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          className="w-full rounded-full bg-[#a7532d] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#8c3d1f] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           {cargando ? "Guardando..." : inicial ? "Guardar cambios" : "Crear producto"}
         </button>
