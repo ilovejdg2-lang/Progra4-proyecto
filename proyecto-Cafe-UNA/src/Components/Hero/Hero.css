@@ -91,9 +91,9 @@
   width: fit-content;
   padding: 0.95rem 1.8rem;
   border: none;
-  border-radius: 999px;
-  background: #d9cdb8;
-  color: var(--coffee-900, #1a0f0a);
+  border-radius: 999px !important;
+  background: #a7532d;
+  color: #fff;
   font-size: 1rem;
   font-weight: 600;
   text-decoration: none;
@@ -104,8 +104,8 @@
 
 .hero__button:hover,
 .hero__button:focus-visible {
-  background: #e4d9c6;
-  color: var(--coffee-900, #1a0f0a);
+  background: #8c3d1f;
+  color: #fff;
   transform: translateY(-2px);
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
 }
