@@ -17,6 +17,12 @@ function mapSeccionInicio(data) {
         : typeof data?.LinkUrl === 'string'
           ? data.LinkUrl.trim()
           : '',
+    linkText:
+      typeof data?.linkText === 'string'
+        ? data.linkText.trim()
+        : typeof data?.LinkText === 'string'
+          ? data.LinkText.trim()
+          : '',
   };
 }
 
@@ -27,6 +33,7 @@ function mapTarjetaInicio(item) {
     titulo: item?.titulo || item?.Titulo || '',
     descripcion: item?.descripcion || item?.Descripcion || '',
     ruta: item?.ruta || item?.Ruta || '',
+    textoBoton: item?.textoBoton || item?.TextoBoton || '',
   };
 }
 

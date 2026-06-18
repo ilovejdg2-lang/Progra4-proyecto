@@ -10,7 +10,9 @@ export function mapHero(data) {
       title: '',
       subtitle: '',
       primaryButtonText: '',
+      primaryButtonUrl: '',
       buttonText: '',
+      buttonUrl: '',
       backgroundImage: '',
     };
   }
@@ -20,7 +22,13 @@ export function mapHero(data) {
     title: pickString(data, 'title', 'Title'),
     subtitle: pickString(data, 'subtitle', 'Subtitle'),
     primaryButtonText: pickString(data, 'primaryButtonText', 'PrimaryButtonText'),
+    primaryButtonUrl: pickString(data, 'primaryButtonUrl', 'PrimaryButtonUrl'),
     buttonText: pickString(data, 'buttonText', 'ButtonText'),
+    buttonUrl: pickString(data, 'buttonUrl', 'ButtonUrl'),
     backgroundImage: pickString(data, 'backgroundImage', 'BackgroundImage'),
   };
+}
+
+export function isExternalHeroUrl(url) {
+  return /^https?:\/\//i.test(url?.trim() || '');
 }
