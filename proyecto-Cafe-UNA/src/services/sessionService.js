@@ -6,6 +6,15 @@ const TOUCH_THROTTLE_MS = 5 * 60 * 1000;
 export const SESSION_UPDATED_EVENT = 'session-updated';
 
 let lastTouchAt = 0;
+let loggingOut = false;
+
+export function isLoggingOut() {
+  return loggingOut;
+}
+
+export function beginLogout() {
+  loggingOut = true;
+}
 
 function notifySessionChange() {
   window.dispatchEvent(new Event('storage'));
@@ -13,7 +22,9 @@ function notifySessionChange() {
 }
 
 export function clearSession() {
+  loggingOut = true;
   localStorage.removeItem(USER_STORAGE_KEY);
+  lastTouchAt = 0;
   notifySessionChange();
 }
 
@@ -38,6 +49,8 @@ export function isSessionExpired(user) {
 }
 
 export function touchSession() {
+  if (loggingOut) return null;
+
   const user = getStoredUser();
   if (!user || isSessionExpired(user)) {
     return null;
@@ -59,6 +72,8 @@ export function touchSession() {
 }
 
 export function getActiveSessionUser() {
+  if (loggingOut) return null;
+
   const user = getStoredUser();
   if (isSessionExpired(user)) {
     clearSession();
@@ -69,6 +84,7 @@ export function getActiveSessionUser() {
 }
 
 export function saveAuthenticatedUser(user) {
+  loggingOut = false;
   lastTouchAt = Date.now();
   const sessionUser = {
     ...user,

@@ -41,11 +41,14 @@ import {
 import { normalizeImageUrl, getImageObjectPosition } from "../../lib/imageUtils";
 import { useHomeBrandNavigation } from "../../hooks/useHomeBrandNavigation";
 import { obtenerNavbar } from "../../services/informacionService";
-import { obtenerPerfil } from "../../services/perfilService";
+import { clearPerfilCache, obtenerPerfil } from "../../services/perfilService";
+import { cancelPendingSessionRefresh } from "../../services/apiClient";
 import {
   applyPerfilToSession,
+  beginLogout,
   clearSession,
   getActiveSessionUser,
+  getStoredUser,
   SESSION_UPDATED_EVENT,
 } from "../../services/sessionService";
 
@@ -96,7 +99,7 @@ export function AppSidebar() {
     const timeoutId = window.setTimeout(() => {
       obtenerPerfil()
         .then((perfil) => {
-          if (!activo || !perfil) return;
+          if (!activo || !perfil || !getStoredUser()) return;
           const updated = applyPerfilToSession(perfil);
           if (updated) setUser(updated);
         })
@@ -151,9 +154,13 @@ export function AppSidebar() {
   };
 
   const handleLogout = () => {
+    beginLogout();
+    cancelPendingSessionRefresh();
     clearSidebarState();
+    clearPerfilCache();
+    setUser(null);
     clearSession();
-    window.location.href = "/";
+    window.location.replace("/");
   };
 
   return (
@@ -307,7 +314,7 @@ export function AppSidebar() {
               <ChevronDown className="size-4 shrink-0" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent side="top" align="end" className="z-[100] w-56">
             <div className="px-2 py-1.5 text-xs text-slate-500">
               <div className="truncate font-medium text-slate-700">{displayName}</div>
               {displayEmail ? <div className="truncate">{displayEmail}</div> : null}
@@ -318,7 +325,13 @@ export function AppSidebar() {
                 <span>Mi perfil</span>
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={handleLogout} className="text-red-600 focus:text-red-700">
+            <DropdownMenuItem
+              className="cursor-pointer text-red-600 focus:text-red-700"
+              onSelect={(event) => {
+                event.preventDefault();
+                handleLogout();
+              }}
+            >
               <LogOut className="size-4" />
               <span>Cerrar sesión</span>
             </DropdownMenuItem>
