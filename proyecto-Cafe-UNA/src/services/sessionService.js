@@ -1,6 +1,11 @@
+import { getTokenExpirationMs } from "../lib/jwt";
+
 const USER_STORAGE_KEY = 'user';
 const SESSION_DURATION_MS = 60 * 60 * 1000;
+const TOUCH_THROTTLE_MS = 5 * 60 * 1000;
 export const SESSION_UPDATED_EVENT = 'session-updated';
+
+let lastTouchAt = 0;
 
 function notifySessionChange() {
   window.dispatchEvent(new Event('storage'));
@@ -22,7 +27,35 @@ export function getStoredUser() {
 }
 
 export function isSessionExpired(user) {
-  return Boolean(user?.expiresAt && Number(user.expiresAt) <= Date.now());
+  if (!user) return true;
+
+  const tokenExp = user.token ? getTokenExpirationMs(user.token) : null;
+  if (tokenExp && tokenExp <= Date.now()) {
+    return true;
+  }
+
+  return Boolean(user.expiresAt && Number(user.expiresAt) <= Date.now());
+}
+
+export function touchSession() {
+  const user = getStoredUser();
+  if (!user || isSessionExpired(user)) {
+    return null;
+  }
+
+  const now = Date.now();
+  if (now - lastTouchAt < TOUCH_THROTTLE_MS) {
+    return user;
+  }
+
+  lastTouchAt = now;
+  const updated = {
+    ...user,
+    expiresAt: now + SESSION_DURATION_MS,
+  };
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated));
+  notifySessionChange();
+  return updated;
 }
 
 export function getActiveSessionUser() {
@@ -32,10 +65,11 @@ export function getActiveSessionUser() {
     return null;
   }
 
-  return user;
+  return touchSession() ?? user;
 }
 
 export function saveAuthenticatedUser(user) {
+  lastTouchAt = Date.now();
   const sessionUser = {
     ...user,
     expiresAt: Date.now() + SESSION_DURATION_MS,
