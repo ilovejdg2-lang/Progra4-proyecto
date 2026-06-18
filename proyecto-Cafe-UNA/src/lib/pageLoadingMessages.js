@@ -3,6 +3,7 @@ import { normalizePathname } from './paths';
 const CACHE_KEY_MESSAGES = {
   home: 'Cargando inicio...',
   products: 'Cargando productos...',
+  'product-detail': 'Cargando producto...',
   about: 'Cargando sobre nosotros...',
   voluntariado: 'Cargando voluntariado...',
   checkout: 'Cargando checkout...',
@@ -23,6 +24,7 @@ export function getLoadingMessageForPathname(pathname = normalizePathname()) {
 
   if (path === '/') return CACHE_KEY_MESSAGES.home;
   if (path === '/productos') return CACHE_KEY_MESSAGES.products;
+  if (path.startsWith('/productos/')) return CACHE_KEY_MESSAGES['product-detail'];
   if (path === '/AboutUs') return CACHE_KEY_MESSAGES.about;
   if (path.startsWith('/voluntariado')) return CACHE_KEY_MESSAGES.voluntariado;
   if (path === '/checkout') return CACHE_KEY_MESSAGES.checkout;
