@@ -2,18 +2,19 @@ import { obtenerHero, obtenerNavbar, obtenerSeccion, obtenerTarjetasInicio, obte
 import { obtenerProductos } from '../services/productosServices';
 import { mapHero } from './heroData';
 
+function pickString(data, camelKey, pascalKey) {
+  const value = data?.[camelKey] ?? data?.[pascalKey];
+  return typeof value === 'string' ? value.trim() : '';
+}
+
 function trimSection(section) {
   return {
-    title: typeof section?.title === 'string' ? section.title.trim() : '',
-    description: typeof section?.description === 'string' ? section.description.trim() : '',
-    eyebrow: typeof section?.eyebrow === 'string' ? section.eyebrow.trim() : '',
-    image: typeof section?.image === 'string' ? section.image.trim() : '',
-    linkUrl:
-      typeof section?.linkUrl === 'string'
-        ? section.linkUrl.trim()
-        : typeof section?.LinkUrl === 'string'
-          ? section.LinkUrl.trim()
-          : '',
+    title: pickString(section, 'title', 'Title'),
+    description: pickString(section, 'description', 'Description'),
+    eyebrow: pickString(section, 'eyebrow', 'Eyebrow'),
+    image: pickString(section, 'image', 'Image'),
+    linkUrl: pickString(section, 'linkUrl', 'LinkUrl'),
+    linkText: pickString(section, 'linkText', 'LinkText'),
   };
 }
 
@@ -56,10 +57,14 @@ export async function fetchHomePageData() {
       title: spotlightData.title,
       description: spotlightData.description,
       image: spotlightData.image,
+      linkUrl: spotlightData.linkUrl,
+      linkText: spotlightData.linkText,
     },
     featuredSection: {
       title: featuredData.title,
       description: featuredData.description,
+      linkUrl: featuredData.linkUrl,
+      linkText: featuredData.linkText,
     },
     iniciativasSection: {
       eyebrow: iniciativasData.eyebrow,
@@ -71,6 +76,7 @@ export async function fetchHomePageData() {
       title: locationData.title,
       description: locationData.description,
       linkUrl: locationData.linkUrl,
+      linkText: locationData.linkText,
     },
     tarjetasInicio: Array.isArray(tarjetas)
       ? tarjetas.map((item) => ({
@@ -79,6 +85,7 @@ export async function fetchHomePageData() {
           titulo: item.titulo || item.Titulo || '',
           descripcion: item.descripcion || item.Descripcion || '',
           ruta: item.ruta || item.Ruta || '',
+          textoBoton: item.textoBoton || item.TextoBoton || '',
         }))
       : [],
     products: Array.isArray(productList) ? productList : [],

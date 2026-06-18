@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { normalizeImageUrl } from "../../lib/imageUtils";
-import { mapHero } from "../../lib/heroData";
+import { isExternalHeroUrl, mapHero } from "../../lib/heroData";
 import "./Hero.css";
 
 function renderHeroTitle(title) {
@@ -22,19 +22,26 @@ function renderHeroTitle(title) {
     );
   }
 
-  const marker = " el universitario";
-  const markerIndex = text.toLowerCase().lastIndexOf(marker);
-  if (markerIndex > 0) {
+  return text;
+}
+
+function HeroActionLink({ href, className, children }) {
+  const target = href?.trim();
+  if (!target) return null;
+
+  if (isExternalHeroUrl(target)) {
     return (
-      <>
-        <span className="hero__title-line hero__title-line--first">{text.slice(0, markerIndex).trim()}</span>
-        <br className="hero__title-break" aria-hidden="true" />
-        <span className="hero__title-line hero__title-line--second">{text.slice(markerIndex).trim()}</span>
-      </>
+      <a href={target} className={className} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
     );
   }
 
-  return text;
+  return (
+    <Link to={target} className={className}>
+      {children}
+    </Link>
+  );
 }
 
 const Hero = ({ data = {}, onBackgroundReady }) => {
@@ -76,7 +83,9 @@ const Hero = ({ data = {}, onBackgroundReady }) => {
     notifyReady();
   };
 
-  const hasActions = Boolean(hero.primaryButtonText || hero.buttonText);
+  const showPrimary = Boolean(hero.primaryButtonText && hero.primaryButtonUrl);
+  const showSecondary = Boolean(hero.buttonText && hero.buttonUrl);
+  const hasActions = showPrimary || showSecondary;
 
   return (
     <section id="hero" className={`hero${bgReady ? " hero--bg-ready" : ""}`}>
@@ -109,15 +118,21 @@ const Hero = ({ data = {}, onBackgroundReady }) => {
 
           {hasActions ? (
             <div className="hero__actions">
-              {hero.primaryButtonText ? (
-                <Link to="/Products" className="hero__button hero__button--primary">
+              {showPrimary ? (
+                <HeroActionLink
+                  href={hero.primaryButtonUrl}
+                  className="hero__button hero__button--primary"
+                >
                   {hero.primaryButtonText}
-                </Link>
+                </HeroActionLink>
               ) : null}
-              {hero.buttonText ? (
-                <Link to="/AboutUs" className="hero__button hero__button--secondary">
+              {showSecondary ? (
+                <HeroActionLink
+                  href={hero.buttonUrl}
+                  className="hero__button hero__button--secondary"
+                >
                   {hero.buttonText}
-                </Link>
+                </HeroActionLink>
               ) : null}
             </div>
           ) : null}

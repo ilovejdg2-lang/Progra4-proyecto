@@ -27,7 +27,9 @@ const heroInicial = {
   title: "",
   subtitle: "",
   primaryButtonText: "",
+  primaryButtonUrl: "",
   buttonText: "",
+  buttonUrl: "",
   backgroundImage: "",
 };
 
@@ -37,6 +39,7 @@ const seccionInicioVacia = {
   description: "",
   image: "",
   linkUrl: "",
+  linkText: "",
 };
 
 const CONFIG_SECCIONES_INICIO = {
@@ -50,6 +53,10 @@ const CONFIG_SECCIONES_INICIO = {
     showImage: true,
     titleLabel: "Titulo",
     descriptionLabel: "Texto breve",
+    showLinkUrl: true,
+    showLinkText: true,
+    linkUrlLabel: "Enlace del boton",
+    linkTextLabel: "Texto del boton",
   },
   homeFeatured: {
     etiqueta: "Inicio",
@@ -61,6 +68,10 @@ const CONFIG_SECCIONES_INICIO = {
     showImage: false,
     titleLabel: "Titulo",
     descriptionLabel: "Texto introductorio",
+    showLinkUrl: true,
+    showLinkText: true,
+    linkUrlLabel: "Enlace del boton",
+    linkTextLabel: "Texto del boton",
   },
   homeIniciativas: {
     etiqueta: "Inicio",
@@ -83,10 +94,12 @@ const CONFIG_SECCIONES_INICIO = {
     showEyebrow: true,
     showImage: false,
     showLinkUrl: true,
+    showLinkText: true,
     eyebrowLabel: "Etiqueta superior",
     titleLabel: "Titulo",
     descriptionLabel: "Descripcion",
     linkUrlLabel: "Enlace de Google Maps",
+    linkTextLabel: "Texto del boton",
   },
 };
 
@@ -102,6 +115,7 @@ const tarjetaInicioVacia = {
   titulo: "",
   descripcion: "",
   ruta: "",
+  textoBoton: "",
 };
 
 const navbarInicial = {
@@ -234,14 +248,28 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
               name="primaryButtonText"
               value={form.primaryButtonText}
               onChange={cambiarCampo}
-              hint="Boton principal que lleva a la pagina de productos."
+            />
+            <CampoTexto
+              label="Enlace boton principal"
+              name="primaryButtonUrl"
+              value={form.primaryButtonUrl}
+              onChange={cambiarCampo}
+              placeholder="/productos o https://..."
+              hint="Ruta interna del sitio o URL externa."
             />
             <CampoTexto
               label="Texto boton secundario"
               name="buttonText"
               value={form.buttonText}
               onChange={cambiarCampo}
-              hint="Boton secundario que lleva a la pagina Sobre nosotros."
+            />
+            <CampoTexto
+              label="Enlace boton secundario"
+              name="buttonUrl"
+              value={form.buttonUrl}
+              onChange={cambiarCampo}
+              placeholder="/AboutUs o https://..."
+              hint="Ruta interna del sitio o URL externa."
             />
           </div>
 
@@ -359,8 +387,16 @@ function ModalSeccionInicio({ config, data, onCerrar, onGuardar, guardando }) {
               name="linkUrl"
               value={form.linkUrl}
               onChange={cambiarCampo}
-              placeholder="https://www.google.com/maps/..."
-              hint="URL que abre el boton Ver en Google Maps y el mapa interactivo."
+              placeholder="/productos o https://..."
+            />
+          ) : null}
+
+          {config.showLinkText ? (
+            <CampoTexto
+              label={config.linkTextLabel || "Texto del boton"}
+              name="linkText"
+              value={form.linkText}
+              onChange={cambiarCampo}
             />
           ) : null}
         </AdminModalBody>
@@ -396,6 +432,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
       titulo: tarjeta.titulo || tarjeta.Titulo || "",
       descripcion: tarjeta.descripcion || tarjeta.Descripcion || "",
       ruta: tarjeta.ruta || tarjeta.Ruta || "",
+      textoBoton: tarjeta.textoBoton || tarjeta.TextoBoton || "",
     })),
   );
 
@@ -414,6 +451,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
         titulo: tarjeta.titulo,
         descripcion: tarjeta.descripcion,
         ruta: tarjeta.ruta,
+        textoBoton: tarjeta.textoBoton,
       })),
     );
   };
@@ -485,9 +523,16 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
                   value={tarjeta.ruta}
                   onChange={(event) => cambiarCampo(index, "ruta", event.target.value)}
                   placeholder="/voluntariado/solicitar"
-                  hint="Ruta interna del boton Completar formulario."
+                  hint="Ruta interna del boton."
                 />
               ) : null}
+
+              <CampoTexto
+                label="Texto del boton"
+                name={`textoBoton-${index}`}
+                value={tarjeta.textoBoton}
+                onChange={(event) => cambiarCampo(index, "textoBoton", event.target.value)}
+              />
             </div>
           ))}
         </AdminModalBody>
@@ -914,6 +959,12 @@ function mapSeccionInicio(data) {
         : typeof data?.LinkUrl === "string"
           ? data.LinkUrl.trim()
           : "",
+    linkText:
+      typeof data?.linkText === "string"
+        ? data.linkText.trim()
+        : typeof data?.LinkText === "string"
+          ? data.LinkText.trim()
+          : "",
   };
 }
 
@@ -930,6 +981,7 @@ function mapTarjetaInicio(item) {
     titulo: item?.titulo || item?.Titulo || "",
     descripcion: item?.descripcion || item?.Descripcion || "",
     ruta: item?.ruta || item?.Ruta || "",
+    textoBoton: item?.textoBoton || item?.TextoBoton || "",
   };
 }
 
