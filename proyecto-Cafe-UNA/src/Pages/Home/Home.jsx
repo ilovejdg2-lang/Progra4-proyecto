@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ArrowRight, ExternalLink, MapPin } from 'lucide-react';
+import { ArrowRight, ExternalLink } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Hero from '../../Components/Hero/Hero';
@@ -72,7 +72,7 @@ const Home = () => {
   const hero = data?.hero ?? {};
   const aboutTeaser = data?.aboutTeaser ?? { title: '', description: '', image: '' };
   const featuredSection = data?.featuredSection ?? { title: '', description: '' };
-  const iniciativasSection = data?.iniciativasSection ?? { eyebrow: '', title: '', description: '' };
+  const iniciativasSection = data?.iniciativasSection ?? { title: '', description: '' };
   const locationSection = data?.locationSection ?? { eyebrow: '', title: '', description: '', linkUrl: '' };
   const locationMapUrl = locationSection.linkUrl?.trim() ?? '';
   const locationMapEmbedUrl = useMemo(
@@ -142,6 +142,7 @@ const Home = () => {
   const featuredProducts = useMemo(
     () => products
       .filter((product) => product.esDestacado && productoPuedeDestacarse(product))
+      .filter((product) => Boolean(normalizeImageUrl(product.imagen, { width: 800 }) || product.imagen))
       .slice(0, 3),
     [products],
   );
@@ -241,15 +242,18 @@ const Home = () => {
           {featuredProducts.length === 0 ? (
             <p className="curated-collections__empty">Aún no hay cafés destacados. Márcalos en el panel de productos.</p>
           ) : (
-            <div
-              className={`curated-collections__grid curated-collections__grid--count-${featuredProducts.length}`}
-              aria-label="Selección destacada de cafés"
-            >
-              {featuredProducts.map((p, idx) => (
-                <article
-                  key={p?.id ?? p?.nombre ?? `featured-${idx}`}
-                  className={`curated-collections__card${featuredProducts.length === 3 && idx === 1 ? ' curated-collections__card--offset' : ''}`}
-                >
+            <div className="curated-collections__carousel">
+              <div
+                className={`curated-collections__grid curated-collections__grid--count-${featuredProducts.length}`}
+                aria-label="Selección destacada de cafés"
+                role="list"
+              >
+                {featuredProducts.map((p, idx) => (
+                  <article
+                    key={p?.id ?? p?.nombre ?? `featured-${idx}`}
+                    role="listitem"
+                    className={`curated-collections__card${featuredProducts.length === 3 && idx === 1 ? ' curated-collections__card--offset' : ''}`}
+                  >
                   <Link to="/productos" className="curated-collections__card-link">
                     <img
                       src={normalizeImageUrl(p.imagen, { width: 800 }) || p.imagen}
@@ -272,6 +276,7 @@ const Home = () => {
                   </Link>
                 </article>
               ))}
+              </div>
             </div>
           )}
 
@@ -284,16 +289,16 @@ const Home = () => {
         </section>
 
         <section id="iniciativas" className="home-page__iniciativas">
-          <div className="iniciativas-header">
-            <span className="iniciativas-eyebrow">{iniciativasSection.eyebrow}</span>
-            <h2 className="iniciativas-titulo">
-              {iniciativasSection.title}
-              <br />
-            </h2>
-            <p className="iniciativas-subtitulo">
-              {iniciativasSection.description}
-            </p>
-          </div>
+          {iniciativasSection.title || iniciativasSection.description ? (
+            <header className="curated-collections__header">
+              {iniciativasSection.title ? (
+                <h2 className="curated-collections__title">{iniciativasSection.title}</h2>
+              ) : null}
+              {iniciativasSection.description ? (
+                <p className="curated-collections__intro">{iniciativasSection.description}</p>
+              ) : null}
+            </header>
+          ) : null}
 
           <div className="iniciativas-grid">
             {iniciativasCards.map((card) => (
@@ -339,10 +344,6 @@ const Home = () => {
         <section className="home-page__location" aria-labelledby="location-title">
           <div className="location-card">
             <div className="location-card__copy">
-              <span className="location-card__eyebrow">
-                <MapPin size={16} strokeWidth={2.4} aria-hidden="true" />
-                {locationSection.eyebrow}
-              </span>
               <h2 id="location-title">{locationSection.title}</h2>
               <p>{locationSection.description}</p>
               {locationMapUrl ? (
@@ -358,8 +359,6 @@ const Home = () => {
                 <iframe
                   title="Mapa de ubicación"
                   src={locationMapEmbedUrl}
-                  width="640"
-                  height="400"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                   aria-hidden="true"
