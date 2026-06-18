@@ -100,7 +100,7 @@ export async function obtenerProductos() {
 // ─── READ: obtener un producto por id ───────────────────────────────────────
 export async function obtenerProductoPorId(id) {
   const productos = await obtenerProductos();
-  return productos.find((producto) => producto.id === id) ?? null;
+  return productos.find((producto) => String(producto.id) === String(id)) ?? null;
 }
 
 // ─── CREATE: agregar nuevo producto ─────────────────────────────────────────

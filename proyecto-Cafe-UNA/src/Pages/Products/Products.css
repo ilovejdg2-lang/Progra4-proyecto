@@ -77,12 +77,36 @@
 }
 
 .products-page__card-media {
+  position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
   border-radius: 14px;
   overflow: hidden;
   background: #f3efe8;
   flex-shrink: 0;
+}
+
+.products-page__card--agotado .products-page__card-media .optimized-image__img,
+.products-page__card--agotado .products-page__card-image {
+  filter: grayscale(0.35) brightness(0.92);
+}
+
+.products-page__agotado-badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(209, 67, 67, 0.94);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 20px rgba(209, 67, 67, 0.28);
 }
 
 .products-page__card-media--placeholder {
@@ -169,6 +193,7 @@
   color: #3e2f21;
   font-size: 0.84rem;
   font-weight: 700;
+  text-decoration: none;
   cursor: pointer;
   transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
@@ -233,8 +258,7 @@
   }
 
   .products-page__card:hover .products-page__quick-buy,
-  .products-page__card:focus-visible .products-page__quick-buy,
-  .products-page__card:focus-within .products-page__quick-buy {
+  .products-page__quick-buy:focus-visible {
     opacity: 1;
     transform: translateY(0) scale(1);
     pointer-events: auto;
