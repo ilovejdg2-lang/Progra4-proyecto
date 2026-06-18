@@ -220,7 +220,7 @@
   color: #374151;
 }
 
-.campo input,
+.campo input:not([type="checkbox"]):not([type="radio"]),
 .campo select,
 .participantes-agregar input,
 .participante-item input {
@@ -240,7 +240,7 @@
   color: #9ca3af;
 }
 
-.campo input:focus,
+.campo input:not([type="checkbox"]):not([type="radio"]):focus,
 .campo select:focus,
 .participantes-agregar input:focus {
   outline: none;
@@ -519,12 +519,110 @@
   width: 100%;
   border: 1px solid var(--borde-input);
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 14px;
   font-family: inherit;
   color: #1f2937;
   background: #ffffff;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  accent-color: var(--verde-principal);
+}
+
+.selector-fecha {
+  position: relative;
+  width: 100%;
+}
+
+.selector-fecha__trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--borde-input);
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 500;
+  color: #1f2937;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  text-align: left;
+}
+
+.selector-fecha__trigger:hover,
+.selector-fecha__trigger:focus-visible {
+  outline: none;
+  border-color: var(--verde-principal);
+  box-shadow: 0 0 0 3px rgba(40, 111, 84, 0.1);
+}
+
+.selector-fecha__trigger--vacio {
+  color: #9ca3af;
+}
+
+.selector-fecha__icono {
+  flex-shrink: 0;
+  color: var(--verde-principal);
+}
+
+.selector-fecha__popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  width: 248px;
+  max-width: calc(100vw - 40px);
+  box-shadow: 0 12px 28px rgba(22, 18, 14, 0.12);
+}
+
+.calendario-voluntariado--selector {
+  max-width: 248px;
+  padding: 10px;
+  border-radius: 14px;
+}
+
+.calendario-voluntariado--selector .calendario-voluntariado__nav {
+  margin-bottom: 6px;
+}
+
+.calendario-voluntariado--selector .calendario-voluntariado__nav span {
+  font-size: 11px;
+}
+
+.calendario-voluntariado--selector .calendario-voluntariado__nav button {
+  min-width: 30px;
+  min-height: 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+}
+
+.calendario-voluntariado--selector .calendario-voluntariado__grid {
+  gap: 2px;
+}
+
+.calendario-voluntariado--selector .calendario-voluntariado__cabecera {
+  font-size: 8px;
+  padding: 0 0 2px;
+}
+
+.calendario-voluntariado--selector .calendario-voluntariado__dia {
+  min-height: 0;
+  aspect-ratio: 1;
+  max-height: 28px;
+  font-size: 10px;
+}
+
+.calendario-voluntariado--selector .calendario-voluntariado__acciones {
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.calendario-voluntariado--selector .calendario-voluntariado__accion {
+  font-size: 11px;
 }
 
 .input-fecha-simple:focus {
@@ -583,11 +681,11 @@
 
 .calendario-voluntariado {
   border: 1px solid var(--borde-input);
-  border-radius: 10px;
-  padding: 10px;
+  border-radius: 18px;
+  padding: 14px;
   background: #fafcfb;
   width: 100%;
-  max-width: 240px;
+  max-width: 300px;
 }
 
 .calendario-voluntariado--compacto .calendario-voluntariado__nav {
@@ -608,12 +706,12 @@
 }
 
 .calendario-voluntariado__nav button {
-  min-width: 44px;
-  min-height: 44px;
-  width: 44px;
-  height: 44px;
+  min-width: 40px;
+  min-height: 40px;
+  width: 40px;
+  height: 40px;
   border: 1px solid var(--borde-input);
-  border-radius: 6px;
+  border-radius: 12px;
   background: #ffffff;
   color: var(--verde-principal);
   cursor: pointer;
@@ -631,7 +729,7 @@
 .calendario-voluntariado__grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 4px;
 }
 
 .calendario-voluntariado__cabecera {
@@ -644,15 +742,16 @@
 
 .calendario-voluntariado__dia {
   width: 100%;
-  height: 28px;
-  border: none;
-  border-radius: 5px;
+  aspect-ratio: 1;
+  min-height: 34px;
+  border: 1px solid transparent;
+  border-radius: 999px;
   background: transparent;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   color: #374151;
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
   font-family: inherit;
   padding: 0;
 }
@@ -694,6 +793,34 @@
   color: var(--texto-secundario);
 }
 
+.calendario-voluntariado__acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(40, 111, 84, 0.12);
+}
+
+.calendario-voluntariado__accion {
+  border: none;
+  background: transparent;
+  padding: 4px 2px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--verde-principal);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.calendario-voluntariado__accion:hover,
+.calendario-voluntariado__accion:focus-visible {
+  color: var(--verde-hover);
+  outline: none;
+}
+
 .checkbox-lista--compacta {
   gap: 8px;
 }
@@ -716,22 +843,34 @@
 
 .checkbox-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   font-size: 14px;
   color: #374151;
   cursor: pointer;
   font-weight: 500;
   line-height: 1.4;
+  user-select: none;
 }
 
 .checkbox-item input {
   width: 16px;
   height: 16px;
-  margin-top: 2px;
+  min-width: 16px;
+  min-height: 16px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--borde-input);
+  border-radius: 4px;
   accent-color: var(--verde-principal);
   cursor: pointer;
   flex-shrink: 0;
+  box-shadow: none;
+}
+
+.checkbox-item input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(40, 111, 84, 0.18);
 }
 
 .area-otro {
@@ -1022,7 +1161,7 @@
     align-items: flex-start;
   }
 
-  .campo input,
+  .campo input:not([type="checkbox"]):not([type="radio"]),
   .campo select,
   .input-fecha-simple {
     min-height: 46px;

@@ -8,7 +8,7 @@ import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
 import { getActiveSessionUser } from "../../services/sessionService";
 import { crearSolicitud } from "../../services/voluntariadoService";
 import { consultarCedula } from "../../services/cedulaService";
-import { SectionCard } from "./CalendarioVoluntariado";
+import { SectionCard, SelectorFecha } from "./CalendarioVoluntariado";
 import "./SolicitarVoluntariado.css";
 
 const TIPOS_VOLUNTARIADO = [
@@ -124,6 +124,11 @@ function SolicitarVoluntariado() {
         return next;
       });
     }
+  };
+
+  const handleFechaChange = (campo) => (valor) => {
+    setFormulario((prev) => ({ ...prev, [campo]: valor }));
+    limpiarError(campo);
   };
 
   const handleChange = (e) => {
@@ -755,12 +760,11 @@ function SolicitarVoluntariado() {
                     <label>
                       Disponibilidad desde <span className="req">*</span>
                     </label>
-                    <input
-                      type="date"
+                    <SelectorFecha
                       name="fechaInicio"
-                      className="input-fecha-simple"
                       value={formulario.fechaInicio}
-                      onChange={handleChange}
+                      onChange={handleFechaChange("fechaInicio")}
+                      placeholder="Seleccionar fecha de inicio"
                     />
                     {errores.fechaInicio && (
                       <span className="mensaje-error">{errores.fechaInicio}</span>
@@ -771,13 +775,12 @@ function SolicitarVoluntariado() {
                     <label>
                       Disponibilidad hasta <span className="req">*</span>
                     </label>
-                    <input
-                      type="date"
+                    <SelectorFecha
                       name="fechaFin"
-                      className="input-fecha-simple"
                       value={formulario.fechaFin}
+                      onChange={handleFechaChange("fechaFin")}
                       min={formulario.fechaInicio || undefined}
-                      onChange={handleChange}
+                      placeholder="Seleccionar fecha de fin"
                     />
                     {errores.fechaFin && (
                       <span className="mensaje-error">{errores.fechaFin}</span>
