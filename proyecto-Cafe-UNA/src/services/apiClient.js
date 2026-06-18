@@ -1,13 +1,24 @@
 import axios from "axios";
 import { getTokenExpirationMs } from "../lib/jwt";
 import { sanitizeUserFacingError } from "../lib/formLimits";
-import { clearSession, getActiveSessionUser, touchSession, updateSessionUser } from "./sessionService";
+import {
+  clearSession,
+  getActiveSessionUser,
+  getStoredUser,
+  isLoggingOut,
+  touchSession,
+  updateSessionUser,
+} from "./sessionService";
 
 const REFRESH_BEFORE_MS = 15 * 60 * 1000;
 let refreshPromise = null;
 
+export function cancelPendingSessionRefresh() {
+  refreshPromise = null;
+}
+
 async function ensureFreshToken(sessionUser) {
-  if (!sessionUser?.token) {
+  if (!sessionUser?.token || isLoggingOut()) {
     return sessionUser;
   }
 
@@ -20,12 +31,18 @@ async function ensureFreshToken(sessionUser) {
     refreshPromise = import("./authService")
       .then(({ renovarToken }) => renovarToken())
       .then((result) => {
+        if (isLoggingOut() || !getStoredUser()) {
+          return null;
+        }
+
         const token = result?.token || result?.Token;
         if (!token) {
-          throw new Error("No se pudo renovar la sesión.");
+          return getActiveSessionUser();
         }
+
         return updateSessionUser({ token });
       })
+      .catch(() => getActiveSessionUser())
       .finally(() => {
         refreshPromise = null;
       });
@@ -35,6 +52,10 @@ async function ensureFreshToken(sessionUser) {
 }
 
 export async function refreshSessionIfNeeded() {
+  if (isLoggingOut()) {
+    return null;
+  }
+
   const user = getActiveSessionUser();
   if (!user?.token) {
     return null;
@@ -43,7 +64,7 @@ export async function refreshSessionIfNeeded() {
   try {
     return await ensureFreshToken(user);
   } catch {
-    return user;
+    return getActiveSessionUser();
   }
 }
 
@@ -56,14 +77,18 @@ export async function apiRequest(url, options = {}) {
     method = "GET",
     skipAuth = false,
     skipRefresh = false,
+    skipSessionClear = false,
     timeout,
     timeoutMessage = "Tiempo de espera agotado al consultar el servidor.",
     ...config
   } = options;
 
-  let sessionUser = skipAuth ? null : getActiveSessionUser();
+  let sessionUser = skipAuth || isLoggingOut() ? null : getActiveSessionUser();
   if (!skipAuth && !skipRefresh && sessionUser?.token) {
-    sessionUser = (await ensureFreshToken(sessionUser)) ?? sessionUser;
+    sessionUser = await ensureFreshToken(sessionUser);
+    if (!getStoredUser()) {
+      sessionUser = null;
+    }
   }
 
   const isGet = (method || "GET").toUpperCase() === "GET";
@@ -87,7 +112,7 @@ export async function apiRequest(url, options = {}) {
       ...config,
     });
 
-    if (!skipAuth && sessionUser?.token) {
+    if (!skipAuth && sessionUser?.token && !isLoggingOut()) {
       touchSession();
     }
 
@@ -112,7 +137,12 @@ export async function apiRequest(url, options = {}) {
         throw new Error("Credenciales incorrectas", { cause: error });
       }
 
-      if (error.response.status === 401 && sessionUser?.token) {
+      if (
+        error.response.status === 401
+        && sessionUser?.token
+        && !skipSessionClear
+        && !isLoggingOut()
+      ) {
         clearSession();
         throw new Error("Su sesión expiró. Inicie sesión de nuevo.", { cause: error });
       }

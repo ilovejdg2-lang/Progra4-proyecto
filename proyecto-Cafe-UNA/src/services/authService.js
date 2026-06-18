@@ -23,6 +23,7 @@ export async function renovarToken() {
   return apiRequest(`${AUTH_BASE_URL}/refresh`, {
     method: "POST",
     skipRefresh: true,
+    skipSessionClear: true,
     errorPrefix: "Error de autenticación",
     timeoutMessage: "Tiempo de espera agotado al renovar la sesión.",
   });
