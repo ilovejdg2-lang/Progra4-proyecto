@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist/wght.css";
+@import "./styles/public.css";
 
 @custom-variant dark (&:is(.dark *));
 :root {
@@ -237,6 +238,11 @@ body:not(.home-hero-ready) .navbar.navbar--transparent + .site-main:not(.site-ma
 
 .site-main--home {
   padding-top: 0;
+}
+
+.site-main--home .home-shell {
+  background: transparent;
+  margin-top: 0;
 }
 
 .site-main--awaiting-ready > *:not(.page-loading) {

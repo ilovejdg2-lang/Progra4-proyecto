@@ -11,6 +11,23 @@ export const HOME_SCROLL_SECTIONS = {
   voluntariado: 'iniciativas',
 };
 
+const HOME_SECTION_IDS = new Set(Object.values(HOME_SCROLL_SECTIONS));
+
+export function resolveHomeSectionFromRoute(route) {
+  const raw = String(route || '').trim();
+  if (!raw || /^https?:\/\//i.test(raw)) {
+    return null;
+  }
+
+  const hashIndex = raw.indexOf('#');
+  if (hashIndex === -1) {
+    return null;
+  }
+
+  const sectionId = raw.slice(hashIndex + 1).split(/[?&]/)[0].trim();
+  return HOME_SECTION_IDS.has(sectionId) ? sectionId : null;
+}
+
 export function setHomeScrollTarget(sectionId) {
   if (!sectionId) {
     pendingTarget = null;
