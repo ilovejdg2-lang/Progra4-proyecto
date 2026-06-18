@@ -3,6 +3,7 @@ import {
   obtenerSeccion,
   obtenerTarjetasInicio,
 } from '../services/informacionService';
+import { mapHero } from './heroData';
 
 function mapSeccionInicio(data) {
   return {
@@ -54,7 +55,7 @@ export async function fetchAdminMainPageData() {
     obtenerTarjetasInicio().catch(() => []),
   ]);
 
-  const hero = bulk?.hero ?? null;
+  const hero = bulk?.hero ? mapHero(bulk.hero) : null;
   const navbar = bulk?.navbar ?? null;
   const footer = bulk?.footer ?? null;
   const enlaces = bulk?.enlaces ?? [];
