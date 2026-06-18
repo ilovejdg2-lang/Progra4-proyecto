@@ -132,6 +132,7 @@
 }
 
 .navbar__cart-button,
+.navbar__notifications-button,
 .navbar__user-button {
   pointer-events: none;
 }
@@ -149,6 +150,25 @@
 
 .navbar__notifications {
   position: relative;
+  cursor: pointer;
+}
+
+.notifications-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 800;
+  padding: 0 0.2rem;
+  line-height: 1;
+  pointer-events: none;
 }
 
 .navbar__icon-button {
@@ -176,21 +196,6 @@
 .navbar--transparent .navbar__icon-button {
   color: #fff;
   filter: drop-shadow(0 1px 4px rgba(10, 6, 4, 0.35));
-}
-
-.notifications-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  min-width: 18px;
-  height: 18px;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  background: #dc2626;
-  color: #fff;
-  font-size: 0.66rem;
-  font-weight: 800;
 }
 
 .dropdown--notifications {

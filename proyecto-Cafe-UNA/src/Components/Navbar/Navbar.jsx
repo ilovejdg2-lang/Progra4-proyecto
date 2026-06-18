@@ -631,19 +631,22 @@ const Navbar = () => {
                 </div>
 
                 {user ? (
-                    <div className="navbar__notifications" ref={notificationsRef}>
+                    <div
+                        className="navbar__notifications"
+                        ref={notificationsRef}
+                        onClick={handleNotificationsClick}
+                    >
                         <button
                             type="button"
-                            className="navbar__icon-button"
+                            className="navbar__icon-button navbar__notifications-button"
                             aria-label="Ver solicitudes de voluntariado"
                             title="Solicitudes de voluntariado"
-                            onClick={handleNotificationsClick}
                         >
                             <Bell size={25} strokeWidth={2.2} aria-hidden="true" />
-                            {solicitudesPendientesCount > 0 ? (
-                                <span className="notifications-badge">{solicitudesPendientesCount}</span>
-                            ) : null}
                         </button>
+                        {solicitudesPendientesCount > 0 ? (
+                            <span className="notifications-badge">{solicitudesPendientesCount}</span>
+                        ) : null}
                         {showNotifications ? (
                             <aside className="dropdown dropdown--notifications" aria-label="Solicitudes de voluntariado">
                                 <header className="notifications-header">
