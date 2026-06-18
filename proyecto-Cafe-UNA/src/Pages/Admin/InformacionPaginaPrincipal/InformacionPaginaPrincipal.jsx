@@ -7,6 +7,7 @@ import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useCachedPageData } from "../../../hooks/useCachedPageData";
 import { fetchAdminMainPageData } from "../../../lib/adminMainPageData";
+import { mapHero } from "../../../lib/heroData";
 import {
   actualizarEnlace,
   actualizarFooter,
@@ -22,8 +23,10 @@ import {
 import { getActiveSessionUser } from "../../../services/sessionService";
 
 const heroInicial = {
+  eyebrow: "",
   title: "",
   subtitle: "",
+  primaryButtonText: "",
   buttonText: "",
   backgroundImage: "",
 };
@@ -197,12 +200,20 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
 
         <AdminModalBody className="space-y-5">
           <CampoTexto
+            label="Etiqueta superior"
+            name="eyebrow"
+            value={form.eyebrow}
+            onChange={cambiarCampo}
+            hint="Texto pequeno que aparece sobre el titulo principal."
+          />
+
+          <CampoTexto
             label="Titulo principal"
             name="title"
             value={form.title}
             onChange={cambiarCampo}
             required
-            hint="Texto grande que aparece primero en la pagina."
+            hint="Puedes usar Enter para forzar un salto de linea en el titulo."
           />
 
           <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
@@ -219,19 +230,28 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
 
           <div className="grid gap-4 md:grid-cols-2">
             <CampoTexto
-              label="Texto del boton"
+              label="Texto boton principal"
+              name="primaryButtonText"
+              value={form.primaryButtonText}
+              onChange={cambiarCampo}
+              hint="Boton principal que lleva a la pagina de productos."
+            />
+            <CampoTexto
+              label="Texto boton secundario"
               name="buttonText"
               value={form.buttonText}
               onChange={cambiarCampo}
-            />
-            <CampoTexto
-              label="Imagen de fondo URL"
-              name="backgroundImage"
-              value={form.backgroundImage}
-              onChange={cambiarCampo}
-              placeholder="https://..."
+              hint="Boton secundario que lleva a la pagina Sobre nosotros."
             />
           </div>
+
+          <CampoTexto
+            label="Imagen de fondo URL"
+            name="backgroundImage"
+            value={form.backgroundImage}
+            onChange={cambiarCampo}
+            placeholder="https://..."
+          />
         </AdminModalBody>
 
         <AdminModalFooter>
@@ -946,7 +966,7 @@ const AdminInformacionPaginaPrincipal = () => {
   useEffect(() => {
     if (!data) return;
 
-    if (data.hero) setHero({ ...heroInicial, ...data.hero });
+    if (data.hero) setHero(mapHero(data.hero));
     setSeccionesInicio(data.seccionesInicio ?? {
       homeSpotlight: { ...seccionInicioVacia },
       homeFeatured: { ...seccionInicioVacia },
@@ -971,7 +991,7 @@ const AdminInformacionPaginaPrincipal = () => {
     try {
       setGuardando(true);
       const actualizado = await actualizarSeccion("hero", form);
-      setHero({ ...heroInicial, ...actualizado });
+      setHero(mapHero(actualizado));
       setEditando(null);
     } catch (err) {
       alert(err.message || "No se pudo guardar el hero.");

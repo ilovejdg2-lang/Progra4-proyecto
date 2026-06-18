@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './Navbar.css';
 import { calcularPrecioConIVA } from '../../services/productosServices';
-import { Bell, Menu, Minus, Plus, ShoppingCart, Trash2, User, X } from 'lucide-react';
+import { Bell, BookOpen, Coffee, HandHeart, Info, Menu, Minus, Package, Plus, ShoppingCart, Trash2, User, X } from 'lucide-react';
 import { obtenerEnlaces, obtenerNavbar } from '../../services/informacionService';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { useHomeBrandNavigation } from '../../hooks/useHomeBrandNavigation';
@@ -71,6 +71,18 @@ function filterNavLinks(enlaces) {
         const ruta = String(enlace?.ruta ?? enlace?.Ruta ?? '').trim();
         return ruta !== '/' && ruta !== '';
     });
+}
+
+function resolveMobileNavIcon(ruta) {
+    const normalized = String(ruta || '').trim().toLowerCase();
+
+    if (normalized.includes('product')) return Coffee;
+    if (normalized.includes('about') || normalized.includes('sobre')) return BookOpen;
+    if (normalized.includes('volunt')) return HandHeart;
+    if (normalized.includes('iniciativa') || normalized.includes('gallery') || normalized.includes('galer')) return Info;
+    if (normalized.includes('checkout') || normalized.includes('cart')) return ShoppingCart;
+
+    return Package;
 }
 
 const Navbar = () => {
@@ -471,6 +483,7 @@ const Navbar = () => {
         { width: 480 }
     );
     const navLinks = filterNavLinks(enlacesNavbar);
+    const mobileMenuLogoSrc = normalizeImageUrl(logoUrl || logoClaroUrl, { width: 320 });
 
     const brandMark = brandLogoSrc ? (
         <img
@@ -760,25 +773,55 @@ const Navbar = () => {
                     aria-label="Menú de navegación"
                 >
                     <header className="navbar__mobile-header">
+                        <Link
+                            to="/"
+                            className="navbar__mobile-brand"
+                            aria-label="Ir al inicio"
+                            onClick={handleBrandClick}
+                        >
+                            {mobileMenuLogoSrc ? (
+                                <img
+                                    src={mobileMenuLogoSrc}
+                                    alt="Café UNA"
+                                    className="navbar__mobile-brand-logo"
+                                    width={200}
+                                    height={44}
+                                    decoding="async"
+                                />
+                            ) : (
+                                <span className="navbar__mobile-brand-text">Café UNA</span>
+                            )}
+                        </Link>
                         <button
                             type="button"
                             className="navbar__mobile-close"
                             aria-label="Cerrar menú"
                             onClick={closeMobileMenu}
                         >
-                            <X size={20} strokeWidth={2.4} aria-hidden="true" />
+                            <X size={20} strokeWidth={2.2} aria-hidden="true" />
                         </button>
                     </header>
-                    <nav className="navbar__mobile-links">
-                        {navLinks.map((enlace) => (
-                            <SiteNavLink
-                                key={`mobile-${enlace.id ?? enlace.ruta}`}
-                                enlace={enlace}
-                                className="navbar__mobile-link"
-                                activeProps={{ className: 'navbar__mobile-link is-active' }}
-                                onClick={closeMobileMenu}
-                            />
-                        ))}
+
+                    <nav className="navbar__mobile-links" aria-label="Secciones del sitio">
+                        {navLinks.map((enlace) => {
+                            const NavIcon = resolveMobileNavIcon(enlace?.ruta ?? enlace?.Ruta);
+                            const label = enlace?.etiqueta ?? enlace?.Etiqueta ?? 'Enlace';
+
+                            return (
+                                <SiteNavLink
+                                    key={`mobile-${enlace.id ?? enlace.ruta}`}
+                                    enlace={enlace}
+                                    className="navbar__mobile-link"
+                                    activeProps={{ className: 'navbar__mobile-link is-active' }}
+                                    onClick={closeMobileMenu}
+                                >
+                                    <span className="navbar__mobile-link-content">
+                                        <NavIcon className="navbar__mobile-link-icon" size={22} strokeWidth={1.9} aria-hidden="true" />
+                                        <span className="navbar__mobile-link-label">{label}</span>
+                                    </span>
+                                </SiteNavLink>
+                            );
+                        })}
                     </nav>
                 </aside>
             </div>
