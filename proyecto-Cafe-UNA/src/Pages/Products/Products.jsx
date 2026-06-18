@@ -1,34 +1,17 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import { ShoppingCart } from 'lucide-react';
 import BackToHomeLink from '../../Components/BackToHomeLink/BackToHomeLink';
 import OptimizedImage from '../../Components/OptimizedImage/OptimizedImage';
 import { HOME_SCROLL_SECTIONS } from '../../lib/homeScrollTarget';
 import './Products.css';
 import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
-import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { useCachedPublicPage } from '../../hooks/useCachedPublicPage';
+import { addProductToCart, pulseButton } from '../../lib/cartStorage';
 import { fetchProductsPageData } from '../../lib/productsPageData';
 import { calcularPrecioConIVA } from '../../services/productosServices';
 
 const PRODUCTS_PER_PAGE = 8;
-const CART_STORAGE_KEY = 'cart';
-
-function getStoredCart() {
-  try {
-    const rawCart = localStorage.getItem(CART_STORAGE_KEY);
-    const parsedCart = rawCart ? JSON.parse(rawCart) : [];
-    return Array.isArray(parsedCart) ? parsedCart : [];
-  } catch {
-    localStorage.removeItem(CART_STORAGE_KEY);
-    return [];
-  }
-}
-
-function pulseButton(element) {
-  if (!element) return;
-  element.classList.add('is-pressed');
-  window.setTimeout(() => element.classList.remove('is-pressed'), 220);
-}
 
 const Products = () => {
   const {
@@ -42,51 +25,6 @@ const Products = () => {
   const products = data?.products ?? [];
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedQuantity, setSelectedQuantity] = useState(1);
-  const productDialogRef = useRef(null);
-
-  useBodyScrollLock(Boolean(selectedProduct));
-
-  const openProduct = (card) => {
-    setSelectedProduct(card);
-    setSelectedQuantity(1);
-  };
-
-  const closeProduct = () => {
-    setSelectedProduct(null);
-    setSelectedQuantity(1);
-  };
-
-  useEffect(() => {
-    const dialog = productDialogRef.current;
-    if (!dialog) return undefined;
-
-    if (selectedProduct) {
-      if (!dialog.open) dialog.showModal();
-    } else if (dialog.open) {
-      dialog.close();
-    }
-
-    return undefined;
-  }, [selectedProduct]);
-
-  useEffect(() => {
-    const onKey = (event) => {
-      if (event.key === 'Escape') closeProduct();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
-  const changeQuantity = (delta) => {
-    if (!selectedProduct) return;
-
-    setSelectedQuantity((current) => {
-      const nextValue = current + delta;
-      return Math.min(Math.max(nextValue, 1), selectedProduct.stockDisponible);
-    });
-  };
 
   const visibleProducts = useMemo(
     () => products.filter((product) => product.estado !== 'Deshabilitado'),
@@ -122,44 +60,6 @@ const Products = () => {
     };
   });
 
-  const handleBuy = (product, quantity = 1) => {
-    const stockDisponible = Number(product.stock) || 0;
-    const parsedCart = getStoredCart();
-
-    const existingProductIndex = parsedCart.findIndex((item) => item.id === product.id);
-    const unidadesEnCarrito = existingProductIndex >= 0 ? (Number(parsedCart[existingProductIndex].units) || 0) : 0;
-
-    if (product.estado === 'Deshabilitado') {
-      window.alert('Este producto está deshabilitado.');
-      return;
-    }
-
-    if (stockDisponible <= 0) {
-      window.alert('Este producto está agotado.');
-      return;
-    }
-
-    if (unidadesEnCarrito + quantity > stockDisponible) {
-      window.alert('No hay más unidades disponibles de este producto.');
-      return;
-    }
-
-    if (existingProductIndex >= 0) {
-      parsedCart[existingProductIndex] = {
-        ...parsedCart[existingProductIndex],
-        units: (parsedCart[existingProductIndex].units || 1) + quantity,
-      };
-    } else {
-      parsedCart.push({
-        ...product,
-        units: quantity,
-      });
-    }
-
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(parsedCart));
-    window.dispatchEvent(new Event('cart-updated'));
-  };
-
   return (
     <PublicPageGate
       showLoading={showLoading}
@@ -183,15 +83,20 @@ const Products = () => {
           <p>No hay productos disponibles en este momento.</p>
         )}
         {productCards.map((card, index) => {
-          const { product, precioNormal, precioConIVA, stockDisponible, estaAgotado } = card;
+          const { product, precioConIVA, estaAgotado } = card;
 
           return (
           <article
-            className="products-page__card"
+            className={`products-page__card${estaAgotado ? ' products-page__card--agotado' : ''}`}
             key={product.id}
           >
             {product.imagen ? (
               <div className="products-page__card-media">
+                {estaAgotado ? (
+                  <span className="products-page__agotado-badge" role="status">
+                    Agotado
+                  </span>
+                ) : null}
                 <OptimizedImage
                   src={product.imagen}
                   alt={product.nombre}
@@ -202,7 +107,13 @@ const Products = () => {
                 />
               </div>
             ) : (
-              <div className="products-page__card-media products-page__card-media--placeholder" aria-hidden="true" />
+              <div className="products-page__card-media products-page__card-media--placeholder" aria-hidden="true">
+                {estaAgotado ? (
+                  <span className="products-page__agotado-badge" role="status">
+                    Agotado
+                  </span>
+                ) : null}
+              </div>
             )}
 
             <div className="products-page__card-body">
@@ -211,23 +122,21 @@ const Products = () => {
             </div>
 
             <div className="products-page__card-actions">
-              <button
-                type="button"
+              <Link
+                to="/productos/$productId"
+                params={{ productId: String(product.id) }}
                 className="products-page__details-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openProduct(card);
-                }}
+                onClick={(e) => e.stopPropagation()}
               >
                 Detalles
-              </button>
+              </Link>
 
               <button
                 type="button"
                 className="products-page__quick-buy"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleBuy(product, 1);
+                  addProductToCart(product, 1);
                   pulseButton(e.currentTarget);
                   e.currentTarget.blur();
                 }}
@@ -260,85 +169,6 @@ const Products = () => {
           );
         })}
       </nav>
-
-      <dialog
-        ref={productDialogRef}
-        className="product-modal"
-        aria-labelledby="product-modal-title"
-        onCancel={(event) => {
-          event.preventDefault();
-          closeProduct();
-        }}
-        onClick={(event) => {
-          if (event.target === event.currentTarget) closeProduct();
-        }}
-      >
-        {selectedProduct ? (
-          <>
-            <button type="button" className="product-modal__close" onClick={closeProduct} aria-label="Cerrar">×</button>
-            <div className="product-modal__image">
-              {selectedProduct.product.imagen && (
-                <OptimizedImage
-                  src={selectedProduct.product.imagen}
-                  alt={selectedProduct.product.nombre}
-                  priority
-                  className="product-modal__image-media"
-                />
-              )}
-            </div>
-            <div className="product-modal__content">
-              <h2 id="product-modal-title">{selectedProduct.product.nombre}</h2>
-              <p className="product-modal__price"><strong>CRC {selectedProduct.precioConIVA.toLocaleString('es-CR')}</strong></p>
-              <p>{selectedProduct.product.descripcion}</p>
-              <ul className="product-modal__meta">
-                <li><strong>Cantidad:</strong> {selectedProduct.product.peso}</li>
-                <li><strong>Precio (sin IVA):</strong> CRC {selectedProduct.precioNormal.toLocaleString('es-CR')}</li>
-                <li><strong>Disponibles:</strong> {selectedProduct.stockDisponible}</li>
-              </ul>
-              <div className="product-modal__quantity-row">
-                <label className="product-modal__quantity-label" htmlFor="product-quantity">Cantidad</label>
-                <div className="product-modal__quantity-stepper" aria-label="Selector de cantidad">
-                  <button
-                    type="button"
-                    className="product-modal__quantity-stepper-button"
-                    onClick={() => changeQuantity(-1)}
-                    disabled={selectedQuantity <= 1}
-                    aria-label="Disminuir cantidad"
-                  >
-                    −
-                  </button>
-                  <div className="product-modal__quantity-value" aria-live="polite">{selectedQuantity}</div>
-                  <button
-                    type="button"
-                    className="product-modal__quantity-stepper-button"
-                    onClick={() => changeQuantity(1)}
-                    disabled={selectedQuantity >= selectedProduct.stockDisponible}
-                    aria-label="Aumentar cantidad"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              <div className="product-modal__actions">
-                <button
-                  type="button"
-                  className="products-page__buy-button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleBuy(selectedProduct.product, selectedQuantity);
-                    pulseButton(e.currentTarget);
-                  }}
-                  disabled={selectedProduct.estaAgotado}
-                >
-                  {selectedProduct.estaAgotado ? 'Agotado' : 'Añadir al carrito'}
-                </button>
-                <button type="button" className="products-page__page-button" onClick={closeProduct}>Cerrar</button>
-              </div>
-            </div>
-          </>
-        ) : null}
-      </dialog>
     </main>
     </PublicPageGate>
   );
