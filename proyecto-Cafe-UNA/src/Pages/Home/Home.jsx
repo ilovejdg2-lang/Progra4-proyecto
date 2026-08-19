@@ -204,12 +204,12 @@ const Home = () => {
           ) : null}
 
           {featuredProducts.length === 0 ? (
-            <p className="curated-collections__empty">Aún no hay cafés destacados. Márcalos en el panel de productos.</p>
+            <p className="curated-collections__empty">{"A\u00fan no hay caf\u00e9s destacados. M\u00e1rcalos en el panel de productos."}</p>
           ) : (
             <div className="curated-collections__carousel">
               <div
                 className={`curated-collections__grid curated-collections__grid--count-${featuredProducts.length}`}
-                aria-label="Selección destacada de cafés"
+                aria-label={"Selecci\u00f3n destacada de caf\u00e9s"}
                 role="list"
               >
                 {featuredProducts.map((p, idx) => (
@@ -226,7 +226,7 @@ const Home = () => {
                   >
                     <img
                       src={normalizeImageUrl(p.imagen, { width: 800 }) || p.imagen}
-                      alt={p.nombre || 'Café'}
+                      alt={p.nombre || 'Caf\u00e9'}
                       loading="eager"
                       width="800"
                       height="1000"
@@ -329,7 +329,7 @@ const Home = () => {
             {locationMapEmbedUrl ? (
               <div className="location-card__map">
                 <iframe
-                  title="Mapa de ubicación"
+                  title={"Mapa de ubicaci\u00f3n"}
                   src={locationMapEmbedUrl}
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
@@ -342,7 +342,7 @@ const Home = () => {
                     target="_blank"
                     rel="noreferrer"
                     className="location-card__map-link"
-                    aria-label="Abrir ubicacion en Google Maps"
+                    aria-label={"Abrir ubicaci\u00f3n en Google Maps"}
                   />
                 ) : null}
               </div>

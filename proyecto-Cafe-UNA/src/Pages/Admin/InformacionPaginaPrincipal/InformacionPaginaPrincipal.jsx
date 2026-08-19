@@ -30,10 +30,9 @@ import {
   crearEnlace,
   eliminarEnlace,
   obtenerEnlaces,
-  obtenerSeccion,
-  obtenerTarjetasInicio,
 } from "../../../services/informacionService";
 import { getActiveSessionUser } from "../../../services/sessionService";
+import { tienePermiso } from "../../../lib/permisos";
 
 const heroInicial = {
   eyebrow: "",
@@ -58,61 +57,61 @@ const seccionInicioVacia = {
 const CONFIG_SECCIONES_INICIO = {
   homeSpotlight: {
     etiqueta: "Inicio",
-    tituloTarjeta: "Conocé más sobre Café UNA",
-    modalTitle: "Conocé más sobre Café UNA",
-    ayuda: "Bloque del inicio que invita a visitar Sobre nosotros. No usa la mision ni la galeria.",
+    tituloTarjeta: "Sobre nosotros (inicio)",
+    modalTitle: "Sobre nosotros (inicio)",
+    ayuda: "Bloque del inicio que invita a visitar Sobre nosotros. No usa la misi\u00f3n ni la galer\u00eda.",
     icon: Sparkles,
     showEyebrow: false,
     showImage: true,
-    titleLabel: "Titulo",
+    titleLabel: "T\u00edtulo",
     descriptionLabel: "Texto breve",
     showLinkUrl: true,
     showLinkText: true,
-    linkUrlLabel: "Enlace del boton",
-    linkTextLabel: "Texto del boton",
+    linkUrlLabel: "Enlace del bot\u00f3n",
+    linkTextLabel: "Texto del bot\u00f3n",
   },
   homeFeatured: {
     etiqueta: "Inicio",
-    tituloTarjeta: "Descubrí nuestra selección de cafés",
-    modalTitle: "Descubrí nuestra selección de cafés",
-    ayuda: "Encabezado de la seccion de productos destacados en el inicio.",
+    tituloTarjeta: "Productos destacados",
+    modalTitle: "Productos destacados",
+    ayuda: "Encabezado de la secci\u00f3n de productos destacados en el inicio.",
     icon: Coffee,
     showEyebrow: false,
     showImage: false,
-    titleLabel: "Titulo",
+    titleLabel: "T\u00edtulo",
     descriptionLabel: "Texto introductorio",
     showLinkUrl: true,
     showLinkText: true,
-    linkUrlLabel: "Enlace del boton",
-    linkTextLabel: "Texto del boton",
+    linkUrlLabel: "Enlace del bot\u00f3n",
+    linkTextLabel: "Texto del bot\u00f3n",
   },
   homeIniciativas: {
     etiqueta: "Inicio",
-    tituloTarjeta: "Participá con nosotros",
-    modalTitle: "Cada aporte, visita o colaboración deja una huella especial",
-    ayuda: "Texto principal de la seccion de iniciativas (donaciones, visitas y voluntariado).",
+    tituloTarjeta: "Iniciativas",
+    modalTitle: "Iniciativas",
+    ayuda: "Texto principal de la secci\u00f3n de iniciativas (donaciones, visitas y voluntariado).",
     icon: Users,
     showEyebrow: true,
     showImage: false,
     eyebrowLabel: "Etiqueta superior",
-    titleLabel: "Titulo principal",
-    descriptionLabel: "Subtitulo",
+    titleLabel: "T\u00edtulo principal",
+    descriptionLabel: "Subt\u00edtulo",
   },
   homeLocation: {
     etiqueta: "Inicio",
-    tituloTarjeta: "Visitanos en la Finca Experimental Santa Lucia",
-    modalTitle: "Visitanos en la Finca Experimental Santa Lucia",
-    ayuda: "Texto y enlace de Google Maps de la seccion de ubicacion en el inicio.",
+    tituloTarjeta: "Ubicaci\u00f3n",
+    modalTitle: "Ubicaci\u00f3n",
+    ayuda: "Texto y enlace de Google Maps de la secci\u00f3n de ubicaci\u00f3n en el inicio.",
     icon: MapPin,
     showEyebrow: true,
     showImage: false,
     showLinkUrl: true,
     showLinkText: true,
     eyebrowLabel: "Etiqueta superior",
-    titleLabel: "Titulo",
-    descriptionLabel: "Descripcion",
+    titleLabel: "T\u00edtulo",
+    descriptionLabel: "Descripci\u00f3n",
     linkUrlLabel: "Enlace de Google Maps",
-    linkTextLabel: "Texto del boton",
+    linkTextLabel: "Texto del bot\u00f3n",
   },
 };
 
@@ -152,14 +151,14 @@ const CONFIG_ENLACES = {
   "enlaces-navbar": {
     seccion: "Navbar",
     etiqueta: "Enlaces del navbar",
-    titulo: "Menu de navegacion",
-    descripcionVacia: "Sin enlaces en el menu superior.",
+    titulo: "Men\u00fa de navegaci\u00f3n",
+    descripcionVacia: "Sin enlaces en el men\u00fa superior.",
   },
   "enlaces-footer": {
     seccion: "FooterExplorar",
     etiqueta: "Enlaces del footer",
-    titulo: "Seccion Explorar",
-    descripcionVacia: "Sin enlaces en la columna Explorar del pie de pagina.",
+    titulo: "Secci\u00f3n Explorar",
+    descripcionVacia: "Sin enlaces en la columna Explorar del pie de p\u00e1gina.",
   },
 };
 
@@ -219,27 +218,27 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
         <AdminModalBody cms>
           <AdminEditorConPreview
             preview={<PreviewHeroLive form={form} />}
-            ayuda="Banner principal de la página de inicio."
+            ayuda={"Banner principal de la p\u00e1gina de inicio."}
           >
           <CampoTexto
             label="Etiqueta superior"
             name="eyebrow"
             value={form.eyebrow}
             onChange={cambiarCampo}
-            hint="Texto pequeno que aparece sobre el titulo principal."
+            hint={"Texto peque\u00f1o que aparece sobre el t\u00edtulo principal."}
           />
 
           <CampoTexto
-            label="Titulo principal"
+            label={"T\u00edtulo principal"}
             name="title"
             value={form.title}
             onChange={cambiarCampo}
             required
-            hint="Puedes usar Enter para forzar un salto de linea en el titulo."
+            hint={"Puedes usar Enter para forzar un salto de l\u00ednea en el t\u00edtulo."}
           />
 
           <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-            Subtitulo
+            {"Subt\u00edtulo"}
             <textarea
               name="subtitle"
               value={form.subtitle}
@@ -252,13 +251,13 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
 
           <div className="grid gap-4 md:grid-cols-2">
             <CampoTexto
-              label="Texto boton principal"
+              label={"Texto bot\u00f3n principal"}
               name="primaryButtonText"
               value={form.primaryButtonText}
               onChange={cambiarCampo}
             />
             <CampoTexto
-              label="Enlace boton principal"
+              label={"Enlace bot\u00f3n principal"}
               name="primaryButtonUrl"
               value={form.primaryButtonUrl}
               onChange={cambiarCampo}
@@ -266,13 +265,13 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
               hint="Ruta interna del sitio o URL externa."
             />
             <CampoTexto
-              label="Texto boton secundario"
+              label={"Texto bot\u00f3n secundario"}
               name="buttonText"
               value={form.buttonText}
               onChange={cambiarCampo}
             />
             <CampoTexto
-              label="Enlace boton secundario"
+              label={"Enlace bot\u00f3n secundario"}
               name="buttonUrl"
               value={form.buttonUrl}
               onChange={cambiarCampo}
@@ -369,7 +368,7 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
           ) : null}
 
           <CampoTexto
-            label={config.titleLabel || "Titulo"}
+            label={config.titleLabel || "T\u00edtulo"}
             name="title"
             value={form.title}
             onChange={cambiarCampo}
@@ -377,7 +376,7 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
           />
 
           <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-            {config.descriptionLabel || "Descripcion"}
+            {config.descriptionLabel || "Descripci\u00f3n"}
             <textarea
               name="description"
               value={form.description}
@@ -395,7 +394,7 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
               value={form.image}
               onChange={cambiarCampo}
               placeholder="https://..."
-              hint="Imagen propia del bloque. No se toma de la galeria."
+              hint={"Imagen propia del bloque. No se toma de la galer\u00eda."}
             />
           ) : null}
 
@@ -411,7 +410,7 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
 
           {config.showLinkText ? (
             <CampoTexto
-              label={config.linkTextLabel || "Texto del boton"}
+              label={config.linkTextLabel || "Texto del bot\u00f3n"}
               name="linkText"
               value={form.linkText}
               onChange={cambiarCampo}
@@ -500,7 +499,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
         <AdminModalBody cms>
           <AdminEditorConPreview
             preview={<PreviewTarjetasInicioLive tarjetas={form} />}
-            ayuda="Editá las tres tarjetas de donaciones, visitas y voluntariado que aparecen en el inicio."
+            ayuda={"Edit\u00e1 las tres tarjetas de donaciones, visitas y voluntariado que aparecen en el inicio."}
           >
 
           {form.map((tarjeta, index) => (
@@ -518,16 +517,14 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
               />
 
               <CampoTexto
-                label="Titulo"
+                label={"T\u00edtulo"}
                 name={`titulo-${index}`}
                 value={tarjeta.titulo}
                 onChange={(event) => cambiarCampo(index, "titulo", event.target.value)}
                 required
               />
 
-              <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                Descripcion
-                <textarea
+              <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">{"Descripci\u00f3n"}<textarea
                   value={tarjeta.descripcion}
                   onChange={(event) => cambiarCampo(index, "descripcion", event.target.value)}
                   rows={3}
@@ -543,12 +540,12 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
                   value={tarjeta.ruta}
                   onChange={(event) => cambiarCampo(index, "ruta", event.target.value)}
                   placeholder="/voluntariado/solicitar"
-                  hint="Ruta interna del boton."
+                  hint={"Ruta interna del bot\u00f3n."}
                 />
               ) : null}
 
               <CampoTexto
-                label="Texto del boton"
+                label={"Texto del bot\u00f3n"}
                 name={`textoBoton-${index}`}
                 value={tarjeta.textoBoton}
                 onChange={(event) => cambiarCampo(index, "textoBoton", event.target.value)}
@@ -615,7 +612,7 @@ function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
         <AdminModalBody cms>
           <AdminEditorConPreview
             preview={<PreviewNavbarLive form={form} enlaces={enlaces} />}
-            ayuda="Logos que aparecen en la barra de navegación del sitio."
+            ayuda={"Logos que aparecen en la barra de navegaci\u00f3n del sitio."}
           >
           <CampoTexto
             label="Logo URL"
@@ -623,7 +620,7 @@ function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
             value={form.logoUrl}
             onChange={cambiarCampo}
             placeholder="https://..."
-            hint="Logo para fondos claros."
+            hint="Logo para fondos claros (al hacer scroll)."
           />
           <CampoTexto
             label="Logo claro URL"
@@ -631,7 +628,7 @@ function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
             value={form.logoClaroUrl}
             onChange={cambiarCampo}
             placeholder="https://..."
-            hint="Logo para fondos oscuros o al hacer scroll."
+            hint="Logo para fondos oscuros (inicio, sin scroll)."
           />
           </AdminEditorConPreview>
         </AdminModalBody>
@@ -657,7 +654,7 @@ function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
   );
 }
 
-function ModalFooter({ footer, onCerrar, onGuardar, guardando }) {
+function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
   const [form, setForm] = useState(() => ({ ...footerInicial, ...footer }));
 
   const cambiarCampo = (event) => {
@@ -692,8 +689,8 @@ function ModalFooter({ footer, onCerrar, onGuardar, guardando }) {
 
         <AdminModalBody cms>
           <AdminEditorConPreview
-            preview={<PreviewFooterLive form={form} />}
-            ayuda="Información de contacto y pie de página del sitio."
+            preview={<PreviewFooterLive form={form} enlaces={enlaces} />}
+            ayuda={"Informaci\u00f3n de contacto y pie de p\u00e1gina del sitio."}
           >
           <div className="grid gap-4 md:grid-cols-2">
             <CampoTexto
@@ -722,7 +719,7 @@ function ModalFooter({ footer, onCerrar, onGuardar, guardando }) {
 
           <div className="grid gap-4 md:grid-cols-2">
             <CampoTexto
-              label="Telefono"
+              label={"Tel\u00e9fono"}
               name="telefono"
               value={form.telefono}
               onChange={cambiarCampo}
@@ -734,7 +731,7 @@ function ModalFooter({ footer, onCerrar, onGuardar, guardando }) {
               type="email"
               value={form.correo}
               onChange={cambiarCampo}
-              placeholder="contacto@cafeuna.com"
+              placeholder="correo@ejemplo.com"
             />
           </div>
 
@@ -768,7 +765,7 @@ function ModalFooter({ footer, onCerrar, onGuardar, guardando }) {
             name="textoCopyright"
             value={form.textoCopyright}
             onChange={cambiarCampo}
-            placeholder="© 2026 Cafe UNA. Todos los derechos reservados."
+            placeholder="Ej. © 2026 Nombre del sitio. Todos los derechos reservados."
           />
           </AdminEditorConPreview>
         </AdminModalBody>
@@ -857,7 +854,7 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
         <AdminModalBody cms className="space-y-5">
           <AdminEditorConPreview
             preview={<PreviewEnlaces items={items} />}
-            ayuda={`Gestioná los enlaces de ${config.titulo.toLowerCase()}.`}
+            ayuda={`Gestion\u00e1 los enlaces de ${config.titulo.toLowerCase()}.`}
           >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Enlaces actuales</p>
@@ -995,6 +992,12 @@ function mapSeccionInicio(data) {
   };
 }
 
+function tituloVisibleSeccion(data, config) {
+  const titulo = typeof data?.title === "string" ? data.title.trim() : "";
+  const etiqueta = typeof data?.eyebrow === "string" ? data.eyebrow.trim() : "";
+  return titulo || etiqueta || config.tituloTarjeta;
+}
+
 function resumenSeccionInicio(data, config) {
   if (data.title) return data.title;
   if (data.description) return data.description;
@@ -1021,7 +1024,7 @@ const AdminInformacionPaginaPrincipal = () => {
     }
   })();
   const actorRoles = Array.isArray(actor?.roles) ? actor.roles : [];
-  const esSuperAdmin = actorRoles.some((rol) => String(rol).toLowerCase() === "superadmin");
+  const esSuperAdmin = tienePermiso(actorRoles, "inactivar_informacion");
 
   const [hero, setHero] = useState(heroInicial);
   const [seccionesInicio, setSeccionesInicio] = useState({
@@ -1061,9 +1064,9 @@ const AdminInformacionPaginaPrincipal = () => {
 
   const cargando = status === "loading";
   const error = status === "error"
-    ? loadError || "No se pudo cargar la informacion principal."
+    ? loadError || "No se pudo cargar la informaci\u00f3n principal."
     : data?.hasError
-      ? "No se pudo cargar la informacion principal."
+      ? "No se pudo cargar la informaci\u00f3n principal."
       : "";
 
   const guardarHero = async (form) => {
@@ -1089,7 +1092,7 @@ const AdminInformacionPaginaPrincipal = () => {
       }));
       setEditando(null);
     } catch (err) {
-      alert(err.message || "No se pudo guardar la seccion del inicio.");
+      alert(err.message || "No se pudo guardar la secci\u00f3n del inicio.");
     } finally {
       setGuardando(false);
     }
@@ -1207,14 +1210,14 @@ const AdminInformacionPaginaPrincipal = () => {
   const resumenFooter = footer.fraseMarca
     || footer.correo
     || footer.telefono
-    || "Sin informacion de contacto configurada.";
+    || "Sin informaci\u00f3n de contacto configurada.";
 
   const resumenEnlacesNavbar = enlacesNavbar.length
-    ? `${enlacesNavbar.length} enlace${enlacesNavbar.length === 1 ? "" : "s"} en el menu superior.`
+    ? `${enlacesNavbar.length} enlace${enlacesNavbar.length === 1 ? "" : "s"} en el men\u00fa superior.`
     : CONFIG_ENLACES["enlaces-navbar"].descripcionVacia;
 
   const resumenEnlacesFooter = enlacesFooter.length
-    ? `${enlacesFooter.length} enlace${enlacesFooter.length === 1 ? "" : "s"} en la seccion Explorar.`
+    ? `${enlacesFooter.length} enlace${enlacesFooter.length === 1 ? "" : "s"} en la secci\u00f3n Explorar.`
     : CONFIG_ENLACES["enlaces-footer"].descripcionVacia;
 
   const seccionesPaginaPrincipal = useMemo(() => {
@@ -1231,8 +1234,8 @@ const AdminInformacionPaginaPrincipal = () => {
       { id: "hero", busqueda: ["Hero section", hero.title, hero.subtitle] },
       ...seccionesInicioItems,
       { id: "tarjetas-inicio", busqueda: ["Mini formularios", "Inicio", resumenTarjetasInicio] },
-      { id: "navbar", busqueda: ["Navbar", "Barra de navegacion", resumenNavbar] },
-      { id: "footer", busqueda: ["Footer", "Pie de pagina", resumenFooter] },
+      { id: "navbar", busqueda: ["Navbar", "Barra de navegaci\u00f3n", resumenNavbar] },
+      { id: "footer", busqueda: ["Footer", "Pie de p\u00e1gina", resumenFooter] },
       {
         id: "enlaces-navbar",
         busqueda: [
@@ -1286,9 +1289,7 @@ const AdminInformacionPaginaPrincipal = () => {
         </div>
 
         {cargando ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">
-            Cargando informacion...
-          </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">{"Cargando informaci\u00f3n..."}</div>
         ) : error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-sm font-semibold text-red-700">
             {error}
@@ -1319,7 +1320,7 @@ const AdminInformacionPaginaPrincipal = () => {
             {idsVisibles.has("hero") ? (
             <AdminSeccionCard
               etiqueta="Hero section"
-              titulo="Hero section"
+              titulo={hero.title || "Hero section"}
               icono={Image}
               onEditar={() => setEditando("hero")}
             />
@@ -1330,7 +1331,7 @@ const AdminInformacionPaginaPrincipal = () => {
               <AdminSeccionCard
                 key={clave}
                 etiqueta={config.etiqueta}
-                titulo={config.tituloTarjeta}
+                titulo={tituloVisibleSeccion(seccionesInicio[clave], config)}
                 icono={config.icon}
                 onEditar={() => setEditando(clave)}
               />
@@ -1349,7 +1350,7 @@ const AdminInformacionPaginaPrincipal = () => {
             {idsVisibles.has("navbar") ? (
             <AdminSeccionCard
               etiqueta="Navbar"
-              titulo="Barra de navegacion"
+              titulo={"Barra de navegaci\u00f3n"}
               icono={LayoutTemplate}
               onEditar={() => setEditando("navbar")}
             />
@@ -1358,7 +1359,7 @@ const AdminInformacionPaginaPrincipal = () => {
             {idsVisibles.has("footer") ? (
             <AdminSeccionCard
               etiqueta="Footer"
-              titulo="Pie de pagina"
+              titulo={"Pie de p\u00e1gina"}
               icono={PanelBottom}
               onEditar={() => setEditando("footer")}
             />
@@ -1423,7 +1424,13 @@ const AdminInformacionPaginaPrincipal = () => {
       ) : null}
 
       {editando === "footer" ? (
-        <ModalFooter footer={footer} onCerrar={() => setEditando(null)} onGuardar={guardarFooter} guardando={guardando} />
+        <ModalFooter
+          footer={footer}
+          enlaces={enlacesFooter}
+          onCerrar={() => setEditando(null)}
+          onGuardar={guardarFooter}
+          guardando={guardando}
+        />
       ) : null}
 
       {editando === "enlaces-navbar" ? (

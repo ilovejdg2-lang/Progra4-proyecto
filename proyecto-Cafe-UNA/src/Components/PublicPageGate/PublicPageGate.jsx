@@ -3,7 +3,7 @@ import { contactSupportMessage, sanitizeUserFacingError } from '../../lib/formLi
 
 export function PublicPageGate({
   showLoading,
-  loadingMessage = 'Cargando página...',
+  loadingMessage = 'Cargando p\u00e1gina...',
   isError = false,
   error,
   errorMessage,
@@ -21,7 +21,7 @@ export function PublicPageGate({
     return (
       <PageLoading
         isError
-        message={sanitizeUserFacingError(error) || errorMessage || 'No se pudo cargar la página.'}
+        message={sanitizeUserFacingError(error) || errorMessage || 'No se pudo cargar la p\u00e1gina.'}
         detail={contactSupportMessage()}
         onRetry={onRetry}
       />

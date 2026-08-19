@@ -1131,7 +1131,10 @@
   }
 
   .navbar__cart .dropdown--cart-panel {
-    width: 100vw;
+    width: 100%;
+    max-width: 100%;
+    left: 0;
+    right: 0;
   }
 }
 

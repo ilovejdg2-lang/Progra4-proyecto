@@ -9,8 +9,3 @@ export function useAdminPageGate(pathname, isReady) {
     loadingMessage: getLoadingMessageForPathname(pathname),
   };
 }
-
-/** @deprecated Usar useAdminPageGate */
-export function useAdminPageLoadingGate(pathname, isReady) {
-  return usePublicPageLoadingGate(pathname, isReady);
-}

@@ -7,10 +7,10 @@ function buildMessage({ nombre, quantity } = {}) {
   const units = Number(quantity) || 1;
 
   if (units > 1) {
-    return `${label} añadido al carrito (${units} unidades)`;
+    return `${label} a\u00f1adido al carrito (${units} unidades)`;
   }
 
-  return `${label} añadido al carrito`;
+  return `${label} a\u00f1adido al carrito`;
 }
 
 export default function CartAddedToast() {

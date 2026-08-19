@@ -53,7 +53,7 @@ function PasswordField({
         type="button"
         className="login-password-toggle"
         onClick={onToggle}
-        aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+        aria-label={visible ? 'Ocultar contrase\u00f1a' : 'Mostrar contrase\u00f1a'}
       >
         <Icon className="login-password-icon" aria-hidden="true" />
       </button>
@@ -121,7 +121,7 @@ const Login = () => {
     nuevaPassword: '',
     confirmPassword: '',
   });
-  const successLooksLikeError = successMessage.toLowerCase().includes('no hay ningún usuario')
+  const successLooksLikeError = successMessage.toLowerCase().includes('no hay ning\u00fan usuario')
     || successMessage.toLowerCase().includes('no hay ningun usuario');
 
   useEffect(() => {
@@ -159,9 +159,9 @@ const Login = () => {
     }
 
     if (!password) {
-      nextErrors.password = 'Ingrese su contraseña.';
+      nextErrors.password = 'Ingrese su contrase\u00f1a.';
     } else if (password.length > MAX_PASSWORD) {
-      nextErrors.password = `La contraseña no puede tener más de ${MAX_PASSWORD} caracteres.`;
+      nextErrors.password = `La contrase\u00f1a no puede tener m\u00e1s de ${MAX_PASSWORD} caracteres.`;
     }
 
     setFieldErrors(nextErrors);
@@ -196,7 +196,7 @@ const Login = () => {
       sessionStorage.removeItem('postLoginRedirect');
       window.location.href = redirectTo;
     } catch (err) {
-      setFormError(sanitizeUserFacingError(err.message || 'Ocurrió un error al iniciar sesión.'));
+      setFormError(sanitizeUserFacingError(err.message || 'Ocurri\u00f3 un error al iniciar sesi\u00f3n.'));
     } finally {
       setIsLoading(false);
     }
@@ -222,7 +222,7 @@ const Login = () => {
     };
 
     if (registerForm.password && registerForm.password !== registerForm.confirmPassword) {
-      nextErrors.confirmPassword = 'Las contraseñas no coinciden.';
+      nextErrors.confirmPassword = 'Las contrase\u00f1as no coinciden.';
     }
 
     setRegisterFieldErrors(nextErrors);
@@ -246,7 +246,7 @@ const Login = () => {
         password: registerForm.password,
       });
       setRegisterEmailSent(result?.emailSent !== false);
-      setSuccessMessage(result?.message || 'Revisa tu correo e ingresa el codigo de verificacion.');
+      setSuccessMessage(result?.message || 'Revisa tu correo e ingresa el c\u00f3digo de verificaci\u00f3n.');
       setRegisterStep('verify');
     } catch (err) {
       setFormError(sanitizeUserFacingError(err.message || 'No se pudo registrar la cuenta.'));
@@ -292,7 +292,7 @@ const Login = () => {
     setSuccessMessage('');
 
     if (!registerForm.correo.trim() || !registerForm.token.trim()) {
-      setFormError('Ingrese el codigo recibido en su correo.');
+      setFormError('Ingrese el c\u00f3digo recibido en su correo.');
       return;
     }
 
@@ -319,7 +319,7 @@ const Login = () => {
     setSuccessMessage('');
 
     if (!recoverForm.identifier.trim()) {
-      setFormError('Ingrese su correo o usuario para recuperar la contraseña.');
+      setFormError('Ingrese su correo o usuario para recuperar la contrase\u00f1a.');
       return;
     }
 
@@ -330,10 +330,10 @@ const Login = () => {
         setSuccessMessage(result?.message || 'Solicitud enviada.');
         setRecoverForm((prev) => ({ ...prev, token: '', nuevaPassword: '', confirmPassword: '' }));
       } else {
-        setFormError(result?.message || 'No hay ningún usuario con ese correo o nombre de usuario.');
+        setFormError(result?.message || 'No hay ning\u00fan usuario con ese correo o nombre de usuario.');
       }
     } catch (err) {
-      setFormError(err.message || 'No se pudo iniciar la recuperación.');
+      setFormError(err.message || 'No se pudo iniciar la recuperaci\u00f3n.');
     } finally {
       setIsLoading(false);
     }
@@ -346,13 +346,13 @@ const Login = () => {
 
     const nextErrors = {
       nuevaPassword: !recoverForm.token.trim()
-        ? 'Ingrese el código recibido en su correo.'
+        ? 'Ingrese el c\u00f3digo recibido en su correo.'
         : validatePassword(recoverForm.nuevaPassword),
       confirmPassword: '',
     };
 
     if (recoverForm.nuevaPassword && recoverForm.nuevaPassword !== recoverForm.confirmPassword) {
-      nextErrors.confirmPassword = 'Las contraseñas no coinciden.';
+      nextErrors.confirmPassword = 'Las contrase\u00f1as no coinciden.';
     }
 
     if (nextErrors.nuevaPassword || nextErrors.confirmPassword) {
@@ -368,11 +368,11 @@ const Login = () => {
         token: recoverForm.token.trim(),
         nuevaPassword: recoverForm.nuevaPassword,
       });
-      setSuccessMessage(result?.message || 'Contraseña actualizada correctamente.');
+      setSuccessMessage(result?.message || 'Contrase\u00f1a actualizada correctamente.');
       setRecoverForm({ identifier: '', token: '', nuevaPassword: '', confirmPassword: '' });
       setMode('login');
     } catch (err) {
-      setFormError(err.message || 'No se pudo restablecer la contraseña.');
+      setFormError(err.message || 'No se pudo restablecer la contrase\u00f1a.');
     } finally {
       setIsLoading(false);
     }
@@ -398,11 +398,11 @@ const Login = () => {
           {logoUrl ? (
             <img
               src={normalizeImageUrl(logoUrl, { width: 320 })}
-              alt="Café UNA"
+              alt={"Caf\u00e9 UNA"}
               className="login-logo"
             />
           ) : (
-            <span className="login-brand-text">Café UNA</span>
+            <span className="login-brand-text">{"Caf\u00e9 UNA"}</span>
           )}
         </div>
 
@@ -439,7 +439,7 @@ const Login = () => {
           </div>
 
           <div className="login-field">
-            <label htmlFor="password">Contraseña</label>
+            <label htmlFor="password">{"Contrase\u00f1a"}</label>
             <PasswordField
               id="password"
               visible={visiblePasswords.login}
@@ -459,9 +459,7 @@ const Login = () => {
                 {fieldErrors.password}
               </p>
             )}
-            <button type="button" className="login-forgot-link" onClick={() => switchMode('recover')}>
-              ¿Olvidó su contraseña?
-            </button>
+            <button type="button" className="login-forgot-link" onClick={() => switchMode('recover')}>{"\u00bfOlvid\u00f3 su contrase\u00f1a?"}</button>
           </div>
 
           <button type="submit" className="login-button" disabled={isLoading}>
@@ -509,7 +507,7 @@ const Login = () => {
               ) : null}
             </div>
             <div className="login-field">
-              <label htmlFor="passwordRegistro">Contraseña</label>
+              <label htmlFor="passwordRegistro">{"Contrase\u00f1a"}</label>
               <PasswordField
                 id="passwordRegistro"
                 visible={visiblePasswords.register}
@@ -529,7 +527,7 @@ const Login = () => {
               ) : null}
             </div>
             <div className="login-field">
-              <label htmlFor="confirmPasswordRegistro">Confirmar contraseña</label>
+              <label htmlFor="confirmPasswordRegistro">{"Confirmar contrase\u00f1a"}</label>
               <PasswordField
                 id="confirmPasswordRegistro"
                 visible={visiblePasswords.registerConfirm}
@@ -549,18 +547,15 @@ const Login = () => {
               ) : null}
             </div>
             <button type="submit" className="login-button" disabled={isLoading}>
-              {isLoading ? 'Enviando código...' : 'REGISTRARME'}
+              {isLoading ? 'Enviando c\u00f3digo...' : 'REGISTRARME'}
             </button>
-            <button type="button" className="login-alt-link" onClick={() => switchMode('login')}>
-              Volver a iniciar sesión
-            </button>
+            <button type="button" className="login-alt-link" onClick={() => switchMode('login')}>{"Volver a iniciar sesi\u00f3n"}</button>
           </form>
           ) : (
           <form className="login-form" onSubmit={handleVerifyRegistration} noValidate>
             <p className="login-verify-hint">
               {registerEmailSent ? (
-                <>
-                  Enviamos un codigo a <strong>{registerForm.correo}</strong>. Ingresalo para activar tu cuenta.
+                <>{"Enviamos un c\u00f3digo a "}<strong>{registerForm.correo}</strong>{". Ingr\u00e9salo para activar tu cuenta."}
                   {' '}Si no lo ve, revise la carpeta de <strong>spam</strong> o <strong>correo no deseado</strong> (comun en Yahoo y Gmail).
                 </>
               ) : (
@@ -617,7 +612,7 @@ const Login = () => {
 
             <form className="login-form login-form--compact" onSubmit={handleResetPassword} noValidate>
               <div className="login-field">
-                <label htmlFor="recoverToken">Código recibido</label>
+                <label htmlFor="recoverToken">{"C\u00f3digo recibido"}</label>
                 <input
                   id="recoverToken"
                   type="text"
@@ -627,7 +622,7 @@ const Login = () => {
                 />
               </div>
               <div className="login-field">
-                <label htmlFor="newPassword">Nueva contraseña</label>
+                <label htmlFor="newPassword">{"Nueva contrase\u00f1a"}</label>
                 <PasswordField
                   id="newPassword"
                   visible={visiblePasswords.recoverNew}
@@ -647,7 +642,7 @@ const Login = () => {
                 ) : null}
               </div>
               <div className="login-field">
-                <label htmlFor="confirmNewPassword">Confirmar nueva contraseña</label>
+                <label htmlFor="confirmNewPassword">{"Confirmar nueva contrase\u00f1a"}</label>
                 <PasswordField
                   id="confirmNewPassword"
                   visible={visiblePasswords.recoverConfirm}
@@ -669,16 +664,14 @@ const Login = () => {
               <button type="submit" className="login-button" disabled={isLoading}>
                 ACTUALIZAR
               </button>
-              <button type="button" className="login-alt-link" onClick={() => switchMode('login')}>
-                Volver a iniciar sesión
-              </button>
+              <button type="button" className="login-alt-link" onClick={() => switchMode('login')}>{"Volver a iniciar sesi\u00f3n"}</button>
             </form>
           </div>
         ) : null}
 
         {mode === 'login' ? (
           <p className="login-register">
-            ¿No tiene una cuenta?
+            {"\u00bfNo tiene una cuenta?"}
             {' '}
             <button type="button" className="login-register-link" onClick={() => switchMode('register')}>
               Registrarse

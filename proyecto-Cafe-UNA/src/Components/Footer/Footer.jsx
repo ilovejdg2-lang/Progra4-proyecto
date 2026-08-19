@@ -105,7 +105,7 @@ const Footer = () => {
             {footer?.mapsUrl ? (
               <a href={footer.mapsUrl} target="_blank" rel="noreferrer" className="footer__contact-item">
                 <MapPin className="footer__contact-icon" aria-hidden="true" />
-                <span>Ubicacion</span>
+                <span>{"Ubicaci\u00f3n"}</span>
               </a>
             ) : null}
           </section>
