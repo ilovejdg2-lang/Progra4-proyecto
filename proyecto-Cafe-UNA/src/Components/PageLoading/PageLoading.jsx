@@ -31,7 +31,7 @@ function removeGlobalLoading() {
 }
 
 const PageLoading = ({
-  message = 'Cargando página...',
+  message = 'Cargando p\u00e1gina...',
   detail = '',
   isError = false,
   onRetry,

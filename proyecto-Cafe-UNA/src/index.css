@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist/wght.css";
 @import "./styles/public.css";
+@import "./styles/siteCanvas.css";
 
 @custom-variant dark (&:is(.dark *));
 :root {
@@ -63,6 +64,7 @@
 html {
   height: 100%;
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
@@ -72,6 +74,8 @@ body {
   flex-direction: column;
   font-family: var(--sans);
   background: #ffffff;
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 body.admin-route-active {

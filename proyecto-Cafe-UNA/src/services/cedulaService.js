@@ -7,7 +7,7 @@ export async function consultarCedula(numero) {
   return apiRequest(`${BASE_URL}/${encodeURIComponent(normalizado)}`, {
     skipAuth: true,
     timeout: 35000,
-    errorPrefix: "No se pudo consultar la cédula",
-    timeoutMessage: "Tiempo de espera agotado al consultar la cédula.",
+    errorPrefix: "No se pudo consultar la c\u00e9dula",
+    timeoutMessage: "Tiempo de espera agotado al consultar la c\u00e9dula.",
   });
 }

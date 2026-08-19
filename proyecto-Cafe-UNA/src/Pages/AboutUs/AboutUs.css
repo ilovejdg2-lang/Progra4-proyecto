@@ -94,7 +94,7 @@
   color: var(--about-muted);
 }
 
-@media (max-width: 640px) {
+@container site-canvas (max-width: 640px) {
   .about-page__values {
     gap: 0.65rem;
   }

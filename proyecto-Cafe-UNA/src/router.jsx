@@ -29,6 +29,7 @@ const AdminInformacionSobreNosotros = lazy(() => import("./Pages/Admin/Informaci
 const AdminInventarioProducto = lazy(() => import("./Pages/Admin/InventarioProducto/InventarioProducto"));
 const AdminVoluntariado = lazy(() => import("./Pages/Admin/Voluntariado/Voluntariado"));
 const AdminUsuarios = lazy(() => import("./Pages/Admin/Usuarios/Usuarios"));
+const AdminAuditoria = lazy(() => import("./Pages/Admin/Auditoria/Auditoria"));
 const Checkout = lazy(() => import("./Pages/Checkout/Checkout"));
 const Perfil = lazy(() => import("./Pages/Perfil/Perfil"));
 const AdminPerfil = lazy(() => import("./Pages/Admin/Perfil/AdminPerfil"));
@@ -41,7 +42,7 @@ function HomeRouteLoading() {
     return <PageLoading message="Cargando inicio..." />;
 }
 
-function SiteRouteLoading({ message = 'Cargando página...', cacheKey }) {
+function SiteRouteLoading({ message = 'Cargando p\u00e1gina...', cacheKey }) {
     if (cacheKey && isPageInstantReady(cacheKey)) {
         return null;
     }
@@ -215,6 +216,11 @@ const adminUsuariosRoute = createRoute({
     path: "/admin/usuarios",
     component: AdminUsuarios,
 })
+const adminAuditoriaRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/auditoria",
+    component: AdminAuditoria,
+})
 const productsRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/productos",
@@ -259,13 +265,13 @@ const routeTree= rootRoute.addChildren([
     adminProductoRoute,
     adminVoluntariadoRoute,
     adminUsuariosRoute,
+    adminAuditoriaRoute,
     productsRoute,
     productDetailRoute,
     checkoutRoute,
     voluntariadoSolicitarRoute,
     perfilRoute,
-    adminPerfilRoute
-   // voluntariadoMisSolicitudesRoute
+    adminPerfilRoute,
 ])
 export const router = createRouter({
     routeTree
