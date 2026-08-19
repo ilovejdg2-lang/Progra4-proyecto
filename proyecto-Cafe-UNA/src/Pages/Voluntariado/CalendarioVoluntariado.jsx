@@ -194,7 +194,7 @@ function SelectorFecha({ name, value, onChange, min, placeholder = "Seleccionar 
                 onClick={() => seleccionar(celda.iso)}
                 aria-label={
                   celda.esMesActual
-                    ? `Día ${celda.dia}${celda.seleccionado ? ", seleccionado" : ""}`
+                    ? `D\u00eda ${celda.dia}${celda.seleccionado ? ", seleccionado" : ""}`
                     : undefined
                 }
               >
@@ -289,7 +289,7 @@ function CalendarioVoluntariado({
             onClick={() => onToggleFecha(celda.iso)}
             aria-label={
               celda.esMesActual
-                ? `Día ${celda.dia}${celda.seleccionado ? ", seleccionado" : ""}`
+                ? `D\u00eda ${celda.dia}${celda.seleccionado ? ", seleccionado" : ""}`
                 : undefined
             }
           >
@@ -300,12 +300,12 @@ function CalendarioVoluntariado({
 
       {fechasSeleccionadas.length > 0 ? (
         <p className="calendario-voluntariado__resumen">
-          {fechasSeleccionadas.length} día
+          {fechasSeleccionadas.length} {"d\u00eda"}
           {fechasSeleccionadas.length !== 1 ? "s" : ""} marcado
           {fechasSeleccionadas.length !== 1 ? "s" : ""}
         </p>
       ) : (
-        <p className="calendario-voluntariado__hint">Seleccione sus días disponibles</p>
+        <p className="calendario-voluntariado__hint">{"Seleccione sus d\u00edas disponibles"}</p>
       )}
     </div>
   );

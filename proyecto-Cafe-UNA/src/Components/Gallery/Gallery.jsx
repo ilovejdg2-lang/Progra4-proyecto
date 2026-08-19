@@ -31,8 +31,8 @@ function getGalleryItemClassName(index, count) {
 const Gallery = ({
   items = [],
   pageSize = DEFAULT_PAGE_SIZE,
-  title = 'Galería de fotos',
-  ariaLabel = 'Galería de fotos',
+  title = 'Galer\u00eda de fotos',
+  ariaLabel = 'Galer\u00eda de fotos',
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeIndex, setActiveIndex] = useState(null);
@@ -115,7 +115,7 @@ const Gallery = ({
               >
                 <OptimizedImage
                   src={item.image}
-                  alt={item.title || 'Imagen de galería'}
+                  alt={item.title || 'Imagen de galer\u00eda'}
                   priority={index === 0 && currentPage === 1}
                   className="gallery__media"
                 />
@@ -129,13 +129,13 @@ const Gallery = ({
       </div>
 
       {totalPages > 1 ? (
-        <nav className="pagination gallery__pagination" aria-label="Paginación de galería">
+        <nav className="pagination gallery__pagination" aria-label={"Paginaci\u00f3n de galer\u00eda"}>
           <button
             type="button"
             className="pagination__button"
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage === 1}
-            aria-label="Página anterior"
+            aria-label={"P\u00e1gina anterior"}
           >
             ‹
           </button>
@@ -158,7 +158,7 @@ const Gallery = ({
             className="pagination__button"
             onClick={() => goToPage(currentPage + 1)}
             disabled={currentPage === totalPages}
-            aria-label="Página siguiente"
+            aria-label={"P\u00e1gina siguiente"}
           >
             ›
           </button>
@@ -202,7 +202,7 @@ const Gallery = ({
             <figure className="gallery-lightbox__figure">
               <img
                 src={activeImageUrl}
-                alt={activeItem.title || 'Imagen de galería'}
+                alt={activeItem.title || 'Imagen de galer\u00eda'}
                 className="gallery-lightbox__image"
               />
               {activeItem.title ? (

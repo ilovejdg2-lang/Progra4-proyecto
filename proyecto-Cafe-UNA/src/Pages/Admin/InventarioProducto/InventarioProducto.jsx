@@ -5,15 +5,18 @@ import { Pencil, Power, Star, Trash2, X } from "lucide-react";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
+import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
+import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import {
   actualizarProducto,
   crearProducto,
   eliminarProducto,
   obtenerProductos,
   calcularPrecioConIVA,
-} from "../../../services/productosServices";
+} from "../../../services/productosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
+import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
 import {
   contactSupportMessage,
   hasFieldErrors,
@@ -198,7 +201,7 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
       const message = sanitizeUserFacingError(err?.message || "No se pudo guardar el producto.");
       if (message.toLowerCase().includes("nombre")) {
         setFieldErrors((prev) => ({ ...prev, nombre: message }));
-      } else if (message.toLowerCase().includes("descripción") || message.toLowerCase().includes("descripcion")) {
+      } else if (message.toLowerCase().includes("descripci\u00f3n") || message.toLowerCase().includes("descripcion")) {
         setFieldErrors((prev) => ({ ...prev, descripcion: message }));
       } else {
         setSubmitError(message);
@@ -229,9 +232,7 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
           {fieldErrors.nombre ? <span className={fieldErrorCls}>{fieldErrors.nombre}</span> : null}
         </label>
 
-        <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-          Descripción
-          <textarea
+        <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">{"Descripci\u00f3n"}<textarea
             name="descripcion"
             value={form.descripcion}
             onChange={handleChange}
@@ -341,10 +342,11 @@ function etiquetaEstadoProducto(producto) {
 const accionBtnBase =
   "inline-flex items-center justify-center gap-1.5 rounded-lg border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
 
-function AccionesProducto({ producto, esSuperAdmin, onEditar, onToggleEstado, onEliminar, variant = "table" }) {
+function AccionesProducto({ producto, puedeEditar, puedeInactivar, puedeEliminar, onEditar, onToggleEstado, onEliminar, variant = "table" }) {
   const esDeshabilitado = producto.estado === "Deshabilitado";
   const esMovil = variant === "mobile";
   const bloquearInhabilitar = producto.esDestacado && !esDeshabilitado;
+  const mostrarExtras = puedeInactivar || puedeEliminar;
 
   const editarCls = `${accionBtnBase} border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 focus-visible:ring-amber-300`;
   const toggleCls = `${accionBtnBase} ${
@@ -354,58 +356,31 @@ function AccionesProducto({ producto, esSuperAdmin, onEditar, onToggleEstado, on
   }`;
   const eliminarCls = `${accionBtnBase} border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300`;
 
-  if (esMovil) {
-    return (
-      <div className={`grid gap-2 ${esSuperAdmin ? "grid-cols-3" : "grid-cols-1"}`}>
-        <button type="button" onClick={onEditar} className={`${editarCls} min-h-10 px-2 py-2`}>
-          <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
-          <span className="truncate">Editar</span>
-        </button>
-        {esSuperAdmin ? (
-          <>
-            <button
-              type="button"
-              onClick={onToggleEstado}
-              disabled={bloquearInhabilitar}
-              title={bloquearInhabilitar ? "Quita el destacado antes de deshabilitarlo" : undefined}
-              className={`${toggleCls} min-h-10 px-2 py-2 disabled:cursor-not-allowed disabled:opacity-50`}
-            >
-              <Power className="size-3.5 shrink-0" aria-hidden="true" />
-              <span className="truncate">{esDeshabilitado ? "Habilitar" : "Inhabilitar"}</span>
-            </button>
-            <button type="button" onClick={onEliminar} className={`${eliminarCls} min-h-10 px-2 py-2`}>
-              <Trash2 className="size-3.5 shrink-0" aria-hidden="true" />
-              <span className="truncate">Eliminar</span>
-            </button>
-          </>
-        ) : null}
-      </div>
-    );
-  }
-
   return (
-    <div className={`grid w-[11.5rem] gap-1.5 ${esSuperAdmin ? "grid-cols-2" : "grid-cols-1"}`}>
-      <button type="button" onClick={onEditar} className={`${editarCls} h-9 px-2.5`}>
-        <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
-        <span>Editar</span>
-      </button>
-      {esSuperAdmin ? (
-        <>
-          <button
-            type="button"
-            onClick={onToggleEstado}
-            disabled={bloquearInhabilitar}
-            title={bloquearInhabilitar ? "Quita el destacado antes de deshabilitarlo" : undefined}
-            className={`${toggleCls} h-9 px-2.5 disabled:cursor-not-allowed disabled:opacity-50`}
-          >
-            <Power className="size-3.5 shrink-0" aria-hidden="true" />
-            <span>{esDeshabilitado ? "Habilitar" : "Inhabilitar"}</span>
-          </button>
-          <button type="button" onClick={onEliminar} className={`${eliminarCls} col-span-2 h-9 px-2.5`}>
-            <Trash2 className="size-3.5 shrink-0" aria-hidden="true" />
-            <span>Eliminar</span>
-          </button>
-        </>
+    <div className={`grid gap-1.5 ${esMovil ? "gap-2" : "w-[11.5rem]"} ${mostrarExtras ? (esMovil ? "grid-cols-3" : "grid-cols-2") : "grid-cols-1"}`}>
+      {puedeEditar ? (
+        <button type="button" onClick={onEditar} className={`${editarCls} ${esMovil ? "min-h-10 px-2 py-2" : "h-9 px-2.5"}`}>
+          <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className={esMovil ? "truncate" : ""}>Editar</span>
+        </button>
+      ) : null}
+      {puedeInactivar ? (
+        <button
+          type="button"
+          onClick={onToggleEstado}
+          disabled={bloquearInhabilitar}
+          title={bloquearInhabilitar ? "Quita el destacado antes de deshabilitarlo" : undefined}
+          className={`${toggleCls} ${esMovil ? "min-h-10 px-2 py-2" : "h-9 px-2.5"} disabled:cursor-not-allowed disabled:opacity-50`}
+        >
+          <Power className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className={esMovil ? "truncate" : ""}>{esDeshabilitado ? "Habilitar" : "Inhabilitar"}</span>
+        </button>
+      ) : null}
+      {puedeEliminar ? (
+        <button type="button" onClick={onEliminar} className={`${eliminarCls} ${esMovil ? "min-h-10 px-2 py-2" : "col-span-2 h-9 px-2.5"}`}>
+          <Trash2 className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className={esMovil ? "truncate" : ""}>Eliminar</span>
+        </button>
       ) : null}
     </div>
   );
@@ -419,8 +394,11 @@ const AdminInventarioProducto = () => {
       return null;
     }
   })();
-  const actorRoles = Array.isArray(actor?.roles) ? actor.roles.map((rol) => String(rol).toLowerCase()) : [];
-  const esSuperAdmin = actorRoles.includes("superadmin");
+  const actorRoles = rolesDeUsuario(actor);
+  const puedeCrear = tienePermiso(actorRoles, "crear_productos");
+  const puedeEditar = tienePermiso(actorRoles, "actualizar_productos");
+  const puedeInactivar = tienePermiso(actorRoles, "inactivar_productos");
+  const puedeEliminar = tienePermiso(actorRoles, "crear_productos");
   const [productos, setProductos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -428,6 +406,25 @@ const AdminInventarioProducto = () => {
   const [productoEditar, setProductoEditar] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const { showLoading, loadingMessage } = useAdminPageGate('/admin/producto', !cargando);
+
+  const {
+    busqueda,
+    setBusqueda,
+    filtrados: productosFiltrados,
+    limpiar,
+    hayFiltrosActivos,
+    total,
+    visibles,
+  } = useAdminListaFiltros(productos, {
+    buscarEn: (producto) => [
+      producto.nombre,
+      producto.descripcion,
+      producto.estado,
+      producto.peso,
+      etiquetaEstadoProducto(producto).texto,
+      producto.esDestacado ? "destacado" : "",
+    ],
+  });
 
   const cargarProductos = async () => {
     try {
@@ -499,12 +496,12 @@ const AdminInventarioProducto = () => {
   };
 
   const handleEliminar = async (producto) => {
-    if (!esSuperAdmin) {
-      alert("Solo SuperAdmin puede eliminar productos.");
+    if (!puedeEliminar) {
+      alert("No tiene permiso para eliminar productos.");
       return;
     }
 
-    const confirmar = window.confirm(`¿Eliminar ${producto.nombre}?`);
+    const confirmar = window.confirm(`\u00bfEliminar ${producto.nombre}?`);
     if (!confirmar) return;
 
     try {
@@ -516,8 +513,8 @@ const AdminInventarioProducto = () => {
   };
 
   const handleToggleEstado = async (producto) => {
-    if (!esSuperAdmin) {
-      alert("Solo SuperAdmin puede habilitar o inhabilitar productos.");
+    if (!puedeInactivar) {
+      alert("No tiene permiso para habilitar o inhabilitar productos.");
       return;
     }
 
@@ -617,12 +614,13 @@ const AdminInventarioProducto = () => {
         <div className="flex flex-col gap-4 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <div>
             <h1 className="text-xl font-semibold text-slate-950 sm:text-2xl">Productos</h1>
-            <p className="mt-1 text-sm text-slate-500">Administración de inventario</p>
+            <p className="mt-1 text-sm text-slate-500">{"Administraci\u00f3n de inventario"}</p>
             <p className="mt-1 text-xs text-slate-400">
               Destacados en inicio: {destacadosEnUso}/{MAX_PRODUCTOS_DESTACADOS}
             </p>
           </div>
 
+          {puedeCrear ? (
           <button
             type="button"
             onClick={() => setModalCrear(true)}
@@ -630,10 +628,25 @@ const AdminInventarioProducto = () => {
           >
             + Nuevo producto
           </button>
+          ) : null}
         </div>
+
+        {!cargando && !error && productos.length > 0 ? (
+          <AdminListaToolbar
+            busqueda={busqueda}
+            onBusquedaChange={setBusqueda}
+            placeholder={"Buscar por nombre, descripci\u00f3n, estado o peso..."}
+            total={total}
+            visibles={visibles}
+            hayFiltrosActivos={hayFiltrosActivos}
+            onLimpiar={limpiar}
+          />
+        ) : null}
 
         {productos.length === 0 ? (
           <div className="px-4 py-14 text-center text-sm text-slate-500 sm:px-6">No hay productos registrados.</div>
+        ) : productosFiltrados.length === 0 ? (
+          <AdminListaVacia onLimpiar={limpiar} />
         ) : (
           <>
             <div className="hidden overflow-x-auto md:block">
@@ -650,7 +663,7 @@ const AdminInventarioProducto = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {productos.map((producto) => {
+                  {productosFiltrados.map((producto) => {
                     const estadoProducto = etiquetaEstadoProducto(producto);
 
                     return (
@@ -702,7 +715,9 @@ const AdminInventarioProducto = () => {
                       <td className="px-6 py-4 align-top">
                         <AccionesProducto
                           producto={producto}
-                          esSuperAdmin={esSuperAdmin}
+                          puedeEditar={puedeEditar}
+                          puedeInactivar={puedeInactivar}
+                          puedeEliminar={puedeEliminar}
                           onEditar={() => setProductoEditar(producto)}
                           onToggleEstado={() => handleToggleEstado(producto)}
                           onEliminar={() => handleEliminar(producto)}
@@ -716,7 +731,7 @@ const AdminInventarioProducto = () => {
             </div>
 
             <div className="divide-y divide-slate-100 md:hidden">
-              {productos.map((producto) => {
+              {productosFiltrados.map((producto) => {
                 const estadoProducto = etiquetaEstadoProducto(producto);
 
                 return (
@@ -768,7 +783,9 @@ const AdminInventarioProducto = () => {
 
                   <AccionesProducto
                     producto={producto}
-                    esSuperAdmin={esSuperAdmin}
+                    puedeEditar={puedeEditar}
+                    puedeInactivar={puedeInactivar}
+                    puedeEliminar={puedeEliminar}
                     variant="mobile"
                     onEditar={() => setProductoEditar(producto)}
                     onToggleEstado={() => handleToggleEstado(producto)}

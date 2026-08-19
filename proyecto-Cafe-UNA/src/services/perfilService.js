@@ -1,6 +1,6 @@
 import { apiRequest } from "./apiClient";
 import { getActiveSessionUser, getStoredUser, isSessionExpired } from "./sessionService";
-import { obtenerUsuarioPorId } from "./usuariosServices";
+import { obtenerUsuarioPorId } from "./usuariosService";
 
 const BASE_URL = `${import.meta.env.BACKEND_URL}/perfil`;
 const CACHE_TTL_MS = 5 * 60 * 1000;

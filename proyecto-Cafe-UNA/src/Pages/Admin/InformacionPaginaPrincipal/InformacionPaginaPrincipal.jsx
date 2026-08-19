@@ -1,11 +1,24 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Coffee, ClipboardList, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Sparkles, Trash2, Users, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
+import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import {
+  AdminEditorConPreview,
+  PreviewEnlaces,
+  PreviewFooterLive,
+  PreviewHeroLive,
+  PreviewHomeSectionLive,
+  PreviewNavbarLive,
+  PreviewTarjetasInicioLive,
+} from "../../../Components/Admin/ui/AdminCmsPreview";
+import { AdminSeccionCard } from "../../../Components/Admin/ui/AdminSeccionCard";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
+import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import { useCachedPageData } from "../../../hooks/useCachedPageData";
+import { filtrarPorBusqueda } from "../../../lib/adminListaFiltros";
 import { fetchAdminMainPageData } from "../../../lib/adminMainPageData";
 import { mapHero } from "../../../lib/heroData";
 import {
@@ -17,10 +30,9 @@ import {
   crearEnlace,
   eliminarEnlace,
   obtenerEnlaces,
-  obtenerSeccion,
-  obtenerTarjetasInicio,
 } from "../../../services/informacionService";
 import { getActiveSessionUser } from "../../../services/sessionService";
+import { tienePermiso } from "../../../lib/permisos";
 
 const heroInicial = {
   eyebrow: "",
@@ -45,61 +57,61 @@ const seccionInicioVacia = {
 const CONFIG_SECCIONES_INICIO = {
   homeSpotlight: {
     etiqueta: "Inicio",
-    tituloTarjeta: "Conocé más sobre Café UNA",
-    modalTitle: "Conocé más sobre Café UNA",
-    ayuda: "Bloque del inicio que invita a visitar Sobre nosotros. No usa la mision ni la galeria.",
+    tituloTarjeta: "Sobre nosotros (inicio)",
+    modalTitle: "Sobre nosotros (inicio)",
+    ayuda: "Bloque del inicio que invita a visitar Sobre nosotros. No usa la misi\u00f3n ni la galer\u00eda.",
     icon: Sparkles,
     showEyebrow: false,
     showImage: true,
-    titleLabel: "Titulo",
+    titleLabel: "T\u00edtulo",
     descriptionLabel: "Texto breve",
     showLinkUrl: true,
     showLinkText: true,
-    linkUrlLabel: "Enlace del boton",
-    linkTextLabel: "Texto del boton",
+    linkUrlLabel: "Enlace del bot\u00f3n",
+    linkTextLabel: "Texto del bot\u00f3n",
   },
   homeFeatured: {
     etiqueta: "Inicio",
-    tituloTarjeta: "Descubrí nuestra selección de cafés",
-    modalTitle: "Descubrí nuestra selección de cafés",
-    ayuda: "Encabezado de la seccion de productos destacados en el inicio.",
+    tituloTarjeta: "Productos destacados",
+    modalTitle: "Productos destacados",
+    ayuda: "Encabezado de la secci\u00f3n de productos destacados en el inicio.",
     icon: Coffee,
     showEyebrow: false,
     showImage: false,
-    titleLabel: "Titulo",
+    titleLabel: "T\u00edtulo",
     descriptionLabel: "Texto introductorio",
     showLinkUrl: true,
     showLinkText: true,
-    linkUrlLabel: "Enlace del boton",
-    linkTextLabel: "Texto del boton",
+    linkUrlLabel: "Enlace del bot\u00f3n",
+    linkTextLabel: "Texto del bot\u00f3n",
   },
   homeIniciativas: {
     etiqueta: "Inicio",
-    tituloTarjeta: "Participá con nosotros",
-    modalTitle: "Cada aporte, visita o colaboración deja una huella especial",
-    ayuda: "Texto principal de la seccion de iniciativas (donaciones, visitas y voluntariado).",
+    tituloTarjeta: "Iniciativas",
+    modalTitle: "Iniciativas",
+    ayuda: "Texto principal de la secci\u00f3n de iniciativas (donaciones, visitas y voluntariado).",
     icon: Users,
     showEyebrow: true,
     showImage: false,
     eyebrowLabel: "Etiqueta superior",
-    titleLabel: "Titulo principal",
-    descriptionLabel: "Subtitulo",
+    titleLabel: "T\u00edtulo principal",
+    descriptionLabel: "Subt\u00edtulo",
   },
   homeLocation: {
     etiqueta: "Inicio",
-    tituloTarjeta: "Visitanos en la Finca Experimental Santa Lucia",
-    modalTitle: "Visitanos en la Finca Experimental Santa Lucia",
-    ayuda: "Texto y enlace de Google Maps de la seccion de ubicacion en el inicio.",
+    tituloTarjeta: "Ubicaci\u00f3n",
+    modalTitle: "Ubicaci\u00f3n",
+    ayuda: "Texto y enlace de Google Maps de la secci\u00f3n de ubicaci\u00f3n en el inicio.",
     icon: MapPin,
     showEyebrow: true,
     showImage: false,
     showLinkUrl: true,
     showLinkText: true,
     eyebrowLabel: "Etiqueta superior",
-    titleLabel: "Titulo",
-    descriptionLabel: "Descripcion",
+    titleLabel: "T\u00edtulo",
+    descriptionLabel: "Descripci\u00f3n",
     linkUrlLabel: "Enlace de Google Maps",
-    linkTextLabel: "Texto del boton",
+    linkTextLabel: "Texto del bot\u00f3n",
   },
 };
 
@@ -139,25 +151,16 @@ const CONFIG_ENLACES = {
   "enlaces-navbar": {
     seccion: "Navbar",
     etiqueta: "Enlaces del navbar",
-    titulo: "Menu de navegacion",
-    descripcionVacia: "Sin enlaces en el menu superior.",
+    titulo: "Men\u00fa de navegaci\u00f3n",
+    descripcionVacia: "Sin enlaces en el men\u00fa superior.",
   },
   "enlaces-footer": {
     seccion: "FooterExplorar",
     etiqueta: "Enlaces del footer",
-    titulo: "Seccion Explorar",
-    descripcionVacia: "Sin enlaces en la columna Explorar del pie de pagina.",
+    titulo: "Secci\u00f3n Explorar",
+    descripcionVacia: "Sin enlaces en la columna Explorar del pie de p\u00e1gina.",
   },
 };
-
-function EstadoPublicado() {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-      <span className="size-2 rounded-full bg-emerald-600" />
-      Publicado
-    </span>
-  );
-}
 
 function CampoTexto({ label, name, value, onChange, type = "text", placeholder, hint, required }) {
   return (
@@ -193,7 +196,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-2xl" labelledBy="admin-hero-modal-title">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-5xl" labelledBy="admin-hero-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
           <div className="flex min-w-0 items-center gap-3">
@@ -212,26 +215,30 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
           </button>
         </AdminModalHeader>
 
-        <AdminModalBody className="space-y-5">
+        <AdminModalBody cms>
+          <AdminEditorConPreview
+            preview={<PreviewHeroLive form={form} />}
+            ayuda={"Banner principal de la p\u00e1gina de inicio."}
+          >
           <CampoTexto
             label="Etiqueta superior"
             name="eyebrow"
             value={form.eyebrow}
             onChange={cambiarCampo}
-            hint="Texto pequeno que aparece sobre el titulo principal."
+            hint={"Texto peque\u00f1o que aparece sobre el t\u00edtulo principal."}
           />
 
           <CampoTexto
-            label="Titulo principal"
+            label={"T\u00edtulo principal"}
             name="title"
             value={form.title}
             onChange={cambiarCampo}
             required
-            hint="Puedes usar Enter para forzar un salto de linea en el titulo."
+            hint={"Puedes usar Enter para forzar un salto de l\u00ednea en el t\u00edtulo."}
           />
 
           <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-            Subtitulo
+            {"Subt\u00edtulo"}
             <textarea
               name="subtitle"
               value={form.subtitle}
@@ -244,13 +251,13 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
 
           <div className="grid gap-4 md:grid-cols-2">
             <CampoTexto
-              label="Texto boton principal"
+              label={"Texto bot\u00f3n principal"}
               name="primaryButtonText"
               value={form.primaryButtonText}
               onChange={cambiarCampo}
             />
             <CampoTexto
-              label="Enlace boton principal"
+              label={"Enlace bot\u00f3n principal"}
               name="primaryButtonUrl"
               value={form.primaryButtonUrl}
               onChange={cambiarCampo}
@@ -258,13 +265,13 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
               hint="Ruta interna del sitio o URL externa."
             />
             <CampoTexto
-              label="Texto boton secundario"
+              label={"Texto bot\u00f3n secundario"}
               name="buttonText"
               value={form.buttonText}
               onChange={cambiarCampo}
             />
             <CampoTexto
-              label="Enlace boton secundario"
+              label={"Enlace bot\u00f3n secundario"}
               name="buttonUrl"
               value={form.buttonUrl}
               onChange={cambiarCampo}
@@ -280,6 +287,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
             onChange={cambiarCampo}
             placeholder="https://..."
           />
+          </AdminEditorConPreview>
         </AdminModalBody>
 
         <AdminModalFooter>
@@ -303,7 +311,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
   );
 }
 
-function ModalSeccionInicio({ config, data, onCerrar, onGuardar, guardando }) {
+function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar, onGuardar, guardando }) {
   const [form, setForm] = useState(() => ({ ...seccionInicioVacia, ...data }));
 
   const cambiarCampo = (event) => {
@@ -317,7 +325,7 @@ function ModalSeccionInicio({ config, data, onCerrar, onGuardar, guardando }) {
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-2xl" labelledBy="admin-seccion-inicio-modal-title">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-5xl" labelledBy="admin-seccion-inicio-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
           <div className="flex min-w-0 items-center gap-3">
@@ -338,8 +346,17 @@ function ModalSeccionInicio({ config, data, onCerrar, onGuardar, guardando }) {
           </button>
         </AdminModalHeader>
 
-        <AdminModalBody className="space-y-5">
-          <p className="text-sm text-slate-600">{config.ayuda}</p>
+        <AdminModalBody cms>
+          <AdminEditorConPreview
+            preview={(
+              <PreviewHomeSectionLive
+                clave={clave}
+                form={form}
+                tarjetasInicio={tarjetasInicio}
+              />
+            )}
+            ayuda={config.ayuda}
+          >
 
           {config.showEyebrow ? (
             <CampoTexto
@@ -351,7 +368,7 @@ function ModalSeccionInicio({ config, data, onCerrar, onGuardar, guardando }) {
           ) : null}
 
           <CampoTexto
-            label={config.titleLabel || "Titulo"}
+            label={config.titleLabel || "T\u00edtulo"}
             name="title"
             value={form.title}
             onChange={cambiarCampo}
@@ -359,7 +376,7 @@ function ModalSeccionInicio({ config, data, onCerrar, onGuardar, guardando }) {
           />
 
           <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-            {config.descriptionLabel || "Descripcion"}
+            {config.descriptionLabel || "Descripci\u00f3n"}
             <textarea
               name="description"
               value={form.description}
@@ -377,7 +394,7 @@ function ModalSeccionInicio({ config, data, onCerrar, onGuardar, guardando }) {
               value={form.image}
               onChange={cambiarCampo}
               placeholder="https://..."
-              hint="Imagen propia del bloque. No se toma de la galeria."
+              hint={"Imagen propia del bloque. No se toma de la galer\u00eda."}
             />
           ) : null}
 
@@ -393,12 +410,13 @@ function ModalSeccionInicio({ config, data, onCerrar, onGuardar, guardando }) {
 
           {config.showLinkText ? (
             <CampoTexto
-              label={config.linkTextLabel || "Texto del boton"}
+              label={config.linkTextLabel || "Texto del bot\u00f3n"}
               name="linkText"
               value={form.linkText}
               onChange={cambiarCampo}
             />
           ) : null}
+          </AdminEditorConPreview>
         </AdminModalBody>
 
         <AdminModalFooter>
@@ -457,7 +475,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-3xl" labelledBy="admin-tarjetas-inicio-modal-title">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-5xl" labelledBy="admin-tarjetas-inicio-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
           <div className="flex min-w-0 items-center gap-3">
@@ -478,10 +496,11 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
           </button>
         </AdminModalHeader>
 
-        <AdminModalBody className="space-y-6">
-          <p className="text-sm text-slate-600">
-            Editá las tres tarjetas de donaciones, visitas y voluntariado que aparecen en el inicio.
-          </p>
+        <AdminModalBody cms>
+          <AdminEditorConPreview
+            preview={<PreviewTarjetasInicioLive tarjetas={form} />}
+            ayuda={"Edit\u00e1 las tres tarjetas de donaciones, visitas y voluntariado que aparecen en el inicio."}
+          >
 
           {form.map((tarjeta, index) => (
             <div key={tarjeta.clave || index} className="space-y-4 rounded-2xl border border-slate-200 p-4 sm:p-5">
@@ -498,16 +517,14 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
               />
 
               <CampoTexto
-                label="Titulo"
+                label={"T\u00edtulo"}
                 name={`titulo-${index}`}
                 value={tarjeta.titulo}
                 onChange={(event) => cambiarCampo(index, "titulo", event.target.value)}
                 required
               />
 
-              <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                Descripcion
-                <textarea
+              <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">{"Descripci\u00f3n"}<textarea
                   value={tarjeta.descripcion}
                   onChange={(event) => cambiarCampo(index, "descripcion", event.target.value)}
                   rows={3}
@@ -523,18 +540,19 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
                   value={tarjeta.ruta}
                   onChange={(event) => cambiarCampo(index, "ruta", event.target.value)}
                   placeholder="/voluntariado/solicitar"
-                  hint="Ruta interna del boton."
+                  hint={"Ruta interna del bot\u00f3n."}
                 />
               ) : null}
 
               <CampoTexto
-                label="Texto del boton"
+                label={"Texto del bot\u00f3n"}
                 name={`textoBoton-${index}`}
                 value={tarjeta.textoBoton}
                 onChange={(event) => cambiarCampo(index, "textoBoton", event.target.value)}
               />
             </div>
           ))}
+          </AdminEditorConPreview>
         </AdminModalBody>
 
         <AdminModalFooter>
@@ -558,7 +576,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
   );
 }
 
-function ModalNavbar({ navbar, onCerrar, onGuardar, guardando }) {
+function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
   const [form, setForm] = useState(() => ({ ...navbarInicial, ...navbar }));
 
   const cambiarCampo = (event) => {
@@ -572,7 +590,7 @@ function ModalNavbar({ navbar, onCerrar, onGuardar, guardando }) {
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-2xl" labelledBy="admin-navbar-modal-title">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-5xl" labelledBy="admin-navbar-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
           <div className="flex min-w-0 items-center gap-3">
@@ -591,14 +609,18 @@ function ModalNavbar({ navbar, onCerrar, onGuardar, guardando }) {
           </button>
         </AdminModalHeader>
 
-        <AdminModalBody className="space-y-5">
+        <AdminModalBody cms>
+          <AdminEditorConPreview
+            preview={<PreviewNavbarLive form={form} enlaces={enlaces} />}
+            ayuda={"Logos que aparecen en la barra de navegaci\u00f3n del sitio."}
+          >
           <CampoTexto
             label="Logo URL"
             name="logoUrl"
             value={form.logoUrl}
             onChange={cambiarCampo}
             placeholder="https://..."
-            hint="Logo para fondos claros."
+            hint="Logo para fondos claros (al hacer scroll)."
           />
           <CampoTexto
             label="Logo claro URL"
@@ -606,8 +628,9 @@ function ModalNavbar({ navbar, onCerrar, onGuardar, guardando }) {
             value={form.logoClaroUrl}
             onChange={cambiarCampo}
             placeholder="https://..."
-            hint="Logo para fondos oscuros o al hacer scroll."
+            hint="Logo para fondos oscuros (inicio, sin scroll)."
           />
+          </AdminEditorConPreview>
         </AdminModalBody>
 
         <AdminModalFooter>
@@ -631,7 +654,7 @@ function ModalNavbar({ navbar, onCerrar, onGuardar, guardando }) {
   );
 }
 
-function ModalFooter({ footer, onCerrar, onGuardar, guardando }) {
+function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
   const [form, setForm] = useState(() => ({ ...footerInicial, ...footer }));
 
   const cambiarCampo = (event) => {
@@ -645,7 +668,7 @@ function ModalFooter({ footer, onCerrar, onGuardar, guardando }) {
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-2xl" labelledBy="admin-footer-modal-title">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-5xl" labelledBy="admin-footer-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
           <div className="flex min-w-0 items-center gap-3">
@@ -664,7 +687,11 @@ function ModalFooter({ footer, onCerrar, onGuardar, guardando }) {
           </button>
         </AdminModalHeader>
 
-        <AdminModalBody className="space-y-5">
+        <AdminModalBody cms>
+          <AdminEditorConPreview
+            preview={<PreviewFooterLive form={form} enlaces={enlaces} />}
+            ayuda={"Informaci\u00f3n de contacto y pie de p\u00e1gina del sitio."}
+          >
           <div className="grid gap-4 md:grid-cols-2">
             <CampoTexto
               label="Logo URL"
@@ -692,7 +719,7 @@ function ModalFooter({ footer, onCerrar, onGuardar, guardando }) {
 
           <div className="grid gap-4 md:grid-cols-2">
             <CampoTexto
-              label="Telefono"
+              label={"Tel\u00e9fono"}
               name="telefono"
               value={form.telefono}
               onChange={cambiarCampo}
@@ -704,7 +731,7 @@ function ModalFooter({ footer, onCerrar, onGuardar, guardando }) {
               type="email"
               value={form.correo}
               onChange={cambiarCampo}
-              placeholder="contacto@cafeuna.com"
+              placeholder="correo@ejemplo.com"
             />
           </div>
 
@@ -738,8 +765,9 @@ function ModalFooter({ footer, onCerrar, onGuardar, guardando }) {
             name="textoCopyright"
             value={form.textoCopyright}
             onChange={cambiarCampo}
-            placeholder="© 2026 Cafe UNA. Todos los derechos reservados."
+            placeholder="Ej. © 2026 Nombre del sitio. Todos los derechos reservados."
           />
+          </AdminEditorConPreview>
         </AdminModalBody>
 
         <AdminModalFooter>
@@ -765,6 +793,12 @@ function ModalFooter({ footer, onCerrar, onGuardar, guardando }) {
 
 function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEliminar }) {
   const [items, setItems] = useState(() => (Array.isArray(enlaces) ? enlaces : []));
+  const [busqueda, setBusqueda] = useState("");
+
+  const itemsFiltrados = useMemo(
+    () => filtrarPorBusqueda(items, busqueda, (item) => [item.etiqueta, item.ruta]),
+    [items, busqueda],
+  );
 
   const cambiarItem = (id, campo, valor) => {
     setItems((actual) => actual.map((item) => (item.id === id ? { ...item, [campo]: valor } : item)));
@@ -796,7 +830,7 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-3xl" labelledBy="admin-enlaces-modal-title">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-5xl" labelledBy="admin-enlaces-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
           <div className="flex min-w-0 items-center gap-3">
@@ -817,7 +851,11 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
           </button>
         </AdminModalHeader>
 
-        <AdminModalBody className="space-y-5">
+        <AdminModalBody cms className="space-y-5">
+          <AdminEditorConPreview
+            preview={<PreviewEnlaces items={items} />}
+            ayuda={`Gestion\u00e1 los enlaces de ${config.titulo.toLowerCase()}.`}
+          >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Enlaces actuales</p>
             <button
@@ -830,13 +868,26 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
             </button>
           </div>
 
+          <AdminListaToolbar
+            compacto
+            busqueda={busqueda}
+            onBusquedaChange={setBusqueda}
+            placeholder="Buscar por etiqueta o ruta..."
+            total={items.length}
+            visibles={itemsFiltrados.length}
+            hayFiltrosActivos={Boolean(busqueda.trim())}
+            onLimpiar={() => setBusqueda("")}
+          />
+
           {items.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
               No hay enlaces configurados. Agregue uno para mostrarlo en el sitio.
             </p>
+          ) : itemsFiltrados.length === 0 ? (
+            <AdminListaVacia onLimpiar={() => setBusqueda("")} />
           ) : (
             <div className="space-y-4">
-              {items.map((item, index) => (
+              {itemsFiltrados.map((item, index) => (
                 <div key={item.id} className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-[1fr_auto]">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
@@ -896,6 +947,7 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
               ))}
             </div>
           )}
+          </AdminEditorConPreview>
         </AdminModalBody>
 
         <AdminModalFooter>
@@ -919,34 +971,6 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
   );
 }
 
-function TarjetaSeccion({ etiqueta, titulo, descripcion, icono: Icon, onEditar }) {
-  return (
-    <article className="border-l-4 border-amber-700 bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-7">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">{etiqueta}</p>
-          <h2 className="mt-2 break-words text-lg font-bold text-slate-950 sm:text-xl">{titulo}</h2>
-          <p className="mt-3 max-w-3xl text-sm text-slate-600 sm:text-base">{descripcion}</p>
-        </div>
-        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700 sm:size-12">
-          <Icon className="size-5 sm:size-6" />
-        </span>
-      </div>
-
-      <div className="mt-6 flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
-        <EstadoPublicado />
-        <button
-          type="button"
-          onClick={onEditar}
-          className="w-full rounded-xl border border-amber-300 px-5 py-2 text-sm font-bold text-amber-800 transition hover:bg-amber-50 sm:w-auto"
-        >
-          Editar
-        </button>
-      </div>
-    </article>
-  );
-}
-
 function mapSeccionInicio(data) {
   return {
     eyebrow: typeof data?.eyebrow === "string" ? data.eyebrow.trim() : "",
@@ -966,6 +990,12 @@ function mapSeccionInicio(data) {
           ? data.LinkText.trim()
           : "",
   };
+}
+
+function tituloVisibleSeccion(data, config) {
+  const titulo = typeof data?.title === "string" ? data.title.trim() : "";
+  const etiqueta = typeof data?.eyebrow === "string" ? data.eyebrow.trim() : "";
+  return titulo || etiqueta || config.tituloTarjeta;
 }
 
 function resumenSeccionInicio(data, config) {
@@ -994,7 +1024,7 @@ const AdminInformacionPaginaPrincipal = () => {
     }
   })();
   const actorRoles = Array.isArray(actor?.roles) ? actor.roles : [];
-  const esSuperAdmin = actorRoles.some((rol) => String(rol).toLowerCase() === "superadmin");
+  const esSuperAdmin = tienePermiso(actorRoles, "inactivar_informacion");
 
   const [hero, setHero] = useState(heroInicial);
   const [seccionesInicio, setSeccionesInicio] = useState({
@@ -1034,9 +1064,9 @@ const AdminInformacionPaginaPrincipal = () => {
 
   const cargando = status === "loading";
   const error = status === "error"
-    ? loadError || "No se pudo cargar la informacion principal."
+    ? loadError || "No se pudo cargar la informaci\u00f3n principal."
     : data?.hasError
-      ? "No se pudo cargar la informacion principal."
+      ? "No se pudo cargar la informaci\u00f3n principal."
       : "";
 
   const guardarHero = async (form) => {
@@ -1062,7 +1092,7 @@ const AdminInformacionPaginaPrincipal = () => {
       }));
       setEditando(null);
     } catch (err) {
-      alert(err.message || "No se pudo guardar la seccion del inicio.");
+      alert(err.message || "No se pudo guardar la secci\u00f3n del inicio.");
     } finally {
       setGuardando(false);
     }
@@ -1180,15 +1210,75 @@ const AdminInformacionPaginaPrincipal = () => {
   const resumenFooter = footer.fraseMarca
     || footer.correo
     || footer.telefono
-    || "Sin informacion de contacto configurada.";
+    || "Sin informaci\u00f3n de contacto configurada.";
 
   const resumenEnlacesNavbar = enlacesNavbar.length
-    ? `${enlacesNavbar.length} enlace${enlacesNavbar.length === 1 ? "" : "s"} en el menu superior.`
+    ? `${enlacesNavbar.length} enlace${enlacesNavbar.length === 1 ? "" : "s"} en el men\u00fa superior.`
     : CONFIG_ENLACES["enlaces-navbar"].descripcionVacia;
 
   const resumenEnlacesFooter = enlacesFooter.length
-    ? `${enlacesFooter.length} enlace${enlacesFooter.length === 1 ? "" : "s"} en la seccion Explorar.`
+    ? `${enlacesFooter.length} enlace${enlacesFooter.length === 1 ? "" : "s"} en la secci\u00f3n Explorar.`
     : CONFIG_ENLACES["enlaces-footer"].descripcionVacia;
+
+  const seccionesPaginaPrincipal = useMemo(() => {
+    const seccionesInicioItems = Object.entries(CONFIG_SECCIONES_INICIO).map(([clave, config]) => ({
+      id: clave,
+      busqueda: [
+        config.etiqueta,
+        config.tituloTarjeta,
+        resumenSeccionInicio(seccionesInicio[clave], config),
+      ],
+    }));
+
+    return [
+      { id: "hero", busqueda: ["Hero section", hero.title, hero.subtitle] },
+      ...seccionesInicioItems,
+      { id: "tarjetas-inicio", busqueda: ["Mini formularios", "Inicio", resumenTarjetasInicio] },
+      { id: "navbar", busqueda: ["Navbar", "Barra de navegaci\u00f3n", resumenNavbar] },
+      { id: "footer", busqueda: ["Footer", "Pie de p\u00e1gina", resumenFooter] },
+      {
+        id: "enlaces-navbar",
+        busqueda: [
+          CONFIG_ENLACES["enlaces-navbar"].etiqueta,
+          CONFIG_ENLACES["enlaces-navbar"].titulo,
+          resumenEnlacesNavbar,
+        ],
+      },
+      {
+        id: "enlaces-footer",
+        busqueda: [
+          CONFIG_ENLACES["enlaces-footer"].etiqueta,
+          CONFIG_ENLACES["enlaces-footer"].titulo,
+          resumenEnlacesFooter,
+        ],
+      },
+    ];
+  }, [
+    hero,
+    seccionesInicio,
+    resumenTarjetasInicio,
+    resumenNavbar,
+    resumenFooter,
+    resumenEnlacesNavbar,
+    resumenEnlacesFooter,
+  ]);
+
+  const {
+    busqueda,
+    setBusqueda,
+    filtrados: seccionesFiltradas,
+    limpiar: limpiarFiltros,
+    hayFiltrosActivos,
+    total: totalSecciones,
+    visibles: seccionesVisibles,
+  } = useAdminListaFiltros(seccionesPaginaPrincipal, {
+    buscarEn: (seccion) => seccion.busqueda,
+  });
+
+  const idsVisibles = useMemo(
+    () => new Set(seccionesFiltradas.map((seccion) => seccion.id)),
+    [seccionesFiltradas],
+  );
 
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
@@ -1199,9 +1289,7 @@ const AdminInformacionPaginaPrincipal = () => {
         </div>
 
         {cargando ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">
-            Cargando informacion...
-          </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">{"Cargando informaci\u00f3n..."}</div>
         ) : error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-sm font-semibold text-red-700">
             {error}
@@ -1215,64 +1303,87 @@ const AdminInformacionPaginaPrincipal = () => {
           </div>
         ) : (
           <div className="space-y-5">
-            <TarjetaSeccion
+            <AdminListaToolbar
+              busqueda={busqueda}
+              onBusquedaChange={setBusqueda}
+              placeholder="Buscar secciones por nombre o contenido..."
+              total={totalSecciones}
+              visibles={seccionesVisibles}
+              hayFiltrosActivos={hayFiltrosActivos}
+              onLimpiar={limpiarFiltros}
+            />
+
+            {seccionesFiltradas.length === 0 ? (
+              <AdminListaVacia onLimpiar={limpiarFiltros} />
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {idsVisibles.has("hero") ? (
+            <AdminSeccionCard
               etiqueta="Hero section"
-              titulo={hero.title || "Sin titulo"}
-              descripcion={hero.subtitle || "Sin subtitulo configurado."}
+              titulo={hero.title || "Hero section"}
               icono={Image}
               onEditar={() => setEditando("hero")}
             />
+            ) : null}
 
-            {Object.entries(CONFIG_SECCIONES_INICIO).map(([clave, config]) => (
-              <TarjetaSeccion
+            {Object.entries(CONFIG_SECCIONES_INICIO).map(([clave, config]) =>
+              idsVisibles.has(clave) ? (
+              <AdminSeccionCard
                 key={clave}
                 etiqueta={config.etiqueta}
-                titulo={config.tituloTarjeta}
-                descripcion={resumenSeccionInicio(seccionesInicio[clave], config)}
+                titulo={tituloVisibleSeccion(seccionesInicio[clave], config)}
                 icono={config.icon}
                 onEditar={() => setEditando(clave)}
               />
-            ))}
+              ) : null,
+            )}
 
-            <TarjetaSeccion
+            {idsVisibles.has("tarjetas-inicio") ? (
+            <AdminSeccionCard
               etiqueta="Inicio"
               titulo="Mini formularios"
-              descripcion={resumenTarjetasInicio}
               icono={ClipboardList}
               onEditar={() => setEditando("tarjetas-inicio")}
             />
+            ) : null}
 
-            <TarjetaSeccion
+            {idsVisibles.has("navbar") ? (
+            <AdminSeccionCard
               etiqueta="Navbar"
-              titulo="Barra de navegacion"
-              descripcion={resumenNavbar}
+              titulo={"Barra de navegaci\u00f3n"}
               icono={LayoutTemplate}
               onEditar={() => setEditando("navbar")}
             />
+            ) : null}
 
-            <TarjetaSeccion
+            {idsVisibles.has("footer") ? (
+            <AdminSeccionCard
               etiqueta="Footer"
-              titulo="Pie de pagina"
-              descripcion={resumenFooter}
+              titulo={"Pie de p\u00e1gina"}
               icono={PanelBottom}
               onEditar={() => setEditando("footer")}
             />
+            ) : null}
 
-            <TarjetaSeccion
+            {idsVisibles.has("enlaces-navbar") ? (
+            <AdminSeccionCard
               etiqueta={CONFIG_ENLACES["enlaces-navbar"].etiqueta}
               titulo={CONFIG_ENLACES["enlaces-navbar"].titulo}
-              descripcion={resumenEnlacesNavbar}
               icono={Link2}
               onEditar={() => setEditando("enlaces-navbar")}
             />
+            ) : null}
 
-            <TarjetaSeccion
+            {idsVisibles.has("enlaces-footer") ? (
+            <AdminSeccionCard
               etiqueta={CONFIG_ENLACES["enlaces-footer"].etiqueta}
               titulo={CONFIG_ENLACES["enlaces-footer"].titulo}
-              descripcion={resumenEnlacesFooter}
               icono={Link2}
               onEditar={() => setEditando("enlaces-footer")}
             />
+            ) : null}
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -1283,8 +1394,10 @@ const AdminInformacionPaginaPrincipal = () => {
 
       {editando && CONFIG_SECCIONES_INICIO[editando] ? (
         <ModalSeccionInicio
+          clave={editando}
           config={CONFIG_SECCIONES_INICIO[editando]}
           data={seccionesInicio[editando]}
+          tarjetasInicio={tarjetasInicio}
           onCerrar={() => setEditando(null)}
           onGuardar={(form) => guardarSeccionInicio(editando, form)}
           guardando={guardando}
@@ -1301,11 +1414,23 @@ const AdminInformacionPaginaPrincipal = () => {
       ) : null}
 
       {editando === "navbar" ? (
-        <ModalNavbar navbar={navbar} onCerrar={() => setEditando(null)} onGuardar={guardarNavbar} guardando={guardando} />
+        <ModalNavbar
+          navbar={navbar}
+          enlaces={enlacesNavbar}
+          onCerrar={() => setEditando(null)}
+          onGuardar={guardarNavbar}
+          guardando={guardando}
+        />
       ) : null}
 
       {editando === "footer" ? (
-        <ModalFooter footer={footer} onCerrar={() => setEditando(null)} onGuardar={guardarFooter} guardando={guardando} />
+        <ModalFooter
+          footer={footer}
+          enlaces={enlacesFooter}
+          onCerrar={() => setEditando(null)}
+          onGuardar={guardarFooter}
+          guardando={guardando}
+        />
       ) : null}
 
       {editando === "enlaces-navbar" ? (

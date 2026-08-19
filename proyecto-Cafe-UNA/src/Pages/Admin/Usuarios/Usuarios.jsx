@@ -11,16 +11,19 @@ import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
+import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import {
   obtenerUsuarios,
   actualizarUsuario,
-  toggleEstadoUsuario,
+  cambiarEstadoUsuario,
   solicitarCreacionUsuario,
   confirmarCreacionUsuario,
   solicitarCambioCorreoUsuario,
   confirmarCambioCorreoUsuario,
-} from "../../../services/usuariosServices";
+} from "../../../services/usuariosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
+import { tienePermiso } from "../../../lib/permisos";
 import {
   MAX_NOMBRE_USUARIO,
   MAX_PASSWORD,
@@ -48,7 +51,6 @@ function Modal({ titulo, onClose, children }) {
   );
 }
 
-// ─── Badge de rol ─────────────────────────────────────────────────────────────
 const colorRol = {
   Superadministrador: "border border-amber-300 bg-amber-200 text-amber-950",
   SuperAdmin:         "border border-amber-300 bg-amber-200 text-amber-950",
@@ -66,8 +68,7 @@ function BadgeRol({ rol }) {
   );
 }
 
-// ─── Formulario de usuario (crear / editar) ───────────────────────────────────
-const ROLES_DISPONIBLES = ["SuperAdmin", "Admin", "Usuario", "Cliente"];
+const ROLES_DISPONIBLES = ["SuperAdmin", "Admin", "Vendedor", "Usuario", "Cliente"];
 
 function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, setCargando, puedeEditarRoles = false }) {
   const actor = (() => {
@@ -141,12 +142,12 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
               ...payload,
               passwordHash: value.passwordHash,
             });
-            setMensajeCorreo(result?.message || "Código enviado al correo.");
+            setMensajeCorreo(result?.message || "C\u00f3digo enviado al correo.");
             setPasoCreacion("codigo");
           } catch (err) {
             setFieldErrors({
               ...nextErrors,
-              formulario: sanitizeUserFacingError(err?.message || "No se pudo enviar el código."),
+              formulario: sanitizeUserFacingError(err?.message || "No se pudo enviar el c\u00f3digo."),
             });
           } finally {
             setCargando(false);
@@ -183,7 +184,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
           return;
         }
         if (!value.passwordActual?.trim()) {
-          setFieldErrors({ ...nextErrors, passwordActual: "Ingrese su contraseña actual." });
+          setFieldErrors({ ...nextErrors, passwordActual: "Ingrese su contrase\u00f1a actual." });
           return;
         }
         cambios.passwordHash = value.passwordHash;
@@ -236,8 +237,8 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
     if (!passwordCorreoUsuario) {
       setErrorPasswordCorreo(
         editandoPropioUsuario
-          ? "Ingrese su contraseña actual."
-          : "Ingrese la contraseña de esta cuenta.",
+          ? "Ingrese su contrase\u00f1a actual."
+          : "Ingrese la contrase\u00f1a de esta cuenta.",
       );
       return;
     }
@@ -253,10 +254,10 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
         passwordActual: passwordCorreoUsuario,
       });
       setPasswordCorreoUsuario("");
-      setMensajeCorreo(result?.message || "Código enviado al nuevo correo.");
+      setMensajeCorreo(result?.message || "C\u00f3digo enviado al nuevo correo.");
     } catch (err) {
-      const message = sanitizeUserFacingError(err?.message || "No se pudo enviar el código.");
-      if (message.toLowerCase().includes("contraseña")) {
+      const message = sanitizeUserFacingError(err?.message || "No se pudo enviar el c\u00f3digo.");
+      if (message.toLowerCase().includes("contrase\u00f1a")) {
         setErrorPasswordCorreo(message);
       } else {
         setErrorCorreo(message);
@@ -270,7 +271,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
     const correo = correoForm.trim().toLowerCase();
     const token = codigoVerificacion.trim();
     if (!correo || !token) {
-      setErrorCorreo("Ingrese el correo y el código recibido.");
+      setErrorCorreo("Ingrese el correo y el c\u00f3digo recibido.");
       return;
     }
 
@@ -342,11 +343,9 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
         </form.Field>
         {inicial && correoCambio ? (
           <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs text-slate-700">
-              El correo cambió. Debe verificar el nuevo correo antes de guardar otros cambios.
-            </p>
+            <p className="text-xs text-slate-700">{"El correo cambi\u00f3. Debe verificar el nuevo correo antes de guardar otros cambios."}</p>
             <label className="block text-xs font-medium text-slate-600">
-              {editandoPropioUsuario ? "Su contraseña actual" : "Contraseña de esta cuenta"}
+              {editandoPropioUsuario ? "Su contrase\u00f1a actual" : "Contrase\u00f1a de esta cuenta"}
               <input
                 type="password"
                 className={`${inputCls} mt-1 ${errorPasswordCorreo ? "border-red-500 focus:border-red-500 focus:ring-red-100" : ""}`}
@@ -356,7 +355,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                   setPasswordCorreoUsuario(e.target.value.slice(0, MAX_PASSWORD));
                 }}
                 maxLength={MAX_PASSWORD}
-                placeholder={editandoPropioUsuario ? "Requerida para cambiar el correo" : "Contraseña del usuario"}
+                placeholder={editandoPropioUsuario ? "Requerida para cambiar el correo" : "Contrase\u00f1a del usuario"}
               />
               {errorPasswordCorreo ? <p className="mt-1 text-xs text-red-600">{errorPasswordCorreo}</p> : null}
             </label>
@@ -366,15 +365,13 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                 onClick={handleSolicitarCodigoCorreo}
                 disabled={verificandoCorreo}
                 className="w-full rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 sm:w-auto sm:py-1.5"
-              >
-                Enviar código
-              </button>
+              >{"Enviar c\u00f3digo"}</button>
             </div>
             <input
               className={inputCls}
               value={codigoVerificacion}
               onChange={(e) => setCodigoVerificacion(e.target.value)}
-              placeholder="Código de verificación"
+              placeholder={"C\u00f3digo de verificaci\u00f3n"}
             />
             <button
               type="button"
@@ -391,12 +388,12 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
       </div>
       {!inicial && pasoCreacion === "codigo" ? (
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Código de verificación</label>
+          <label className="mb-1 block text-xs font-medium text-slate-600">{"C\u00f3digo de verificaci\u00f3n"}</label>
           <input
             className={inputCls}
             value={codigoVerificacion}
             onChange={(e) => setCodigoVerificacion(e.target.value)}
-            placeholder="6 dígitos"
+            placeholder={"6 d\u00edgitos"}
             required
           />
         </div>
@@ -407,7 +404,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
             <>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">
-                  Contraseña {inicial && <span className="text-slate-400">(opcional)</span>}
+                  {"Contrase\u00f1a"} {inicial && <span className="text-slate-400">(opcional)</span>}
                 </label>
                 <form.Field name="passwordHash">
                   {(field) => (
@@ -423,7 +420,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                         }}
                         maxLength={MAX_PASSWORD}
                         required={!inicial}
-                        placeholder={inicial ? "Dejar vacío para no cambiar" : ""}
+                        placeholder={inicial ? "Dejar vac\u00edo para no cambiar" : ""}
                       />
                       {fieldErrors.passwordHash ? (
                         <p className="mt-1 text-xs text-red-600">{fieldErrors.passwordHash}</p>
@@ -434,7 +431,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
               </div>
               {inicial ? (
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">Contraseña actual</label>
+                  <label className="mb-1 block text-xs font-medium text-slate-600">{"Contrase\u00f1a actual"}</label>
                   <form.Field name="passwordActual">
                     {(field) => (
                       <>
@@ -448,7 +445,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                             field.handleChange(event.target.value.slice(0, MAX_PASSWORD));
                           }}
                           maxLength={MAX_PASSWORD}
-                          placeholder="Requerida si cambia la contraseña"
+                          placeholder={"Requerida si cambia la contrase\u00f1a"}
                         />
                         {fieldErrors.passwordActual ? (
                           <p className="mt-1 text-xs text-red-600">{fieldErrors.passwordActual}</p>
@@ -460,9 +457,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
               ) : null}
             </>
           ) : (
-            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-              Solo puede cambiar su propia contraseña.
-            </p>
+            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">{"Solo puede cambiar su propia contrase\u00f1a."}</p>
           )}
           <div>
             <label className="mb-2 block text-xs font-medium text-slate-600">Roles</label>
@@ -532,7 +527,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
             ? "Procesando…"
             : !inicial
               ? pasoCreacion === "datos"
-                ? "Enviar código al correo"
+                ? "Enviar c\u00f3digo al correo"
                 : "Crear usuario"
               : "Guardar cambios"}
         </button>
@@ -627,14 +622,13 @@ function AccionesUsuario({
 }
 
 
-// ─── Página principal ─────────────────────────────────────────────────────────
 const AdminUsuarios = () => {
   const actor = (() => {
     return getActiveSessionUser();
   })();
   const actorId = Number(actor?.id) || null;
   const actorRoles = Array.isArray(actor?.roles) ? actor.roles : [];
-  const esSuperAdmin = actorRoles.includes("SuperAdmin");
+  const esSuperAdmin = tienePermiso(actorRoles, "editar_usuarios");
 
   const [usuarios, setUsuarios]   = useState([]);
   const [cargando, setCargando]   = useState(true);
@@ -645,6 +639,22 @@ const AdminUsuarios = () => {
   const [toggleando, setToggleando] = useState(null); // id en proceso
   const [sorting, setSorting] = useState([]);
   const { showLoading, loadingMessage } = useAdminPageGate('/admin/usuarios', !cargando);
+  const {
+    busqueda,
+    setBusqueda,
+    filtrados: usuariosFiltrados,
+    limpiar,
+    hayFiltrosActivos,
+    total,
+    visibles,
+  } = useAdminListaFiltros(usuarios, {
+    buscarEn: (usuario) => [
+      usuario.nombre,
+      usuario.correo,
+      usuario.estado,
+      ...(Array.isArray(usuario.roles) ? usuario.roles : []),
+    ],
+  });
 
   async function cargar() {
     try {
@@ -714,14 +724,14 @@ const AdminUsuarios = () => {
       return;
     }
     if (esMismoUsuario) {
-      alert("No puede inactivarse a sí mismo.");
+      alert("No puede inactivarse a s\u00ed mismo.");
       return;
     }
 
     try {
       setToggleando(usuario.id);
       const nuevoEstado = esUsuarioActivo(usuario.estado) ? "inactivo" : "activo";
-      const actualizado = await toggleEstadoUsuario(usuario.id, nuevoEstado);
+      const actualizado = await cambiarEstadoUsuario(usuario.id, nuevoEstado);
       setUsuarios((prev) => prev.map((u) => (u.id === actualizado.id ? mapUsuario(actualizado) : u)));
     } catch (err) {
       alert(err?.message || "Error al cambiar el estado.");
@@ -797,7 +807,7 @@ const AdminUsuarios = () => {
   // TanStack Table returns instance helpers by design; the warning is expected with React Compiler.
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data: usuarios,
+    data: usuariosFiltrados,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
@@ -814,7 +824,7 @@ const AdminUsuarios = () => {
         <div className="flex flex-col gap-4 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <div>
             <h1 className="text-xl font-semibold text-slate-900">Administrar usuarios</h1>
-            <p className="mt-0.5 text-sm text-slate-600">Gestión de acceso y roles</p>
+            <p className="mt-0.5 text-sm text-slate-600">{"Gesti\u00f3n de acceso y roles"}</p>
           </div>
           <button
             onClick={() => setModalCrear(true)}
@@ -824,7 +834,18 @@ const AdminUsuarios = () => {
           </button>
         </div>
 
-        {/* Tabla */}
+        {!cargando && !error ? (
+          <AdminListaToolbar
+            busqueda={busqueda}
+            onBusquedaChange={setBusqueda}
+            placeholder="Buscar por nombre, correo o rol..."
+            total={total}
+            visibles={visibles}
+            hayFiltrosActivos={hayFiltrosActivos}
+            onLimpiar={limpiar}
+          />
+        ) : null}
+
         {cargando ? (
           <div className="flex items-center justify-center py-16 text-sm text-slate-600">
             Cargando usuarios…
@@ -836,6 +857,8 @@ const AdminUsuarios = () => {
           </div>
         ) : usuarios.length === 0 ? (
           <div className="py-16 text-center text-sm text-slate-600">No hay usuarios registrados.</div>
+        ) : usuariosFiltrados.length === 0 ? (
+          <AdminListaVacia onLimpiar={limpiar} />
         ) : (
           <>
             <div className="hidden overflow-x-auto md:block">
@@ -879,7 +902,7 @@ const AdminUsuarios = () => {
             </div>
 
             <div className="divide-y divide-slate-100 md:hidden">
-              {usuarios.map((usuario) => {
+              {usuariosFiltrados.map((usuario) => {
                 const esMismoUsuario = actorId !== null && Number(usuario.id) === actorId;
                 const puedeCambiarEstado = esSuperAdmin && !esMismoUsuario;
 
