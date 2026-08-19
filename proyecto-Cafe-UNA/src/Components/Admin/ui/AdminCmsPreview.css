@@ -1,1 +1,177 @@
+:root {
+  --cms-preview-max-height: clamp(220px, 38vh, 420px);
+  --cms-preview-hero-max-height: clamp(240px, 40vh, 400px);
+}
 
+.admin-cms-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-cms-preview-panel {
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-cms-preview-panel__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-cms-preview-panel__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: rgb(254 243 199);
+  color: rgb(146 64 14);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-cms-preview-panel__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: rgb(100 116 139);
+}
+
+.admin-cms-preview-shell {
+  width: 100%;
+  min-width: 0;
+  border-radius: 0.875rem;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+}
+
+/* Canvas compartido: site-canvas.css + reglas @container site-canvas de las páginas públicas */
+.admin-cms-preview.site-canvas {
+  max-height: var(--cms-preview-max-height);
+  overflow: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  background: var(--color-fondo, #faf7f4);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+.admin-cms-preview a,
+.admin-cms-preview button,
+.admin-cms-preview iframe,
+.admin-cms-preview .gallery__item {
+  pointer-events: none;
+}
+
+.admin-cms-preview .navbar {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+}
+
+/* El hero real usa 100svh; en la caja de preview usamos altura proporcional al canvas */
+.admin-cms-preview.site-canvas .hero {
+  min-height: clamp(240px, 70cqw, 520px);
+}
+
+.admin-cms-preview.site-canvas.admin-cms-preview--hero {
+  max-height: var(--cms-preview-hero-max-height);
+}
+
+.admin-cms-editor__form-section {
+  width: 100%;
+  min-width: 0;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgb(226 232 240);
+}
+
+.admin-cms-editor__form-header {
+  margin-bottom: 0.75rem;
+}
+
+.admin-cms-editor__form-title {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(100 116 139);
+}
+
+.admin-cms-editor__ayuda {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(226 232 240);
+  background: rgb(248 250 252);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: rgb(71 85 105);
+}
+
+.admin-cms-editor__fields {
+  display: grid;
+  gap: 1.25rem;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --cms-preview-max-height: min(48dvh, 360px);
+    --cms-preview-hero-max-height: min(52dvh, 380px);
+  }
+
+  .admin-cms-preview-panel__header {
+    gap: 0.35rem;
+  }
+
+  .admin-cms-preview-panel__hint {
+    font-size: 0.75rem;
+  }
+
+  .admin-cms-preview-shell {
+    border-radius: 0.75rem;
+  }
+
+  .admin-cms-editor__form-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+
+  .admin-cms-editor__ayuda {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.8125rem;
+  }
+
+  .admin-cms-editor__fields {
+    gap: 1rem;
+  }
+
+  .admin-modal-body--cms {
+    padding-inline: 0.875rem;
+    padding-block: 0.875rem;
+  }
+}
+
+@media (max-width: 380px) {
+  :root {
+    --cms-preview-max-height: min(44dvh, 300px);
+    --cms-preview-hero-max-height: min(48dvh, 320px);
+  }
+
+  .admin-cms-preview-panel__hint {
+    width: 100%;
+  }
+}
