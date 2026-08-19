@@ -1,1 +1,11 @@
-
+/**
+ * Contenedor compartido para responsive de páginas públicas y vistas previa CMS.
+ * Los @container site-canvas en Home, Hero, AboutUs y Gallery responden al ancho
+ * del canvas (viewport en la página real, modal en el admin).
+ */
+.site-canvas {
+  container-type: inline-size;
+  container-name: site-canvas;
+  width: 100%;
+  min-width: 0;
+}
