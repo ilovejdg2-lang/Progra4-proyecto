@@ -14,7 +14,7 @@ const AdminPanel = () => {
         <div className="admin-panel">
           <h2>Panel Administrativo</h2>
           <p>Bienvenido, {user?.name}!</p>
-          <p>{"Aqui puedes gestionar la aplicaci\u00f3n."}</p>
+          <p>{"Aqu\u00ed puedes gestionar la aplicaci\u00f3n."}</p>
         </div>
       </AdminLayout>
     </AdminPageGate>

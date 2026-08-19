@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Check, HandHeart, Lock, Mail, Sprout, User, Users } from "lucide-react";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
@@ -14,13 +14,13 @@ import "./SolicitarVoluntariado.css";
 const TIPOS_VOLUNTARIADO = [
   "Apoyo General",
   "Capacitaciones",
-  "Investigación Académica",
+  "Investigaci\u00f3n Acad\u00e9mica",
   "Actividades de limpieza y mantenimiento",
   "Otro",
 ];
 
 const HORARIOS_PREFERIDOS = [
-  { id: "manana", label: "Mañana (8:00 – 12:00)" },
+  { id: "manana", label: "Ma\u00f1ana (8:00 – 12:00)" },
   { id: "tarde", label: "Tarde (01:00 – 04:30)" },
   { id: "flexible", label: "Horario flexible" },
 ];
@@ -101,6 +101,78 @@ function SolicitarVoluntariado() {
   const esNacionalCr = formulario.esNacional === "si";
   const consultaCedulaRef = useRef({ digitos: "", enCurso: false });
 
+  const limpiarError = (campo) => {
+    if (errores[campo]) {
+      setErrores((prev) => {
+        const next = { ...prev };
+        delete next[campo];
+        return next;
+      });
+    }
+  };
+
+  const consultarDatosCedula = useCallback(async (digitos, { forzar = false } = {}) => {
+    if (!esNacionalCr || digitos.length !== 9) return;
+    if (consultaCedulaRef.current.enCurso) return;
+    if (!forzar && consultaCedulaRef.current.digitos === digitos) return;
+
+    consultaCedulaRef.current = { digitos, enCurso: true };
+    setConsultandoCedula(true);
+    setAvisoCedula(null);
+
+    try {
+      const datos = await consultarCedula(digitos);
+      const nombre = obtenerCampoCedula(datos, "nombre", "Nombre");
+
+      if (!nombre) {
+        consultaCedulaRef.current = { digitos: "", enCurso: false };
+        setNombreAutocargado(false);
+        setFormulario((prev) => ({
+          ...prev,
+          nombre: "",
+        }));
+        setAvisoCedula("No se encontraron datos para esta c\u00e9dula. Complete el nombre manualmente.");
+        return;
+      }
+
+      consultaCedulaRef.current = { digitos, enCurso: false };
+      setNombreAutocargado(true);
+      setFormulario((prev) => ({
+        ...prev,
+        identificacion: digitos,
+        nombre,
+        pais: "Costa Rica",
+      }));
+      setAvisoCedula("Nombre cargado autom\u00e1ticamente. Puede editarlo si es necesario.");
+      setErrores((prev) => {
+        if (!prev.nombre && !prev.identificacion) return prev;
+        const next = { ...prev };
+        delete next.nombre;
+        delete next.identificacion;
+        return next;
+      });
+    } catch (error) {
+      consultaCedulaRef.current = { digitos: "", enCurso: false };
+      setNombreAutocargado(false);
+      setFormulario((prev) => ({
+        ...prev,
+        nombre: "",
+      }));
+      const mensajeBase = error?.message?.trim() || "No se pudo consultar la c\u00e9dula.";
+      const yaIndicaManual = /manualmente|completar el nombre/i.test(mensajeBase);
+      const esConexion = error?.cause?.code === "ERR_NETWORK" || /conectar con el servidor/i.test(mensajeBase);
+      setAvisoCedula(
+        yaIndicaManual
+          ? mensajeBase
+          : esConexion
+            ? `${mensajeBase} Mientras tanto, complete el nombre manualmente.`
+            : `${mensajeBase} Complete el nombre manualmente.`,
+      );
+    } finally {
+      setConsultandoCedula(false);
+    }
+  }, [esNacionalCr]);
+
   useEffect(() => {
     if (!esNacionalCr) return;
 
@@ -114,17 +186,7 @@ function SolicitarVoluntariado() {
     }, 350);
 
     return () => window.clearTimeout(timeoutId);
-  }, [formulario.identificacion, esNacionalCr]);
-
-  const limpiarError = (campo) => {
-    if (errores[campo]) {
-      setErrores((prev) => {
-        const next = { ...prev };
-        delete next[campo];
-        return next;
-      });
-    }
-  };
+  }, [formulario.identificacion, esNacionalCr, consultarDatosCedula]);
 
   const handleFechaChange = (campo) => (valor) => {
     setFormulario((prev) => ({ ...prev, [campo]: valor }));
@@ -190,63 +252,6 @@ function SolicitarVoluntariado() {
     }
   };
 
-  const consultarDatosCedula = async (digitos, { forzar = false } = {}) => {
-    if (!esNacionalCr || digitos.length !== 9) return;
-    if (consultaCedulaRef.current.enCurso) return;
-    if (!forzar && consultaCedulaRef.current.digitos === digitos) return;
-
-    consultaCedulaRef.current = { digitos, enCurso: true };
-    setConsultandoCedula(true);
-    setAvisoCedula(null);
-
-    try {
-      const datos = await consultarCedula(digitos);
-      const nombre = obtenerCampoCedula(datos, "nombre", "Nombre");
-
-      if (!nombre) {
-        consultaCedulaRef.current = { digitos: "", enCurso: false };
-        setNombreAutocargado(false);
-        setFormulario((prev) => ({
-          ...prev,
-          nombre: "",
-        }));
-        setAvisoCedula("No se encontraron datos para esta cédula. Complete el nombre manualmente.");
-        return;
-      }
-
-      consultaCedulaRef.current = { digitos, enCurso: false };
-      setNombreAutocargado(true);
-      setFormulario((prev) => ({
-        ...prev,
-        identificacion: digitos,
-        nombre,
-        pais: "Costa Rica",
-      }));
-      setAvisoCedula("Nombre cargado automáticamente. Puede editarlo si es necesario.");
-      limpiarError("nombre");
-      limpiarError("identificacion");
-    } catch (error) {
-      consultaCedulaRef.current = { digitos: "", enCurso: false };
-      setNombreAutocargado(false);
-      setFormulario((prev) => ({
-        ...prev,
-        nombre: "",
-      }));
-      const mensajeBase = error?.message?.trim() || "No se pudo consultar la cédula.";
-      const yaIndicaManual = /manualmente|completar el nombre/i.test(mensajeBase);
-      const esConexion = error?.cause?.code === "ERR_NETWORK" || /conectar con el servidor/i.test(mensajeBase);
-      setAvisoCedula(
-        yaIndicaManual
-          ? mensajeBase
-          : esConexion
-            ? `${mensajeBase} Mientras tanto, complete el nombre manualmente.`
-            : `${mensajeBase} Complete el nombre manualmente.`,
-      );
-    } finally {
-      setConsultandoCedula(false);
-    }
-  };
-
   const handleIdentificacionBlur = async () => {
     const digitos = normalizarCedulaCr(formulario.identificacion);
 
@@ -263,7 +268,7 @@ function SolicitarVoluntariado() {
 
     if (digitos.length !== 9) {
       if (digitos.length > 0) {
-        setAvisoCedula("La cédula costarricense debe tener 9 dígitos.");
+        setAvisoCedula("La c\u00e9dula costarricense debe tener 9 d\u00edgitos.");
       }
       return;
     }
@@ -313,24 +318,24 @@ function SolicitarVoluntariado() {
 
     const nombre = formulario.nombre?.trim();
     if (!nombre) nuevosErrores.nombre = "El nombre es obligatorio";
-    else if (nombre.length < 3) nuevosErrores.nombre = "Mínimo 3 caracteres";
+    else if (nombre.length < 3) nuevosErrores.nombre = "M\u00ednimo 3 caracteres";
 
     const identificacion = formulario.identificacion?.trim();
     if (!identificacion) {
-      nuevosErrores.identificacion = "La identificación es obligatoria";
+      nuevosErrores.identificacion = "La identificaci\u00f3n es obligatoria";
     } else if (esNacionalCr) {
       const digitos = normalizarCedulaCr(identificacion);
       if (digitos.length !== 9) {
-        nuevosErrores.identificacion = "La cédula costarricense debe tener 9 dígitos";
+        nuevosErrores.identificacion = "La c\u00e9dula costarricense debe tener 9 d\u00edgitos";
       }
     }
 
     if (!formulario.institucion?.trim()) {
-      nuevosErrores.institucion = "Ingrese la institución educativa";
+      nuevosErrores.institucion = "Ingrese la instituci\u00f3n educativa";
     }
 
     if (!formulario.pais?.trim()) {
-      nuevosErrores.pais = "Ingrese el país de residencia";
+      nuevosErrores.pais = "Ingrese el pa\u00eds de residencia";
     }
 
     const residencia = formulario.residencia?.trim();
@@ -339,11 +344,11 @@ function SolicitarVoluntariado() {
     const correo = formulario.correo?.trim();
     if (!correo) nuevosErrores.correo = "El correo es obligatorio";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
-      nuevosErrores.correo = "Correo inválido";
+      nuevosErrores.correo = "Correo inv\u00e1lido";
     }
 
     const telefono = formulario.telefono?.trim();
-    if (!telefono) nuevosErrores.telefono = "El teléfono es obligatorio";
+    if (!telefono) nuevosErrores.telefono = "El tel\u00e9fono es obligatorio";
 
     if (!formulario.tipo) {
       nuevosErrores.tipo = "Seleccione el tipo de voluntariado";
@@ -365,9 +370,9 @@ function SolicitarVoluntariado() {
     if (esGrupal) {
       const cantidad = Number(formulario.cantidadParticipantes);
       if (!formulario.cantidadParticipantes || cantidad < 2) {
-        nuevosErrores.cantidadParticipantes = "Ingrese la cantidad (mínimo 2)";
+        nuevosErrores.cantidadParticipantes = "Ingrese la cantidad (m\u00ednimo 2)";
       } else if (cantidad > 100) {
-        nuevosErrores.cantidadParticipantes = "Máximo 100 participantes";
+        nuevosErrores.cantidadParticipantes = "M\u00e1ximo 100 participantes";
       }
     }
 
@@ -388,14 +393,14 @@ function SolicitarVoluntariado() {
     e.preventDefault();
     if (!usuario) {
       sessionStorage.setItem("postLoginRedirect", "/voluntariado/solicitar");
-      setErrorApi("Debe iniciar sesión antes de enviar una solicitud de voluntariado.");
+      setErrorApi("Debe iniciar sesi\u00f3n antes de enviar una solicitud de voluntariado.");
       return;
     }
 
     if (!validarFormulario()) return;
 
     if (esNacionalCr && !formulario.nombre?.trim()) {
-      setAvisoCedula("Ingrese su nombre completo o verifique la cédula.");
+      setAvisoCedula("Ingrese su nombre completo o verifique la c\u00e9dula.");
       return;
     }
 
@@ -451,7 +456,7 @@ function SolicitarVoluntariado() {
       resetFormulario();
       setEnviado(true);
     } catch (err) {
-      setErrorApi("Ocurrió un error al enviar la solicitud. Intente nuevamente.");
+      setErrorApi("Ocurri\u00f3 un error al enviar la solicitud. Intente nuevamente.");
       console.error(err);
     } finally {
       setEnviando(false);
@@ -471,11 +476,8 @@ function SolicitarVoluntariado() {
       <section id="voluntariado" className="voluntariado-section">
         <div className="voluntariado-header">
           <span className="badge badge--voluntariado">Programa de Voluntariado</span>
-          <h1>Únete a nuestras iniciativas de voluntariado</h1>
-          <p>
-            Complete el siguiente formulario para aplicar al área de
-            voluntariado de su interés.
-          </p>
+          <h1>{"\u00danete a nuestras iniciativas de voluntariado"}</h1>
+          <p>{"Complete el siguiente formulario para aplicar al \u00e1rea de voluntariado de su inter\u00e9s."}</p>
         </div>
 
         {!usuario ? (
@@ -483,7 +485,7 @@ function SolicitarVoluntariado() {
             <div className="auth-required-card__icono">
               <Lock size={28} strokeWidth={1.8} aria-hidden="true" />
             </div>
-            <h2>Inicie sesión para enviar su solicitud</h2>
+            <h2>{"Inicie sesi\u00f3n para enviar su solicitud"}</h2>
             <p>
               Para registrar y consultar el estado de sus solicitudes de voluntariado,
               primero debe ingresar con su cuenta.
@@ -492,15 +494,12 @@ function SolicitarVoluntariado() {
               to="/login"
               className="btn-enviar auth-required-card__btn"
               onClick={() => sessionStorage.setItem("postLoginRedirect", "/voluntariado/solicitar")}
-            >
-              Iniciar sesión
-            </Link>
+            >{"Iniciar sesi\u00f3n"}</Link>
           </div>
         ) : !enviado ? (
           <form onSubmit={handleSubmit} className="formulario-card" noValidate>
             <div className="tipo-postulacion">
-              <p>
-                ¿Cómo desea participar? <span className="req">*</span>
+              <p>{"\u00bfC\u00f3mo desea participar?"}<span className="req">*</span>
               </p>
               <div className="tipo-opciones">
                 <label className="radio-card">
@@ -529,11 +528,10 @@ function SolicitarVoluntariado() {
             </div>
 
             <div className="form-secciones">
-              <SectionCard icon={User} title="Información personal">
+              <SectionCard icon={User} title={"Informaci\u00f3n personal"}>
                 <div className="form-grid">
                   <div className="campo full">
-                    <p className="campo-pregunta">
-                      ¿Es nacional costarricense? <span className="req">*</span>
+                    <p className="campo-pregunta">{"\u00bfEs nacional costarricense?"}<span className="req">*</span>
                     </p>
                     <div className="tipo-opciones">
                       <label className="radio-card">
@@ -545,7 +543,7 @@ function SolicitarVoluntariado() {
                           onChange={() => handleEsNacional("si")}
                         />
                         <span className="radio-custom" />
-                        <span>Sí</span>
+                        <span>{"S\u00ed"}</span>
                       </label>
                       <label className="radio-card">
                         <input
@@ -566,13 +564,13 @@ function SolicitarVoluntariado() {
 
                   <div className="campo full">
                     <label>
-                      {esNacionalCr ? "Número de cédula" : "Documento de identificación"}{" "}
+                      {esNacionalCr ? "N\u00famero de c\u00e9dula" : "Documento de identificaci\u00f3n"}{" "}
                       <span className="req">*</span>
                     </label>
                     <input
                       type="text"
                       name="identificacion"
-                      placeholder={esNacionalCr ? "Cédula de 9 dígitos" : "Pasaporte o documento de identidad"}
+                      placeholder={esNacionalCr ? "C\u00e9dula de 9 d\u00edgitos" : "Pasaporte o documento de identidad"}
                       value={formulario.identificacion}
                       onChange={handleChange}
                       onBlur={esNacionalCr ? handleIdentificacionBlur : undefined}
@@ -582,7 +580,7 @@ function SolicitarVoluntariado() {
                       disabled={!formulario.esNacional}
                     />
                     {consultandoCedula && (
-                      <span className="mensaje-info">Consultando datos de la cédula...</span>
+                      <span className="mensaje-info">{"Consultando datos de la c\u00e9dula..."}</span>
                     )}
                     {!consultandoCedula && avisoCedula && (
                       <span className={esAvisoCedulaInformativo(avisoCedula) ? "mensaje-info" : "mensaje-error"}>
@@ -641,8 +639,7 @@ function SolicitarVoluntariado() {
                   </div>
 
                   <div className="campo">
-                    <label>
-                      Institución educativa <span className="req">*</span>
+                    <label>{"Instituci\u00f3n educativa"}<span className="req">*</span>
                     </label>
                     <input
                       type="text"
@@ -665,7 +662,7 @@ function SolicitarVoluntariado() {
                     <input
                       type="text"
                       name="residencia"
-                      placeholder="Ciudad, cantón o provincia"
+                      placeholder={"Ciudad, cant\u00f3n o provincia"}
                       value={formulario.residencia}
                       onChange={handleChange}
                       disabled={!formulario.esNacional}
@@ -676,8 +673,7 @@ function SolicitarVoluntariado() {
                   </div>
 
                   <div className="campo">
-                    <label>
-                      País de residencia <span className="req">*</span>
+                    <label>{"Pa\u00eds de residencia"}<span className="req">*</span>
                     </label>
                     <input
                       type="text"
@@ -697,8 +693,7 @@ function SolicitarVoluntariado() {
               <SectionCard icon={Mail} title="Contacto al solicitante">
                     <div className="form-grid">
                       <div className="campo">
-                        <label>
-                          Correo electrónico <span className="req">*</span>
+                        <label>{"Correo electr\u00f3nico"}<span className="req">*</span>
                         </label>
                         <input
                           type="email"
@@ -711,8 +706,7 @@ function SolicitarVoluntariado() {
                       </div>
 
                       <div className="campo">
-                        <label>
-                          Número de teléfono <span className="req">*</span>
+                        <label>{"N\u00famero de tel\u00e9fono"}<span className="req">*</span>
                         </label>
                         <input
                           type="tel"
@@ -732,7 +726,7 @@ function SolicitarVoluntariado() {
                 <SectionCard
                   icon={Users}
                   title="Participantes"
-                  hint="Indique cuántas personas asistirán"
+                  hint={"Indique cu\u00e1ntas personas asistir\u00e1n"}
                 >
                   <div className="campo">
                     <label>
@@ -754,7 +748,7 @@ function SolicitarVoluntariado() {
                 </SectionCard>
               )}
 
-              <SectionCard icon={HandHeart} title="Información del voluntariado">
+              <SectionCard icon={HandHeart} title={"Informaci\u00f3n del voluntariado"}>
                 <div className="form-grid">
                   <div className="campo">
                     <label>
@@ -813,7 +807,7 @@ function SolicitarVoluntariado() {
               <SectionCard
                 icon={Sprout}
                 title="Tipo de voluntariado"
-                hint="Seleccione una única opción"
+                hint={"Seleccione una \u00fanica opci\u00f3n"}
               >
                 <div className="opciones-radio-lista">
                   {TIPOS_VOLUNTARIADO.map((tipo) => (

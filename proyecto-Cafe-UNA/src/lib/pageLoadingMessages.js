@@ -12,11 +12,11 @@ const CACHE_KEY_MESSAGES = {
 };
 
 export function getLoadingMessageForCacheKey(cacheKey) {
-  if (!cacheKey) return 'Cargando página...';
+  if (!cacheKey) return 'Cargando p\u00e1gina...';
   if (cacheKey.startsWith('admin:')) {
     return getLoadingMessageForPathname(cacheKey.slice('admin:'.length) || '/admin');
   }
-  return CACHE_KEY_MESSAGES[cacheKey] ?? 'Cargando página...';
+  return CACHE_KEY_MESSAGES[cacheKey] ?? 'Cargando p\u00e1gina...';
 }
 
 export function getLoadingMessageForPathname(pathname = normalizePathname()) {
@@ -32,5 +32,5 @@ export function getLoadingMessageForPathname(pathname = normalizePathname()) {
   if (path === '/perfil') return CACHE_KEY_MESSAGES.perfil;
   if (path.startsWith('/admin')) return 'Cargando panel administrativo...';
 
-  return 'Cargando página...';
+  return 'Cargando p\u00e1gina...';
 }

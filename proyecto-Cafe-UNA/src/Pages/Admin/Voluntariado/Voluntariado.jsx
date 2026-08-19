@@ -19,19 +19,22 @@ import {
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
+import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
+import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import {
   actualizarSolicitud,
   eliminarSolicitud,
   obtenerSolicitudes,
 } from "../../../services/voluntariadoService";
 import { getActiveSessionUser } from "../../../services/sessionService";
+import { tienePermiso } from "../../../lib/permisos";
 
-const ESTADOS = ["Pendiente", "En revisión", "Aprobado", "Rechazado"];
+const ESTADOS = ["Pendiente", "En revisi\u00f3n", "Aprobado", "Rechazado"];
 
 const ESTADO_ESTILOS = {
   Pendiente: "border-amber-200 bg-amber-50 text-amber-700",
-  "En revisión": "border-blue-200 bg-blue-50 text-blue-700",
+  "En revisi\u00f3n": "border-blue-200 bg-blue-50 text-blue-700",
   Aprobado: "border-emerald-200 bg-emerald-50 text-emerald-700",
   Rechazado: "border-red-200 bg-red-50 text-red-700",
 };
@@ -45,7 +48,7 @@ function normalizarEstado(estado) {
 
   if (normalized === "aprobada" || normalized === "aprobado") return "Aprobado";
   if (normalized === "rechazada" || normalized === "rechazado") return "Rechazado";
-  if (normalized === "en revision" || normalized === "revision") return "En revisión";
+  if (normalized === "en revision" || normalized === "revision") return "En revisi\u00f3n";
   return "Pendiente";
 }
 
@@ -58,16 +61,16 @@ function normalizarSolicitud(solicitud) {
 
 const CAMPOS_EDITABLES = [
   { name: "nombre", label: "Nombre completo" },
-  { name: "email", label: "Correo electrónico", type: "email" },
-  { name: "telefono", label: "Teléfono" },
+  { name: "email", label: "Correo electr\u00f3nico", type: "email" },
+  { name: "telefono", label: "Tel\u00e9fono" },
   { name: "tipoVoluntariado", label: "Tipo de voluntariado" },
-  { name: "identificacion", label: "Identificación" },
-  { name: "institucion", label: "Institución" },
-  { name: "pais", label: "País" },
+  { name: "identificacion", label: "Identificaci\u00f3n" },
+  { name: "institucion", label: "Instituci\u00f3n" },
+  { name: "pais", label: "Pa\u00eds" },
   { name: "residencia", label: "Residencia" },
   { name: "horario", label: "Horario" },
-  { name: "dias", label: "Días disponibles" },
-  { name: "area", label: "Área de interés" },
+  { name: "dias", label: "D\u00edas disponibles" },
+  { name: "area", label: "\u00c1rea de inter\u00e9s" },
 ];
 
 function BadgeEstado({ estado }) {
@@ -176,25 +179,25 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
             <div className="grid gap-4 md:grid-cols-2">
               <DetailField icon={UserRound} label="Nombre" value={solicitud.nombre} />
               <DetailField icon={Mail} label="Correo" value={solicitud.email} />
-              <DetailField icon={Phone} label="Teléfono" value={solicitud.telefono} />
+              <DetailField icon={Phone} label={"Tel\u00e9fono"} value={solicitud.telefono} />
               <DetailField icon={GraduationCap} label="Tipo de voluntariado" value={solicitud.tipoVoluntariado} />
               <DetailField icon={Calendar} label="Fecha de solicitud" value={solicitud.fechaSolicitud} />
               <DetailField icon={Clock} label="Disponibilidad" value={solicitud.horario} />
-              <DetailField icon={Hash} label="Identificación" value={solicitud.identificacion} />
-              <DetailField icon={Building2} label="Institución" value={solicitud.institucion} />
+              <DetailField icon={Hash} label={"Identificaci\u00f3n"} value={solicitud.identificacion} />
+              <DetailField icon={Building2} label={"Instituci\u00f3n"} value={solicitud.institucion} />
               <DetailField icon={MapPin} label="Residencia" value={solicitud.residencia} />
               <DetailField icon={Users} label="Participantes" value={String(solicitud.cantidadParticipantes || 1)} />
-              <DetailField icon={MapPin} label="País" value={solicitud.pais} />
-              <DetailField icon={Calendar} label="Días disponibles" value={solicitud.dias} />
+              <DetailField icon={MapPin} label={"Pa\u00eds"} value={solicitud.pais} />
+              <DetailField icon={Calendar} label={"D\u00edas disponibles"} value={solicitud.dias} />
               <DetailField icon={GraduationCap} label="Modalidad" value={solicitud.modalidad === "grupal" ? "Grupal" : "Individual"} />
-              <DetailField icon={MapPin} label="Área de interés" value={solicitud.area} />
-              <DetailBlock label="Motivación" value={solicitud.motivacion} />
+              <DetailField icon={MapPin} label={"\u00c1rea de inter\u00e9s"} value={solicitud.area} />
+              <DetailBlock label={"Motivaci\u00f3n"} value={solicitud.motivacion} />
               <DetailBlock label="Experiencia" value={solicitud.descripcion} />
             </div>
           </section>
 
           <section className="mt-6 space-y-4 border-t border-slate-100 pt-6">
-            <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Panel de administración</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">{"Panel de administraci\u00f3n"}</h4>
             <label className="grid gap-2 text-sm font-medium text-slate-700">
               Observaciones del administrador
               <textarea
@@ -213,11 +216,9 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
             <button
               type="button"
               disabled={guardando}
-              onClick={() => cambiarEstado("En revisión")}
+              onClick={() => cambiarEstado("En revisi\u00f3n")}
               className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Marcar en revisión
-            </button>
+            >{"Marcar en revisi\u00f3n"}</button>
             <button
               type="button"
               disabled={guardando}
@@ -296,7 +297,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-950">Editar solicitud</h2>
-            <p className="text-sm text-slate-500">Actualizá los datos o el estado del voluntariado.</p>
+            <p className="text-sm text-slate-500">{"Actualiz\u00e1 los datos o el estado del voluntariado."}</p>
           </div>
           <button
             type="button"
@@ -375,9 +376,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
               />
             </label>
 
-            <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-              Motivación
-              <textarea
+            <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">{"Motivaci\u00f3n"}<textarea
                 name="motivacion"
                 value={form.motivacion}
                 onChange={handleChange}
@@ -417,8 +416,8 @@ const AdminVoluntariado = () => {
       return null;
     }
   })();
-  const actorRoles = Array.isArray(actor?.roles) ? actor.roles.map((rol) => String(rol).toLowerCase()) : [];
-  const esSuperAdmin = actorRoles.includes("superadmin");
+  const actorRoles = Array.isArray(actor?.roles) ? actor.roles : [];
+  const esSuperAdmin = tienePermiso(actorRoles, "inactivar_voluntariado");
   const [solicitudes, setSolicitudes] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -426,6 +425,28 @@ const AdminVoluntariado = () => {
   const [editando, setEditando] = useState(null);
   const [eliminando, setEliminando] = useState(null);
   const { showLoading, loadingMessage } = useAdminPageGate('/admin/voluntariado', !cargando);
+
+  const {
+    busqueda,
+    setBusqueda,
+    filtrados: solicitudesFiltradas,
+    limpiar,
+    hayFiltrosActivos,
+    total,
+    visibles,
+  } = useAdminListaFiltros(solicitudes, {
+    buscarEn: (solicitud) => [
+      solicitud.nombre,
+      solicitud.email,
+      solicitud.telefono,
+      solicitud.tipoVoluntariado,
+      solicitud.estado,
+      solicitud.institucion,
+      solicitud.identificacion,
+      solicitud.area,
+      solicitud.pais,
+    ],
+  });
 
   const resumen = useMemo(() => {
     return solicitudes.reduce((acc, solicitud) => {
@@ -483,7 +504,7 @@ const AdminVoluntariado = () => {
       setEditando(null);
       setViendo(null);
     } catch (err) {
-      alert("Error al actualizar la solicitud. Intentá de nuevo.");
+      alert("Error al actualizar la solicitud. Intent\u00e1 de nuevo.");
       console.error(err);
     }
   };
@@ -494,7 +515,7 @@ const AdminVoluntariado = () => {
       return;
     }
 
-    const confirmar = window.confirm(`¿Deseás eliminar la solicitud de ${solicitud.nombre || "esta persona"}?`);
+    const confirmar = window.confirm(`\u00bfDese\u00e1s eliminar la solicitud de ${solicitud.nombre || "esta persona"}?`);
     if (!confirmar) return;
 
     setEliminando(solicitud.id);
@@ -502,7 +523,7 @@ const AdminVoluntariado = () => {
       await eliminarSolicitud(solicitud.id);
       setSolicitudes((prev) => prev.filter((item) => item.id !== solicitud.id));
     } catch (err) {
-      alert("Error al eliminar la solicitud. Intentá de nuevo.");
+      alert("Error al eliminar la solicitud. Intent\u00e1 de nuevo.");
       console.error(err);
     } finally {
       setEliminando(null);
@@ -520,9 +541,7 @@ const AdminVoluntariado = () => {
                 Programa de Voluntariado
               </span>
               <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Solicitudes registradas</h1>
-              <p className="mt-3 max-w-2xl text-slate-600">
-                Gestioná el estado y los datos de cada solicitud de voluntariado recibida.
-              </p>
+              <p className="mt-3 max-w-2xl text-slate-600">{"Gestion\u00e1 el estado y los datos de cada solicitud de voluntariado recibida."}</p>
             </div>
 
             <button
@@ -568,11 +587,25 @@ const AdminVoluntariado = () => {
 
         {!cargando && !error && solicitudes.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-            <p className="text-slate-600">No hay solicitudes registradas aún.</p>
+            <p className="text-slate-600">{"No hay solicitudes registradas a\u00fan."}</p>
           </div>
         ) : null}
 
         {!cargando && !error && solicitudes.length > 0 ? (
+          <>
+            <AdminListaToolbar
+              busqueda={busqueda}
+              onBusquedaChange={setBusqueda}
+              placeholder={"Buscar por nombre, correo, tipo, estado o instituci\u00f3n..."}
+              total={total}
+              visibles={visibles}
+              hayFiltrosActivos={hayFiltrosActivos}
+              onLimpiar={limpiar}
+            />
+
+            {solicitudesFiltradas.length === 0 ? (
+              <AdminListaVacia onLimpiar={limpiar} />
+            ) : (
           <>
             <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
               <div className="overflow-x-auto">
@@ -587,7 +620,7 @@ const AdminVoluntariado = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {solicitudes.map((solicitud) => (
+                    {solicitudesFiltradas.map((solicitud) => (
                       <tr key={solicitud.id} className="transition hover:bg-slate-50">
                         <td className="px-5 py-4">
                           <div className="font-semibold text-slate-950">{solicitud.nombre || "Sin nombre"}</div>
@@ -641,7 +674,7 @@ const AdminVoluntariado = () => {
             </div>
 
             <div className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:hidden">
-              {solicitudes.map((solicitud) => (
+              {solicitudesFiltradas.map((solicitud) => (
                 <article key={solicitud.id} className="space-y-3 px-4 py-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -692,6 +725,8 @@ const AdminVoluntariado = () => {
                 </article>
               ))}
             </div>
+          </>
+            )}
           </>
         ) : null}
       </section>

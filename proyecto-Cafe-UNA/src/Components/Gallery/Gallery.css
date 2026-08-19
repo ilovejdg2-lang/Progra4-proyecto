@@ -121,7 +121,7 @@
   margin-top: 1.25rem;
 }
 
-@media (max-width: 720px) {
+@container site-canvas (max-width: 720px) {
   .gallery__bento {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -141,7 +141,7 @@
   }
 }
 
-@media (min-width: 721px) {
+@container site-canvas (min-width: 721px) {
   .gallery__item--fill-mobile:not(.gallery__item--fill-desktop) {
     grid-column: span 1;
     aspect-ratio: 1;
@@ -244,7 +244,7 @@
   background: rgba(255, 255, 255, 0.24);
 }
 
-@media (max-width: 640px) {
+@container site-canvas (max-width: 640px) {
   .gallery-lightbox__panel {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr auto;

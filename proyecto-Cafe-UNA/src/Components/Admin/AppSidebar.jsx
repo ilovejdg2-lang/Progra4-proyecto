@@ -11,6 +11,7 @@ import {
   Info,
   LogOut,
   Package,
+  ScrollText,
   Settings,
   UserRound,
   Users,
@@ -42,6 +43,7 @@ import { normalizeImageUrl, getImageObjectPosition } from "../../lib/imageUtils"
 import { useHomeBrandNavigation } from "../../hooks/useHomeBrandNavigation";
 import { obtenerNavbar } from "../../services/informacionService";
 import { clearPerfilCache, obtenerPerfil } from "../../services/perfilService";
+import { tienePermiso, rolesDeUsuario } from "../../lib/permisos";
 import { cancelPendingSessionRefresh } from "../../services/apiClient";
 import {
   applyPerfilToSession,
@@ -61,6 +63,13 @@ export function AppSidebar() {
   const { setOpenMobile } = useSidebar();
   const displayName = user?.name || user?.username || "Usuario";
   const displayEmail = user?.email || user?.correo || "";
+  const roles = rolesDeUsuario(user);
+  const puedeCms = tienePermiso(roles, "actualizar_informacion");
+  const puedeInventario = tienePermiso(roles, "ver_inventario");
+  const puedeVoluntariado = tienePermiso(roles, "ver_solicitudes_voluntariado");
+  const puedeUsuarios = tienePermiso(roles, "editar_usuarios");
+  const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
+  const puedePerfil = tienePermiso(roles, "ver_perfil_propio");
   const avatarUrl = user?.fotoPerfilUrl?.trim()
     ? normalizeImageUrl(user.fotoPerfilUrl.trim(), { width: 96 })
     : "";
@@ -170,7 +179,7 @@ export function AppSidebar() {
           to="/"
           className="block"
           title="Ir al inicio"
-          aria-label="Ir al inicio de Café UNA"
+          aria-label={"Ir al inicio de Caf\u00e9 UNA"}
           onClick={(event) => {
             closeMobileSidebar();
             onBrandClick(event);
@@ -179,16 +188,17 @@ export function AppSidebar() {
           {logoUrl ? (
             <img
               src={normalizeImageUrl(logoUrl, { width: 320 })}
-              alt="Café UNA"
+              alt={"Caf\u00e9 UNA"}
               className="h-8 w-auto"
             />
           ) : (
-            <span className="text-sm font-bold text-slate-900">Café UNA</span>
+            <span className="text-sm font-bold text-slate-900">{"Caf\u00e9 UNA"}</span>
           )}
         </Link>
       </SidebarHeader>
 
       <SidebarContent>
+        {puedeCms ? (
         <Collapsible.Root
           open={generalOpen}
           onOpenChange={updateGeneralOpen}
@@ -209,7 +219,7 @@ export function AppSidebar() {
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/informacion-pagina-principal" onClick={closeMobileSidebar}>
                         <Info />
-                        <span>{"Informaci\u00f3n pagina principal"}</span>
+                        <span>{"Informaci\u00f3n p\u00e1gina principal"}</span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
@@ -226,7 +236,9 @@ export function AppSidebar() {
             </Collapsible.Content>
           </SidebarGroup>
         </Collapsible.Root>
+        ) : null}
 
+        {puedeInventario ? (
         <Collapsible.Root
           open={inventoryOpen}
           onOpenChange={updateInventoryOpen}
@@ -256,9 +268,11 @@ export function AppSidebar() {
             </Collapsible.Content>
           </SidebarGroup>
         </Collapsible.Root>
+        ) : null}
 
         <SidebarGroup>
           <SidebarMenu>
+            {puedeVoluntariado ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <Link to="/admin/voluntariado" onClick={closeMobileSidebar}>
@@ -267,6 +281,8 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            ) : null}
+            {puedeUsuarios ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <Link to="/admin/usuarios" onClick={closeMobileSidebar}>
@@ -275,6 +291,18 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            ) : null}
+            {puedeAuditoria ? (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link to="/admin/auditoria" onClick={closeMobileSidebar}>
+                  <ScrollText />
+                  <span>{"Auditor\u00eda"}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            ) : null}
+            {puedePerfil ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <Link to="/admin/perfil" onClick={closeMobileSidebar}>
@@ -283,6 +311,7 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            ) : null}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
@@ -333,7 +362,7 @@ export function AppSidebar() {
               }}
             >
               <LogOut className="size-4" />
-              <span>Cerrar sesión</span>
+              <span>{"Cerrar sesi\u00f3n"}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

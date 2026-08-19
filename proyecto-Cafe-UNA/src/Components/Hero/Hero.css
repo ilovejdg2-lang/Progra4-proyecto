@@ -172,7 +172,7 @@
   transform: translateY(-2px);
 }
 
-@media (min-width: 1025px) {
+@container site-canvas (min-width: 1025px) {
   .hero {
     padding-left: clamp(5rem, 11vw, 10.5rem);
   }
@@ -200,13 +200,13 @@
   }
 }
 
-@media (max-width: 1024px) {
+@container site-canvas (max-width: 1024px) {
   .hero {
     padding: calc(var(--navbar-height) + 1.5rem) clamp(1.25rem, 4vw, 2rem) clamp(3.5rem, 7vh, 4rem);
   }
 }
 
-@media (max-width: 720px) {
+@container site-canvas (max-width: 720px) {
   .hero {
     align-items: center;
     justify-content: center;
