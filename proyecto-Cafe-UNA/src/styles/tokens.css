@@ -1,1 +1,45 @@
+/* Café UNA — tokens de marca.
+   Cambiar un color aquí actualiza toda la web pública. */
 
+:root {
+  --cafe-900: #1a0f0a;
+  --cafe-800: #2f251d;
+  --cafe-700: #4d2b1f;
+  --cafe-600: #6d432c;
+  --cafe-500: #a7532d;
+  --cafe-500-hover: #8c3d1f;
+  --cafe-400: #c47a4a;
+  --cafe-900-hover: #2a1711;
+  --cafe-crema: #faf6f3;
+  --cafe-texto: #4a3d31;
+  --cafe-titulo: #1c140f;
+  --cafe-apagado: #5a5148;
+  --verde-finca: #286f54;
+  --verde-finca-fondo: #f0fbf6;
+  --verde-finca-borde: #a9dec8;
+  --donacion: #a7532d;
+  --donacion-fondo: #fff6f0;
+  --donacion-borde: #efc4ad;
+  --visita: #286f54;
+  --visita-fondo: #f0fbf6;
+  --visita-borde: #a9dec8;
+  --voluntariado: #67521d;
+  --voluntariado-fondo: #fff9eb;
+  --voluntariado-borde: #dfc98d;
+  --error: #991b1b;
+  --superficie: #ffffff;
+  --degradado-hero: linear-gradient(135deg, #4d2b1f 0%, #1f120c 100%);
+  --radio-ui: 16px;
+  --ancho-seccion: 1120px;
+
+  --coffee-900: var(--cafe-900);
+  --coffee-800: var(--cafe-800);
+  --coffee-700: var(--cafe-700);
+  --coffee-600: var(--cafe-600);
+  --coffee-500: var(--cafe-500);
+  --coffee-400: var(--cafe-400);
+  --coffee-muted: var(--cafe-apagado);
+  --coffee-cream: var(--cafe-crema);
+  --hero-gradient: var(--degradado-hero);
+  --section-max: var(--ancho-seccion);
+}

@@ -5,8 +5,8 @@
   align-items: center;
   gap: 0.95rem;
   padding: 1.1rem 1.5rem 1rem;
-  background: #4d2b1f;
-  color: #f4efe7;
+  background: #000000;
+  color: #ffffff;
   font-size: 0.95rem;
 }
 
@@ -46,7 +46,7 @@
 
 .footer__brand-copy span {
   font-size: 0.88rem;
-  color: rgba(244, 239, 231, 0.88);
+  color: #ffffff;
 }
 
 .footer__column {
@@ -57,7 +57,7 @@
 
 .footer__column h2 {
   margin: 0 0 0.18rem;
-  color: rgba(244, 239, 231, 0.72);
+  color: #ffffff;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0;
@@ -66,7 +66,7 @@
 
 .footer__column a,
 .footer__contact-item {
-  color: rgba(244, 239, 231, 0.86);
+  color: #ffffff;
   font-size: 0.78rem;
   font-weight: 600;
   line-height: 1.2;
@@ -96,14 +96,14 @@
   height: 0.88rem;
   flex: 0 0 auto;
   margin-top: 0.05rem;
-  color: rgba(244, 239, 231, 0.78);
+  color: #ffffff;
 }
 
 .footer__divider {
   width: min(100%, 1180px);
   margin: 0 auto;
   height: 1px;
-  background: rgba(244, 239, 231, 0.22);
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .footer__bottom {
@@ -118,7 +118,7 @@
   text-align: center;
   font-size: 0.78rem;
   font-weight: 500;
-  color: rgba(244, 239, 231, 0.78);
+  color: #ffffff;
 }
 
 @media (max-width: 900px) {
