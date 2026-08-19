@@ -38,7 +38,7 @@ export function useCachedPageData(cacheKey, fetcher) {
         setStatus('ready');
         return;
       }
-      setError(err?.message || 'No se pudo cargar la página.');
+      setError(err?.message || 'No se pudo cargar la p\u00e1gina.');
       setStatus('error');
     }
   }, [applyFresh, cacheKey, fetcher]);
@@ -71,7 +71,7 @@ export function useCachedPageData(cacheKey, fetcher) {
           setStatus('ready');
           return;
         }
-        setError(err?.message || 'No se pudo cargar la página.');
+        setError(err?.message || 'No se pudo cargar la p\u00e1gina.');
         setStatus('error');
       }
     }

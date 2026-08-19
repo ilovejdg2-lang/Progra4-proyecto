@@ -44,7 +44,7 @@ function PerfilPasswordField({ label, value, onChange, visible, onToggle, autoFo
           type="button"
           className="perfil-password-field__toggle"
           onClick={onToggle}
-          aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
+          aria-label={visible ? "Ocultar contrase\u00f1a" : "Mostrar contrase\u00f1a"}
         >
           <Icon size={18} aria-hidden="true" />
         </button>
@@ -192,7 +192,7 @@ function ImageUrlModal({
 
             <div className="perfil-modal__position-controls">
               <label className="perfil-field">
-                <span>Posición horizontal ({Math.round(position.x)}%)</span>
+                <span>{"Posici\u00f3n horizontal ("}{Math.round(position.x)}%)</span>
                 <input
                   type="range"
                   min="0"
@@ -202,7 +202,7 @@ function ImageUrlModal({
                 />
               </label>
               <label className="perfil-field">
-                <span>Posición vertical ({Math.round(position.y)}%)</span>
+                <span>{"Posici\u00f3n vertical ("}{Math.round(position.y)}%)</span>
                 <input
                   type="range"
                   min="0"
@@ -214,7 +214,7 @@ function ImageUrlModal({
             </div>
           </div>
         ) : (
-          <p className="perfil-modal__empty-preview">Pega un enlace para ver la vista previa al tamaño real.</p>
+          <p className="perfil-modal__empty-preview">{"Pega un enlace para ver la vista previa al tama\u00f1o real."}</p>
         )}
 
         <div className="perfil-modal__actions">
@@ -336,7 +336,7 @@ export function PerfilContent({ variant = "standalone" }) {
   useEffect(() => {
     if (!sessionUserId) {
       setCargando(false);
-      setError("Inicie sesión para ver su perfil.");
+      setError("Inicie sesi\u00f3n para ver su perfil.");
       return;
     }
 
@@ -470,7 +470,7 @@ export function PerfilContent({ variant = "standalone" }) {
       return;
     }
     if (!emailForm.passwordActual) {
-      setEmailErrors((prev) => ({ ...prev, passwordActual: "Ingrese su contraseña actual." }));
+      setEmailErrors((prev) => ({ ...prev, passwordActual: "Ingrese su contrase\u00f1a actual." }));
       return;
     }
 
@@ -479,10 +479,10 @@ export function PerfilContent({ variant = "standalone" }) {
       const result = await solicitarCambioCorreo(nuevoCorreo, emailForm.passwordActual);
       setEmailForm((prev) => ({ ...prev, step: "verify", passwordActual: "" }));
       setShowPasswords((prev) => ({ ...prev, email: false }));
-      setMensaje(result?.message || "Se envió el código al nuevo correo.");
+      setMensaje(result?.message || "Se envi\u00f3 el c\u00f3digo al nuevo correo.");
     } catch (err) {
       const message = sanitizeUserFacingError(err.message || "No se pudo solicitar el cambio de correo.");
-      if (message.toLowerCase().includes("contraseña")) {
+      if (message.toLowerCase().includes("contrase\u00f1a")) {
         setEmailErrors((prev) => ({ ...prev, passwordActual: message }));
       } else {
         setEmailErrors((prev) => ({ ...prev, formulario: message }));
@@ -502,7 +502,7 @@ export function PerfilContent({ variant = "standalone" }) {
     if (!nuevoCorreo || !emailForm.token.trim()) {
       setEmailErrors((prev) => ({
         ...prev,
-        token: !emailForm.token.trim() ? "Ingrese el código recibido." : "",
+        token: !emailForm.token.trim() ? "Ingrese el c\u00f3digo recibido." : "",
         nuevoCorreo: !nuevoCorreo ? "Ingrese el nuevo correo." : "",
       }));
       return;
@@ -521,7 +521,7 @@ export function PerfilContent({ variant = "standalone" }) {
       setMensaje("Correo actualizado correctamente.");
     } catch (err) {
       const message = sanitizeUserFacingError(err.message || "No se pudo confirmar el cambio de correo.");
-      if (message.toLowerCase().includes("código")) {
+      if (message.toLowerCase().includes("c\u00f3digo")) {
         setEmailErrors((prev) => ({ ...prev, token: message }));
       } else {
         setEmailErrors((prev) => ({ ...prev, formulario: message }));
@@ -538,13 +538,13 @@ export function PerfilContent({ variant = "standalone" }) {
     setPasswordErrors({ passwordActual: "", passwordNueva: "", confirmPassword: "" });
 
     const nextErrors = {
-      passwordActual: passwordForm.passwordActual ? "" : "Ingrese su contraseña actual.",
+      passwordActual: passwordForm.passwordActual ? "" : "Ingrese su contrase\u00f1a actual.",
       passwordNueva: validatePassword(passwordForm.passwordNueva),
       confirmPassword: "",
     };
 
     if (passwordForm.passwordNueva && passwordForm.passwordNueva !== passwordForm.confirmPassword) {
-      nextErrors.confirmPassword = "Las contraseñas nuevas no coinciden.";
+      nextErrors.confirmPassword = "Las contrase\u00f1as nuevas no coinciden.";
     }
 
     if (nextErrors.passwordActual || nextErrors.passwordNueva || nextErrors.confirmPassword) {
@@ -560,11 +560,11 @@ export function PerfilContent({ variant = "standalone" }) {
       });
       setPasswordForm({ passwordActual: "", passwordNueva: "", confirmPassword: "", step: "view" });
       resetPasswordVisibility();
-      setMensaje(result?.message || "Contraseña actualizada correctamente.");
+      setMensaje(result?.message || "Contrase\u00f1a actualizada correctamente.");
     } catch (err) {
       setPasswordErrors((prev) => ({
         ...prev,
-        passwordNueva: sanitizeUserFacingError(err.message || "No se pudo cambiar la contraseña."),
+        passwordNueva: sanitizeUserFacingError(err.message || "No se pudo cambiar la contrase\u00f1a."),
       }));
     } finally {
       setGuardando(false);
@@ -671,7 +671,7 @@ export function PerfilContent({ variant = "standalone" }) {
         <section className="perfil-card">
           <header className="perfil-card__header">
             <UserRound size={18} />
-            <h2>Información personal</h2>
+            <h2>{"Informaci\u00f3n personal"}</h2>
           </header>
 
           <p className="perfil-card__current-value">{form.nombre || "Sin nombre"}</p>
@@ -725,7 +725,7 @@ export function PerfilContent({ variant = "standalone" }) {
         <section className="perfil-card">
           <header className="perfil-card__header">
             <Mail size={18} />
-            <h2>Correo electrónico</h2>
+            <h2>{"Correo electr\u00f3nico"}</h2>
           </header>
 
           <p className="perfil-card__current-value">{form.correo}</p>
@@ -763,7 +763,7 @@ export function PerfilContent({ variant = "standalone" }) {
 
               {emailForm.step === "edit" ? (
                 <PerfilPasswordField
-                  label="Contraseña actual"
+                  label={"Contrase\u00f1a actual"}
                   value={emailForm.passwordActual}
                   onChange={(e) => {
                     setEmailErrors((prev) => ({ ...prev, passwordActual: "", formulario: "" }));
@@ -780,7 +780,7 @@ export function PerfilContent({ variant = "standalone" }) {
 
               {emailForm.step === "verify" ? (
                 <label className="perfil-field">
-                  <span>Código de verificación</span>
+                  <span>{"C\u00f3digo de verificaci\u00f3n"}</span>
                   <input
                     value={emailForm.token}
                     onChange={(e) => {
@@ -788,7 +788,7 @@ export function PerfilContent({ variant = "standalone" }) {
                       setEmailForm((prev) => ({ ...prev, token: e.target.value }));
                     }}
                     className={emailErrors.token ? "input-error" : ""}
-                    placeholder="6 dígitos"
+                    placeholder={"6 d\u00edgitos"}
                     required
                     autoFocus
                   />
@@ -814,7 +814,7 @@ export function PerfilContent({ variant = "standalone" }) {
                   {guardando
                     ? "Procesando..."
                     : emailForm.step === "edit"
-                      ? "Enviar código"
+                      ? "Enviar c\u00f3digo"
                       : "Confirmar correo"}
                 </button>
               </div>
@@ -831,15 +831,13 @@ export function PerfilContent({ variant = "standalone" }) {
           <p className="perfil-card__current-value perfil-card__current-value--masked">••••••••</p>
 
           {passwordForm.step === "view" ? (
-            <button type="button" className="perfil-link-action" onClick={openPasswordEdit}>
-              Cambiar contraseña
-              <ChevronRight size={16} />
+            <button type="button" className="perfil-link-action" onClick={openPasswordEdit}>{"Cambiar contrase\u00f1a"}<ChevronRight size={16} />
             </button>
           ) : (
             <form className="perfil-password-form" onSubmit={handleCambiarPassword}>
               <div className="perfil-password-form__fields">
                 <PerfilPasswordField
-                  label="Contraseña actual"
+                  label={"Contrase\u00f1a actual"}
                   value={passwordForm.passwordActual}
                   onChange={(e) => {
                     setPasswordErrors((prev) => ({ ...prev, passwordActual: "" }));
@@ -852,7 +850,7 @@ export function PerfilContent({ variant = "standalone" }) {
                 />
 
                 <PerfilPasswordField
-                  label="Contraseña nueva"
+                  label={"Contrase\u00f1a nueva"}
                   value={passwordForm.passwordNueva}
                   onChange={(e) => {
                     setPasswordErrors((prev) => ({ ...prev, passwordNueva: "" }));
@@ -864,7 +862,7 @@ export function PerfilContent({ variant = "standalone" }) {
                 />
 
                 <PerfilPasswordField
-                  label="Confirmar contraseña nueva"
+                  label={"Confirmar contrase\u00f1a nueva"}
                   value={passwordForm.confirmPassword}
                   onChange={(e) => {
                     setPasswordErrors((prev) => ({ ...prev, confirmPassword: "" }));
@@ -881,7 +879,7 @@ export function PerfilContent({ variant = "standalone" }) {
                   Cancelar
                 </button>
                 <button type="submit" className="perfil-button perfil-button--secondary" disabled={guardando}>
-                  {guardando ? "Actualizando..." : "Actualizar contraseña"}
+                  {guardando ? "Actualizando..." : "Actualizar contrase\u00f1a"}
                 </button>
               </div>
             </form>

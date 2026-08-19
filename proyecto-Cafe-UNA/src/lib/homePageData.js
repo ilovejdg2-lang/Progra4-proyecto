@@ -1,5 +1,5 @@
 import { obtenerHero, obtenerNavbar, obtenerSeccion, obtenerTarjetasInicio, obtenerEnlaces } from '../services/informacionService';
-import { obtenerProductos } from '../services/productosServices';
+import { obtenerProductos } from '../services/productosService';
 import { mapHero } from './heroData';
 
 function pickString(data, camelKey, pascalKey) {

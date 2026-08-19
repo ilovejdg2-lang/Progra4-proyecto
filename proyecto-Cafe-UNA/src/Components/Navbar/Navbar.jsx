@@ -1,7 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './Navbar.css';
-import { calcularPrecioConIVA } from '../../services/productosServices';
+import { calcularPrecioConIVA } from '../../services/productosService';
 import { Bell, BookOpen, Coffee, HandHeart, Info, Menu, Minus, Package, Plus, ShoppingCart, Trash2, User, X } from 'lucide-react';
 import { obtenerEnlaces, obtenerNavbar } from '../../services/informacionService';
 import { normalizeImageUrl } from '../../lib/imageUtils';
@@ -13,16 +13,7 @@ import { beginLogout, clearSession, getActiveSessionUser } from '../../services/
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
-const CART_STORAGE_KEY = 'cart';
-
-const parseStorageJson = (key, fallback) => {
-    try {
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-    } catch {
-        return fallback;
-    }
-};
+import { clearCart as emptyCart, getStoredCart, saveCart } from '../../lib/cartStorage';
 
 const formatCRC = (amount) => {
     const value = Number.isFinite(amount) ? amount : 0;
@@ -137,7 +128,7 @@ const Navbar = () => {
     useEffect(() => {
         const syncNavbarState = () => {
             const storedUser = getActiveSessionUser();
-            const storedCart = parseStorageJson(CART_STORAGE_KEY, []);
+            const storedCart = getStoredCart();
             setUser(storedUser);
             setCartItems(Array.isArray(storedCart) ? storedCart : []);
             if (!storedUser) {
@@ -334,10 +325,9 @@ const Navbar = () => {
     const solicitudesPendientes = solicitudes.filter(isSolicitudPendiente);
     const solicitudesPendientesCount = solicitudesPendientes.length;
 
-    const saveCart = (updatedCart) => {
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
+    const persistCart = (updatedCart) => {
         setCartItems(updatedCart);
-        window.dispatchEvent(new Event('cart-updated'));
+        saveCart(updatedCart);
     };
 
     const removeOneUnit = (productId) => {
@@ -349,7 +339,7 @@ const Navbar = () => {
             ))
             .filter((item) => (item.units || 0) > 0);
 
-        saveCart(updatedCart);
+        persistCart(updatedCart);
     };
 
     const addOneUnit = (productId) => {
@@ -362,12 +352,12 @@ const Navbar = () => {
         const unidadesActuales = getQuantity(targetItem);
 
         if (stockDisponible <= 0 || targetItem.estado === 'Agotado') {
-            window.alert('Este producto está agotado.');
+            window.alert('Este producto est\u00e1 agotado.');
             return;
         }
 
         if (unidadesActuales >= stockDisponible) {
-            window.alert('No hay más unidades disponibles de este producto.');
+            window.alert('No hay m\u00e1s unidades disponibles de este producto.');
             return;
         }
 
@@ -377,16 +367,17 @@ const Navbar = () => {
                 : item
         ));
 
-        saveCart(updatedCart);
+        persistCart(updatedCart);
     };
 
     const removeLineItem = (productId) => {
         const updatedCart = cartItems.filter((item) => item.id !== productId);
-        saveCart(updatedCart);
+        persistCart(updatedCart);
     };
 
-    const clearCart = () => {
-        saveCart([]);
+    const clearCartItems = () => {
+        setCartItems([]);
+        emptyCart();
     };
 
     const closeMobileMenu = () => {
@@ -488,14 +479,14 @@ const Navbar = () => {
     const brandMark = brandLogoSrc ? (
         <img
             src={brandLogoSrc}
-            alt="Café UNA"
+            alt={"Caf\u00e9 UNA"}
             className="navbar__brand-logo"
             width={240}
             height={52}
             decoding="async"
         />
     ) : (
-        <span className="navbar__brand-text">Café UNA</span>
+        <span className="navbar__brand-text">{"Caf\u00e9 UNA"}</span>
     );
 
     return (
@@ -635,7 +626,7 @@ const Navbar = () => {
                                         <button
                                             type="button"
                                             className="cart-clear-button"
-                                            onClick={clearCart}
+                                            onClick={clearCartItems}
                                         >
                                             Vaciar carrito
                                         </button>
@@ -683,7 +674,7 @@ const Navbar = () => {
                                                 <div className="notification-item__main">
                                                     <strong>{solicitud.tipoVoluntariado || solicitud.area || 'Voluntariado'}</strong>
                                                     <span>{solicitud.fechaSolicitud || 'Fecha no disponible'}</span>
-                                                    {user?.role === 'admin' ? <small>Abrir en administración</small> : null}
+                                                    {user?.role === 'admin' ? <small>{"Abrir en administraci\u00f3n"}</small> : null}
                                                 </div>
                                             );
 
@@ -693,7 +684,7 @@ const Navbar = () => {
                                                     type="button"
                                                     className="notification-item"
                                                     onClick={handleNotificationOpen}
-                                                    title="Abrir administración de voluntariado"
+                                                    title={"Abrir administraci\u00f3n de voluntariado"}
                                                 >
                                                     {notificationContent}
                                                 </button>
@@ -714,8 +705,8 @@ const Navbar = () => {
                     <button
                         type="button"
                         className="navbar__icon-button navbar__user-button"
-                        aria-label={user ? 'Abrir menú de usuario' : 'Iniciar sesión'}
-                        title={user ? 'Mi cuenta' : 'Iniciar sesión'}
+                        aria-label={user ? 'Abrir men\u00fa de usuario' : 'Iniciar sesi\u00f3n'}
+                        title={user ? 'Mi cuenta' : 'Iniciar sesi\u00f3n'}
                     >
                         <User size={24} strokeWidth={2} aria-hidden="true" />
                     </button>
@@ -733,7 +724,7 @@ const Navbar = () => {
                         {user.role === 'admin' && (
                             <Link to="/admin" onClick={() => setShowDropdown(false)}>Panel Administrativo</Link>
                         )}
-                        <button className="dropdown__logout" onClick={handleLogout}>Cerrar Sesión</button>
+                        <button className="dropdown__logout" onClick={handleLogout}>{"Cerrar Sesi\u00f3n"}</button>
                         </div>
                     )}
                 </div>
@@ -741,7 +732,7 @@ const Navbar = () => {
                 <button
                     type="button"
                     className="navbar__menu-toggle"
-                    aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+                    aria-label={isMobileMenuOpen ? 'Cerrar men\u00fa' : 'Abrir men\u00fa'}
                     aria-expanded={isMobileMenuOpen}
                     aria-controls="navbar-mobile-menu"
                     onClick={handleMobileMenuToggle}
@@ -761,7 +752,7 @@ const Navbar = () => {
                 <button
                     type="button"
                     className="navbar__mobile-backdrop"
-                    aria-label="Cerrar menú"
+                    aria-label={"Cerrar men\u00fa"}
                     tabIndex={isMobileMenuOpen ? 0 : -1}
                     onClick={closeMobileMenu}
                 />
@@ -770,7 +761,7 @@ const Navbar = () => {
                     className="navbar__mobile-panel"
                     role="dialog"
                     aria-modal="true"
-                    aria-label="Menú de navegación"
+                    aria-label={"Men\u00fa de navegaci\u00f3n"}
                 >
                     <header className="navbar__mobile-header">
                         <Link
@@ -782,20 +773,20 @@ const Navbar = () => {
                             {mobileMenuLogoSrc ? (
                                 <img
                                     src={mobileMenuLogoSrc}
-                                    alt="Café UNA"
+                                    alt={"Caf\u00e9 UNA"}
                                     className="navbar__mobile-brand-logo"
                                     width={200}
                                     height={44}
                                     decoding="async"
                                 />
                             ) : (
-                                <span className="navbar__mobile-brand-text">Café UNA</span>
+                                <span className="navbar__mobile-brand-text">{"Caf\u00e9 UNA"}</span>
                             )}
                         </Link>
                         <button
                             type="button"
                             className="navbar__mobile-close"
-                            aria-label="Cerrar menú"
+                            aria-label={"Cerrar men\u00fa"}
                             onClick={closeMobileMenu}
                         >
                             <X size={20} strokeWidth={2.2} aria-hidden="true" />

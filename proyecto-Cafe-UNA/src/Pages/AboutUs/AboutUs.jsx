@@ -33,10 +33,10 @@ const AboutUs = () => {
       loadingMessage={loadingMessage}
       isError={isError}
       error={loadError}
-      errorMessage="No se pudo cargar la información de Sobre Nosotros."
+      errorMessage={"No se pudo cargar la informaci\u00f3n de Sobre Nosotros."}
       onRetry={reload}
     >
-      <main className="about-page">
+      <main className="about-page site-canvas">
         <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.about} />
         {!hasHistoria ? (
           <h1 className="about-page__title about-page__title--sr">Sobre nosotros</h1>
@@ -53,7 +53,7 @@ const AboutUs = () => {
         ) : null}
 
         {hasMission || hasVision ? (
-          <section className="about-page__values" aria-label="Misión y visión">
+          <section className="about-page__values" aria-label={"Misi\u00f3n y visi\u00f3n"}>
             {hasMission ? (
               <article className="about-page__card">
                 <Coffee className="about-page__icon" strokeWidth={1.35} aria-hidden="true" />

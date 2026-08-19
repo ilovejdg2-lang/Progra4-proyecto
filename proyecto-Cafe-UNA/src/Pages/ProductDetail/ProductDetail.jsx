@@ -6,7 +6,7 @@ import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { usePublicPageLoadingGate } from '../../hooks/usePublicPageLoadingGate';
 import { addProductToCart, pulseButton } from '../../lib/cartStorage';
 import { getLoadingMessageForCacheKey } from '../../lib/pageLoadingMessages';
-import { calcularPrecioConIVA, obtenerProductoPorId } from '../../services/productosServices';
+import { calcularPrecioConIVA, obtenerProductoPorId } from '../../services/productosService';
 import './ProductDetail.css';
 
 function formatCRC(value) {
@@ -106,16 +106,12 @@ const ProductDetail = () => {
     >
       <main className="product-detail-page">
         <Link to="/productos" className="product-detail-page__back">
-          <ArrowLeft size={18} aria-hidden="true" />
-          Volver al catálogo
-        </Link>
+          <ArrowLeft size={18} aria-hidden="true" />{"Volver al cat\u00e1logo"}</Link>
 
         {!product && !loading ? (
           <section className="product-detail-page__empty">
             <p>{loadError || 'Producto no encontrado.'}</p>
-            <button type="button" className="product-detail-page__close-btn" onClick={handleBack}>
-              Volver al catálogo
-            </button>
+            <button type="button" className="product-detail-page__close-btn" onClick={handleBack}>{"Volver al cat\u00e1logo"}</button>
           </section>
         ) : null}
 
@@ -199,7 +195,7 @@ const ProductDetail = () => {
                   disabled={estaAgotado}
                 >
                   <ShoppingBag size={18} aria-hidden="true" />
-                  {estaAgotado ? 'Agotado' : 'Añadir al carrito'}
+                  {estaAgotado ? 'Agotado' : 'A\u00f1adir al carrito'}
                 </button>
                 <button type="button" className="product-detail-page__close-btn" onClick={handleBack}>
                   Cerrar

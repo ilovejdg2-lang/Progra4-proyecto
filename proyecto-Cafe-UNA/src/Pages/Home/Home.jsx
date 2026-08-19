@@ -16,44 +16,8 @@ import { productoPuedeDestacarse } from '../../lib/productoDisponibilidad';
 import { readPageCache, readStalePageCache } from '../../lib/pageDataCache';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { toGoogleMapsEmbedUrl } from '../../lib/googleMaps';
+import { buildIniciativasCards } from '../../lib/iniciativasCards';
 import './Home.css';
-
-const CARD_VISUALS = {
-  donaciones: {
-    icono: (
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-      </svg>
-    ),
-    accentColor: '#a7532d',
-    accentBg: '#fff6f0',
-    borderColor: '#efc4ad',
-  },
-  visitas: {
-    icono: (
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-    ),
-    accentColor: '#286f54',
-    accentBg: '#f0fbf6',
-    borderColor: '#a9dec8',
-  },
-  voluntariado: {
-    icono: (
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
-    accentColor: '#67521d',
-    accentBg: '#fff9eb',
-    borderColor: '#dfc98d',
-  },
-};
 
 function getPreloadSource(pageStatus, data) {
   if (pageStatus === 'ready' && data) return data;
@@ -147,23 +111,7 @@ const Home = () => {
     [products],
   );
 
-  const iniciativasCards = useMemo(() => tarjetasInicio.map((tarjeta) => {
-    const clave = (tarjeta.clave || '').toLowerCase();
-    const visual = CARD_VISUALS[clave] || {};
-
-    return {
-      id: clave || tarjeta.clave,
-      etiqueta: tarjeta.etiqueta,
-      titulo: tarjeta.titulo,
-      descripcion: tarjeta.descripcion,
-      ruta: tarjeta.ruta || '',
-      textoBoton: tarjeta.textoBoton || '',
-      icono: visual.icono,
-      accentColor: visual.accentColor,
-      accentBg: visual.accentBg,
-      borderColor: visual.borderColor,
-    };
-  }), [tarjetasInicio]);
+  const iniciativasCards = useMemo(() => buildIniciativasCards(tarjetasInicio), [tarjetasInicio]);
 
   if (pageStatus === 'error') {
     return createPortal(
@@ -192,7 +140,7 @@ const Home = () => {
         <PageLoading message="Cargando inicio..." />,
         document.body,
       ) : null}
-      <div className={prepaintHero ? 'home-page--prepaint' : undefined} inert={prepaintHero || undefined}>
+      <div className={`home-shell site-canvas${prepaintHero ? ' home-page--prepaint' : ''}`} inert={prepaintHero || undefined}>
       <Hero data={hero} onBackgroundReady={handleHeroBackgroundReady} />
       {isFullyVisible ? (
       <main className="home-page">
@@ -256,12 +204,12 @@ const Home = () => {
           ) : null}
 
           {featuredProducts.length === 0 ? (
-            <p className="curated-collections__empty">Aún no hay cafés destacados. Márcalos en el panel de productos.</p>
+            <p className="curated-collections__empty">{"A\u00fan no hay caf\u00e9s destacados. M\u00e1rcalos en el panel de productos."}</p>
           ) : (
             <div className="curated-collections__carousel">
               <div
                 className={`curated-collections__grid curated-collections__grid--count-${featuredProducts.length}`}
-                aria-label="Selección destacada de cafés"
+                aria-label={"Selecci\u00f3n destacada de caf\u00e9s"}
                 role="list"
               >
                 {featuredProducts.map((p, idx) => (
@@ -278,7 +226,7 @@ const Home = () => {
                   >
                     <img
                       src={normalizeImageUrl(p.imagen, { width: 800 }) || p.imagen}
-                      alt={p.nombre || 'Café'}
+                      alt={p.nombre || 'Caf\u00e9'}
                       loading="eager"
                       width="800"
                       height="1000"
@@ -381,7 +329,7 @@ const Home = () => {
             {locationMapEmbedUrl ? (
               <div className="location-card__map">
                 <iframe
-                  title="Mapa de ubicación"
+                  title={"Mapa de ubicaci\u00f3n"}
                   src={locationMapEmbedUrl}
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
@@ -394,7 +342,7 @@ const Home = () => {
                     target="_blank"
                     rel="noreferrer"
                     className="location-card__map-link"
-                    aria-label="Abrir ubicacion en Google Maps"
+                    aria-label={"Abrir ubicaci\u00f3n en Google Maps"}
                   />
                 ) : null}
               </div>

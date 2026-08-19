@@ -1,5 +1,6 @@
 import { apiRequest } from "./apiClient";
 import { decodeJwtPayload } from "../lib/jwt";
+import { tienePermiso } from "../lib/permisos";
 
 const AUTH_BASE_URL = `${import.meta.env.BACKEND_URL}/auth`;
 
@@ -7,7 +8,7 @@ async function request(url, options = {}) {
   return apiRequest(url, {
     ...options,
     skipAuth: true,
-    errorPrefix: "Error de autenticación",
+    errorPrefix: "Error de autenticaci\u00f3n",
     timeoutMessage: "Tiempo de espera agotado al autenticar.",
   });
 }
@@ -24,8 +25,8 @@ export async function renovarToken() {
     method: "POST",
     skipRefresh: true,
     skipSessionClear: true,
-    errorPrefix: "Error de autenticación",
-    timeoutMessage: "Tiempo de espera agotado al renovar la sesión.",
+    errorPrefix: "Error de autenticaci\u00f3n",
+    timeoutMessage: "Tiempo de espera agotado al renovar la sesi\u00f3n.",
   });
 }
 
@@ -34,7 +35,7 @@ export function mapAuthenticatedUser(token) {
   const roles = payload?.role
     ? (Array.isArray(payload.role) ? payload.role : [payload.role])
     : [];
-  const isAdmin = roles.some((role) => role === "SuperAdmin" || role === "Admin");
+  const isAdmin = tienePermiso(roles, "ver_panel_administrativo");
 
   return {
     id: Number(payload?.sub),

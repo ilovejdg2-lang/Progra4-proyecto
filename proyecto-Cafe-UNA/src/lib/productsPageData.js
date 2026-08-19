@@ -1,4 +1,4 @@
-import { obtenerProductos } from '../services/productosServices';
+import { obtenerProductos } from '../services/productosService';
 
 export async function fetchProductsPageData() {
   const productList = await obtenerProductos();
