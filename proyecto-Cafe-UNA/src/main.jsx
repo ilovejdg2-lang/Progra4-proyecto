@@ -8,7 +8,7 @@ import { refreshSessionIfNeeded } from './services/apiClient'
 import { getActiveSessionUser, isLoggingOut, touchSession } from './services/sessionService'
 
 const ACTIVITY_THROTTLE_MS = 60_000;
-const SESSION_ACTIVITY_EVENTS = ['click', 'keydown', 'scroll', 'mousemove'];
+const SESSION_ACTIVITY_EVENTS = ['click', 'keydown', 'scroll'];
 
 function runSessionRefresh() {
   if (isLoggingOut()) return;
@@ -17,9 +17,7 @@ function runSessionRefresh() {
 
 function SessionSync() {
   useEffect(() => {
-    getActiveSessionUser();
-    const user = getActiveSessionUser();
-    if (!user) return undefined;
+    if (!getActiveSessionUser()) return undefined;
 
     let lastActivityAt = 0;
     const handleActivity = () => {

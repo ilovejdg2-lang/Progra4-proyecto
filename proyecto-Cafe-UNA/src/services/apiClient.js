@@ -120,14 +120,14 @@ export async function apiRequest(url, options = {}) {
   } catch (error) {
     if (error.code === "ECONNABORTED") {
       throw new Error(
-        timeoutMessage || "El servidor tardó demasiado en responder. Intente de nuevo.",
+        timeoutMessage || "El servidor tard\u00f3 demasiado en responder. Intente de nuevo.",
         { cause: error },
       );
     }
 
     if (error.code === "ERR_NETWORK") {
       throw new Error(
-        "No se pudo conectar con el servidor. Verifique que el backend esté en ejecución.",
+        "No se pudo conectar con el servidor. Verifique que el backend est\u00e9 en ejecuci\u00f3n.",
         { cause: error },
       );
     }
@@ -144,7 +144,7 @@ export async function apiRequest(url, options = {}) {
         && !isLoggingOut()
       ) {
         clearSession();
-        throw new Error("Su sesión expiró. Inicie sesión de nuevo.", { cause: error });
+        throw new Error("Su sesi\u00f3n expir\u00f3. Inicie sesi\u00f3n de nuevo.", { cause: error });
       }
 
       const responseData = error.response.data;
@@ -155,7 +155,7 @@ export async function apiRequest(url, options = {}) {
     }
 
     throw new Error(
-      sanitizeUserFacingError(error.message || "No se pudo completar la acción."),
+      sanitizeUserFacingError(error.message || "No se pudo completar la acci\u00f3n."),
       { cause: error },
     );
   }

@@ -13,6 +13,7 @@ export function AdminModal({
   maxWidth = "max-w-2xl",
   className,
   labelledBy,
+  elevated = false,
 }) {
   useBodyScrollLock(open);
 
@@ -23,12 +24,13 @@ export function AdminModal({
 
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
+        event.stopImmediatePropagation();
         onClose();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown, elevated);
+    return () => window.removeEventListener("keydown", handleKeyDown, elevated);
   }, [open, onClose]);
 
   if (!open) {
@@ -36,7 +38,7 @@ export function AdminModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
+    <div className={cn("fixed inset-0 flex items-end justify-center sm:items-center sm:p-4", elevated ? "z-[60]" : "z-50")}>
       <button
         type="button"
         className="absolute inset-0 bg-slate-950/45 backdrop-blur-[1px]"

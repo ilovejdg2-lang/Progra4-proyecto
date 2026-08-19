@@ -9,7 +9,7 @@ import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { useCachedPublicPage } from '../../hooks/useCachedPublicPage';
 import { addProductToCart, pulseButton } from '../../lib/cartStorage';
 import { fetchProductsPageData } from '../../lib/productsPageData';
-import { calcularPrecioConIVA } from '../../services/productosServices';
+import { calcularPrecioConIVA } from '../../services/productosService';
 
 const PRODUCTS_PER_PAGE = 8;
 
@@ -66,13 +66,13 @@ const Products = () => {
       loadingMessage={loadingMessage}
       isError={isError}
       error={loadError}
-      errorMessage="No se pudo cargar el catálogo."
+      errorMessage={"No se pudo cargar el cat\u00e1logo."}
       onRetry={reload}
     >
     <main className="products-page">
       <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.products} />
       <section className="products-page__hero">
-        <h1>Catálogo de Cafés</h1>
+        <h1>{"Cat\u00e1logo de Caf\u00e9s"}</h1>
         <p>
           Explora nuestros productos y elige el grano ideal para tu rutina.
         </p>
@@ -141,7 +141,7 @@ const Products = () => {
                   e.currentTarget.blur();
                 }}
                 disabled={estaAgotado}
-                aria-label={`Añadir ${product.nombre} al carrito`}
+                aria-label={`A\u00f1adir ${product.nombre} al carrito`}
               >
                 <ShoppingCart className="products-page__quick-buy-icon" aria-hidden="true" />
               </button>
