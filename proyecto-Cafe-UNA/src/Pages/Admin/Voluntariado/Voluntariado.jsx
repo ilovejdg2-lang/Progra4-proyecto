@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
+import { AdminModalActions, adminBtnCancel, adminBtnPrimary } from "../../../Components/Admin/ui/AdminModal";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
@@ -154,7 +155,7 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
             aria-label="Cerrar"
           >
             <X className="size-4" />
@@ -217,13 +218,13 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
               type="button"
               disabled={guardando}
               onClick={() => cambiarEstado("En revisi\u00f3n")}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >{"Marcar en revisi\u00f3n"}</button>
             <button
               type="button"
               disabled={guardando}
               onClick={() => cambiarEstado("Aprobado")}
-              className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Aprobar
             </button>
@@ -231,26 +232,26 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
               type="button"
               disabled={guardando}
               onClick={() => cambiarEstado("Rechazado")}
-              className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-full bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Rechazar
             </button>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={onCerrar}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Cerrar
-            </button>
+          <div className="flex flex-row flex-wrap justify-end gap-2">
             <button
               type="button"
               disabled={guardando}
               onClick={() => guardarCambios()}
-              className="rounded-lg bg-[#a7532d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8c3d1f] disabled:cursor-not-allowed disabled:opacity-60"
+              className={adminBtnPrimary}
             >
               {guardando ? "Guardando..." : "Guardar observaciones"}
+            </button>
+            <button
+              type="button"
+              onClick={onCerrar}
+              className={adminBtnCancel}
+            >
+              Cerrar
             </button>
           </div>
         </div>
@@ -302,7 +303,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
             aria-label="Cerrar"
           >
             <X className="size-4" />
@@ -387,21 +388,12 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={guardando}
-            className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {guardando ? "Guardando..." : "Guardar cambios"}
-          </button>
+        <div className="flex flex-row flex-wrap justify-end gap-2 border-t border-slate-200 px-6 py-4">
+          <AdminModalActions
+            onCancel={onCerrar}
+            primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
+            primaryDisabled={guardando}
+          />
         </div>
       </form>
     </div>
@@ -548,7 +540,7 @@ const AdminVoluntariado = () => {
               type="button"
               onClick={cargarSolicitudes}
               disabled={cargando}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RefreshCw className={`size-4 ${cargando ? "animate-spin" : ""}`} />
               Actualizar
@@ -578,7 +570,7 @@ const AdminVoluntariado = () => {
             <button
               type="button"
               onClick={cargarSolicitudes}
-              className="mt-4 rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800"
+              className="mt-4 rounded-full bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800"
             >
               Reintentar
             </button>
@@ -636,7 +628,7 @@ const AdminVoluntariado = () => {
                             <button
                               type="button"
                               onClick={() => setViendo(solicitud)}
-                              className="inline-flex size-9 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+                              className="inline-flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
                               title="Ver solicitud"
                             >
                               <Eye className="size-4" />
@@ -644,7 +636,7 @@ const AdminVoluntariado = () => {
                             <button
                               type="button"
                               onClick={() => setEditando(solicitud)}
-                              className="inline-flex size-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100"
+                              className="inline-flex size-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100"
                               title="Editar solicitud"
                             >
                               <Pencil className="size-4" />
@@ -654,7 +646,7 @@ const AdminVoluntariado = () => {
                                 type="button"
                                 onClick={() => handleEliminar(solicitud)}
                                 disabled={eliminando === solicitud.id}
-                                className="inline-flex size-9 items-center justify-center rounded-lg bg-red-50 text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex size-9 items-center justify-center rounded-full bg-red-50 text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                                 title="Eliminar solicitud"
                               >
                                 {eliminando === solicitud.id ? (
@@ -693,7 +685,7 @@ const AdminVoluntariado = () => {
                     <button
                       type="button"
                       onClick={() => setViendo(solicitud)}
-                      className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+                      className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
                     >
                       <Eye className="size-4" />
                       Ver
@@ -701,7 +693,7 @@ const AdminVoluntariado = () => {
                     <button
                       type="button"
                       onClick={() => setEditando(solicitud)}
-                      className="inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                      className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
                     >
                       <Pencil className="size-4" />
                       Editar
@@ -711,7 +703,7 @@ const AdminVoluntariado = () => {
                         type="button"
                         onClick={() => handleEliminar(solicitud)}
                         disabled={eliminando === solicitud.id}
-                        className="inline-flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {eliminando === solicitud.id ? (
                           <RefreshCw className="size-4 animate-spin" />

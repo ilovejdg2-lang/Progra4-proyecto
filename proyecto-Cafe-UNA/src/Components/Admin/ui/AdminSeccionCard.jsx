@@ -39,7 +39,7 @@ export function AdminSeccionCard({
           <button
             type="button"
             onClick={onEditar}
-            className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${botonCls}`}
+            className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${botonCls}`}
           >
             Editar
           </button>
