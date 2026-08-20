@@ -117,7 +117,7 @@ const Navbar = () => {
                 setLogoClaroUrl(typeof navbar?.logoClaroUrl === 'string' ? navbar.logoClaroUrl.trim() : '');
             })
             .catch((err) => {
-                console.error('No se pudo cargar la informacion del navbar.', err);
+                console.error('No se pudo cargar la información del navbar.', err);
             });
 
         return () => {
@@ -542,7 +542,7 @@ const Navbar = () => {
                                 <h2>Resumen del carrito</h2>
                             </header>
                             {cartItems.length === 0 ? (
-                                <p className="dropdown__empty">Tu carrito esta vacio.</p>
+                                <p className="dropdown__empty">Tu carrito está vacío.</p>
                             ) : (
                                 <>
                                     <section className="cart-items" aria-label="Productos en el carrito">
