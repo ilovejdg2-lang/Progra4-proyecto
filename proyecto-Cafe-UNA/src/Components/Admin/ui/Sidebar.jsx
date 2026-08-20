@@ -146,7 +146,7 @@ export function Sidebar({
         >
           <button
             type="button"
-            className="absolute right-3 top-3 z-10 inline-flex size-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            className="absolute right-3 top-3 z-10 inline-flex size-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"
             onClick={() => setOpenMobile(false)}
           >
             <X className="size-4" />
@@ -168,7 +168,7 @@ export function SidebarTrigger({ className, onClick, ...props }) {
     <button
       type="button"
       className={cn(
-        "inline-flex size-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-100 hover:text-slate-950",
+        "inline-flex size-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-100 hover:text-slate-950",
         className,
       )}
       onClick={(event) => {
@@ -231,7 +231,7 @@ export function SidebarMenuButton({ asChild = false, className, ...props }) {
   return (
     <Comp
       className={cn(
-        "flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 [&_svg]:size-4 [&_svg]:shrink-0",
+        "flex h-9 w-full items-center gap-2 rounded-full px-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 [&_svg]:size-4 [&_svg]:shrink-0",
         className,
       )}
       {...props}
@@ -258,7 +258,7 @@ export function SidebarMenuSubButton({ asChild = false, className, ...props }) {
   return (
     <Comp
       className={cn(
-        "flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 [&_svg]:size-4 [&_svg]:shrink-0",
+        "flex h-8 w-full items-center gap-2 rounded-full px-2 text-left text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 [&_svg]:size-4 [&_svg]:shrink-0",
         className,
       )}
       {...props}

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Coffee, ClipboardList, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Sparkles, Trash2, Users, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
-import { AdminModal, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
+import { AdminModal, AdminModalActions, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import {
   AdminEditorConPreview,
@@ -291,20 +291,11 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
         </AdminModalBody>
 
         <AdminModalFooter>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="w-full rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={guardando}
-            className="w-full rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-          >
-            {guardando ? "Guardando..." : "Guardar cambios"}
-          </button>
+          <AdminModalActions
+            onCancel={onCerrar}
+            primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
+            primaryDisabled={guardando}
+          />
         </AdminModalFooter>
       </form>
     </AdminModal>
@@ -420,20 +411,11 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
         </AdminModalBody>
 
         <AdminModalFooter>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="w-full rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={guardando}
-            className="w-full rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-          >
-            {guardando ? "Guardando..." : "Guardar cambios"}
-          </button>
+          <AdminModalActions
+            onCancel={onCerrar}
+            primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
+            primaryDisabled={guardando}
+          />
         </AdminModalFooter>
       </form>
     </AdminModal>
@@ -556,20 +538,11 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
         </AdminModalBody>
 
         <AdminModalFooter>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="w-full rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={guardando}
-            className="w-full rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-          >
-            {guardando ? "Guardando..." : "Guardar cambios"}
-          </button>
+          <AdminModalActions
+            onCancel={onCerrar}
+            primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
+            primaryDisabled={guardando}
+          />
         </AdminModalFooter>
       </form>
     </AdminModal>
@@ -634,20 +607,11 @@ function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
         </AdminModalBody>
 
         <AdminModalFooter>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="w-full rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={guardando}
-            className="w-full rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-          >
-            {guardando ? "Guardando..." : "Guardar cambios"}
-          </button>
+          <AdminModalActions
+            onCancel={onCerrar}
+            primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
+            primaryDisabled={guardando}
+          />
         </AdminModalFooter>
       </form>
     </AdminModal>
@@ -771,20 +735,11 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
         </AdminModalBody>
 
         <AdminModalFooter>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="w-full rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={guardando}
-            className="w-full rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-          >
-            {guardando ? "Guardando..." : "Guardar cambios"}
-          </button>
+          <AdminModalActions
+            onCancel={onCerrar}
+            primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
+            primaryDisabled={guardando}
+          />
         </AdminModalFooter>
       </form>
     </AdminModal>
@@ -861,7 +816,7 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
             <button
               type="button"
               onClick={agregarItem}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 px-4 py-2 text-sm font-bold text-amber-800 transition hover:bg-amber-50 sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-amber-200 px-4 py-2 text-sm font-bold text-amber-800 transition hover:bg-amber-50 sm:w-auto"
             >
               <Plus className="size-4" />
               Agregar enlace
@@ -935,7 +890,7 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
                     <button
                       type="button"
                       onClick={() => eliminarItem(item.id)}
-                      className="inline-flex size-10 items-center justify-center self-start rounded-xl bg-red-50 text-red-700 transition hover:bg-red-100 md:self-center"
+                      className="inline-flex size-10 items-center justify-center self-start rounded-full bg-red-50 text-red-700 transition hover:bg-red-100 md:self-center"
                       aria-label="Eliminar enlace"
                     >
                       <Trash2 className="size-5" />
@@ -951,20 +906,11 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
         </AdminModalBody>
 
         <AdminModalFooter>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="w-full rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={guardando}
-            className="w-full rounded-xl bg-amber-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-          >
-            {guardando ? "Guardando..." : "Guardar cambios"}
-          </button>
+          <AdminModalActions
+            onCancel={onCerrar}
+            primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
+            primaryDisabled={guardando}
+          />
         </AdminModalFooter>
       </form>
     </AdminModal>
@@ -1296,7 +1242,7 @@ const AdminInformacionPaginaPrincipal = () => {
             <button
               type="button"
               onClick={reload}
-              className="mt-4 block rounded-lg bg-red-700 px-4 py-2 text-white"
+              className="mt-4 block rounded-full bg-red-700 px-4 py-2 text-white"
             >
               Reintentar
             </button>
