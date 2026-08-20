@@ -260,7 +260,7 @@ const Login = () => {
     setSuccessMessage('');
 
     if (!registerForm.nombre.trim() || !registerForm.correo.trim() || !registerForm.password) {
-      setFormError('Complete el formulario de registro antes de reenviar el codigo.');
+      setFormError('Complete el formulario de registro antes de reenviar el código.');
       setRegisterStep('form');
       return;
     }
@@ -278,9 +278,9 @@ const Login = () => {
         password: registerForm.password,
       });
       setRegisterEmailSent(result?.emailSent !== false);
-      setSuccessMessage(result?.message || 'Codigo reenviado. Revise su correo y la carpeta de spam.');
+      setSuccessMessage(result?.message || 'Código reenviado. Revise su correo y la carpeta de spam.');
     } catch (err) {
-      setFormError(err.message || 'No se pudo reenviar el codigo.');
+      setFormError(err.message || 'No se pudo reenviar el código.');
     } finally {
       setIsLoading(false);
     }
@@ -302,12 +302,12 @@ const Login = () => {
         correo: registerForm.correo.trim().toLowerCase(),
         token: registerForm.token.trim(),
       });
-      setSuccessMessage(result?.message || 'Cuenta creada correctamente. Ya puede iniciar sesion.');
+      setSuccessMessage(result?.message || 'Cuenta creada correctamente. Ya puede iniciar sesión.');
       setRegisterForm({ nombre: '', correo: '', password: '', confirmPassword: '', token: '' });
       setRegisterStep('form');
       setMode('login');
     } catch (err) {
-      setFormError(err.message || 'No se pudo verificar el codigo.');
+      setFormError(err.message || 'No se pudo verificar el código.');
     } finally {
       setIsLoading(false);
     }
@@ -556,16 +556,16 @@ const Login = () => {
             <p className="login-verify-hint">
               {registerEmailSent ? (
                 <>{"Enviamos un c\u00f3digo a "}<strong>{registerForm.correo}</strong>{". Ingr\u00e9salo para activar tu cuenta."}
-                  {' '}Si no lo ve, revise la carpeta de <strong>spam</strong> o <strong>correo no deseado</strong> (comun en Yahoo y Gmail).
+                  {' '}Si no lo ve, revise la carpeta de <strong>spam</strong> o <strong>correo no deseado</strong> (común en Yahoo y Gmail).
                 </>
               ) : (
                 <>
-                  No pudimos enviar el correo a <strong>{registerForm.correo}</strong>. Espere 3 minutos y use <strong>Reenviar codigo</strong>.
+                  No pudimos enviar el correo a <strong>{registerForm.correo}</strong>. Revise que lo escribiera bien o trate de contactar a Café UNA.
                 </>
               )}
             </p>
             <div className="login-field">
-              <label htmlFor="registerToken">Codigo recibido</label>
+              <label htmlFor="registerToken">Código recibido</label>
               <input
                 id="registerToken"
                 type="text"
@@ -583,7 +583,7 @@ const Login = () => {
               onClick={handleResendRegistrationCode}
               disabled={isLoading}
             >
-              Reenviar codigo
+              Reenviar código
             </button>
             <button type="button" className="login-alt-link" onClick={() => setRegisterStep('form')}>
               Volver al formulario

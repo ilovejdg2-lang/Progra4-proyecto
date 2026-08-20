@@ -297,7 +297,7 @@
   padding: 0.35rem;
   display: grid;
   place-items: center;
-  border-radius: 8px;
+  border-radius: var(--ui-btn-radius);
 }
 
 .perfil-password-field__toggle:hover {
@@ -345,6 +345,7 @@
   display: flex;
   gap: 0.6rem;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .perfil-field {
@@ -391,23 +392,24 @@
 .perfil-button {
   margin-top: 0.25rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--ui-btn-radius);
   padding: 0.75rem 1.2rem;
-  background: #78350f;
-  color: #fff7ed;
-  font-weight: 600;
+  background: #a7532d;
+  color: #fff;
+  font-weight: 700;
   cursor: pointer;
   min-height: 2.75rem;
 }
 
 .perfil-button--secondary {
-  background: #0f172a;
+  background: #a7532d;
 }
 
 .perfil-button--ghost {
   background: #fff;
-  color: #334155;
-  border: 1px solid #e2e8f0;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  font-weight: 600;
 }
 
 .perfil-button:disabled {
@@ -421,7 +423,7 @@
   gap: 0.75rem;
   width: 100%;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  border-radius: var(--ui-btn-radius);
   background: #f8fafc;
   text-align: left;
   cursor: pointer;
@@ -745,7 +747,9 @@
 
   .perfil-card__actions,
   .perfil-modal__actions {
-    flex-direction: column-reverse;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     align-items: stretch;
   }
 

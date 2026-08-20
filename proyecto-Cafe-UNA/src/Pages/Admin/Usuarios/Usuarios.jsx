@@ -10,7 +10,7 @@ import { Pencil, Power, X } from "lucide-react";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
-import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
+import { AdminModal, AdminModalActions, AdminModalBody, AdminModalHeader, adminBtnCancel, adminBtnPrimary } from "../../../Components/Admin/ui/AdminModal";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import {
@@ -40,7 +40,7 @@ function Modal({ titulo, onClose, children }) {
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+          className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
           aria-label="Cerrar"
         >
           <X className="size-5" />
@@ -364,7 +364,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                 type="button"
                 onClick={handleSolicitarCodigoCorreo}
                 disabled={verificandoCorreo}
-                className="w-full rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 sm:w-auto sm:py-1.5"
+                className={`${adminBtnPrimary} text-xs sm:py-1.5`}
               >{"Enviar c\u00f3digo"}</button>
             </div>
             <input
@@ -377,7 +377,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
               type="button"
               onClick={handleConfirmarCodigoCorreo}
               disabled={verificandoCorreo}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-50 sm:w-auto sm:py-1.5"
+              className={`${adminBtnCancel} text-xs sm:py-1.5`}
             >
               Verificar correo
             </button>
@@ -510,27 +510,20 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 
       {fieldErrors.formulario ? <p className="text-xs text-red-600">{fieldErrors.formulario}</p> : null}
 
-      <div className="flex flex-col-reverse justify-end gap-2 pt-2 sm:flex-row">
-        <button
-          type="button"
-          onClick={onCancelar}
-          className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50 sm:w-auto"
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={cargando || verificandoCorreo}
-          className="w-full rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-50 sm:w-auto"
-        >
-          {cargando || verificandoCorreo
-            ? "Procesando…"
-            : !inicial
-              ? pasoCreacion === "datos"
-                ? "Enviar c\u00f3digo al correo"
-                : "Crear usuario"
-              : "Guardar cambios"}
-        </button>
+      <div className="flex flex-row flex-wrap justify-end gap-2 pt-2">
+        <AdminModalActions
+          onCancel={onCancelar}
+          primaryDisabled={cargando || verificandoCorreo}
+          primaryLabel={
+            cargando || verificandoCorreo
+              ? "Procesando…"
+              : !inicial
+                ? pasoCreacion === "datos"
+                  ? "Enviar código al correo"
+                  : "Crear usuario"
+                : "Guardar cambios"
+          }
+        />
       </div>
     </form>
   );
@@ -538,7 +531,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 
 
 const accionBtnBase =
-  "inline-flex items-center justify-center gap-1.5 rounded-lg border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
+  "inline-flex items-center justify-center gap-1.5 rounded-full border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
 
 function mapUsuario(item) {
   const estado = String(item?.estado ?? item?.Estado ?? "").trim().toLowerCase();
