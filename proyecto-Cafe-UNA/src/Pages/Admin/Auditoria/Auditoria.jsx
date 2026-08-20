@@ -180,7 +180,7 @@ function AdminAuditoria() {
               type="button"
               onClick={recargar}
               disabled={refrescando || cargando}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
             >
               <RefreshCw className={`size-4 ${refrescando ? "animate-spin" : ""}`} />
               Actualizar

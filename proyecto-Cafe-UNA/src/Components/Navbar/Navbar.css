@@ -30,7 +30,7 @@
   width: 44px;
   height: 44px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--ui-btn-radius);
   background: transparent;
   color: #1f2937;
   cursor: pointer;
@@ -185,7 +185,7 @@
   color: #1f2937;
   cursor: pointer;
   padding: 0;
-  border-radius: 10px;
+  border-radius: var(--ui-btn-radius);
   transition: background-color 160ms ease;
 }
 
@@ -248,7 +248,7 @@
   width: 100%;
   padding: 0.8rem;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: var(--ui-btn-radius);
   background: #ffffff;
   cursor: pointer;
   text-align: left;
@@ -948,7 +948,7 @@
   margin-top: 0;
   width: 100%;
   border: 1px solid #d6baa2;
-  border-radius: 12px;
+  border-radius: var(--ui-btn-radius);
   background: #fff8f2;
   color: #583e29;
   font-size: 0.84rem;
