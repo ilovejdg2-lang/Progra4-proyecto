@@ -151,7 +151,7 @@ const Products = () => {
         })}
       </section>
 
-      <nav className="products-page__pagination" aria-label="Paginacion de productos">
+      <nav className="products-page__pagination" aria-label="Paginación de productos">
         {Array.from({ length: totalPages }, (_, index) => {
           const pageNumber = index + 1;
           return (

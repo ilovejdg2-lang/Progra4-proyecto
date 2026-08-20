@@ -135,7 +135,7 @@
   justify-content: center;
   min-height: 3rem;
   padding: 0.85rem 1.65rem;
-  border-radius: 999px !important;
+  border-radius: var(--ui-btn-radius) !important;
   font-size: 0.95rem;
   font-weight: 600;
   text-decoration: none;

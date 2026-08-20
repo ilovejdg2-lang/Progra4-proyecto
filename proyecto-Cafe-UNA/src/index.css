@@ -9,6 +9,7 @@
 :root {
   --navbar-height: 84px;
   --ui-radius: 16px;
+  --ui-btn-radius: 999px;
   --text: #4a3d31;
   --text-h: #1c140f;
   --bg: #ffffff;
@@ -425,27 +426,37 @@ img {
   display: block;
 }
 
-button,
 input:not([type="checkbox"]):not([type="radio"]),
 select,
-textarea,
-a[class*="button"],
-a[class*="btn"],
-[class*="button"],
-[class*="btn"] {
+textarea {
   border-radius: var(--ui-radius) !important;
 }
 
-[class*="card"],
-[class*="panel"],
-[class*="dropdown"],
-[class*="modal"],
-[class*="badge"],
-[class*="pill"] {
+[class*="card"]:not(button):not(a),
+[class*="panel"]:not(button):not(a),
+[class*="dropdown"]:not(button):not(a),
+[class*="modal"]:not(button):not(a),
+[class*="badge"]:not(button),
+[class*="pill"]:not(button):not(a) {
   border-radius: var(--ui-radius) !important;
 }
 
 .navbar {
+  border-radius: 0 !important;
+}
+
+button,
+a[class*="button"],
+a[class*="btn"],
+[class*="button"],
+[class*="btn"] {
+  border-radius: var(--ui-btn-radius) !important;
+}
+
+button[class*="inset-0"],
+button[class*="backdrop"],
+.gallery-lightbox__backdrop,
+.perfil-modal__backdrop {
   border-radius: 0 !important;
 }
 

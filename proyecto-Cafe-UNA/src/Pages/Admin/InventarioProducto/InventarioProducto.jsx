@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Pencil, Power, Star, Trash2, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
-import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
+import { AdminModal, AdminModalActions, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
@@ -71,7 +71,7 @@ function Modal({ titulo, onClose, children, ancho = "max-w-2xl" }) {
         <button
           type="button"
           onClick={onClose}
-          className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+          className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
           aria-label="Cerrar"
         >
           <X className="size-5" />
@@ -299,21 +299,12 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
 
       {submitError ? <p className={fieldErrorCls}>{submitError}</p> : null}
 
-      <div className="flex flex-col-reverse justify-end gap-3 pt-2 sm:flex-row">
-        <button
-          type="button"
-          onClick={onCancelar}
-          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={cargando}
-          className="w-full rounded-full bg-[#a7532d] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#8c3d1f] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-        >
-          {cargando ? "Guardando..." : inicial ? "Guardar cambios" : "Crear producto"}
-        </button>
+      <div className="flex flex-row flex-wrap justify-end gap-2 pt-2">
+        <AdminModalActions
+          onCancel={onCancelar}
+          primaryLabel={cargando ? "Guardando..." : inicial ? "Guardar cambios" : "Crear producto"}
+          primaryDisabled={cargando}
+        />
       </div>
     </form>
   );
@@ -340,7 +331,7 @@ function etiquetaEstadoProducto(producto) {
 }
 
 const accionBtnBase =
-  "inline-flex items-center justify-center gap-1.5 rounded-lg border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
+  "inline-flex items-center justify-center gap-1.5 rounded-full border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
 
 function AccionesProducto({ producto, puedeEditar, puedeInactivar, puedeEliminar, onEditar, onToggleEstado, onEliminar, variant = "table" }) {
   const esDeshabilitado = producto.estado === "Deshabilitado";
