@@ -446,7 +446,7 @@ function SolicitarVoluntariado() {
         horario: horariosLabel.join(", "),
         dias: `${formulario.fechaInicio} - ${formulario.fechaFin}`,
         area: tipoFinal,
-        descripcion: `Periodo: ${formulario.fechaInicio} - ${formulario.fechaFin}.${
+        descripcion: `Período: ${formulario.fechaInicio} - ${formulario.fechaFin}.${
           esGrupal ? ` Cantidad de participantes: ${formulario.cantidadParticipantes}.` : ""
         }`,
         motivacion: "",
