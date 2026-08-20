@@ -218,11 +218,11 @@ function ImageUrlModal({
         )}
 
         <div className="perfil-modal__actions">
-          <button type="button" className="perfil-button perfil-button--ghost" onClick={onClose}>
-            Cancelar
-          </button>
           <button type="button" className="perfil-button" onClick={onSave} disabled={saving || !value.trim()}>
             {saving ? "Guardando..." : "Guardar imagen"}
+          </button>
+          <button type="button" className="perfil-button perfil-button--ghost" onClick={onClose}>
+            Cancelar
           </button>
         </div>
       </div>
@@ -707,15 +707,15 @@ export function PerfilContent({ variant = "standalone" }) {
               </label>
 
               <div className="perfil-card__actions">
+                <button type="submit" className="perfil-button" disabled={guardando}>
+                  {guardando ? "Guardando..." : "Guardar nombre"}
+                </button>
                 <button
                   type="button"
                   className="perfil-button perfil-button--ghost"
                   onClick={() => setNombreForm({ nombre: form.nombre, step: "view" })}
                 >
                   Cancelar
-                </button>
-                <button type="submit" className="perfil-button" disabled={guardando}>
-                  {guardando ? "Guardando..." : "Guardar nombre"}
                 </button>
               </div>
             </form>
@@ -799,6 +799,13 @@ export function PerfilContent({ variant = "standalone" }) {
               {emailErrors.formulario ? <p className="perfil-field-error">{emailErrors.formulario}</p> : null}
 
               <div className="perfil-card__actions">
+                <button type="submit" className="perfil-button" disabled={guardando}>
+                  {guardando
+                    ? "Procesando..."
+                    : emailForm.step === "edit"
+                      ? "Enviar c\u00f3digo"
+                      : "Confirmar correo"}
+                </button>
                 <button
                   type="button"
                   className="perfil-button perfil-button--ghost"
@@ -809,13 +816,6 @@ export function PerfilContent({ variant = "standalone" }) {
                   }}
                 >
                   Cancelar
-                </button>
-                <button type="submit" className="perfil-button" disabled={guardando}>
-                  {guardando
-                    ? "Procesando..."
-                    : emailForm.step === "edit"
-                      ? "Enviar c\u00f3digo"
-                      : "Confirmar correo"}
                 </button>
               </div>
             </form>
@@ -875,11 +875,11 @@ export function PerfilContent({ variant = "standalone" }) {
               </div>
 
               <div className="perfil-card__actions perfil-card__actions--wide">
+                <button type="submit" className="perfil-button" disabled={guardando}>
+                  {guardando ? "Actualizando..." : "Actualizar contraseña"}
+                </button>
                 <button type="button" className="perfil-button perfil-button--ghost" onClick={closePasswordEdit}>
                   Cancelar
-                </button>
-                <button type="submit" className="perfil-button perfil-button--secondary" disabled={guardando}>
-                  {guardando ? "Actualizando..." : "Actualizar contrase\u00f1a"}
                 </button>
               </div>
             </form>

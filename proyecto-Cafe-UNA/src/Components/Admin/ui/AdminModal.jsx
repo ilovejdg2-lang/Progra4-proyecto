@@ -90,15 +90,46 @@ export function AdminModalBody({ children, className, cms = false }) {
   );
 }
 
+export const adminBtnCancel =
+  "w-full rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto";
+
+export const adminBtnPrimary =
+  "w-full rounded-full bg-[#a7532d] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#8c3d1f] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
+
 export function AdminModalFooter({ children, className }) {
   return (
     <footer
       className={cn(
-        "flex shrink-0 flex-col-reverse gap-2 border-t border-slate-200 px-4 py-4 sm:flex-row sm:justify-end sm:gap-3 sm:px-6",
+        "flex shrink-0 flex-row flex-wrap justify-end gap-2 border-t border-slate-200 px-4 py-4 sm:gap-3 sm:px-6",
         className,
       )}
     >
       {children}
     </footer>
+  );
+}
+
+export function AdminModalActions({
+  onCancel,
+  cancelLabel = "Cancelar",
+  primaryLabel,
+  primaryDisabled = false,
+  primaryType = "submit",
+  onPrimary,
+}) {
+  return (
+    <>
+      <button
+        type={primaryType}
+        disabled={primaryDisabled}
+        onClick={onPrimary}
+        className={adminBtnPrimary}
+      >
+        {primaryLabel}
+      </button>
+      <button type="button" onClick={onCancel} className={adminBtnCancel}>
+        {cancelLabel}
+      </button>
+    </>
   );
 }

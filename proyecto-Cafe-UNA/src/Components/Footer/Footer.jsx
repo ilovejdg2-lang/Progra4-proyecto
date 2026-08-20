@@ -54,7 +54,7 @@ const Footer = () => {
           {footerLogoSrc ? (
             <img
               src={footerLogoSrc}
-              alt="Cafe UNA"
+              alt="Café UNA"
               className="footer__logo"
               width={160}
               height={46}

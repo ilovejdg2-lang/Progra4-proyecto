@@ -465,7 +465,7 @@ function PreviewFooterLive({ form, enlaces = [] }) {
         <div className="footer__top">
           <div className="footer__brand" aria-hidden="true">
             {footerLogoSrc ? (
-              <img src={footerLogoSrc} alt="Cafe UNA" className="footer__logo" width={160} height={46} decoding="async" />
+              <img src={footerLogoSrc} alt="Café UNA" className="footer__logo" width={160} height={46} decoding="async" />
             ) : null}
             <div className="footer__brand-copy">
               {form.fraseMarca ? <span>{form.fraseMarca}</span> : null}

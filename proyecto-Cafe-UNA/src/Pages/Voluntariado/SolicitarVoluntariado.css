@@ -313,7 +313,7 @@
   background: var(--verde-principal);
   color: #ffffff;
   padding: 0 20px;
-  border-radius: 10px;
+  border-radius: var(--ui-btn-radius);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -371,7 +371,7 @@
   border: 1px solid #fecaca;
   background: #fff5f5;
   color: #dc2626;
-  border-radius: 10px;
+  border-radius: var(--ui-btn-radius);
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
 }
@@ -597,7 +597,7 @@
   min-height: 30px;
   width: 30px;
   height: 30px;
-  border-radius: 9px;
+  border-radius: var(--ui-btn-radius);
 }
 
 .calendario-voluntariado--selector .calendario-voluntariado__grid {
@@ -711,7 +711,7 @@
   width: 40px;
   height: 40px;
   border: 1px solid var(--borde-input);
-  border-radius: 12px;
+  border-radius: var(--ui-btn-radius);
   background: #ffffff;
   color: var(--verde-principal);
   cursor: pointer;
@@ -957,7 +957,7 @@
   background: var(--verde-principal);
   color: #ffffff;
   padding: 16px 24px;
-  border-radius: 12px;
+  border-radius: var(--ui-btn-radius);
   cursor: pointer;
   font-size: 15px;
   font-weight: 600;
