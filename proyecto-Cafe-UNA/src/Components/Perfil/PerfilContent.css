@@ -233,8 +233,29 @@
   padding: 0.2rem 0.65rem;
   font-size: 0.75rem;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: #f1f5f9;
+  border: none;
+  color: #334155;
+}
+
+.perfil-hero__role--superadmin {
+  color: #eab308;
+}
+
+.perfil-hero__role--admin {
+  color: #16a34a;
+}
+
+.perfil-hero__role--vendedor {
+  color: #5c3317;
+}
+
+.perfil-hero__role--cliente {
+  color: #dc2626;
+}
+
+.perfil-hero__role--usuario {
+  color: #334155;
 }
 
 .perfil-grid {
@@ -373,36 +394,58 @@
 
 .perfil-field input {
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: var(--ui-btn-radius);
   padding: 0.7rem 0.85rem;
   background: #f8fafc;
   color: #0f172a;
   width: 100%;
   min-width: 0;
   font-size: 1rem;
+  box-shadow: none;
+  outline: none;
 }
 
-.perfil-field input:focus {
+.perfil-field input:focus,
+.perfil-field input:focus-visible {
   outline: none;
-  border-color: #b45309;
-  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.12);
+  border-color: #cbd5e1;
+  box-shadow: none;
   background: #fff;
+}
+
+.perfil-field input:-webkit-autofill,
+.perfil-field input:-webkit-autofill:hover,
+.perfil-field input:-webkit-autofill:focus,
+.perfil-field input:-webkit-autofill:active {
+  -webkit-text-fill-color: #0f172a;
+  caret-color: #0f172a;
+  border-color: #e2e8f0;
+  -webkit-box-shadow: 0 0 0 1000px #f8fafc inset;
+  box-shadow: 0 0 0 1000px #f8fafc inset;
+  transition: background-color 9999s ease-out;
 }
 
 .perfil-button {
   margin-top: 0.25rem;
-  border: 0;
+  border: 1px solid #1a1a1a;
   border-radius: var(--ui-btn-radius);
   padding: 0.75rem 1.2rem;
-  background: #a7532d;
+  background: #1a1a1a;
   color: #fff;
   font-weight: 700;
   cursor: pointer;
   min-height: 2.75rem;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.perfil-button:hover:not(:disabled),
+.perfil-button:active:not(:disabled) {
+  background: #404040;
+  border-color: #404040;
 }
 
 .perfil-button--secondary {
-  background: #a7532d;
+  background: #1a1a1a;
 }
 
 .perfil-button--ghost {
@@ -410,6 +453,12 @@
   color: #475569;
   border: 1px solid #cbd5e1;
   font-weight: 600;
+}
+
+.perfil-button--ghost:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
 }
 
 .perfil-button:disabled {
@@ -427,7 +476,7 @@
   background: #f8fafc;
   text-align: left;
   cursor: pointer;
-  color: #78350f;
+  color: #1a1a1a;
   font-weight: 600;
   padding: 0.85rem 1rem;
   justify-content: space-between;

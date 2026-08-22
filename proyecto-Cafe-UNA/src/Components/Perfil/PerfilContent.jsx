@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Camera, ChevronRight, Eye, EyeOff, KeyRound, Mail, Move, UserRound, X } from "lucide-react";
+import { Camera, ChevronRight, Eye, EyeOff, KeyRound, Mail, UserRound, X } from "lucide-react";
 import {
   actualizarPerfil,
   cambiarPasswordPerfil,
@@ -9,7 +9,7 @@ import {
   solicitarCambioCorreo,
 } from "../../services/perfilService";
 import { applyPerfilToSession, getActiveSessionUser } from "../../services/sessionService";
-import { formatImagePosition, getImageObjectPosition, normalizeImageUrl, parseImagePosition } from "../../lib/imageUtils";
+import { normalizeImageUrl } from "../../lib/imageUtils";
 import {
   MAX_NOMBRE_USUARIO,
   MAX_PASSWORD,
@@ -22,6 +22,15 @@ import PageLoading from "../PageLoading/PageLoading";
 import "./PerfilContent.css";
 
 const FEEDBACK_AUTO_HIDE_MS = 4000;
+
+function claseRolPerfil(rol) {
+  const clave = String(rol ?? "").trim().toLowerCase();
+  if (clave === "superadmin" || clave === "superadministrador") return "perfil-hero__role--superadmin";
+  if (clave === "admin" || clave === "administración" || clave === "administracion") return "perfil-hero__role--admin";
+  if (clave === "vendedor") return "perfil-hero__role--vendedor";
+  if (clave === "cliente") return "perfil-hero__role--cliente";
+  return "perfil-hero__role--usuario";
+}
 
 function PerfilPasswordField({ label, value, onChange, visible, onToggle, autoFocus = false, error = "" }) {
   const Icon = visible ? Eye : EyeOff;
@@ -59,85 +68,19 @@ function ImageUrlModal({
   type,
   variant,
   value,
-  position,
   onChange,
-  onPositionChange,
   onClose,
   onSave,
   saving,
 }) {
-  const previewRef = useRef(null);
-  const [dragging, setDragging] = useState(false);
-
-  useEffect(() => {
-    if (!dragging) return undefined;
-
-    function updateFromPointer(clientX, clientY) {
-      const frame = previewRef.current;
-      if (!frame) return;
-
-      const rect = frame.getBoundingClientRect();
-      const x = ((clientX - rect.left) / rect.width) * 100;
-      const y = ((clientY - rect.top) / rect.height) * 100;
-      onPositionChange({
-        x: Math.min(100, Math.max(0, x)),
-        y: Math.min(100, Math.max(0, y)),
-      });
-    }
-
-    function handleMouseMove(event) {
-      updateFromPointer(event.clientX, event.clientY);
-    }
-
-    function handleTouchMove(event) {
-      if (!event.touches[0]) return;
-      event.preventDefault();
-      updateFromPointer(event.touches[0].clientX, event.touches[0].clientY);
-    }
-
-    function stopDragging() {
-      setDragging(false);
-    }
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", stopDragging);
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
-    window.addEventListener("touchend", stopDragging);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", stopDragging);
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", stopDragging);
-    };
-  }, [dragging, onPositionChange]);
-
   if (!open) return null;
 
   const isAvatar = type === "avatar";
   const isAdmin = variant === "admin";
   const preview = value ? normalizeImageUrl(value, { width: isAvatar ? 320 : 1600 }) : "";
-  const objectPosition = formatImagePosition(position);
   const previewLabel = isAvatar
     ? `Vista previa (${isAdmin ? "96×96" : "112×112"} px)`
     : `Vista previa (${isAdmin ? "220" : "280"} px de alto)`;
-
-  function startDragging(event) {
-    if (!preview) return;
-    setDragging(true);
-
-    const point = "touches" in event ? event.touches[0] : event;
-    const frame = previewRef.current;
-    if (!frame || !point) return;
-
-    const rect = frame.getBoundingClientRect();
-    const x = ((point.clientX - rect.left) / rect.width) * 100;
-    const y = ((point.clientY - rect.top) / rect.height) * 100;
-    onPositionChange({
-      x: Math.min(100, Math.max(0, x)),
-      y: Math.min(100, Math.max(0, y)),
-    });
-  }
 
   return (
     <div className="perfil-modal" role="dialog" aria-modal="true">
@@ -164,53 +107,20 @@ function ImageUrlModal({
           <div className="perfil-modal__preview-block">
             <p className="perfil-modal__preview-label">{previewLabel}</p>
             <div
-              ref={previewRef}
               className={[
                 "perfil-modal__preview-frame",
                 isAvatar ? "perfil-modal__preview-frame--avatar" : "perfil-modal__preview-frame--banner",
                 isAdmin ? "perfil-modal__preview-frame--admin" : "",
-                dragging ? "is-dragging" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
-              onMouseDown={startDragging}
-              onTouchStart={startDragging}
-              role="presentation"
             >
               <img
                 src={preview}
                 alt="Vista previa"
                 className="perfil-modal__preview-img"
-                style={{ objectPosition }}
                 draggable={false}
               />
-              <span className="perfil-modal__preview-hint">
-                <Move size={14} aria-hidden="true" />
-                Arrastra para acomodar
-              </span>
-            </div>
-
-            <div className="perfil-modal__position-controls">
-              <label className="perfil-field">
-                <span>{"Posici\u00f3n horizontal ("}{Math.round(position.x)}%)</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={position.x}
-                  onChange={(e) => onPositionChange({ ...position, x: Number(e.target.value) })}
-                />
-              </label>
-              <label className="perfil-field">
-                <span>{"Posici\u00f3n vertical ("}{Math.round(position.y)}%)</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={position.y}
-                  onChange={(e) => onPositionChange({ ...position, y: Number(e.target.value) })}
-                />
-              </label>
             </div>
           </div>
         ) : (
@@ -240,7 +150,6 @@ export function PerfilContent({ variant = "standalone" }) {
   const [error, setError] = useState("");
   const [imageModal, setImageModal] = useState(null);
   const [imageDraft, setImageDraft] = useState("");
-  const [imagePositionDraft, setImagePositionDraft] = useState({ x: 50, y: 50 });
   const [form, setForm] = useState({
     nombre: "",
     correo: "",
@@ -357,9 +266,6 @@ export function PerfilContent({ variant = "standalone" }) {
     ? normalizeImageUrl(form.fotoPerfilUrl, { width: 320 })
     : null;
 
-  const bannerPosition = getImageObjectPosition(form.fotoBannerPosicion);
-  const avatarPosition = getImageObjectPosition(form.fotoPerfilPosicion);
-
   function syncSession(actualizado) {
     applyPerfilToSession(actualizado);
   }
@@ -413,11 +319,9 @@ export function PerfilContent({ variant = "standalone" }) {
     setGuardando(true);
 
     const field = imageModal === "avatar" ? "fotoPerfilUrl" : "fotoBannerUrl";
-    const positionField = imageModal === "avatar" ? "fotoPerfilPosicion" : "fotoBannerPosicion";
     const nextForm = {
       ...form,
       [field]: imageDraft.trim(),
-      [positionField]: formatImagePosition(imagePositionDraft),
     };
 
     try {
@@ -448,13 +352,7 @@ export function PerfilContent({ variant = "standalone" }) {
   }
 
   function openImageModal(type) {
-    if (type === "avatar") {
-      setImageDraft(form.fotoPerfilUrl);
-      setImagePositionDraft(parseImagePosition(form.fotoPerfilPosicion));
-    } else {
-      setImageDraft(form.fotoBannerUrl);
-      setImagePositionDraft(parseImagePosition(form.fotoBannerPosicion));
-    }
+    setImageDraft(type === "avatar" ? form.fotoPerfilUrl : form.fotoBannerUrl);
     setImageModal(type);
   }
 
@@ -610,7 +508,6 @@ export function PerfilContent({ variant = "standalone" }) {
             height={420}
             decoding="async"
             fetchPriority="high"
-            style={{ objectPosition: bannerPosition }}
           />
           ) : (
           <div className="perfil-hero__banner perfil-hero__banner--placeholder" aria-hidden="true" />
@@ -639,7 +536,6 @@ export function PerfilContent({ variant = "standalone" }) {
                 width={160}
                 height={160}
                 decoding="async"
-                style={{ objectPosition: avatarPosition }}
               />
             ) : (
               <div className="perfil-hero__avatar perfil-hero__avatar--placeholder">
@@ -659,7 +555,7 @@ export function PerfilContent({ variant = "standalone" }) {
             {Array.isArray(perfil?.roles) && perfil.roles.length > 0 ? (
               <div className="perfil-hero__roles">
                 {perfil.roles.map((rol) => (
-                  <span key={rol} className="perfil-hero__role">{rol}</span>
+                  <span key={rol} className={`perfil-hero__role ${claseRolPerfil(rol)}`}>{rol}</span>
                 ))}
               </div>
             ) : null}
@@ -901,9 +797,7 @@ export function PerfilContent({ variant = "standalone" }) {
         type={imageModal}
         variant={variant}
         value={imageDraft}
-        position={imagePositionDraft}
         onChange={setImageDraft}
-        onPositionChange={setImagePositionDraft}
         onClose={() => setImageModal(null)}
         onSave={handleGuardarImagen}
         saving={guardando}

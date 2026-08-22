@@ -432,6 +432,24 @@ textarea {
   border-radius: var(--ui-radius) !important;
 }
 
+.login-field input:not([type="checkbox"]):not([type="radio"]),
+.perfil-field input:not([type="checkbox"]):not([type="radio"]),
+.usuarios-form input:not([type="checkbox"]):not([type="radio"]) {
+  border-radius: var(--ui-btn-radius) !important;
+}
+
+.login-field input:-webkit-autofill,
+.login-field input:-webkit-autofill:focus,
+.perfil-field input:-webkit-autofill,
+.perfil-field input:-webkit-autofill:focus,
+.usuarios-form input:-webkit-autofill,
+.usuarios-form input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #1a1a1a;
+  caret-color: #1a1a1a;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+}
+
 [class*="card"]:not(button):not(a),
 [class*="panel"]:not(button):not(a),
 [class*="dropdown"]:not(button):not(a),

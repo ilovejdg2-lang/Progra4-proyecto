@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Coffee, ExternalLink, Eye, Mail, MapPin, Phone, Share2, ShoppingCart } from "lucide-react";
+import { ArrowRight, Coffee, ExternalLink, Eye, Mail, MapPin, Phone, ShoppingCart } from "lucide-react";
+import { FacebookIcon, InstagramIcon } from "../../Footer/SocialIcons";
 
 import Hero from "../../Hero/Hero";
 import Gallery from "../../Gallery/Gallery";
@@ -455,9 +456,10 @@ function PreviewNavbarLive({ form, enlaces = [] }) {
 }
 
 function PreviewFooterLive({ form, enlaces = [] }) {
-  const footerLogoSrc = normalizeImageUrl(form.logoClaroUrl || form.logoUrl, { width: 320 });
+  const footerLogoSrc = normalizeImageUrl(form.logoClaroUrl || form.logoUrl, { width: 480 });
   const explorar = enlaces.filter((item) => item.etiqueta?.trim() || item.ruta?.trim()).slice(0, 5);
-  const hasContact = Boolean(form.telefono || form.correo || form.facebookUrl || form.instagramUrl || form.mapsUrl);
+  const hasContactos = Boolean(form.telefono || form.correo || form.mapsUrl);
+  const hasSocial = Boolean(form.facebookUrl || form.instagramUrl);
 
   return (
     <PreviewLiveFrame variant="admin-cms-preview--footer">
@@ -465,7 +467,7 @@ function PreviewFooterLive({ form, enlaces = [] }) {
         <div className="footer__top">
           <div className="footer__brand" aria-hidden="true">
             {footerLogoSrc ? (
-              <img src={footerLogoSrc} alt="Café UNA" className="footer__logo" width={160} height={46} decoding="async" />
+              <img src={footerLogoSrc} alt="Café UNA" className="footer__logo" width={220} height={64} decoding="async" />
             ) : null}
             <div className="footer__brand-copy">
               {form.fraseMarca ? <span>{form.fraseMarca}</span> : null}
@@ -481,9 +483,9 @@ function PreviewFooterLive({ form, enlaces = [] }) {
             )}
           </nav>
 
-          {hasContact ? (
-            <section className="footer__column footer__contact" aria-label="Contacto">
-              <h2>Contacto</h2>
+          {hasContactos ? (
+            <section className="footer__column footer__contact" aria-label="Contactos">
+              <h2>Contactos</h2>
               {form.telefono ? (
                 <span className="footer__contact-item">
                   <Phone className="footer__contact-icon" aria-hidden="true" />
@@ -496,24 +498,30 @@ function PreviewFooterLive({ form, enlaces = [] }) {
                   <span>{form.correo}</span>
                 </span>
               ) : null}
-              {form.facebookUrl ? (
-                <span className="footer__contact-item">
-                  <Share2 className="footer__contact-icon" aria-hidden="true" />
-                  <span>Facebook</span>
-                </span>
-              ) : null}
-              {form.instagramUrl ? (
-                <span className="footer__contact-item">
-                  <Share2 className="footer__contact-icon" aria-hidden="true" />
-                  <span>Instagram</span>
-                </span>
-              ) : null}
               {form.mapsUrl ? (
                 <span className="footer__contact-item">
                   <MapPin className="footer__contact-icon" aria-hidden="true" />
                   <span>{"Ubicaci\u00f3n"}</span>
                 </span>
               ) : null}
+            </section>
+          ) : null}
+
+          {hasSocial ? (
+            <section className="footer__column footer__social" aria-label="Redes sociales">
+              <h2>Redes sociales</h2>
+              <div className="footer__social-links">
+                {form.instagramUrl ? (
+                  <span aria-label="Instagram">
+                    <InstagramIcon className="footer__social-icon" />
+                  </span>
+                ) : null}
+                {form.facebookUrl ? (
+                  <span aria-label="Facebook">
+                    <FacebookIcon className="footer__social-icon" />
+                  </span>
+                ) : null}
+              </div>
             </section>
           ) : null}
         </div>
