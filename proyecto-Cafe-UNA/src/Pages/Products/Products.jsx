@@ -1,32 +1,30 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState } from 'react';
+import { Link } from '@tanstack/react-router';
+import { ShoppingCart } from 'lucide-react';
+import BackToHomeLink from '../../Components/BackToHomeLink/BackToHomeLink';
+import OptimizedImage from '../../Components/OptimizedImage/OptimizedImage';
+import { HOME_SCROLL_SECTIONS } from '../../lib/homeScrollTarget';
 import './Products.css';
-import { calcularPrecioConIVA, obtenerProductos } from '../../services/productosServices';
+import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
+import { useCachedPublicPage } from '../../hooks/useCachedPublicPage';
+import { addProductToCart, pulseButton } from '../../lib/cartStorage';
+import { fetchProductsPageData } from '../../lib/productsPageData';
+import { calcularPrecioConIVA } from '../../services/productosService';
 
 const PRODUCTS_PER_PAGE = 8;
-const CART_STORAGE_KEY = 'cart';
 
 const Products = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    data,
+    showLoading,
+    isError,
+    error: loadError,
+    reload,
+    loadingMessage,
+  } = useCachedPublicPage('products', fetchProductsPageData);
+  const products = data?.products ?? [];
+
   const [currentPage, setCurrentPage] = useState(1);
-  const [lastAddedProductId, setLastAddedProductId] = useState(null);
-  const addTimerRef = useRef(null);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const data = await obtenerProductos();
-        setProducts(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
 
   const visibleProducts = useMemo(
     () => products.filter((product) => product.estado !== 'Deshabilitado'),
@@ -62,115 +60,98 @@ const Products = () => {
     };
   });
 
-  const handleBuy = (product) => {
-    const stockDisponible = Number(product.stock) || 0;
-    const rawCart = localStorage.getItem(CART_STORAGE_KEY);
-    const parsedCart = rawCart ? JSON.parse(rawCart) : [];
-
-    const existingProductIndex = parsedCart.findIndex((item) => item.id === product.id);
-    const unidadesEnCarrito = existingProductIndex >= 0 ? (Number(parsedCart[existingProductIndex].units) || 0) : 0;
-
-    if (product.estado === 'Deshabilitado') {
-      window.alert('Este producto está deshabilitado.');
-      return;
-    }
-
-    if (stockDisponible <= 0) {
-      window.alert('Este producto está agotado.');
-      return;
-    }
-
-    if (unidadesEnCarrito >= stockDisponible) {
-      window.alert('No hay más unidades disponibles de este producto.');
-      return;
-    }
-
-    if (existingProductIndex >= 0) {
-      parsedCart[existingProductIndex] = {
-        ...parsedCart[existingProductIndex],
-        units: (parsedCart[existingProductIndex].units || 1) + 1,
-      };
-    } else {
-      parsedCart.push({
-        ...product,
-        units: 1,
-      });
-    }
-
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(parsedCart));
-    window.dispatchEvent(new Event('cart-updated'));
-    setLastAddedProductId(product.id);
-
-    if (addTimerRef.current) {
-      window.clearTimeout(addTimerRef.current);
-    }
-
-    addTimerRef.current = window.setTimeout(() => {
-      setLastAddedProductId(null);
-      addTimerRef.current = null;
-    }, 2100);
-  };
-
-  useEffect(() => () => {
-    if (addTimerRef.current) {
-      window.clearTimeout(addTimerRef.current);
-      addTimerRef.current = null;
-    }
-  }, []);
-
   return (
+    <PublicPageGate
+      showLoading={showLoading}
+      loadingMessage={loadingMessage}
+      isError={isError}
+      error={loadError}
+      errorMessage={"No se pudo cargar el cat\u00e1logo."}
+      onRetry={reload}
+    >
     <main className="products-page">
+      <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.products} />
       <section className="products-page__hero">
-        <h1>Catálogo de Cafés</h1>
+        <h1>{"Cat\u00e1logo de Caf\u00e9s"}</h1>
         <p>
           Explora nuestros productos y elige el grano ideal para tu rutina.
         </p>
       </section>
 
       <section className="products-page__grid" aria-label="Lista de productos de cafe">
-        {loading && <p>Cargando productos...</p>}
-        {error && <p>Error: {error}</p>}
-        {!loading && !error && productCards.map(({ product, precioNormal, precioConIVA, stockDisponible, estaAgotado }) => (
-          <article className="products-page__card" key={product.id}>
-            {product.imagen && (
-              <img 
-                className="products-page__card-image"
-                src={product.imagen} 
-                alt={product.nombre} 
-              />
+        {productCards.length === 0 && (
+          <p>No hay productos disponibles en este momento.</p>
+        )}
+        {productCards.map((card, index) => {
+          const { product, precioConIVA, estaAgotado } = card;
+
+          return (
+          <article
+            className={`products-page__card${estaAgotado ? ' products-page__card--agotado' : ''}`}
+            key={product.id}
+          >
+            {product.imagen ? (
+              <div className="products-page__card-media">
+                {estaAgotado ? (
+                  <span className="products-page__agotado-badge" role="status">
+                    Agotado
+                  </span>
+                ) : null}
+                <OptimizedImage
+                  src={product.imagen}
+                  alt={product.nombre}
+                  width={640}
+                  height={480}
+                  priority={index < 4}
+                  className="products-page__card-image"
+                />
+              </div>
+            ) : (
+              <div className="products-page__card-media products-page__card-media--placeholder" aria-hidden="true">
+                {estaAgotado ? (
+                  <span className="products-page__agotado-badge" role="status">
+                    Agotado
+                  </span>
+                ) : null}
+              </div>
             )}
-            <h2>{product.nombre}</h2>
-            <p>
-              <strong>Cantidad:</strong> {product.peso}
-            </p>
-            <p>
-              <strong>Precio:</strong> CRC {precioNormal.toLocaleString('es-CR')}
-            </p>
-            <p>
-              <strong>Precio con IVA:</strong> CRC {precioConIVA.toLocaleString('es-CR')}
-            </p>
-            <p>
-              <strong>Disponibles:</strong> {stockDisponible}
-            </p>
-            <p className="products-page__description">
-              {product.descripcion}
-            </p>
-            <button
-              type="button"
-              className="products-page__buy-button"
-              onClick={() => handleBuy(product)}
-              disabled={estaAgotado}
-            >
-              {estaAgotado ? 'Agotado' : 'Comprar'}
-            </button>
-            {lastAddedProductId === product.id ? (
-              <p className="products-page__added" aria-live="polite">Producto agregado al carrito.</p>
-            ) : null}
+
+            <div className="products-page__card-body">
+              <h2>{product.nombre}</h2>
+              <p className="products-page__price">CRC {precioConIVA.toLocaleString('es-CR')}</p>
+            </div>
+
+            <div className="products-page__card-actions">
+              <Link
+                to="/productos/$productId"
+                params={{ productId: String(product.id) }}
+                className="products-page__details-btn"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Detalles
+              </Link>
+
+              <button
+                type="button"
+                className="products-page__quick-buy"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addProductToCart(product, 1);
+                  pulseButton(e.currentTarget);
+                  e.currentTarget.blur();
+                }}
+                disabled={estaAgotado}
+                aria-label={`A\u00f1adir ${product.nombre} al carrito`}
+              >
+                <ShoppingCart className="products-page__quick-buy-icon" aria-hidden="true" />
+              </button>
+            </div>
           </article>
-        ))}
+          );
+        })}
       </section>
 
-      <nav className="products-page__pagination" aria-label="Paginacion de productos">
+      <nav className="products-page__pagination" aria-label="Paginación de productos">
         {Array.from({ length: totalPages }, (_, index) => {
           const pageNumber = index + 1;
           return (
@@ -189,6 +170,7 @@ const Products = () => {
         })}
       </nav>
     </main>
+    </PublicPageGate>
   );
 };
 

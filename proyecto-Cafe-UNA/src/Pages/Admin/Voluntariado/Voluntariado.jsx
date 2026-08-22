@@ -1,109 +1,264 @@
 import { useEffect, useMemo, useState } from "react";
-import { Eye, Pencil, RefreshCw, Trash2, X } from "lucide-react";
+import {
+  Building2,
+  Calendar,
+  Clock,
+  Eye,
+  GraduationCap,
+  Hash,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  RefreshCw,
+  Trash2,
+  UserRound,
+  Users,
+  X,
+} from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
+import { AdminModalActions, adminBtnCancel, adminBtnPrimary } from "../../../Components/Admin/ui/AdminModal";
+import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
+import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
+import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import {
   actualizarSolicitud,
   eliminarSolicitud,
   obtenerSolicitudes,
 } from "../../../services/voluntariadoService";
+import { getActiveSessionUser } from "../../../services/sessionService";
+import { tienePermiso } from "../../../lib/permisos";
 
-const ESTADOS = ["Pendiente", "En revisión", "Aprobado", "Rechazado"];
+const ESTADOS = ["Pendiente", "En revisi\u00f3n", "Aprobado", "Rechazado"];
 
 const ESTADO_ESTILOS = {
   Pendiente: "border-amber-200 bg-amber-50 text-amber-700",
-  "En revisión": "border-blue-200 bg-blue-50 text-blue-700",
+  "En revisi\u00f3n": "border-blue-200 bg-blue-50 text-blue-700",
   Aprobado: "border-emerald-200 bg-emerald-50 text-emerald-700",
   Rechazado: "border-red-200 bg-red-50 text-red-700",
 };
 
+function normalizarEstado(estado) {
+  const normalized = String(estado || "Pendiente")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (normalized === "aprobada" || normalized === "aprobado") return "Aprobado";
+  if (normalized === "rechazada" || normalized === "rechazado") return "Rechazado";
+  if (normalized === "en revision" || normalized === "revision") return "En revisi\u00f3n";
+  return "Pendiente";
+}
+
+function normalizarSolicitud(solicitud) {
+  return {
+    ...solicitud,
+    estado: normalizarEstado(solicitud?.estado),
+  };
+}
+
 const CAMPOS_EDITABLES = [
   { name: "nombre", label: "Nombre completo" },
-  { name: "email", label: "Correo electrónico", type: "email" },
-  { name: "telefono", label: "Teléfono" },
+  { name: "email", label: "Correo electr\u00f3nico", type: "email" },
+  { name: "telefono", label: "Tel\u00e9fono" },
   { name: "tipoVoluntariado", label: "Tipo de voluntariado" },
-  { name: "identificacion", label: "Identificación" },
-  { name: "institucion", label: "Institución" },
-  { name: "pais", label: "País" },
+  { name: "identificacion", label: "Identificaci\u00f3n" },
+  { name: "institucion", label: "Instituci\u00f3n" },
+  { name: "pais", label: "Pa\u00eds" },
   { name: "residencia", label: "Residencia" },
   { name: "horario", label: "Horario" },
-  { name: "dias", label: "Días disponibles" },
-  { name: "area", label: "Área de interés" },
+  { name: "dias", label: "D\u00edas disponibles" },
+  { name: "area", label: "\u00c1rea de inter\u00e9s" },
 ];
 
 function BadgeEstado({ estado }) {
+  const estadoNormalizado = normalizarEstado(estado);
+
   return (
     <span
       className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
-        ESTADO_ESTILOS[estado] ?? "border-slate-200 bg-slate-50 text-slate-600"
+        ESTADO_ESTILOS[estadoNormalizado] ?? "border-slate-200 bg-slate-50 text-slate-600"
       }`}
     >
-      {estado || "Sin estado"}
+      {estadoNormalizado}
     </span>
   );
 }
 
-function ModalDetalle({ solicitud, onCerrar }) {
-  const detalles = [
-    ["Nombre", solicitud.nombre],
-    ["Correo", solicitud.email],
-    ["Teléfono", solicitud.telefono],
-    ["Tipo", solicitud.tipoVoluntariado],
-    ["Fecha", solicitud.fechaSolicitud],
-    ["Estado", solicitud.estado],
-    ["Modalidad", solicitud.modalidad],
-    ["Participantes", solicitud.cantidadParticipantes],
-    ["Identificación", solicitud.identificacion],
-    ["Institución", solicitud.institucion],
-    ["País", solicitud.pais],
-    ["Residencia", solicitud.residencia],
-    ["Horario", solicitud.horario],
-    ["Días", solicitud.dias],
-    ["Área", solicitud.area],
-    ["Experiencia", solicitud.descripcion],
-    ["Motivación", solicitud.motivacion],
-  ];
+const getInitials = (name = "") => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "SV";
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join("");
+};
+
+function DetailField({ icon: Icon, label, value, className = "" }) {
+  return (
+    <div className={`grid gap-2 ${className}`}>
+      <span className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+        <Icon className="size-4 text-slate-500" />
+        {label}
+      </span>
+      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900">
+        {value || "No indicado"}
+      </p>
+    </div>
+  );
+}
+
+function DetailBlock({ label, value }) {
+  return (
+    <div className="grid gap-2 md:col-span-2">
+      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <div className="min-h-[4.5rem] whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold leading-6 text-slate-900">
+        {value || "No indicado"}
+      </div>
+    </div>
+  );
+}
+
+function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
+  const [estado, setEstado] = useState(normalizarEstado(solicitud.estado));
+  const [observacionesAdmin, setObservacionesAdmin] = useState(solicitud.observacionesAdmin || "");
+  const [guardando, setGuardando] = useState(false);
+
+  const guardarCambios = async (nuevoEstado = estado) => {
+    setGuardando(true);
+    try {
+      await onGuardar(solicitud.id, {
+        estado: nuevoEstado,
+        observacionesAdmin,
+      });
+      onCerrar();
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const cambiarEstado = async (nuevoEstado) => {
+    setEstado(nuevoEstado);
+    await guardarCambios(nuevoEstado);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-slate-950">Detalle de solicitud</h2>
-            <p className="text-sm text-slate-500">Información registrada por la persona voluntaria.</p>
+            <h2 className="text-lg font-semibold text-slate-950">Ver solicitud</h2>
+            <p className="text-sm text-slate-500">
+              Solicitud #{solicitud.id} · Recibida el {solicitud.fechaSolicitud || "sin fecha"}
+            </p>
           </div>
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
             aria-label="Cerrar"
           >
             <X className="size-4" />
           </button>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
-          <dl className="grid min-w-0 gap-4 sm:grid-cols-2">
-            {detalles.map(([label, value]) => (
-              <div
-                key={label}
-                className={`min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-4 ${
-                  label === "Experiencia" || label === "Motivación" ? "sm:col-span-2" : ""
-                }`}
-              >
-                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</dt>
-                <dd className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-900">
-                  {value || "No indicado"}
-                </dd>
+        <div className="max-h-[68vh] overflow-y-auto px-6 py-5">
+          <header className="mb-6 flex items-center gap-4 border-b border-slate-100 pb-5">
+            <div className="grid size-14 shrink-0 place-items-center rounded-full bg-[#a7532d] text-base font-bold text-white">
+              {getInitials(solicitud.nombre)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-xl font-bold text-slate-950">{solicitud.nombre || "Sin nombre"}</h3>
+              <div className="mt-2">
+                <BadgeEstado estado={estado} />
               </div>
-            ))}
-          </dl>
+            </div>
+          </header>
+
+          <section className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Solicitud completa</h4>
+            <div className="grid gap-4 md:grid-cols-2">
+              <DetailField icon={UserRound} label="Nombre" value={solicitud.nombre} />
+              <DetailField icon={Mail} label="Correo" value={solicitud.email} />
+              <DetailField icon={Phone} label={"Tel\u00e9fono"} value={solicitud.telefono} />
+              <DetailField icon={GraduationCap} label="Tipo de voluntariado" value={solicitud.tipoVoluntariado} />
+              <DetailField icon={Calendar} label="Fecha de solicitud" value={solicitud.fechaSolicitud} />
+              <DetailField icon={Clock} label="Disponibilidad" value={solicitud.horario} />
+              <DetailField icon={Hash} label={"Identificaci\u00f3n"} value={solicitud.identificacion} />
+              <DetailField icon={Building2} label={"Instituci\u00f3n"} value={solicitud.institucion} />
+              <DetailField icon={MapPin} label="Residencia" value={solicitud.residencia} />
+              <DetailField icon={Users} label="Participantes" value={String(solicitud.cantidadParticipantes || 1)} />
+              <DetailField icon={MapPin} label={"Pa\u00eds"} value={solicitud.pais} />
+              <DetailField icon={Calendar} label={"D\u00edas disponibles"} value={solicitud.dias} />
+              <DetailField icon={GraduationCap} label="Modalidad" value={solicitud.modalidad === "grupal" ? "Grupal" : "Individual"} />
+              <DetailField icon={MapPin} label={"\u00c1rea de inter\u00e9s"} value={solicitud.area} />
+              <DetailBlock label={"Motivaci\u00f3n"} value={solicitud.motivacion} />
+              <DetailBlock label="Experiencia" value={solicitud.descripcion} />
+            </div>
+          </section>
+
+          <section className="mt-6 space-y-4 border-t border-slate-100 pt-6">
+            <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">{"Panel de administraci\u00f3n"}</h4>
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              Observaciones del administrador
+              <textarea
+                value={observacionesAdmin}
+                onChange={(event) => setObservacionesAdmin(event.target.value)}
+                rows={3}
+                className="resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                placeholder="Notas internas sobre esta solicitud..."
+              />
+            </label>
+          </section>
+        </div>
+
+        <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={guardando}
+              onClick={() => cambiarEstado("En revisi\u00f3n")}
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >{"Marcar en revisi\u00f3n"}</button>
+            <button
+              type="button"
+              disabled={guardando}
+              onClick={() => cambiarEstado("Aprobado")}
+              className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Aprobar
+            </button>
+            <button
+              type="button"
+              disabled={guardando}
+              onClick={() => cambiarEstado("Rechazado")}
+              className="rounded-full bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Rechazar
+            </button>
+          </div>
+          <div className="flex flex-row flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              disabled={guardando}
+              onClick={() => guardarCambios()}
+              className={adminBtnPrimary}
+            >
+              {guardando ? "Guardando..." : "Guardar observaciones"}
+            </button>
+            <button
+              type="button"
+              onClick={onCerrar}
+              className={adminBtnCancel}
+            >
+              Cerrar
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
 function ModalEditar({ solicitud, onGuardar, onCerrar }) {
   const [form, setForm] = useState(() => ({
     estado: solicitud.estado || "Pendiente",
@@ -143,12 +298,12 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-950">Editar solicitud</h2>
-            <p className="text-sm text-slate-500">Actualizá los datos o el estado del voluntariado.</p>
+            <p className="text-sm text-slate-500">{"Actualiz\u00e1 los datos o el estado del voluntariado."}</p>
           </div>
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
             aria-label="Cerrar"
           >
             <X className="size-4" />
@@ -222,9 +377,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
               />
             </label>
 
-            <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-              Motivación
-              <textarea
+            <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">{"Motivaci\u00f3n"}<textarea
                 name="motivacion"
                 value={form.motivacion}
                 onChange={handleChange}
@@ -235,21 +388,12 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={guardando}
-            className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {guardando ? "Guardando..." : "Guardar cambios"}
-          </button>
+        <div className="flex flex-row flex-wrap justify-end gap-2 border-t border-slate-200 px-6 py-4">
+          <AdminModalActions
+            onCancel={onCerrar}
+            primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
+            primaryDisabled={guardando}
+          />
         </div>
       </form>
     </div>
@@ -257,18 +401,51 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
 }
 
 const AdminVoluntariado = () => {
+  const actor = (() => {
+    try {
+      return getActiveSessionUser();
+    } catch {
+      return null;
+    }
+  })();
+  const actorRoles = Array.isArray(actor?.roles) ? actor.roles : [];
+  const esSuperAdmin = tienePermiso(actorRoles, "inactivar_voluntariado");
   const [solicitudes, setSolicitudes] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [viendo, setViendo] = useState(null);
   const [editando, setEditando] = useState(null);
   const [eliminando, setEliminando] = useState(null);
+  const { showLoading, loadingMessage } = useAdminPageGate('/admin/voluntariado', !cargando);
+
+  const {
+    busqueda,
+    setBusqueda,
+    filtrados: solicitudesFiltradas,
+    limpiar,
+    hayFiltrosActivos,
+    total,
+    visibles,
+  } = useAdminListaFiltros(solicitudes, {
+    buscarEn: (solicitud) => [
+      solicitud.nombre,
+      solicitud.email,
+      solicitud.telefono,
+      solicitud.tipoVoluntariado,
+      solicitud.estado,
+      solicitud.institucion,
+      solicitud.identificacion,
+      solicitud.area,
+      solicitud.pais,
+    ],
+  });
 
   const resumen = useMemo(() => {
-    return ESTADOS.reduce((acc, estado) => {
-      acc[estado] = solicitudes.filter((solicitud) => solicitud.estado === estado).length;
+    return solicitudes.reduce((acc, solicitud) => {
+      const estado = normalizarEstado(solicitud.estado);
+      acc[estado] = (acc[estado] || 0) + 1;
       return acc;
-    }, {});
+    }, Object.fromEntries(ESTADOS.map((estado) => [estado, 0])));
   }, [solicitudes]);
 
   const cargarSolicitudes = async () => {
@@ -276,7 +453,7 @@ const AdminVoluntariado = () => {
     setError(null);
     try {
       const data = await obtenerSolicitudes();
-      setSolicitudes(Array.isArray(data) ? data : []);
+      setSolicitudes(Array.isArray(data) ? data.map(normalizarSolicitud) : []);
     } catch (err) {
       setError("No se pudieron cargar las solicitudes de voluntariado.");
       console.error(err);
@@ -290,7 +467,7 @@ const AdminVoluntariado = () => {
 
     obtenerSolicitudes()
       .then((data) => {
-        if (activo) setSolicitudes(Array.isArray(data) ? data : []);
+        if (activo) setSolicitudes(Array.isArray(data) ? data.map(normalizarSolicitud) : []);
       })
       .catch((err) => {
         if (!activo) return;
@@ -310,17 +487,27 @@ const AdminVoluntariado = () => {
     try {
       const actualizada = await actualizarSolicitud(id, cambios);
       setSolicitudes((prev) =>
-        prev.map((solicitud) => (solicitud.id === id ? { ...solicitud, ...(actualizada || cambios) } : solicitud))
+        prev.map((solicitud) => (
+          solicitud.id === id
+            ? normalizarSolicitud({ ...solicitud, ...(actualizada || cambios) })
+            : solicitud
+        ))
       );
       setEditando(null);
+      setViendo(null);
     } catch (err) {
-      alert("Error al actualizar la solicitud. Intentá de nuevo.");
+      alert("Error al actualizar la solicitud. Intent\u00e1 de nuevo.");
       console.error(err);
     }
   };
 
   const handleEliminar = async (solicitud) => {
-    const confirmar = window.confirm(`¿Deseás eliminar la solicitud de ${solicitud.nombre || "esta persona"}?`);
+    if (!esSuperAdmin) {
+      alert("Solo SuperAdmin puede eliminar solicitudes de voluntariado.");
+      return;
+    }
+
+    const confirmar = window.confirm(`\u00bfDese\u00e1s eliminar la solicitud de ${solicitud.nombre || "esta persona"}?`);
     if (!confirmar) return;
 
     setEliminando(solicitud.id);
@@ -328,7 +515,7 @@ const AdminVoluntariado = () => {
       await eliminarSolicitud(solicitud.id);
       setSolicitudes((prev) => prev.filter((item) => item.id !== solicitud.id));
     } catch (err) {
-      alert("Error al eliminar la solicitud. Intentá de nuevo.");
+      alert("Error al eliminar la solicitud. Intent\u00e1 de nuevo.");
       console.error(err);
     } finally {
       setEliminando(null);
@@ -336,25 +523,24 @@ const AdminVoluntariado = () => {
   };
 
   return (
+    <AdminPageGate showLoading={showLoading} message={loadingMessage}>
     <AdminLayout>
       <section className="space-y-6">
-        <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1 text-sm font-semibold text-emerald-800">
                 Programa de Voluntariado
               </span>
-              <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">Solicitudes registradas</h1>
-              <p className="mt-3 max-w-2xl text-slate-600">
-                Gestioná el estado y los datos de cada solicitud de voluntariado recibida.
-              </p>
+              <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Solicitudes registradas</h1>
+              <p className="mt-3 max-w-2xl text-slate-600">{"Gestion\u00e1 el estado y los datos de cada solicitud de voluntariado recibida."}</p>
             </div>
 
             <button
               type="button"
               onClick={cargarSolicitudes}
               disabled={cargando}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RefreshCw className={`size-4 ${cargando ? "animate-spin" : ""}`} />
               Actualizar
@@ -384,7 +570,7 @@ const AdminVoluntariado = () => {
             <button
               type="button"
               onClick={cargarSolicitudes}
-              className="mt-4 rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800"
+              className="mt-4 rounded-full bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800"
             >
               Reintentar
             </button>
@@ -393,83 +579,160 @@ const AdminVoluntariado = () => {
 
         {!cargando && !error && solicitudes.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-            <p className="text-slate-600">No hay solicitudes registradas aún.</p>
+            <p className="text-slate-600">{"No hay solicitudes registradas a\u00fan."}</p>
           </div>
         ) : null}
 
         {!cargando && !error && solicitudes.length > 0 ? (
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] border-collapse text-left text-sm">
-                <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="px-5 py-4 font-bold">Nombre</th>
-                    <th className="px-5 py-4 font-bold">Tipo de voluntariado</th>
-                    <th className="px-5 py-4 font-bold">Fecha</th>
-                    <th className="px-5 py-4 font-bold">Estado</th>
-                    <th className="px-5 py-4 font-bold">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {solicitudes.map((solicitud) => (
-                    <tr key={solicitud.id} className="transition hover:bg-slate-50">
-                      <td className="px-5 py-4">
-                        <div className="font-semibold text-slate-950">{solicitud.nombre || "Sin nombre"}</div>
-                        <div className="mt-1 text-xs text-slate-500">{solicitud.email || "Sin correo"}</div>
-                      </td>
-                      <td className="px-5 py-4 text-slate-700">{solicitud.tipoVoluntariado || "No indicado"}</td>
-                      <td className="px-5 py-4 text-slate-700">{solicitud.fechaSolicitud || "No indicada"}</td>
-                      <td className="px-5 py-4">
-                        <BadgeEstado estado={solicitud.estado} />
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setViendo(solicitud)}
-                            className="inline-flex size-9 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition hover:bg-slate-200"
-                            title="Ver solicitud"
-                          >
-                            <Eye className="size-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditando(solicitud)}
-                            className="inline-flex size-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100"
-                            title="Editar solicitud"
-                          >
-                            <Pencil className="size-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleEliminar(solicitud)}
-                            disabled={eliminando === solicitud.id}
-                            className="inline-flex size-9 items-center justify-center rounded-lg bg-red-50 text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                            title="Eliminar solicitud"
-                          >
-                            {eliminando === solicitud.id ? (
-                              <RefreshCw className="size-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="size-4" />
-                            )}
-                          </button>
-                        </div>
-                      </td>
+          <>
+            <AdminListaToolbar
+              busqueda={busqueda}
+              onBusquedaChange={setBusqueda}
+              placeholder={"Buscar por nombre, correo, tipo, estado o instituci\u00f3n..."}
+              total={total}
+              visibles={visibles}
+              hayFiltrosActivos={hayFiltrosActivos}
+              onLimpiar={limpiar}
+            />
+
+            {solicitudesFiltradas.length === 0 ? (
+              <AdminListaVacia onLimpiar={limpiar} />
+            ) : (
+          <>
+            <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px] border-collapse text-left text-sm">
+                  <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="px-5 py-4 font-bold">Nombre</th>
+                      <th className="px-5 py-4 font-bold">Tipo de voluntariado</th>
+                      <th className="px-5 py-4 font-bold">Fecha</th>
+                      <th className="px-5 py-4 font-bold">Estado</th>
+                      <th className="px-5 py-4 font-bold">Acciones</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {solicitudesFiltradas.map((solicitud) => (
+                      <tr key={solicitud.id} className="transition hover:bg-slate-50">
+                        <td className="px-5 py-4">
+                          <div className="font-semibold text-slate-950">{solicitud.nombre || "Sin nombre"}</div>
+                          <div className="mt-1 text-xs text-slate-500">{solicitud.email || "Sin correo"}</div>
+                        </td>
+                        <td className="px-5 py-4 text-slate-700">{solicitud.tipoVoluntariado || "No indicado"}</td>
+                        <td className="px-5 py-4 text-slate-700">{solicitud.fechaSolicitud || "No indicada"}</td>
+                        <td className="px-5 py-4">
+                          <BadgeEstado estado={solicitud.estado} />
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setViendo(solicitud)}
+                              className="inline-flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+                              title="Ver solicitud"
+                            >
+                              <Eye className="size-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditando(solicitud)}
+                              className="inline-flex size-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100"
+                              title="Editar solicitud"
+                            >
+                              <Pencil className="size-4" />
+                            </button>
+                            {esSuperAdmin ? (
+                              <button
+                                type="button"
+                                onClick={() => handleEliminar(solicitud)}
+                                disabled={eliminando === solicitud.id}
+                                className="inline-flex size-9 items-center justify-center rounded-full bg-red-50 text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                title="Eliminar solicitud"
+                              >
+                                {eliminando === solicitud.id ? (
+                                  <RefreshCw className="size-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="size-4" />
+                                )}
+                              </button>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+
+            <div className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:hidden">
+              {solicitudesFiltradas.map((solicitud) => (
+                <article key={solicitud.id} className="space-y-3 px-4 py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-slate-950">{solicitud.nombre || "Sin nombre"}</h3>
+                      <p className="mt-0.5 truncate text-sm text-slate-500">{solicitud.email || "Sin correo"}</p>
+                    </div>
+                    <BadgeEstado estado={solicitud.estado} />
+                  </div>
+
+                  <div className="grid gap-1 text-sm text-slate-600">
+                    <p><span className="font-medium text-slate-800">Tipo:</span> {solicitud.tipoVoluntariado || "No indicado"}</p>
+                    <p><span className="font-medium text-slate-800">Fecha:</span> {solicitud.fechaSolicitud || "No indicada"}</p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setViendo(solicitud)}
+                      className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+                    >
+                      <Eye className="size-4" />
+                      Ver
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditando(solicitud)}
+                      className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                    >
+                      <Pencil className="size-4" />
+                      Editar
+                    </button>
+                    {esSuperAdmin ? (
+                      <button
+                        type="button"
+                        onClick={() => handleEliminar(solicitud)}
+                        disabled={eliminando === solicitud.id}
+                        className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {eliminando === solicitud.id ? (
+                          <RefreshCw className="size-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="size-4" />
+                        )}
+                        Eliminar
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </>
+            )}
+          </>
         ) : null}
       </section>
 
-      {viendo ? <ModalDetalle solicitud={viendo} onCerrar={() => setViendo(null)} /> : null}
+      {viendo ? (
+        <ModalDetalle solicitud={viendo} onGuardar={handleActualizar} onCerrar={() => setViendo(null)} />
+      ) : null}
       {editando ? (
         <ModalEditar solicitud={editando} onGuardar={handleActualizar} onCerrar={() => setEditando(null)} />
       ) : null}
     </AdminLayout>
+    </AdminPageGate>
   );
 };
 
 export default AdminVoluntariado;
+

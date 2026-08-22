@@ -1,10 +1,20 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './Navbar.css';
-import { calcularPrecioConIVA } from '../../services/productosServices';
-import { Minus, Plus, Trash2, X } from 'lucide-react';
+import { calcularPrecioConIVA } from '../../services/productosService';
+import { Bell, BookOpen, Coffee, HandHeart, Info, Menu, Minus, Package, Plus, ShoppingCart, Trash2, User, X } from 'lucide-react';
+import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
+import { FacebookIcon, InstagramIcon } from '../Footer/SocialIcons';
+import { normalizeImageUrl } from '../../lib/imageUtils';
+import { useHomeBrandNavigation } from '../../hooks/useHomeBrandNavigation';
+import { readPageCache } from '../../lib/pageDataCache';
+import { obtenerSolicitudes, obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService';
+import { cancelPendingSessionRefresh } from '../../services/apiClient';
+import { beginLogout, clearSession, getActiveSessionUser } from '../../services/sessionService';
+import SiteNavLink from '../SiteNavLink/SiteNavLink';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
-const CART_STORAGE_KEY = 'cart';
+import { clearCart as emptyCart, getStoredCart, saveCart } from '../../lib/cartStorage';
 
 const formatCRC = (amount) => {
     const value = Number.isFinite(amount) ? amount : 0;
@@ -15,23 +25,132 @@ const getQuantity = (item) => Number(item.units) || 1;
 const getUnitPriceWithoutIva = (item) => Number(item.precioNormal ?? item.priceWithoutIva ?? item.price ?? 0) || 0;
 const getUnitPriceWithIva = (item) => calcularPrecioConIVA(getUnitPriceWithoutIva(item));
 const getAvailableStock = (item) => Number(item.stock) || 0;
+const canCompletePurchase = (user) => Boolean(user);
+const canSeeAllSolicitudes = (user) => {
+    const roles = Array.isArray(user?.roles) ? user.roles : [];
+    return roles.some((role) => {
+        const normalizedRole = String(role).toLowerCase();
+        return normalizedRole === 'admin' || normalizedRole === 'superadmin';
+    });
+};
+const isSolicitudPendiente = (solicitud) =>
+    String(solicitud?.estado || '').trim().toLowerCase() === 'pendiente';
+
+function getCachedNavbarLogos() {
+    const home = readPageCache('home');
+    return {
+        logoUrl: typeof home?.navbar?.logoUrl === 'string' ? home.navbar.logoUrl.trim() : '',
+        logoClaroUrl: typeof home?.navbar?.logoClaroUrl === 'string' ? home.navbar.logoClaroUrl.trim() : '',
+    };
+}
+
+function getCachedFooterSocial() {
+    const home = readPageCache('home');
+    const footer = home?.footer;
+    return {
+        facebookUrl: typeof footer?.facebookUrl === 'string' ? footer.facebookUrl.trim() : '',
+        instagramUrl: typeof footer?.instagramUrl === 'string' ? footer.instagramUrl.trim() : '',
+    };
+}
+
+function getCachedNavbarLinks() {
+    const home = readPageCache('home');
+    if (Array.isArray(home?.enlacesNavbar) && home.enlacesNavbar.length > 0) {
+        return filterNavLinks(home.enlacesNavbar);
+    }
+
+    const adminMain = readPageCache('admin-main');
+    if (Array.isArray(adminMain?.enlacesNavbar) && adminMain.enlacesNavbar.length > 0) {
+        return filterNavLinks(adminMain.enlacesNavbar);
+    }
+
+    return [];
+}
+
+function filterNavLinks(enlaces) {
+    return enlaces.filter((enlace) => {
+        const ruta = String(enlace?.ruta ?? enlace?.Ruta ?? '').trim();
+        return ruta !== '/' && ruta !== '';
+    });
+}
+
+function resolveMobileNavIcon(ruta) {
+    const normalized = String(ruta || '').trim().toLowerCase();
+
+    if (normalized.includes('product')) return Coffee;
+    if (normalized.includes('about') || normalized.includes('sobre')) return BookOpen;
+    if (normalized.includes('volunt')) return HandHeart;
+    if (normalized.includes('iniciativa') || normalized.includes('gallery') || normalized.includes('galer')) return Info;
+    if (normalized.includes('checkout') || normalized.includes('cart')) return ShoppingCart;
+
+    return Package;
+}
 
 const Navbar = () => {
     const navigate = useNavigate();
+    const [isScrolled, setIsScrolled] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const [showCartDropdown, setShowCartDropdown] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
     const [isCartClosing, setIsCartClosing] = useState(false);
     const [user, setUser] = useState(null);
     const [cartItems, setCartItems] = useState([]);
+    const [solicitudes, setSolicitudes] = useState([]);
+    const [notificationsLoading, setNotificationsLoading] = useState(false);
+    const [notificationsError, setNotificationsError] = useState('');
+    const [enlacesNavbar, setEnlacesNavbar] = useState(() => getCachedNavbarLinks());
+    const cachedLogos = getCachedNavbarLogos();
+    const cachedSocial = getCachedFooterSocial();
+    const [logoUrl, setLogoUrl] = useState(cachedLogos.logoUrl);
+    const [logoClaroUrl, setLogoClaroUrl] = useState(cachedLogos.logoClaroUrl);
+    const [facebookUrl, setFacebookUrl] = useState(cachedSocial.facebookUrl);
+    const [instagramUrl, setInstagramUrl] = useState(cachedSocial.instagramUrl);
     const cartContainerRef = useRef(null);
+    const notificationsRef = useRef(null);
     const cartCloseTimerRef = useRef(null);
+    const navbarRef = useRef(null);
+    const pathname = useRouterState({
+        select: (state) => state.location.pathname,
+    });
+
+    useBodyScrollLock(isMobileMenuOpen || showCartDropdown);
+
+    useEffect(() => {
+        let activo = true;
+
+        Promise.all([
+            obtenerEnlaces('Navbar').catch(() => []),
+            obtenerNavbar().catch(() => null),
+            obtenerFooter().catch(() => null),
+        ])
+            .then(([enlaces, navbar, footer]) => {
+                if (!activo) return;
+                setEnlacesNavbar(filterNavLinks(Array.isArray(enlaces) ? enlaces : []));
+                setLogoUrl(typeof navbar?.logoUrl === 'string' ? navbar.logoUrl.trim() : '');
+                setLogoClaroUrl(typeof navbar?.logoClaroUrl === 'string' ? navbar.logoClaroUrl.trim() : '');
+                setFacebookUrl(typeof footer?.facebookUrl === 'string' ? footer.facebookUrl.trim() : '');
+                setInstagramUrl(typeof footer?.instagramUrl === 'string' ? footer.instagramUrl.trim() : '');
+            })
+            .catch((err) => {
+                console.error('No se pudo cargar la información del navbar.', err);
+            });
+
+        return () => {
+            activo = false;
+        };
+    }, []);
 
     useEffect(() => {
         const syncNavbarState = () => {
-            const storedUser = JSON.parse(localStorage.getItem('user'));
-            const storedCart = localStorage.getItem(CART_STORAGE_KEY);
+            const storedUser = getActiveSessionUser();
+            const storedCart = getStoredCart();
             setUser(storedUser);
-            setCartItems(storedCart ? JSON.parse(storedCart) : []);
+            setCartItems(Array.isArray(storedCart) ? storedCart : []);
+            if (!storedUser) {
+                setSolicitudes([]);
+                setShowNotifications(false);
+            }
         };
         syncNavbarState();
         window.addEventListener('storage', syncNavbarState);
@@ -42,11 +161,113 @@ const Navbar = () => {
         };
     }, []);
 
+    const loadSolicitudesUsuario = useCallback(async (currentUser = user) => {
+        if (!currentUser) {
+            setSolicitudes([]);
+            return;
+        }
+
+        setNotificationsLoading(true);
+        setNotificationsError('');
+        try {
+            const userId = currentUser?.id || currentUser?.email || currentUser?.username;
+            const data = canSeeAllSolicitudes(currentUser)
+                ? await obtenerSolicitudes()
+                : await obtenerSolicitudesDeUsuario(String(userId));
+            setSolicitudes(data);
+        } catch (err) {
+            console.error('No se pudieron cargar las solicitudes de voluntariado.', err);
+            setNotificationsError('No se pudieron cargar las solicitudes.');
+        } finally {
+            setNotificationsLoading(false);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        if (!user) return;
+        const initialLoadId = window.setTimeout(() => {
+            loadSolicitudesUsuario(user);
+        }, 0);
+
+        const syncSolicitudes = () => loadSolicitudesUsuario(user);
+        window.addEventListener('voluntariado-updated', syncSolicitudes);
+        return () => {
+            window.clearTimeout(initialLoadId);
+            window.removeEventListener('voluntariado-updated', syncSolicitudes);
+        };
+    }, [user, loadSolicitudesUsuario]);
+
+    const syncScrolledState = useCallback(() => {
+        setIsScrolled(window.scrollY > 10);
+    }, []);
+
+    useEffect(() => {
+        const rafId = window.requestAnimationFrame(syncScrolledState);
+        window.addEventListener('scroll', syncScrolledState, { passive: true });
+        return () => {
+            window.cancelAnimationFrame(rafId);
+            window.removeEventListener('scroll', syncScrolledState);
+        };
+    }, [syncScrolledState]);
+
+    useEffect(() => {
+        const rafId = window.requestAnimationFrame(syncScrolledState);
+        const timeoutId = window.setTimeout(syncScrolledState, 80);
+
+        return () => {
+            window.cancelAnimationFrame(rafId);
+            window.clearTimeout(timeoutId);
+        };
+    }, [pathname, syncScrolledState]);
+
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [pathname]);
+
+    useEffect(() => {
+        if (!isMobileMenuOpen) {
+            return;
+        }
+
+        const handleEscapeKey = (event) => {
+            if (event.key === 'Escape') {
+                setIsMobileMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('keydown', handleEscapeKey);
+        return () => document.removeEventListener('keydown', handleEscapeKey);
+    }, [isMobileMenuOpen]);
+
     useEffect(() => () => {
         if (cartCloseTimerRef.current) {
             window.clearTimeout(cartCloseTimerRef.current);
         }
     }, []);
+
+    useEffect(() => {
+        const updateNavbarHeight = () => {
+            const currentHeight = navbarRef.current?.offsetHeight;
+            if (!currentHeight) return;
+            document.documentElement.style.setProperty('--navbar-height', `${currentHeight}px`);
+        };
+
+        updateNavbarHeight();
+        window.addEventListener('resize', updateNavbarHeight);
+        const resizeObserver =
+            typeof ResizeObserver !== 'undefined' && navbarRef.current
+                ? new ResizeObserver(() => updateNavbarHeight())
+                : null;
+
+        if (resizeObserver && navbarRef.current) {
+            resizeObserver.observe(navbarRef.current);
+        }
+
+        return () => {
+            window.removeEventListener('resize', updateNavbarHeight);
+            resizeObserver?.disconnect();
+        };
+    }, [pathname, isScrolled, cartItems, showCartDropdown, showDropdown, isMobileMenuOpen]);
 
     const closeCartPanel = useCallback(() => {
         if (!showCartDropdown || isCartClosing) {
@@ -86,16 +307,43 @@ const Navbar = () => {
         };
     }, [showCartDropdown, closeCartPanel]);
 
+    useEffect(() => {
+        if (!showNotifications) {
+            return;
+        }
+
+        const handlePointerDown = (event) => {
+            if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+                setShowNotifications(false);
+            }
+        };
+
+        const handleEscapeKey = (event) => {
+            if (event.key === 'Escape') {
+                setShowNotifications(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handlePointerDown);
+        document.addEventListener('keydown', handleEscapeKey);
+
+        return () => {
+            document.removeEventListener('mousedown', handlePointerDown);
+            document.removeEventListener('keydown', handleEscapeKey);
+        };
+    }, [showNotifications]);
+
     const cartUnits = cartItems.reduce((acc, item) => acc + (Number(item.units) || 0), 0);
     const cartSubtotal = cartItems.reduce((acc, item) => acc + (getUnitPriceWithoutIva(item) * getQuantity(item)), 0);
     const cartIva = cartItems.reduce((acc, item) => acc + ((getUnitPriceWithIva(item) - getUnitPriceWithoutIva(item)) * getQuantity(item)), 0);
     const cartTotal = cartItems.reduce((acc, item) => acc + (getUnitPriceWithIva(item) * getQuantity(item)), 0);
     const userDisplayName = user?.username?.includes('@') ? user?.name : user?.username || user?.name;
+    const solicitudesPendientes = solicitudes.filter(isSolicitudPendiente);
+    const solicitudesPendientesCount = solicitudesPendientes.length;
 
-    const saveCart = (updatedCart) => {
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
+    const persistCart = (updatedCart) => {
         setCartItems(updatedCart);
-        window.dispatchEvent(new Event('cart-updated'));
+        saveCart(updatedCart);
     };
 
     const removeOneUnit = (productId) => {
@@ -107,7 +355,7 @@ const Navbar = () => {
             ))
             .filter((item) => (item.units || 0) > 0);
 
-        saveCart(updatedCart);
+        persistCart(updatedCart);
     };
 
     const addOneUnit = (productId) => {
@@ -120,12 +368,12 @@ const Navbar = () => {
         const unidadesActuales = getQuantity(targetItem);
 
         if (stockDisponible <= 0 || targetItem.estado === 'Agotado') {
-            window.alert('Este producto está agotado.');
+            window.alert('Este producto est\u00e1 agotado.');
             return;
         }
 
         if (unidadesActuales >= stockDisponible) {
-            window.alert('No hay más unidades disponibles de este producto.');
+            window.alert('No hay m\u00e1s unidades disponibles de este producto.');
             return;
         }
 
@@ -135,24 +383,65 @@ const Navbar = () => {
                 : item
         ));
 
-        saveCart(updatedCart);
+        persistCart(updatedCart);
     };
 
     const removeLineItem = (productId) => {
         const updatedCart = cartItems.filter((item) => item.id !== productId);
-        saveCart(updatedCart);
+        persistCart(updatedCart);
     };
 
-    const clearCart = () => {
-        saveCart([]);
+    const clearCartItems = () => {
+        setCartItems([]);
+        emptyCart();
+    };
+
+    const closeMobileMenu = () => {
+        setIsMobileMenuOpen(false);
+    };
+
+    const onBrandClick = useHomeBrandNavigation();
+
+    const handleBrandClick = (event) => {
+        closeMobileMenu();
+        onBrandClick(event);
+    };
+
+    const handleMobileMenuToggle = () => {
+        const nextState = !isMobileMenuOpen;
+        setIsMobileMenuOpen(nextState);
+        if (nextState) {
+            setShowDropdown(false);
+            setShowCartDropdown(false);
+            setShowNotifications(false);
+        }
     };
 
     const handleIconClick = () => {
         if (user) {
             setShowDropdown(!showDropdown);
             setShowCartDropdown(false);
+            setShowNotifications(false);
+            setIsMobileMenuOpen(false);
         } else {
             navigate({ to: '/login' });
+        }
+    };
+
+    const handleNotificationsClick = () => {
+        const nextState = !showNotifications;
+        setShowNotifications(nextState);
+        setShowDropdown(false);
+        setShowCartDropdown(false);
+        if (nextState) {
+            loadSolicitudesUsuario(user);
+        }
+    };
+
+    const handleNotificationOpen = () => {
+        setShowNotifications(false);
+        if (user?.role === 'admin') {
+            navigate({ to: '/admin/voluntariado' });
         }
     };
 
@@ -170,33 +459,84 @@ const Navbar = () => {
         setIsCartClosing(false);
         setShowCartDropdown(true);
         setShowDropdown(false);
+        setShowNotifications(false);
+    };
+
+    const handleCheckoutClick = (event) => {
+        if (canCompletePurchase(user)) {
+            setShowCartDropdown(false);
+            return;
+        }
+
+        event.preventDefault();
+        setShowCartDropdown(false);
+        sessionStorage.setItem('postLoginRedirect', '/checkout');
+        navigate({ to: '/login' });
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('user');
-        window.dispatchEvent(new Event('storage'));
+        beginLogout();
+        cancelPendingSessionRefresh();
+        clearSession();
         setUser(null);
         setShowDropdown(false);
-        window.location.href = '/';
+        window.location.replace('/');
     };
 
+    const isTransparent = pathname === '/' && !isScrolled;
+    const useSolidNavbar = isScrolled;
+    const brandLogoSrc = normalizeImageUrl(
+        isTransparent && !useSolidNavbar ? (logoClaroUrl || logoUrl) : logoUrl,
+        { width: 480 }
+    );
+    const navLinks = filterNavLinks(enlacesNavbar);
+    const mobileMenuLogoSrc = normalizeImageUrl(logoUrl || logoClaroUrl, { width: 320 });
+    const hasMobileSocial = Boolean(instagramUrl || facebookUrl);
+
+    const brandMark = brandLogoSrc ? (
+        <img
+            src={brandLogoSrc}
+            alt={"Caf\u00e9 UNA"}
+            className="navbar__brand-logo"
+            width={240}
+            height={52}
+            decoding="async"
+        />
+    ) : (
+        <span className="navbar__brand-text">{"Caf\u00e9 UNA"}</span>
+    );
+
     return (
-        <nav className="navbar">
-            <div className="navbar__brand">Café UNA</div>
-            <div className="navbar__menu">
-                <Link to="/" activeProps={{ style: { fontWeight: '700' } }}>Inicio</Link>
-                <Link to="/AboutUs" activeProps={{ style: { fontWeight: '700' } }}>About Us</Link>
-                <Link to="/productos" activeProps={{ style: { fontWeight: '700' } }}>Productos</Link>
-                <Link to="/voluntariado/solicitar">Voluntariado</Link>
-                
+        <nav
+            ref={navbarRef}
+            className={`navbar ${isTransparent && !useSolidNavbar ? 'navbar--transparent' : 'navbar--solid'}${isMobileMenuOpen ? ' navbar--menu-open' : ''}`}
+        >
+            <div className="navbar__start">
+                <Link to="/" className="navbar__brand" aria-label="Ir al inicio" onClick={handleBrandClick}>
+                    {brandMark}
+                </Link>
             </div>
+
+            <div className="navbar__menu">
+                {navLinks.map((enlace) => (
+                    <SiteNavLink
+                        key={enlace.id ?? enlace.ruta}
+                        enlace={enlace}
+                        activeProps={{ style: { fontWeight: '700' } }}
+                    />
+                ))}
+            </div>
+
             <div className="navbar__actions">
                 <div className="navbar__cart" ref={cartContainerRef} onClick={handleCartClick}>
-                    <img
-                        src="https://cdn-icons-png.flaticon.com/512/263/263142.png"
-                        alt="Carrito"
-                        className="cart-icon"
-                    />
+                    <button
+                        type="button"
+                        className="navbar__icon-button navbar__cart-button"
+                        aria-label="Ver carrito de compras"
+                        title="Carrito"
+                    >
+                        <ShoppingCart size={24} strokeWidth={2} aria-hidden="true" />
+                    </button>
                     <span className="cart-badge">{cartUnits}</span>
                     {showCartDropdown ? (
                         <aside
@@ -219,7 +559,7 @@ const Navbar = () => {
                                 <h2>Resumen del carrito</h2>
                             </header>
                             {cartItems.length === 0 ? (
-                                <p className="dropdown__empty">Tu carrito esta vacio.</p>
+                                <p className="dropdown__empty">Tu carrito está vacío.</p>
                             ) : (
                                 <>
                                     <section className="cart-items" aria-label="Productos en el carrito">
@@ -297,13 +637,13 @@ const Navbar = () => {
                                         </div>
                                     </footer>
                                     <div className="cart-actions-row">
-                                        <Link to="/checkout" className="cart-go-checkout" onClick={() => setShowCartDropdown(false)}>
+                                        <Link to="/checkout" className="cart-go-checkout" onClick={handleCheckoutClick}>
                                             Ir a pagar
                                         </Link>
                                         <button
                                             type="button"
                                             className="cart-clear-button"
-                                            onClick={clearCart}
+                                            onClick={clearCartItems}
                                         >
                                             Vaciar carrito
                                         </button>
@@ -314,18 +654,202 @@ const Navbar = () => {
                     ) : null}
                 </div>
 
+                {user ? (
+                    <div
+                        className="navbar__notifications"
+                        ref={notificationsRef}
+                        onClick={handleNotificationsClick}
+                    >
+                        <button
+                            type="button"
+                            className="navbar__icon-button navbar__notifications-button"
+                            aria-label="Ver solicitudes de voluntariado"
+                            title="Solicitudes de voluntariado"
+                        >
+                            <Bell size={25} strokeWidth={2.2} aria-hidden="true" />
+                        </button>
+                        {solicitudesPendientesCount > 0 ? (
+                            <span className="notifications-badge">{solicitudesPendientesCount}</span>
+                        ) : null}
+                        {showNotifications ? (
+                            <aside className="dropdown dropdown--notifications" aria-label="Solicitudes de voluntariado">
+                                <header className="notifications-header">
+                                    <h2>Mis solicitudes</h2>
+                                    <span>{solicitudesPendientesCount}</span>
+                                </header>
+
+                                {notificationsLoading ? (
+                                    <p className="dropdown__empty">Cargando solicitudes...</p>
+                                ) : notificationsError ? (
+                                    <p className="dropdown__empty">{notificationsError}</p>
+                                ) : solicitudesPendientesCount === 0 ? (
+                                    <p className="dropdown__empty">No hay solicitudes pendientes.</p>
+                                ) : (
+                                    <div className="notifications-list">
+                                        {solicitudesPendientes.map((solicitud) => {
+                                            const notificationContent = (
+                                                <div className="notification-item__main">
+                                                    <strong>{solicitud.tipoVoluntariado || solicitud.area || 'Voluntariado'}</strong>
+                                                    <span>{solicitud.fechaSolicitud || 'Fecha no disponible'}</span>
+                                                    {user?.role === 'admin' ? <small>{"Abrir en administraci\u00f3n"}</small> : null}
+                                                </div>
+                                            );
+
+                                            return user?.role === 'admin' ? (
+                                                <button
+                                                    key={solicitud.id}
+                                                    type="button"
+                                                    className="notification-item"
+                                                    onClick={handleNotificationOpen}
+                                                    title={"Abrir administraci\u00f3n de voluntariado"}
+                                                >
+                                                    {notificationContent}
+                                                </button>
+                                            ) : (
+                                                <article key={solicitud.id} className="notification-item notification-item--readonly">
+                                                    {notificationContent}
+                                                </article>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </aside>
+                        ) : null}
+                    </div>
+                ) : null}
+
                 <div className="navbar__user" onClick={handleIconClick}>
-                    <img src="https://cdn-icons-png.flaticon.com/512/7531/7531708.png" alt="User Icon" className="user-icon" />
+                    <button
+                        type="button"
+                        className="navbar__icon-button navbar__user-button"
+                        aria-label={user ? 'Abrir men\u00fa de usuario' : 'Iniciar sesi\u00f3n'}
+                        title={user ? 'Mi cuenta' : 'Iniciar sesi\u00f3n'}
+                    >
+                        <User size={24} strokeWidth={2} aria-hidden="true" />
+                    </button>
                     {showDropdown && user && (
                         <div className="dropdown">
-                        <p>{userDisplayName}</p>
+                        <div className="dropdown__user">
+                          <p className="dropdown__name">{userDisplayName}</p>
+                          <p className="dropdown__email">{user?.email || user?.correo}</p>
+                        </div>
+                        {user.role !== 'admin' ? (
+                          <Link to="/perfil" onClick={() => setShowDropdown(false)}>
+                            Mi perfil
+                          </Link>
+                        ) : null}
                         {user.role === 'admin' && (
                             <Link to="/admin" onClick={() => setShowDropdown(false)}>Panel Administrativo</Link>
                         )}
-                        <button onClick={handleLogout}>Cerrar Sesión</button>
+                        <button className="dropdown__logout" onClick={handleLogout}>{"Cerrar Sesi\u00f3n"}</button>
                         </div>
                     )}
                 </div>
+
+                <button
+                    type="button"
+                    className="navbar__menu-toggle"
+                    aria-label={isMobileMenuOpen ? 'Cerrar men\u00fa' : 'Abrir men\u00fa'}
+                    aria-expanded={isMobileMenuOpen}
+                    aria-controls="navbar-mobile-menu"
+                    onClick={handleMobileMenuToggle}
+                >
+                    {isMobileMenuOpen ? (
+                        <X size={24} strokeWidth={2.2} aria-hidden="true" />
+                    ) : (
+                        <Menu size={24} strokeWidth={2.2} aria-hidden="true" />
+                    )}
+                </button>
+            </div>
+
+            <div
+                className={`navbar__mobile-drawer ${isMobileMenuOpen ? 'is-open' : ''}`}
+                inert={!isMobileMenuOpen || undefined}
+            >
+                <button
+                    type="button"
+                    className="navbar__mobile-backdrop"
+                    aria-label={"Cerrar men\u00fa"}
+                    tabIndex={isMobileMenuOpen ? 0 : -1}
+                    onClick={closeMobileMenu}
+                />
+                <aside
+                    id="navbar-mobile-menu"
+                    className="navbar__mobile-panel"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={"Men\u00fa de navegaci\u00f3n"}
+                >
+                    <header className="navbar__mobile-header">
+                        <Link
+                            to="/"
+                            className="navbar__mobile-brand"
+                            aria-label="Ir al inicio"
+                            onClick={handleBrandClick}
+                        >
+                            {mobileMenuLogoSrc ? (
+                                <img
+                                    src={mobileMenuLogoSrc}
+                                    alt={"Caf\u00e9 UNA"}
+                                    className="navbar__mobile-brand-logo"
+                                    width={200}
+                                    height={44}
+                                    decoding="async"
+                                />
+                            ) : (
+                                <span className="navbar__mobile-brand-text">{"Caf\u00e9 UNA"}</span>
+                            )}
+                        </Link>
+                        <button
+                            type="button"
+                            className="navbar__mobile-close"
+                            aria-label={"Cerrar men\u00fa"}
+                            onClick={closeMobileMenu}
+                        >
+                            <X size={20} strokeWidth={2.2} aria-hidden="true" />
+                        </button>
+                    </header>
+
+                    <nav className="navbar__mobile-links" aria-label="Secciones del sitio">
+                        {navLinks.map((enlace) => {
+                            const NavIcon = resolveMobileNavIcon(enlace?.ruta ?? enlace?.Ruta);
+                            const label = enlace?.etiqueta ?? enlace?.Etiqueta ?? 'Enlace';
+
+                            return (
+                                <SiteNavLink
+                                    key={`mobile-${enlace.id ?? enlace.ruta}`}
+                                    enlace={enlace}
+                                    className="navbar__mobile-link"
+                                    activeProps={{ className: 'navbar__mobile-link is-active' }}
+                                    onClick={closeMobileMenu}
+                                >
+                                    <span className="navbar__mobile-link-content">
+                                        <NavIcon className="navbar__mobile-link-icon" size={22} strokeWidth={1.9} aria-hidden="true" />
+                                        <span className="navbar__mobile-link-label">{label}</span>
+                                    </span>
+                                </SiteNavLink>
+                            );
+                        })}
+                    </nav>
+
+                    {hasMobileSocial ? (
+                        <div className="navbar__mobile-social">
+                            <p className="navbar__mobile-social-title">Redes sociales</p>
+                            <div className="navbar__mobile-social-links">
+                                {instagramUrl ? (
+                                    <a href={instagramUrl} target="_blank" rel="noreferrer" aria-label="Instagram" onClick={closeMobileMenu}>
+                                        <InstagramIcon className="navbar__mobile-social-icon" />
+                                    </a>
+                                ) : null}
+                                {facebookUrl ? (
+                                    <a href={facebookUrl} target="_blank" rel="noreferrer" aria-label="Facebook" onClick={closeMobileMenu}>
+                                        <FacebookIcon className="navbar__mobile-social-icon" />
+                                    </a>
+                                ) : null}
+                            </div>
+                        </div>
+                    ) : null}
+                </aside>
             </div>
         </nav>
     )

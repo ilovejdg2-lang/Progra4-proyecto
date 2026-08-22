@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, Coffee, CreditCard, ShoppingBasket } from 'lucide-react';
+import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
+import { usePublicPageLoadingGate } from '../../hooks/usePublicPageLoadingGate';
+import { getLoadingMessageForCacheKey } from '../../lib/pageLoadingMessages';
 import './Checkout.css';
-import { ajustarStockProductos, calcularPrecioConIVA } from '../../services/productosServices';
-
-const CART_STORAGE_KEY = 'cart';
+import { ajustarStockProductos, calcularPrecioConIVA } from '../../services/productosService';
+import { getActiveSessionUser } from '../../services/sessionService';
+import { clearCart, getStoredCart } from '../../lib/cartStorage';
 
 const formatCRC = (amount) => {
   const value = Number.isFinite(amount) ? amount : 0;
@@ -14,25 +17,21 @@ const formatCRC = (amount) => {
 const getQuantity = (item) => Number(item.units) || 1;
 const getUnitPriceWithoutIva = (item) => Number(item.precioNormal ?? item.priceWithoutIva ?? 0) || 0;
 const getUnitPriceWithIva = (item) => calcularPrecioConIVA(getUnitPriceWithoutIva(item));
+const getCurrentUser = () => getActiveSessionUser();
+const canCompletePurchase = (user) => Boolean(user);
 
 const Checkout = () => {
   const navigate = useNavigate();
   const redirectTimeoutRef = useRef(null);
-  const [cartItems, setCartItems] = useState(() => {
-    const raw = localStorage.getItem(CART_STORAGE_KEY);
-    try {
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      localStorage.removeItem(CART_STORAGE_KEY);
-      return [];
-    }
-  });
+  const [cartItems, setCartItems] = useState(getStoredCart);
   const [paid, setPaid] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
 
+  const showLoading = usePublicPageLoadingGate('checkout', true);
+  const loadingMessage = getLoadingMessageForCacheKey('checkout');
+
   useEffect(() => {
-    // Oculta la chrome (navbar + footer) mientras esta pagina este montada
     document.body.classList.add('hide-chrome');
     return () => {
       if (redirectTimeoutRef.current) {
@@ -44,15 +43,7 @@ const Checkout = () => {
   }, []);
 
   useEffect(() => {
-    const onCartUpdated = () => {
-      const r = localStorage.getItem(CART_STORAGE_KEY);
-      try {
-        setCartItems(r ? JSON.parse(r) : []);
-      } catch {
-        localStorage.removeItem(CART_STORAGE_KEY);
-        setCartItems([]);
-      }
-    };
+    const onCartUpdated = () => setCartItems(getStoredCart());
     window.addEventListener('cart-updated', onCartUpdated);
     return () => window.removeEventListener('cart-updated', onCartUpdated);
   }, []);
@@ -79,12 +70,22 @@ const Checkout = () => {
     const deshabilitados = items.filter((item) => item.estado === 'Deshabilitado');
     if (deshabilitados.length > 0) {
       const nombres = deshabilitados.map((item) => item.nombre || item.name || 'Producto').join(', ');
-      throw new Error(`No se puede completar la compra porque estos productos están deshabilitados: ${nombres}`);
+      throw new Error(`No se puede completar la compra porque estos productos est\u00e1n deshabilitados: ${nombres}`);
     }
+  };
+
+  const redirectToLoginForPurchase = () => {
+    sessionStorage.setItem('postLoginRedirect', '/checkout');
+    navigate({ to: '/login' });
   };
 
   const handlePay = async () => {
     if (cartItems.length === 0 || processingPayment) {
+      return;
+    }
+
+    if (!canCompletePurchase(getCurrentUser())) {
+      redirectToLoginForPurchase();
       return;
     }
 
@@ -95,8 +96,7 @@ const Checkout = () => {
       handleValidateCartItems(cartItems);
       await ajustarStockProductos(cartItems);
 
-      localStorage.removeItem(CART_STORAGE_KEY);
-      window.dispatchEvent(new Event('cart-updated'));
+      clearCart();
       window.dispatchEvent(new CustomEvent('order-confirmed', { detail: { total: totalConIva } }));
       setPaid(true);
       redirectTimeoutRef.current = window.setTimeout(() => {
@@ -112,8 +112,9 @@ const Checkout = () => {
     }
   };
 
-  if (paid) {
-    return (
+  return (
+    <PublicPageGate showLoading={showLoading} loadingMessage={loadingMessage}>
+      {paid ? (
       <main className="checkout-page">
         <section className="checkout-success-card" aria-live="polite">
           <div className="checkout-success-card__top">
@@ -122,7 +123,7 @@ const Checkout = () => {
           <div className="checkout-success-card__body">
             <h2>Gracias por tu compra</h2>
             <p>Tu pedido fue procesado correctamente.</p>
-            <span className="checkout-success-card__hint">Serás redirigido a inicio automáticamente en unos segundos.</span>
+            <span className="checkout-success-card__hint">{"Ser\u00e1s redirigido a inicio autom\u00e1ticamente en unos segundos."}</span>
           </div>
           <div className="checkout-success-card__actions">
             <button type="button" className="checkout-success-card__primary" onClick={() => navigate({ to: '/' })}>
@@ -132,17 +133,14 @@ const Checkout = () => {
               Seguir comprando
             </button>
           </div>
-          <p className="checkout-success-card__brand">Café UNA</p>
+          <p className="checkout-success-card__brand">{"Caf\u00e9 UNA"}</p>
         </section>
       </main>
-    );
-  }
-
-  return (
+      ) : (
     <main className="checkout-page">
       <section className="checkout-page__summary">
         <header className="checkout-page__header">
-          <button type="button" className="checkout-page__back" onClick={() => navigate({ to: '/productos' })} aria-label="Volver al catálogo">
+          <button type="button" className="checkout-page__back" onClick={() => navigate({ to: '/productos' })} aria-label={"Volver al cat\u00e1logo"}>
             <ArrowLeft size={22} strokeWidth={2.4} aria-hidden="true" />
           </button>
           <h1>Resumen de tu pedido</h1>
@@ -205,6 +203,8 @@ const Checkout = () => {
         )}
       </section>
     </main>
+      )}
+    </PublicPageGate>
   );
 };
 

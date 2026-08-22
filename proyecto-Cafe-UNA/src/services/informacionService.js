@@ -1,86 +1,171 @@
-const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/informacion`;
+import { invalidateAllPageCaches } from "../lib/pageDataCache";
+import { createDomainRequest, createKeyedCache } from "./serviceHelpers";
 
-async function request(url, options = {}) {
-  const res = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+const BASE_URL = `${import.meta.env.BACKEND_URL}/informacion`;
+const CACHE_TTL_MS = 30 * 60 * 1000;
+const cache = createKeyedCache(CACHE_TTL_MS);
+
+function clearInfoCache() {
+  cache.clear();
+  invalidateAllPageCaches();
+}
+
+const request = createDomainRequest(
+  "Error en informaci\u00f3n",
+  "Tiempo de espera agotado al consultar informaci\u00f3n.",
+);
+
+async function domainRequest(url, options = {}) {
+  const method = (options.method || "GET").toUpperCase();
+  const isPublicRead = method === "GET";
+  return request(url, {
     ...options,
+    skipAuth: isPublicRead ? true : options.skipAuth,
   });
-
-  if (!res.ok) {
-    let message = `Error en informacion (${res.status})`;
-    try {
-      const data = await res.json();
-      message = data?.message || message;
-    } catch {
-      // ignore parse error and keep fallback message
-    }
-    throw new Error(message);
-  }
-
-  if (res.status === 204) {
-    return null;
-  }
-
-  return res.json();
 }
 
 export async function obtenerInformacion() {
-  return request(BASE_URL);
+  return cache.get("all", () => domainRequest(BASE_URL));
 }
 
 export async function obtenerSeccion(seccion) {
-  return request(`${BASE_URL}/${encodeURIComponent(seccion)}`);
+  return cache.get(`section:${seccion}`, () =>
+    domainRequest(`${BASE_URL}/${encodeURIComponent(seccion)}`),
+  );
 }
 
 export async function actualizarInformacion(nuevaInformacion) {
-  return request(BASE_URL, {
+  const result = await domainRequest(BASE_URL, {
     method: "PUT",
-    body: JSON.stringify(nuevaInformacion),
+    data: nuevaInformacion,
   });
+  clearInfoCache();
+  return result;
 }
 
 export async function actualizarSeccion(seccion, cambios) {
-  return request(`${BASE_URL}/${encodeURIComponent(seccion)}`, {
+  const result = await domainRequest(`${BASE_URL}/${encodeURIComponent(seccion)}`, {
     method: "PATCH",
-    body: JSON.stringify(cambios),
+    data: cambios,
   });
+  clearInfoCache();
+  return result;
 }
 
 export async function agregarGaleriaItem(item) {
-  return request(`${BASE_URL}/galeria`, {
+  const result = await domainRequest(`${BASE_URL}/galeria`, {
     method: "POST",
-    body: JSON.stringify(item),
+    data: item,
   });
+  clearInfoCache();
+  return result;
 }
 
 export async function actualizarGaleriaItem(id, cambios) {
-  return request(`${BASE_URL}/galeria/${id}`, {
+  const result = await domainRequest(`${BASE_URL}/galeria/${id}`, {
     method: "PUT",
-    body: JSON.stringify(cambios),
+    data: cambios,
   });
+  clearInfoCache();
+  return result;
 }
 
 export async function eliminarGaleriaItem(id) {
-  await request(`${BASE_URL}/galeria/${id}`, { method: "DELETE" });
+  await domainRequest(`${BASE_URL}/galeria/${id}`, {
+    method: "DELETE",
+  });
+  clearInfoCache();
   return true;
 }
 
 export async function obtenerHero() {
-  return request(`${BASE_URL}/hero`);
+  return cache.get("hero", () => domainRequest(`${BASE_URL}/hero`));
+}
+
+export async function obtenerNavbar() {
+  return cache.get("navbar", () => domainRequest(`${BASE_URL}/navbar`));
+}
+
+export async function actualizarNavbar(cambios) {
+  const result = await domainRequest(`${BASE_URL}/navbar`, {
+    method: "PATCH",
+    data: cambios,
+  });
+  clearInfoCache();
+  return result;
+}
+
+export async function obtenerFooter() {
+  return cache.get("footer", () => domainRequest(`${BASE_URL}/footer`));
+}
+
+export async function actualizarFooter(cambios) {
+  const result = await domainRequest(`${BASE_URL}/footer`, {
+    method: "PATCH",
+    data: cambios,
+  });
+  clearInfoCache();
+  return result;
+}
+
+export async function obtenerEnlaces(seccion) {
+  const key = `enlaces:${seccion || "all"}`;
+  const query = seccion ? `?seccion=${encodeURIComponent(seccion)}` : "";
+  return cache.get(key, () =>
+    domainRequest(`${BASE_URL}/enlaces${query}`).then((data) => (Array.isArray(data) ? data : [])),
+  );
+}
+
+export async function crearEnlace(item) {
+  const result = await domainRequest(`${BASE_URL}/enlaces`, {
+    method: "POST",
+    data: item,
+  });
+  clearInfoCache();
+  return result;
+}
+
+export async function actualizarEnlace(id, cambios) {
+  const result = await domainRequest(`${BASE_URL}/enlaces/${id}`, {
+    method: "PUT",
+    data: cambios,
+  });
+  clearInfoCache();
+  return result;
+}
+
+export async function eliminarEnlace(id) {
+  await domainRequest(`${BASE_URL}/enlaces/${id}`, {
+    method: "DELETE",
+  });
+  clearInfoCache();
+  return true;
+}
+
+export async function obtenerTarjetasInicio() {
+  return cache.get("tarjetas-inicio", () =>
+    domainRequest(`${BASE_URL}/tarjetas-inicio`).then((data) => (Array.isArray(data) ? data : [])),
+  );
+}
+
+export async function actualizarTarjetasInicio(tarjetas) {
+  const result = await domainRequest(`${BASE_URL}/tarjetas-inicio`, {
+    method: "PATCH",
+    data: { tarjetas },
+  });
+  clearInfoCache();
+  return Array.isArray(result) ? result : [];
 }
 
 export async function obtenerInformacionSobreNosotros() {
-  const [historia, mission, vision, gallery] = await Promise.all([
-    obtenerSeccion("historia").catch(() => ({})),
-    obtenerSeccion("mission").catch(() => ({})),
-    obtenerSeccion("vision").catch(() => ({})),
-    obtenerSeccion("gallery").catch(() => []),
-  ]);
+  return cache.get("sobre-nosotros", async () => {
+    const bulk = await domainRequest(BASE_URL);
 
-  return {
-    historia: historia ?? {},
-    mission: mission ?? {},
-    vision: vision ?? {},
-    gallery: Array.isArray(gallery) ? gallery : [],
-  };
+    return {
+      historia: bulk?.historia ?? {},
+      mission: bulk?.mission ?? {},
+      vision: bulk?.vision ?? {},
+      gallery: Array.isArray(bulk?.gallery) ? bulk.gallery : [],
+    };
+  });
 }

@@ -1,16 +1,60 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath, URL } from 'node:url'
+import { normalizeBackendUrl } from './scripts/normalizeBackendUrl.mjs'
 
-export default defineConfig({
-  resolve: {
-    alias: {
-      tslib: fileURLToPath(new URL('./src/lib/tslib-shim.js', import.meta.url)),
+function backendOrigin(apiUrl) {
+  return apiUrl.replace(/\/api\/?$/, '')
+}
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const fullBackendUrl = normalizeBackendUrl(
+    process.env.BACKEND_URL || env.BACKEND_URL || 'http://localhost:5220/api',
+  )
+  const useDevProxy = mode === 'development' && !process.env.NETLIFY
+
+  // Local: el navegador llama a /api y Vite reenvía a BACKEND_URL.
+  // Netlify/producción: el navegador llama directo a BACKEND_URL (env, no se commitea).
+  const clientBackendUrl = useDevProxy ? '/api' : fullBackendUrl
+
+  return {
+    envPrefix: 'BACKEND',
+    define: {
+      'import.meta.env.BACKEND_URL': JSON.stringify(clientBackendUrl),
     },
-  },
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
+    resolve: {
+      alias: {
+        tslib: fileURLToPath(new URL('./src/lib/tslib-shim.js', import.meta.url)),
+      },
+    },
+    server: useDevProxy
+      ? {
+          proxy: {
+            '/api': {
+              target: backendOrigin(fullBackendUrl),
+              changeOrigin: true,
+            },
+          },
+        }
+      : undefined,
+    plugins: [
+      react(),
+      tailwindcss(),
+    ],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('@tanstack')) return 'vendor-react';
+              if (id.includes('lucide-react')) return 'vendor-icons';
+              return 'vendor';
+            }
+          },
+        },
+      },
+    },
+  }
 })
