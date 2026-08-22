@@ -10,7 +10,7 @@ import { Pencil, Power, X } from "lucide-react";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
-import { AdminModal, AdminModalActions, AdminModalBody, AdminModalHeader, adminBtnCancel, adminBtnPrimary } from "../../../Components/Admin/ui/AdminModal";
+import { AdminModal, AdminModalActions, AdminModalBody, AdminModalHeader, adminBtnCancel } from "../../../Components/Admin/ui/AdminModal";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import {
@@ -52,21 +52,38 @@ function Modal({ titulo, onClose, children }) {
 }
 
 const colorRol = {
-  Superadministrador: "border border-amber-300 bg-amber-200 text-amber-950",
-  SuperAdmin:         "border border-amber-300 bg-amber-200 text-amber-950",
-  Administración:     "border border-emerald-300 bg-emerald-100 text-emerald-900",
-  Admin:              "border border-emerald-300 bg-emerald-100 text-emerald-900",
-  Cliente:            "bg-orange-100 text-orange-700",
-  Usuario:            "bg-slate-100 text-slate-500",
+  Superadministrador: "bg-slate-100 text-yellow-500",
+  SuperAdmin:         "bg-slate-100 text-yellow-500",
+  Administración:     "bg-slate-100 text-green-600",
+  Admin:              "bg-slate-100 text-green-600",
+  Vendedor:           "bg-slate-100 text-[#5c3317]",
+  Cliente:            "bg-slate-100 text-red-600",
+  Usuario:            "bg-slate-100 text-slate-700",
 };
+
+function claseRol(rol) {
+  const clave = String(rol ?? "").trim().toLowerCase();
+  if (clave === "superadmin" || clave === "superadministrador") return colorRol.SuperAdmin;
+  if (clave === "admin" || clave === "administración" || clave === "administracion") return colorRol.Admin;
+  if (clave === "vendedor") return colorRol.Vendedor;
+  if (clave === "cliente") return colorRol.Cliente;
+  if (clave === "usuario") return colorRol.Usuario;
+  return colorRol[rol] ?? "bg-slate-100 text-slate-700";
+}
 
 function BadgeRol({ rol }) {
   return (
-    <span className={`inline-block rounded-full px-3 py-0.5 text-xs font-semibold ${colorRol[rol] ?? "bg-slate-100 text-slate-500"}`}>
+    <span className={`inline-block rounded-full px-3 py-0.5 text-xs font-semibold ${claseRol(rol)}`}>
       {rol}
     </span>
   );
 }
+
+const btnNegro =
+  "w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
+
+const btnCancelarGris =
+  "w-full rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 sm:w-auto";
 
 const ROLES_DISPONIBLES = ["SuperAdmin", "Admin", "Vendedor", "Usuario", "Cliente"];
 
@@ -297,17 +314,17 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
   }
 
   const inputCls =
-    "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-100";
+    "w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="usuarios-form space-y-4">
       <div>
         <label className="mb-1 block text-xs font-medium text-slate-600">Nombre</label>
         <form.Field name="nombre">
           {(field) => (
             <>
               <input
-                className={`${inputCls} ${fieldErrors.nombre ? "border-red-500 focus:border-red-500 focus:ring-red-100" : ""}`}
+                className={`${inputCls} ${fieldErrors.nombre ? "border-red-500 focus:border-red-500" : ""}`}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => {
@@ -342,13 +359,13 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
           )}
         </form.Field>
         {inicial && correoCambio ? (
-          <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <div className="mt-3 space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs text-slate-700">{"El correo cambi\u00f3. Debe verificar el nuevo correo antes de guardar otros cambios."}</p>
             <label className="block text-xs font-medium text-slate-600">
               {editandoPropioUsuario ? "Su contrase\u00f1a actual" : "Contrase\u00f1a de esta cuenta"}
               <input
                 type="password"
-                className={`${inputCls} mt-1 ${errorPasswordCorreo ? "border-red-500 focus:border-red-500 focus:ring-red-100" : ""}`}
+                className={`${inputCls} mt-1 ${errorPasswordCorreo ? "border-red-500 focus:border-red-500" : ""}`}
                 value={passwordCorreoUsuario}
                 onChange={(e) => {
                   setErrorPasswordCorreo("");
@@ -364,7 +381,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                 type="button"
                 onClick={handleSolicitarCodigoCorreo}
                 disabled={verificandoCorreo}
-                className={`${adminBtnPrimary} text-xs sm:py-1.5`}
+                className={`${btnNegro} text-xs sm:py-1.5`}
               >{"Enviar c\u00f3digo"}</button>
             </div>
             <input
@@ -411,7 +428,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                     <>
                       <input
                         type="password"
-                        className={`${inputCls} ${fieldErrors.passwordHash ? "border-red-500 focus:border-red-500 focus:ring-red-100" : ""}`}
+                        className={`${inputCls} ${fieldErrors.passwordHash ? "border-red-500 focus:border-red-500" : ""}`}
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(event) => {
@@ -437,7 +454,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                       <>
                         <input
                           type="password"
-                          className={`${inputCls} ${fieldErrors.passwordActual ? "border-red-500 focus:border-red-500 focus:ring-red-100" : ""}`}
+                          className={`${inputCls} ${fieldErrors.passwordActual ? "border-red-500 focus:border-red-500" : ""}`}
                           value={field.state.value}
                           onBlur={field.handleBlur}
                           onChange={(event) => {
@@ -457,7 +474,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
               ) : null}
             </>
           ) : (
-            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">{"Solo puede cambiar su propia contrase\u00f1a."}</p>
+            <p className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-500">{"Solo puede cambiar su propia contrase\u00f1a."}</p>
           )}
           <div>
             <label className="mb-2 block text-xs font-medium text-slate-600">Roles</label>
@@ -482,7 +499,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                           onClick={() => toggleRol(rol)}
                           className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                             selectedRoles.includes(rol)
-                              ? `${colorRol[rol] ?? "bg-slate-800 text-white"}`
+                              ? claseRol(rol)
                               : "border border-slate-200 bg-white text-slate-500 hover:border-slate-300"
                           }`}
                         >
@@ -514,6 +531,8 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
         <AdminModalActions
           onCancel={onCancelar}
           primaryDisabled={cargando || verificandoCorreo}
+          primaryClassName={btnNegro}
+          cancelClassName={btnCancelarGris}
           primaryLabel={
             cargando || verificandoCorreo
               ? "Procesando…"
@@ -531,7 +550,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 
 
 const accionBtnBase =
-  "inline-flex items-center justify-center gap-1.5 rounded-full border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
+  "inline-flex items-center justify-center gap-1 rounded-full border text-[11px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
 
 function mapUsuario(item) {
   const estado = String(item?.estado ?? item?.Estado ?? "").trim().toLowerCase();
@@ -560,7 +579,7 @@ function AccionesUsuario({
   const esInactivo = !esUsuarioActivo(usuario.estado);
   const esMovil = variant === "mobile";
 
-  const editarCls = `${accionBtnBase} border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 focus-visible:ring-amber-300`;
+  const editarCls = `${accionBtnBase} border-slate-950 bg-slate-950 text-white hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 focus-visible:ring-slate-400`;
   const toggleCls = `${accionBtnBase} ${
     esInactivo
       ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300"
@@ -570,34 +589,34 @@ function AccionesUsuario({
   const toggleLabel = toggleando === usuario.id
     ? "..."
     : esInactivo
-      ? "Habilitar"
-      : "Inhabilitar";
+      ? "Activar"
+      : "Inactivar";
 
   if (esMovil) {
     return (
-      <div className="grid grid-cols-2 gap-2">
-        <button type="button" onClick={onEditar} className={`${editarCls} min-h-10 px-2 py-2`}>
-          <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
-          <span className="truncate">Editar</span>
+      <div className="flex gap-1.5">
+        <button type="button" onClick={onEditar} className={`${editarCls} h-8 px-2.5`}>
+          <Pencil className="size-3 shrink-0" aria-hidden="true" />
+          <span>Editar</span>
         </button>
         <button
           type="button"
           onClick={onToggle}
           disabled={toggleando === usuario.id || !puedeCambiarEstado}
           title={!puedeCambiarEstado ? "Solo SuperAdmin puede cambiar estado." : ""}
-          className={`${toggleCls} min-h-10 px-2 py-2 disabled:cursor-not-allowed disabled:opacity-50`}
+          className={`${toggleCls} h-8 px-2.5 disabled:cursor-not-allowed disabled:opacity-50`}
         >
-          <Power className="size-3.5 shrink-0" aria-hidden="true" />
-          <span className="truncate">{toggleLabel}</span>
+          <Power className="size-3 shrink-0" aria-hidden="true" />
+          <span>{toggleLabel}</span>
         </button>
       </div>
     );
   }
 
   return (
-    <div className="grid w-[11.5rem] grid-cols-2 gap-1.5">
-      <button type="button" onClick={onEditar} className={`${editarCls} h-9 px-2.5`}>
-        <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
+    <div className="flex gap-1">
+      <button type="button" onClick={onEditar} className={`${editarCls} h-7 px-2`}>
+        <Pencil className="size-3 shrink-0" aria-hidden="true" />
         <span>Editar</span>
       </button>
       <button
@@ -605,9 +624,9 @@ function AccionesUsuario({
         onClick={onToggle}
         disabled={toggleando === usuario.id || !puedeCambiarEstado}
         title={!puedeCambiarEstado ? "Solo SuperAdmin puede cambiar estado." : ""}
-        className={`${toggleCls} h-9 px-2.5 disabled:cursor-not-allowed disabled:opacity-50`}
+        className={`${toggleCls} h-7 px-2 disabled:cursor-not-allowed disabled:opacity-50`}
       >
-        <Power className="size-3.5 shrink-0" aria-hidden="true" />
+        <Power className="size-3 shrink-0" aria-hidden="true" />
         <span>{toggleLabel}</span>
       </button>
     </div>
@@ -764,12 +783,9 @@ const AdminUsuarios = () => {
       cell: ({ getValue }) => {
         const estado = getValue();
         return (
-          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            estado === "activo" || esUsuarioActivo(estado)
-              ? "bg-green-50 text-green-700"
-              : "bg-red-50 text-red-600"
+          <span className={`text-xs font-medium ${
+            esUsuarioActivo(estado) ? "text-green-700" : "text-red-600"
           }`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${esUsuarioActivo(estado) ? "bg-green-500" : "bg-red-400"}`} />
             {esUsuarioActivo(estado) ? "Activo" : "Inactivo"}
           </span>
         );
@@ -821,7 +837,7 @@ const AdminUsuarios = () => {
           </div>
           <button
             onClick={() => setModalCrear(true)}
-            className="w-full rounded-full bg-amber-900 px-5 py-2 text-sm font-semibold text-amber-50 transition hover:bg-amber-800 sm:w-auto"
+            className="w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2 text-sm font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 sm:w-auto"
           >
             Nuevo usuario +
           </button>
@@ -906,12 +922,9 @@ const AdminUsuarios = () => {
                         <h3 className="truncate font-semibold text-slate-900">{usuario.nombre}</h3>
                         <p className="mt-0.5 truncate text-sm text-slate-500">{usuario.correo}</p>
                       </div>
-                      <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        usuario.estado === "activo"
-                          ? "bg-green-50 text-green-700"
-                          : "bg-red-50 text-red-600"
+                      <span className={`shrink-0 text-xs font-medium ${
+                        esUsuarioActivo(usuario.estado) ? "text-green-700" : "text-red-600"
                       }`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${esUsuarioActivo(usuario.estado) ? "bg-green-500" : "bg-red-400"}`} />
                         {esUsuarioActivo(usuario.estado) ? "Activo" : "Inactivo"}
                       </span>
                     </div>

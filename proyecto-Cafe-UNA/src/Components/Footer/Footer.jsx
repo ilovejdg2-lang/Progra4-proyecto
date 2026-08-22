@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Mail, MapPin, Phone, Share2 } from 'lucide-react';
+import { Mail, MapPin, Phone } from 'lucide-react';
+import { FacebookIcon, InstagramIcon } from './SocialIcons';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
 import { useHomeBrandNavigation } from '../../hooks/useHomeBrandNavigation';
 import { normalizeImageUrl } from '../../lib/imageUtils';
@@ -36,11 +37,10 @@ const Footer = () => {
   }, []);
 
   const telHref = telefonoHref(footer?.telefono);
-  const footerLogoSrc = normalizeImageUrl(footer?.logoClaroUrl || footer?.logoUrl, { width: 320 });
+  const footerLogoSrc = normalizeImageUrl(footer?.logoClaroUrl || footer?.logoUrl, { width: 480 });
   const explorarLinks = enlacesExplorar;
-  const hasContact = Boolean(
-    telHref || footer?.correo || footer?.facebookUrl || footer?.instagramUrl || footer?.mapsUrl
-  );
+  const hasContactos = Boolean(telHref || footer?.correo || footer?.mapsUrl);
+  const hasSocial = Boolean(footer?.facebookUrl || footer?.instagramUrl);
 
   return (
     <footer className="footer">
@@ -56,8 +56,8 @@ const Footer = () => {
               src={footerLogoSrc}
               alt="Café UNA"
               className="footer__logo"
-              width={160}
-              height={46}
+              width={220}
+              height={64}
               decoding="async"
             />
           ) : null}
@@ -75,9 +75,9 @@ const Footer = () => {
         </nav>
         ) : null}
 
-        {hasContact ? (
-          <section className="footer__column footer__contact" aria-label="Contacto">
-            <h2>Contacto</h2>
+        {hasContactos ? (
+          <section className="footer__column footer__contact" aria-label="Contactos">
+            <h2>Contactos</h2>
             {telHref ? (
               <a href={telHref} className="footer__contact-item">
                 <Phone className="footer__contact-icon" aria-hidden="true" />
@@ -90,24 +90,30 @@ const Footer = () => {
                 <span>{footer.correo}</span>
               </a>
             ) : null}
-            {footer?.facebookUrl ? (
-              <a href={footer.facebookUrl} target="_blank" rel="noreferrer" className="footer__contact-item">
-                <Share2 className="footer__contact-icon" aria-hidden="true" />
-                <span>Facebook</span>
-              </a>
-            ) : null}
-            {footer?.instagramUrl ? (
-              <a href={footer.instagramUrl} target="_blank" rel="noreferrer" className="footer__contact-item">
-                <Share2 className="footer__contact-icon" aria-hidden="true" />
-                <span>Instagram</span>
-              </a>
-            ) : null}
             {footer?.mapsUrl ? (
               <a href={footer.mapsUrl} target="_blank" rel="noreferrer" className="footer__contact-item">
                 <MapPin className="footer__contact-icon" aria-hidden="true" />
                 <span>{"Ubicaci\u00f3n"}</span>
               </a>
             ) : null}
+          </section>
+        ) : null}
+
+        {hasSocial ? (
+          <section className="footer__column footer__social" aria-label="Redes sociales">
+            <h2>Redes sociales</h2>
+            <div className="footer__social-links">
+              {footer?.instagramUrl ? (
+                <a href={footer.instagramUrl} target="_blank" rel="noreferrer" aria-label="Instagram">
+                  <InstagramIcon className="footer__social-icon" />
+                </a>
+              ) : null}
+              {footer?.facebookUrl ? (
+                <a href={footer.facebookUrl} target="_blank" rel="noreferrer" aria-label="Facebook">
+                  <FacebookIcon className="footer__social-icon" />
+                </a>
+              ) : null}
+            </div>
           </section>
         ) : null}
       </div>
