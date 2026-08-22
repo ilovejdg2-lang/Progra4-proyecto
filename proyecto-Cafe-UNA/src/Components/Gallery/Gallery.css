@@ -46,7 +46,7 @@
 
 .gallery__item--fill-desktop {
   grid-column: span 4;
-  aspect-ratio: 4 / 1;
+  aspect-ratio: 2.2 / 1;
 }
 
 .gallery__trigger {
