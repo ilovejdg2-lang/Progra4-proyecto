@@ -56,6 +56,9 @@ import {
 
 const GENERAL_OPEN_KEY = "admin-sidebar-general-open";
 const INVENTORY_OPEN_KEY = "admin-sidebar-inventory-open";
+const linkActivo = {
+  className: "text-slate-950",
+};
 
 export function AppSidebar() {
   const navigate = useNavigate();
@@ -217,7 +220,7 @@ export function AppSidebar() {
                 <SidebarMenuSub>
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/informacion-pagina-principal" onClick={closeMobileSidebar}>
+                      <Link to="/admin/informacion-pagina-principal" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Info />
                         <span>{"Informaci\u00f3n p\u00e1gina principal"}</span>
                       </Link>
@@ -225,7 +228,7 @@ export function AppSidebar() {
                   </SidebarMenuSubItem>
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/sobre-nosotros" onClick={closeMobileSidebar}>
+                      <Link to="/admin/sobre-nosotros" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <ClipboardList />
                         <span>Sobre nosotros</span>
                       </Link>
@@ -257,7 +260,7 @@ export function AppSidebar() {
                 <SidebarMenuSub>
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/producto" onClick={closeMobileSidebar}>
+                      <Link to="/admin/producto" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Box />
                         <span>Producto</span>
                       </Link>
@@ -275,7 +278,7 @@ export function AppSidebar() {
             {puedeVoluntariado ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link to="/admin/voluntariado" onClick={closeMobileSidebar}>
+                <Link to="/admin/voluntariado" activeProps={linkActivo} onClick={closeMobileSidebar}>
                   <HandHeart />
                   <span>Administrar voluntariado</span>
                 </Link>
@@ -285,7 +288,7 @@ export function AppSidebar() {
             {puedeUsuarios ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link to="/admin/usuarios" onClick={closeMobileSidebar}>
+                <Link to="/admin/usuarios" activeProps={linkActivo} onClick={closeMobileSidebar}>
                   <Users />
                   <span>Administrar usuarios</span>
                 </Link>
@@ -295,7 +298,7 @@ export function AppSidebar() {
             {puedeAuditoria ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link to="/admin/auditoria" onClick={closeMobileSidebar}>
+                <Link to="/admin/auditoria" activeProps={linkActivo} onClick={closeMobileSidebar}>
                   <ScrollText />
                   <span>{"Auditor\u00eda"}</span>
                 </Link>
@@ -305,7 +308,7 @@ export function AppSidebar() {
             {puedePerfil ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link to="/admin/perfil" onClick={closeMobileSidebar}>
+                <Link to="/admin/perfil" activeProps={linkActivo} onClick={closeMobileSidebar}>
                   <UserRound />
                   <span>Mi perfil</span>
                 </Link>
@@ -321,7 +324,7 @@ export function AppSidebar() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex w-full items-center gap-2 rounded-full px-2 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-950"
+              className="flex w-full items-center gap-2 px-2 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950"
             >
               {avatarUrl ? (
                 <img
@@ -349,13 +352,13 @@ export function AppSidebar() {
               {displayEmail ? <div className="truncate">{displayEmail}</div> : null}
             </div>
             <DropdownMenuItem asChild>
-              <Link to="/admin/perfil" className="cursor-pointer">
+              <Link to="/admin/perfil" className="cursor-pointer" activeProps={linkActivo}>
                 <UserRound className="size-4" />
                 <span>Mi perfil</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="cursor-pointer text-red-600 focus:text-red-700"
+              className="cursor-pointer text-red-600 hover:text-red-600 focus:text-red-700 data-[highlighted]:text-red-600"
               onSelect={(event) => {
                 event.preventDefault();
                 handleLogout();
