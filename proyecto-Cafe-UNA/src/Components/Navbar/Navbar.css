@@ -509,8 +509,46 @@
 .navbar__mobile-links {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: 0.15rem;
   padding-top: 0.85rem;
+}
+
+.navbar__mobile-social {
+  margin-top: auto;
+  padding-top: 1.15rem;
+  border-top: 1px solid rgba(41, 31, 20, 0.1);
+}
+
+.navbar__mobile-social-title {
+  margin: 0 0 0.7rem;
+  color: #2a1d14;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.navbar__mobile-social-links {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.navbar__mobile-social-links a {
+  color: #4d2b1f;
+  line-height: 0;
+}
+
+.navbar__mobile-social-links a:hover,
+.navbar__mobile-social-links a:focus-visible {
+  color: #8c3d1f;
+}
+
+.navbar__mobile-social-icon {
+  display: block;
+  width: 1.45rem;
+  height: 1.45rem;
 }
 
 .navbar__mobile-link {

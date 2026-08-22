@@ -205,7 +205,7 @@ export function SidebarGroupLabel({ asChild = false, className, ...props }) {
   return (
     <Comp
       className={cn(
-        "flex h-9 w-full items-center gap-2 rounded-md px-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 [&_svg]:size-4 [&_svg]:shrink-0",
+        "flex h-9 w-full items-center gap-2 px-2 text-sm font-medium text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950 [&_svg]:size-4 [&_svg]:shrink-0",
         className,
       )}
       {...props}
@@ -231,7 +231,7 @@ export function SidebarMenuButton({ asChild = false, className, ...props }) {
   return (
     <Comp
       className={cn(
-        "flex h-9 w-full items-center gap-2 rounded-full px-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 [&_svg]:size-4 [&_svg]:shrink-0",
+        "flex h-9 w-full items-center gap-2 px-2 text-left text-sm text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0",
         className,
       )}
       {...props}
@@ -258,7 +258,7 @@ export function SidebarMenuSubButton({ asChild = false, className, ...props }) {
   return (
     <Comp
       className={cn(
-        "flex h-8 w-full items-center gap-2 rounded-full px-2 text-left text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 [&_svg]:size-4 [&_svg]:shrink-0",
+        "flex h-8 w-full items-center gap-2 px-2 text-left text-sm text-slate-600 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0",
         className,
       )}
       {...props}

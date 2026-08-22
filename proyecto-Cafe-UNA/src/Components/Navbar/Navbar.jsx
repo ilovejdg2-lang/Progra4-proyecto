@@ -3,7 +3,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import './Navbar.css';
 import { calcularPrecioConIVA } from '../../services/productosService';
 import { Bell, BookOpen, Coffee, HandHeart, Info, Menu, Minus, Package, Plus, ShoppingCart, Trash2, User, X } from 'lucide-react';
-import { obtenerEnlaces, obtenerNavbar } from '../../services/informacionService';
+import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
+import { FacebookIcon, InstagramIcon } from '../Footer/SocialIcons';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { useHomeBrandNavigation } from '../../hooks/useHomeBrandNavigation';
 import { readPageCache } from '../../lib/pageDataCache';
@@ -40,6 +41,15 @@ function getCachedNavbarLogos() {
     return {
         logoUrl: typeof home?.navbar?.logoUrl === 'string' ? home.navbar.logoUrl.trim() : '',
         logoClaroUrl: typeof home?.navbar?.logoClaroUrl === 'string' ? home.navbar.logoClaroUrl.trim() : '',
+    };
+}
+
+function getCachedFooterSocial() {
+    const home = readPageCache('home');
+    const footer = home?.footer;
+    return {
+        facebookUrl: typeof footer?.facebookUrl === 'string' ? footer.facebookUrl.trim() : '',
+        instagramUrl: typeof footer?.instagramUrl === 'string' ? footer.instagramUrl.trim() : '',
     };
 }
 
@@ -91,8 +101,11 @@ const Navbar = () => {
     const [notificationsError, setNotificationsError] = useState('');
     const [enlacesNavbar, setEnlacesNavbar] = useState(() => getCachedNavbarLinks());
     const cachedLogos = getCachedNavbarLogos();
+    const cachedSocial = getCachedFooterSocial();
     const [logoUrl, setLogoUrl] = useState(cachedLogos.logoUrl);
     const [logoClaroUrl, setLogoClaroUrl] = useState(cachedLogos.logoClaroUrl);
+    const [facebookUrl, setFacebookUrl] = useState(cachedSocial.facebookUrl);
+    const [instagramUrl, setInstagramUrl] = useState(cachedSocial.instagramUrl);
     const cartContainerRef = useRef(null);
     const notificationsRef = useRef(null);
     const cartCloseTimerRef = useRef(null);
@@ -109,12 +122,15 @@ const Navbar = () => {
         Promise.all([
             obtenerEnlaces('Navbar').catch(() => []),
             obtenerNavbar().catch(() => null),
+            obtenerFooter().catch(() => null),
         ])
-            .then(([enlaces, navbar]) => {
+            .then(([enlaces, navbar, footer]) => {
                 if (!activo) return;
                 setEnlacesNavbar(filterNavLinks(Array.isArray(enlaces) ? enlaces : []));
                 setLogoUrl(typeof navbar?.logoUrl === 'string' ? navbar.logoUrl.trim() : '');
                 setLogoClaroUrl(typeof navbar?.logoClaroUrl === 'string' ? navbar.logoClaroUrl.trim() : '');
+                setFacebookUrl(typeof footer?.facebookUrl === 'string' ? footer.facebookUrl.trim() : '');
+                setInstagramUrl(typeof footer?.instagramUrl === 'string' ? footer.instagramUrl.trim() : '');
             })
             .catch((err) => {
                 console.error('No se pudo cargar la información del navbar.', err);
@@ -475,6 +491,7 @@ const Navbar = () => {
     );
     const navLinks = filterNavLinks(enlacesNavbar);
     const mobileMenuLogoSrc = normalizeImageUrl(logoUrl || logoClaroUrl, { width: 320 });
+    const hasMobileSocial = Boolean(instagramUrl || facebookUrl);
 
     const brandMark = brandLogoSrc ? (
         <img
@@ -814,6 +831,24 @@ const Navbar = () => {
                             );
                         })}
                     </nav>
+
+                    {hasMobileSocial ? (
+                        <div className="navbar__mobile-social">
+                            <p className="navbar__mobile-social-title">Redes sociales</p>
+                            <div className="navbar__mobile-social-links">
+                                {instagramUrl ? (
+                                    <a href={instagramUrl} target="_blank" rel="noreferrer" aria-label="Instagram" onClick={closeMobileMenu}>
+                                        <InstagramIcon className="navbar__mobile-social-icon" />
+                                    </a>
+                                ) : null}
+                                {facebookUrl ? (
+                                    <a href={facebookUrl} target="_blank" rel="noreferrer" aria-label="Facebook" onClick={closeMobileMenu}>
+                                        <FacebookIcon className="navbar__mobile-social-icon" />
+                                    </a>
+                                ) : null}
+                            </div>
+                        </div>
+                    ) : null}
                 </aside>
             </div>
         </nav>

@@ -217,17 +217,6 @@
   .hero__bg {
     object-position: center 35%;
     transform: translate(-50%, -50%) scale(1.08);
-    filter: blur(1px);
-  }
-
-  .hero__overlay {
-    background: linear-gradient(
-      180deg,
-      rgba(8, 5, 2, 0.55) 0%,
-      rgba(8, 5, 2, 0.68) 45%,
-      rgba(8, 5, 2, 0.82) 100%
-    );
-    backdrop-filter: blur(2px);
   }
 
   .hero__inner {
@@ -245,9 +234,6 @@
   .hero__eyebrow {
     font-size: 0.58rem;
     letter-spacing: 0.18em;
-    color: rgba(255, 220, 190, 0.95);
-    border-color: rgba(255, 255, 255, 0.2);
-    background: rgba(0, 0, 0, 0.18);
   }
 
   .hero__title {
