@@ -207,7 +207,7 @@
 }
 
 .admin-cms-preview .footer__top {
-  grid-template-columns: minmax(220px, auto) minmax(150px, max-content) minmax(240px, max-content);
+  grid-template-columns: minmax(220px, auto) minmax(150px, max-content) minmax(200px, max-content) minmax(140px, max-content);
 }
 
 .admin-cms-preview .footer__column > span:not(.footer__contact-item) {

@@ -116,6 +116,8 @@ export function AdminModalActions({
   primaryDisabled = false,
   primaryType = "submit",
   onPrimary,
+  primaryClassName,
+  cancelClassName,
 }) {
   return (
     <>
@@ -123,11 +125,11 @@ export function AdminModalActions({
         type={primaryType}
         disabled={primaryDisabled}
         onClick={onPrimary}
-        className={adminBtnPrimary}
+        className={primaryClassName || adminBtnPrimary}
       >
         {primaryLabel}
       </button>
-      <button type="button" onClick={onCancel} className={adminBtnCancel}>
+      <button type="button" onClick={onCancel} className={cancelClassName || adminBtnCancel}>
         {cancelLabel}
       </button>
     </>
