@@ -15,9 +15,9 @@ export default defineConfig(({ mode }) => {
   )
   const useDevProxy = mode === 'development' && !process.env.NETLIFY
 
-  // Netlify y desarrollo local: el navegador llama a /api (mismo origen).
-  // Vite reenvía /api al backend real definido en BACKEND_URL.
-  const clientBackendUrl = process.env.NETLIFY || useDevProxy ? '/api' : fullBackendUrl
+  // Local: el navegador llama a /api y Vite reenvía a BACKEND_URL.
+  // Netlify/producción: el navegador llama directo a BACKEND_URL (env, no se commitea).
+  const clientBackendUrl = useDevProxy ? '/api' : fullBackendUrl
 
   return {
     envPrefix: 'BACKEND',
