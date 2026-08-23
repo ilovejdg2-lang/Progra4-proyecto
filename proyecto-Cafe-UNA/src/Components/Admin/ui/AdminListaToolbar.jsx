@@ -6,6 +6,9 @@ const inputCls =
 const selectCls =
   "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-100";
 
+const inputFechaCls =
+  "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-100";
+
 export function AdminListaToolbar({
   busqueda,
   onBusquedaChange,
@@ -18,9 +21,13 @@ export function AdminListaToolbar({
   compacto = false,
 }) {
   return (
-    <div className={`space-y-3 border-b border-slate-100 bg-slate-50/60 ${compacto ? "px-0 py-0" : "px-4 py-4 sm:px-6"}`}>
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div className="relative min-w-0 flex-1">
+    <div
+      className={`space-y-4 border-b border-slate-100 bg-slate-50/60 ${
+        compacto ? "px-4 py-5 sm:px-6" : "px-4 py-5 sm:px-6"
+      }`}
+    >
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-stretch gap-4 xl:flex-row xl:items-end xl:justify-center">
+        <div className="relative w-full xl:min-w-[16rem] xl:max-w-md xl:flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
           <input
             type="search"
@@ -33,31 +40,43 @@ export function AdminListaToolbar({
         </div>
 
         {filtros.length > 0 ? (
-          <div className="grid gap-2 sm:grid-cols-2 lg:flex lg:items-center">
+          <div className="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-center xl:w-auto">
             {filtros.map((filtro) => (
-              <label key={filtro.id} className="grid min-w-[10rem] gap-1">
+              <label
+                key={filtro.id}
+                className="grid w-full min-w-[11rem] flex-1 gap-1.5 sm:max-w-[12.5rem]"
+              >
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                   <SlidersHorizontal className="size-3" aria-hidden="true" />
                   {filtro.label}
                 </span>
-                <select
-                  value={filtro.value}
-                  onChange={(event) => filtro.onChange(event.target.value)}
-                  className={selectCls}
-                >
-                  {filtro.opciones.map((opcion) => (
-                    <option key={opcion.value} value={opcion.value}>
-                      {opcion.label}
-                    </option>
-                  ))}
-                </select>
+                {filtro.tipo === "fecha" ? (
+                  <input
+                    type="date"
+                    value={filtro.value}
+                    onChange={(event) => filtro.onChange(event.target.value)}
+                    className={inputFechaCls}
+                  />
+                ) : (
+                  <select
+                    value={filtro.value}
+                    onChange={(event) => filtro.onChange(event.target.value)}
+                    className={selectCls}
+                  >
+                    {filtro.opciones.map((opcion) => (
+                      <option key={opcion.value} value={opcion.value}>
+                        {opcion.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </label>
             ))}
           </div>
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
         <p>
           {hayFiltrosActivos ? (
             <>
