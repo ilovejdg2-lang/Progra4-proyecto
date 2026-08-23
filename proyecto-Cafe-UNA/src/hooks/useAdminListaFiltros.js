@@ -41,7 +41,11 @@ export function useAdminListaFiltros(items, { buscarEn, filtrosConfig = [] }) {
     Boolean(busqueda.trim()) ||
     filtrosConfig.some((filtro) => {
       const valor = valoresFiltro[filtro.id];
-      return valor && valor !== (filtro.valorInicial ?? "todos");
+      const valorInicial = filtro.valorInicial ?? "todos";
+      if (valorInicial === "") {
+        return Boolean(valor);
+      }
+      return Boolean(valor) && valor !== valorInicial;
     });
 
   return {

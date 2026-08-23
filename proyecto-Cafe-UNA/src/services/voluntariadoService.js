@@ -9,11 +9,24 @@ const request = createDomainRequest(
   "Tiempo de espera agotado al consultar voluntariado.",
 );
 
-export async function obtenerSolicitudes() {
-  const cached = cache.get();
-  if (cached) return cached;
+export async function obtenerSolicitudes(filtros = {}) {
+  const params = new URLSearchParams();
+  Object.entries(filtros).forEach(([clave, valor]) => {
+    const normalizado = String(valor ?? "").trim();
+    if (normalizado) params.set(clave, normalizado);
+  });
 
-  return cache.setPromise(request(BASE_URL));
+  const query = params.toString();
+  const url = query ? `${BASE_URL}?${query}` : BASE_URL;
+
+  if (!query) {
+    const cached = cache.get();
+    if (cached) return cached;
+    return cache.setPromise(request(url));
+  }
+
+  cache.clear();
+  return request(url);
 }
 
 export async function obtenerSolicitudesDeUsuario(userId) {
