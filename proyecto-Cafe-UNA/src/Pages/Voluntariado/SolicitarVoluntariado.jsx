@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Check,
   HandHeart,
@@ -9,7 +9,7 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, isBefore, parseISO, startOfDay } from "date-fns";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
 import { HOME_SCROLL_SECTIONS } from "../../lib/homeScrollTarget";
 import PageLoading from "../../Components/PageLoading/PageLoading";
@@ -79,6 +79,28 @@ function esAvisoCedulaInformativo(mensaje) {
   return /cargad[oa]s?\s+autom[aá]ticamente/i.test(mensaje) || /datos cargados/i.test(mensaje);
 }
 
+function validarFechasVoluntariado(fechaInicio, fechaFin) {
+  const errores = {};
+  const hoy = startOfDay(new Date());
+
+  if (!fechaInicio) {
+    errores.fechaInicio = "Seleccione la fecha de inicio";
+  } else if (isBefore(startOfDay(parseISO(fechaInicio)), hoy)) {
+    errores.fechaInicio = "La fecha de inicio no puede ser anterior a hoy";
+  }
+
+  if (!fechaFin) {
+    errores.fechaFin = "Seleccione la fecha de finalización";
+  } else if (
+    fechaInicio &&
+    isBefore(startOfDay(parseISO(fechaFin)), startOfDay(parseISO(fechaInicio)))
+  ) {
+    errores.fechaFin = "La fecha de finalización no puede ser anterior a la fecha de inicio";
+  }
+
+  return errores;
+}
+
 function crearFormularioInicial(user) {
   return {
     ...FORM_INICIAL,
@@ -86,7 +108,10 @@ function crearFormularioInicial(user) {
   };
 }
 
+const VOLUNTARIADO_LOGIN_REDIRECT = "/voluntariado/solicitar";
+
 function SolicitarVoluntariado() {
+  const navigate = useNavigate();
   const [usuario] = useState(() => obtenerUsuarioActual());
   const [formulario, setFormulario] = useState(() => crearFormularioInicial(obtenerUsuarioActual()));
   const [dateRange, setDateRange] = useState({ from: undefined, to: undefined });
@@ -110,6 +135,23 @@ function SolicitarVoluntariado() {
   const esTipoOtro = formulario.tipo === "Otro";
   const esNacionalCr = formulario.esNacional === "si";
   const consultaCedulaRef = useRef({ digitos: "", enCurso: false });
+
+  const redirectToLogin = useCallback(() => {
+    sessionStorage.setItem("postLoginRedirect", VOLUNTARIADO_LOGIN_REDIRECT);
+    navigate({ to: "/login" });
+  }, [navigate]);
+
+  const handleFormInteractionCapture = useCallback(
+    (event) => {
+      if (usuario) return;
+      if (event.target.closest(".auth-banner__link")) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      redirectToLogin();
+    },
+    [usuario, redirectToLogin]
+  );
 
   const limpiarError = (campo) => {
     if (errores[campo]) {
@@ -208,18 +250,31 @@ function SolicitarVoluntariado() {
   }, [formulario.identificacion, esNacionalCr, consultarDatosCedula]);
 
   const handleRangeChange = (range) => {
-    setDateRange(range);
     const fechaInicioStr = range?.from ? format(range.from, "yyyy-MM-dd") : "";
     const fechaFinStr = range?.to ? format(range.to, "yyyy-MM-dd") : "";
+    const erroresFechas = validarFechasVoluntariado(fechaInicioStr, fechaFinStr);
 
+    setDateRange(range);
     setFormulario((prev) => ({
       ...prev,
       fechaInicio: fechaInicioStr,
       fechaFin: fechaFinStr,
     }));
 
-    if (fechaInicioStr) limpiarError("fechaInicio");
-    if (fechaFinStr) limpiarError("fechaFin");
+    setErrores((prev) => {
+      const next = { ...prev };
+      delete next.fechaInicio;
+      delete next.fechaFin;
+
+      if (erroresFechas.fechaInicio) {
+        next.fechaInicio = erroresFechas.fechaInicio;
+      }
+      if (erroresFechas.fechaFin) {
+        next.fechaFin = erroresFechas.fechaFin;
+      }
+
+      return next;
+    });
   };
 
   const handleChange = (e) => {
@@ -379,12 +434,10 @@ function SolicitarVoluntariado() {
       nuevosErrores.tipoOtro = "Especifique el tipo de voluntariado";
     }
 
-    if (!formulario.fechaInicio) {
-      nuevosErrores.fechaInicio = "Seleccione la fecha de inicio";
-    }
-    if (!formulario.fechaFin) {
-      nuevosErrores.fechaFin = "Seleccione la fecha de fin del rango";
-    }
+    Object.assign(
+      nuevosErrores,
+      validarFechasVoluntariado(formulario.fechaInicio, formulario.fechaFin)
+    );
 
     if (!formulario.horarioDetallado?.trim()) {
       nuevosErrores.horarioDetallado = "Describa los días y horas disponibles";
@@ -415,7 +468,7 @@ function SolicitarVoluntariado() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!usuario) {
-      sessionStorage.setItem("postLoginRedirect", "/voluntariado/solicitar");
+      sessionStorage.setItem("postLoginRedirect", VOLUNTARIADO_LOGIN_REDIRECT);
       setErrorApi("Debe iniciar sesión antes de enviar una solicitud de voluntariado.");
       return;
     }
@@ -488,9 +541,15 @@ function SolicitarVoluntariado() {
           </div>
 
           {!enviado ? (
-            <form onSubmit={handleSubmit} className="formulario-card" noValidate>
-              <div className="tipo-postulacion">
-                <p>
+            <form
+              onSubmit={handleSubmit}
+              className="formulario-card"
+              noValidate
+              onFocusCapture={handleFormInteractionCapture}
+              onPointerDownCapture={handleFormInteractionCapture}
+            >
+              <div className="campo full tipo-postulacion">
+                <p className="campo-pregunta">
                   ¿Cómo desea participar?<span className="req">*</span>
                 </p>
                 <div className="tipo-opciones">
@@ -729,9 +788,9 @@ function SolicitarVoluntariado() {
 
                 <SectionCard icon={HandHeart} title="Información del voluntariado">
                   <div className="campo full">
-                    <label>
+                    <p className="campo-pregunta">
                       Período de voluntariado (Desde — Hasta) <span className="req">*</span>
-                    </label>
+                    </p>
                     <DatePickerWithRange
                       dateRange={dateRange}
                       setDateRange={handleRangeChange}
@@ -745,12 +804,17 @@ function SolicitarVoluntariado() {
                   </div>
 
                   <div className="campo full">
-                    <label>
+                    <p className="campo-pregunta" id="horario-detallado-label">
                       Horario preferido y disponibilidad detallada <span className="req">*</span>
-                    </label>
+                    </p>
+                    <p className="mensaje-info">
+                      El horario para realizar el voluntariado es de 8:00 a. m. a 5:00 p. m., con un
+                      período de almuerzo de 12:00 p. m. a 1:00 p. m.
+                    </p>
                     <textarea
                       name="horarioDetallado"
                       rows={3}
+                      aria-labelledby="horario-detallado-label"
                       placeholder="Describa el horario detallado de su voluntariado por días y horas asignadas. Ejemplo: Lunes (8am - 12pm), Martes (1pm - 5pm), Miércoles (9am - 11am)."
                       value={formulario.horarioDetallado}
                       onChange={handleChange}
@@ -816,7 +880,9 @@ function SolicitarVoluntariado() {
                     <Link
                       to="/login"
                       className="auth-banner__link"
-                      onClick={() => sessionStorage.setItem("postLoginRedirect", "/voluntariado/solicitar")}
+                      onClick={() =>
+                        sessionStorage.setItem("postLoginRedirect", VOLUNTARIADO_LOGIN_REDIRECT)
+                      }
                     >
                       Iniciar sesión →
                     </Link>
