@@ -11,3 +11,13 @@ export async function consultarCedula(numero) {
     timeoutMessage: "Tiempo de espera agotado al consultar la c\u00e9dula.",
   });
 }
+
+export async function consultarCedulaDetallada(numero) {
+  const normalizado = String(numero ?? "").replace(/\D/g, "");
+  return apiRequest(`${BASE_URL}/${encodeURIComponent(normalizado)}/detalle`, {
+    skipAuth: true,
+    timeout: 35000,
+    errorPrefix: "No se pudo consultar la c\u00e9dula",
+    timeoutMessage: "Tiempo de espera agotado al consultar la c\u00e9dula.",
+  });
+}
