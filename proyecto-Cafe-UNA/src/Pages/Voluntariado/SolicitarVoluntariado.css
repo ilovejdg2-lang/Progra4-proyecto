@@ -118,9 +118,10 @@
   margin-bottom: 28px;
 }
 
-.tipo-postulacion > p {
+.campo-pregunta {
   font-size: 14px;
   font-weight: 600;
+  line-height: 1.4;
   margin: 0 0 12px;
   color: var(--texto-principal);
 }
@@ -154,6 +155,16 @@
 
 .radio-card input {
   display: none;
+}
+
+.radio-card:hover:not(:has(input:checked)) {
+  color: var(--texto-principal);
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.radio-card:focus-within:not(:has(input:checked)) {
+  outline: 2px solid rgba(15, 23, 42, 0.18);
+  outline-offset: 1px;
 }
 
 .radio-card:has(input:checked) {
@@ -421,11 +432,98 @@
   margin-top: 5px;
 }
 
+.mensaje-info {
+  color: var(--texto-secundario);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: -4px 0 10px;
+}
+
 .form-error {
   color: var(--error);
   margin: 0 0 16px;
   font-size: 13px;
   text-align: center;
+}
+
+.auth-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--borde-input);
+  border-radius: var(--radius-ui);
+  background: var(--fondo-soft);
+}
+
+.auth-banner__icon {
+  color: var(--texto-secundario);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.auth-banner__content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-banner__text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--texto-principal);
+}
+
+.auth-banner__link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--negro-principal);
+  text-decoration: none;
+}
+
+.auth-banner__link:hover {
+  text-decoration: underline;
+}
+
+.confirmacion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  border: 1px solid var(--borde-input);
+  border-radius: var(--radius-ui);
+  background: #ffffff;
+}
+
+.confirmacion__icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--fondo-soft);
+  color: var(--negro-principal);
+}
+
+.confirmacion h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--texto-principal);
+}
+
+.confirmacion p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--texto-secundario);
 }
 
 /* =========================
@@ -536,44 +634,112 @@
 
 .calendar-shadcn-custom {
   margin: 0 auto;
+  --rdp-accent-color: var(--negro-principal);
+  --rdp-accent-background-color: #f1f5f9;
+  --rdp-range_middle-background-color: #f1f5f9;
+  --rdp-range_middle-color: var(--negro-principal);
+  --rdp-range_start-color: #ffffff;
+  --rdp-range_end-color: #ffffff;
+  --rdp-range_start-background: var(--negro-principal);
+  --rdp-range_end-background: var(--negro-principal);
+  --rdp-selected-border: 2px solid var(--negro-principal);
 }
 
-/* Extremos del Rango (Inicio y Fin en Negro Puro) */
-.calendar-shadcn-custom .rdp-day_range_start,
-.calendar-shadcn-custom .rdp-day_range_end,
-.calendar-shadcn-custom .rdp-day_selected:not(.rdp-day_range_middle) {
-  background-color: #0f172a !important;
+/* Clases personalizadas vía classNames */
+.calendar-shadcn-custom .rdp-selected-custom,
+.calendar-shadcn-custom .rdp-range-start-custom,
+.calendar-shadcn-custom .rdp-range-end-custom {
+  background-color: var(--negro-principal) !important;
   color: #ffffff !important;
   font-weight: 700 !important;
   border-radius: 8px !important;
 }
 
-/* Días Intermedios del Rango */
-.calendar-shadcn-custom .rdp-day_range_middle {
+.calendar-shadcn-custom .rdp-range-middle-custom {
   background-color: #f1f5f9 !important;
-  color: #0f172a !important;
+  color: var(--negro-principal) !important;
   border-radius: 0 !important;
   font-weight: 500;
 }
 
-/* Hover de Días */
+/* Extremos del rango (v10) */
+.calendar-shadcn-custom .rdp-range_start,
+.calendar-shadcn-custom .rdp-range_end,
+.calendar-shadcn-custom .rdp-selected:not(.rdp-range_middle) {
+  background-color: var(--negro-principal) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+}
+
+/* Días intermedios del rango (v10) */
+.calendar-shadcn-custom .rdp-range_middle {
+  background-color: #f1f5f9 !important;
+  color: var(--negro-principal) !important;
+  border-radius: 0 !important;
+  font-weight: 500;
+}
+
+/* Compatibilidad con clases v9 */
+.calendar-shadcn-custom .rdp-day_range_start,
+.calendar-shadcn-custom .rdp-day_range_end,
+.calendar-shadcn-custom .rdp-day_selected:not(.rdp-day_range_middle) {
+  background-color: var(--negro-principal) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+}
+
+.calendar-shadcn-custom .rdp-day_range_middle {
+  background-color: #f1f5f9 !important;
+  color: var(--negro-principal) !important;
+  border-radius: 0 !important;
+  font-weight: 500;
+}
+
+/* Hover de días */
+.calendar-shadcn-custom .rdp-day_button:hover:not(.rdp-range_start):not(.rdp-range_end),
 .calendar-shadcn-custom .rdp-button:hover:not(.rdp-day_range_start):not(.rdp-day_range_end) {
   background-color: #e2e8f0 !important;
   border-radius: 8px;
-  color: #0f172a;
+  color: var(--negro-principal);
+}
+
+/* Navegación y chevrons */
+.calendar-shadcn-custom .rdp-chevron {
+  fill: var(--negro-principal);
+}
+
+.calendar-shadcn-custom .rdp-button_previous:hover,
+.calendar-shadcn-custom .rdp-button_next:hover,
+.calendar-shadcn-custom .rdp-nav_button:hover {
+  background-color: #e2e8f0 !important;
+  color: var(--negro-principal);
 }
 
 /* Ajustes visuales de cabecera */
-.calendar-shadcn-custom .rdp-caption_label {
+.calendar-shadcn-custom .rdp-caption_label,
+.calendar-shadcn-custom .rdp-month_caption {
   font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--negro-principal);
   text-transform: capitalize;
 }
 
-.calendar-shadcn-custom .rdp-head_cell {
+.calendar-shadcn-custom .rdp-head_cell,
+.calendar-shadcn-custom .rdp-weekday {
   font-size: 12px;
   font-weight: 600;
   color: var(--texto-secundario);
   text-transform: uppercase;
+}
+
+.calendar-shadcn-custom .rdp-disabled .rdp-day_button {
+  color: #cbd5e1 !important;
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.calendar-shadcn-custom .rdp-disabled .rdp-day_button:hover {
+  background-color: transparent !important;
 }
