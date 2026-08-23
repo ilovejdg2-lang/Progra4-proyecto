@@ -1,11 +1,13 @@
-import * as React from "react";
-import { format } from "date-fns";
+import { useMemo } from "react";
+import { format, startOfDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { Calendar as CalendarIcon, ArrowRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 
 export function DatePickerWithRange({ dateRange, setDateRange, error }) {
+  const hoy = useMemo(() => startOfDay(new Date()), []);
+
   const formatearFecha = (fecha) => {
     if (!fecha) return "Por definir";
     return format(fecha, "dd 'de' MMMM, yyyy", { locale: es });
@@ -38,14 +40,19 @@ export function DatePickerWithRange({ dateRange, setDateRange, error }) {
       <div className="calendario-fijo-contenedor">
         <DayPicker
           mode="range"
-          defaultMonth={dateRange?.from || new Date(2026, 7, 23)}
+          defaultMonth={dateRange?.from || hoy}
           selected={dateRange}
-          onSelect={(range) => {
-            setDateRange(range);
-          }}
+          onSelect={setDateRange}
+          disabled={{ before: hoy }}
           numberOfMonths={window.innerWidth < 768 ? 1 : 2}
           locale={es}
           className="calendar-shadcn-custom"
+          classNames={{
+            selected: "rdp-selected-custom",
+            range_start: "rdp-range-start-custom",
+            range_end: "rdp-range-end-custom",
+            range_middle: "rdp-range-middle-custom",
+          }}
         />
       </div>
     </div>
