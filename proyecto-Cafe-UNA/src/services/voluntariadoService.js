@@ -1,4 +1,5 @@
 import { createDomainRequest, createListCache } from "./serviceHelpers";
+import { apiRequest } from "./apiClient";
 
 const BASE_URL = `${import.meta.env.BACKEND_URL}/voluntariado/solicitudes`;
 const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -20,11 +21,11 @@ export async function obtenerSolicitudesDeUsuario(userId) {
   return Array.isArray(data) ? data : [];
 }
 
-export async function crearSolicitud(nuevaSolicitud) {
+export async function crearSolicitud(datos) {
   cache.clear();
   return request(BASE_URL, {
     method: "POST",
-    data: nuevaSolicitud,
+    data: datos,
   });
 }
 
