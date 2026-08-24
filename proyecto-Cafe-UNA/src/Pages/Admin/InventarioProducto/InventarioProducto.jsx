@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 
-import { Pencil, Power, Star, Trash2, X } from "lucide-react";
+import { Pencil, Power, Trash2, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalActions, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { ProductCatalogMobileList } from "./components/ProductCatalogMobileList";
+import { ProductCatalogTable } from "./components/ProductCatalogTable";
+import { etiquetaEstadoProducto } from "./components/catalogFormatters";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import {
@@ -308,26 +311,6 @@ function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtro
       </div>
     </form>
   );
-}
-
-function formatearPrecio(valor) {
-  return new Intl.NumberFormat("es-CR", {
-    style: "currency",
-    currency: "CRC",
-    maximumFractionDigits: 0,
-  }).format(valor || 0);
-}
-
-function etiquetaEstadoProducto(producto) {
-  if (productoEstaDeshabilitado(producto)) {
-    return { texto: "Deshabilitado", clase: "bg-red-50 text-red-700" };
-  }
-
-  if (productoSinStock(producto)) {
-    return { texto: "Agotado", clase: "bg-amber-50 text-amber-800" };
-  }
-
-  return { texto: "Habilitado", clase: "bg-emerald-50 text-emerald-700" };
 }
 
 const accionBtnBase =
@@ -640,152 +623,43 @@ const AdminInventarioProducto = () => {
           <AdminListaVacia onLimpiar={limpiar} />
         ) : (
           <>
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[900px] text-left text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    <th className="px-6 py-4">Imagen</th>
-                    <th className="px-6 py-4">Nombre</th>
-                    <th className="px-6 py-4">Precio</th>
-                    <th className="px-6 py-4">Stock</th>
-                    <th className="px-6 py-4">Estado</th>
-                    <th className="px-6 py-4">Destacado</th>
-                    <th className="px-6 py-4 w-48">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {productosFiltrados.map((producto) => {
-                    const estadoProducto = etiquetaEstadoProducto(producto);
-
-                    return (
-                    <tr key={producto.id} className="border-b border-slate-100 last:border-b-0">
-                      <td className="px-6 py-4">
-                        {producto.imagen ? (
-                          <img
-                            src={producto.imagen}
-                            alt={producto.nombre}
-                            className="h-14 w-14 rounded-xl object-cover ring-1 ring-slate-200"
-                          />
-                        ) : (
-                          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-slate-200 text-xs text-slate-500">
-                            Sin foto
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-slate-900">{producto.nombre}</div>
-                        <div className="mt-1 line-clamp-2 max-w-xl text-xs leading-5 text-slate-500">
-                          {producto.descripcion}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-slate-700">{formatearPrecio(producto.precioNormal)}</td>
-                      <td className="px-6 py-4 text-slate-700">{producto.stock}</td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${estadoProducto.clase}`}
-                        >
-                          {estadoProducto.texto}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleDestacado(producto)}
-                          disabled={!producto.esDestacado && (destacadosEnUso >= MAX_PRODUCTOS_DESTACADOS || !productoPuedeDestacarse(producto))}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                            producto.esDestacado
-                              ? "bg-amber-50 text-amber-800 hover:bg-amber-100"
-                              : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                          }`}
-                          aria-pressed={producto.esDestacado}
-                        >
-                          <Star className={`size-3.5 ${producto.esDestacado ? "fill-current" : ""}`} aria-hidden="true" />
-                          {producto.esDestacado ? "Si" : "No"}
-                        </button>
-                      </td>
-                      <td className="px-6 py-4 align-top">
-                        <AccionesProducto
-                          producto={producto}
-                          puedeEditar={puedeEditar}
-                          puedeInactivar={puedeInactivar}
-                          puedeEliminar={puedeEliminar}
-                          onEditar={() => setProductoEditar(producto)}
-                          onToggleEstado={() => handleToggleEstado(producto)}
-                          onEliminar={() => handleEliminar(producto)}
-                        />
-                      </td>
-                    </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="divide-y divide-slate-100 md:hidden">
-              {productosFiltrados.map((producto) => {
-                const estadoProducto = etiquetaEstadoProducto(producto);
-
-                return (
-                <article key={producto.id} className="space-y-3 px-4 py-4">
-                  <div className="flex items-start gap-3">
-                    {producto.imagen ? (
-                      <img
-                        src={producto.imagen}
-                        alt={producto.nombre}
-                        className="h-16 w-16 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
-                      />
-                    ) : (
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-xs text-slate-500">
-                        Sin foto
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-slate-900">{producto.nombre}</h3>
-                        <span
-                          className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${estadoProducto.clase}`}
-                        >
-                          {estadoProducto.texto}
-                        </span>
-                      </div>
-                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{producto.descripcion}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-3 text-sm text-slate-600">
-                    <span><strong className="text-slate-800">Precio:</strong> {formatearPrecio(producto.precioNormal)}</span>
-                    <span><strong className="text-slate-800">Stock:</strong> {producto.stock}</span>
-                    {producto.peso ? <span><strong className="text-slate-800">Peso:</strong> {producto.peso}</span> : null}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleToggleDestacado(producto)}
-                    disabled={!producto.esDestacado && (destacadosEnUso >= MAX_PRODUCTOS_DESTACADOS || !productoPuedeDestacarse(producto))}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                      producto.esDestacado
-                        ? "bg-amber-50 text-amber-800"
-                        : "bg-slate-100 text-slate-500"
-                    }`}
-                  >
-                    <Star className={`size-3.5 ${producto.esDestacado ? "fill-current" : ""}`} aria-hidden="true" />
-                    {producto.esDestacado ? "Destacado en inicio" : "Marcar como destacado"}
-                  </button>
-
-                  <AccionesProducto
-                    producto={producto}
-                    puedeEditar={puedeEditar}
-                    puedeInactivar={puedeInactivar}
-                    puedeEliminar={puedeEliminar}
-                    variant="mobile"
-                    onEditar={() => setProductoEditar(producto)}
-                    onToggleEstado={() => handleToggleEstado(producto)}
-                    onEliminar={() => handleEliminar(producto)}
-                  />
-                </article>
-                );
-              })}
-            </div>
+            <ProductCatalogTable
+              productos={productosFiltrados}
+              destacadosEnUso={destacadosEnUso}
+              maxDestacados={MAX_PRODUCTOS_DESTACADOS}
+              puedeDestacarse={productoPuedeDestacarse}
+              onToggleDestacado={handleToggleDestacado}
+              renderAcciones={(producto) => (
+                <AccionesProducto
+                  producto={producto}
+                  puedeEditar={puedeEditar}
+                  puedeInactivar={puedeInactivar}
+                  puedeEliminar={puedeEliminar}
+                  onEditar={() => setProductoEditar(producto)}
+                  onToggleEstado={() => handleToggleEstado(producto)}
+                  onEliminar={() => handleEliminar(producto)}
+                />
+              )}
+            />
+            <ProductCatalogMobileList
+              productos={productosFiltrados}
+              destacadosEnUso={destacadosEnUso}
+              maxDestacados={MAX_PRODUCTOS_DESTACADOS}
+              puedeDestacarse={productoPuedeDestacarse}
+              onToggleDestacado={handleToggleDestacado}
+              renderAcciones={(producto) => (
+                <AccionesProducto
+                  producto={producto}
+                  puedeEditar={puedeEditar}
+                  puedeInactivar={puedeInactivar}
+                  puedeEliminar={puedeEliminar}
+                  variant="mobile"
+                  onEditar={() => setProductoEditar(producto)}
+                  onToggleEstado={() => handleToggleEstado(producto)}
+                  onEliminar={() => handleEliminar(producto)}
+                />
+              )}
+            />
           </>
         )}
           </>
