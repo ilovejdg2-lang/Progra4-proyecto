@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { Pencil, Power, Trash2 } from "lucide-react";
+
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { ProductActions } from "./components/ProductActions";
 import { ProductCatalogFormDrawer } from "./components/ProductCatalogFormDrawer";
 import { ProductCatalogMobileList } from "./components/ProductCatalogMobileList";
 import { ProductCatalogTable } from "./components/ProductCatalogTable";
@@ -14,7 +15,6 @@ import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import {
   actualizarProducto,
   crearProducto,
-  eliminarProducto,
   obtenerProductos,
 } from "../../../services/productosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
@@ -32,53 +32,6 @@ function contarDestacados(productos, excluirId = null) {
   return productos.filter((item) => item.esDestacado && item.id !== excluirId).length;
 }
 
-const accionBtnBase =
-  "inline-flex items-center justify-center gap-1.5 rounded-full border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
-
-function AccionesProducto({ producto, puedeEditar, puedeInactivar, puedeEliminar, onEditar, onToggleEstado, onEliminar, variant = "table" }) {
-  const esDeshabilitado = producto.estado === "Deshabilitado";
-  const esMovil = variant === "mobile";
-  const bloquearInhabilitar = producto.esDestacado && !esDeshabilitado;
-  const mostrarExtras = puedeInactivar || puedeEliminar;
-
-  const editarCls = `${accionBtnBase} border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 focus-visible:ring-amber-300`;
-  const toggleCls = `${accionBtnBase} ${
-    esDeshabilitado
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300"
-      : "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300"
-  }`;
-  const eliminarCls = `${accionBtnBase} border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300`;
-
-  return (
-    <div className={`grid gap-1.5 ${esMovil ? "gap-2" : "w-[11.5rem]"} ${mostrarExtras ? (esMovil ? "grid-cols-3" : "grid-cols-2") : "grid-cols-1"}`}>
-      {puedeEditar ? (
-        <button type="button" onClick={onEditar} className={`${editarCls} ${esMovil ? "min-h-10 px-2 py-2" : "h-9 px-2.5"}`}>
-          <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
-          <span className={esMovil ? "truncate" : ""}>Editar</span>
-        </button>
-      ) : null}
-      {puedeInactivar ? (
-        <button
-          type="button"
-          onClick={onToggleEstado}
-          disabled={bloquearInhabilitar}
-          title={bloquearInhabilitar ? "Quita el destacado antes de deshabilitarlo" : undefined}
-          className={`${toggleCls} ${esMovil ? "min-h-10 px-2 py-2" : "h-9 px-2.5"} disabled:cursor-not-allowed disabled:opacity-50`}
-        >
-          <Power className="size-3.5 shrink-0" aria-hidden="true" />
-          <span className={esMovil ? "truncate" : ""}>{esDeshabilitado ? "Habilitar" : "Inhabilitar"}</span>
-        </button>
-      ) : null}
-      {puedeEliminar ? (
-        <button type="button" onClick={onEliminar} className={`${eliminarCls} ${esMovil ? "min-h-10 px-2 py-2" : "col-span-2 h-9 px-2.5"}`}>
-          <Trash2 className="size-3.5 shrink-0" aria-hidden="true" />
-          <span className={esMovil ? "truncate" : ""}>Eliminar</span>
-        </button>
-      ) : null}
-    </div>
-  );
-}
-
 const AdminInventarioProducto = () => {
   const actor = (() => {
     try {
@@ -91,7 +44,6 @@ const AdminInventarioProducto = () => {
   const puedeCrear = tienePermiso(actorRoles, "crear_productos");
   const puedeEditar = tienePermiso(actorRoles, "actualizar_productos");
   const puedeInactivar = tienePermiso(actorRoles, "inactivar_productos");
-  const puedeEliminar = tienePermiso(actorRoles, "crear_productos");
   const [productos, setProductos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -184,22 +136,6 @@ const AdminInventarioProducto = () => {
     }
   };
 
-  const handleEliminar = async (producto) => {
-    if (!puedeEliminar) {
-      alert("No tiene permiso para eliminar productos.");
-      return;
-    }
-
-    const confirmar = window.confirm(`\u00bfEliminar ${producto.nombre}?`);
-    if (!confirmar) return;
-
-    try {
-      await eliminarProducto(producto.id);
-      setProductos((prev) => prev.filter((item) => item.id !== producto.id));
-    } catch {
-      alert("No se pudo eliminar el producto.");
-    }
-  };
 
   const handleToggleEstado = async (producto) => {
     if (!puedeInactivar) {
@@ -334,14 +270,12 @@ const AdminInventarioProducto = () => {
               puedeDestacarse={productoPuedeDestacarse}
               onToggleDestacado={handleToggleDestacado}
               renderAcciones={(producto) => (
-                <AccionesProducto
+                <ProductActions
                   producto={producto}
                   puedeEditar={puedeEditar}
                   puedeInactivar={puedeInactivar}
-                  puedeEliminar={puedeEliminar}
                   onEditar={() => setProductoEditar(producto)}
                   onToggleEstado={() => handleToggleEstado(producto)}
-                  onEliminar={() => handleEliminar(producto)}
                 />
               )}
             />
@@ -352,15 +286,13 @@ const AdminInventarioProducto = () => {
               puedeDestacarse={productoPuedeDestacarse}
               onToggleDestacado={handleToggleDestacado}
               renderAcciones={(producto) => (
-                <AccionesProducto
+                <ProductActions
                   producto={producto}
                   puedeEditar={puedeEditar}
                   puedeInactivar={puedeInactivar}
-                  puedeEliminar={puedeEliminar}
                   variant="mobile"
                   onEditar={() => setProductoEditar(producto)}
                   onToggleEstado={() => handleToggleEstado(producto)}
-                  onEliminar={() => handleEliminar(producto)}
                 />
               )}
             />
