@@ -145,11 +145,11 @@ const AdminInventarioProducto = () => {
     }
 
     try {
-      const actualizado = await actualizarProducto(producto.id, {
+      await actualizarProducto(producto.id, {
         ...producto,
         estado: nuevoEstado,
       });
-      setProductos((prev) => prev.map((item) => (item.id === actualizado.id ? actualizado : item)));
+      await catalogState.retry();
     } catch (err) {
       alert(err?.message || "No se pudo cambiar el estado del producto.");
     }
@@ -173,10 +173,10 @@ const AdminInventarioProducto = () => {
     }
 
     try {
-      const actualizado = await actualizarProducto(producto.id, {
+      await actualizarProducto(producto.id, {
         esDestacado: !producto.esDestacado,
       });
-      setProductos((prev) => prev.map((item) => (item.id === actualizado.id ? actualizado : item)));
+      await catalogState.retry();
     } catch (err) {
       alert(err?.message || "No se pudo cambiar el estado destacado.");
     }
@@ -200,6 +200,7 @@ const AdminInventarioProducto = () => {
       />
 
       <CentralStockEditor
+        key={`${productoStockEditar?.id ?? "closed"}-${productoStockEditar?.centralStock?.confidence ?? "unknown"}-${productoStockEditar?.centralStock?.stock ?? ""}`}
         open={Boolean(productoStockEditar)}
         product={productoStockEditar}
         stockRecord={productoStockEditar?.centralStock}
