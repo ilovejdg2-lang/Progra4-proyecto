@@ -6,6 +6,7 @@ export function ProductCatalogTable({
   destacadosEnUso,
   maxDestacados,
   puedeDestacarse,
+  stockLoading = false,
   onToggleDestacado,
   renderAcciones,
 }) {
@@ -49,7 +50,13 @@ export function ProductCatalogTable({
                   </div>
                 </td>
                 <td className="px-6 py-4 text-slate-700">{formatearPrecio(producto.precioNormal)}</td>
-                <td className="px-6 py-4 text-slate-700">{producto.stock}</td>
+                <td className="px-6 py-4 text-slate-700">
+                  {producto.centralStock?.confidence === "known"
+                    ? producto.centralStock.stock
+                    : stockLoading
+                      ? "Cargando..."
+                      : "No disponible"}
+                </td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${estadoProducto.clase}`}>
                     {estadoProducto.texto}

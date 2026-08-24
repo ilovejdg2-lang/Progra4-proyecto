@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 
 
 
@@ -6,20 +6,23 @@ import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { ProductActions } from "./components/ProductActions";
+import { CentralStockEditor } from "./components/CentralStockEditor";
 import { ProductCatalogFormDrawer } from "./components/ProductCatalogFormDrawer";
 import { ProductCatalogMobileList } from "./components/ProductCatalogMobileList";
 import { ProductCatalogTable } from "./components/ProductCatalogTable";
 import { etiquetaEstadoProducto } from "./components/catalogFormatters";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
+import { useCentralStock } from "../../../hooks/useCentralStock";
+import { useProductCatalog } from "../../../hooks/useProductCatalog";
 import {
   actualizarProducto,
+  actualizarStockCentral,
   crearProducto,
-  obtenerProductos,
 } from "../../../services/productosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
-import { contactSupportMessage, sanitizeUserFacingError } from "../../../lib/formLimits";
+import { contactSupportMessage } from "../../../lib/formLimits";
 import {
   productoPuedeDestacarse,
   productoPuedeDeshabilitarse,
@@ -44,12 +47,33 @@ const AdminInventarioProducto = () => {
   const puedeCrear = tienePermiso(actorRoles, "crear_productos");
   const puedeEditar = tienePermiso(actorRoles, "actualizar_productos");
   const puedeInactivar = tienePermiso(actorRoles, "inactivar_productos");
-  const [productos, setProductos] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
+  const puedeActualizarStock = tienePermiso(actorRoles, "actualizar_stock_productos");
   const [modalCrear, setModalCrear] = useState(false);
   const [productoEditar, setProductoEditar] = useState(null);
+  const [productoStockEditar, setProductoStockEditar] = useState(null);
   const [guardando, setGuardando] = useState(false);
+  const [guardandoStock, setGuardandoStock] = useState(false);
+  const catalogState = useProductCatalog();
+  const stockState = useCentralStock();
+  const stockByProductId = useMemo(
+    () => new Map(stockState.data.map((stock) => [String(stock.productId), stock])),
+    [stockState.data],
+  );
+  const productos = useMemo(
+    () => catalogState.data.map((producto) => ({
+      ...producto,
+      centralStock: stockByProductId.get(String(producto.id)) || {
+        productId: String(producto.id),
+        locationCode: "BODEGA_CENTRAL",
+        stock: null,
+        confidence: "unknown",
+      },
+      stock: stockByProductId.get(String(producto.id))?.stock ?? 0,
+    })),
+    [catalogState.data, stockByProductId],
+  );
+  const cargando = catalogState.loading;
+  const error = catalogState.error?.message || null;
   const { showLoading, loadingMessage } = useAdminPageGate('/admin/producto', !cargando);
 
   const {
@@ -71,54 +95,13 @@ const AdminInventarioProducto = () => {
     ],
   });
 
-  const cargarProductos = async () => {
-    try {
-      setCargando(true);
-      setError(null);
-      const data = await obtenerProductos();
-      setProductos(data);
-    } catch (err) {
-      setError(sanitizeUserFacingError(err?.message || "No se pudieron cargar los productos."));
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  useEffect(() => {
-    let activo = true;
-
-    const inicializar = async () => {
-      try {
-        setCargando(true);
-        setError(null);
-        const data = await obtenerProductos();
-
-        if (activo) {
-          setProductos(data);
-        }
-      } catch {
-        if (activo) {
-          setError("No se pudieron cargar los productos.");
-        }
-      } finally {
-        if (activo) {
-          setCargando(false);
-        }
-      }
-    };
-
-    inicializar();
-
-    return () => {
-      activo = false;
-    };
-  }, []);
+  const cargarProductos = () => catalogState.retry();
 
   const handleCrear = async (form) => {
     setGuardando(true);
     try {
-      const nuevo = await crearProducto(form);
-      setProductos((prev) => [...prev, nuevo]);
+      await crearProducto(form);
+      await Promise.all([catalogState.retry(), stockState.retry()]);
       setModalCrear(false);
     } finally {
       setGuardando(false);
@@ -128,11 +111,22 @@ const AdminInventarioProducto = () => {
   const handleEditar = async (form) => {
     setGuardando(true);
     try {
-      const actualizado = await actualizarProducto(productoEditar.id, form);
-      setProductos((prev) => prev.map((producto) => (producto.id === actualizado.id ? actualizado : producto)));
+      await actualizarProducto(productoEditar.id, form);
+      await Promise.all([catalogState.retry(), stockState.retry()]);
       setProductoEditar(null);
     } finally {
       setGuardando(false);
+    }
+  };
+
+  const handleGuardarStock = async (stock) => {
+    setGuardandoStock(true);
+    try {
+      await actualizarStockCentral(productoStockEditar.id, stock);
+      await Promise.all([catalogState.retry(), stockState.retry()]);
+      setProductoStockEditar(null);
+    } finally {
+      setGuardandoStock(false);
     }
   };
 
@@ -151,11 +145,11 @@ const AdminInventarioProducto = () => {
     }
 
     try {
-      const actualizado = await actualizarProducto(producto.id, {
+      await actualizarProducto(producto.id, {
         ...producto,
         estado: nuevoEstado,
       });
-      setProductos((prev) => prev.map((item) => (item.id === actualizado.id ? actualizado : item)));
+      await catalogState.retry();
     } catch (err) {
       alert(err?.message || "No se pudo cambiar el estado del producto.");
     }
@@ -179,10 +173,10 @@ const AdminInventarioProducto = () => {
     }
 
     try {
-      const actualizado = await actualizarProducto(producto.id, {
+      await actualizarProducto(producto.id, {
         esDestacado: !producto.esDestacado,
       });
-      setProductos((prev) => prev.map((item) => (item.id === actualizado.id ? actualizado : item)));
+      await catalogState.retry();
     } catch (err) {
       alert(err?.message || "No se pudo cambiar el estado destacado.");
     }
@@ -205,6 +199,16 @@ const AdminInventarioProducto = () => {
         isSaving={guardando}
       />
 
+      <CentralStockEditor
+        key={`${productoStockEditar?.id ?? "closed"}-${productoStockEditar?.centralStock?.confidence ?? "unknown"}-${productoStockEditar?.centralStock?.stock ?? ""}`}
+        open={Boolean(productoStockEditar)}
+        product={productoStockEditar}
+        stockRecord={productoStockEditar?.centralStock}
+        onSave={handleGuardarStock}
+        onClose={() => setProductoStockEditar(null)}
+        isSaving={guardandoStock}
+      />
+
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
         {cargando ? (
           <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 px-4 py-14 text-center sm:px-6">
@@ -225,6 +229,18 @@ const AdminInventarioProducto = () => {
           </div>
         ) : (
           <>
+        {stockState.error ? (
+          <div className="flex flex-col gap-2 border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between sm:px-6" role="status">
+            <span>El catálogo está disponible, pero no se pudo cargar el stock de Bodega Central.</span>
+            <button
+              type="button"
+              onClick={stockState.retry}
+              className="min-h-11 rounded-full border border-amber-300 bg-white px-4 py-2 text-xs font-semibold text-amber-900 transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+            >
+              Reintentar stock
+            </button>
+          </div>
+        ) : null}
         <div className="flex flex-col gap-4 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <div>
             <h1 className="text-xl font-semibold text-slate-950 sm:text-2xl">Productos</h1>
@@ -268,14 +284,17 @@ const AdminInventarioProducto = () => {
               destacadosEnUso={destacadosEnUso}
               maxDestacados={MAX_PRODUCTOS_DESTACADOS}
               puedeDestacarse={productoPuedeDestacarse}
+              stockLoading={stockState.loading}
               onToggleDestacado={handleToggleDestacado}
               renderAcciones={(producto) => (
                 <ProductActions
                   producto={producto}
                   puedeEditar={puedeEditar}
                   puedeInactivar={puedeInactivar}
+                  puedeActualizarStock={puedeActualizarStock}
                   onEditar={() => setProductoEditar(producto)}
                   onToggleEstado={() => handleToggleEstado(producto)}
+                  onEditarStock={() => setProductoStockEditar(producto)}
                 />
               )}
             />
@@ -284,15 +303,18 @@ const AdminInventarioProducto = () => {
               destacadosEnUso={destacadosEnUso}
               maxDestacados={MAX_PRODUCTOS_DESTACADOS}
               puedeDestacarse={productoPuedeDestacarse}
+              stockLoading={stockState.loading}
               onToggleDestacado={handleToggleDestacado}
               renderAcciones={(producto) => (
                 <ProductActions
                   producto={producto}
                   puedeEditar={puedeEditar}
                   puedeInactivar={puedeInactivar}
+                  puedeActualizarStock={puedeActualizarStock}
                   variant="mobile"
                   onEditar={() => setProductoEditar(producto)}
                   onToggleEstado={() => handleToggleEstado(producto)}
+                  onEditarStock={() => setProductoStockEditar(producto)}
                 />
               )}
             />

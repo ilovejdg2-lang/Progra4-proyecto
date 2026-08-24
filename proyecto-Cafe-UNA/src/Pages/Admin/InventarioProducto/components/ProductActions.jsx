@@ -1,4 +1,4 @@
-import { Pencil, Power } from "lucide-react";
+import { PackageOpen, Pencil, Power } from "lucide-react";
 
 const actionButtonBase =
   "inline-flex items-center justify-center gap-1.5 rounded-full border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
@@ -7,8 +7,10 @@ export function ProductActions({
   producto,
   puedeEditar,
   puedeInactivar,
+  puedeActualizarStock,
   onEditar,
   onToggleEstado,
+  onEditarStock,
   variant = "table",
 }) {
   const esDeshabilitado = producto.estado === "Deshabilitado";
@@ -49,6 +51,16 @@ export function ProductActions({
         >
           <Power className="size-3.5 shrink-0" aria-hidden="true" />
           <span className={esMovil ? "truncate" : ""}>{esDeshabilitado ? "Habilitar" : "Inhabilitar"}</span>
+        </button>
+      ) : null}
+      {puedeActualizarStock ? (
+        <button
+          type="button"
+          onClick={onEditarStock}
+          className={`${actionButtonBase} border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100 focus-visible:ring-slate-400 ${esMovil ? "min-h-10 px-2 py-2" : "h-9 px-2.5"}`}
+        >
+          <PackageOpen className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className={esMovil ? "truncate" : ""}>Stock</span>
         </button>
       ) : null}
     </div>
