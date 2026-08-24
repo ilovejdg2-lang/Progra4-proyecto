@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { Pencil, Power, Trash2, X } from "lucide-react";
+import { Pencil, Power, Trash2 } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
-import { AdminModal, AdminModalActions, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { ProductCatalogFormDrawer } from "./components/ProductCatalogFormDrawer";
 import { ProductCatalogMobileList } from "./components/ProductCatalogMobileList";
 import { ProductCatalogTable } from "./components/ProductCatalogTable";
 import { etiquetaEstadoProducto } from "./components/catalogFormatters";
@@ -16,301 +16,20 @@ import {
   crearProducto,
   eliminarProducto,
   obtenerProductos,
-  calcularPrecioConIVA,
 } from "../../../services/productosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
-import {
-  contactSupportMessage,
-  hasFieldErrors,
-  MAX_PRODUCTO_DESCRIPCION,
-  MAX_PRODUCTO_NOMBRE,
-  sanitizeUserFacingError,
-  validateProductoForm,
-} from "../../../lib/formLimits";
+import { contactSupportMessage, sanitizeUserFacingError } from "../../../lib/formLimits";
 import {
   productoPuedeDestacarse,
   productoPuedeDeshabilitarse,
-  productoSinStock,
   productoEstaDeshabilitado,
 } from "../../../lib/productoDisponibilidad";
-
-const FORM_VACIO = {
-  nombre: "",
-  descripcion: "",
-  imagen: "",
-  precioNormal: "",
-  precioConIVA: "",
-  stock: "",
-  estado: "Habilitado",
-  peso: "",
-  esDestacado: false,
-};
 
 const MAX_PRODUCTOS_DESTACADOS = 3;
 
 function contarDestacados(productos, excluirId = null) {
   return productos.filter((item) => item.esDestacado && item.id !== excluirId).length;
-}
-
-function puedeMarcarDestacado(form, destacadosOtros) {
-  const borrador = {
-    estado: form.estado,
-    stock: Number(form.stock) || 0,
-  };
-
-  if (!productoPuedeDestacarse(borrador)) {
-    return false;
-  }
-
-  return form.esDestacado || destacadosOtros < MAX_PRODUCTOS_DESTACADOS;
-}
-
-function Modal({ titulo, onClose, children, ancho = "max-w-2xl" }) {
-  return (
-    <AdminModal open onClose={onClose} maxWidth={ancho} labelledBy="admin-productos-modal-title">
-      <AdminModalHeader>
-        <h2 id="admin-productos-modal-title" className="text-lg font-semibold text-slate-950">{titulo}</h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-          aria-label="Cerrar"
-        >
-          <X className="size-5" />
-        </button>
-      </AdminModalHeader>
-      <AdminModalBody>{children}</AdminModalBody>
-    </AdminModal>
-  );
-}
-
-function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtros = 0 }) {
-  const [form, setForm] = useState(() => ({
-    ...FORM_VACIO,
-    ...inicial,
-    precioNormal: inicial?.precioNormal ?? "",
-    precioConIVA: calcularPrecioConIVA(inicial?.precioNormal ?? inicial?.precioConIVA ?? 0),
-    stock: inicial?.stock ?? "",
-    estado: inicial?.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado",
-    esDestacado: Boolean(inicial?.esDestacado),
-  }));
-  const [fieldErrors, setFieldErrors] = useState({});
-  const [submitError, setSubmitError] = useState("");
-
-  const handleChange = (event) => {
-    const { name, value, type, checked } = event.target;
-
-    if (name === "esDestacado" && checked) {
-      if (destacadosOtros >= MAX_PRODUCTOS_DESTACADOS) {
-        alert(`Solo puedes destacar hasta ${MAX_PRODUCTOS_DESTACADOS} productos en el inicio.`);
-        return;
-      }
-
-      const borrador = {
-        estado: form.estado,
-        stock: Number(form.stock) || 0,
-      };
-
-      if (!productoPuedeDestacarse(borrador)) {
-        if (productoEstaDeshabilitado(borrador)) {
-          alert("No puedes destacar un producto deshabilitado.");
-        } else {
-          alert("No puedes destacar un producto sin stock.");
-        }
-        return;
-      }
-    }
-
-    if (name === "estado" && value === "Deshabilitado" && form.esDestacado) {
-      alert("Quita el producto de destacados antes de deshabilitarlo.");
-      return;
-    }
-
-    if (name === "stock" && Number(value) <= 0 && form.esDestacado) {
-      alert("Quita el producto de destacados antes de dejar el stock en cero.");
-      return;
-    }
-
-    setForm((prev) => {
-      const next = {
-        ...prev,
-        [name]: type === "checkbox"
-          ? checked
-          : name === "precioNormal" || name === "precioConIVA" || name === "stock"
-          ? value === ""
-            ? ""
-            : Number(value)
-          : value,
-        precioConIVA: name === "precioNormal"
-          ? calcularPrecioConIVA(value === "" ? 0 : Number(value))
-          : prev.precioConIVA,
-      };
-
-      if ((name === "estado" && value === "Deshabilitado") || (name === "stock" && Number(value) <= 0)) {
-        next.esDestacado = false;
-      }
-
-      return next;
-    });
-
-    if (name === "nombre" || name === "descripcion") {
-      setFieldErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-    setSubmitError("");
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const errors = validateProductoForm(form);
-    if (hasFieldErrors(errors)) {
-      setFieldErrors(errors);
-      setSubmitError("");
-      return;
-    }
-
-    setFieldErrors({});
-    setSubmitError("");
-
-    try {
-      const payload = {
-        ...form,
-        precioNormal: Number(form.precioNormal) || 0,
-        precioConIVA: calcularPrecioConIVA(form.precioNormal),
-        stock: Number(form.stock) || 0,
-      };
-
-      if (payload.esDestacado && !productoPuedeDestacarse(payload)) {
-        if (productoEstaDeshabilitado(payload)) {
-          setSubmitError("No puedes destacar un producto deshabilitado.");
-        } else {
-          setSubmitError("No puedes destacar un producto sin stock.");
-        }
-        return;
-      }
-
-      if (productoEstaDeshabilitado(payload) && payload.esDestacado) {
-        setSubmitError("Quita el producto de destacados antes de deshabilitarlo.");
-        return;
-      }
-
-      if (productoSinStock(payload) && payload.esDestacado) {
-        setSubmitError("Quita el producto de destacados antes de dejar el stock en cero.");
-        return;
-      }
-
-      await onGuardar(payload);
-    } catch (err) {
-      const message = sanitizeUserFacingError(err?.message || "No se pudo guardar el producto.");
-      if (message.toLowerCase().includes("nombre")) {
-        setFieldErrors((prev) => ({ ...prev, nombre: message }));
-      } else if (message.toLowerCase().includes("descripci\u00f3n") || message.toLowerCase().includes("descripcion")) {
-        setFieldErrors((prev) => ({ ...prev, descripcion: message }));
-      } else {
-        setSubmitError(message);
-      }
-    }
-  };
-
-  const inputCls =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
-  const inputErrorCls = "border-red-500 focus:border-red-500 focus:ring-red-100";
-  const fieldErrorCls = "text-xs text-red-600";
-  const textareaCls = `${inputCls} min-h-[6rem] resize-y break-words whitespace-pre-wrap overflow-x-hidden`;
-  const destacadoDeshabilitado = !puedeMarcarDestacado(form, destacadosOtros);
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-          Nombre
-          <input
-            name="nombre"
-            value={form.nombre}
-            onChange={handleChange}
-            maxLength={MAX_PRODUCTO_NOMBRE}
-            className={`${inputCls} ${fieldErrors.nombre ? inputErrorCls : ""}`}
-            required
-          />
-          {fieldErrors.nombre ? <span className={fieldErrorCls}>{fieldErrors.nombre}</span> : null}
-        </label>
-
-        <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">{"Descripci\u00f3n"}<textarea
-            name="descripcion"
-            value={form.descripcion}
-            onChange={handleChange}
-            rows={4}
-            maxLength={MAX_PRODUCTO_DESCRIPCION}
-            className={`${textareaCls} ${fieldErrors.descripcion ? inputErrorCls : ""}`}
-            required
-          />
-          {fieldErrors.descripcion ? <span className={fieldErrorCls}>{fieldErrors.descripcion}</span> : null}
-        </label>
-
-        <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-          Imagen URL
-          <input name="imagen" value={form.imagen} onChange={handleChange} className={inputCls} />
-        </label>
-
-        <label className="grid gap-2 text-sm font-medium text-slate-700">
-          Precio normal
-          <input type="number" name="precioNormal" value={form.precioNormal} onChange={handleChange} className={inputCls} min="0" required />
-        </label>
-
-        <label className="grid gap-2 text-sm font-medium text-slate-700">
-          Precio con IVA
-          <input type="number" name="precioConIVA" value={form.precioConIVA} className={inputCls} min="0" readOnly aria-readonly="true" />
-        </label>
-
-        <label className="grid gap-2 text-sm font-medium text-slate-700">
-          Stock
-          <input type="number" name="stock" value={form.stock} onChange={handleChange} className={inputCls} min="0" required />
-        </label>
-
-        <label className="grid gap-2 text-sm font-medium text-slate-700">
-          Peso
-          <input name="peso" value={form.peso} onChange={handleChange} className={inputCls} placeholder="500g / 1kg" />
-        </label>
-
-        <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-          Estado
-          <select name="estado" value={form.estado} onChange={handleChange} className={inputCls}>
-            <option value="Habilitado">Habilitado</option>
-            <option value="Deshabilitado">Deshabilitado</option>
-          </select>
-        </label>
-
-        <label className="flex items-center gap-3 text-sm font-medium text-slate-700 md:col-span-2">
-          <input
-            type="checkbox"
-            name="esDestacado"
-            checked={Boolean(form.esDestacado)}
-            onChange={handleChange}
-            disabled={destacadoDeshabilitado}
-            className="size-4 rounded border-slate-300 accent-[#a7532d] text-[#a7532d] focus:ring-[#a7532d] disabled:cursor-not-allowed disabled:opacity-50"
-          />
-          Mostrar como destacado en el inicio
-        </label>
-        <p className="text-xs text-slate-500 md:col-span-2">
-          Maximo {MAX_PRODUCTOS_DESTACADOS} productos destacados en el inicio
-          ({Math.min(destacadosOtros + (form.esDestacado ? 1 : 0), MAX_PRODUCTOS_DESTACADOS)}/{MAX_PRODUCTOS_DESTACADOS}).
-          {productoEstaDeshabilitado(form) ? " Un producto deshabilitado no puede destacarse." : null}
-          {!productoEstaDeshabilitado(form) && productoSinStock(form) ? " Un producto sin stock no puede destacarse." : null}
-          {form.esDestacado ? " Quita el destacado antes de deshabilitarlo o dejar el stock en cero." : null}
-        </p>
-      </div>
-
-      {submitError ? <p className={fieldErrorCls}>{submitError}</p> : null}
-
-      <div className="flex flex-row flex-wrap justify-end gap-2 pt-2">
-        <AdminModalActions
-          onCancel={onCancelar}
-          primaryLabel={cargando ? "Guardando..." : inicial ? "Guardar cambios" : "Crear producto"}
-          primaryDisabled={cargando}
-        />
-      </div>
-    </form>
-  );
 }
 
 const accionBtnBase =
@@ -449,8 +168,6 @@ const AdminInventarioProducto = () => {
       const nuevo = await crearProducto(form);
       setProductos((prev) => [...prev, nuevo]);
       setModalCrear(false);
-    } catch (err) {
-      throw err;
     } finally {
       setGuardando(false);
     }
@@ -462,8 +179,6 @@ const AdminInventarioProducto = () => {
       const actualizado = await actualizarProducto(productoEditar.id, form);
       setProductos((prev) => prev.map((producto) => (producto.id === actualizado.id ? actualizado : producto)));
       setProductoEditar(null);
-    } catch (err) {
-      throw err;
     } finally {
       setGuardando(false);
     }
@@ -542,28 +257,17 @@ const AdminInventarioProducto = () => {
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
     <AdminLayout>
-      {modalCrear && (
-        <Modal titulo="Nuevo producto" onClose={() => setModalCrear(false)}>
-          <FormProducto
-            destacadosOtros={destacadosEnUso}
-            onGuardar={handleCrear}
-            onCancelar={() => setModalCrear(false)}
-            cargando={guardando}
-          />
-        </Modal>
-      )}
-
-      {productoEditar && (
-        <Modal titulo="Editar producto" onClose={() => setProductoEditar(null)}>
-          <FormProducto
-            inicial={productoEditar}
-            destacadosOtros={contarDestacados(productos, productoEditar.id)}
-            onGuardar={handleEditar}
-            onCancelar={() => setProductoEditar(null)}
-            cargando={guardando}
-          />
-        </Modal>
-      )}
+      <ProductCatalogFormDrawer
+        open={modalCrear || Boolean(productoEditar)}
+        initial={productoEditar}
+        products={productos}
+        onSave={productoEditar ? handleEditar : handleCrear}
+        onClose={() => {
+          setModalCrear(false);
+          setProductoEditar(null);
+        }}
+        isSaving={guardando}
+      />
 
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
         {cargando ? (
