@@ -1,380 +1,38 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 
-import { Pencil, Power, Star, Trash2, X } from "lucide-react";
+
 
 import { AdminLayout } from "../layouts/AdminLayout";
-import { AdminModal, AdminModalActions, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { ProductActions } from "./components/ProductActions";
+import { CentralStockEditor } from "./components/CentralStockEditor";
+import { ProductCatalogFormDrawer } from "./components/ProductCatalogFormDrawer";
+import { ProductCatalogMobileList } from "./components/ProductCatalogMobileList";
+import { ProductCatalogTable } from "./components/ProductCatalogTable";
+import { etiquetaEstadoProducto } from "./components/catalogFormatters";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
+import { useCentralStock } from "../../../hooks/useCentralStock";
+import { useProductCatalog } from "../../../hooks/useProductCatalog";
 import {
   actualizarProducto,
+  actualizarStockCentral,
   crearProducto,
-  eliminarProducto,
-  obtenerProductos,
-  calcularPrecioConIVA,
 } from "../../../services/productosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
-import {
-  contactSupportMessage,
-  hasFieldErrors,
-  MAX_PRODUCTO_DESCRIPCION,
-  MAX_PRODUCTO_NOMBRE,
-  sanitizeUserFacingError,
-  validateProductoForm,
-} from "../../../lib/formLimits";
+import { contactSupportMessage } from "../../../lib/formLimits";
 import {
   productoPuedeDestacarse,
   productoPuedeDeshabilitarse,
-  productoSinStock,
   productoEstaDeshabilitado,
 } from "../../../lib/productoDisponibilidad";
-
-const FORM_VACIO = {
-  nombre: "",
-  descripcion: "",
-  imagen: "",
-  precioNormal: "",
-  precioConIVA: "",
-  stock: "",
-  estado: "Habilitado",
-  peso: "",
-  esDestacado: false,
-};
 
 const MAX_PRODUCTOS_DESTACADOS = 3;
 
 function contarDestacados(productos, excluirId = null) {
   return productos.filter((item) => item.esDestacado && item.id !== excluirId).length;
-}
-
-function puedeMarcarDestacado(form, destacadosOtros) {
-  const borrador = {
-    estado: form.estado,
-    stock: Number(form.stock) || 0,
-  };
-
-  if (!productoPuedeDestacarse(borrador)) {
-    return false;
-  }
-
-  return form.esDestacado || destacadosOtros < MAX_PRODUCTOS_DESTACADOS;
-}
-
-function Modal({ titulo, onClose, children, ancho = "max-w-2xl" }) {
-  return (
-    <AdminModal open onClose={onClose} maxWidth={ancho} labelledBy="admin-productos-modal-title">
-      <AdminModalHeader>
-        <h2 id="admin-productos-modal-title" className="text-lg font-semibold text-slate-950">{titulo}</h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-          aria-label="Cerrar"
-        >
-          <X className="size-5" />
-        </button>
-      </AdminModalHeader>
-      <AdminModalBody>{children}</AdminModalBody>
-    </AdminModal>
-  );
-}
-
-function FormProducto({ inicial, onGuardar, onCancelar, cargando, destacadosOtros = 0 }) {
-  const [form, setForm] = useState(() => ({
-    ...FORM_VACIO,
-    ...inicial,
-    precioNormal: inicial?.precioNormal ?? "",
-    precioConIVA: calcularPrecioConIVA(inicial?.precioNormal ?? inicial?.precioConIVA ?? 0),
-    stock: inicial?.stock ?? "",
-    estado: inicial?.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado",
-    esDestacado: Boolean(inicial?.esDestacado),
-  }));
-  const [fieldErrors, setFieldErrors] = useState({});
-  const [submitError, setSubmitError] = useState("");
-
-  const handleChange = (event) => {
-    const { name, value, type, checked } = event.target;
-
-    if (name === "esDestacado" && checked) {
-      if (destacadosOtros >= MAX_PRODUCTOS_DESTACADOS) {
-        alert(`Solo puedes destacar hasta ${MAX_PRODUCTOS_DESTACADOS} productos en el inicio.`);
-        return;
-      }
-
-      const borrador = {
-        estado: form.estado,
-        stock: Number(form.stock) || 0,
-      };
-
-      if (!productoPuedeDestacarse(borrador)) {
-        if (productoEstaDeshabilitado(borrador)) {
-          alert("No puedes destacar un producto deshabilitado.");
-        } else {
-          alert("No puedes destacar un producto sin stock.");
-        }
-        return;
-      }
-    }
-
-    if (name === "estado" && value === "Deshabilitado" && form.esDestacado) {
-      alert("Quita el producto de destacados antes de deshabilitarlo.");
-      return;
-    }
-
-    if (name === "stock" && Number(value) <= 0 && form.esDestacado) {
-      alert("Quita el producto de destacados antes de dejar el stock en cero.");
-      return;
-    }
-
-    setForm((prev) => {
-      const next = {
-        ...prev,
-        [name]: type === "checkbox"
-          ? checked
-          : name === "precioNormal" || name === "precioConIVA" || name === "stock"
-          ? value === ""
-            ? ""
-            : Number(value)
-          : value,
-        precioConIVA: name === "precioNormal"
-          ? calcularPrecioConIVA(value === "" ? 0 : Number(value))
-          : prev.precioConIVA,
-      };
-
-      if ((name === "estado" && value === "Deshabilitado") || (name === "stock" && Number(value) <= 0)) {
-        next.esDestacado = false;
-      }
-
-      return next;
-    });
-
-    if (name === "nombre" || name === "descripcion") {
-      setFieldErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-    setSubmitError("");
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const errors = validateProductoForm(form);
-    if (hasFieldErrors(errors)) {
-      setFieldErrors(errors);
-      setSubmitError("");
-      return;
-    }
-
-    setFieldErrors({});
-    setSubmitError("");
-
-    try {
-      const payload = {
-        ...form,
-        precioNormal: Number(form.precioNormal) || 0,
-        precioConIVA: calcularPrecioConIVA(form.precioNormal),
-        stock: Number(form.stock) || 0,
-      };
-
-      if (payload.esDestacado && !productoPuedeDestacarse(payload)) {
-        if (productoEstaDeshabilitado(payload)) {
-          setSubmitError("No puedes destacar un producto deshabilitado.");
-        } else {
-          setSubmitError("No puedes destacar un producto sin stock.");
-        }
-        return;
-      }
-
-      if (productoEstaDeshabilitado(payload) && payload.esDestacado) {
-        setSubmitError("Quita el producto de destacados antes de deshabilitarlo.");
-        return;
-      }
-
-      if (productoSinStock(payload) && payload.esDestacado) {
-        setSubmitError("Quita el producto de destacados antes de dejar el stock en cero.");
-        return;
-      }
-
-      await onGuardar(payload);
-    } catch (err) {
-      const message = sanitizeUserFacingError(err?.message || "No se pudo guardar el producto.");
-      if (message.toLowerCase().includes("nombre")) {
-        setFieldErrors((prev) => ({ ...prev, nombre: message }));
-      } else if (message.toLowerCase().includes("descripci\u00f3n") || message.toLowerCase().includes("descripcion")) {
-        setFieldErrors((prev) => ({ ...prev, descripcion: message }));
-      } else {
-        setSubmitError(message);
-      }
-    }
-  };
-
-  const inputCls =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
-  const inputErrorCls = "border-red-500 focus:border-red-500 focus:ring-red-100";
-  const fieldErrorCls = "text-xs text-red-600";
-  const textareaCls = `${inputCls} min-h-[6rem] resize-y break-words whitespace-pre-wrap overflow-x-hidden`;
-  const destacadoDeshabilitado = !puedeMarcarDestacado(form, destacadosOtros);
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-          Nombre
-          <input
-            name="nombre"
-            value={form.nombre}
-            onChange={handleChange}
-            maxLength={MAX_PRODUCTO_NOMBRE}
-            className={`${inputCls} ${fieldErrors.nombre ? inputErrorCls : ""}`}
-            required
-          />
-          {fieldErrors.nombre ? <span className={fieldErrorCls}>{fieldErrors.nombre}</span> : null}
-        </label>
-
-        <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">{"Descripci\u00f3n"}<textarea
-            name="descripcion"
-            value={form.descripcion}
-            onChange={handleChange}
-            rows={4}
-            maxLength={MAX_PRODUCTO_DESCRIPCION}
-            className={`${textareaCls} ${fieldErrors.descripcion ? inputErrorCls : ""}`}
-            required
-          />
-          {fieldErrors.descripcion ? <span className={fieldErrorCls}>{fieldErrors.descripcion}</span> : null}
-        </label>
-
-        <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-          Imagen URL
-          <input name="imagen" value={form.imagen} onChange={handleChange} className={inputCls} />
-        </label>
-
-        <label className="grid gap-2 text-sm font-medium text-slate-700">
-          Precio normal
-          <input type="number" name="precioNormal" value={form.precioNormal} onChange={handleChange} className={inputCls} min="0" required />
-        </label>
-
-        <label className="grid gap-2 text-sm font-medium text-slate-700">
-          Precio con IVA
-          <input type="number" name="precioConIVA" value={form.precioConIVA} className={inputCls} min="0" readOnly aria-readonly="true" />
-        </label>
-
-        <label className="grid gap-2 text-sm font-medium text-slate-700">
-          Stock
-          <input type="number" name="stock" value={form.stock} onChange={handleChange} className={inputCls} min="0" required />
-        </label>
-
-        <label className="grid gap-2 text-sm font-medium text-slate-700">
-          Peso
-          <input name="peso" value={form.peso} onChange={handleChange} className={inputCls} placeholder="500g / 1kg" />
-        </label>
-
-        <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-          Estado
-          <select name="estado" value={form.estado} onChange={handleChange} className={inputCls}>
-            <option value="Habilitado">Habilitado</option>
-            <option value="Deshabilitado">Deshabilitado</option>
-          </select>
-        </label>
-
-        <label className="flex items-center gap-3 text-sm font-medium text-slate-700 md:col-span-2">
-          <input
-            type="checkbox"
-            name="esDestacado"
-            checked={Boolean(form.esDestacado)}
-            onChange={handleChange}
-            disabled={destacadoDeshabilitado}
-            className="size-4 rounded border-slate-300 accent-[#a7532d] text-[#a7532d] focus:ring-[#a7532d] disabled:cursor-not-allowed disabled:opacity-50"
-          />
-          Mostrar como destacado en el inicio
-        </label>
-        <p className="text-xs text-slate-500 md:col-span-2">
-          Maximo {MAX_PRODUCTOS_DESTACADOS} productos destacados en el inicio
-          ({Math.min(destacadosOtros + (form.esDestacado ? 1 : 0), MAX_PRODUCTOS_DESTACADOS)}/{MAX_PRODUCTOS_DESTACADOS}).
-          {productoEstaDeshabilitado(form) ? " Un producto deshabilitado no puede destacarse." : null}
-          {!productoEstaDeshabilitado(form) && productoSinStock(form) ? " Un producto sin stock no puede destacarse." : null}
-          {form.esDestacado ? " Quita el destacado antes de deshabilitarlo o dejar el stock en cero." : null}
-        </p>
-      </div>
-
-      {submitError ? <p className={fieldErrorCls}>{submitError}</p> : null}
-
-      <div className="flex flex-row flex-wrap justify-end gap-2 pt-2">
-        <AdminModalActions
-          onCancel={onCancelar}
-          primaryLabel={cargando ? "Guardando..." : inicial ? "Guardar cambios" : "Crear producto"}
-          primaryDisabled={cargando}
-        />
-      </div>
-    </form>
-  );
-}
-
-function formatearPrecio(valor) {
-  return new Intl.NumberFormat("es-CR", {
-    style: "currency",
-    currency: "CRC",
-    maximumFractionDigits: 0,
-  }).format(valor || 0);
-}
-
-function etiquetaEstadoProducto(producto) {
-  if (productoEstaDeshabilitado(producto)) {
-    return { texto: "Deshabilitado", clase: "bg-red-50 text-red-700" };
-  }
-
-  if (productoSinStock(producto)) {
-    return { texto: "Agotado", clase: "bg-amber-50 text-amber-800" };
-  }
-
-  return { texto: "Habilitado", clase: "bg-emerald-50 text-emerald-700" };
-}
-
-const accionBtnBase =
-  "inline-flex items-center justify-center gap-1.5 rounded-full border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
-
-function AccionesProducto({ producto, puedeEditar, puedeInactivar, puedeEliminar, onEditar, onToggleEstado, onEliminar, variant = "table" }) {
-  const esDeshabilitado = producto.estado === "Deshabilitado";
-  const esMovil = variant === "mobile";
-  const bloquearInhabilitar = producto.esDestacado && !esDeshabilitado;
-  const mostrarExtras = puedeInactivar || puedeEliminar;
-
-  const editarCls = `${accionBtnBase} border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 focus-visible:ring-amber-300`;
-  const toggleCls = `${accionBtnBase} ${
-    esDeshabilitado
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300"
-      : "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300"
-  }`;
-  const eliminarCls = `${accionBtnBase} border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300`;
-
-  return (
-    <div className={`grid gap-1.5 ${esMovil ? "gap-2" : "w-[11.5rem]"} ${mostrarExtras ? (esMovil ? "grid-cols-3" : "grid-cols-2") : "grid-cols-1"}`}>
-      {puedeEditar ? (
-        <button type="button" onClick={onEditar} className={`${editarCls} ${esMovil ? "min-h-10 px-2 py-2" : "h-9 px-2.5"}`}>
-          <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
-          <span className={esMovil ? "truncate" : ""}>Editar</span>
-        </button>
-      ) : null}
-      {puedeInactivar ? (
-        <button
-          type="button"
-          onClick={onToggleEstado}
-          disabled={bloquearInhabilitar}
-          title={bloquearInhabilitar ? "Quita el destacado antes de deshabilitarlo" : undefined}
-          className={`${toggleCls} ${esMovil ? "min-h-10 px-2 py-2" : "h-9 px-2.5"} disabled:cursor-not-allowed disabled:opacity-50`}
-        >
-          <Power className="size-3.5 shrink-0" aria-hidden="true" />
-          <span className={esMovil ? "truncate" : ""}>{esDeshabilitado ? "Habilitar" : "Inhabilitar"}</span>
-        </button>
-      ) : null}
-      {puedeEliminar ? (
-        <button type="button" onClick={onEliminar} className={`${eliminarCls} ${esMovil ? "min-h-10 px-2 py-2" : "col-span-2 h-9 px-2.5"}`}>
-          <Trash2 className="size-3.5 shrink-0" aria-hidden="true" />
-          <span className={esMovil ? "truncate" : ""}>Eliminar</span>
-        </button>
-      ) : null}
-    </div>
-  );
 }
 
 const AdminInventarioProducto = () => {
@@ -389,13 +47,33 @@ const AdminInventarioProducto = () => {
   const puedeCrear = tienePermiso(actorRoles, "crear_productos");
   const puedeEditar = tienePermiso(actorRoles, "actualizar_productos");
   const puedeInactivar = tienePermiso(actorRoles, "inactivar_productos");
-  const puedeEliminar = tienePermiso(actorRoles, "crear_productos");
-  const [productos, setProductos] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
+  const puedeActualizarStock = tienePermiso(actorRoles, "actualizar_stock_productos");
   const [modalCrear, setModalCrear] = useState(false);
   const [productoEditar, setProductoEditar] = useState(null);
+  const [productoStockEditar, setProductoStockEditar] = useState(null);
   const [guardando, setGuardando] = useState(false);
+  const [guardandoStock, setGuardandoStock] = useState(false);
+  const catalogState = useProductCatalog();
+  const stockState = useCentralStock();
+  const stockByProductId = useMemo(
+    () => new Map(stockState.data.map((stock) => [String(stock.productId), stock])),
+    [stockState.data],
+  );
+  const productos = useMemo(
+    () => catalogState.data.map((producto) => ({
+      ...producto,
+      centralStock: stockByProductId.get(String(producto.id)) || {
+        productId: String(producto.id),
+        locationCode: "BODEGA_CENTRAL",
+        stock: null,
+        confidence: "unknown",
+      },
+      stock: stockByProductId.get(String(producto.id))?.stock ?? 0,
+    })),
+    [catalogState.data, stockByProductId],
+  );
+  const cargando = catalogState.loading;
+  const error = catalogState.error?.message || null;
   const { showLoading, loadingMessage } = useAdminPageGate('/admin/producto', !cargando);
 
   const {
@@ -417,57 +95,14 @@ const AdminInventarioProducto = () => {
     ],
   });
 
-  const cargarProductos = async () => {
-    try {
-      setCargando(true);
-      setError(null);
-      const data = await obtenerProductos();
-      setProductos(data);
-    } catch (err) {
-      setError(sanitizeUserFacingError(err?.message || "No se pudieron cargar los productos."));
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  useEffect(() => {
-    let activo = true;
-
-    const inicializar = async () => {
-      try {
-        setCargando(true);
-        setError(null);
-        const data = await obtenerProductos();
-
-        if (activo) {
-          setProductos(data);
-        }
-      } catch {
-        if (activo) {
-          setError("No se pudieron cargar los productos.");
-        }
-      } finally {
-        if (activo) {
-          setCargando(false);
-        }
-      }
-    };
-
-    inicializar();
-
-    return () => {
-      activo = false;
-    };
-  }, []);
+  const cargarProductos = () => catalogState.retry();
 
   const handleCrear = async (form) => {
     setGuardando(true);
     try {
-      const nuevo = await crearProducto(form);
-      setProductos((prev) => [...prev, nuevo]);
+      await crearProducto(form);
+      await Promise.all([catalogState.retry(), stockState.retry()]);
       setModalCrear(false);
-    } catch (err) {
-      throw err;
     } finally {
       setGuardando(false);
     }
@@ -476,32 +111,25 @@ const AdminInventarioProducto = () => {
   const handleEditar = async (form) => {
     setGuardando(true);
     try {
-      const actualizado = await actualizarProducto(productoEditar.id, form);
-      setProductos((prev) => prev.map((producto) => (producto.id === actualizado.id ? actualizado : producto)));
+      await actualizarProducto(productoEditar.id, form);
+      await Promise.all([catalogState.retry(), stockState.retry()]);
       setProductoEditar(null);
-    } catch (err) {
-      throw err;
     } finally {
       setGuardando(false);
     }
   };
 
-  const handleEliminar = async (producto) => {
-    if (!puedeEliminar) {
-      alert("No tiene permiso para eliminar productos.");
-      return;
-    }
-
-    const confirmar = window.confirm(`\u00bfEliminar ${producto.nombre}?`);
-    if (!confirmar) return;
-
+  const handleGuardarStock = async (stock) => {
+    setGuardandoStock(true);
     try {
-      await eliminarProducto(producto.id);
-      setProductos((prev) => prev.filter((item) => item.id !== producto.id));
-    } catch {
-      alert("No se pudo eliminar el producto.");
+      await actualizarStockCentral(productoStockEditar.id, stock);
+      await Promise.all([catalogState.retry(), stockState.retry()]);
+      setProductoStockEditar(null);
+    } finally {
+      setGuardandoStock(false);
     }
   };
+
 
   const handleToggleEstado = async (producto) => {
     if (!puedeInactivar) {
@@ -517,11 +145,11 @@ const AdminInventarioProducto = () => {
     }
 
     try {
-      const actualizado = await actualizarProducto(producto.id, {
+      await actualizarProducto(producto.id, {
         ...producto,
         estado: nuevoEstado,
       });
-      setProductos((prev) => prev.map((item) => (item.id === actualizado.id ? actualizado : item)));
+      await catalogState.retry();
     } catch (err) {
       alert(err?.message || "No se pudo cambiar el estado del producto.");
     }
@@ -545,10 +173,10 @@ const AdminInventarioProducto = () => {
     }
 
     try {
-      const actualizado = await actualizarProducto(producto.id, {
+      await actualizarProducto(producto.id, {
         esDestacado: !producto.esDestacado,
       });
-      setProductos((prev) => prev.map((item) => (item.id === actualizado.id ? actualizado : item)));
+      await catalogState.retry();
     } catch (err) {
       alert(err?.message || "No se pudo cambiar el estado destacado.");
     }
@@ -559,28 +187,27 @@ const AdminInventarioProducto = () => {
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
     <AdminLayout>
-      {modalCrear && (
-        <Modal titulo="Nuevo producto" onClose={() => setModalCrear(false)}>
-          <FormProducto
-            destacadosOtros={destacadosEnUso}
-            onGuardar={handleCrear}
-            onCancelar={() => setModalCrear(false)}
-            cargando={guardando}
-          />
-        </Modal>
-      )}
+      <ProductCatalogFormDrawer
+        open={modalCrear || Boolean(productoEditar)}
+        initial={productoEditar}
+        products={productos}
+        onSave={productoEditar ? handleEditar : handleCrear}
+        onClose={() => {
+          setModalCrear(false);
+          setProductoEditar(null);
+        }}
+        isSaving={guardando}
+      />
 
-      {productoEditar && (
-        <Modal titulo="Editar producto" onClose={() => setProductoEditar(null)}>
-          <FormProducto
-            inicial={productoEditar}
-            destacadosOtros={contarDestacados(productos, productoEditar.id)}
-            onGuardar={handleEditar}
-            onCancelar={() => setProductoEditar(null)}
-            cargando={guardando}
-          />
-        </Modal>
-      )}
+      <CentralStockEditor
+        key={`${productoStockEditar?.id ?? "closed"}-${productoStockEditar?.centralStock?.confidence ?? "unknown"}-${productoStockEditar?.centralStock?.stock ?? ""}`}
+        open={Boolean(productoStockEditar)}
+        product={productoStockEditar}
+        stockRecord={productoStockEditar?.centralStock}
+        onSave={handleGuardarStock}
+        onClose={() => setProductoStockEditar(null)}
+        isSaving={guardandoStock}
+      />
 
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
         {cargando ? (
@@ -602,6 +229,18 @@ const AdminInventarioProducto = () => {
           </div>
         ) : (
           <>
+        {stockState.error ? (
+          <div className="flex flex-col gap-2 border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between sm:px-6" role="status">
+            <span>El catálogo está disponible, pero no se pudo cargar el stock de Bodega Central.</span>
+            <button
+              type="button"
+              onClick={stockState.retry}
+              className="min-h-11 rounded-full border border-amber-300 bg-white px-4 py-2 text-xs font-semibold text-amber-900 transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+            >
+              Reintentar stock
+            </button>
+          </div>
+        ) : null}
         <div className="flex flex-col gap-4 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <div>
             <h1 className="text-xl font-semibold text-slate-950 sm:text-2xl">Productos</h1>
@@ -640,152 +279,45 @@ const AdminInventarioProducto = () => {
           <AdminListaVacia onLimpiar={limpiar} />
         ) : (
           <>
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[900px] text-left text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    <th className="px-6 py-4">Imagen</th>
-                    <th className="px-6 py-4">Nombre</th>
-                    <th className="px-6 py-4">Precio</th>
-                    <th className="px-6 py-4">Stock</th>
-                    <th className="px-6 py-4">Estado</th>
-                    <th className="px-6 py-4">Destacado</th>
-                    <th className="px-6 py-4 w-48">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {productosFiltrados.map((producto) => {
-                    const estadoProducto = etiquetaEstadoProducto(producto);
-
-                    return (
-                    <tr key={producto.id} className="border-b border-slate-100 last:border-b-0">
-                      <td className="px-6 py-4">
-                        {producto.imagen ? (
-                          <img
-                            src={producto.imagen}
-                            alt={producto.nombre}
-                            className="h-14 w-14 rounded-xl object-cover ring-1 ring-slate-200"
-                          />
-                        ) : (
-                          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-slate-200 text-xs text-slate-500">
-                            Sin foto
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-slate-900">{producto.nombre}</div>
-                        <div className="mt-1 line-clamp-2 max-w-xl text-xs leading-5 text-slate-500">
-                          {producto.descripcion}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-slate-700">{formatearPrecio(producto.precioNormal)}</td>
-                      <td className="px-6 py-4 text-slate-700">{producto.stock}</td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${estadoProducto.clase}`}
-                        >
-                          {estadoProducto.texto}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleDestacado(producto)}
-                          disabled={!producto.esDestacado && (destacadosEnUso >= MAX_PRODUCTOS_DESTACADOS || !productoPuedeDestacarse(producto))}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                            producto.esDestacado
-                              ? "bg-amber-50 text-amber-800 hover:bg-amber-100"
-                              : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                          }`}
-                          aria-pressed={producto.esDestacado}
-                        >
-                          <Star className={`size-3.5 ${producto.esDestacado ? "fill-current" : ""}`} aria-hidden="true" />
-                          {producto.esDestacado ? "Si" : "No"}
-                        </button>
-                      </td>
-                      <td className="px-6 py-4 align-top">
-                        <AccionesProducto
-                          producto={producto}
-                          puedeEditar={puedeEditar}
-                          puedeInactivar={puedeInactivar}
-                          puedeEliminar={puedeEliminar}
-                          onEditar={() => setProductoEditar(producto)}
-                          onToggleEstado={() => handleToggleEstado(producto)}
-                          onEliminar={() => handleEliminar(producto)}
-                        />
-                      </td>
-                    </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="divide-y divide-slate-100 md:hidden">
-              {productosFiltrados.map((producto) => {
-                const estadoProducto = etiquetaEstadoProducto(producto);
-
-                return (
-                <article key={producto.id} className="space-y-3 px-4 py-4">
-                  <div className="flex items-start gap-3">
-                    {producto.imagen ? (
-                      <img
-                        src={producto.imagen}
-                        alt={producto.nombre}
-                        className="h-16 w-16 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
-                      />
-                    ) : (
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-xs text-slate-500">
-                        Sin foto
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-slate-900">{producto.nombre}</h3>
-                        <span
-                          className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${estadoProducto.clase}`}
-                        >
-                          {estadoProducto.texto}
-                        </span>
-                      </div>
-                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{producto.descripcion}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-3 text-sm text-slate-600">
-                    <span><strong className="text-slate-800">Precio:</strong> {formatearPrecio(producto.precioNormal)}</span>
-                    <span><strong className="text-slate-800">Stock:</strong> {producto.stock}</span>
-                    {producto.peso ? <span><strong className="text-slate-800">Peso:</strong> {producto.peso}</span> : null}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleToggleDestacado(producto)}
-                    disabled={!producto.esDestacado && (destacadosEnUso >= MAX_PRODUCTOS_DESTACADOS || !productoPuedeDestacarse(producto))}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                      producto.esDestacado
-                        ? "bg-amber-50 text-amber-800"
-                        : "bg-slate-100 text-slate-500"
-                    }`}
-                  >
-                    <Star className={`size-3.5 ${producto.esDestacado ? "fill-current" : ""}`} aria-hidden="true" />
-                    {producto.esDestacado ? "Destacado en inicio" : "Marcar como destacado"}
-                  </button>
-
-                  <AccionesProducto
-                    producto={producto}
-                    puedeEditar={puedeEditar}
-                    puedeInactivar={puedeInactivar}
-                    puedeEliminar={puedeEliminar}
-                    variant="mobile"
-                    onEditar={() => setProductoEditar(producto)}
-                    onToggleEstado={() => handleToggleEstado(producto)}
-                    onEliminar={() => handleEliminar(producto)}
-                  />
-                </article>
-                );
-              })}
-            </div>
+            <ProductCatalogTable
+              productos={productosFiltrados}
+              destacadosEnUso={destacadosEnUso}
+              maxDestacados={MAX_PRODUCTOS_DESTACADOS}
+              puedeDestacarse={productoPuedeDestacarse}
+              stockLoading={stockState.loading}
+              onToggleDestacado={handleToggleDestacado}
+              renderAcciones={(producto) => (
+                <ProductActions
+                  producto={producto}
+                  puedeEditar={puedeEditar}
+                  puedeInactivar={puedeInactivar}
+                  puedeActualizarStock={puedeActualizarStock}
+                  onEditar={() => setProductoEditar(producto)}
+                  onToggleEstado={() => handleToggleEstado(producto)}
+                  onEditarStock={() => setProductoStockEditar(producto)}
+                />
+              )}
+            />
+            <ProductCatalogMobileList
+              productos={productosFiltrados}
+              destacadosEnUso={destacadosEnUso}
+              maxDestacados={MAX_PRODUCTOS_DESTACADOS}
+              puedeDestacarse={productoPuedeDestacarse}
+              stockLoading={stockState.loading}
+              onToggleDestacado={handleToggleDestacado}
+              renderAcciones={(producto) => (
+                <ProductActions
+                  producto={producto}
+                  puedeEditar={puedeEditar}
+                  puedeInactivar={puedeInactivar}
+                  puedeActualizarStock={puedeActualizarStock}
+                  variant="mobile"
+                  onEditar={() => setProductoEditar(producto)}
+                  onToggleEstado={() => handleToggleEstado(producto)}
+                  onEditarStock={() => setProductoStockEditar(producto)}
+                />
+              )}
+            />
           </>
         )}
           </>
