@@ -137,7 +137,6 @@ describe('InventarioProducto characterization', () => {
     await user.type(within(dialog).getByRole('textbox', { name: /^Nombre/ }), 'Café nuevo')
     await user.type(within(dialog).getByRole('textbox', { name: /^Descripción/ }), 'Descripción válida')
     await user.type(within(dialog).getByRole('spinbutton', { name: 'Precio normal' }), '1000')
-    await user.type(within(dialog).getByRole('spinbutton', { name: 'Stock' }), '5')
     await user.click(submit)
 
     await waitFor(() => expect(serviceMocks.crearProducto).toHaveBeenCalledTimes(1))
