@@ -4,9 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const serviceMocks = vi.hoisted(() => ({
   actualizarProducto: vi.fn(),
+  actualizarStockCentral: vi.fn(),
   crearProducto: vi.fn(),
-  eliminarProducto: vi.fn(),
-  obtenerProductos: vi.fn(),
+}))
+
+const hookMocks = vi.hoisted(() => ({
+  catalog: { data: [], status: 'idle', error: null, loading: false, retry: vi.fn() },
+  stock: { data: [], status: 'success', error: null, loading: false, retry: vi.fn() },
 }))
 
 const sessionMocks = vi.hoisted(() => ({
@@ -16,6 +20,13 @@ const sessionMocks = vi.hoisted(() => ({
 vi.mock('../../../services/productosService', () => ({
   ...serviceMocks,
   calcularPrecioConIVA: (value) => Math.round((Number(value) || 0) * 1.13),
+}))
+
+vi.mock('../../../hooks/useProductCatalog', () => ({
+  useProductCatalog: () => hookMocks.catalog,
+}))
+vi.mock('../../../hooks/useCentralStock', () => ({
+  useCentralStock: () => hookMocks.stock,
 }))
 
 vi.mock('../../../services/sessionService', () => sessionMocks)
@@ -58,7 +69,25 @@ const products = [
 
 function renderPage({ role = 'SuperAdmin', data = products } = {}) {
   sessionMocks.getActiveSessionUser.mockReturnValue({ role })
-  serviceMocks.obtenerProductos.mockResolvedValue(data)
+  hookMocks.catalog = {
+    data: data.map(({ stock, ...producto }) => producto),
+    status: 'success',
+    error: null,
+    loading: false,
+    retry: vi.fn(),
+  }
+  hookMocks.stock = {
+    data: data.map((producto) => ({
+      productId: String(producto.id),
+      locationCode: 'BODEGA_CENTRAL',
+      stock: producto.stock,
+      confidence: 'known',
+    })),
+    status: 'success',
+    error: null,
+    loading: false,
+    retry: vi.fn(),
+  }
   return render(<AdminInventarioProducto />)
 }
 
@@ -69,7 +98,7 @@ describe('InventarioProducto characterization', () => {
 
   it('shows loading while the catalog request is pending', () => {
     sessionMocks.getActiveSessionUser.mockReturnValue({ role: 'SuperAdmin' })
-    serviceMocks.obtenerProductos.mockReturnValue(new Promise(() => {}))
+    hookMocks.catalog = { data: [], status: 'loading', error: null, loading: true, retry: vi.fn() }
 
     render(<AdminInventarioProducto />)
 
@@ -80,17 +109,19 @@ describe('InventarioProducto characterization', () => {
   it('keeps a failed request retryable and restores catalog content', async () => {
     const user = userEvent.setup()
     sessionMocks.getActiveSessionUser.mockReturnValue({ role: 'SuperAdmin' })
-    serviceMocks.obtenerProductos
-      .mockRejectedValueOnce(new Error('network'))
-      .mockResolvedValueOnce(products)
+    hookMocks.catalog = {
+      data: [],
+      status: 'error',
+      error: new Error('network'),
+      loading: false,
+      retry: vi.fn(),
+    }
 
     render(<AdminInventarioProducto />)
 
-    expect(await screen.findByText('No se pudieron cargar los productos.')).toBeInTheDocument()
+    expect(await screen.findByText('network')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Reintentar' }))
-
-    expect(await screen.findAllByText('Café Premium')).toHaveLength(2)
-    expect(serviceMocks.obtenerProductos).toHaveBeenCalledTimes(2)
+    expect(hookMocks.catalog.retry).toHaveBeenCalledTimes(1)
   })
 
   it('filters records and renders the current desktop and mobile representations', async () => {
@@ -115,6 +146,39 @@ describe('InventarioProducto characterization', () => {
     expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Inhabilitar' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Eliminar' })).not.toBeInTheDocument()
+  })
+
+  it('shows central stock editing only to authorized staff and keeps catalog visible on stock failure', async () => {
+    const user = userEvent.setup()
+    sessionMocks.getActiveSessionUser.mockReturnValue({ role: 'Admin' })
+    hookMocks.catalog = {
+      data: products.map(({ stock, ...producto }) => producto),
+      status: 'success',
+      error: null,
+      loading: false,
+      retry: vi.fn(),
+    }
+    hookMocks.stock = {
+      data: [],
+      status: 'error',
+      error: new Error('stock unavailable'),
+      loading: false,
+      retry: vi.fn(),
+    }
+
+    render(<AdminInventarioProducto />)
+
+    expect(await screen.findAllByText('Café Premium')).toHaveLength(2)
+    expect(screen.getByText(/catálogo está disponible/)).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Stock' })).toHaveLength(4)
+
+    await user.click(screen.getAllByRole('button', { name: 'Stock' })[0])
+    const dialog = screen.getByRole('dialog', { name: 'Stock de Bodega Central' })
+    await user.type(within(dialog).getByRole('spinbutton', { name: /^Unidades disponibles/ }), '7')
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar stock' }))
+
+    await waitFor(() => expect(serviceMocks.actualizarStockCentral).toHaveBeenCalledWith(1, 7))
+    expect(hookMocks.stock.retry).toHaveBeenCalled()
   })
 
   it('validates required fields and exposes the pending create request state', async () => {

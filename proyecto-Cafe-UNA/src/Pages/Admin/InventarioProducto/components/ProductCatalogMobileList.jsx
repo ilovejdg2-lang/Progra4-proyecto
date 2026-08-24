@@ -6,6 +6,7 @@ export function ProductCatalogMobileList({
   destacadosEnUso,
   maxDestacados,
   puedeDestacarse,
+  stockLoading = false,
   onToggleDestacado,
   renderAcciones,
 }) {
@@ -41,7 +42,14 @@ export function ProductCatalogMobileList({
 
             <div className="flex flex-wrap gap-3 text-sm text-slate-600">
               <span><strong className="text-slate-800">Precio:</strong> {formatearPrecio(producto.precioNormal)}</span>
-              <span><strong className="text-slate-800">Stock:</strong> {producto.stock}</span>
+              <span>
+                <strong className="text-slate-800">Stock central:</strong>{" "}
+                {producto.centralStock?.confidence === "known"
+                  ? producto.centralStock.stock
+                  : stockLoading
+                    ? "Cargando..."
+                    : "No disponible"}
+              </span>
               {producto.peso ? <span><strong className="text-slate-800">Peso:</strong> {producto.peso}</span> : null}
             </div>
 
