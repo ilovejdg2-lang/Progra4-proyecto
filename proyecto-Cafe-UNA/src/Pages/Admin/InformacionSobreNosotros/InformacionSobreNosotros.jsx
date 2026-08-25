@@ -68,7 +68,7 @@ const estilos = {
 };
 
 function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
-  const [form, setForm] = useState(() => ({ title: "", description: "", ...data }));
+  const [form, setForm] = useState(() => ({ title: "", description: "", image: "", ...data }));
   const estilo = estilos[tipo];
   const Icon = estilo.Icon;
 
@@ -122,11 +122,13 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
                 required
               />
             </label>
+
           </AdminEditorConPreview>
         </AdminModalBody>
 
         <AdminModalFooter>
           <AdminModalActions
+            buttonStyle="voluntariado"
             onCancel={onCerrar}
             primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
             primaryDisabled={guardando}
@@ -211,6 +213,7 @@ function ModalNuevaFoto({ onCerrar, onAgregar }) {
 
         <AdminModalFooter>
           <AdminModalActions
+            buttonStyle="voluntariado"
             onCancel={onCerrar}
             primaryLabel={"Agregar a la galer\u00eda"}
           />
@@ -279,7 +282,7 @@ function ModalGaleria({ info, onCerrar, onGuardar, guardando, puedeEliminar }) {
             <button
               type="button"
               onClick={() => setAgregandoFoto(true)}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-teal-200 px-4 py-2 text-sm font-bold text-teal-700 transition hover:bg-teal-50 sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 sm:w-auto"
             >
               <ImagePlus className="size-4" />
               Agregar foto
@@ -356,6 +359,7 @@ function ModalGaleria({ info, onCerrar, onGuardar, guardando, puedeEliminar }) {
 
         <AdminModalFooter>
           <AdminModalActions
+            buttonStyle="voluntariado"
             onCancel={onCerrar}
             primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
             primaryDisabled={guardando}
@@ -443,6 +447,7 @@ const AdminInformacionSobreNosotros = () => {
       setGuardando(true);
       const actualizado = await actualizarSeccion(tipo, form);
       setInfo((actual) => ({ ...actual, [tipo]: actualizado }));
+      await reload();
       setEditandoTexto(null);
     } catch (err) {
       alert(err.message || "No se pudo guardar la secci\u00f3n.");
@@ -479,6 +484,7 @@ const AdminInformacionSobreNosotros = () => {
 
       const recargado = await obtenerInformacionSobreNosotros();
       setInfo({ ...infoInicial, ...recargado, gallery: Array.isArray(recargado.gallery) ? recargado.gallery : [] });
+      await reload();
       setEditandoGaleria(false);
     } catch (err) {
       alert(err.message || "No se pudo guardar la galer\u00eda.");
@@ -554,7 +560,6 @@ const AdminInformacionSobreNosotros = () => {
                   icono={Image}
                   borde="border-teal-600"
                   iconoCls="bg-teal-50 text-teal-700"
-                  botonCls="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
                   onEditar={() => setEditandoGaleria(true)}
                 />
               ) : null}

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Coffee, ExternalLink, Eye, Mail, MapPin, Phone, ShoppingCart } from "lucide-react";
+import { ArrowRight, ExternalLink, Mail, MapPin, Phone, ShoppingCart } from "lucide-react";
 import { FacebookIcon, InstagramIcon } from "../../Footer/SocialIcons";
+import { adminBtnVoluntariadoCancel, adminBtnVoluntariadoPrimary } from "./AdminModal";
 
 import Hero from "../../Hero/Hero";
 import Gallery from "../../Gallery/Gallery";
+import { AboutNarrativeBlock } from "../../AboutNarrativeBlock/AboutNarrativeBlock";
 import { HomeActionLink } from "../../../lib/homeActionLink";
 import { normalizeImageUrl } from "../../../lib/imageUtils";
 import { productoPuedeDestacarse } from "../../../lib/productoDisponibilidad";
@@ -338,34 +340,13 @@ function PreviewTarjetasInicioLive({ tarjetas = [] }) {
 }
 
 function PreviewTextoInstitucionalLive({ form, tipo = "historia" }) {
-  if (tipo === "historia") {
-    return (
-      <PreviewLiveFrame variant="admin-cms-preview--about">
-        <main className="about-page">
-          <section className="about-page__intro" aria-labelledby="preview-about-historia-title">
-            {form.title ? (
-              <h1 id="preview-about-historia-title" className="section-title about-page__title">
-                {form.title}
-              </h1>
-            ) : null}
-            {form.description ? <p className="about-page__lead">{form.description}</p> : null}
-          </section>
-        </main>
-      </PreviewLiveFrame>
-    );
-  }
-
-  const Icon = tipo === "vision" ? Eye : Coffee;
+  const reverse = tipo === "mission";
 
   return (
     <PreviewLiveFrame variant="admin-cms-preview--about">
       <main className="about-page">
-        <section className="about-page__values" aria-label={tipo === "vision" ? "Visi\u00f3n" : "Misi\u00f3n"}>
-          <article className="about-page__card">
-            <Icon className="about-page__icon" strokeWidth={1.35} aria-hidden="true" />
-            {form.title ? <h2>{form.title}</h2> : null}
-            {form.description ? <p>{form.description}</p> : null}
-          </article>
+        <section className="about-page__narratives">
+          <AboutNarrativeBlock title={form.title} description={form.description} />
         </section>
       </main>
     </PreviewLiveFrame>
@@ -564,13 +545,33 @@ function PreviewEnlaces({ items = [] }) {
 }
 
 export function AdminEditorConPreview({ preview, children, ayuda }) {
+  const [mostrandoVistaPrevia, setMostrandoVistaPrevia] = useState(false);
+
   return (
     <div className="admin-cms-editor">
-      <PreviewShell>{preview}</PreviewShell>
+      {mostrandoVistaPrevia ? (
+        <section className="admin-cms-editor__preview-section">
+          <PreviewShell>{preview}</PreviewShell>
+          <button
+            type="button"
+            onClick={() => setMostrandoVistaPrevia(false)}
+            className={adminBtnVoluntariadoCancel}
+          >
+            Volver a edición
+          </button>
+        </section>
+      ) : null}
 
       <section className="admin-cms-editor__form-section">
         <div className="admin-cms-editor__form-header">
           <h3 className="admin-cms-editor__form-title">{"Edici\u00f3n"}</h3>
+          <button
+            type="button"
+            onClick={() => setMostrandoVistaPrevia(true)}
+            className={adminBtnVoluntariadoPrimary}
+          >
+            Previsualizar
+          </button>
         </div>
         {ayuda ? <p className="admin-cms-editor__ayuda">{ayuda}</p> : null}
         <div className="admin-cms-editor__fields">{children}</div>
