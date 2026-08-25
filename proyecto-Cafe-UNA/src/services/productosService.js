@@ -2,6 +2,7 @@ import { invalidateAllPageCaches } from "../lib/pageDataCache";
 import { apiRequest } from "./apiClient";
 
 const BASE_URL = `${import.meta.env.BACKEND_URL}/productos`;
+const INVENTORY_BASE_URL = `${import.meta.env.BACKEND_URL}/inventario`;
 const IVA_RATE = 0.13;
 const CACHE_TTL_MS = 30 * 60 * 1000;
 let productosCache = {
@@ -14,6 +15,17 @@ let productosRawCache = {
   data: null,
 };
 let productosRawInflight = null;
+let ubicacionesCache = { expiresAt: 0, data: null };
+let ubicacionesInflight = null;
+const stockPorUbicacionCache = new Map();
+const stockPorUbicacionInflight = new Map();
+
+const CANONICAL_LOCATION_NAMES = Object.freeze({
+  BODEGA_CENTRAL: "Bodega Central",
+  POS_FUNA_UNA: "FUNA-UNA",
+  POS_EDITORIAL: "Editorial",
+  POS_STAND_FERIAS: "Stand Ferias",
+});
 
 const CATALOG_FIELDS = [
   "nombre",
@@ -34,6 +46,13 @@ function limpiarProductosCache() {
   invalidateAllPageCaches();
 }
 
+export function limpiarInventarioUbicacionCache() {
+  ubicacionesCache = { expiresAt: 0, data: null };
+  ubicacionesInflight = null;
+  stockPorUbicacionCache.clear();
+  stockPorUbicacionInflight.clear();
+}
+
 async function request(url, options = {}) {
   const method = (options.method || "GET").toUpperCase();
   const isPublicRead = method === "GET";
@@ -49,6 +68,14 @@ async function request(url, options = {}) {
 export function calcularPrecioConIVA(precioNormal) {
   const base = Number(precioNormal) || 0;
   return Math.round(base * (1 + IVA_RATE));
+}
+
+async function inventoryRequest(url, options = {}) {
+  return apiRequest(url, {
+    ...options,
+    errorPrefix: "Error en inventario",
+    timeoutMessage: "Tiempo de espera agotado al consultar inventario.",
+  });
 }
 
 function firstDefined(value, aliases) {
@@ -85,6 +112,40 @@ export function normalizarStockCentral(producto) {
     locationCode: "BODEGA_CENTRAL",
     stock: known ? parsedStock : null,
     confidence: known ? "known" : "unknown",
+  };
+}
+
+export function normalizarUbicacion(ubicacion) {
+  const code = firstDefined(ubicacion, ["code", "Code", "codigo", "Codigo", "locationCode", "LocationCode"]);
+  if (!hasIdentity(code)) return null;
+  const canonicalCode = String(code).trim();
+  const canonicalName = CANONICAL_LOCATION_NAMES[canonicalCode];
+  if (!canonicalName) return null;
+  const name = firstDefined(ubicacion, ["name", "Name", "nombre", "Nombre"]);
+  return { code: canonicalCode, name: hasIdentity(name) ? String(name) : canonicalName };
+}
+
+export function validarCodigoUbicacion(locationCode) {
+  return Boolean(CANONICAL_LOCATION_NAMES[locationCode]);
+}
+
+export function validarStockPorUbicacion(stock) {
+  return Number.isInteger(stock) && stock >= 0 && stock <= 2147483647;
+}
+
+export function normalizarStockPorUbicacion(stock) {
+  const productId = firstDefined(stock, ["productId", "ProductId", "id", "Id", "ID"]);
+  const rawLocationCode = firstDefined(stock, ["locationCode", "LocationCode", "code", "Code", "codigo", "Codigo"]);
+  if (!hasIdentity(productId) || !hasIdentity(rawLocationCode)) return null;
+  const locationCode = String(rawLocationCode).trim();
+  if (!validarCodigoUbicacion(locationCode)) return null;
+  const rawStock = firstDefined(stock, ["stock", "Stock"]);
+  const normalizedStock = rawStock === undefined || rawStock === null ? null : rawStock;
+  return {
+    productId: String(productId),
+    locationCode,
+    stock: validarStockPorUbicacion(normalizedStock) ? normalizedStock : null,
+    provisioned: toBoolean(firstDefined(stock, ["provisioned", "Provisioned"])),
   };
 }
 
@@ -196,6 +257,53 @@ export async function obtenerCatalogoProductos() {
 export async function obtenerStockCentral() {
   const productos = await obtenerProductosRaw();
   return productos.map(normalizarStockCentral).filter(Boolean);
+}
+
+function responseList(data) {
+  return Array.isArray(data) ? data : Array.isArray(data?.value) ? data.value : [];
+}
+
+export async function obtenerUbicaciones() {
+  const now = Date.now();
+  if (ubicacionesCache.data && ubicacionesCache.expiresAt > now) return ubicacionesCache.data;
+  if (ubicacionesInflight) return ubicacionesInflight;
+  ubicacionesInflight = inventoryRequest(`${INVENTORY_BASE_URL}/ubicaciones`)
+    .then((data) => {
+      const normalized = responseList(data).map(normalizarUbicacion).filter(Boolean);
+      ubicacionesCache = { expiresAt: Date.now() + CACHE_TTL_MS, data: normalized };
+      ubicacionesInflight = null;
+      return normalized;
+    })
+    .catch((error) => {
+      ubicacionesInflight = null;
+      throw error;
+    });
+  return ubicacionesInflight;
+}
+
+export async function obtenerStockPorUbicacion(locationCode) {
+  if (!validarCodigoUbicacion(locationCode)) throw new Error("El código de ubicación no es válido.");
+  const now = Date.now();
+  const cached = stockPorUbicacionCache.get(locationCode);
+  if (cached?.expiresAt > now) return cached.data;
+  stockPorUbicacionCache.delete(locationCode);
+  if (stockPorUbicacionInflight.has(locationCode)) return stockPorUbicacionInflight.get(locationCode);
+  const url = `${INVENTORY_BASE_URL}/stock?locationCode=${encodeURIComponent(locationCode)}`;
+  const inflight = inventoryRequest(url)
+    .then((data) => {
+      const normalized = responseList(data)
+        .map(normalizarStockPorUbicacion)
+        .filter((item) => item?.locationCode === locationCode);
+      stockPorUbicacionCache.set(locationCode, { expiresAt: Date.now() + CACHE_TTL_MS, data: normalized });
+      stockPorUbicacionInflight.delete(locationCode);
+      return normalized;
+    })
+    .catch((error) => {
+      stockPorUbicacionInflight.delete(locationCode);
+      throw error;
+    });
+  stockPorUbicacionInflight.set(locationCode, inflight);
+  return inflight;
 }
 
 export async function obtenerProductoPorId(id) {
