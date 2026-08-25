@@ -1,5 +1,5 @@
-import { Coffee, Eye } from 'lucide-react';
 import Gallery from '../../Components/Gallery/Gallery';
+import { AboutNarrativeBlock } from '../../Components/AboutNarrativeBlock/AboutNarrativeBlock';
 import BackToHomeLink from '../../Components/BackToHomeLink/BackToHomeLink';
 import { HOME_SCROLL_SECTIONS } from '../../lib/homeScrollTarget';
 import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
@@ -41,37 +41,17 @@ const AboutUs = () => {
         {!hasHistoria ? (
           <h1 className="about-page__title about-page__title--sr">Sobre nosotros</h1>
         ) : null}
-        {hasHistoria ? (
-          <section className="about-page__intro" aria-labelledby="about-historia-title">
-            {historiaTitulo ? (
-              <h1 id="about-historia-title" className="section-title about-page__title">
-                {historiaTitulo}
-              </h1>
-            ) : null}
-            {historia ? <p className="about-page__lead">{historia}</p> : null}
-          </section>
-        ) : null}
-
-        {hasMission || hasVision ? (
-          <section className="about-page__values" aria-label={"Misi\u00f3n y visi\u00f3n"}>
-            {hasMission ? (
-              <article className="about-page__card">
-                <Coffee className="about-page__icon" strokeWidth={1.35} aria-hidden="true" />
-                {missionData.title ? <h2>{missionData.title}</h2> : null}
-                {missionData.description ? <p>{missionData.description}</p> : null}
-              </article>
-            ) : null}
-
-            {hasVision ? (
-              <article className="about-page__card">
-                <Eye className="about-page__icon" strokeWidth={1.35} aria-hidden="true" />
-                {visionData.title ? <h2>{visionData.title}</h2> : null}
-                {visionData.description ? <p>{visionData.description}</p> : null}
-              </article>
-            ) : null}
-          </section>
-        ) : null}
-
+        <section className="about-page__narratives" aria-label="Nuestra historia, misión y visión">
+          {hasHistoria ? (
+            <AboutNarrativeBlock title={historiaTitulo} description={historia} />
+          ) : null}
+          {hasMission ? (
+            <AboutNarrativeBlock title={missionData.title} description={missionData.description} />
+          ) : null}
+          {hasVision ? (
+            <AboutNarrativeBlock title={visionData.title} description={visionData.description} />
+          ) : null}
+        </section>
         {galleryItems.length > 0 ? (
           <Gallery items={galleryItems} pageSize={10} />
         ) : null}

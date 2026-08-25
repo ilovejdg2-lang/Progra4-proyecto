@@ -292,6 +292,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
 
         <AdminModalFooter>
           <AdminModalActions
+            buttonStyle="voluntariado"
             onCancel={onCerrar}
             primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
             primaryDisabled={guardando}
@@ -412,6 +413,7 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
 
         <AdminModalFooter>
           <AdminModalActions
+            buttonStyle="voluntariado"
             onCancel={onCerrar}
             primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
             primaryDisabled={guardando}
@@ -539,6 +541,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
 
         <AdminModalFooter>
           <AdminModalActions
+            buttonStyle="voluntariado"
             onCancel={onCerrar}
             primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
             primaryDisabled={guardando}
@@ -608,6 +611,7 @@ function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
 
         <AdminModalFooter>
           <AdminModalActions
+            buttonStyle="voluntariado"
             onCancel={onCerrar}
             primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
             primaryDisabled={guardando}
@@ -736,6 +740,7 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
 
         <AdminModalFooter>
           <AdminModalActions
+            buttonStyle="voluntariado"
             onCancel={onCerrar}
             primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
             primaryDisabled={guardando}
@@ -907,6 +912,7 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
 
         <AdminModalFooter>
           <AdminModalActions
+            buttonStyle="voluntariado"
             onCancel={onCerrar}
             primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
             primaryDisabled={guardando}
@@ -1020,6 +1026,7 @@ const AdminInformacionPaginaPrincipal = () => {
       setGuardando(true);
       const actualizado = await actualizarSeccion("hero", form);
       setHero(mapHero(actualizado));
+      await reload();
       setEditando(null);
     } catch (err) {
       alert(err.message || "No se pudo guardar el hero.");
@@ -1036,6 +1043,7 @@ const AdminInformacionPaginaPrincipal = () => {
         ...actual,
         [clave]: mapSeccionInicio(actualizado ?? form),
       }));
+      await reload();
       setEditando(null);
     } catch (err) {
       alert(err.message || "No se pudo guardar la secci\u00f3n del inicio.");
@@ -1049,6 +1057,7 @@ const AdminInformacionPaginaPrincipal = () => {
       setGuardando(true);
       const actualizadas = await actualizarTarjetasInicio(tarjetas);
       setTarjetasInicio(Array.isArray(actualizadas) ? actualizadas.map(mapTarjetaInicio) : []);
+      await reload();
       setEditando(null);
     } catch (err) {
       alert(err.message || "No se pudieron guardar los mini formularios.");
@@ -1062,6 +1071,7 @@ const AdminInformacionPaginaPrincipal = () => {
       setGuardando(true);
       const actualizado = await actualizarNavbar(form);
       setNavbar({ ...navbarInicial, ...actualizado });
+      await reload();
       setEditando(null);
     } catch (err) {
       alert(err.message || "No se pudo guardar el navbar.");
@@ -1075,6 +1085,7 @@ const AdminInformacionPaginaPrincipal = () => {
       setGuardando(true);
       const actualizado = await actualizarFooter(form);
       setFooter({ ...footerInicial, ...actualizado });
+      await reload();
       setEditando(null);
     } catch (err) {
       alert(err.message || "No se pudo guardar el footer.");
@@ -1137,6 +1148,7 @@ const AdminInformacionPaginaPrincipal = () => {
       } else {
         setEnlacesFooter(recargado);
       }
+      await reload();
       setEditando(null);
     } catch (err) {
       alert(err.message || "No se pudieron guardar los enlaces.");
