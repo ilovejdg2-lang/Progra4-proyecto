@@ -1,0 +1,11 @@
+{
+  "name": "progra4-proyecto",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix proyecto-Cafe-UNA run dev",
+    "build": "npm --prefix proyecto-Cafe-UNA run build",
+    "lint": "npm --prefix proyecto-Cafe-UNA run lint",
+    "test": "npm --prefix proyecto-Cafe-UNA run test",
+    "preview": "npm --prefix proyecto-Cafe-UNA run preview"
+  }
+}

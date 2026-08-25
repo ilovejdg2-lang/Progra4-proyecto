@@ -260,7 +260,16 @@
 }
 
 .admin-cms-editor__form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin-bottom: 0.75rem;
+}
+
+.admin-cms-editor__preview-section {
+  display: grid;
+  gap: 0.75rem;
 }
 
 .admin-cms-editor__form-title {
