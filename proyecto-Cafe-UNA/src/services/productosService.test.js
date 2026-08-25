@@ -14,13 +14,20 @@ import {
   adaptarProducto,
   actualizarStockCentral,
   construirPayloadCatalogo,
+  limpiarInventarioUbicacionCache,
+  normalizarStockPorUbicacion,
   normalizarStockCentral,
+  normalizarUbicacion,
+  obtenerStockPorUbicacion,
+  obtenerUbicaciones,
+  validarCodigoUbicacion,
   validarStockCentral,
 } from "./productosService";
 
 describe("productosService contract", () => {
   beforeEach(() => {
     apiRequestMock.mockReset();
+    limpiarInventarioUbicacionCache();
   });
 
   it("gives canonical aliases precedence and preserves valid zero/false values", () => {
@@ -112,5 +119,62 @@ describe("productosService contract", () => {
       expect.stringContaining("/productos/p-1/stock-central"),
       expect.objectContaining({ method: "PUT", body: JSON.stringify({ stock: 8 }) }),
     );
+  });
+
+  it("normalizes the four canonical locations and rejects unknown codes", () => {
+    expect(["BODEGA_CENTRAL", "POS_FUNA_UNA", "POS_EDITORIAL", "POS_STAND_FERIAS"]
+      .every((code) => validarCodigoUbicacion(code))).toBe(true);
+    expect(normalizarUbicacion({ Code: "POS_EDITORIAL", Nombre: "Editorial" })).toEqual({
+      code: "POS_EDITORIAL", name: "Editorial",
+    });
+    expect(normalizarUbicacion({ codigo: "LEGACY_LOCATION" })).toBeNull();
+    expect(validarCodigoUbicacion("PUNTO_VENTA_1")).toBe(false);
+  });
+
+  it("preserves absent and explicit zero stock states", () => {
+    expect(normalizarStockPorUbicacion({ ProductId: "p-1", LocationCode: "POS_EDITORIAL", Stock: 0, Provisioned: false }))
+      .toEqual({ productId: "p-1", locationCode: "POS_EDITORIAL", stock: 0, provisioned: false });
+    expect(normalizarStockPorUbicacion({ id: "p-2", code: "POS_EDITORIAL" }))
+      .toEqual({ productId: "p-2", locationCode: "POS_EDITORIAL", stock: null, provisioned: false });
+    expect(normalizarStockPorUbicacion({ id: "p-3", code: "UNKNOWN", stock: 2 })).toBeNull();
+  });
+
+  it("loads and caches locations without bypassing auth", async () => {
+    apiRequestMock.mockResolvedValueOnce([
+      { code: "BODEGA_CENTRAL", name: "Bodega Central" },
+      { code: "POS_FUNA_UNA", name: "FUNA-UNA" },
+    ]);
+    const first = await obtenerUbicaciones();
+    const second = await obtenerUbicaciones();
+    expect(first).toEqual([
+      { code: "BODEGA_CENTRAL", name: "Bodega Central" },
+      { code: "POS_FUNA_UNA", name: "FUNA-UNA" },
+    ]);
+    expect(second).toBe(first);
+    expect(apiRequestMock).toHaveBeenCalledTimes(1);
+    expect(apiRequestMock.mock.calls[0][1]).toMatchObject({ errorPrefix: "Error en inventario" });
+    expect(apiRequestMock.mock.calls[0][1]).not.toHaveProperty("skipAuth", true);
+  });
+
+  it("reads bulk stock by location and isolates the cache", async () => {
+    apiRequestMock.mockResolvedValueOnce([
+      { productId: "p-1", locationCode: "POS_EDITORIAL", stock: 7, provisioned: true },
+      { productId: "p-2", locationCode: "POS_FUNA_UNA", stock: 11, provisioned: true },
+    ]).mockResolvedValueOnce([
+      { ProductId: "p-1", LocationCode: "POS_FUNA_UNA", Stock: 11, Provisioned: true },
+    ]);
+    const editorial = await obtenerStockPorUbicacion("POS_EDITORIAL");
+    const cachedEditorial = await obtenerStockPorUbicacion("POS_EDITORIAL");
+    const funaUna = await obtenerStockPorUbicacion("POS_FUNA_UNA");
+    expect(editorial).toEqual([{ productId: "p-1", locationCode: "POS_EDITORIAL", stock: 7, provisioned: true }]);
+    expect(cachedEditorial).toBe(editorial);
+    expect(funaUna).toEqual([{ productId: "p-1", locationCode: "POS_FUNA_UNA", stock: 11, provisioned: true }]);
+    expect(apiRequestMock).toHaveBeenCalledTimes(2);
+    expect(apiRequestMock.mock.calls[0][1]).not.toHaveProperty("skipAuth", true);
+  });
+
+  it("rejects invalid locations before making a request", async () => {
+    await expect(obtenerStockPorUbicacion("PUNTO_VENTA_1")).rejects.toThrow("El código de ubicación no es válido.");
+    expect(apiRequestMock).not.toHaveBeenCalled();
   });
 });
