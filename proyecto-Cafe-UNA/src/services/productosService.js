@@ -133,6 +133,34 @@ export function validarStockPorUbicacion(stock) {
   return Number.isInteger(stock) && stock >= 0 && stock <= 2147483647;
 }
 
+function normalizarProductIdParaAjuste(productId) {
+  if (typeof productId === "number") {
+    return Number.isSafeInteger(productId) && productId > 0 ? String(productId) : null;
+  }
+
+  if (typeof productId !== "string" || !/^\d+$/.test(productId) || BigInt(productId) <= 0n) {
+    return null;
+  }
+
+  return productId;
+}
+
+function normalizarRespuestaAjusteStock(data, fallback) {
+  const productId = firstDefined(data, ["productId", "ProductId"]) ?? fallback.productId;
+  const locationCode = firstDefined(data, ["locationCode", "LocationCode"]) ?? fallback.locationCode;
+  const previousStock = firstDefined(data, ["previousStock", "PreviousStock"]);
+  const stock = firstDefined(data, ["stock", "Stock"]);
+  const reason = firstDefined(data, ["reason", "Reason"]) ?? fallback.reason;
+
+  return {
+    productId: String(productId),
+    locationCode: String(locationCode),
+    previousStock,
+    stock,
+    reason: String(reason).trim(),
+  };
+}
+
 export function normalizarStockPorUbicacion(stock) {
   const productId = firstDefined(stock, ["productId", "ProductId", "id", "Id", "ID"]);
   const rawLocationCode = firstDefined(stock, ["locationCode", "LocationCode", "code", "Code", "codigo", "Codigo"]);
@@ -340,6 +368,48 @@ export async function actualizarStockCentral(productId, stock) {
   });
   limpiarProductosCache();
   return normalizarStockCentral({ ...actualizado, productId });
+}
+
+export async function ajustarStockPorUbicacion(locationCode, productId, stock, reason) {
+  if (!validarCodigoUbicacion(locationCode)) {
+    throw new Error("El código de ubicación no es válido.");
+  }
+  if (locationCode === "BODEGA_CENTRAL") {
+    throw new Error("La ruta de ajustes solo admite puntos de venta.");
+  }
+
+  const normalizedProductId = normalizarProductIdParaAjuste(productId);
+  if (!normalizedProductId) {
+    throw new Error("El identificador del producto no es válido.");
+  }
+  if (!validarStockPorUbicacion(stock)) {
+    throw new Error("La cantidad de stock debe ser un entero entre 0 y 2147483647.");
+  }
+  if (typeof reason !== "string") {
+    throw new Error("El motivo del ajuste es obligatorio.");
+  }
+
+  const normalizedReason = reason.trim();
+  if (normalizedReason.length === 0 || normalizedReason.length > 300) {
+    throw new Error("El motivo del ajuste debe tener entre 1 y 300 caracteres.");
+  }
+
+  const actualizado = await inventoryRequest(
+    `${INVENTORY_BASE_URL}/ubicaciones/${encodeURIComponent(locationCode)}/productos/${encodeURIComponent(normalizedProductId)}/stock`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ stock, reason: normalizedReason }),
+    },
+  );
+
+  stockPorUbicacionCache.delete(locationCode);
+  stockPorUbicacionInflight.delete(locationCode);
+
+  return normalizarRespuestaAjusteStock(actualizado, {
+    productId: normalizedProductId,
+    locationCode,
+    reason: normalizedReason,
+  });
 }
 
 export async function ajustarStockProductos(carritoItems) {
