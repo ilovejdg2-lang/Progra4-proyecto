@@ -12,7 +12,7 @@ export function PointOfSaleCards({ locations, selectedCode, onSelect }) {
             type="button"
             aria-pressed={selected}
             onClick={() => onSelect(location.code)}
-            className={`group rounded-2xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 ${
+            className={`group !rounded-2xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 ${
               selected
                 ? "border-amber-800 bg-amber-900 text-white shadow-md"
                 : "border-slate-200 bg-white text-slate-900 hover:border-amber-300 hover:bg-amber-50/50"
