@@ -43,6 +43,7 @@ import {
   useSidebar,
 } from "./ui/Sidebar";
 import { normalizeImageUrl, getImageObjectPosition } from "../../lib/imageUtils";
+import { inicialDeNombre } from "../../lib/inicialDeNombre";
 import { useHomeBrandNavigation } from "../../hooks/useHomeBrandNavigation";
 import { obtenerNavbar } from "../../services/informacionService";
 import { clearPerfilCache, obtenerPerfil } from "../../services/perfilService";
@@ -81,11 +82,17 @@ export function AppSidebar() {
   const avatarUrl = user?.fotoPerfilUrl?.trim()
     ? normalizeImageUrl(user.fotoPerfilUrl.trim(), { width: 96 })
     : "";
+  const [avatarRoto, setAvatarRoto] = useState(false);
+  const inicialAvatar = inicialDeNombre(displayName);
 
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
   const onBrandClick = useHomeBrandNavigation();
+
+  useEffect(() => {
+    setAvatarRoto(false);
+  }, [avatarUrl]);
 
   const isGeneralRoute =
     pathname === "/admin/informacion-pagina-principal" || pathname === "/admin/sobre-nosotros";
@@ -197,10 +204,10 @@ export function AppSidebar() {
             <img
               src={normalizeImageUrl(logoUrl, { width: 320 })}
               alt={"Caf\u00e9 UNA"}
-              className="h-8 w-auto"
+              className="h-[52px] w-auto max-w-[10rem] object-contain"
             />
           ) : (
-            <span className="text-sm font-bold text-slate-900">{"Caf\u00e9 UNA"}</span>
+            <span className="text-[length:var(--text-subtitle)] font-bold text-slate-900">{"Caf\u00e9 UNA"}</span>
           )}
         </Link>
       </SidebarHeader>
@@ -367,17 +374,21 @@ export function AppSidebar() {
               type="button"
               className="flex w-full items-center gap-2 px-2 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950"
             >
-              {avatarUrl ? (
+              {avatarUrl && !avatarRoto ? (
                 <img
                   key={avatarUrl}
                   src={avatarUrl}
                   alt=""
                   className="size-8 rounded-full object-cover"
                   style={{ objectPosition: getImageObjectPosition(user?.fotoPerfilPosicion) }}
+                  onError={() => setAvatarRoto(true)}
                 />
               ) : (
-                <span className="inline-flex size-8 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-700">
-                  {displayName.slice(0, 2).toUpperCase()}
+                <span
+                  className="inline-flex size-8 items-center justify-center rounded-full bg-amber-900 text-[length:var(--text-body)] font-bold text-white"
+                  aria-hidden="true"
+                >
+                  {inicialAvatar}
                 </span>
               )}
               <span className="min-w-0 flex-1 text-left">
