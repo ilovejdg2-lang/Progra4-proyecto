@@ -10,6 +10,7 @@ import {
 } from "../../services/perfilService";
 import { applyPerfilToSession, getActiveSessionUser } from "../../services/sessionService";
 import { normalizeImageUrl } from "../../lib/imageUtils";
+import { inicialDeNombre } from "../../lib/inicialDeNombre";
 import {
   MAX_NOMBRE_USUARIO,
   MAX_PASSWORD,
@@ -192,6 +193,7 @@ export function PerfilContent({ variant = "standalone" }) {
     confirm: false,
     email: false,
   });
+  const [avatarRoto, setAvatarRoto] = useState(false);
 
   function resetPasswordVisibility() {
     setShowPasswords({ actual: false, nueva: false, confirm: false });
@@ -265,6 +267,11 @@ export function PerfilContent({ variant = "standalone" }) {
   const avatarSrc = form.fotoPerfilUrl
     ? normalizeImageUrl(form.fotoPerfilUrl, { width: 320 })
     : null;
+  const inicialAvatar = inicialDeNombre(form.nombre || sessionUser?.name || sessionUser?.username);
+
+  useEffect(() => {
+    setAvatarRoto(false);
+  }, [avatarSrc]);
 
   function syncSession(actualizado) {
     applyPerfilToSession(actualizado);
@@ -528,7 +535,7 @@ export function PerfilContent({ variant = "standalone" }) {
             }}
             aria-label="Cambiar foto de perfil"
           >
-            {avatarSrc ? (
+            {avatarSrc && !avatarRoto ? (
               <img
                 src={avatarSrc}
                 alt=""
@@ -536,10 +543,11 @@ export function PerfilContent({ variant = "standalone" }) {
                 width={160}
                 height={160}
                 decoding="async"
+                onError={() => setAvatarRoto(true)}
               />
             ) : (
-              <div className="perfil-hero__avatar perfil-hero__avatar--placeholder">
-                <UserRound size={42} />
+              <div className="perfil-hero__avatar perfil-hero__avatar--placeholder" aria-hidden="true">
+                <span className="perfil-hero__avatar-inicial">{inicialAvatar}</span>
               </div>
             )}
             <span className="perfil-hero__avatar-change">
