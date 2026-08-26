@@ -654,6 +654,8 @@ const AdminUsuarios = () => {
   const {
     busqueda,
     setBusqueda,
+    valoresFiltro,
+    setValorFiltro,
     filtrados: usuariosFiltrados,
     limpiar,
     hayFiltrosActivos,
@@ -666,7 +668,27 @@ const AdminUsuarios = () => {
       usuario.estado,
       ...(Array.isArray(usuario.roles) ? usuario.roles : []),
     ],
+    filtrosConfig: [
+      {
+        id: "rol",
+        aplicar: (lista, valor) =>
+          !valor || valor === "todos"
+            ? lista
+            : lista.filter((usuario) => (usuario.roles || []).includes(valor)),
+      },
+      { id: "estado", obtenerValor: (usuario) => usuario.estado },
+    ],
   });
+
+  const rolesDisponibles = useMemo(() => {
+    const vistos = new Set();
+    usuarios.forEach((usuario) => {
+      (usuario.roles || []).forEach((rol) => {
+        if (rol) vistos.add(rol);
+      });
+    });
+    return [...vistos];
+  }, [usuarios]);
 
   async function cargar() {
     try {
@@ -786,7 +808,7 @@ const AdminUsuarios = () => {
           <span className={`text-xs font-medium ${
             esUsuarioActivo(estado) ? "text-green-700" : "text-red-600"
           }`}>
-            {esUsuarioActivo(estado) ? "Activo" : "Inactivo"}
+            {esUsuarioActivo(estado) ? "Habilitado" : "Deshabilitado"}
           </span>
         );
       },
@@ -852,6 +874,29 @@ const AdminUsuarios = () => {
             visibles={visibles}
             hayFiltrosActivos={hayFiltrosActivos}
             onLimpiar={limpiar}
+            filtros={[
+              {
+                id: "rol",
+                label: "Rol",
+                value: valoresFiltro.rol || "todos",
+                onChange: (valor) => setValorFiltro("rol", valor),
+                opciones: [
+                  { value: "todos", label: "Todos" },
+                  ...rolesDisponibles.map((rol) => ({ value: rol, label: rol })),
+                ],
+              },
+              {
+                id: "estado",
+                label: "Estado",
+                value: valoresFiltro.estado || "todos",
+                onChange: (valor) => setValorFiltro("estado", valor),
+                opciones: [
+                  { value: "todos", label: "Todos" },
+                  { value: "Habilitado", label: "Habilitado" },
+                  { value: "Deshabilitado", label: "Deshabilitado" },
+                ],
+              },
+            ]}
           />
         ) : null}
 
@@ -925,7 +970,7 @@ const AdminUsuarios = () => {
                       <span className={`shrink-0 text-xs font-medium ${
                         esUsuarioActivo(usuario.estado) ? "text-green-700" : "text-red-600"
                       }`}>
-                        {esUsuarioActivo(usuario.estado) ? "Activo" : "Inactivo"}
+                        {esUsuarioActivo(usuario.estado) ? "Habilitado" : "Deshabilitado"}
                       </span>
                     </div>
 

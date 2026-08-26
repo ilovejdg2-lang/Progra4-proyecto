@@ -8,23 +8,43 @@ function getImage(data) {
       : '';
 }
 
+function pickText(data, ...keys) {
+  for (const key of keys) {
+    if (typeof data?.[key] === 'string' && data[key].trim()) return data[key].trim();
+  }
+  return '';
+}
+
+function normalizarGaleria(items) {
+  return (Array.isArray(items) ? items : []).map((item) => ({
+    ...item,
+    id: item.id ?? item.Id,
+    title: pickText(item, 'title', 'Title'),
+    image: pickText(item, 'image', 'Image'),
+    categoria: pickText(item, 'categoria', 'Categoria'),
+  }));
+}
+
 export async function fetchAboutPageData() {
   const info = await obtenerInformacionSobreNosotros();
 
   return {
-    historiaTitulo: typeof info.historia?.title === 'string' ? info.historia.title.trim() : '',
-    historia: typeof info.historia?.description === 'string' ? info.historia.description.trim() : '',
+    historiaTitulo: pickText(info.historia, 'title', 'Title'),
+    historia: pickText(info.historia, 'description', 'Description'),
+    historiaEyebrow: pickText(info.historia, 'eyebrow', 'Eyebrow'),
     historiaImage: getImage(info.historia),
     missionData: {
-      title: typeof info.mission?.title === 'string' ? info.mission.title.trim() : '',
-      description: typeof info.mission?.description === 'string' ? info.mission.description.trim() : '',
+      title: pickText(info.mission, 'title', 'Title'),
+      description: pickText(info.mission, 'description', 'Description'),
+      eyebrow: pickText(info.mission, 'eyebrow', 'Eyebrow'),
       image: getImage(info.mission),
     },
     visionData: {
-      title: typeof info.vision?.title === 'string' ? info.vision.title.trim() : '',
-      description: typeof info.vision?.description === 'string' ? info.vision.description.trim() : '',
+      title: pickText(info.vision, 'title', 'Title'),
+      description: pickText(info.vision, 'description', 'Description'),
+      eyebrow: pickText(info.vision, 'eyebrow', 'Eyebrow'),
       image: getImage(info.vision),
     },
-    galleryData: Array.isArray(info.gallery) ? info.gallery : [],
+    galleryData: normalizarGaleria(info.gallery),
   };
 }

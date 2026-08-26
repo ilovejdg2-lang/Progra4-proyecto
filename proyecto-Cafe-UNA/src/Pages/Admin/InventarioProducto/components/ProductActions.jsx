@@ -18,7 +18,7 @@ export function ProductActions({
   const bloquearInhabilitar = producto.esDestacado && !esDeshabilitado;
   const mostrarDosAcciones = puedeEditar && puedeInactivar;
 
-  const editarClassName = `${actionButtonBase} border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 focus-visible:ring-amber-300`;
+  const editarClassName = `${actionButtonBase} border-slate-950 bg-slate-950 text-white hover:border-neutral-700 hover:bg-neutral-700 focus-visible:ring-slate-400`;
   const toggleClassName = `${actionButtonBase} ${
     esDeshabilitado
       ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300"

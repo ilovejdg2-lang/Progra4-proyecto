@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { X } from "lucide-react";
 
@@ -16,6 +16,14 @@ import {
   validateProductoForm,
 } from "../../../../lib/formLimits";
 import {
+  parsearImagenesProducto,
+  serializarImagenesProducto,
+} from "../../../../lib/productoImagenes";
+import { TIPO_CATEGORIA_PRODUCTO } from "../../../../lib/categorias";
+import { CategoriaCampo } from "../../../../Components/Admin/ui/CategoriaCampo";
+import { Switch } from "../../../../Components/ui/Switch";
+import { UiSelect } from "../../../../Components/ui/Select";
+import {
   productoEstaDeshabilitado,
   productoPuedeDestacarse,
   productoSinStock,
@@ -27,11 +35,17 @@ const FORM_VACIO = {
   nombre: "",
   descripcion: "",
   imagen: "",
+  imagen2: "",
+  imagen3: "",
+  imagen4: "",
   precioNormal: "",
   precioConIVA: "",
   estado: "Habilitado",
   peso: "",
+  categoria: "",
+  subcategoria: "",
   esDestacado: false,
+  stockMinimo: "0",
 };
 
 function contarDestacados(productos, excluirId = null) {
@@ -46,12 +60,37 @@ function buildCatalogPayload(form) {
   return {
     nombre: form.nombre,
     descripcion: form.descripcion,
-    imagen: form.imagen,
+    imagen: serializarImagenesProducto([form.imagen, form.imagen2, form.imagen3, form.imagen4]),
     precioNormal: Number(form.precioNormal) || 0,
     precioConIVA: calcularPrecioConIVA(form.precioNormal),
     estado: form.estado,
     peso: form.peso,
+    categoria: form.categoria,
+    subcategoria: form.subcategoria,
     esDestacado: Boolean(form.esDestacado),
+    stockMinimo: Math.max(0, Math.floor(Number(form.stockMinimo) || 0)),
+  };
+}
+
+function formDesdeProducto(initial) {
+  if (!initial) return { ...FORM_VACIO };
+  const fotos = parsearImagenesProducto(initial);
+  return {
+    ...FORM_VACIO,
+    nombre: initial.nombre ?? "",
+    descripcion: initial.descripcion ?? "",
+    imagen: fotos[0] || "",
+    imagen2: fotos[1] || "",
+    imagen3: fotos[2] || "",
+    imagen4: fotos[3] || "",
+    precioNormal: initial.precioNormal ?? "",
+    precioConIVA: initial.precioConIVA ?? calcularPrecioConIVA(initial.precioNormal),
+    estado: initial.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado",
+    peso: initial.peso ?? "",
+    categoria: initial.categoria ?? "",
+    subcategoria: initial.subcategoria ?? "",
+    esDestacado: Boolean(initial.esDestacado),
+    stockMinimo: String(initial.stockMinimo ?? 0),
   };
 }
 
@@ -63,24 +102,27 @@ export function ProductCatalogFormDrawer({
   open,
   initial,
   products = [],
+  categorias = [],
+  onCategoriaCreada,
   onSave,
   onClose,
   isSaving = false,
 }) {
-  const [form, setForm] = useState(() => ({
-    ...FORM_VACIO,
-    ...initial,
-    precioNormal: initial?.precioNormal ?? "",
-    precioConIVA: initial?.precioConIVA ?? "",
-    estado: initial?.estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado",
-    esDestacado: Boolean(initial?.esDestacado),
-  }));
+  const [form, setForm] = useState(() => formDesdeProducto(initial));
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitError, setSubmitError] = useState("");
   const submitGuard = useRef(false);
   const isEditing = Boolean(initial);
   const featuredOthers = contarDestacados(products, initial?.id);
   const stockForEligibility = Number(initial?.stock) || 0;
+
+  useEffect(() => {
+    if (!open) return;
+    setForm(formDesdeProducto(initial));
+    setFieldErrors({});
+    setSubmitError("");
+    submitGuard.current = false;
+  }, [open, initial]);
 
   if (!open) return null;
 
@@ -175,8 +217,8 @@ export function ProductCatalogFormDrawer({
   };
 
   const inputClassName =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
-  const errorClassName = "border-red-500 focus:border-red-500 focus:ring-red-100";
+    "w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none";
+  const errorClassName = "border-red-500 focus:border-red-500";
   const fieldErrorClassName = "text-xs text-red-600";
   const fieldClassName = (name) => `${inputClassName} ${fieldErrors[name] ? errorClassName : ""}`;
   const fieldDescription = (name) => (fieldErrors[name] ? errorId(name) : undefined);
@@ -232,7 +274,7 @@ export function ProductCatalogFormDrawer({
                 onBlur={handleBlur}
                 rows={4}
                 maxLength={MAX_PRODUCTO_DESCRIPCION}
-                className={`${fieldClassName("descripcion")} min-h-[6rem] resize-y break-words whitespace-pre-wrap overflow-x-hidden`}
+                className={`${fieldClassName("descripcion")} min-h-[6rem] resize-y rounded-2xl break-words whitespace-pre-wrap overflow-x-hidden`}
                 aria-invalid={Boolean(fieldErrors.descripcion)}
                 aria-describedby={fieldDescription("descripcion")}
                 required
@@ -245,8 +287,20 @@ export function ProductCatalogFormDrawer({
             </label>
 
             <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-              Imagen URL
+              Foto principal (URL)
               <input name="imagen" value={form.imagen} onChange={handleChange} className={inputClassName} />
+            </label>
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              Foto extra 2
+              <input name="imagen2" value={form.imagen2} onChange={handleChange} className={inputClassName} />
+            </label>
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              Foto extra 3
+              <input name="imagen3" value={form.imagen3} onChange={handleChange} className={inputClassName} />
+            </label>
+            <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
+              Foto extra 4
+              <input name="imagen4" value={form.imagen4} onChange={handleChange} className={inputClassName} />
             </label>
             <label className="grid gap-2 text-sm font-medium text-slate-700">
               Precio normal
@@ -260,24 +314,71 @@ export function ProductCatalogFormDrawer({
               Peso
               <input name="peso" value={form.peso} onChange={handleChange} className={inputClassName} placeholder="500g / 1kg" />
             </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-              Estado
-              <select name="estado" value={form.estado} onChange={handleChange} className={inputClassName}>
-                <option value="Habilitado">Habilitado</option>
-                <option value="Deshabilitado">Deshabilitado</option>
-              </select>
-            </label>
-            <label className="flex items-center gap-3 text-sm font-medium text-slate-700 md:col-span-2">
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              Stock mínimo (alerta)
               <input
-                type="checkbox"
-                name="esDestacado"
-                checked={Boolean(form.esDestacado)}
+                type="number"
+                name="stockMinimo"
+                value={form.stockMinimo}
                 onChange={handleChange}
-                disabled={featuredDisabled}
-                className="size-4 rounded border-slate-300 accent-[#a7532d] text-[#a7532d] focus:ring-[#a7532d] disabled:cursor-not-allowed disabled:opacity-50"
+                className={inputClassName}
+                min="0"
+                step="1"
               />
-              Mostrar como destacado en el inicio
             </label>
+            <div className="grid gap-4 md:col-span-2 md:grid-cols-2">
+              <CategoriaCampo
+                tipo={TIPO_CATEGORIA_PRODUCTO}
+                value={form.categoria || ""}
+                extras={categorias}
+                permitirCrear
+                onChange={(valor) =>
+                  setForm((current) => ({
+                    ...current,
+                    categoria: valor,
+                    subcategoria: valor === current.categoria ? current.subcategoria : "",
+                  }))
+                }
+                onCreada={onCategoriaCreada}
+              />
+              <CategoriaCampo
+                tipo={TIPO_CATEGORIA_PRODUCTO}
+                padre={form.categoria || ""}
+                value={form.subcategoria || ""}
+                label="Subcategoría"
+                vacioLabel="Sin subcategoría"
+                permitirCrear={Boolean(form.categoria)}
+                placeholderNueva="Ej. Tueste medio"
+                etiquetaNueva="Agregar subcategoría (ej. tueste)"
+                onChange={(valor) => setForm((current) => ({ ...current, subcategoria: valor }))}
+                onCreada={onCategoriaCreada}
+              />
+            </div>
+            <div className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
+              Estado
+              <UiSelect
+                ariaLabel="Estado"
+                value={form.estado}
+                onChange={(valor) => handleChange({ target: { name: "estado", value: valor } })}
+                options={[
+                  { value: "Habilitado", label: "Habilitado" },
+                  { value: "Deshabilitado", label: "Deshabilitado" },
+                ]}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Switch
+                id="esDestacado"
+                checked={Boolean(form.esDestacado)}
+                disabled={featuredDisabled && !form.esDestacado}
+                onCheckedChange={(checked) => {
+                  handleChange({
+                    target: { name: "esDestacado", type: "checkbox", checked },
+                  });
+                }}
+                label="Mostrar como destacado en el inicio"
+              />
+            </div>
             <p className="text-xs text-slate-500 md:col-span-2" aria-live="polite">
               Máximo {MAX_PRODUCTOS_DESTACADOS} productos destacados en el inicio ({Math.min(featuredOthers + (form.esDestacado ? 1 : 0), MAX_PRODUCTOS_DESTACADOS)}/{MAX_PRODUCTOS_DESTACADOS}).
               {productoEstaDeshabilitado(form) ? " Un producto deshabilitado no puede destacarse." : null}

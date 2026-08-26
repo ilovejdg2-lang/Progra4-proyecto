@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ExternalLink, Mail, MapPin, Phone, ShoppingCart } from "lucide-react";
+import { ArrowRight, ExternalLink, Mail, MapPin, Phone, ShoppingCart, User } from "lucide-react";
 import { FacebookIcon, InstagramIcon } from "../../Footer/SocialIcons";
 import { adminBtnVoluntariadoCancel, adminBtnVoluntariadoPrimary } from "./AdminModal";
 
 import Hero from "../../Hero/Hero";
 import Gallery from "../../Gallery/Gallery";
+import SiteNavLink from "../../SiteNavLink/SiteNavLink";
 import { AboutNarrativeBlock } from "../../AboutNarrativeBlock/AboutNarrativeBlock";
 import { HomeActionLink } from "../../../lib/homeActionLink";
 import { normalizeImageUrl } from "../../../lib/imageUtils";
 import { productoPuedeDestacarse } from "../../../lib/productoDisponibilidad";
 import { toGoogleMapsEmbedUrl } from "../../../lib/googleMaps";
+import FeaturedCafesCarousel from "../../FeaturedCafesCarousel/FeaturedCafesCarousel";
+import { imagenPrincipalProducto } from "../../../lib/productoImagenes";
 import { obtenerProductos } from "../../../services/productosService";
 
 import "../../../Pages/Home/Home.css";
@@ -38,7 +41,7 @@ function useProductosDestacados(enabled) {
 
         const destacados = (Array.isArray(lista) ? lista : [])
           .filter((producto) => producto.esDestacado && productoPuedeDestacarse(producto))
-          .filter((producto) => Boolean(normalizeImageUrl(producto.imagen, { width: 800 }) || producto.imagen))
+          .filter((producto) => Boolean(imagenPrincipalProducto(producto)))
           .slice(0, 3);
 
         setProducts(destacados);
@@ -75,6 +78,38 @@ function PreviewLiveFrame({ children, variant = "" }) {
       <div className={`admin-cms-preview site-canvas ${variant}`.trim()}>
         {children}
       </div>
+    </div>
+  );
+}
+
+function enlaceTieneContenido(item) {
+  return Boolean(String(item?.etiqueta ?? "").trim() || String(item?.ruta ?? "").trim());
+}
+
+function enlacesNavbarParaPreview(enlaces = []) {
+  return enlaces.filter((item) => {
+    if (!enlaceTieneContenido(item)) return false;
+    return String(item?.ruta ?? "").trim() !== "/";
+  });
+}
+
+function PreviewNavItem({ item }) {
+  if (item?.ruta) {
+    return <SiteNavLink enlace={item} />;
+  }
+
+  return <span>{item?.etiqueta || "Enlace"}</span>;
+}
+
+function PreviewNavbarActions() {
+  return (
+    <div className="navbar__actions" aria-hidden="true">
+      <span className="navbar__icon-button navbar__cart-button">
+        <ShoppingCart size={24} strokeWidth={2} />
+      </span>
+      <span className="navbar__icon-button navbar__user-button">
+        <User size={24} strokeWidth={2} />
+      </span>
     </div>
   );
 }
@@ -151,44 +186,8 @@ function PreviewFeaturedProducts({ products, loading }) {
   }
 
   return (
-    <div className="curated-collections__carousel">
-      <div
-        className={`curated-collections__grid curated-collections__grid--count-${products.length}`}
-        aria-label={"Selecci\u00f3n destacada de caf\u00e9s"}
-        role="list"
-      >
-        {products.map((producto, idx) => (
-          <article
-            key={producto?.id ?? producto?.nombre ?? `featured-${idx}`}
-            role="listitem"
-            className={`curated-collections__card${
-              products.length === 3 && idx === 1 ? " curated-collections__card--offset" : ""
-            }`}
-          >
-            <HomeActionLink
-              href={producto.id ? `/productos/${producto.id}` : ""}
-              className="curated-collections__card-link"
-            >
-              <img
-                src={normalizeImageUrl(producto.imagen, { width: 800 }) || producto.imagen}
-                alt={producto.nombre || "Caf\u00e9"}
-                loading="eager"
-                width="800"
-                height="1000"
-                referrerPolicy="no-referrer"
-              />
-              <div className="curated-collections__overlay" aria-hidden="true" />
-              <div className="curated-collections__content">
-                {producto.peso ? (
-                  <span className="curated-collections__pill">{String(producto.peso).toUpperCase()}</span>
-                ) : null}
-                <h3>{producto.nombre}</h3>
-                {producto.descripcion ? <p>{producto.descripcion}</p> : null}
-              </div>
-            </HomeActionLink>
-          </article>
-        ))}
-      </div>
+    <div className="featured-cafes-section featured-cafes-section--preview">
+      <FeaturedCafesCarousel products={products} />
     </div>
   );
 }
@@ -197,6 +196,7 @@ function PreviewHomeSectionLive({ clave, form, tarjetasInicio = [] }) {
   const { products, loading } = useProductosDestacados(clave === "homeFeatured");
 
   const aboutTeaserImageUrl = normalizeImageUrl(form.image, { width: 900 });
+  const locationImageUrl = normalizeImageUrl(form.image, { width: 1200 });
   const locationMapUrl = form.linkUrl?.trim() ?? "";
   const locationMapEmbedUrl = useMemo(
     () => toGoogleMapsEmbedUrl(locationMapUrl),
@@ -210,13 +210,23 @@ function PreviewHomeSectionLive({ clave, form, tarjetasInicio = [] }) {
       <section className="home-page__mission-spotlight" aria-labelledby="preview-about-teaser-title">
         <div className="mission-spotlight-shell">
           <article className="mission-spotlight-card">
-            {form.title ? (
-              <h2 id="preview-about-teaser-title" className="mission-spotlight-card__title">
-                {form.title}
-              </h2>
-            ) : null}
-
             <div className="mission-spotlight-card__body">
+              <div className="mission-spotlight-card__content">
+                {form.title ? (
+                  <h2 id="preview-about-teaser-title" className="mission-spotlight-card__title">
+                    {form.title}
+                  </h2>
+                ) : null}
+                {form.description ? (
+                  <p className="mission-spotlight-card__description">{form.description}</p>
+                ) : null}
+                {form.linkText && form.linkUrl ? (
+                  <HomeActionLink href={form.linkUrl} className="mission-spotlight-card__button">
+                    {form.linkText}
+                  </HomeActionLink>
+                ) : null}
+              </div>
+
               {aboutTeaserImageUrl ? (
                 <div className="mission-spotlight-card__media">
                   <img
@@ -230,20 +240,6 @@ function PreviewHomeSectionLive({ clave, form, tarjetasInicio = [] }) {
                   />
                 </div>
               ) : null}
-
-              <div className="mission-spotlight-card__content">
-                {form.description ? (
-                  <p className="mission-spotlight-card__description">{form.description}</p>
-                ) : null}
-                {form.linkText && form.linkUrl ? (
-                  <HomeActionLink href={form.linkUrl} className="mission-spotlight-card__link">
-                    {form.linkText}
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                  </HomeActionLink>
-                ) : null}
-              </div>
             </div>
           </article>
         </div>
@@ -251,19 +247,19 @@ function PreviewHomeSectionLive({ clave, form, tarjetasInicio = [] }) {
     );
   } else if (clave === "homeFeatured") {
     section = (
-      <section className="home-page__featured curated-collections">
+      <section className="home-page__featured featured-cafes-section">
         {(form.title || form.description) ? (
-          <header className="curated-collections__header">
-            {form.title ? <h2 className="curated-collections__title">{form.title}</h2> : null}
-            {form.description ? <p className="curated-collections__intro">{form.description}</p> : null}
+          <header className="featured-cafes-section__header">
+            {form.title ? <h2 className="featured-cafes-section__title">{form.title}</h2> : null}
+            {form.description ? <p className="featured-cafes-section__intro">{form.description}</p> : null}
           </header>
         ) : null}
 
         <PreviewFeaturedProducts products={products} loading={loading} />
 
         {form.linkText && form.linkUrl ? (
-          <footer className="curated-collections__footer">
-            <HomeActionLink href={form.linkUrl} className="curated-collections__cta">
+          <footer className="featured-cafes-section__footer">
+            <HomeActionLink href={form.linkUrl} className="featured-cafes-section__cta">
               {form.linkText}
               <ArrowRight size={18} aria-hidden="true" />
             </HomeActionLink>
@@ -291,11 +287,11 @@ function PreviewHomeSectionLive({ clave, form, tarjetasInicio = [] }) {
           <div className="location-card__copy">
             {form.title ? <h2 id="preview-location-title">{form.title}</h2> : null}
             {form.description ? <p>{form.description}</p> : null}
-            {locationMapUrl && form.linkText ? (
-              <a href={locationMapUrl} target="_blank" rel="noreferrer" className="location-card__button">
+            {form.linkText && form.linkUrl ? (
+              <HomeActionLink href={form.linkUrl} className="location-card__button">
                 {form.linkText}
-                <ExternalLink size={16} strokeWidth={2.4} aria-hidden="true" />
-              </a>
+                <ExternalLink size={15} aria-hidden="true" />
+              </HomeActionLink>
             ) : null}
           </div>
 
@@ -306,8 +302,18 @@ function PreviewHomeSectionLive({ clave, form, tarjetasInicio = [] }) {
                 src={locationMapEmbedUrl}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                aria-hidden="true"
-                tabIndex={-1}
+              />
+            </div>
+          ) : locationImageUrl ? (
+            <div className="location-card__media">
+              <img
+                src={locationImageUrl}
+                alt=""
+                width={1200}
+                height={900}
+                loading="eager"
+                decoding="async"
+                referrerPolicy="no-referrer"
               />
             </div>
           ) : null}
@@ -340,13 +346,17 @@ function PreviewTarjetasInicioLive({ tarjetas = [] }) {
 }
 
 function PreviewTextoInstitucionalLive({ form, tipo = "historia" }) {
-  const reverse = tipo === "mission";
-
   return (
     <PreviewLiveFrame variant="admin-cms-preview--about">
       <main className="about-page">
         <section className="about-page__narratives">
-          <AboutNarrativeBlock title={form.title} description={form.description} />
+          <AboutNarrativeBlock
+            eyebrow={form.eyebrow}
+            title={form.title}
+            description={form.description}
+            image={form.image}
+            reverse={tipo === "mission"}
+          />
         </section>
       </main>
     </PreviewLiveFrame>
@@ -369,7 +379,7 @@ function PreviewGaleriaLive({ items = [] }) {
   return (
     <PreviewLiveFrame variant="admin-cms-preview--gallery">
       <main className="about-page">
-        <Gallery items={galleryItems.slice(0, 4)} pageSize={4} />
+        <Gallery items={galleryItems} pageSize={10} permitirLightbox={false} />
       </main>
     </PreviewLiveFrame>
   );
@@ -381,7 +391,7 @@ function PreviewNavbarLive({ form, enlaces = [] }) {
     scrolled ? (form.logoUrl || form.logoClaroUrl) : (form.logoClaroUrl || form.logoUrl),
     { width: 320 },
   );
-  const links = enlaces.filter((item) => item.etiqueta?.trim() || item.ruta?.trim()).slice(0, 5);
+  const links = enlacesNavbarParaPreview(enlaces);
 
   return (
     <>
@@ -406,7 +416,7 @@ function PreviewNavbarLive({ form, enlaces = [] }) {
         </button>
       </div>
       <PreviewLiveFrame variant={`admin-cms-preview--navbar${scrolled ? " admin-cms-preview--navbar-solid" : ""}`}>
-        <header className={`navbar ${scrolled ? "navbar--solid" : "navbar--transparent"}`}>
+        <nav className={`navbar ${scrolled ? "navbar--solid" : "navbar--transparent"}`}>
           <div className="navbar__start">
             <span className="navbar__brand" aria-hidden="true">
               {logoSrc ? (
@@ -417,20 +427,16 @@ function PreviewNavbarLive({ form, enlaces = [] }) {
             </span>
           </div>
 
-          <nav className="navbar__menu" aria-label="Vista previa de enlaces">
+          <div className="navbar__menu" aria-label="Vista previa de enlaces">
             {links.length ? links.map((item, index) => (
-              <span key={item.id ?? index}>{item.etiqueta || "Enlace"}</span>
+              <PreviewNavItem key={item.id ?? index} item={item} />
             )) : (
               <span style={{ opacity: 0.5 }}>{"Los enlaces aparecer\u00e1n aqu\u00ed."}</span>
             )}
-          </nav>
-
-          <div className="navbar__actions" aria-hidden="true">
-            <span className="navbar__icon-button">
-              <ShoppingCart size={24} strokeWidth={2} />
-            </span>
           </div>
-        </header>
+
+          <PreviewNavbarActions />
+        </nav>
       </PreviewLiveFrame>
     </>
   );
@@ -438,7 +444,7 @@ function PreviewNavbarLive({ form, enlaces = [] }) {
 
 function PreviewFooterLive({ form, enlaces = [] }) {
   const footerLogoSrc = normalizeImageUrl(form.logoClaroUrl || form.logoUrl, { width: 480 });
-  const explorar = enlaces.filter((item) => item.etiqueta?.trim() || item.ruta?.trim()).slice(0, 5);
+  const explorar = enlaces.filter(enlaceTieneContenido);
   const hasContactos = Boolean(form.telefono || form.correo || form.mapsUrl);
   const hasSocial = Boolean(form.facebookUrl || form.instagramUrl);
 
@@ -455,35 +461,35 @@ function PreviewFooterLive({ form, enlaces = [] }) {
             </div>
           </div>
 
-          <nav className="footer__column" aria-label="Explorar">
-            <h2>Explorar</h2>
-            {explorar.length ? explorar.map((item, index) => (
-              <span key={item.id ?? index}>{item.etiqueta || "Enlace"}</span>
-            )) : (
-              <span style={{ opacity: 0.5 }}>{"Los enlaces aparecer\u00e1n aqu\u00ed."}</span>
-            )}
-          </nav>
+          {explorar.length ? (
+            <nav className="footer__column" aria-label="Explorar">
+              <h2>Explorar</h2>
+              {explorar.map((item, index) => (
+                <PreviewNavItem key={item.id ?? index} item={item} />
+              ))}
+            </nav>
+          ) : null}
 
           {hasContactos ? (
             <section className="footer__column footer__contact" aria-label="Contactos">
               <h2>Contactos</h2>
               {form.telefono ? (
-                <span className="footer__contact-item">
+                <a href={`tel:${form.telefono}`} className="footer__contact-item">
                   <Phone className="footer__contact-icon" aria-hidden="true" />
                   <span>{form.telefono}</span>
-                </span>
+                </a>
               ) : null}
               {form.correo ? (
-                <span className="footer__contact-item">
+                <a href={`mailto:${form.correo}`} className="footer__contact-item">
                   <Mail className="footer__contact-icon" aria-hidden="true" />
                   <span>{form.correo}</span>
-                </span>
+                </a>
               ) : null}
               {form.mapsUrl ? (
-                <span className="footer__contact-item">
+                <a href={form.mapsUrl} className="footer__contact-item">
                   <MapPin className="footer__contact-icon" aria-hidden="true" />
                   <span>{"Ubicaci\u00f3n"}</span>
-                </span>
+                </a>
               ) : null}
             </section>
           ) : null}
@@ -493,14 +499,14 @@ function PreviewFooterLive({ form, enlaces = [] }) {
               <h2>Redes sociales</h2>
               <div className="footer__social-links">
                 {form.instagramUrl ? (
-                  <span aria-label="Instagram">
+                  <a href={form.instagramUrl} aria-label="Instagram">
                     <InstagramIcon className="footer__social-icon" />
-                  </span>
+                  </a>
                 ) : null}
                 {form.facebookUrl ? (
-                  <span aria-label="Facebook">
+                  <a href={form.facebookUrl} aria-label="Facebook">
                     <FacebookIcon className="footer__social-icon" />
-                  </span>
+                  </a>
                 ) : null}
               </div>
             </section>
@@ -516,32 +522,12 @@ function PreviewFooterLive({ form, enlaces = [] }) {
   );
 }
 
-function PreviewEnlaces({ items = [] }) {
-  const enlaces = items.filter((item) => item.etiqueta?.trim() || item.ruta?.trim());
-
-  if (!enlaces.length) {
-    return (
-      <PreviewLiveFrame variant="admin-cms-preview--navbar">
-        <header className="navbar navbar--solid">
-          <div className="navbar__menu">
-            <span style={{ opacity: 0.5 }}>{"Los enlaces aparecer\u00e1n aqu\u00ed."}</span>
-          </div>
-        </header>
-      </PreviewLiveFrame>
-    );
+function PreviewEnlaces({ items = [], variante = "navbar", navbar, footer }) {
+  if (variante === "footer") {
+    return <PreviewFooterLive form={footer ?? {}} enlaces={items} />;
   }
 
-  return (
-    <PreviewLiveFrame variant="admin-cms-preview--navbar">
-      <header className="navbar navbar--solid" aria-label="Vista previa de enlaces">
-        <div className="navbar__menu">
-          {enlaces.map((item, index) => (
-            <span key={item.id ?? index}>{item.etiqueta || "Sin etiqueta"}</span>
-          ))}
-        </div>
-      </header>
-    </PreviewLiveFrame>
-  );
+  return <PreviewNavbarLive form={navbar ?? {}} enlaces={items} />;
 }
 
 export function AdminEditorConPreview({ preview, children, ayuda }) {

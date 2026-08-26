@@ -2,9 +2,19 @@
  * Convierte un enlace de Google Maps (del backend) a URL usable en <iframe>.
  * Los enlaces normales de maps.google.com no se renderizan en iframe sin output=embed.
  */
+export function esUrlGoogleMaps(mapsUrl) {
+  const url = String(mapsUrl ?? "").trim();
+  if (!url) return false;
+  return /google\.[^/]*\/maps/i.test(url)
+    || /maps\.app\.goo\.gl/i.test(url)
+    || /goo\.gl\/maps/i.test(url)
+    || /\/maps\/embed\b/i.test(url)
+    || /output=embed/i.test(url);
+}
+
 export function toGoogleMapsEmbedUrl(mapsUrl) {
   const url = String(mapsUrl ?? '').trim();
-  if (!url) return '';
+  if (!esUrlGoogleMaps(url)) return '';
 
   if (/output=embed/i.test(url) || /\/maps\/embed\b/i.test(url)) {
     return url;

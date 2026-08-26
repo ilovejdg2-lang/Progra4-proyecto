@@ -6,7 +6,17 @@ function normalizarSeccion(data = {}) {
     title: data?.title ?? data?.Title ?? '',
     description: data?.description ?? data?.Description ?? '',
     image: data?.image ?? data?.Image ?? '',
+    eyebrow: data?.eyebrow ?? data?.Eyebrow ?? '',
   };
+}
+
+function normalizarGaleria(items) {
+  return (Array.isArray(items) ? items : []).map((item) => ({
+    ...item,
+    title: item?.title ?? item?.Title ?? '',
+    image: item?.image ?? item?.Image ?? '',
+    categoria: item?.categoria ?? item?.Categoria ?? '',
+  }));
 }
 
 export async function fetchAboutAdminPageData() {
@@ -17,6 +27,6 @@ export async function fetchAboutAdminPageData() {
     historia: normalizarSeccion(data?.historia),
     mission: normalizarSeccion(data?.mission),
     vision: normalizarSeccion(data?.vision),
-    gallery: Array.isArray(data?.gallery) ? data.gallery : [],
+    gallery: normalizarGaleria(data?.gallery),
   };
 }

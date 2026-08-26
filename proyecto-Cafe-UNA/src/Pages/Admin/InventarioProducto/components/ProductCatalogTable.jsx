@@ -1,5 +1,7 @@
 import { ProductCatalogFeaturedToggle } from "./ProductCatalogFeaturedToggle";
 import { destacadoDeshabilitado, etiquetaEstadoProducto, formatearPrecio } from "./catalogFormatters";
+import { etiquetaCategoriaProducto } from "../../../../lib/categorias";
+import { imagenPrincipalProducto } from "../../../../lib/productoImagenes";
 
 export function ProductCatalogTable({
   productos,
@@ -17,6 +19,7 @@ export function ProductCatalogTable({
           <tr className="border-b border-slate-200 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <th className="px-6 py-4">Imagen</th>
             <th className="px-6 py-4">Nombre</th>
+            <th className="px-6 py-4">Categoría</th>
             <th className="px-6 py-4">Precio</th>
             <th className="px-6 py-4">Stock</th>
             <th className="px-6 py-4">Estado</th>
@@ -26,19 +29,20 @@ export function ProductCatalogTable({
         </thead>
         <tbody>
           {productos.map((producto) => {
+            const foto = imagenPrincipalProducto(producto);
             const estadoProducto = etiquetaEstadoProducto(producto);
 
             return (
               <tr key={producto.id} className="border-b border-slate-100 last:border-b-0">
                 <td className="px-6 py-4">
-                  {producto.imagen ? (
+                  {foto ? (
                     <img
-                      src={producto.imagen}
+                      src={foto}
                       alt={producto.nombre}
-                      className="h-14 w-14 rounded-xl object-cover ring-1 ring-slate-200"
+                      className="h-14 w-14 rounded-2xl object-cover ring-1 ring-slate-200"
                     />
                   ) : (
-                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-slate-200 text-xs text-slate-500">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-200 text-xs text-slate-500">
                       Sin foto
                     </div>
                   )}
@@ -49,6 +53,7 @@ export function ProductCatalogTable({
                     {producto.descripcion}
                   </div>
                 </td>
+                <td className="px-6 py-4 text-slate-600">{etiquetaCategoriaProducto(producto) || "—"}</td>
                 <td className="px-6 py-4 text-slate-700">{formatearPrecio(producto.precioNormal)}</td>
                 <td className="px-6 py-4 text-slate-700">
                   {producto.centralStock?.confidence === "known"
@@ -58,7 +63,7 @@ export function ProductCatalogTable({
                       : "No disponible"}
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${estadoProducto.clase}`}>
+                  <span className={`text-xs font-semibold ${estadoProducto.clase}`}>
                     {estadoProducto.texto}
                   </span>
                 </td>

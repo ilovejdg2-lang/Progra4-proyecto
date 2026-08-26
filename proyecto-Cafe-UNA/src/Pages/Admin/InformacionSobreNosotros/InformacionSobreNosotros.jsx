@@ -10,11 +10,13 @@ import {
   PreviewTextoInstitucionalLive,
 } from "../../../Components/Admin/ui/AdminCmsPreview";
 import { AdminSeccionCard } from "../../../Components/Admin/ui/AdminSeccionCard";
+import { CategoriaCampo, CategoriaNueva, CategoriaOpcionBorrar } from "../../../Components/Admin/ui/CategoriaCampo";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useCachedPageData } from "../../../hooks/useCachedPageData";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import { filtrarPorBusqueda } from "../../../lib/adminListaFiltros";
+import { categoriasUnicas, filtrarPorCategoria, TIPO_CATEGORIA_GALERIA } from "../../../lib/categorias";
 import { fetchAboutAdminPageData } from "../../../lib/aboutAdminPageData";
 import {
   actualizarGaleriaItem,
@@ -23,6 +25,7 @@ import {
   eliminarGaleriaItem,
   obtenerInformacionSobreNosotros,
 } from "../../../services/informacionService";
+import { obtenerCategorias } from "../../../services/categoriasService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { tienePermiso } from "../../../lib/permisos";
 
@@ -31,14 +34,20 @@ const infoInicial = {
   historia: {
     title: "",
     description: "",
+    eyebrow: "",
+    image: "",
   },
   mission: {
     title: "",
     description: "",
+    eyebrow: "",
+    image: "",
   },
   vision: {
     title: "",
     description: "",
+    eyebrow: "",
+    image: "",
   },
   gallery: [],
 };
@@ -68,7 +77,7 @@ const estilos = {
 };
 
 function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
-  const [form, setForm] = useState(() => ({ title: "", description: "", image: "", ...data }));
+  const [form, setForm] = useState(() => ({ title: "", description: "", image: "", eyebrow: "", ...data }));
   const estilo = estilos[tipo];
   const Icon = estilo.Icon;
 
@@ -104,11 +113,19 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
 
         <AdminModalBody cms>
           <AdminEditorConPreview preview={<PreviewTextoInstitucionalLive form={form} tipo={tipo} />}>
+            <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">{"Etiqueta superior"}<input
+                name="eyebrow"
+                value={form.eyebrow}
+                onChange={cambiarCampo}
+                className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
+              />
+            </label>
+
             <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">{"T\u00edtulo de la secci\u00f3n"}<input
                 name="title"
                 value={form.title}
                 onChange={cambiarCampo}
-                className="rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
                 required
               />
             </label>
@@ -118,8 +135,19 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
                 value={form.description}
                 onChange={cambiarCampo}
                 rows={8}
-                className="resize-none rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
                 required
+              />
+            </label>
+
+            <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+              URL de foto
+              <input
+                name="image"
+                value={form.image}
+                onChange={cambiarCampo}
+                placeholder="https://..."
+                className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
               />
             </label>
 
@@ -139,8 +167,8 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
   );
 }
 
-function ModalNuevaFoto({ onCerrar, onAgregar }) {
-  const [form, setForm] = useState({ title: "", image: "" });
+function ModalNuevaFoto({ onCerrar, onAgregar, categorias = [], onCategoriaCreada }) {
+  const [form, setForm] = useState({ title: "", image: "", categoria: "" });
 
   const cambiarCampo = (event) => {
     const { name, value } = event.target;
@@ -152,7 +180,7 @@ function ModalNuevaFoto({ onCerrar, onAgregar }) {
     const title = form.title.trim();
     const image = form.image.trim();
     if (!title || !image) return;
-    onAgregar({ title, image });
+    onAgregar({ title, image, categoria: form.categoria.trim() });
   };
 
   return (
@@ -193,7 +221,7 @@ function ModalNuevaFoto({ onCerrar, onAgregar }) {
               value={form.title}
               onChange={cambiarCampo}
               placeholder={"Ej. Feria del caf\u00e9"}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
               required
             />
           </label>
@@ -205,10 +233,19 @@ function ModalNuevaFoto({ onCerrar, onAgregar }) {
               value={form.image}
               onChange={cambiarCampo}
               placeholder="https://..."
-              className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
               required
             />
           </label>
+
+          <CategoriaCampo
+            tipo={TIPO_CATEGORIA_GALERIA}
+            value={form.categoria}
+            extras={categorias}
+            permitirCrear
+            onChange={(valor) => setForm((actual) => ({ ...actual, categoria: valor }))}
+            onCreada={onCategoriaCreada}
+          />
         </AdminModalBody>
 
         <AdminModalFooter>
@@ -226,19 +263,43 @@ function ModalNuevaFoto({ onCerrar, onAgregar }) {
 function ModalGaleria({ info, onCerrar, onGuardar, guardando, puedeEliminar }) {
   const [gallery, setGallery] = useState(() => (Array.isArray(info.gallery) ? info.gallery : []));
   const [busqueda, setBusqueda] = useState("");
+  const [categoriaFiltro, setCategoriaFiltro] = useState("todos");
   const [agregandoFoto, setAgregandoFoto] = useState(false);
+  const [categoriasApi, setCategoriasApi] = useState([]);
 
-  const galleryFiltrada = useMemo(
-    () => filtrarPorBusqueda(gallery, busqueda, (item) => [item.title, item.image]),
-    [gallery, busqueda],
+  const recargarCategorias = () =>
+    obtenerCategorias(TIPO_CATEGORIA_GALERIA)
+      .then((lista) => setCategoriasApi(lista))
+      .catch(() => setCategoriasApi([]));
+
+  useEffect(() => {
+    recargarCategorias();
+  }, []);
+
+  const nombresCategoriasApi = useMemo(
+    () => categoriasApi.map((item) => item.nombre),
+    [categoriasApi],
   );
+  const categoriasDisponibles = useMemo(
+    () => categoriasUnicas([...gallery, ...nombresCategoriasApi.map((nombre) => ({ categoria: nombre }))]),
+    [gallery, nombresCategoriasApi],
+  );
+  const nombresCategoriasEnUso = useMemo(
+    () => gallery.map((item) => item.categoria),
+    [gallery],
+  );
+
+  const galleryFiltrada = useMemo(() => {
+    const porTexto = filtrarPorBusqueda(gallery, busqueda, (item) => [item.title, item.image, item.categoria]);
+    return filtrarPorCategoria(porTexto, categoriaFiltro === "todos" ? "todas" : categoriaFiltro);
+  }, [gallery, busqueda, categoriaFiltro]);
 
   const cambiarItem = (id, campo, valor) => {
     setGallery((actual) => actual.map((item) => (item.id === id ? { ...item, [campo]: valor } : item)));
   };
 
-  const agregarItem = ({ title, image }) => {
-    setGallery((actual) => [...actual, { id: Date.now(), title, image }]);
+  const agregarItem = ({ title, image, categoria }) => {
+    setGallery((actual) => [...actual, { id: Date.now(), title, image, categoria: categoria || "" }]);
     setAgregandoFoto(false);
   };
 
@@ -293,23 +354,70 @@ function ModalGaleria({ info, onCerrar, onGuardar, guardando, puedeEliminar }) {
             compacto
             busqueda={busqueda}
             onBusquedaChange={setBusqueda}
-            placeholder={"Buscar por t\u00edtulo o URL..."}
+            placeholder={"Buscar por t\u00edtulo, categor\u00eda o URL..."}
             total={gallery.length}
             visibles={galleryFiltrada.length}
-            hayFiltrosActivos={Boolean(busqueda.trim())}
-            onLimpiar={() => setBusqueda("")}
+            hayFiltrosActivos={Boolean(busqueda.trim()) || categoriaFiltro !== "todos"}
+            onLimpiar={() => {
+              setBusqueda("");
+              setCategoriaFiltro("todos");
+            }}
+            filtros={[
+              {
+                id: "categoria",
+                label: "Categoría",
+                value: categoriaFiltro || "todos",
+                onChange: setCategoriaFiltro,
+                footer: (
+                  <CategoriaNueva
+                    tipo={TIPO_CATEGORIA_GALERIA}
+                    enMenu
+                    onCreada={recargarCategorias}
+                    placeholder="Ej. Feria del café"
+                  />
+                ),
+                renderOptionEnd: (opcion) =>
+                  opcion.id ? (
+                    <CategoriaOpcionBorrar
+                      categoria={opcion}
+                      nombresEnUso={nombresCategoriasEnUso}
+                      onEliminada={(nombre) => {
+                        recargarCategorias();
+                        if ((categoriaFiltro || "").toLowerCase() === String(nombre || "").toLowerCase()) {
+                          setCategoriaFiltro("todos");
+                        }
+                      }}
+                    />
+                  ) : null,
+                opciones: [
+                  { value: "todos", label: "Todas" },
+                  ...categoriasDisponibles.map((categoria) => {
+                    const registro = categoriasApi.find(
+                      (item) => (item.nombre || "").toLowerCase() === String(categoria).toLowerCase(),
+                    );
+                    return {
+                      value: categoria,
+                      label: categoria,
+                      id: registro?.id,
+                      nombre: categoria,
+                      usos: registro?.usos,
+                    };
+                  }),
+                ],
+              },
+            ]}
           />
 
           <div className="space-y-4">
             {galleryFiltrada.length === 0 ? (
               <AdminListaVacia
                 mensaje={gallery.length === 0 ? "No hay fotos en la galer\u00eda." : "No hay fotos que coincidan con la b\u00fasqueda."}
-                onLimpiar={busqueda.trim() ? () => setBusqueda("") : undefined}
+                onLimpiar={(busqueda.trim() || categoriaFiltro !== "todos") ? () => { setBusqueda(""); setCategoriaFiltro("todos"); } : undefined}
               />
             ) : null}
             {galleryFiltrada.map((item, index) => (
-              <div key={item.id} className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-[140px_1fr_auto]">
-                <div className="aspect-square overflow-hidden rounded-lg border border-slate-200 bg-white">
+              <div key={item.id} className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-[140px_1fr_auto]">
+                <div className="aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-white">
                   {item.image ? (
                     <img src={item.image} alt={item.title || `Imagen ${index + 1}`} className="size-full object-cover" />
                   ) : (
@@ -323,7 +431,7 @@ function ModalGaleria({ info, onCerrar, onGuardar, guardando, puedeEliminar }) {
                   <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">{"T\u00edtulo"}<input
                       value={item.title}
                       onChange={(event) => cambiarItem(item.id, "title", event.target.value)}
-                      className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                      className="rounded-full border border-slate-200 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
                       required
                     />
                   </label>
@@ -333,10 +441,18 @@ function ModalGaleria({ info, onCerrar, onGuardar, guardando, puedeEliminar }) {
                       value={item.image}
                       onChange={(event) => cambiarItem(item.id, "image", event.target.value)}
                       placeholder="https://..."
-                      className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                      className="rounded-full border border-slate-200 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
                       required
                     />
                   </label>
+                  <CategoriaCampo
+                    tipo={TIPO_CATEGORIA_GALERIA}
+                    value={item.categoria || ""}
+                    extras={categoriasDisponibles}
+                    permitirCrear
+                    onChange={(valor) => cambiarItem(item.id, "categoria", valor)}
+                    onCreada={recargarCategorias}
+                  />
                 </div>
 
                 {puedeEliminar ? (
@@ -368,7 +484,12 @@ function ModalGaleria({ info, onCerrar, onGuardar, guardando, puedeEliminar }) {
       </form>
     </AdminModal>
     {agregandoFoto ? (
-      <ModalNuevaFoto onCerrar={() => setAgregandoFoto(false)} onAgregar={agregarItem} />
+      <ModalNuevaFoto
+        onCerrar={() => setAgregandoFoto(false)}
+        onAgregar={agregarItem}
+        categorias={categoriasDisponibles}
+        onCategoriaCreada={recargarCategorias}
+      />
     ) : null}
     </>
   );
@@ -412,13 +533,15 @@ const AdminInformacionSobreNosotros = () => {
     {
       id: "galeria",
       tipo: "galeria",
-      busqueda: ["Galer\u00eda", "Galer\u00eda institucional", ...(info.gallery ?? []).map((item) => item.title)],
+      busqueda: ["Galer\u00eda", "Galer\u00eda institucional", ...(info.gallery ?? []).map((item) => `${item.title} ${item.categoria}`)],
     },
   ]), [info]);
 
   const {
     busqueda,
     setBusqueda,
+    valoresFiltro,
+    setValorFiltro,
     filtrados: seccionesFiltradas,
     limpiar: limpiarFiltros,
     hayFiltrosActivos,
@@ -426,6 +549,7 @@ const AdminInformacionSobreNosotros = () => {
     visibles: seccionesVisibles,
   } = useAdminListaFiltros(seccionesSobreNosotros, {
     buscarEn: (seccion) => seccion.busqueda,
+    filtrosConfig: [{ id: "tipo", obtenerValor: (seccion) => seccion.tipo }],
   });
 
   const idsVisibles = useMemo(
@@ -468,16 +592,17 @@ const AdminInformacionSobreNosotros = () => {
       const editados = gallery.filter((item) => {
         const previo = actualPorId.get(Number(item.id));
         if (!previo) return false;
-        return (previo.title ?? "") !== (item.title ?? "") || (previo.image ?? "") !== (item.image ?? "");
+        return (previo.title ?? "") !== (item.title ?? "") || (previo.image ?? "") !== (item.image ?? "") || (previo.categoria ?? "") !== (item.categoria ?? "");
       });
 
       await Promise.all(removidos.map((item) => eliminarGaleriaItem(item.id)));
-      await Promise.all(agregados.map((item) => agregarGaleriaItem({ title: item.title, image: item.image })));
+      await Promise.all(agregados.map((item) => agregarGaleriaItem({ title: item.title, image: item.image, categoria: item.categoria })));
       await Promise.all(
         editados.map((item) =>
           actualizarGaleriaItem(item.id, {
             title: item.title,
             image: item.image,
+            categoria: item.categoria,
           })
         )
       );
@@ -517,11 +642,24 @@ const AdminInformacionSobreNosotros = () => {
             <AdminListaToolbar
               busqueda={busqueda}
               onBusquedaChange={setBusqueda}
-              placeholder={"Buscar secciones por t\u00edtulo o contenido..."}
+              placeholder={"Buscar secciones por título o contenido..."}
               total={totalSecciones}
               visibles={seccionesVisibles}
               hayFiltrosActivos={hayFiltrosActivos}
               onLimpiar={limpiarFiltros}
+              filtros={[
+                {
+                  id: "tipo",
+                  label: "Tipo",
+                  value: valoresFiltro.tipo || "todos",
+                  onChange: (valor) => setValorFiltro("tipo", valor),
+                  opciones: [
+                    { value: "todos", label: "Todos" },
+                    { value: "texto", label: "Textos" },
+                    { value: "galeria", label: "Galería" },
+                  ],
+                },
+              ]}
             />
 
             {seccionesFiltradas.length === 0 ? (

@@ -1,0 +1,136 @@
+import { useState } from "react";
+import { Store, X } from "lucide-react";
+
+import {
+  AdminModal,
+  AdminModalActions,
+  AdminModalBody,
+  AdminModalHeader,
+} from "../../../../Components/Admin/ui/AdminModal";
+
+export function PointOfSaleLocationEditor({
+  open,
+  location = null,
+  onClose,
+  onSave,
+  isSaving = false,
+  error = "",
+}) {
+  const isEdit = Boolean(location?.code);
+  const [nombre, setNombre] = useState(() => location?.name || "");
+  const [codigo, setCodigo] = useState(() => location?.code || "");
+  const [validationError, setValidationError] = useState("");
+
+  if (!open) return null;
+
+  const message = validationError || error;
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const normalizedNombre = nombre.trim();
+    if (normalizedNombre.length < 2 || normalizedNombre.length > 100) {
+      setValidationError("El nombre debe tener entre 2 y 100 caracteres.");
+      return;
+    }
+
+    if (!isEdit) {
+      const normalizedCodigo = codigo.trim().toUpperCase();
+      if (normalizedCodigo && !/^POS_[A-Z0-9_]{1,45}$/.test(normalizedCodigo)) {
+        setValidationError("El código debe iniciar con POS_ y usar solo letras, números o guion bajo.");
+        return;
+      }
+      setValidationError("");
+      await onSave({
+        nombre: normalizedNombre,
+        codigo: normalizedCodigo || undefined,
+      });
+      return;
+    }
+
+    setValidationError("");
+    await onSave({ nombre: normalizedNombre });
+  };
+
+  return (
+    <AdminModal open onClose={onClose} maxWidth="max-w-xl" labelledBy="pos-location-editor-title">
+      <AdminModalHeader>
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+            <Store className="size-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h2 id="pos-location-editor-title" className="truncate text-lg font-semibold text-slate-950">
+              {isEdit ? "Editar punto de venta" : "Agregar punto de venta"}
+            </h2>
+            <p className="truncate text-sm text-slate-500">
+              {isEdit ? location.code : "Bodega Central no se modifica desde aquí."}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+          aria-label="Cerrar editor de punto de venta"
+        >
+          <X className="size-5" aria-hidden="true" />
+        </button>
+      </AdminModalHeader>
+      <AdminModalBody>
+        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+          <label className="grid gap-2 text-sm font-medium text-slate-700">
+            Nombre
+            <input
+              name="nombre"
+              type="text"
+              value={nombre}
+              onChange={(event) => {
+                setNombre(event.target.value);
+                setValidationError("");
+              }}
+              className={`min-h-11 rounded-full border bg-slate-50 px-3 py-2.5 text-base text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0 ${
+                message ? "border-red-500" : "border-slate-200"
+              }`}
+              aria-invalid={Boolean(message)}
+              required
+            />
+          </label>
+          {!isEdit ? (
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              Código (opcional)
+              <input
+                name="codigo"
+                type="text"
+                value={codigo}
+                onChange={(event) => {
+                  setCodigo(event.target.value);
+                  setValidationError("");
+                }}
+                placeholder="POS_..."
+                className={`min-h-11 rounded-full border bg-slate-50 px-3 py-2.5 text-base text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0 ${
+                  message ? "border-red-500" : "border-slate-200"
+                }`}
+                aria-invalid={Boolean(message)}
+              />
+              <span className="text-xs font-normal text-slate-500">
+                Si lo dejás vacío, se genera automáticamente a partir del nombre.
+              </span>
+            </label>
+          ) : null}
+          {message ? (
+            <p className="text-sm text-red-600" role="alert" aria-live="assertive">
+              {message}
+            </p>
+          ) : null}
+          <div className="border-t border-slate-100 pt-4">
+            <AdminModalActions
+              onCancel={onClose}
+              primaryLabel={isSaving ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear punto"}
+              primaryDisabled={isSaving}
+            />
+          </div>
+        </form>
+      </AdminModalBody>
+    </AdminModal>
+  );
+}

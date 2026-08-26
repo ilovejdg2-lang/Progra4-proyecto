@@ -10,13 +10,15 @@ function backendOrigin(apiUrl) {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const fullBackendUrl = normalizeBackendUrl(
-    process.env.BACKEND_URL || env.BACKEND_URL || 'http://localhost:5220/api',
-  )
   const useDevProxy = mode === 'development' && !process.env.NETLIFY
+  const localBackendUrl = 'http://localhost:5220/api'
+  // En `npm run dev` el proxy va al Nest local. BACKEND_URL del .env es para Netlify/producción.
+  const fullBackendUrl = normalizeBackendUrl(
+    useDevProxy
+      ? (env.DEV_BACKEND_URL || localBackendUrl)
+      : (process.env.BACKEND_URL || env.BACKEND_URL || localBackendUrl),
+  )
 
-  // Local: el navegador llama a /api y Vite reenvía a BACKEND_URL.
-  // Netlify/producción: el navegador llama directo a BACKEND_URL (env, no se commitea).
   const clientBackendUrl = useDevProxy ? '/api' : fullBackendUrl
 
   return {
