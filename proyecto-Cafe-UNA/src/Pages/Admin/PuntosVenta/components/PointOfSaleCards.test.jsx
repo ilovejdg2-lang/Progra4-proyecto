@@ -15,7 +15,9 @@ describe("PointOfSaleCards", () => {
     const onSelect = vi.fn();
     render(<PointOfSaleCards locations={locations} selectedCode="POS_FUNA_UNA" onSelect={onSelect} />);
 
-    expect(screen.getByRole("button", { name: /FUNA-UNA/i })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /FUNA-UNA/i }))
+      .toHaveAttribute("aria-pressed", "true")
+      .toHaveClass("!rounded-2xl");
     await user.click(screen.getByRole("button", { name: /Editorial/i }));
     expect(onSelect).toHaveBeenCalledWith("POS_EDITORIAL");
   });
