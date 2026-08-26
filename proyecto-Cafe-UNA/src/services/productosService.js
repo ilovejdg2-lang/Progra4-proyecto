@@ -20,7 +20,9 @@ let ubicacionesInflight = null;
 const stockPorUbicacionCache = new Map();
 const stockPorUbicacionInflight = new Map();
 
-const CANONICAL_LOCATION_NAMES = Object.freeze({
+const LOCATION_CODE_PATTERN = /^[A-Z][A-Z0-9_]{1,48}$/;
+
+const FALLBACK_LOCATION_NAMES = Object.freeze({
   BODEGA_CENTRAL: "Bodega Central",
   POS_FUNA_UNA: "FUNA-UNA",
   POS_EDITORIAL: "Editorial",
@@ -35,7 +37,10 @@ const CATALOG_FIELDS = [
   "precioConIVA",
   "estado",
   "peso",
+  "categoria",
+  "subcategoria",
   "esDestacado",
+  "stockMinimo",
 ];
 
 function limpiarProductosCache() {
@@ -118,15 +123,21 @@ export function normalizarStockCentral(producto) {
 export function normalizarUbicacion(ubicacion) {
   const code = firstDefined(ubicacion, ["code", "Code", "codigo", "Codigo", "locationCode", "LocationCode"]);
   if (!hasIdentity(code)) return null;
-  const canonicalCode = String(code).trim();
-  const canonicalName = CANONICAL_LOCATION_NAMES[canonicalCode];
-  if (!canonicalName) return null;
+  const normalizedCode = String(code).trim().toUpperCase();
+  if (!validarCodigoUbicacion(normalizedCode)) return null;
   const name = firstDefined(ubicacion, ["name", "Name", "nombre", "Nombre"]);
-  return { code: canonicalCode, name: hasIdentity(name) ? String(name) : canonicalName };
+  const fallbackName = FALLBACK_LOCATION_NAMES[normalizedCode] || normalizedCode;
+  const rawActivo = firstDefined(ubicacion, ["activo", "Activo"]);
+  return {
+    code: normalizedCode,
+    name: hasIdentity(name) ? String(name).trim() : fallbackName,
+    activo: rawActivo === undefined || rawActivo === null ? true : toBoolean(rawActivo),
+  };
 }
 
 export function validarCodigoUbicacion(locationCode) {
-  return Boolean(CANONICAL_LOCATION_NAMES[locationCode]);
+  if (typeof locationCode !== "string") return false;
+  return LOCATION_CODE_PATTERN.test(locationCode.trim().toUpperCase());
 }
 
 export function validarStockPorUbicacion(stock) {
@@ -204,7 +215,19 @@ export function adaptarProducto(producto) {
       precioConIVA,
       estado: estado === "Deshabilitado" ? "Deshabilitado" : "Habilitado",
       peso: firstDefined(producto, ["peso", "Peso"]) ?? "",
+      categoria: firstDefined(producto, ["categoria", "Categoria"]) ?? "",
+      subcategoria: firstDefined(producto, ["subcategoria", "Subcategoria"]) ?? "",
       esDestacado: toBoolean(firstDefined(producto, ["esDestacado", "EsDestacado"])),
+      stockMinimo: Number(firstDefined(producto, ["stockMinimo", "StockMinimo"]) ?? 0) || 0,
+      alertaStock: toBoolean(firstDefined(producto, ["alertaStock", "AlertaStock"])),
+      disponible: firstDefined(producto, ["disponible", "Disponible"]) === undefined
+        ? true
+        : toBoolean(firstDefined(producto, ["disponible", "Disponible"])),
+      stockTotal: Number(
+        firstDefined(producto, ["stockTotal", "stock_total", "StockTotal"]) ??
+          firstDefined(producto, ["stock", "Stock"]) ??
+          0,
+      ) || 0,
     },
     centralStock: normalizarStockCentral({ ...producto, id }),
   };
@@ -339,6 +362,27 @@ export async function obtenerProductoPorId(id) {
   return productos.find((producto) => String(producto.id) === String(id)) ?? null;
 }
 
+export async function obtenerStockDesglosadoProducto(productId) {
+  if (!hasIdentity(productId)) throw new Error("El identificador del producto no es válido.");
+  const data = await inventoryRequest(
+    `${BASE_URL}/${encodeURIComponent(String(productId))}/stock`,
+  );
+  const locations = Array.isArray(data?.locations)
+    ? data.locations
+    : Array.isArray(data?.Locations)
+      ? data.Locations
+      : [];
+  return {
+    productId: String(data?.productId ?? data?.ProductId ?? productId),
+    locations: locations.map((location) => ({
+      code: String(location.code ?? location.Code ?? ""),
+      name: String(location.name ?? location.Name ?? ""),
+      stock: Number(location.stock ?? location.Stock) || 0,
+    })),
+    total: Number(data?.total ?? data?.Total) || 0,
+  };
+}
+
 export async function crearProducto(nuevoProducto) {
   const creado = await request(BASE_URL, {
     method: "POST",
@@ -370,11 +414,46 @@ export async function actualizarStockCentral(productId, stock) {
   return normalizarStockCentral({ ...actualizado, productId });
 }
 
+export async function crearUbicacion({ nombre, codigo } = {}) {
+  const payload = { nombre };
+  if (hasIdentity(codigo)) payload.codigo = String(codigo).trim().toUpperCase();
+
+  const creada = await inventoryRequest(`${INVENTORY_BASE_URL}/ubicaciones`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  limpiarInventarioUbicacionCache();
+  return normalizarUbicacion(creada);
+}
+
+export async function actualizarUbicacion(locationCode, cambios = {}) {
+  if (!validarCodigoUbicacion(locationCode)) {
+    throw new Error("El código de ubicación no es válido.");
+  }
+  if (String(locationCode).toUpperCase() === "BODEGA_CENTRAL") {
+    throw new Error("Bodega Central no se puede editar ni inhabilitar.");
+  }
+
+  const payload = {};
+  if (Object.prototype.hasOwnProperty.call(cambios, "nombre")) payload.nombre = cambios.nombre;
+  if (Object.prototype.hasOwnProperty.call(cambios, "activo")) payload.activo = cambios.activo;
+
+  const actualizada = await inventoryRequest(
+    `${INVENTORY_BASE_URL}/ubicaciones/${encodeURIComponent(String(locationCode).trim().toUpperCase())}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
+  );
+  limpiarInventarioUbicacionCache();
+  return normalizarUbicacion(actualizada);
+}
+
 export async function ajustarStockPorUbicacion(locationCode, productId, stock, reason) {
   if (!validarCodigoUbicacion(locationCode)) {
     throw new Error("El código de ubicación no es válido.");
   }
-  if (locationCode === "BODEGA_CENTRAL") {
+  if (String(locationCode).toUpperCase() === "BODEGA_CENTRAL") {
     throw new Error("La ruta de ajustes solo admite puntos de venta.");
   }
 
@@ -423,6 +502,19 @@ export async function ajustarStockProductos(carritoItems) {
   });
   limpiarProductosCache();
   return (Array.isArray(actualizados) ? actualizados : []).map(normalizarProducto);
+}
+
+export async function obtenerAlertasStock() {
+  const data = await apiRequest(`${BASE_URL}/alertas-stock`, {
+    errorPrefix: "Error al consultar alertas de stock",
+  });
+  return (Array.isArray(data) ? data : []).map((item) => ({
+    id: String(item?.id ?? item?.Id ?? ""),
+    nombre: String(item?.nombre ?? item?.Nombre ?? ""),
+    stockActual: Number(item?.stockActual ?? item?.StockActual ?? 0) || 0,
+    stockMinimo: Number(item?.stockMinimo ?? item?.StockMinimo ?? 0) || 0,
+    agotado: Boolean(item?.agotado ?? item?.Agotado),
+  }));
 }
 
 export async function eliminarProducto(id) {

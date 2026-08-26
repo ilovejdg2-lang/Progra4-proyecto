@@ -1,16 +1,22 @@
-import { createDomainRequest, createListCache } from "./serviceHelpers";
+import { createDomainRequest } from "./serviceHelpers";
 
 const BASE_URL = `${import.meta.env.BACKEND_URL}/auditoria`;
-const CACHE_TTL_MS = 2 * 60 * 1000;
-const cache = createListCache(CACHE_TTL_MS);
 const request = createDomainRequest(
   "Error en auditor\u00eda",
   "Tiempo de espera agotado al consultar auditor\u00eda.",
 );
 
-export async function obtenerAuditoria({ force = false } = {}) {
-  const cached = cache.get(force);
-  if (cached) return cached;
+function buildQuery(params = {}) {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "" || value === "todos") return;
+    if (key === "force") return;
+    search.set(key, String(value));
+  });
+  const text = search.toString();
+  return text ? `?${text}` : "";
+}
 
-  return cache.setPromise(request(BASE_URL));
+export async function obtenerAuditoria(params = {}) {
+  return request(`${BASE_URL}${buildQuery(params)}`);
 }

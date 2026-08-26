@@ -4,36 +4,31 @@ import {
   obtenerTarjetasInicio,
 } from '../services/informacionService';
 import { mapHero } from './heroData';
+import { textoVisible } from './textoVisible';
+
+function textoCampo(valor) {
+  return typeof valor === 'string' ? textoVisible(valor.trim()) : '';
+}
 
 function mapSeccionInicio(data) {
   return {
-    eyebrow: typeof data?.eyebrow === 'string' ? data.eyebrow.trim() : '',
-    title: typeof data?.title === 'string' ? data.title.trim() : '',
-    description: typeof data?.description === 'string' ? data.description.trim() : '',
-    image: typeof data?.image === 'string' ? data.image.trim() : '',
-    linkUrl:
-      typeof data?.linkUrl === 'string'
-        ? data.linkUrl.trim()
-        : typeof data?.LinkUrl === 'string'
-          ? data.LinkUrl.trim()
-          : '',
-    linkText:
-      typeof data?.linkText === 'string'
-        ? data.linkText.trim()
-        : typeof data?.LinkText === 'string'
-          ? data.LinkText.trim()
-          : '',
+    eyebrow: textoCampo(data?.eyebrow),
+    title: textoCampo(data?.title),
+    description: textoCampo(data?.description),
+    image: textoCampo(data?.image),
+    linkUrl: textoCampo(data?.linkUrl) || textoCampo(data?.LinkUrl),
+    linkText: textoCampo(data?.linkText) || textoCampo(data?.LinkText),
   };
 }
 
 function mapTarjetaInicio(item) {
   return {
     clave: item?.clave || item?.Clave || '',
-    etiqueta: item?.etiqueta || item?.Etiqueta || '',
-    titulo: item?.titulo || item?.Titulo || '',
-    descripcion: item?.descripcion || item?.Descripcion || '',
+    etiqueta: textoCampo(item?.etiqueta || item?.Etiqueta),
+    titulo: textoCampo(item?.titulo || item?.Titulo),
+    descripcion: textoCampo(item?.descripcion || item?.Descripcion),
     ruta: item?.ruta || item?.Ruta || '',
-    textoBoton: item?.textoBoton || item?.TextoBoton || '',
+    textoBoton: textoCampo(item?.textoBoton || item?.TextoBoton),
   };
 }
 

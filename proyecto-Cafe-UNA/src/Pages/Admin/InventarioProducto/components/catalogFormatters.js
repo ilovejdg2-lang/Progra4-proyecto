@@ -8,14 +8,14 @@ export function formatearPrecio(valor) {
 
 export function etiquetaEstadoProducto(producto) {
   if (producto?.estado === "Deshabilitado") {
-    return { texto: "Deshabilitado", clase: "bg-red-50 text-red-700" };
+    return { texto: "Deshabilitado", clase: "text-red-600" };
   }
 
   if ((Number(producto?.stock) || 0) <= 0) {
-    return { texto: "Agotado", clase: "bg-amber-50 text-amber-800" };
+    return { texto: "Agotado", clase: "text-amber-800" };
   }
 
-  return { texto: "Habilitado", clase: "bg-emerald-50 text-emerald-700" };
+  return { texto: "Habilitado", clase: "text-green-700" };
 }
 
 export function destacadoDeshabilitado(producto, destacadosEnUso, maxDestacados, puedeDestacarse) {

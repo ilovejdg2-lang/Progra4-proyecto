@@ -24,7 +24,7 @@ export function DropdownMenuContent({ className, sideOffset = 8, onCloseAutoFocu
           onCloseAutoFocus?.(event);
         }}
         className={cn(
-          "z-[60] min-w-48 rounded-md border border-slate-200 bg-white p-1 text-sm text-slate-900 shadow-lg outline-none",
+          "z-[60] min-w-48 rounded-[var(--ui-radius)] border border-neutral-900 bg-white p-1 text-sm text-neutral-950 shadow-lg outline-none",
           className,
         )}
         {...props}
@@ -37,7 +37,7 @@ export function DropdownMenuItem({ className, ...props }) {
   return (
     <DropdownMenuPrimitive.Item
       className={cn(
-        "flex cursor-pointer items-center gap-2 px-2 py-1.5 outline-none hover:bg-transparent hover:text-slate-950 data-[highlighted]:bg-transparent data-[highlighted]:text-slate-950",
+        "flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 outline-none hover:bg-neutral-950 hover:text-white data-[highlighted]:bg-neutral-950 data-[highlighted]:text-white",
         className,
       )}
       {...props}

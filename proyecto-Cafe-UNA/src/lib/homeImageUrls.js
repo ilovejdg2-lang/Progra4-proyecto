@@ -18,6 +18,9 @@ export function collectHomeImageUrls(data) {
   const aboutUrl = normalizeImageUrl(data.aboutTeaser?.image, { width: 900 });
   if (aboutUrl) urls.push(aboutUrl);
 
+  const locationUrl = normalizeImageUrl(data.locationSection?.image, { width: 1200 });
+  if (locationUrl) urls.push(locationUrl);
+
   const featured = (Array.isArray(data.products) ? data.products : [])
     .filter((product) => product.esDestacado && productoPuedeDestacarse(product))
     .slice(0, 3);

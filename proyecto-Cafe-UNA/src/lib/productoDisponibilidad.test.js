@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  clasificarDisponibilidad,
   obtenerStockCentral,
   productoPuedeDestacarse,
   productoSinStock,
@@ -25,5 +26,12 @@ describe("productoDisponibilidad central stock", () => {
       estado: "Habilitado",
       centralStock: { stock: 0, confidence: "known" },
     })).toBe(false);
+  });
+
+  it("classifies Disponible, Pocas unidades and Agotado", () => {
+    expect(clasificarDisponibilidad({ stock: 12, estado: "Habilitado" }).etiqueta).toBe("Disponible");
+    expect(clasificarDisponibilidad({ stock: 3, estado: "Habilitado" }).etiqueta).toBe("Pocas unidades");
+    expect(clasificarDisponibilidad({ stock: 0, estado: "Habilitado" }).etiqueta).toBe("Agotado");
+    expect(clasificarDisponibilidad({ stock: 20, estado: "Deshabilitado" }).etiqueta).toBe("Agotado");
   });
 });

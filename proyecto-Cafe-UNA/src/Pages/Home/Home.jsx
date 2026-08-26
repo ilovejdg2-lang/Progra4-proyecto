@@ -14,9 +14,12 @@ import { removeHomeInitialLoader, setHomePageLoading } from '../../lib/homePageL
 import { runHomeScrollWhenReady } from '../../lib/homeScrollTarget';
 import { productoPuedeDestacarse } from '../../lib/productoDisponibilidad';
 import { readPageCache, readStalePageCache } from '../../lib/pageDataCache';
+import FeaturedCafesCarousel from '../../Components/FeaturedCafesCarousel/FeaturedCafesCarousel';
+import { imagenPrincipalProducto } from '../../lib/productoImagenes';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { toGoogleMapsEmbedUrl } from '../../lib/googleMaps';
 import { buildIniciativasCards } from '../../lib/iniciativasCards';
+import { useRevealOnScroll } from '../../hooks/useRevealOnScroll';
 import './Home.css';
 
 function getPreloadSource(pageStatus, data) {
@@ -37,7 +40,7 @@ const Home = () => {
   const aboutTeaser = data?.aboutTeaser ?? { title: '', description: '', image: '', linkUrl: '', linkText: '' };
   const featuredSection = data?.featuredSection ?? { title: '', description: '', linkUrl: '', linkText: '' };
   const iniciativasSection = data?.iniciativasSection ?? { eyebrow: '', title: '', description: '' };
-  const locationSection = data?.locationSection ?? { eyebrow: '', title: '', description: '', linkUrl: '', linkText: '' };
+  const locationSection = data?.locationSection ?? { eyebrow: '', title: '', description: '', image: '', linkUrl: '', linkText: '' };
   const locationMapUrl = locationSection.linkUrl?.trim() ?? '';
   const locationMapEmbedUrl = useMemo(
     () => toGoogleMapsEmbedUrl(locationMapUrl),
@@ -102,11 +105,14 @@ const Home = () => {
     return runHomeScrollWhenReady(isFullyVisible);
   }, [isFullyVisible]);
 
+  useRevealOnScroll(isFullyVisible);
+
   const aboutTeaserImageUrl = normalizeImageUrl(aboutTeaser.image, { width: 900 });
+  const locationImageUrl = normalizeImageUrl(locationSection.image, { width: 1200 });
   const featuredProducts = useMemo(
     () => products
       .filter((product) => product.esDestacado && productoPuedeDestacarse(product))
-      .filter((product) => Boolean(normalizeImageUrl(product.imagen, { width: 800 }) || product.imagen))
+      .filter((product) => Boolean(imagenPrincipalProducto(product)))
       .slice(0, 3),
     [products],
   );
@@ -145,16 +151,28 @@ const Home = () => {
       {isFullyVisible ? (
       <main className="home-page">
         {(aboutTeaser.title || aboutTeaser.description || aboutTeaserImageUrl) ? (
-        <section id="sobre-nosotros" className="home-page__mission-spotlight" aria-labelledby="about-teaser-title">
+        <section id="sobre-nosotros" className="home-page__mission-spotlight reveal-on-scroll" aria-labelledby="about-teaser-title">
           <div className="mission-spotlight-shell">
             <article className="mission-spotlight-card">
-              {aboutTeaser.title ? (
-                <h2 id="about-teaser-title" className="mission-spotlight-card__title">
-                  {aboutTeaser.title}
-                </h2>
-              ) : null}
-
               <div className="mission-spotlight-card__body">
+                <div className="mission-spotlight-card__content">
+                  {aboutTeaser.title ? (
+                    <h2 id="about-teaser-title" className="mission-spotlight-card__title">
+                      {aboutTeaser.title}
+                    </h2>
+                  ) : null}
+                  {aboutTeaser.description ? (
+                    <p className="mission-spotlight-card__description">
+                      {aboutTeaser.description}
+                    </p>
+                  ) : null}
+                  {aboutTeaser.linkText && aboutTeaser.linkUrl ? (
+                    <HomeActionLink href={aboutTeaser.linkUrl} className="mission-spotlight-card__button">
+                      {aboutTeaser.linkText}
+                    </HomeActionLink>
+                  ) : null}
+                </div>
+
                 {aboutTeaserImageUrl ? (
                   <div className="mission-spotlight-card__media">
                     <img
@@ -168,22 +186,6 @@ const Home = () => {
                     />
                   </div>
                 ) : null}
-
-                <div className="mission-spotlight-card__content">
-                  {aboutTeaser.description ? (
-                    <p className="mission-spotlight-card__description">
-                      {aboutTeaser.description}
-                    </p>
-                  ) : null}
-                  {aboutTeaser.linkText && aboutTeaser.linkUrl ? (
-                    <HomeActionLink href={aboutTeaser.linkUrl} className="mission-spotlight-card__link">
-                      {aboutTeaser.linkText}
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
-                    </HomeActionLink>
-                  ) : null}
-                </div>
               </div>
             </article>
           </div>
@@ -191,67 +193,27 @@ const Home = () => {
         ) : null}
 
         {(featuredSection.title || featuredSection.description || featuredProducts.length > 0) ? (
-        <section id="productos" className="home-page__featured curated-collections">
+        <section id="productos" className="home-page__featured featured-cafes-section reveal-on-scroll">
           {(featuredSection.title || featuredSection.description) ? (
-          <header className="curated-collections__header">
+          <header className="featured-cafes-section__header">
             {featuredSection.title ? (
-              <h2 className="curated-collections__title">{featuredSection.title}</h2>
+              <h2 className="featured-cafes-section__title">{featuredSection.title}</h2>
             ) : null}
             {featuredSection.description ? (
-              <p className="curated-collections__intro">{featuredSection.description}</p>
+              <p className="featured-cafes-section__intro">{featuredSection.description}</p>
             ) : null}
           </header>
           ) : null}
 
           {featuredProducts.length === 0 ? (
-            <p className="curated-collections__empty">{"A\u00fan no hay caf\u00e9s destacados. M\u00e1rcalos en el panel de productos."}</p>
+            <p className="featured-cafes-section__empty">{"A\u00fan no hay caf\u00e9s destacados. M\u00e1rcalos en el panel de productos."}</p>
           ) : (
-            <div className="curated-collections__carousel">
-              <div
-                className={`curated-collections__grid curated-collections__grid--count-${featuredProducts.length}`}
-                aria-label={"Selecci\u00f3n destacada de caf\u00e9s"}
-                role="list"
-              >
-                {featuredProducts.map((p, idx) => (
-                  <article
-                    key={p?.id ?? p?.nombre ?? `featured-${idx}`}
-                    role="listitem"
-                    className={`curated-collections__card${
-                      featuredProducts.length === 3 && idx === 1 ? ' curated-collections__card--offset' : ''
-                    }`}
-                  >
-                  <HomeActionLink
-                    href={p.id ? `/productos/${p.id}` : ''}
-                    className="curated-collections__card-link"
-                  >
-                    <img
-                      src={normalizeImageUrl(p.imagen, { width: 800 }) || p.imagen}
-                      alt={p.nombre || 'Caf\u00e9'}
-                      loading="eager"
-                      width="800"
-                      height="1000"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="curated-collections__overlay" aria-hidden="true" />
-                    <div className="curated-collections__content">
-                      {p.peso ? (
-                      <span className="curated-collections__pill">
-                        {String(p.peso).toUpperCase()}
-                      </span>
-                      ) : null}
-                      <h3>{p.nombre}</h3>
-                      {p.descripcion ? <p>{p.descripcion}</p> : null}
-                    </div>
-                  </HomeActionLink>
-                </article>
-              ))}
-              </div>
-            </div>
+            <FeaturedCafesCarousel products={featuredProducts} />
           )}
 
           {featuredSection.linkText && featuredSection.linkUrl ? (
-          <footer className="curated-collections__footer">
-            <HomeActionLink href={featuredSection.linkUrl} className="curated-collections__cta">
+          <footer className="featured-cafes-section__footer">
+            <HomeActionLink href={featuredSection.linkUrl} className="featured-cafes-section__cta">
               {featuredSection.linkText}
               <ArrowRight size={18} aria-hidden="true" />
             </HomeActionLink>
@@ -260,7 +222,7 @@ const Home = () => {
         </section>
         ) : null}
 
-        <section id="iniciativas" className="home-page__iniciativas">
+        <section id="iniciativas" className="home-page__iniciativas reveal-on-scroll">
           {iniciativasSection.title || iniciativasSection.description ? (
             <header className="curated-collections__header">
               {iniciativasSection.title ? (
@@ -313,16 +275,20 @@ const Home = () => {
           </div>
         </section>
 
-        <section className="home-page__location" aria-labelledby="location-title">
+        <section className="home-page__location reveal-on-scroll" aria-labelledby="location-title">
           <div className="location-card">
             <div className="location-card__copy">
-              <h2 id="location-title">{locationSection.title}</h2>
-              <p>{locationSection.description}</p>
-              {locationMapUrl && locationSection.linkText ? (
-                <a href={locationMapUrl} target="_blank" rel="noreferrer" className="location-card__button">
+              {locationSection.title ? (
+                <h2 id="location-title">{locationSection.title}</h2>
+              ) : null}
+              {locationSection.description ? (
+                <p>{locationSection.description}</p>
+              ) : null}
+              {locationSection.linkText && locationSection.linkUrl ? (
+                <HomeActionLink href={locationSection.linkUrl} className="location-card__button">
                   {locationSection.linkText}
-                  <ExternalLink size={16} strokeWidth={2.4} aria-hidden="true" />
-                </a>
+                  <ExternalLink size={15} aria-hidden="true" />
+                </HomeActionLink>
               ) : null}
             </div>
 
@@ -333,18 +299,19 @@ const Home = () => {
                   src={locationMapEmbedUrl}
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  aria-hidden="true"
-                  tabIndex={-1}
                 />
-                {locationMapUrl ? (
-                  <a
-                    href={locationMapUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="location-card__map-link"
-                    aria-label={"Abrir ubicaci\u00f3n en Google Maps"}
-                  />
-                ) : null}
+              </div>
+            ) : locationImageUrl ? (
+              <div className="location-card__media">
+                <img
+                  src={locationImageUrl}
+                  alt=""
+                  width={1200}
+                  height={900}
+                  loading="lazy"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                />
               </div>
             ) : null}
           </div>
