@@ -27,6 +27,7 @@ const AdminPanel = lazy(() => import("./Pages/Admin/Panel/Panel"));
 const AdminInformacionPaginaPrincipal = lazy(() => import("./Pages/Admin/InformacionPaginaPrincipal/InformacionPaginaPrincipal"));
 const AdminInformacionSobreNosotros = lazy(() => import("./Pages/Admin/InformacionSobreNosotros/InformacionSobreNosotros"));
 const AdminInventarioProducto = lazy(() => import("./Pages/Admin/InventarioProducto/InventarioProducto"));
+const AdminPuntosVenta = lazy(() => import("./Pages/Admin/PuntosVenta/PuntosVenta"));
 const AdminVoluntariado = lazy(() => import("./Pages/Admin/Voluntariado/Voluntariado"));
 const AdminUsuarios = lazy(() => import("./Pages/Admin/Usuarios/Usuarios"));
 const AdminAuditoria = lazy(() => import("./Pages/Admin/Auditoria/Auditoria"));
@@ -206,6 +207,11 @@ const adminProductoRoute = createRoute({
     path: "/admin/producto",
     component: AdminInventarioProducto,
 })
+const adminPuntosVentaRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/puntos-venta",
+    component: AdminPuntosVenta,
+})
 const adminVoluntariadoRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/voluntariado",
@@ -263,6 +269,7 @@ const routeTree= rootRoute.addChildren([
     adminInformacionPaginaPrincipalRoute,
     adminSobreNosotrosRoute,
     adminProductoRoute,
+    adminPuntosVentaRoute,
     adminVoluntariadoRoute,
     adminUsuariosRoute,
     adminAuditoriaRoute,
