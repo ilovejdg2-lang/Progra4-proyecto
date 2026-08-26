@@ -1,30 +1,113 @@
 .admin-panel {
-  max-width: 800px;
-  margin: 50px auto;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--ui-radius);
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
 .admin-panel h2 {
-  text-align: center;
-  margin-bottom: 20px;
+  margin: 0 0 0.75rem;
+  font-size: var(--text-title);
+  color: #0f172a;
 }
 
 .admin-panel p {
-  margin-bottom: 20px;
+  margin: 0 0 0.75rem;
+  font-size: var(--text-body);
+  color: #475569;
 }
 
-.admin-panel button {
-  padding: 10px 20px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
+.admin-panel__alertas {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.admin-panel__alertas-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.admin-panel__alertas-head h3 {
+  margin: 0;
+  font-size: var(--text-subtitle);
+  color: #0f172a;
+}
+
+.admin-panel__alertas-msg {
+  margin: 0;
+  font-size: var(--text-body);
+  color: #64748b;
+}
+
+.admin-panel__alertas-msg--error {
+  color: #b91c1c;
+}
+
+.admin-panel__alertas-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.admin-panel__alerta-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--ui-radius);
+  border: 1px solid #e2e8f0;
+}
+
+.admin-panel__alerta-item--bajo {
+  background: #f8fafc;
+  border-color: #0f172a;
+  border-left: 4px solid #0f172a;
+}
+
+.admin-panel__alerta-item--agotado {
+  background: #f8fafc;
+  border-color: #0f172a;
+  border-left: 4px solid #111111;
+}
+
+.admin-panel__alerta-nombre {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.admin-panel__alerta-meta {
+  margin: 0.25rem 0 0;
+  font-size: var(--text-body);
+  color: #64748b;
+}
+
+.admin-panel__alerta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: var(--control-height);
+  padding: 0 var(--control-pad-x);
   border-radius: var(--ui-btn-radius);
-  cursor: pointer;
+  background: #111111;
+  color: #fff;
+  font-size: var(--text-body);
+  font-weight: 700;
+  text-decoration: none;
 }
 
-.admin-panel button:hover {
-  background-color: #c82333;
+.admin-panel__alerta-btn:hover {
+  background: #000000;
 }

@@ -1,13 +1,11 @@
 import { Search, SlidersHorizontal, X } from "lucide-react";
+import { UiSelect } from "../../ui/Select";
 
 const inputCls =
-  "w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-100";
-
-const selectCls =
-  "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-100";
+  "w-full rounded-full border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
 
 const inputFechaCls =
-  "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-100";
+  "w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
 
 export function AdminListaToolbar({
   busqueda,
@@ -19,10 +17,11 @@ export function AdminListaToolbar({
   onLimpiar,
   hayFiltrosActivos = false,
   compacto = false,
+  extra = null,
 }) {
   return (
     <div
-      className={`space-y-4 border-b border-slate-100 bg-slate-50/60 ${
+      className={`space-y-4 border-b border-slate-100 bg-white ${
         compacto ? "px-4 py-5 sm:px-6" : "px-4 py-5 sm:px-6"
       }`}
     >
@@ -42,11 +41,13 @@ export function AdminListaToolbar({
         {filtros.length > 0 ? (
           <div className="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-center xl:w-auto">
             {filtros.map((filtro) => (
-              <label
+              <div
                 key={filtro.id}
-                className="grid w-full min-w-[11rem] flex-1 gap-1.5 sm:max-w-[12.5rem]"
+                className={`grid w-full min-w-[11rem] flex-1 gap-1.5 ${
+                  filtro.footer ? "sm:max-w-[18rem]" : "sm:max-w-[12.5rem]"
+                }`}
               >
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
                   <SlidersHorizontal className="size-3" aria-hidden="true" />
                   {filtro.label}
                 </span>
@@ -58,23 +59,26 @@ export function AdminListaToolbar({
                     className={inputFechaCls}
                   />
                 ) : (
-                  <select
+                  <UiSelect
+                    ariaLabel={filtro.label}
                     value={filtro.value}
-                    onChange={(event) => filtro.onChange(event.target.value)}
-                    className={selectCls}
-                  >
-                    {filtro.opciones.map((opcion) => (
-                      <option key={opcion.value} value={opcion.value}>
-                        {opcion.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={filtro.onChange}
+                    options={filtro.opciones}
+                    footer={filtro.footer}
+                    renderOptionEnd={filtro.renderOptionEnd}
+                  />
                 )}
-              </label>
+              </div>
             ))}
           </div>
         ) : null}
       </div>
+
+      {extra ? (
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 sm:flex-row sm:items-end">
+          {extra}
+        </div>
+      ) : null}
 
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
         <p>
@@ -114,7 +118,7 @@ export function AdminListaVacia({ mensaje = "No hay resultados con los filtros a
         <button
           type="button"
           onClick={onLimpiar}
-          className="mt-3 text-sm font-semibold text-amber-800 underline-offset-2 hover:underline"
+          className="mt-3 text-sm font-semibold text-slate-800 underline-offset-2 hover:underline"
         >
           Limpiar filtros
         </button>

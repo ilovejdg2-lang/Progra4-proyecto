@@ -28,11 +28,14 @@ const AdminInformacionPaginaPrincipal = lazy(() => import("./Pages/Admin/Informa
 const AdminInformacionSobreNosotros = lazy(() => import("./Pages/Admin/InformacionSobreNosotros/InformacionSobreNosotros"));
 const AdminInventarioProducto = lazy(() => import("./Pages/Admin/InventarioProducto/InventarioProducto"));
 const AdminPuntosVenta = lazy(() => import("./Pages/Admin/PuntosVenta/PuntosVenta"));
+const AdminActivosFijos = lazy(() => import("./Pages/Admin/ActivosFijos/ActivosFijos"));
 const AdminVoluntariado = lazy(() => import("./Pages/Admin/Voluntariado/Voluntariado"));
 const AdminUsuarios = lazy(() => import("./Pages/Admin/Usuarios/Usuarios"));
 const AdminAuditoria = lazy(() => import("./Pages/Admin/Auditoria/Auditoria"));
+const AdminHistorialVentas = lazy(() => import("./Pages/Admin/HistorialVentas/HistorialVentas"));
 const Checkout = lazy(() => import("./Pages/Checkout/Checkout"));
 const Perfil = lazy(() => import("./Pages/Perfil/Perfil"));
+const HistorialComprasCliente = lazy(() => import("./Pages/HistorialCompras/HistorialComprasCliente"));
 const AdminPerfil = lazy(() => import("./Pages/Admin/Perfil/AdminPerfil"));
 
 function HomeRouteLoading() {
@@ -111,6 +114,8 @@ const rootRoute = createRootRoute({
         const isAdminRoute = pathname.startsWith("/admin");
         const isLoginRoute = pathname === "/login";
         const isPerfilRoute = pathname === "/perfil";
+        const isCheckoutRoute = pathname === "/checkout";
+        const isChromelessRoute = isLoginRoute || isPerfilRoute || isCheckoutRoute;
 
         useLayoutEffect(() => {
             if (!isHomeRoute) {
@@ -128,7 +133,8 @@ const rootRoute = createRootRoute({
         useEffect(() => {
             document.body.classList.toggle("admin-route-active", isAdminRoute);
             document.body.classList.toggle("perfil-route-active", isPerfilRoute);
-            if (isAdminRoute || isPerfilRoute) {
+            document.body.classList.toggle("checkout-route-active", isCheckoutRoute);
+            if (isAdminRoute || isPerfilRoute || isCheckoutRoute) {
                 document.body.classList.remove("app-route-loading", "home-hero-ready");
                 clearHomePageLoading();
             }
@@ -136,10 +142,11 @@ const rootRoute = createRootRoute({
             return () => {
                 document.body.classList.remove("admin-route-active");
                 document.body.classList.remove("perfil-route-active");
+                document.body.classList.remove("checkout-route-active");
             };
-        }, [isAdminRoute, isPerfilRoute]);
+        }, [isAdminRoute, isPerfilRoute, isCheckoutRoute]);
 
-        if (isAdminRoute || isLoginRoute || isPerfilRoute) {
+        if (isAdminRoute || isChromelessRoute) {
             return (
                 <Suspense fallback={
                     isAdminRoute
@@ -212,6 +219,11 @@ const adminPuntosVentaRoute = createRoute({
     path: "/admin/puntos-venta",
     component: AdminPuntosVenta,
 })
+const adminActivosFijosRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/activos-fijos",
+    component: AdminActivosFijos,
+})
 const adminVoluntariadoRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/voluntariado",
@@ -221,6 +233,11 @@ const adminUsuariosRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/usuarios",
     component: AdminUsuarios,
+})
+const adminHistorialVentasRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/historial-ventas",
+    component: AdminHistorialVentas,
 })
 const adminAuditoriaRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -252,6 +269,11 @@ const perfilRoute = createRoute({
     path: "/perfil",
     component: Perfil,
 })
+const historialComprasClienteRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/perfil/compras",
+    component: HistorialComprasCliente,
+})
 const adminPerfilRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/perfil",
@@ -270,6 +292,8 @@ const routeTree= rootRoute.addChildren([
     adminSobreNosotrosRoute,
     adminProductoRoute,
     adminPuntosVentaRoute,
+    adminActivosFijosRoute,
+    adminHistorialVentasRoute,
     adminVoluntariadoRoute,
     adminUsuariosRoute,
     adminAuditoriaRoute,
@@ -278,6 +302,7 @@ const routeTree= rootRoute.addChildren([
     checkoutRoute,
     voluntariadoSolicitarRoute,
     perfilRoute,
+    historialComprasClienteRoute,
     adminPerfilRoute,
 ])
 export const router = createRouter({

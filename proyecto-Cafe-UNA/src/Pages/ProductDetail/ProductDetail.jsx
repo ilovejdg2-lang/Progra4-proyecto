@@ -1,25 +1,31 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ShoppingBag } from 'lucide-react';
 import OptimizedImage from '../../Components/OptimizedImage/OptimizedImage';
 import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { usePublicPageLoadingGate } from '../../hooks/usePublicPageLoadingGate';
 import { addProductToCart, pulseButton } from '../../lib/cartStorage';
 import { getLoadingMessageForCacheKey } from '../../lib/pageLoadingMessages';
-import { calcularPrecioConIVA, obtenerProductoPorId } from '../../services/productosService';
+import { etiquetaCategoriaProducto } from '../../lib/categorias';
+import { imagenPrincipalProducto, parsearImagenesProducto } from '../../lib/productoImagenes';
+import { calcularPrecioConIVA, obtenerProductoPorId, obtenerProductos } from '../../services/productosService';
+import { clasificarDisponibilidad } from '../../lib/productoDisponibilidad';
 import './ProductDetail.css';
 
 function formatCRC(value) {
-  return `CRC ${(Number(value) || 0).toLocaleString('es-CR')}`;
+  return `\u20A1${(Number(value) || 0).toLocaleString('es-CR')}`;
 }
 
 const ProductDetail = () => {
   const navigate = useNavigate();
   const { productId } = useParams({ strict: false });
   const [product, setProduct] = useState(null);
+  const [relacionados, setRelacionados] = useState([]);
   const [loadError, setLoadError] = useState('');
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [fotoActiva, setFotoActiva] = useState(0);
+  const [specsAbiertas, setSpecsAbiertas] = useState(true);
 
   const numericId = Number(productId);
   const isReady = !loading;
@@ -41,16 +47,26 @@ const ProductDetail = () => {
       try {
         setLoading(true);
         setLoadError('');
-        const data = await obtenerProductoPorId(numericId);
+        const [data, catalogo] = await Promise.all([
+          obtenerProductoPorId(numericId),
+          obtenerProductos().catch(() => []),
+        ]);
 
         if (!active) return;
 
         if (!data || data.estado === 'Deshabilitado') {
           setProduct(null);
+          setRelacionados([]);
           setLoadError('Producto no encontrado o no disponible.');
         } else {
           setProduct(data);
           setQuantity(1);
+          setFotoActiva(0);
+          setRelacionados(
+            (Array.isArray(catalogo) ? catalogo : [])
+              .filter((item) => String(item.id) !== String(data.id) && item.estado !== 'Deshabilitado' && imagenPrincipalProducto(item))
+              .slice(0, 4),
+          );
         }
       } catch {
         if (active) {
@@ -69,13 +85,16 @@ const ProductDetail = () => {
     };
   }, [numericId]);
 
+  const fotos = useMemo(() => parsearImagenesProducto(product), [product]);
+  const fotoActual = fotos[fotoActiva] || fotos[0] || '';
   const precioNormal = useMemo(
     () => Number(product?.precioNormal ?? product?.priceWithoutIva ?? product?.price ?? 0) || 0,
     [product],
   );
   const precioConIVA = useMemo(() => calcularPrecioConIVA(precioNormal), [precioNormal]);
   const stockDisponible = Number(product?.stock) || 0;
-  const estaAgotado = stockDisponible <= 0;
+  const disponibilidad = clasificarDisponibilidad(product || { stock: 0 });
+  const estaAgotado = disponibilidad.codigo === 'agotado';
 
   const changeQuantity = (delta) => {
     setQuantity((current) => {
@@ -116,51 +135,67 @@ const ProductDetail = () => {
         ) : null}
 
         {product ? (
+          <>
           <article className="product-detail-page__layout">
-            <div className="product-detail-page__media">
-              {product.imagen ? (
-                <OptimizedImage
-                  src={product.imagen}
-                  alt={product.nombre}
-                  width={960}
-                  height={960}
-                  priority
-                  className="product-detail-page__image"
-                />
-              ) : (
-                <div className="product-detail-page__media-placeholder" aria-hidden="true" />
-              )}
+            <div className="product-detail-page__gallery">
+              <div className="product-detail-page__media">
+                {fotoActual ? (
+                  <OptimizedImage
+                    src={fotoActual}
+                    alt={product.nombre}
+                    width={960}
+                    height={960}
+                    priority
+                    className="product-detail-page__image"
+                  />
+                ) : (
+                  <div className="product-detail-page__media-placeholder" aria-hidden="true" />
+                )}
+              </div>
+              {fotos.length > 1 ? (
+                <div className="product-detail-page__thumbs" role="list">
+                  {fotos.map((src, index) => (
+                    <button
+                      key={`${src}-${index}`}
+                      type="button"
+                      className={`product-detail-page__thumb${index === fotoActiva ? ' is-active' : ''}`}
+                      onClick={() => setFotoActiva(index)}
+                      aria-label={`Foto ${index + 1} de ${product.nombre}`}
+                    >
+                      <img src={src} alt="" />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
 
             <div className="product-detail-page__content">
               <header className="product-detail-page__header">
                 <h1>{product.nombre}</h1>
-                <p className="product-detail-page__price">{formatCRC(precioConIVA)}</p>
+                {(() => {
+                  const etiqueta = etiquetaCategoriaProducto(product);
+                  if (product.peso && etiqueta) {
+                    return <p className="product-detail-page__series">{`${etiqueta} · ${product.peso}`}</p>;
+                  }
+                  if (product.peso) return <p className="product-detail-page__series">{product.peso}</p>;
+                  if (etiqueta) return <p className="product-detail-page__series">{etiqueta}</p>;
+                  return null;
+                })()}
               </header>
+
+              <p className="product-detail-page__price">{formatCRC(precioConIVA)}</p>
+              <p className="product-detail-page__vat">IVA incluido</p>
 
               {product.descripcion ? (
                 <p className="product-detail-page__description">{product.descripcion}</p>
               ) : null}
 
-              <dl className="product-detail-page__meta">
-                <div className="product-detail-page__meta-row">
-                  <dt>Cantidad</dt>
-                  <dd>{product.peso || '—'}</dd>
+              {product.peso ? (
+                <div className="product-detail-page__chips">
+                  <p className="product-detail-page__chips-label">{"Presentaci\u00f3n"}</p>
+                  <span className="product-detail-page__chip is-active">{product.peso}</span>
                 </div>
-                <div className="product-detail-page__meta-row">
-                  <dt>Precio (sin IVA)</dt>
-                  <dd>{formatCRC(precioNormal)}</dd>
-                </div>
-                <div className="product-detail-page__meta-row">
-                  <dt>Disponibles</dt>
-                  <dd>
-                    <span className={`product-detail-page__stock${estaAgotado ? ' product-detail-page__stock--out' : ''}`}>
-                      <span className="product-detail-page__stock-dot" aria-hidden="true" />
-                      {estaAgotado ? 'Agotado' : `${stockDisponible} unidades`}
-                    </span>
-                  </dd>
-                </div>
-              </dl>
+              ) : null}
 
               <div className="product-detail-page__quantity-row">
                 <span className="product-detail-page__quantity-label">Cantidad</span>
@@ -198,11 +233,79 @@ const ProductDetail = () => {
                   {estaAgotado ? 'Agotado' : 'A\u00f1adir al carrito'}
                 </button>
                 <button type="button" className="product-detail-page__close-btn" onClick={handleBack}>
-                  Cerrar
+                  {"Volver al cat\u00e1logo"}
                 </button>
+              </div>
+
+              <div className="product-detail-page__accordion">
+                <button
+                  type="button"
+                  className="product-detail-page__accordion-trigger"
+                  onClick={() => setSpecsAbiertas((open) => !open)}
+                  aria-expanded={specsAbiertas}
+                >
+                  {"Ficha t\u00e9cnica"}
+                  <ChevronDown size={18} className={specsAbiertas ? 'is-open' : ''} aria-hidden="true" />
+                </button>
+                {specsAbiertas ? (
+                  <dl className="product-detail-page__meta">
+                    <div className="product-detail-page__meta-row">
+                      <dt>Categoría</dt>
+                      <dd>{product.categoria || '—'}</dd>
+                    </div>
+                    {product.subcategoria ? (
+                      <div className="product-detail-page__meta-row">
+                        <dt>Subcategoría</dt>
+                        <dd>{product.subcategoria}</dd>
+                      </div>
+                    ) : null}
+                    <div className="product-detail-page__meta-row">
+                      <dt>{"Presentaci\u00f3n"}</dt>
+                      <dd>{product.peso || '—'}</dd>
+                    </div>
+                    <div className="product-detail-page__meta-row">
+                      <dt>Precio (sin IVA)</dt>
+                      <dd>{formatCRC(precioNormal)}</dd>
+                    </div>
+                    <div className="product-detail-page__meta-row">
+                      <dt>Disponibles</dt>
+                      <dd>
+                        <span className={`product-detail-page__stock product-detail-page__stock--${disponibilidad.codigo}`}>
+                          <span className="product-detail-page__stock-dot" aria-hidden="true" />
+                          {disponibilidad.etiqueta}
+                          {disponibilidad.codigo !== 'agotado' ? ` · ${stockDisponible} unidades` : ''}
+                        </span>
+                      </dd>
+                    </div>
+                  </dl>
+                ) : null}
               </div>
             </div>
           </article>
+
+          {relacionados.length > 0 ? (
+            <section className="product-detail-page__related" aria-labelledby="productos-relacionados-title">
+              <div className="product-detail-page__related-header">
+                <h2 id="productos-relacionados-title">{"Tambi\u00e9n te puede gustar"}</h2>
+                <Link to="/productos">{"Ver catálogo"}</Link>
+              </div>
+              <div className="product-detail-page__related-grid">
+                {relacionados.map((item) => (
+                  <Link
+                    key={item.id}
+                    to="/productos/$productId"
+                    params={{ productId: String(item.id) }}
+                    className="product-detail-page__related-card"
+                  >
+                    <img src={imagenPrincipalProducto(item)} alt="" />
+                    <h3>{item.nombre}</h3>
+                    <p>{formatCRC(calcularPrecioConIVA(item.precioNormal))}</p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          ) : null}
+          </>
         ) : null}
       </main>
     </PublicPageGate>

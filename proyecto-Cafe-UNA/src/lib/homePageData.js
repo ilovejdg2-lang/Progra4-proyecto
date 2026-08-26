@@ -1,10 +1,11 @@
 import { obtenerHero, obtenerNavbar, obtenerSeccion, obtenerTarjetasInicio, obtenerEnlaces } from '../services/informacionService';
 import { obtenerProductos } from '../services/productosService';
 import { mapHero } from './heroData';
+import { textoVisible } from './textoVisible';
 
 function pickString(data, camelKey, pascalKey) {
   const value = data?.[camelKey] ?? data?.[pascalKey];
-  return typeof value === 'string' ? value.trim() : '';
+  return typeof value === 'string' ? textoVisible(value.trim()) : '';
 }
 
 function trimSection(section) {
@@ -75,6 +76,7 @@ export async function fetchHomePageData() {
       eyebrow: locationData.eyebrow,
       title: locationData.title,
       description: locationData.description,
+      image: locationData.image,
       linkUrl: locationData.linkUrl,
       linkText: locationData.linkText,
     },

@@ -6,6 +6,10 @@ const serviceMocks = vi.hoisted(() => ({
   actualizarProducto: vi.fn(),
   actualizarStockCentral: vi.fn(),
   crearProducto: vi.fn(),
+  obtenerStockDesglosadoProducto: vi.fn().mockResolvedValue({
+    productId: "1",
+    locations: [{ code: "BODEGA_CENTRAL", name: "Bodega Central", stock: 12 }],
+  }),
 }))
 
 const hookMocks = vi.hoisted(() => ({
