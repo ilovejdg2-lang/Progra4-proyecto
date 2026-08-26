@@ -39,6 +39,7 @@ export const PERMISOS_POR_ROL = {
   ver_historial_compras_clientes: staff,
   ver_historial_compras_propio: [CL],
   ver_inventario: admins,
+  ajustar_stock_ubicaciones: staff,
   actualizar_inventario: admins,
   agregar_articulo_inventario: admins,
   inactivar_articulo_inventario: admins,
