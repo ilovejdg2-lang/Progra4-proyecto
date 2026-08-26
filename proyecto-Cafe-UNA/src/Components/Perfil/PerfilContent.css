@@ -183,8 +183,17 @@
 .perfil-hero__avatar--placeholder {
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.18);
+  background: #78350f;
   color: #fff;
+}
+
+.perfil-hero__avatar-inicial {
+  font-size: var(--text-title);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  user-select: none;
 }
 
 .perfil-hero__avatar-change {
@@ -501,8 +510,8 @@
 }
 
 .perfil-feedback--ok {
-  background: #ecfdf5;
-  color: #047857;
+  background: #f1f5f9;
+  color: #475569;
 }
 
 .perfil-feedback--error {
