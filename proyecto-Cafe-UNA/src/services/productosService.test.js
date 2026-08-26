@@ -12,6 +12,7 @@ vi.mock("../lib/pageDataCache", () => ({
 
 import {
   adaptarProducto,
+  ajustarStockPorUbicacion,
   actualizarStockCentral,
   construirPayloadCatalogo,
   limpiarInventarioUbicacionCache,
@@ -176,5 +177,87 @@ describe("productosService contract", () => {
   it("rejects invalid locations before making a request", async () => {
     await expect(obtenerStockPorUbicacion("PUNTO_VENTA_1")).rejects.toThrow("El código de ubicación no es válido.");
     expect(apiRequestMock).not.toHaveBeenCalled();
+  });
+
+  it("sends the lower camel case adjustment payload and normalizes response casing", async () => {
+    apiRequestMock.mockResolvedValue({
+      ProductId: "1",
+      LocationCode: "POS_EDITORIAL",
+      PreviousStock: 2,
+      Stock: 7,
+      Reason: "  Conteo inicial  ",
+    });
+
+    await expect(ajustarStockPorUbicacion("POS_EDITORIAL", "1", 7, "  Conteo inicial  "))
+      .resolves.toEqual({
+        productId: "1",
+        locationCode: "POS_EDITORIAL",
+        previousStock: 2,
+        stock: 7,
+        reason: "Conteo inicial",
+      });
+
+    expect(apiRequestMock).toHaveBeenCalledWith(
+      expect.stringContaining("/inventario/ubicaciones/POS_EDITORIAL/productos/1/stock"),
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({ stock: 7, reason: "Conteo inicial" }),
+      }),
+    );
+  });
+
+  it.each([
+    ["BODEGA_CENTRAL", "1", 7, "Conteo", "La ruta de ajustes solo admite puntos de venta."],
+    ["UNKNOWN", "1", 7, "Conteo", "El código de ubicación no es válido."],
+    ["POS_EDITORIAL", null, 7, "Conteo", "El identificador del producto no es válido."],
+    ["POS_EDITORIAL", "", 7, "Conteo", "El identificador del producto no es válido."],
+    ["POS_EDITORIAL", "1", null, "Conteo", "La cantidad de stock debe ser un entero entre 0 y 2147483647."],
+    ["POS_EDITORIAL", "1", "", "Conteo", "La cantidad de stock debe ser un entero entre 0 y 2147483647."],
+    ["POS_EDITORIAL", "1", "7", "Conteo", "La cantidad de stock debe ser un entero entre 0 y 2147483647."],
+    ["POS_EDITORIAL", "1", 7, null, "El motivo del ajuste es obligatorio."],
+    ["POS_EDITORIAL", "1", 7, "", "El motivo del ajuste debe tener entre 1 y 300 caracteres."],
+    ["POS_EDITORIAL", "1", 7, "a".repeat(301), "El motivo del ajuste debe tener entre 1 y 300 caracteres."],
+  ])("rejects invalid adjustment input before the request: %s", async (locationCode, productId, stock, reason, message) => {
+    await expect(ajustarStockPorUbicacion(locationCode, productId, stock, reason)).rejects.toThrow(message);
+    expect(apiRequestMock).not.toHaveBeenCalled();
+  });
+
+  it("propagates HTTP errors without invalidating the location cache", async () => {
+    apiRequestMock
+      .mockResolvedValueOnce([{ productId: "1", locationCode: "POS_EDITORIAL", stock: 2, provisioned: true }])
+      .mockRejectedValueOnce(new Error("No se pudo guardar el ajuste."));
+
+    await obtenerStockPorUbicacion("POS_EDITORIAL");
+    await expect(ajustarStockPorUbicacion("POS_EDITORIAL", "1", 7, "Conteo")).rejects.toThrow(
+      "No se pudo guardar el ajuste.",
+    );
+    await obtenerStockPorUbicacion("POS_EDITORIAL");
+
+    expect(apiRequestMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("invalidates only the selected location cache after a successful adjustment", async () => {
+    apiRequestMock
+      .mockResolvedValueOnce([{ productId: "1", locationCode: "POS_EDITORIAL", stock: 2, provisioned: true }])
+      .mockResolvedValueOnce([{ productId: "1", locationCode: "POS_FUNA_UNA", stock: 4, provisioned: true }])
+      .mockResolvedValueOnce({
+        productId: "1",
+        locationCode: "POS_EDITORIAL",
+        previousStock: 2,
+        stock: 7,
+        reason: "Conteo",
+      })
+      .mockResolvedValueOnce([{ productId: "1", locationCode: "POS_EDITORIAL", stock: 7, provisioned: true }]);
+
+    const editorial = await obtenerStockPorUbicacion("POS_EDITORIAL");
+    const funaUna = await obtenerStockPorUbicacion("POS_FUNA_UNA");
+    await ajustarStockPorUbicacion("POS_EDITORIAL", "1", 7, "Conteo");
+
+    const refreshedEditorial = await obtenerStockPorUbicacion("POS_EDITORIAL");
+    const cachedFunaUna = await obtenerStockPorUbicacion("POS_FUNA_UNA");
+
+    expect(refreshedEditorial).not.toBe(editorial);
+    expect(cachedFunaUna).toBe(funaUna);
+    expect(apiRequestMock).toHaveBeenCalledTimes(4);
   });
 });
