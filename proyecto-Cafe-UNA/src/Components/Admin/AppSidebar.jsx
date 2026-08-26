@@ -1,7 +1,7 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -13,6 +13,7 @@ import {
   Package,
   ScrollText,
   Settings,
+  Store,
   UserRound,
   Users,
 } from "lucide-react";
@@ -61,7 +62,6 @@ const linkActivo = {
 };
 
 export function AppSidebar() {
-  const navigate = useNavigate();
   const [user, setUser] = useState(() => getActiveSessionUser());
   const { setOpenMobile } = useSidebar();
   const displayName = user?.name || user?.username || "Usuario";
@@ -84,7 +84,7 @@ export function AppSidebar() {
 
   const isGeneralRoute =
     pathname === "/admin/informacion-pagina-principal" || pathname === "/admin/sobre-nosotros";
-  const isInventoryRoute = pathname === "/admin/producto";
+  const isInventoryRoute = pathname === "/admin/producto" || pathname === "/admin/puntos-venta";
 
   const [generalOpen, setGeneralOpen] = useState(() => {
     const savedValue = localStorage.getItem(GENERAL_OPEN_KEY);
@@ -263,6 +263,14 @@ export function AppSidebar() {
                       <Link to="/admin/producto" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Box />
                         <span>Producto</span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/puntos-venta" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <Store />
+                        <span>Puntos de venta</span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
