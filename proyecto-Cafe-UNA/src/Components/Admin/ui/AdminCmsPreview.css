@@ -9,6 +9,8 @@
   gap: 0;
   width: 100%;
   min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .admin-cms-preview-panel {
@@ -82,6 +84,7 @@
   --cms-preview-ratio-h: 9;
   container-type: size;
   width: 100%;
+  max-width: 100%;
   aspect-ratio: var(--cms-preview-ratio-w) / var(--cms-preview-ratio-h);
   overflow: hidden;
   position: relative;
