@@ -10,6 +10,13 @@
   --navbar-height: 84px;
   --ui-radius: 16px;
   --ui-btn-radius: 999px;
+  /* Tipografía: solo 3 tamaños en UI (base 18px como antes) */
+  --text-title: clamp(1.65rem, 2.2vw, 2rem);
+  --text-subtitle: 1.05rem;
+  --text-body: 1rem;
+  /* Controles: un solo tamaño para botones, inputs, chips */
+  --control-height: 44px;
+  --control-pad-x: 1rem;
   --text: #4a3d31;
   --text-h: #1c140f;
   --bg: #ffffff;
@@ -432,31 +439,47 @@ textarea {
   border-radius: var(--ui-radius) !important;
 }
 
+input.rounded-full:not([type="checkbox"]):not([type="radio"]),
 .login-field input:not([type="checkbox"]):not([type="radio"]),
 .perfil-field input:not([type="checkbox"]):not([type="radio"]),
 .usuarios-form input:not([type="checkbox"]):not([type="radio"]) {
   border-radius: var(--ui-btn-radius) !important;
 }
 
-.login-field input:-webkit-autofill,
-.login-field input:-webkit-autofill:focus,
-.perfil-field input:-webkit-autofill,
-.perfil-field input:-webkit-autofill:focus,
-.usuarios-form input:-webkit-autofill,
-.usuarios-form input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #1a1a1a;
-  caret-color: #1a1a1a;
+input:not([type="checkbox"]):not([type="radio"]):-webkit-autofill,
+input:not([type="checkbox"]):not([type="radio"]):-webkit-autofill:hover,
+input:not([type="checkbox"]):not([type="radio"]):-webkit-autofill:focus,
+input:not([type="checkbox"]):not([type="radio"]):-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active {
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a !important;
+  border-color: rgb(226 232 240) !important;
+  -webkit-box-shadow: 0 0 0 1000px rgb(248 250 252) inset !important;
+  box-shadow: 0 0 0 1000px rgb(248 250 252) inset !important;
+  transition: background-color 99999s ease-out, color 99999s ease-out;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):-webkit-autofill:focus,
+textarea:-webkit-autofill:focus {
+  border-color: rgb(148 163 184) !important;
   -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
   box-shadow: 0 0 0 1000px #ffffff inset !important;
 }
 
-[class*="card"]:not(button):not(a),
-[class*="panel"]:not(button):not(a),
-[class*="dropdown"]:not(button):not(a),
-[class*="modal"]:not(button):not(a),
-[class*="badge"]:not(button),
-[class*="pill"]:not(button):not(a) {
+[class*="card"]:not(button):not(a):not([class*="__"]),
+[class*="panel"]:not(button):not(a):not([class*="__"]),
+[class*="dropdown"]:not(button):not(a):not([class*="__"]),
+[class*="modal"]:not(button):not(a):not([class*="__"]) {
   border-radius: var(--ui-radius) !important;
+}
+
+[class*="badge"],
+[class*="pill"],
+[class*="chip"] {
+  border-radius: var(--ui-btn-radius) !important;
 }
 
 .navbar {
@@ -476,6 +499,11 @@ button[class*="backdrop"],
 .gallery-lightbox__backdrop,
 .perfil-modal__backdrop {
   border-radius: 0 !important;
+}
+
+.ui-select__trigger,
+.categoria-nueva__agregar {
+  border-radius: var(--ui-radius) !important;
 }
 
 @media (max-width: 1024px) {

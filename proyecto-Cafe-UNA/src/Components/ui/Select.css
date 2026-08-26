@@ -1,0 +1,123 @@
+.ui-select {
+  position: relative;
+  width: 100%;
+}
+
+.ui-select.is-open {
+  z-index: 40;
+}
+
+.ui-select__trigger {
+  display: flex;
+  width: 100%;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgb(226 232 240);
+  border-radius: var(--ui-radius);
+  background: rgb(248 250 252);
+  color: rgb(15 23 42);
+  font-size: 0.875rem;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.ui-select__trigger:hover {
+  border-color: rgb(203 213 225);
+  background: rgb(248 250 252);
+  color: rgb(15 23 42);
+}
+
+.ui-select__trigger[aria-expanded="true"],
+.ui-select__trigger:focus-visible {
+  border-color: rgb(148 163 184);
+  background: #fff;
+  color: rgb(15 23 42);
+  outline: none;
+}
+
+.ui-select__trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.ui-select__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-select__chevron {
+  flex-shrink: 0;
+}
+
+.ui-select__menu {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: min(22rem, 70vh);
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgb(226 232 240);
+  border-radius: var(--ui-radius);
+  background: #fff;
+  box-shadow: 0 12px 32px rgb(15 23 42 / 0.08);
+}
+
+.ui-select.has-footer .ui-select__menu {
+  min-width: 16.5rem;
+}
+
+.ui-select__options {
+  margin: 0;
+  padding: 0.35rem;
+  overflow: auto;
+  list-style: none;
+}
+
+.ui-select__option-row {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.ui-select__option {
+  display: block;
+  min-width: 0;
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #111;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ui-select__option:hover {
+  background: rgb(241 245 249);
+  color: rgb(15 23 42);
+}
+
+.ui-select__option.is-selected {
+  background: rgb(226 232 240);
+  color: rgb(15 23 42);
+  font-weight: 600;
+}
+
+.ui-select__footer {
+  flex-shrink: 0;
+  padding: 0.55rem 0.6rem 0.65rem;
+  border-top: 1px solid rgb(226 232 240);
+  background: #fff;
+}

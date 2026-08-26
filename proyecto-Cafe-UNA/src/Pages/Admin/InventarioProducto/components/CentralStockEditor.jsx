@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Package, X } from "lucide-react";
 
@@ -9,6 +9,7 @@ import {
   AdminModalHeader,
 } from "../../../../Components/Admin/ui/AdminModal";
 import { sanitizeUserFacingError } from "../../../../lib/formLimits";
+import { ProductLocationStockPanel } from "./ProductLocationStockPanel";
 
 const MAX_STOCK = 2147483647;
 
@@ -29,6 +30,21 @@ export function CentralStockEditor({
   const [validationError, setValidationError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const submitGuard = useRef(false);
+  const lastSyncedStock = useRef(initialValue(stockRecord));
+
+  useEffect(() => {
+    if (!open) {
+      submitGuard.current = false;
+      return;
+    }
+    const next = initialValue(stockRecord);
+    if (next !== lastSyncedStock.current) {
+      lastSyncedStock.current = next;
+      setValue(next);
+      setValidationError("");
+      setSubmitError("");
+    }
+  }, [open, stockRecord]);
 
   if (!open) return null;
 
@@ -51,6 +67,7 @@ export function CentralStockEditor({
 
     try {
       await onSave(stock);
+      lastSyncedStock.current = String(stock);
     } catch (saveError) {
       submitGuard.current = false;
       setSubmitError(sanitizeUserFacingError(saveError?.message || "No se pudo actualizar el stock central."));
@@ -83,7 +100,7 @@ export function CentralStockEditor({
 
       <AdminModalBody>
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ubicación</p>
             <p className="mt-1 text-sm font-semibold text-slate-900">Bodega Central</p>
             <p className="mt-1 text-xs text-slate-500">
@@ -92,7 +109,7 @@ export function CentralStockEditor({
           </div>
 
           {stockRecord?.confidence !== "known" ? (
-            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800" role="status">
+            <p className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700" role="status">
               No se pudo confirmar el stock actual. Ingresa el valor correcto para continuar.
             </p>
           ) : null}
@@ -107,12 +124,13 @@ export function CentralStockEditor({
               step="1"
               inputMode="numeric"
               value={value}
+              disabled={isSaving}
               onChange={(event) => {
                 setValue(event.target.value);
                 setValidationError("");
                 setSubmitError("");
               }}
-              className={`min-h-11 w-full rounded-lg border bg-white px-3 py-2.5 text-base text-slate-900 outline-none transition focus:border-slate-700 focus:ring-2 focus:ring-slate-200 ${message ? "border-red-500" : "border-slate-300"}`}
+              className={`min-h-11 w-full rounded-full border bg-slate-50 px-3 py-2.5 text-base text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0 disabled:opacity-60 ${message ? "border-red-500" : "border-slate-200"}`}
               aria-invalid={Boolean(message)}
               aria-describedby={message ? "central-stock-error" : undefined}
               required
@@ -125,6 +143,11 @@ export function CentralStockEditor({
               {message}
             </p>
           ) : null}
+
+          <ProductLocationStockPanel
+            productId={product?.id}
+            refreshKey={product?.id || ""}
+          />
 
           <div className="border-t border-slate-100 pt-4">
             <AdminModalActions

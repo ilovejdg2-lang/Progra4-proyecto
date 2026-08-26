@@ -2,6 +2,13 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+vi.mock("../../../../services/productosService", () => ({
+  obtenerStockDesglosadoProducto: vi.fn().mockResolvedValue({
+    productId: "p-1",
+    locations: [{ code: "BODEGA_CENTRAL", name: "Bodega Central", stock: 4 }],
+  }),
+}));
+
 import { CentralStockEditor } from "./CentralStockEditor";
 
 const product = { id: "p-1", nombre: "Café Premium" };

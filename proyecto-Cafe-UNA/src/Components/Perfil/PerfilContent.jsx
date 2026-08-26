@@ -563,6 +563,20 @@ export function PerfilContent({ variant = "standalone" }) {
         </div>
       </section>
 
+      {variant === "standalone" ? (
+        <section className="perfil-card" style={{ marginBottom: "1rem" }}>
+          <header className="perfil-card__header">
+            <UserRound size={18} />
+            <h2>Compras</h2>
+          </header>
+          <p className="perfil-card__current-value">Revisá pedidos, totales y detalle.</p>
+          <Link to="/perfil/compras" className="perfil-link-action">
+            Ver historial de compras
+            <ChevronRight size={16} />
+          </Link>
+        </section>
+      ) : null}
+
       <div className="perfil-grid">
         <section className="perfil-card">
           <header className="perfil-card__header">

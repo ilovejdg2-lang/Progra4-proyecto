@@ -101,10 +101,10 @@ const CONFIG_SECCIONES_INICIO = {
     etiqueta: "Inicio",
     tituloTarjeta: "Ubicaci\u00f3n",
     modalTitle: "Ubicaci\u00f3n",
-    ayuda: "Texto y enlace de Google Maps de la secci\u00f3n de ubicaci\u00f3n en el inicio.",
+    ayuda: "Texto, foto y enlace de la secci\u00f3n de ubicaci\u00f3n en el inicio.",
     icon: MapPin,
     showEyebrow: true,
-    showImage: false,
+    showImage: true,
     showLinkUrl: true,
     showLinkText: true,
     eyebrowLabel: "Etiqueta superior",
@@ -173,7 +173,7 @@ function CampoTexto({ label, name, value, onChange, type = "text", placeholder, 
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className="rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+        className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
       />
       {hint ? (
         <span className="text-xs font-medium normal-case tracking-normal text-slate-400">{hint}</span>
@@ -244,7 +244,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
               value={form.subtitle}
               onChange={cambiarCampo}
               rows={4}
-              className="resize-none rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+              className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
               required
             />
           </label>
@@ -321,7 +321,7 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
           <div className="flex min-w-0 items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
               <config.icon className="size-5" />
             </span>
             <h2 id="admin-seccion-inicio-modal-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">
@@ -374,7 +374,7 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
               value={form.description}
               onChange={cambiarCampo}
               rows={4}
-              className="resize-none rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+              className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
               required
             />
           </label>
@@ -512,7 +512,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
                   value={tarjeta.descripcion}
                   onChange={(event) => cambiarCampo(index, "descripcion", event.target.value)}
                   rows={3}
-                  className="resize-none rounded-xl border border-slate-300 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                  className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
                   required
                 />
               </label>
@@ -751,7 +751,7 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
   );
 }
 
-function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEliminar }) {
+function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, guardando, puedeEliminar }) {
   const [items, setItems] = useState(() => (Array.isArray(enlaces) ? enlaces : []));
   const [busqueda, setBusqueda] = useState("");
 
@@ -813,7 +813,14 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
 
         <AdminModalBody cms className="space-y-5">
           <AdminEditorConPreview
-            preview={<PreviewEnlaces items={items} />}
+            preview={(
+              <PreviewEnlaces
+                items={items}
+                variante={config.seccion === "Navbar" ? "navbar" : "footer"}
+                navbar={navbar}
+                footer={footer}
+              />
+            )}
             ayuda={`Gestion\u00e1 los enlaces de ${config.titulo.toLowerCase()}.`}
           >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -821,7 +828,7 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
             <button
               type="button"
               onClick={agregarItem}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-amber-200 px-4 py-2 text-sm font-bold text-amber-800 transition hover:bg-amber-50 sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 py-2 text-sm font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 sm:w-auto"
             >
               <Plus className="size-4" />
               Agregar enlace
@@ -848,7 +855,7 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
           ) : (
             <div className="space-y-4">
               {itemsFiltrados.map((item, index) => (
-                <div key={item.id} className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-[1fr_auto]">
+                <div key={item.id} className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-[1fr_auto]">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
                       Etiqueta
@@ -856,7 +863,7 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
                         value={item.etiqueta ?? ""}
                         onChange={(event) => cambiarItem(item.id, "etiqueta", event.target.value)}
                         placeholder={`Enlace ${index + 1}`}
-                        className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                        className="rounded-full border border-slate-200 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
                         required
                       />
                     </label>
@@ -866,7 +873,7 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
                         value={item.ruta ?? ""}
                         onChange={(event) => cambiarItem(item.id, "ruta", event.target.value)}
                         placeholder="/productos o https://..."
-                        className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                        className="rounded-full border border-slate-200 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
                         required
                       />
                     </label>
@@ -877,7 +884,7 @@ function ModalEnlaces({ config, enlaces, onCerrar, onGuardar, guardando, puedeEl
                         min="1"
                         value={item.orden ?? index + 1}
                         onChange={(event) => cambiarItem(item.id, "orden", event.target.value)}
-                        className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                        className="rounded-full border border-slate-200 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
                       />
                     </label>
                     <label className="flex items-end gap-2 pb-3 text-sm font-medium text-slate-700">
@@ -1181,6 +1188,7 @@ const AdminInformacionPaginaPrincipal = () => {
   const seccionesPaginaPrincipal = useMemo(() => {
     const seccionesInicioItems = Object.entries(CONFIG_SECCIONES_INICIO).map(([clave, config]) => ({
       id: clave,
+      grupo: "inicio",
       busqueda: [
         config.etiqueta,
         config.tituloTarjeta,
@@ -1189,13 +1197,14 @@ const AdminInformacionPaginaPrincipal = () => {
     }));
 
     return [
-      { id: "hero", busqueda: ["Hero section", hero.title, hero.subtitle] },
+      { id: "hero", grupo: "inicio", busqueda: ["Hero section", hero.title, hero.subtitle] },
       ...seccionesInicioItems,
-      { id: "tarjetas-inicio", busqueda: ["Mini formularios", "Inicio", resumenTarjetasInicio] },
-      { id: "navbar", busqueda: ["Navbar", "Barra de navegaci\u00f3n", resumenNavbar] },
-      { id: "footer", busqueda: ["Footer", "Pie de p\u00e1gina", resumenFooter] },
+      { id: "tarjetas-inicio", grupo: "inicio", busqueda: ["Mini formularios", "Inicio", resumenTarjetasInicio] },
+      { id: "navbar", grupo: "navbar", busqueda: ["Navbar", "Barra de navegaci\u00f3n", resumenNavbar] },
+      { id: "footer", grupo: "footer", busqueda: ["Footer", "Pie de p\u00e1gina", resumenFooter] },
       {
         id: "enlaces-navbar",
+        grupo: "navbar",
         busqueda: [
           CONFIG_ENLACES["enlaces-navbar"].etiqueta,
           CONFIG_ENLACES["enlaces-navbar"].titulo,
@@ -1204,6 +1213,7 @@ const AdminInformacionPaginaPrincipal = () => {
       },
       {
         id: "enlaces-footer",
+        grupo: "footer",
         busqueda: [
           CONFIG_ENLACES["enlaces-footer"].etiqueta,
           CONFIG_ENLACES["enlaces-footer"].titulo,
@@ -1224,6 +1234,8 @@ const AdminInformacionPaginaPrincipal = () => {
   const {
     busqueda,
     setBusqueda,
+    valoresFiltro,
+    setValorFiltro,
     filtrados: seccionesFiltradas,
     limpiar: limpiarFiltros,
     hayFiltrosActivos,
@@ -1231,6 +1243,7 @@ const AdminInformacionPaginaPrincipal = () => {
     visibles: seccionesVisibles,
   } = useAdminListaFiltros(seccionesPaginaPrincipal, {
     buscarEn: (seccion) => seccion.busqueda,
+    filtrosConfig: [{ id: "grupo", obtenerValor: (seccion) => seccion.grupo }],
   });
 
   const idsVisibles = useMemo(
@@ -1269,6 +1282,20 @@ const AdminInformacionPaginaPrincipal = () => {
               visibles={seccionesVisibles}
               hayFiltrosActivos={hayFiltrosActivos}
               onLimpiar={limpiarFiltros}
+              filtros={[
+                {
+                  id: "grupo",
+                  label: "Sección",
+                  value: valoresFiltro.grupo || "todos",
+                  onChange: (valor) => setValorFiltro("grupo", valor),
+                  opciones: [
+                    { value: "todos", label: "Todas" },
+                    { value: "inicio", label: "Inicio" },
+                    { value: "navbar", label: "Navbar" },
+                    { value: "footer", label: "Footer" },
+                  ],
+                },
+              ]}
             />
 
             {seccionesFiltradas.length === 0 ? (
@@ -1395,6 +1422,8 @@ const AdminInformacionPaginaPrincipal = () => {
         <ModalEnlaces
           config={CONFIG_ENLACES["enlaces-navbar"]}
           enlaces={enlacesNavbar}
+          navbar={navbar}
+          footer={footer}
           onCerrar={() => setEditando(null)}
           onGuardar={(lista) => guardarEnlaces("enlaces-navbar", lista)}
           guardando={guardando}
@@ -1406,6 +1435,8 @@ const AdminInformacionPaginaPrincipal = () => {
         <ModalEnlaces
           config={CONFIG_ENLACES["enlaces-footer"]}
           enlaces={enlacesFooter}
+          navbar={navbar}
+          footer={footer}
           onCerrar={() => setEditando(null)}
           onGuardar={(lista) => guardarEnlaces("enlaces-footer", lista)}
           guardando={guardando}
