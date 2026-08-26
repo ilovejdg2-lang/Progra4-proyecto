@@ -107,8 +107,8 @@
 }
 
 .admin-cms-preview-viewport.admin-cms-preview--gallery {
-  --cms-preview-ratio-w: 4;
-  --cms-preview-ratio-h: 3;
+  --cms-preview-ratio-w: 16;
+  --cms-preview-ratio-h: 14;
 }
 
 .admin-cms-preview-viewport.admin-cms-preview--navbar {
@@ -162,6 +162,17 @@
 .admin-cms-preview iframe,
 .admin-cms-preview .gallery__item {
   pointer-events: none;
+}
+
+.admin-cms-preview .category-filter,
+.admin-cms-preview .category-filter button,
+.admin-cms-preview .gallery__pagination,
+.admin-cms-preview .gallery__pagination button {
+  pointer-events: auto;
+}
+
+.admin-cms-preview .gallery__trigger {
+  cursor: default;
 }
 
 .admin-cms-preview .navbar {
@@ -232,9 +243,27 @@
   gap: 0;
 }
 
+.admin-cms-preview .home-page__featured.featured-cafes-section {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  padding: 0;
+}
+
 .admin-cms-preview .about-page {
   padding: 2.5rem 2.5rem;
   gap: 1.5rem;
+}
+
+.admin-cms-preview-viewport.admin-cms-preview--gallery > .admin-cms-preview.site-canvas {
+  overflow-y: auto;
+}
+
+.admin-cms-preview.admin-cms-preview--gallery .about-page {
+  overflow: visible;
+  height: auto;
+  min-height: 100%;
 }
 
 .admin-cms-preview.site-canvas .hero {

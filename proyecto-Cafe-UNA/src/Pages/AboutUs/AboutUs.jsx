@@ -4,6 +4,7 @@ import BackToHomeLink from '../../Components/BackToHomeLink/BackToHomeLink';
 import { HOME_SCROLL_SECTIONS } from '../../lib/homeScrollTarget';
 import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { useCachedPublicPage } from '../../hooks/useCachedPublicPage';
+import { useRevealOnScroll } from '../../hooks/useRevealOnScroll';
 import { fetchAboutPageData } from '../../lib/aboutPageData';
 import './AboutUs.css';
 
@@ -23,9 +24,12 @@ const AboutUs = () => {
   const visionData = data?.visionData ?? { title: '', description: '' };
   const galleryItems = data?.galleryData ?? [];
 
-  const hasHistoria = Boolean(historiaTitulo || historia);
-  const hasMission = Boolean(missionData.title || missionData.description);
-  const hasVision = Boolean(visionData.title || visionData.description);
+  const hasHistoria = Boolean(historiaTitulo || historia || data?.historiaImage || data?.historiaEyebrow);
+  const hasMission = Boolean(missionData.title || missionData.description || missionData.image || missionData.eyebrow);
+  const hasVision = Boolean(visionData.title || visionData.description || visionData.image || visionData.eyebrow);
+  const pageReady = !showLoading && !isError;
+
+  useRevealOnScroll(pageReady, '.about-page');
 
   return (
     <PublicPageGate
@@ -43,17 +47,38 @@ const AboutUs = () => {
         ) : null}
         <section className="about-page__narratives" aria-label="Nuestra historia, misión y visión">
           {hasHistoria ? (
-            <AboutNarrativeBlock title={historiaTitulo} description={historia} />
+            <AboutNarrativeBlock
+              className="reveal-on-scroll"
+              eyebrow={data?.historiaEyebrow}
+              title={historiaTitulo}
+              description={historia}
+              image={data?.historiaImage}
+            />
           ) : null}
           {hasMission ? (
-            <AboutNarrativeBlock title={missionData.title} description={missionData.description} />
+            <AboutNarrativeBlock
+              className="reveal-on-scroll"
+              eyebrow={missionData.eyebrow}
+              title={missionData.title}
+              description={missionData.description}
+              image={missionData.image}
+              reverse
+            />
           ) : null}
           {hasVision ? (
-            <AboutNarrativeBlock title={visionData.title} description={visionData.description} />
+            <AboutNarrativeBlock
+              className="reveal-on-scroll"
+              eyebrow={visionData.eyebrow}
+              title={visionData.title}
+              description={visionData.description}
+              image={visionData.image}
+            />
           ) : null}
         </section>
         {galleryItems.length > 0 ? (
-          <Gallery items={galleryItems} pageSize={10} />
+          <div className="reveal-on-scroll">
+            <Gallery items={galleryItems} pageSize={10} />
+          </div>
         ) : null}
       </main>
     </PublicPageGate>

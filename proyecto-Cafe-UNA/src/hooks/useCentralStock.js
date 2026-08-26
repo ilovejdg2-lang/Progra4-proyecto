@@ -11,10 +11,14 @@ const INITIAL_STATE = {
 export function useCentralStock({ enabled = true } = {}) {
   const [state, setState] = useState(INITIAL_STATE);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ silent = false } = {}) => {
     if (!enabled) return;
 
-    setState((current) => ({ ...current, status: "loading", error: null }));
+    setState((current) => ({
+      ...current,
+      status: silent && current.status === "success" ? "success" : "loading",
+      error: null,
+    }));
     try {
       const data = await obtenerStockCentral();
       setState({ data, status: "success", error: null });

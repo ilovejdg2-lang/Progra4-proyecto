@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import { categoriasUnicas, filtrarPorCategoria } from '../../lib/categorias';
 import { normalizeImageUrl } from '../../lib/imageUtils';
+import { CategoryFilter } from '../CategoryFilter/CategoryFilter';
 import OptimizedImage from '../OptimizedImage/OptimizedImage';
 import './Gallery.css';
 
@@ -33,16 +35,24 @@ const Gallery = ({
   pageSize = DEFAULT_PAGE_SIZE,
   title = 'Galer\u00eda de fotos',
   ariaLabel = 'Galer\u00eda de fotos',
+  permitirLightbox = true,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeIndex, setActiveIndex] = useState(null);
+  const [categoria, setCategoria] = useState('todas');
 
-  const totalPages = Math.ceil(items.length / pageSize) || 1;
+  const categorias = useMemo(() => categoriasUnicas(items), [items]);
+  const filtrados = useMemo(
+    () => filtrarPorCategoria(items, categoria),
+    [items, categoria],
+  );
+
+  const totalPages = Math.ceil(filtrados.length / pageSize) || 1;
 
   const pageItems = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return items.slice(start, start + pageSize);
-  }, [currentPage, items, pageSize]);
+    return filtrados.slice(start, start + pageSize);
+  }, [currentPage, filtrados, pageSize]);
 
   const activeItem = activeIndex !== null ? pageItems[activeIndex] : null;
   const activeImageUrl = activeItem
@@ -70,6 +80,11 @@ const Gallery = ({
   }, [pageItems.length]);
 
   useEffect(() => {
+    setCurrentPage(1);
+    setActiveIndex(null);
+  }, [categoria, items]);
+
+  useEffect(() => {
     if (activeIndex === null) return undefined;
 
     const onKeyDown = (event) => {
@@ -88,6 +103,10 @@ const Gallery = ({
     setCurrentPage(page);
   };
 
+  const cambiarCategoria = (valor) => {
+    setCategoria(valor);
+  };
+
   if (items.length === 0) return null;
 
   return (
@@ -96,6 +115,11 @@ const Gallery = ({
         <h2 className="section-title gallery__title">{title}</h2>
       </header>
 
+      <CategoryFilter categorias={categorias} valor={categoria} onChange={cambiarCategoria} />
+
+      {filtrados.length === 0 ? (
+        <p className="gallery__empty">{"No hay fotos en esta categoría."}</p>
+      ) : (
       <div className="gallery__bento" data-count={pageItems.length}>
         {pageItems.map((item, index) => {
           const label = item.title
@@ -110,8 +134,11 @@ const Gallery = ({
               <button
                 type="button"
                 className="gallery__trigger"
-                onClick={() => setActiveIndex(index)}
+                onClick={() => {
+                  if (permitirLightbox) setActiveIndex(index);
+                }}
                 aria-label={label}
+                tabIndex={permitirLightbox ? undefined : -1}
               >
                 <OptimizedImage
                   src={item.image}
@@ -127,6 +154,7 @@ const Gallery = ({
           );
         })}
       </div>
+      )}
 
       {totalPages > 1 ? (
         <nav className="pagination gallery__pagination" aria-label={"Paginaci\u00f3n de galer\u00eda"}>

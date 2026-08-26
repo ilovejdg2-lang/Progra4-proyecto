@@ -2,24 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 
 import { obtenerUbicaciones } from "../services/productosService";
 
-export const POS_LOCATION_CODES = Object.freeze([
-  "POS_FUNA_UNA",
-  "POS_EDITORIAL",
-  "POS_STAND_FERIAS",
-]);
-
 const INITIAL_STATE = { data: [], status: "idle", error: null };
 
 function onlyPointOfSaleLocations(locations) {
-  const byCode = new Map(
-    (Array.isArray(locations) ? locations : [])
-      .filter((location) => POS_LOCATION_CODES.includes(location?.code))
-      .map((location) => [location.code, location]),
-  );
-
-  return POS_LOCATION_CODES
-    .map((code) => byCode.get(code))
-    .filter(Boolean);
+  return (Array.isArray(locations) ? locations : [])
+    .filter((location) => location?.code && location.code !== "BODEGA_CENTRAL")
+    .sort((a, b) => String(a.name || a.code).localeCompare(String(b.name || b.code), "es"));
 }
 
 export function useInventoryLocations({ enabled = true } = {}) {
@@ -31,13 +19,17 @@ export function useInventoryLocations({ enabled = true } = {}) {
     setState((current) => ({ ...current, status: "loading", error: null }));
     try {
       const locations = await obtenerUbicaciones();
-      setState({ data: onlyPointOfSaleLocations(locations), status: "success", error: null });
+      setState({
+        data: onlyPointOfSaleLocations(locations),
+        status: "success",
+        error: null,
+      });
     } catch (error) {
-      setState((current) => ({
-        ...current,
+      setState({
+        data: [],
         status: "error",
         error: error instanceof Error ? error : new Error("No se pudieron cargar los puntos de venta."),
-      }));
+      });
     }
   }, [enabled]);
 

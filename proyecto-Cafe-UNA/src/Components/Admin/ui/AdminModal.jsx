@@ -94,7 +94,7 @@ export const adminBtnCancel =
   "w-full rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto";
 
 export const adminBtnPrimary =
-  "w-full rounded-full bg-[#a7532d] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#8c3d1f] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
+  "w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
 
 // Shared with the buttons in Voluntariado; CMS editors opt in instead of
 // maintaining a second copy of the same visual treatment.
