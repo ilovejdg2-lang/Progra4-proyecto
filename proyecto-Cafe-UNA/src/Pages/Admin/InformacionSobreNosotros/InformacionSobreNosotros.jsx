@@ -665,7 +665,7 @@ const AdminInformacionSobreNosotros = () => {
             {seccionesFiltradas.length === 0 ? (
               <AdminListaVacia onLimpiar={limpiarFiltros} />
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid min-w-0 grid-cols-1 gap-4 overflow-x-hidden sm:grid-cols-2 xl:grid-cols-3">
               {idsVisibles.has("historia") ? (
                 <AdminSeccionCard
                   etiqueta="Historia"
