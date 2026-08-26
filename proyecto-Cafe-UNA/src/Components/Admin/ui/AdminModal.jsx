@@ -50,7 +50,7 @@ export function AdminModal({
         aria-modal="true"
         aria-labelledby={labelledBy}
         className={cn(
-          "relative z-10 flex max-h-[92dvh] w-full min-h-0 flex-col overflow-hidden bg-white shadow-2xl",
+          "relative z-10 flex max-h-[92dvh] w-full min-h-0 min-w-0 max-w-full flex-col overflow-x-hidden overflow-hidden bg-white shadow-2xl",
           "rounded-t-2xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl",
           maxWidth,
           className,
@@ -80,7 +80,7 @@ export function AdminModalBody({ children, className, cms = false }) {
   return (
     <div
       className={cn(
-        "min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5",
+        "min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-4 sm:px-6 sm:py-5",
         cms && "admin-modal-body--cms",
         className,
       )}

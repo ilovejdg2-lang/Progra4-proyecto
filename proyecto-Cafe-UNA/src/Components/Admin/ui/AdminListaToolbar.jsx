@@ -2,10 +2,10 @@ import { Search, SlidersHorizontal, X } from "lucide-react";
 import { UiSelect } from "../../ui/Select";
 
 const inputCls =
-  "w-full rounded-full border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
+  "w-full min-w-0 max-w-full rounded-full border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
 
 const inputFechaCls =
-  "w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
+  "w-full min-w-0 max-w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
 
 export function AdminListaToolbar({
   busqueda,
@@ -21,12 +21,12 @@ export function AdminListaToolbar({
 }) {
   return (
     <div
-      className={`space-y-4 border-b border-slate-100 bg-white ${
+      className={`min-w-0 space-y-4 overflow-x-hidden border-b border-slate-100 bg-white ${
         compacto ? "px-4 py-5 sm:px-6" : "px-4 py-5 sm:px-6"
       }`}
     >
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-stretch gap-4 xl:flex-row xl:items-end xl:justify-center">
-        <div className="relative w-full xl:min-w-[16rem] xl:max-w-md xl:flex-1">
+      <div className="mx-auto flex w-full max-w-6xl min-w-0 flex-col items-stretch gap-4 xl:flex-row xl:items-end xl:justify-center">
+        <div className="relative w-full min-w-0 xl:max-w-md xl:flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
           <input
             type="search"
@@ -39,11 +39,11 @@ export function AdminListaToolbar({
         </div>
 
         {filtros.length > 0 ? (
-          <div className="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-center xl:w-auto">
+          <div className="flex w-full min-w-0 flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-center xl:w-auto">
             {filtros.map((filtro) => (
               <div
                 key={filtro.id}
-                className={`grid w-full min-w-[11rem] flex-1 gap-1.5 ${
+                className={`grid w-full min-w-0 flex-1 gap-1.5 ${
                   filtro.footer ? "sm:max-w-[18rem]" : "sm:max-w-[12.5rem]"
                 }`}
               >
