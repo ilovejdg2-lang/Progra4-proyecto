@@ -83,6 +83,8 @@ describe("productosService contract", () => {
       precioConIVA: 0,
       estado: "Habilitado",
       peso: "",
+      categoria: "",
+      subcategoria: "",
       esDestacado: false,
       stock: 40,
       locationCode: "PUNTO_VENTA_1",
@@ -94,6 +96,8 @@ describe("productosService contract", () => {
       precioConIVA: 0,
       estado: "Habilitado",
       peso: "",
+      categoria: "",
+      subcategoria: "",
       esDestacado: false,
     });
   });
@@ -122,14 +126,17 @@ describe("productosService contract", () => {
     );
   });
 
-  it("normalizes the four canonical locations and rejects unknown codes", () => {
-    expect(["BODEGA_CENTRAL", "POS_FUNA_UNA", "POS_EDITORIAL", "POS_STAND_FERIAS"]
+  it("normalizes locations from the API without a fixed allowlist", () => {
+    expect(["BODEGA_CENTRAL", "POS_FUNA_UNA", "POS_EDITORIAL", "POS_STAND_FERIAS", "POS_NUEVO"]
       .every((code) => validarCodigoUbicacion(code))).toBe(true);
-    expect(normalizarUbicacion({ Code: "POS_EDITORIAL", Nombre: "Editorial" })).toEqual({
-      code: "POS_EDITORIAL", name: "Editorial",
+    expect(normalizarUbicacion({ Code: "POS_EDITORIAL", Nombre: "Editorial", Activo: true })).toEqual({
+      code: "POS_EDITORIAL", name: "Editorial", activo: true,
     });
-    expect(normalizarUbicacion({ codigo: "LEGACY_LOCATION" })).toBeNull();
-    expect(validarCodigoUbicacion("PUNTO_VENTA_1")).toBe(false);
+    expect(normalizarUbicacion({ codigo: "POS_NUEVO", nombre: "Kiosco", activo: false })).toEqual({
+      code: "POS_NUEVO", name: "Kiosco", activo: false,
+    });
+    expect(normalizarUbicacion({ codigo: "bad code!" })).toBeNull();
+    expect(validarCodigoUbicacion("bad code!")).toBe(false);
   });
 
   it("preserves absent and explicit zero stock states", () => {
@@ -137,7 +144,7 @@ describe("productosService contract", () => {
       .toEqual({ productId: "p-1", locationCode: "POS_EDITORIAL", stock: 0, provisioned: false });
     expect(normalizarStockPorUbicacion({ id: "p-2", code: "POS_EDITORIAL" }))
       .toEqual({ productId: "p-2", locationCode: "POS_EDITORIAL", stock: null, provisioned: false });
-    expect(normalizarStockPorUbicacion({ id: "p-3", code: "UNKNOWN", stock: 2 })).toBeNull();
+    expect(normalizarStockPorUbicacion({ id: "p-3", code: "bad code!", stock: 2 })).toBeNull();
   });
 
   it("loads and caches locations without bypassing auth", async () => {
@@ -148,8 +155,8 @@ describe("productosService contract", () => {
     const first = await obtenerUbicaciones();
     const second = await obtenerUbicaciones();
     expect(first).toEqual([
-      { code: "BODEGA_CENTRAL", name: "Bodega Central" },
-      { code: "POS_FUNA_UNA", name: "FUNA-UNA" },
+      { code: "BODEGA_CENTRAL", name: "Bodega Central", activo: true },
+      { code: "POS_FUNA_UNA", name: "FUNA-UNA", activo: true },
     ]);
     expect(second).toBe(first);
     expect(apiRequestMock).toHaveBeenCalledTimes(1);
@@ -175,7 +182,7 @@ describe("productosService contract", () => {
   });
 
   it("rejects invalid locations before making a request", async () => {
-    await expect(obtenerStockPorUbicacion("PUNTO_VENTA_1")).rejects.toThrow("El código de ubicación no es válido.");
+    await expect(obtenerStockPorUbicacion("bad code!")).rejects.toThrow("El código de ubicación no es válido.");
     expect(apiRequestMock).not.toHaveBeenCalled();
   });
 
@@ -208,7 +215,7 @@ describe("productosService contract", () => {
 
   it.each([
     ["BODEGA_CENTRAL", "1", 7, "Conteo", "La ruta de ajustes solo admite puntos de venta."],
-    ["UNKNOWN", "1", 7, "Conteo", "El código de ubicación no es válido."],
+    ["bad code!", "1", 7, "Conteo", "El código de ubicación no es válido."],
     ["POS_EDITORIAL", null, 7, "Conteo", "El identificador del producto no es válido."],
     ["POS_EDITORIAL", "", 7, "Conteo", "El identificador del producto no es válido."],
     ["POS_EDITORIAL", "1", null, "Conteo", "La cantidad de stock debe ser un entero entre 0 y 2147483647."],

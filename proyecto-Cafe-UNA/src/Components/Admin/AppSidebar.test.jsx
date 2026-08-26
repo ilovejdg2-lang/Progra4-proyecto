@@ -59,7 +59,7 @@ describe("AppSidebar", () => {
     permissions.tienePermiso.mockReturnValue(true);
   });
 
-  it("exposes Puntos de venta inside the inventory section", () => {
+  it("exposes Puntos de venta and Activos fijos inside the inventory section", () => {
     render(
       <SidebarProvider>
         <AppSidebar />
@@ -69,6 +69,10 @@ describe("AppSidebar", () => {
     expect(screen.getAllByRole("link", { name: /Puntos de venta/i })[0]).toHaveAttribute(
       "href",
       "/admin/puntos-venta",
+    );
+    expect(screen.getAllByRole("link", { name: /Activos fijos/i })[0]).toHaveAttribute(
+      "href",
+      "/admin/activos-fijos",
     );
   });
 
@@ -82,6 +86,7 @@ describe("AppSidebar", () => {
     );
 
     expect(screen.queryByRole("link", { name: /Puntos de venta/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Activos fijos/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /^Producto$/i })).not.toBeInTheDocument();
   });
 });

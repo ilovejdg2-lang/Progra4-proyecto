@@ -11,11 +11,13 @@ import {
   Info,
   LogOut,
   Package,
+  Receipt,
   ScrollText,
   Settings,
   Store,
   UserRound,
   Users,
+  Wrench,
 } from "lucide-react";
 
 import {
@@ -71,6 +73,9 @@ export function AppSidebar() {
   const puedeInventario = tienePermiso(roles, "ver_inventario");
   const puedeVoluntariado = tienePermiso(roles, "ver_solicitudes_voluntariado");
   const puedeUsuarios = tienePermiso(roles, "editar_usuarios");
+  const puedeVentas =
+    tienePermiso(roles, "ver_ventas") ||
+    tienePermiso(roles, "ver_historial_compras_clientes");
   const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
   const puedePerfil = tienePermiso(roles, "ver_perfil_propio");
   const avatarUrl = user?.fotoPerfilUrl?.trim()
@@ -84,7 +89,7 @@ export function AppSidebar() {
 
   const isGeneralRoute =
     pathname === "/admin/informacion-pagina-principal" || pathname === "/admin/sobre-nosotros";
-  const isInventoryRoute = pathname === "/admin/producto" || pathname === "/admin/puntos-venta";
+  const isInventoryRoute = pathname === "/admin/producto" || pathname === "/admin/puntos-venta" || pathname === "/admin/activos-fijos" || pathname === "/admin/historial-ventas";
 
   const [generalOpen, setGeneralOpen] = useState(() => {
     const savedValue = localStorage.getItem(GENERAL_OPEN_KEY);
@@ -274,6 +279,24 @@ export function AppSidebar() {
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/activos-fijos" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <Wrench />
+                        <span>Activos fijos</span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  {puedeVentas ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/historial-ventas" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <Receipt />
+                        <span>Historial de ventas</span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
                 </SidebarMenuSub>
               </SidebarGroupContent>
             </Collapsible.Content>
@@ -283,6 +306,16 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarMenu>
+            {puedeVentas && !puedeInventario ? (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link to="/admin/historial-ventas" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                  <Receipt />
+                  <span>Historial de ventas</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            ) : null}
             {puedeVoluntariado ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>

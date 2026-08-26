@@ -35,4 +35,37 @@ describe("ProductCatalogFormDrawer", () => {
     expect(onSave.mock.calls[0][0]).not.toHaveProperty("stock");
     expect(onSave.mock.calls[0][0]).toMatchObject({ nombre: "Café nuevo", precioNormal: 1000 });
   });
+
+  it("fills the current product when opening edit", () => {
+    const { rerender } = render(
+      <ProductCatalogFormDrawer open={false} initial={null} onClose={vi.fn()} onSave={vi.fn()} />,
+    );
+
+    rerender(
+      <ProductCatalogFormDrawer
+        open
+        initial={{
+          id: 3,
+          nombre: "Café otro",
+          descripcion: "Tueste medio",
+          imagen: "https://img.example/1.jpg\nhttps://img.example/2.jpg",
+          precioNormal: 3390,
+          precioConIVA: 3831,
+          estado: "Habilitado",
+          peso: "1 KG",
+          categoria: "café",
+          esDestacado: false,
+        }}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Editar producto" });
+    expect(within(dialog).getByRole("textbox", { name: /^Nombre/ })).toHaveValue("Café otro");
+    expect(within(dialog).getByRole("textbox", { name: /^Descripción/ })).toHaveValue("Tueste medio");
+    expect(within(dialog).getByRole("spinbutton", { name: "Precio normal" })).toHaveValue(3390);
+    expect(within(dialog).getByRole("textbox", { name: /Foto principal/ })).toHaveValue("https://img.example/1.jpg");
+    expect(within(dialog).getByRole("textbox", { name: /Foto extra 2/ })).toHaveValue("https://img.example/2.jpg");
+  });
 });

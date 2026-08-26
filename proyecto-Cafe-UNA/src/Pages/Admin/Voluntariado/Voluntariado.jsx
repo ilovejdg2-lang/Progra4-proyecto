@@ -20,6 +20,7 @@ import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModalActions, adminBtnCancel } from "../../../Components/Admin/ui/AdminModal";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { UiSelect } from "../../../Components/ui/Select";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import {
@@ -50,13 +51,13 @@ const btnCancelarGris =
   "inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60";
 
 const inputModalCls =
-  "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-normal text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-100";
+  "rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-normal text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
 
 const colorEstado = {
-  Pendiente: "bg-slate-100 text-amber-600",
-  "En revisi\u00f3n": "bg-slate-100 text-blue-600",
-  Aprobado: "bg-slate-100 text-green-600",
-  Rechazado: "bg-slate-100 text-red-600",
+  Pendiente: "text-amber-600",
+  "En revisi\u00f3n": "text-blue-600",
+  Aprobado: "text-green-600",
+  Rechazado: "text-red-600",
 };
 
 function normalizarEstado(estado) {
@@ -82,13 +83,13 @@ function normalizarSolicitud(solicitud) {
 }
 
 function claseEstado(estado) {
-  return colorEstado[normalizarEstado(estado)] ?? "bg-slate-100 text-slate-700";
+  return colorEstado[normalizarEstado(estado)] ?? "text-slate-700";
 }
 
 function BadgeEstado({ estado }) {
   const estadoNormalizado = normalizarEstado(estado);
   return (
-    <span className={`inline-block rounded-full px-3 py-0.5 text-xs font-semibold ${claseEstado(estadoNormalizado)}`}>
+    <span className={`text-xs font-semibold ${claseEstado(estadoNormalizado)}`}>
       {estadoNormalizado}
     </span>
   );
@@ -119,7 +120,7 @@ function DetailField({ icon: Icon, label, value, className = "" }) {
         <Icon className="size-4 text-slate-500" />
         {label}
       </span>
-      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900">
+      <p className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900">
         {value || "No indicado"}
       </p>
     </div>
@@ -298,7 +299,7 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
                 value={observacionesAdmin}
                 onChange={(event) => setObservacionesAdmin(event.target.value)}
                 rows={3}
-                className={`${inputModalCls} resize-none`}
+                className={`${inputModalCls} min-h-[6rem] resize-none rounded-2xl`}
                 placeholder="Indique observaciones internas o el motivo si la solicitud es rechazada..."
               />
             </label>
@@ -381,24 +382,28 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
 
         <div className="max-h-[68vh] overflow-y-auto px-6 py-5">
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <div className="grid gap-2 text-sm font-medium text-slate-700">
               Estado
-              <select name="estado" value={form.estado} onChange={handleChange} className={inputModalCls}>
-                {ESTADOS.map((estado) => (
-                  <option key={estado} value={estado}>
-                    {estado}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <UiSelect
+                ariaLabel="Estado"
+                value={form.estado}
+                onChange={(valor) => handleChange({ target: { name: "estado", value: valor } })}
+                options={ESTADOS.map((estado) => ({ value: estado, label: estado }))}
+              />
+            </div>
 
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <div className="grid gap-2 text-sm font-medium text-slate-700">
               Modalidad
-              <select name="modalidad" value={form.modalidad} onChange={handleChange} className={inputModalCls}>
-                <option value="individual">Individual</option>
-                <option value="grupal">Grupal</option>
-              </select>
-            </label>
+              <UiSelect
+                ariaLabel="Modalidad"
+                value={form.modalidad}
+                onChange={(valor) => handleChange({ target: { name: "modalidad", value: valor } })}
+                options={[
+                  { value: "individual", label: "Individual" },
+                  { value: "grupal", label: "Grupal" },
+                ]}
+              />
+            </div>
 
             {CAMPOS_EDITABLES.map((campo) => (
               <label key={campo.name} className={`grid gap-2 text-sm font-medium text-slate-700 ${campo.name === "horario" || campo.name === "dias" ? "md:col-span-2" : ""}`}>
@@ -434,7 +439,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
                 value={form.observacionesAdmin}
                 onChange={handleChange}
                 rows={3}
-                className={`${inputModalCls} resize-none`}
+                className={`${inputModalCls} min-h-[6rem] resize-none rounded-2xl`}
               />
             </label>
           </div>
@@ -621,11 +626,8 @@ const AdminVoluntariado = () => {
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1 text-sm font-semibold text-emerald-800">
-                  Programa de Voluntariado
-                </span>
-                <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Solicitudes registradas</h1>
-                <p className="mt-3 max-w-2xl text-slate-600">{"Gestion\u00e1 el estado y los datos de cada solicitud de voluntariado recibida."}</p>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Solicitudes registradas</h1>
+                <p className="mt-1 max-w-2xl text-slate-600">{"Gestion\u00e1 el estado y los datos de cada solicitud de voluntariado recibida."}</p>
               </div>
 
               <button
@@ -639,11 +641,11 @@ const AdminVoluntariado = () => {
               </button>
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-4 flex flex-wrap gap-x-10 gap-y-3">
               {ESTADOS.map((estado) => (
-                <div key={estado} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">{estado}</p>
-                  <p className="mt-1 text-2xl font-bold text-slate-950">{resumen[estado] || 0}</p>
+                <div key={estado}>
+                  <p className={`text-sm font-semibold ${colorEstado[estado]}`}>{estado}</p>
+                  <p className="mt-0.5 text-2xl font-bold text-slate-950">{resumen[estado] || 0}</p>
                 </div>
               ))}
             </div>

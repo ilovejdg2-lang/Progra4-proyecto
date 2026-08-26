@@ -1,5 +1,7 @@
 import { ProductCatalogFeaturedToggle } from "./ProductCatalogFeaturedToggle";
 import { destacadoDeshabilitado, etiquetaEstadoProducto, formatearPrecio } from "./catalogFormatters";
+import { etiquetaCategoriaProducto } from "../../../../lib/categorias";
+import { imagenPrincipalProducto } from "../../../../lib/productoImagenes";
 
 export function ProductCatalogMobileList({
   productos,
@@ -13,14 +15,15 @@ export function ProductCatalogMobileList({
   return (
     <div className="divide-y divide-slate-100 md:hidden">
       {productos.map((producto) => {
+        const foto = imagenPrincipalProducto(producto);
         const estadoProducto = etiquetaEstadoProducto(producto);
 
         return (
           <article key={producto.id} className="space-y-3 px-4 py-4">
             <div className="flex items-start gap-3">
-              {producto.imagen ? (
+              {foto ? (
                 <img
-                  src={producto.imagen}
+                  src={foto}
                   alt={producto.nombre}
                   className="h-16 w-16 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
                 />
@@ -32,7 +35,7 @@ export function ProductCatalogMobileList({
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-semibold text-slate-900">{producto.nombre}</h3>
-                  <span className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${estadoProducto.clase}`}>
+                  <span className={`shrink-0 text-xs font-semibold ${estadoProducto.clase}`}>
                     {estadoProducto.texto}
                   </span>
                 </div>
@@ -51,6 +54,9 @@ export function ProductCatalogMobileList({
                     : "No disponible"}
               </span>
               {producto.peso ? <span><strong className="text-slate-800">Peso:</strong> {producto.peso}</span> : null}
+              {etiquetaCategoriaProducto(producto) ? (
+                <span><strong className="text-slate-800">Categoría:</strong> {etiquetaCategoriaProducto(producto)}</span>
+              ) : null}
             </div>
 
             <ProductCatalogFeaturedToggle

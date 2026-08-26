@@ -5,14 +5,14 @@ export const ESTILOS_INICIATIVA = {
     borderColor: "#efc4ad",
   },
   visitas: {
-    accentColor: "#286f54",
-    accentBg: "#f0fbf6",
-    borderColor: "#a9dec8",
+    accentColor: "#6d432c",
+    accentBg: "#faf6f3",
+    borderColor: "#e4d4c4",
   },
   voluntariado: {
-    accentColor: "#67521d",
-    accentBg: "#fff9eb",
-    borderColor: "#dfc98d",
+    accentColor: "#2f7a55",
+    accentBg: "#f1f8f4",
+    borderColor: "#b7d4c4",
   },
 };
 
