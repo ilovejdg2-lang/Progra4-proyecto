@@ -514,6 +514,11 @@ export async function obtenerAlertasStock() {
     stockActual: Number(item?.stockActual ?? item?.StockActual ?? 0) || 0,
     stockMinimo: Number(item?.stockMinimo ?? item?.StockMinimo ?? 0) || 0,
     agotado: Boolean(item?.agotado ?? item?.Agotado),
+    ubicaciones: (Array.isArray(item?.ubicaciones) ? item.ubicaciones : []).map((ubi) => ({
+      codigo: String(ubi?.codigo ?? ubi?.Codigo ?? ""),
+      nombre: String(ubi?.nombre ?? ubi?.Nombre ?? ""),
+      stock: Number(ubi?.stock ?? ubi?.Stock ?? 0) || 0,
+    })),
   }));
 }
 
