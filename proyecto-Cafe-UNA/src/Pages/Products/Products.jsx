@@ -1,6 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { ChevronDown, Search, ShoppingCart, SlidersHorizontal, X } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  Coffee,
+  Filter,
+  Package,
+  Search,
+  Shirt,
+  ShoppingCart,
+  SlidersHorizontal,
+  Tag,
+  X,
+} from 'lucide-react';
 import BackToHomeLink from '../../Components/BackToHomeLink/BackToHomeLink';
 import OptimizedImage from '../../Components/OptimizedImage/OptimizedImage';
 import { HOME_SCROLL_SECTIONS } from '../../lib/homeScrollTarget';
@@ -31,6 +43,15 @@ function coincidenciaBusqueda(producto, query) {
 
 function mergeNombres(...listas) {
   return categoriasUnicas(listas.flat().map((nombre) => ({ categoria: nombre })));
+}
+
+function iconoDeCategoria(nombre) {
+  const n = String(nombre || '').toLowerCase();
+  if (n.includes('caf')) return Coffee;
+  if (n.includes('camisa') || n.includes('ropa') || n.includes('shirt') || n.includes('polo')) {
+    return Shirt;
+  }
+  return Tag;
 }
 
 const Products = () => {
@@ -193,22 +214,34 @@ const Products = () => {
         className={`products-page__aside-link${categoria === 'todas' ? ' is-active' : ''}`}
         onClick={() => cambiarCategoria('todas')}
       >
-        Todas
+        {categoria === 'todas' ? (
+          <Check size={16} aria-hidden="true" />
+        ) : (
+          <Package size={16} aria-hidden="true" />
+        )}
+        <span>Todas</span>
       </button>
 
       {categorias.map((nombre) => {
         const activa = nombreCategoria(categoria).toLowerCase() === nombre.toLowerCase();
         const hijas = subcategoriasPorCategoria[nombre] || [];
         const expandida = Boolean(abiertas[nombre]) || activa;
+        const Icono = iconoDeCategoria(nombre);
+        const categoriaSeleccionada = activa && subcategoria === 'todas';
         return (
           <div key={nombre} className={`products-page__aside-group${activa ? ' is-open' : ''}`}>
             <div className="products-page__aside-row">
               <button
                 type="button"
-                className={`products-page__aside-link${activa && subcategoria === 'todas' ? ' is-active' : ''}${activa ? ' is-current' : ''}`}
+                className={`products-page__aside-link${categoriaSeleccionada ? ' is-active' : ''}${activa ? ' is-current' : ''}`}
                 onClick={() => cambiarCategoria(nombre)}
               >
-                {nombre}
+                {categoriaSeleccionada ? (
+                  <Check size={16} aria-hidden="true" />
+                ) : (
+                  <Icono size={16} aria-hidden="true" />
+                )}
+                <span>{nombre}</span>
               </button>
               {hijas.length > 0 ? (
                 <button
@@ -236,7 +269,8 @@ const Products = () => {
                       }`}
                       onClick={() => cambiarSubcategoria(nombre, sub)}
                     >
-                      {sub}
+                      <span className="products-page__aside-dot" aria-hidden="true" />
+                      <span>{sub}</span>
                     </button>
                   </li>
                 ))}
@@ -260,13 +294,27 @@ const Products = () => {
       <main className="products-page">
         <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.products} />
         <section className="products-page__hero">
-          <h1>Productos</h1>
+          <div className="products-page__hero-copy">
+            <h1>Productos</h1>
+            <p className="products-page__hero-lead">Explora nuestro catálogo disponible.</p>
+          </div>
+          <p className="products-page__count-badge" aria-live="polite">
+            <Package size={15} aria-hidden="true" />
+            <span>
+              {productosFiltrados.length}{' '}
+              {productosFiltrados.length === 1 ? 'producto' : 'productos'}
+              {etiquetaActiva !== 'Todas' ? ` · ${etiquetaActiva}` : ''}
+            </span>
+          </p>
         </section>
 
         <div className="products-page__shop">
           <aside className="products-page__aside" aria-label="Filtros">
             <div className="products-page__aside-head">
-              <h2>Filtros</h2>
+              <h2>
+                <Filter size={16} aria-hidden="true" />
+                Filtros
+              </h2>
               {hayFiltros ? (
                 <button
                   type="button"
@@ -291,13 +339,13 @@ const Products = () => {
             <div className="products-page__toolbar">
               <label className="products-page__search">
                 <Search className="products-page__search-icon" size={18} aria-hidden="true" />
-                <span className="sr-only">Buscar por nombre</span>
+                <span className="sr-only">Buscar productos</span>
                 <input
                   type="search"
                   value={busqueda}
                   onChange={(event) => setBusqueda(event.target.value)}
-                  placeholder=""
-                  aria-label="Buscar por nombre"
+                  placeholder="Buscar productos."
+                  aria-label="Buscar productos"
                   autoComplete="off"
                 />
                 {busqueda ? (
@@ -322,11 +370,28 @@ const Products = () => {
                 Filtros
               </button>
 
-              <p className="products-page__toolbar-meta" aria-live="polite">
-                {productosFiltrados.length}{' '}
-                {productosFiltrados.length === 1 ? 'producto' : 'productos'}
-                {etiquetaActiva !== 'Todas' ? ` · ${etiquetaActiva}` : ''}
-              </p>
+              <div className="products-page__pills" role="group" aria-label="Filtro r\u00e1pido por categor\u00eda">
+                <button
+                  type="button"
+                  className={`products-page__pill${categoria === 'todas' ? ' is-active' : ''}`}
+                  onClick={() => cambiarCategoria('todas')}
+                >
+                  Todas
+                </button>
+                {categorias.map((nombre) => {
+                  const activa = nombreCategoria(categoria).toLowerCase() === nombre.toLowerCase();
+                  return (
+                    <button
+                      key={nombre}
+                      type="button"
+                      className={`products-page__pill${activa ? ' is-active' : ''}`}
+                      onClick={() => cambiarCategoria(nombre)}
+                    >
+                      {nombre}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <section className="products-page__grid" aria-label="Lista de productos">
@@ -346,6 +411,14 @@ const Products = () => {
                     className={`products-page__card${estaAgotado ? ' products-page__card--agotado' : ''}`}
                     key={product.id}
                   >
+                    <Link
+                      to="/productos/$productId"
+                      params={{ productId: String(product.id) }}
+                      className="products-page__card-hit"
+                    >
+                      <span className="sr-only">{`Ver detalles de ${product.nombre}`}</span>
+                    </Link>
+
                     {foto ? (
                       <div className="products-page__card-media">
                         <OptimizedImage
@@ -379,7 +452,6 @@ const Products = () => {
                         to="/productos/$productId"
                         params={{ productId: String(product.id) }}
                         className="products-page__details-btn"
-                        onClick={(e) => e.stopPropagation()}
                       >
                         Detalles
                       </Link>
@@ -437,7 +509,10 @@ const Products = () => {
             />
             <div className="products-page__drawer-panel">
               <div className="products-page__aside-head">
-                <h2>Filtros</h2>
+                <h2>
+                  <Filter size={16} aria-hidden="true" />
+                  Filtros
+                </h2>
                 <button
                   type="button"
                   className="products-page__drawer-close"

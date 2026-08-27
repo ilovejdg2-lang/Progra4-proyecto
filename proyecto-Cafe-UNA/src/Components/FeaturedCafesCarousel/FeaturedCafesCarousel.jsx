@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { HomeActionLink } from "../../lib/homeActionLink";
 import { imagenPrincipalProducto } from "../../lib/productoImagenes";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { calcularPrecioConIVA } from "../../services/productosService";
@@ -80,15 +80,16 @@ export default function FeaturedCafesCarousel({ products = [] }) {
               key={producto.id ?? producto.nombre ?? index}
               className={`featured-cafes__card featured-cafes__card--${posicion}`}
               aria-hidden={posicion === "hidden"}
-              onClick={posicion === "center" || posicion === "hidden" ? undefined : () => setActivo(index)}
             >
-              {posicion === "center" ? (
-                <HomeActionLink
-                  href={producto.id ? `/productos/${producto.id}` : ""}
+              {producto.id ? (
+                <Link
+                  to="/productos/$productId"
+                  params={{ productId: String(producto.id) }}
                   className="featured-cafes__link"
+                  tabIndex={posicion === "hidden" ? -1 : undefined}
                 >
                   {contenido}
-                </HomeActionLink>
+                </Link>
               ) : (
                 <div className="featured-cafes__surface">{contenido}</div>
               )}

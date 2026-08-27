@@ -8,6 +8,7 @@ import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { obtenerAlertasStock } from "../../../services/productosService";
 import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
+import { requestAdminStockProduct } from "../../../lib/adminStockAlert";
 import "./Panel.css";
 
 const AdminPanel = () => {
@@ -100,13 +101,7 @@ const AdminPanel = () => {
                       <Link
                         to="/admin/producto"
                         className="admin-panel__alerta-btn"
-                        onClick={() => {
-                          try {
-                            sessionStorage.setItem("cafe_una_stock_producto_id", item.id);
-                          } catch {
-                            /* ignore */
-                          }
-                        }}
+                        onClick={() => requestAdminStockProduct(item.id, { nombre: item.nombre })}
                       >
                         <Package className="size-4" aria-hidden="true" />
                         Reponer stock

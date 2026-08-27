@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { Bell, Package } from "lucide-react";
 
 import { obtenerAlertasStock } from "../../services/productosService";
 import { getActiveSessionUser } from "../../services/sessionService";
 import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
+import { requestAdminStockProduct } from "../../lib/adminStockAlert";
+import "../Navbar/Navbar.css";
 
 function puedeVerAlertasStock(user) {
   const roles = rolesDeUsuario(user);
@@ -16,6 +18,7 @@ function puedeVerAlertasStock(user) {
 
 export function AdminStockNotificationsBell() {
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const user = getActiveSessionUser();
   const enabled = puedeVerAlertasStock(user);
 
@@ -75,21 +78,19 @@ export function AdminStockNotificationsBell() {
 
   const count = alertas.length;
 
-  const openProducto = (productoId) => {
+  const openProducto = (item) => {
     setOpen(false);
-    try {
-      sessionStorage.setItem("cafe_una_stock_producto_id", String(productoId));
-    } catch {
-      /* ignore */
+    requestAdminStockProduct(item.id, { nombre: item.nombre });
+    if (pathname !== "/admin/producto") {
+      navigate({ to: "/admin/producto" });
     }
-    navigate({ to: "/admin/producto" });
   };
 
   return (
-    <div className="relative ml-auto" ref={rootRef}>
+    <div className="navbar__notifications relative ml-auto" ref={rootRef}>
       <button
         type="button"
-        className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-800 hover:bg-slate-100"
+        className="navbar__icon-button"
         aria-label="Ver alertas de stock"
         title="Alertas de stock"
         onClick={() => {
@@ -98,69 +99,59 @@ export function AdminStockNotificationsBell() {
           if (next) loadAlertas();
         }}
       >
-        <Bell className="size-5" strokeWidth={2.2} aria-hidden="true" />
-        {count > 0 ? (
-          <span className="absolute right-1 top-1 grid min-w-[1.1rem] place-items-center rounded-full bg-red-600 px-1 text-[length:var(--text-body)] font-bold leading-none text-white">
-            {count > 99 ? "99+" : count}
-          </span>
-        ) : null}
+        <Bell size={22} strokeWidth={2.2} aria-hidden="true" />
       </button>
+      {count > 0 ? (
+        <span className="notifications-badge">{count > 99 ? "99+" : count}</span>
+      ) : null}
 
       {open ? (
-        <aside
-          className="absolute right-0 top-[calc(100%+0.4rem)] z-40 w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
-          aria-label="Alertas de stock"
-        >
-          <header className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="m-0 text-[length:var(--text-subtitle)] font-bold text-slate-950">
-              Stock bajo
-            </h2>
-            <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-slate-100 px-2 text-[length:var(--text-body)] font-bold text-slate-800">
-              {count}
-            </span>
+        <aside className="dropdown dropdown--notifications" aria-label="Alertas de stock">
+          <header className="notifications-header">
+            <h2>Notificaciones</h2>
+            <span>{count}</span>
           </header>
 
           {loading ? (
-            <p className="m-0 text-[length:var(--text-body)] text-slate-600">Cargando alertas...</p>
+            <p className="dropdown__empty">Cargando alertas...</p>
           ) : error ? (
-            <p className="m-0 text-[length:var(--text-body)] text-red-700">{error}</p>
+            <p className="dropdown__empty">{error}</p>
           ) : count === 0 ? (
-            <p className="m-0 text-[length:var(--text-body)] text-slate-600">
-              No hay productos con poco stock en los puntos de venta.
-            </p>
+            <p className="dropdown__empty">No hay productos con poco stock en los puntos de venta.</p>
           ) : (
-            <div className="grid max-h-[22rem] gap-2 overflow-y-auto">
-              {alertas.map((item) => {
-                const lugares =
-                  Array.isArray(item.ubicaciones) && item.ubicaciones.length > 0
-                    ? item.ubicaciones
-                        .map((ubi) => `${ubi.nombre}: ${ubi.stock}`)
-                        .join(" · ")
-                    : `Stock ${item.stockActual} (mín. ${item.stockMinimo})`;
+            <div className="notifications-list">
+              <section className="notifications-section" aria-label="Stock bajo">
+                <p className="notifications-section-label">Stock bajo</p>
+                {alertas.map((item) => {
+                  const lugares =
+                    Array.isArray(item.ubicaciones) && item.ubicaciones.length > 0
+                      ? item.ubicaciones.map((ubi) => `${ubi.nombre}: ${ubi.stock}`).join(" · ")
+                      : `Stock ${item.stockActual} (mín. ${item.stockMinimo})`;
 
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="grid w-full gap-1 rounded-xl border border-slate-200 bg-white p-3 text-left hover:border-slate-300 hover:bg-slate-50"
-                    onClick={() => openProducto(item.id)}
-                    title="Abrir inventario del producto"
-                  >
-                    <strong className="text-[length:var(--text-body)] text-slate-950">
-                      {item.nombre}
-                    </strong>
-                    <span className="text-[length:var(--text-body)] text-slate-600">
-                      {item.agotado ? "Agotado" : "Bajo mínimo"}
-                      {" · "}
-                      {lugares}
-                    </span>
-                    <small className="inline-flex items-center gap-1 text-[length:var(--text-body)] font-bold text-amber-800">
-                      <Package className="size-3.5" aria-hidden="true" />
-                      Reponer stock
-                    </small>
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`notification-item ${item.agotado ? "notification-item--agotado" : "notification-item--bajo"}`}
+                      onClick={() => openProducto(item)}
+                      title="Abrir inventario del producto"
+                    >
+                      <span className="notification-item__icon" aria-hidden="true">
+                        <Package size={16} />
+                      </span>
+                      <div className="notification-item__main">
+                        <strong>{item.nombre}</strong>
+                        <span>
+                          {item.agotado ? "Agotado" : "Bajo mínimo"}
+                          {" · "}
+                          {lugares}
+                        </span>
+                        <small className="notification-item__stock">Reponer stock</small>
+                      </div>
+                    </button>
+                  );
+                })}
+              </section>
             </div>
           )}
         </aside>

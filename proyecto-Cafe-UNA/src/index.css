@@ -91,6 +91,54 @@ body.admin-route-active {
   overflow: auto;
 }
 
+html.admin-modal-open,
+html.admin-modal-open body,
+html.admin-modal-open body.admin-route-active {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+.admin-modal-root {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  z-index: 100010;
+  display: flex;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: none;
+  margin: 0;
+  flex: none;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: auto;
+  isolation: isolate;
+  overscroll-behavior: none;
+}
+
+.admin-modal-root.is-elevated {
+  z-index: 100020;
+}
+
+@media (min-width: 640px) {
+  .admin-modal-root {
+    align-items: center;
+    padding: 1rem;
+  }
+}
+
+.admin-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: rgb(15 23 42 / 0.55);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
 #root {
   width: 100%;
   max-width: 100%;
@@ -492,6 +540,25 @@ a[class*="btn"],
 [class*="button"],
 [class*="btn"] {
   border-radius: var(--ui-btn-radius) !important;
+}
+
+button.notification-item,
+article.notification-item,
+.notification-item {
+  border-radius: 6px !important;
+}
+
+.notification-item__icon {
+  border-radius: 4px !important;
+}
+
+button.dropdown__logout,
+.dropdown--user .dropdown__item {
+  border-radius: 6px !important;
+}
+
+.admin-modal-backdrop {
+  border-radius: 0 !important;
 }
 
 button[class*="inset-0"],

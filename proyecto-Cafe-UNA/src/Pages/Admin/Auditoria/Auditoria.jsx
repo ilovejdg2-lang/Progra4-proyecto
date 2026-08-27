@@ -7,6 +7,7 @@ import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import { obtenerAuditoria } from "../../../services/auditoriaService";
+import { AuditoriaComparacion } from "./AuditoriaComparacion";
 import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
 import { getActiveSessionUser } from "../../../services/sessionService";
 
@@ -84,15 +85,6 @@ function formatearFecha(fecha) {
   });
 }
 
-function formatearJson(valor) {
-  if (valor == null) return "—";
-  try {
-    return JSON.stringify(valor, null, 2);
-  } catch {
-    return String(valor);
-  }
-}
-
 function BadgeAccion({ accion }) {
   const estilos = {
     INSERT: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -148,20 +140,7 @@ function FilaDetalle({ item, abierta, onToggle }) {
       {abierta && tieneCambios ? (
         <tr className="bg-slate-50">
           <td colSpan={5} className="px-4 py-3">
-            <div className="grid gap-3 md:grid-cols-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Datos anteriores</p>
-                <pre className="mt-1 max-h-48 overflow-auto rounded border border-slate-200 bg-white p-2 text-xs text-slate-700">
-                  {formatearJson(item.datosAnteriores)}
-                </pre>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Datos nuevos</p>
-                <pre className="mt-1 max-h-48 overflow-auto rounded border border-slate-200 bg-white p-2 text-xs text-slate-700">
-                  {formatearJson(item.datosNuevos)}
-                </pre>
-              </div>
-            </div>
+            <AuditoriaComparacion item={item} />
           </td>
         </tr>
       ) : null}
@@ -493,13 +472,8 @@ function AdminAuditoria() {
                             </button>
                           ) : null}
                           {abierta && tieneCambios ? (
-                            <div className="mt-3 grid gap-2">
-                              <pre className="max-h-40 overflow-auto rounded border border-slate-200 bg-white p-2 text-xs text-slate-700">
-                                {`Anteriores:\n${formatearJson(item.datosAnteriores)}`}
-                              </pre>
-                              <pre className="max-h-40 overflow-auto rounded border border-slate-200 bg-white p-2 text-xs text-slate-700">
-                                {`Nuevos:\n${formatearJson(item.datosNuevos)}`}
-                              </pre>
+                            <div className="mt-3">
+                              <AuditoriaComparacion item={item} />
                             </div>
                           ) : null}
                         </article>

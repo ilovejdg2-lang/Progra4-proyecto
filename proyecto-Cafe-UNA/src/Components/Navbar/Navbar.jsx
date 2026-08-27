@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './Navbar.css';
 import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
-import { Bell, BookOpen, Coffee, HandHeart, Info, Menu, Minus, Package, Plus, ShoppingCart, Trash2, User, X } from 'lucide-react';
+import { Bell, BookOpen, Coffee, HandHeart, Info, LayoutDashboard, LogOut, Menu, Minus, Package, Plus, ShoppingBag, ShoppingCart, Trash2, User, X } from 'lucide-react';
 import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
 import { FacebookIcon, InstagramIcon } from '../Footer/SocialIcons';
 import { normalizeImageUrl } from '../../lib/imageUtils';
@@ -12,6 +12,7 @@ import { obtenerSolicitudes, obtenerSolicitudesDeUsuario } from '../../services/
 import { cancelPendingSessionRefresh } from '../../services/apiClient';
 import { beginLogout, clearSession, getActiveSessionUser } from '../../services/sessionService';
 import { rolesDeUsuario, tienePermiso } from '../../lib/permisos';
+import { requestAdminStockProduct } from '../../lib/adminStockAlert';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
@@ -117,6 +118,7 @@ const Navbar = () => {
     const [instagramUrl, setInstagramUrl] = useState(cachedSocial.instagramUrl);
     const cartContainerRef = useRef(null);
     const notificationsRef = useRef(null);
+    const userMenuRef = useRef(null);
     const cartCloseTimerRef = useRef(null);
     const navbarRef = useRef(null);
     const pathname = useRouterState({
@@ -350,6 +352,32 @@ const Navbar = () => {
         };
     }, [showNotifications]);
 
+    useEffect(() => {
+        if (!showDropdown) {
+            return;
+        }
+
+        const handlePointerDown = (event) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        };
+
+        const handleEscapeKey = (event) => {
+            if (event.key === 'Escape') {
+                setShowDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handlePointerDown);
+        document.addEventListener('keydown', handleEscapeKey);
+
+        return () => {
+            document.removeEventListener('mousedown', handlePointerDown);
+            document.removeEventListener('keydown', handleEscapeKey);
+        };
+    }, [showDropdown]);
+
     const cartUnits = cartItems.reduce((acc, item) => acc + (Number(item.units) || 0), 0);
     const cartSubtotal = cartItems.reduce((acc, item) => acc + (getUnitPriceWithoutIva(item) * getQuantity(item)), 0);
     const cartIva = cartItems.reduce((acc, item) => acc + ((getUnitPriceWithIva(item) - getUnitPriceWithoutIva(item)) * getQuantity(item)), 0);
@@ -465,14 +493,12 @@ const Navbar = () => {
         }
     };
 
-    const handleStockAlertOpen = (productoId) => {
+    const handleStockAlertOpen = (alerta) => {
         setShowNotifications(false);
-        try {
-            sessionStorage.setItem('cafe_una_stock_producto_id', String(productoId));
-        } catch {
-            /* ignore */
+        requestAdminStockProduct(alerta?.id ?? alerta, { nombre: alerta?.nombre });
+        if (pathname !== '/admin/producto') {
+            navigate({ to: '/admin/producto' });
         }
-        navigate({ to: '/admin/producto' });
     };
 
     const handleCartClick = () => {
@@ -539,7 +565,7 @@ const Navbar = () => {
     return (
         <nav
             ref={navbarRef}
-            className={`navbar ${isTransparent && !useSolidNavbar ? 'navbar--transparent' : 'navbar--solid'}${isMobileMenuOpen ? ' navbar--menu-open' : ''}`}
+            className={`navbar ${isTransparent && !useSolidNavbar ? 'navbar--transparent' : 'navbar--solid'}${isScrolled ? ' navbar--scrolled' : ''}${isMobileMenuOpen ? ' navbar--menu-open' : ''}`}
         >
             <div className="navbar__start">
                 <Link to="/" className="navbar__brand" aria-label="Ir al inicio" onClick={handleBrandClick}>
@@ -589,7 +615,20 @@ const Navbar = () => {
                                 <h2>Resumen del carrito</h2>
                             </header>
                             {cartItems.length === 0 ? (
-                                <p className="dropdown__empty">Tu carrito está vacío.</p>
+                                <div className="cart-empty">
+                                    <span className="cart-empty__icon" aria-hidden="true">
+                                        <ShoppingBag size={28} strokeWidth={1.8} />
+                                    </span>
+                                    <h3>Tu carrito está vacío</h3>
+                                    <p>Todavía no hay cafés por aquí. Explorá el catálogo y agregá el que más te guste.</p>
+                                    <Link
+                                        to="/productos"
+                                        className="cart-empty__cta"
+                                        onClick={() => closeCartPanel()}
+                                    >
+                                        Ver catálogo
+                                    </Link>
+                                </div>
                             ) : (
                                 <>
                                     <section className="cart-items" aria-label="Productos en el carrito">
@@ -717,7 +756,7 @@ const Navbar = () => {
                                 ) : (
                                     <div className="notifications-list">
                                         {showStockAlerts && alertasStockCount > 0 ? (
-                                            <>
+                                            <section className="notifications-section" aria-label="Stock bajo">
                                                 <p className="notifications-section-label">Stock bajo</p>
                                                 {alertasStock.map((alerta) => {
                                                     const lugares =
@@ -731,10 +770,13 @@ const Navbar = () => {
                                                         <button
                                                             key={`stock-${alerta.id}`}
                                                             type="button"
-                                                            className="notification-item"
-                                                            onClick={() => handleStockAlertOpen(alerta.id)}
+                                                            className={`notification-item ${alerta.agotado ? 'notification-item--agotado' : 'notification-item--bajo'}`}
+                                                            onClick={() => handleStockAlertOpen(alerta)}
                                                             title="Abrir inventario del producto"
                                                         >
+                                                            <span className="notification-item__icon" aria-hidden="true">
+                                                                <Package size={16} />
+                                                            </span>
                                                             <div className="notification-item__main">
                                                                 <strong>{alerta.nombre}</strong>
                                                                 <span>
@@ -743,47 +785,51 @@ const Navbar = () => {
                                                                     {lugares}
                                                                 </span>
                                                                 <small className="notification-item__stock">
-                                                                    <Package size={12} aria-hidden="true" />
-                                                                    {" Reponer stock"}
+                                                                    {"Reponer stock"}
                                                                 </small>
                                                             </div>
                                                         </button>
                                                     );
                                                 })}
-                                            </>
+                                            </section>
                                         ) : null}
 
                                         {solicitudesPendientesCount > 0 ? (
-                                            <>
+                                            <section className="notifications-section" aria-label="Voluntariado">
                                                 {showStockAlerts && alertasStockCount > 0 ? (
                                                     <p className="notifications-section-label">Voluntariado</p>
                                                 ) : null}
                                                 {solicitudesPendientes.map((solicitud) => {
                                                     const notificationContent = (
-                                                        <div className="notification-item__main">
-                                                            <strong>{solicitud.tipoVoluntariado || solicitud.area || 'Voluntariado'}</strong>
-                                                            <span>{solicitud.fechaSolicitud || 'Fecha no disponible'}</span>
-                                                            {user?.role === 'admin' ? <small>{"Abrir en administraci\u00f3n"}</small> : null}
-                                                        </div>
+                                                        <>
+                                                            <span className="notification-item__icon" aria-hidden="true">
+                                                                <HandHeart size={16} />
+                                                            </span>
+                                                            <div className="notification-item__main">
+                                                                <strong>{solicitud.tipoVoluntariado || solicitud.area || 'Voluntariado'}</strong>
+                                                                <span>{solicitud.fechaSolicitud || 'Fecha no disponible'}</span>
+                                                                {user?.role === 'admin' ? <small>{"Abrir en administraci\u00f3n"}</small> : null}
+                                                            </div>
+                                                        </>
                                                     );
 
                                                     return user?.role === 'admin' ? (
                                                         <button
                                                             key={solicitud.id}
                                                             type="button"
-                                                            className="notification-item"
+                                                            className="notification-item notification-item--voluntariado"
                                                             onClick={handleNotificationOpen}
                                                             title={"Abrir administraci\u00f3n de voluntariado"}
                                                         >
                                                             {notificationContent}
                                                         </button>
                                                     ) : (
-                                                        <article key={solicitud.id} className="notification-item notification-item--readonly">
+                                                        <article key={solicitud.id} className="notification-item notification-item--voluntariado notification-item--readonly">
                                                             {notificationContent}
                                                         </article>
                                                     );
                                                 })}
-                                            </>
+                                            </section>
                                         ) : null}
                                     </div>
                                 )}
@@ -792,7 +838,7 @@ const Navbar = () => {
                     </div>
                 ) : null}
 
-                <div className="navbar__user" onClick={handleIconClick}>
+                <div className="navbar__user" ref={userMenuRef} onClick={handleIconClick}>
                     <button
                         type="button"
                         className="navbar__icon-button navbar__user-button"
@@ -802,20 +848,36 @@ const Navbar = () => {
                         <User size={24} strokeWidth={2} aria-hidden="true" />
                     </button>
                     {showDropdown && user && (
-                        <div className="dropdown">
-                        <div className="dropdown__user">
-                          <p className="dropdown__name">{userDisplayName}</p>
-                          <p className="dropdown__email">{user?.email || user?.correo}</p>
-                        </div>
-                        {user.role !== 'admin' ? (
-                          <Link to="/perfil" onClick={() => setShowDropdown(false)}>
-                            Mi perfil
-                          </Link>
-                        ) : null}
-                        {user.role === 'admin' && (
-                            <Link to="/admin" onClick={() => setShowDropdown(false)}>Panel Administrativo</Link>
-                        )}
-                        <button className="dropdown__logout" onClick={handleLogout}>{"Cerrar Sesi\u00f3n"}</button>
+                        <div className="dropdown dropdown--user" role="menu" aria-label="Menú de usuario">
+                          <div className="dropdown__user">
+                            <span className="dropdown__avatar" aria-hidden="true">
+                              <User size={18} strokeWidth={2.1} />
+                            </span>
+                            <div className="dropdown__user-copy">
+                              <p className="dropdown__name">{userDisplayName}</p>
+                              <p className="dropdown__email" title={user?.email || user?.correo || ''}>
+                                {user?.email || user?.correo}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="dropdown__actions">
+                            {user.role !== 'admin' ? (
+                              <Link to="/perfil" className="dropdown__item" role="menuitem" onClick={() => setShowDropdown(false)}>
+                                <User size={16} strokeWidth={2.1} aria-hidden="true" />
+                                Mi perfil
+                              </Link>
+                            ) : null}
+                            {user.role === 'admin' ? (
+                              <Link to="/admin" className="dropdown__item" role="menuitem" onClick={() => setShowDropdown(false)}>
+                                <LayoutDashboard size={16} strokeWidth={2.1} aria-hidden="true" />
+                                Panel administrativo
+                              </Link>
+                            ) : null}
+                            <button type="button" className="dropdown__logout" role="menuitem" onClick={handleLogout}>
+                              <LogOut size={16} strokeWidth={2.1} aria-hidden="true" />
+                              Cerrar sesión
+                            </button>
+                          </div>
                         </div>
                     )}
                 </div>

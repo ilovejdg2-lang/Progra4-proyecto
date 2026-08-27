@@ -1,6 +1,7 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
-import { useBodyScrollLock } from "../../../hooks/useBodyScrollLock";
+import { useAdminModalLock } from "../../../hooks/useBodyScrollLock";
 
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -15,7 +16,7 @@ export function AdminModal({
   labelledBy,
   elevated = false,
 }) {
-  useBodyScrollLock(open);
+  useAdminModalLock(open);
 
   useEffect(() => {
     if (!open || !onClose) {
@@ -31,19 +32,20 @@ export function AdminModal({
 
     window.addEventListener("keydown", handleKeyDown, elevated);
     return () => window.removeEventListener("keydown", handleKeyDown, elevated);
-  }, [open, onClose]);
+  }, [open, onClose, elevated]);
 
-  if (!open) {
+  if (!open || typeof document === "undefined") {
     return null;
   }
 
-  return (
-    <div className={cn("fixed inset-0 flex items-end justify-center sm:items-center sm:p-4", elevated ? "z-[60]" : "z-50")}>
-      <button
-        type="button"
-        className="absolute inset-0 bg-slate-950/45 backdrop-blur-[1px]"
-        aria-label="Cerrar modal"
+  return createPortal(
+    <div className={cn("admin-modal-root", elevated && "is-elevated")}>
+      <div
+        className="admin-modal-backdrop"
+        aria-hidden="true"
         onClick={onClose}
+        onWheel={(event) => event.preventDefault()}
+        onTouchMove={(event) => event.preventDefault()}
       />
       <div
         role="dialog"
@@ -56,10 +58,12 @@ export function AdminModal({
           className,
         )}
         onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -127,11 +131,12 @@ export function AdminModalActions({
   primaryClassName,
   cancelClassName,
   buttonStyle,
+  className,
 }) {
   const usesVoluntariadoStyle = buttonStyle === "voluntariado";
 
   return (
-    <>
+    <div className={cn("flex flex-row flex-wrap justify-end gap-3 sm:gap-4", className)}>
       <button
         type={primaryType}
         disabled={primaryDisabled}
@@ -143,6 +148,6 @@ export function AdminModalActions({
       <button type="button" onClick={onCancel} className={cancelClassName || (usesVoluntariadoStyle ? adminBtnVoluntariadoCancel : adminBtnCancel)}>
         {cancelLabel}
       </button>
-    </>
+    </div>
   );
 }

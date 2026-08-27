@@ -27,6 +27,17 @@ const SiteNavLink = ({ enlace, className, activeProps, children, onClick }) => {
   const etiqueta = children ?? enlace?.etiqueta;
   const ruta = enlace?.ruta;
   const homeSection = resolveHomeSectionFromRoute(ruta);
+  const currentPath = normalizePathname(pathname);
+  const targetPath = normalizePathname(String(ruta || '').split('#')[0] || '/');
+  const esCatalogo =
+    currentPath === '/productos' || currentPath.startsWith('/productos/');
+  const enlaceEsProductos =
+    homeSection === 'productos' ||
+    targetPath === '/productos' ||
+    String(ruta || '').toLowerCase().includes('productos');
+  const isCurrent =
+    (esCatalogo && enlaceEsProductos) ||
+    (!homeSection && Boolean(targetPath) && currentPath === targetPath && targetPath !== '/');
 
   if (!ruta) {
     return null;
@@ -67,7 +78,8 @@ const SiteNavLink = ({ enlace, className, activeProps, children, onClick }) => {
   return (
     <Link
       to={homeSection ? '/' : ruta}
-      className={className}
+      className={[className, isCurrent ? 'is-current' : ''].filter(Boolean).join(' ')}
+      activeOptions={{ exact: Boolean(homeSection) || normalizePathname(ruta) === '/' }}
       activeProps={activeProps}
       onClick={handleClick}
     >

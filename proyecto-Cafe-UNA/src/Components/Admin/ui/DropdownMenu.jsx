@@ -24,7 +24,7 @@ export function DropdownMenuContent({ className, sideOffset = 8, onCloseAutoFocu
           onCloseAutoFocus?.(event);
         }}
         className={cn(
-          "z-[60] min-w-48 rounded-[var(--ui-radius)] border border-neutral-900 bg-white p-1 text-sm text-neutral-950 shadow-lg outline-none",
+          "z-[100] min-w-48 rounded-[var(--ui-radius)] border border-neutral-900 bg-white p-1 text-sm text-neutral-950 shadow-lg outline-none",
           className,
         )}
         {...props}
