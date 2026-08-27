@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 
 import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
+import { AdminStockNotificationsBell } from "../../../Components/Admin/AdminStockNotificationsBell";
 import { AppSidebar } from "../../../Components/Admin/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "../../../Components/Admin/ui/Sidebar";
 import { getActiveSessionUser } from "../../../services/sessionService";
@@ -26,6 +27,7 @@ export function AdminLayout({ children }) {
       <main className="min-h-svh min-w-0 flex-1 overflow-x-hidden bg-white">
         <div className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4">
           <SidebarTrigger />
+          <AdminStockNotificationsBell />
         </div>
         <div className="min-w-0 max-w-full overflow-x-hidden p-4 md:p-6">{children}</div>
       </main>
