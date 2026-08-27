@@ -21,6 +21,10 @@ export function clearCart() {
   window.dispatchEvent(new Event('cart-updated'));
 }
 
+function notifyCartFeedback(detail) {
+  window.dispatchEvent(new CustomEvent('cart-item-added', { detail }));
+}
+
 export function addProductToCart(product, quantity = 1) {
   const stockDisponible = Number(product.stock) || 0;
   const parsedCart = getStoredCart();
@@ -30,17 +34,17 @@ export function addProductToCart(product, quantity = 1) {
     : 0;
 
   if (product.estado === 'Deshabilitado') {
-    window.alert('Este producto est\u00e1 deshabilitado.');
+    notifyCartFeedback({ type: 'error', message: 'Este producto est\u00e1 deshabilitado.' });
     return false;
   }
 
   if (stockDisponible <= 0) {
-    window.alert('Este producto est\u00e1 agotado.');
+    notifyCartFeedback({ type: 'error', message: 'Este producto est\u00e1 agotado.' });
     return false;
   }
 
   if (unidadesEnCarrito + quantity > stockDisponible) {
-    window.alert('No hay m\u00e1s unidades disponibles de este producto.');
+    notifyCartFeedback({ type: 'error', message: 'No hay m\u00e1s unidades disponibles de este producto.' });
     return false;
   }
 
@@ -57,6 +61,12 @@ export function addProductToCart(product, quantity = 1) {
   }
 
   saveCart(parsedCart);
+  notifyCartFeedback({
+    type: 'success',
+    nombre: product.nombre,
+    quantity,
+    image: product.imagenes ?? product.imagen ?? '',
+  });
   return true;
 }
 

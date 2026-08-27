@@ -151,6 +151,7 @@ export function CentralStockEditor({
 
           <div className="border-t border-slate-100 pt-4">
             <AdminModalActions
+              className="w-full justify-start"
               onCancel={onClose}
               primaryLabel={isSaving ? "Guardando..." : "Guardar stock"}
               primaryDisabled={isSaving}

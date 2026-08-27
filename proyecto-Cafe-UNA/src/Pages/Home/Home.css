@@ -993,19 +993,19 @@
     font-size: clamp(1.45rem, 6.5vw, 1.9rem);
   }
 
-  /* Formularios: 2 arriba + 1 centrada abajo, las 3 del mismo ancho */
+  /* En celular: una columna a ancho completo */
   .iniciativas-grid {
-    --iniciativa-gap: 0.75rem;
-    --iniciativa-card-width: calc((100% - var(--iniciativa-gap)) / 2);
+    --iniciativa-gap: 0.85rem;
+    --iniciativa-card-width: 100%;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    justify-content: center;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
     gap: var(--iniciativa-gap);
     align-items: start;
   }
 
   .iniciativas-grid:has(> .iniciativa-card:only-child) {
-    grid-template-columns: minmax(0, var(--iniciativa-card-width));
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .iniciativa-card {
@@ -1020,14 +1020,9 @@
     border-radius: 16px;
   }
 
-  .iniciativa-card:nth-child(3) {
-    grid-column: 1 / -1;
-    width: var(--iniciativa-card-width);
-    max-width: var(--iniciativa-card-width);
-    justify-self: center;
-  }
-
-  .iniciativa-card:nth-child(n + 4) {
+  .iniciativas-grid > .iniciativa-card:nth-child(3),
+  .iniciativas-grid > .iniciativa-card:last-child:nth-child(odd),
+  .iniciativas-grid > .iniciativa-card:nth-child(n + 4) {
     grid-column: auto;
     width: 100%;
     max-width: 100%;
@@ -1053,13 +1048,13 @@
   }
 
   .iniciativa-card__etiqueta {
-    font-size: clamp(7px, 2.2vw, 9px);
-    letter-spacing: clamp(1px, 0.4vw, 1.5px);
-    padding: clamp(3px, 1vw, 5px) clamp(6px, 2vw, 9px);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    padding: 0.28rem 0.7rem;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: none;
   }
 
   .iniciativa-card__body {
@@ -1076,12 +1071,11 @@
   }
 
   .iniciativa-card__desc {
-    font-size: clamp(0.72rem, 2.8vw, 0.86rem);
-    line-height: 1.45;
-    display: -webkit-box;
-    -webkit-line-clamp: 5;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    font-size: var(--text-body);
+    line-height: 1.5;
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: unset;
   }
 
   .iniciativa-card__btn {
@@ -1103,8 +1097,8 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .iniciativa-card:nth-child(3),
-  .iniciativa-card:last-child:nth-child(odd) {
+  .iniciativas-grid > .iniciativa-card:nth-child(3),
+  .iniciativas-grid > .iniciativa-card:last-child:nth-child(odd) {
     grid-column: auto;
     width: 100%;
     max-width: 100%;

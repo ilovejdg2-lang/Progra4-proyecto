@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
@@ -24,6 +24,7 @@ import { getActiveSessionUser } from "../../../services/sessionService";
 import { obtenerCategorias } from "../../../services/categoriasService";
 import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
 import { contactSupportMessage } from "../../../lib/formLimits";
+import { ADMIN_STOCK_PRODUCT_EVENT, clearPendingStockProduct, peekPendingStockProduct } from "../../../lib/adminStockAlert";
 import {
   productoPuedeDestacarse,
   productoPuedeDeshabilitarse,
@@ -53,7 +54,6 @@ const AdminInventarioProducto = () => {
   const [modalCrear, setModalCrear] = useState(false);
   const [productoEditar, setProductoEditar] = useState(null);
   const [productoStockEditar, setProductoStockEditar] = useState(null);
-  const stockAutoOpenRef = useRef(false);
   const [guardando, setGuardando] = useState(false);
   const [guardandoStock, setGuardandoStock] = useState(false);
   const [categoriasApi, setCategoriasApi] = useState([]);
@@ -80,23 +80,44 @@ const AdminInventarioProducto = () => {
   const error = catalogState.error?.message || null;
   const { showLoading, loadingMessage } = useAdminPageGate('/admin/producto', !cargando);
 
+  const abrirStockDeProducto = (productId, nombre = "") => {
+    if (!puedeActualizarStock || !productId) return false;
+    const producto = productos.find((item) => String(item.id) === String(productId));
+    setProductoStockEditar(
+      producto || {
+        id: productId,
+        nombre: nombre || "Producto",
+        centralStock: {
+          productId: String(productId),
+          locationCode: "BODEGA_CENTRAL",
+          stock: null,
+          confidence: "unknown",
+        },
+        stock: 0,
+      },
+    );
+    return true;
+  };
+
+  const abrirStockPendiente = () => {
+    const pending = peekPendingStockProduct();
+    if (!pending?.productId) return;
+    if (abrirStockDeProducto(pending.productId, pending.nombre)) {
+      window.setTimeout(() => clearPendingStockProduct(), 500);
+    }
+  };
+
   useEffect(() => {
-    if (stockAutoOpenRef.current || !puedeActualizarStock || productos.length === 0) return;
-    let id = new URLSearchParams(window.location.search).get("stockProductoId");
-    if (!id) {
-      try {
-        id = sessionStorage.getItem("cafe_una_stock_producto_id");
-        if (id) sessionStorage.removeItem("cafe_una_stock_producto_id");
-      } catch {
-        id = null;
-      }
-    }
-    if (!id) return;
-    const producto = productos.find((item) => String(item.id) === String(id));
-    if (producto) {
-      stockAutoOpenRef.current = true;
-      setProductoStockEditar(producto);
-    }
+    abrirStockPendiente();
+  }, [puedeActualizarStock, productos]);
+
+  useEffect(() => {
+    const onOpenStock = () => {
+      abrirStockPendiente();
+    };
+
+    window.addEventListener(ADMIN_STOCK_PRODUCT_EVENT, onOpenStock);
+    return () => window.removeEventListener(ADMIN_STOCK_PRODUCT_EVENT, onOpenStock);
   }, [puedeActualizarStock, productos]);
 
   const recargarCategorias = () =>
@@ -256,7 +277,21 @@ const AdminInventarioProducto = () => {
 
   const destacadosEnUso = contarDestacados(productos);
 
+  const stockEditor = (
+      <CentralStockEditor
+        key={productoStockEditar?.id ?? "closed"}
+        open={Boolean(productoStockEditar)}
+        product={productoStockEditar}
+        stockRecord={productoStockEditar?.centralStock}
+        onSave={handleGuardarStock}
+        onClose={() => setProductoStockEditar(null)}
+        isSaving={guardandoStock}
+      />
+  );
+
   return (
+    <>
+    {stockEditor}
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
     <AdminLayout>
       <ProductCatalogFormDrawer
@@ -272,16 +307,6 @@ const AdminInventarioProducto = () => {
           setProductoEditar(null);
         }}
         isSaving={guardando}
-      />
-
-      <CentralStockEditor
-        key={productoStockEditar?.id ?? "closed"}
-        open={Boolean(productoStockEditar)}
-        product={productoStockEditar}
-        stockRecord={productoStockEditar?.centralStock}
-        onSave={handleGuardarStock}
-        onClose={() => setProductoStockEditar(null)}
-        isSaving={guardandoStock}
       />
 
       <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -470,6 +495,7 @@ const AdminInventarioProducto = () => {
       </section>
     </AdminLayout>
     </AdminPageGate>
+    </>
   );
 };
 
