@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Calendar,
   Clock,
@@ -18,6 +19,7 @@ import {
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModalActions, adminBtnCancel } from "../../../Components/Admin/ui/AdminModal";
+import { useAdminModalLock } from "../../../hooks/useBodyScrollLock";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { UiSelect } from "../../../Components/ui/Select";
@@ -202,6 +204,7 @@ function AccionesSolicitud({
 }
 
 function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
+  useAdminModalLock(true);
   const [estado, setEstado] = useState(normalizarEstado(solicitud.estado));
   const [observacionesAdmin, setObservacionesAdmin] = useState(solicitud.observacionesAdmin || "");
   const [guardando, setGuardando] = useState(false);
@@ -230,9 +233,16 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
     await guardarCambios(nuevoEstado);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-2xl">
+  return createPortal(
+    <div className="admin-modal-root">
+      <div
+        className="admin-modal-backdrop"
+        aria-hidden="true"
+        onClick={onCerrar}
+        onWheel={(event) => event.preventDefault()}
+        onTouchMove={(event) => event.preventDefault()}
+      />
+      <div className="relative z-10 max-h-[92dvh] w-full max-w-3xl overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-950">Ver solicitud</h2>
@@ -328,11 +338,13 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
 function ModalEditar({ solicitud, onGuardar, onCerrar }) {
+  useAdminModalLock(true);
   const [form, setForm] = useState(() => ({
     estado: normalizarEstado(solicitud.estado),
     nombre: solicitud.nombre || "",
@@ -362,9 +374,16 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
     setGuardando(false);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <form onSubmit={handleSubmit} className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-2xl">
+  return createPortal(
+    <div className="admin-modal-root">
+      <div
+        className="admin-modal-backdrop"
+        aria-hidden="true"
+        onClick={onCerrar}
+        onWheel={(event) => event.preventDefault()}
+        onTouchMove={(event) => event.preventDefault()}
+      />
+      <form onSubmit={handleSubmit} className="relative z-10 max-h-[92dvh] w-full max-w-3xl overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-950">Editar solicitud</h2>
@@ -455,7 +474,8 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
           />
         </div>
       </form>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

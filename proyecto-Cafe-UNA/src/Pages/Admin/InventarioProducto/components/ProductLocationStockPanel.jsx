@@ -81,7 +81,7 @@ export function ProductLocationStockPanel({ productId, refreshKey = 0 }) {
               );
             })}
           </ul>
-          <p className="mt-3 text-right text-sm font-bold text-slate-950">
+          <p className="mt-3 flex min-h-10 items-center justify-center border-t border-slate-200 pt-3 text-center text-sm font-bold leading-none text-slate-950">
             Total consolidado: {state.data?.total ?? 0}
           </p>
         </>
