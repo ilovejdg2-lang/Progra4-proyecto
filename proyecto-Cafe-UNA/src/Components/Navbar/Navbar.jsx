@@ -1,7 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './Navbar.css';
-import { calcularPrecioConIVA } from '../../services/productosService';
+import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
 import { Bell, BookOpen, Coffee, HandHeart, Info, Menu, Minus, Package, Plus, ShoppingCart, Trash2, User, X } from 'lucide-react';
 import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
 import { FacebookIcon, InstagramIcon } from '../Footer/SocialIcons';
@@ -11,6 +11,7 @@ import { readPageCache } from '../../lib/pageDataCache';
 import { obtenerSolicitudes, obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService';
 import { cancelPendingSessionRefresh } from '../../services/apiClient';
 import { beginLogout, clearSession, getActiveSessionUser } from '../../services/sessionService';
+import { rolesDeUsuario, tienePermiso } from '../../lib/permisos';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
@@ -32,6 +33,13 @@ const canSeeAllSolicitudes = (user) => {
         const normalizedRole = String(role).toLowerCase();
         return normalizedRole === 'admin' || normalizedRole === 'superadmin';
     });
+};
+const canSeeStockAlerts = (user) => {
+    const roles = rolesDeUsuario(user);
+    return (
+        tienePermiso(roles, 'ver_inventario') ||
+        tienePermiso(roles, 'ver_panel_administrativo')
+    );
 };
 const isSolicitudPendiente = (solicitud) =>
     String(solicitud?.estado || '').trim().toLowerCase() === 'pendiente';
@@ -97,6 +105,7 @@ const Navbar = () => {
     const [user, setUser] = useState(null);
     const [cartItems, setCartItems] = useState([]);
     const [solicitudes, setSolicitudes] = useState([]);
+    const [alertasStock, setAlertasStock] = useState([]);
     const [notificationsLoading, setNotificationsLoading] = useState(false);
     const [notificationsError, setNotificationsError] = useState('');
     const [enlacesNavbar, setEnlacesNavbar] = useState(() => getCachedNavbarLinks());
@@ -149,6 +158,7 @@ const Navbar = () => {
             setCartItems(Array.isArray(storedCart) ? storedCart : []);
             if (!storedUser) {
                 setSolicitudes([]);
+                setAlertasStock([]);
                 setShowNotifications(false);
             }
         };
@@ -164,6 +174,7 @@ const Navbar = () => {
     const loadSolicitudesUsuario = useCallback(async (currentUser = user) => {
         if (!currentUser) {
             setSolicitudes([]);
+            setAlertasStock([]);
             return;
         }
 
@@ -171,13 +182,19 @@ const Navbar = () => {
         setNotificationsError('');
         try {
             const userId = currentUser?.id || currentUser?.email || currentUser?.username;
-            const data = canSeeAllSolicitudes(currentUser)
-                ? await obtenerSolicitudes()
-                : await obtenerSolicitudesDeUsuario(String(userId));
+            const solicitudesPromise = canSeeAllSolicitudes(currentUser)
+                ? obtenerSolicitudes()
+                : obtenerSolicitudesDeUsuario(String(userId));
+            const alertasPromise = canSeeStockAlerts(currentUser)
+                ? obtenerAlertasStock().catch(() => [])
+                : Promise.resolve([]);
+
+            const [data, alertas] = await Promise.all([solicitudesPromise, alertasPromise]);
             setSolicitudes(data);
+            setAlertasStock(Array.isArray(alertas) ? alertas : []);
         } catch (err) {
-            console.error('No se pudieron cargar las solicitudes de voluntariado.', err);
-            setNotificationsError('No se pudieron cargar las solicitudes.');
+            console.error('No se pudieron cargar las notificaciones.', err);
+            setNotificationsError('No se pudieron cargar las notificaciones.');
         } finally {
             setNotificationsLoading(false);
         }
@@ -340,6 +357,9 @@ const Navbar = () => {
     const userDisplayName = user?.username?.includes('@') ? user?.name : user?.username || user?.name;
     const solicitudesPendientes = solicitudes.filter(isSolicitudPendiente);
     const solicitudesPendientesCount = solicitudesPendientes.length;
+    const alertasStockCount = alertasStock.length;
+    const notificationsCount = solicitudesPendientesCount + alertasStockCount;
+    const showStockAlerts = canSeeStockAlerts(user);
 
     const persistCart = (updatedCart) => {
         setCartItems(updatedCart);
@@ -443,6 +463,16 @@ const Navbar = () => {
         if (user?.role === 'admin') {
             navigate({ to: '/admin/voluntariado' });
         }
+    };
+
+    const handleStockAlertOpen = (productoId) => {
+        setShowNotifications(false);
+        try {
+            sessionStorage.setItem('cafe_una_stock_producto_id', String(productoId));
+        } catch {
+            /* ignore */
+        }
+        navigate({ to: '/admin/producto' });
     };
 
     const handleCartClick = () => {
@@ -663,54 +693,98 @@ const Navbar = () => {
                         <button
                             type="button"
                             className="navbar__icon-button navbar__notifications-button"
-                            aria-label="Ver solicitudes de voluntariado"
-                            title="Solicitudes de voluntariado"
+                            aria-label="Ver notificaciones"
+                            title="Notificaciones"
                         >
                             <Bell size={25} strokeWidth={2.2} aria-hidden="true" />
                         </button>
-                        {solicitudesPendientesCount > 0 ? (
-                            <span className="notifications-badge">{solicitudesPendientesCount}</span>
+                        {notificationsCount > 0 ? (
+                            <span className="notifications-badge">{notificationsCount}</span>
                         ) : null}
                         {showNotifications ? (
-                            <aside className="dropdown dropdown--notifications" aria-label="Solicitudes de voluntariado">
+                            <aside className="dropdown dropdown--notifications" aria-label="Notificaciones">
                                 <header className="notifications-header">
-                                    <h2>Mis solicitudes</h2>
-                                    <span>{solicitudesPendientesCount}</span>
+                                    <h2>Notificaciones</h2>
+                                    <span>{notificationsCount}</span>
                                 </header>
 
                                 {notificationsLoading ? (
-                                    <p className="dropdown__empty">Cargando solicitudes...</p>
+                                    <p className="dropdown__empty">Cargando notificaciones...</p>
                                 ) : notificationsError ? (
                                     <p className="dropdown__empty">{notificationsError}</p>
-                                ) : solicitudesPendientesCount === 0 ? (
-                                    <p className="dropdown__empty">No hay solicitudes pendientes.</p>
+                                ) : notificationsCount === 0 ? (
+                                    <p className="dropdown__empty">No hay notificaciones pendientes.</p>
                                 ) : (
                                     <div className="notifications-list">
-                                        {solicitudesPendientes.map((solicitud) => {
-                                            const notificationContent = (
-                                                <div className="notification-item__main">
-                                                    <strong>{solicitud.tipoVoluntariado || solicitud.area || 'Voluntariado'}</strong>
-                                                    <span>{solicitud.fechaSolicitud || 'Fecha no disponible'}</span>
-                                                    {user?.role === 'admin' ? <small>{"Abrir en administraci\u00f3n"}</small> : null}
-                                                </div>
-                                            );
+                                        {showStockAlerts && alertasStockCount > 0 ? (
+                                            <>
+                                                <p className="notifications-section-label">Stock bajo</p>
+                                                {alertasStock.map((alerta) => {
+                                                    const lugares =
+                                                        Array.isArray(alerta.ubicaciones) && alerta.ubicaciones.length > 0
+                                                            ? alerta.ubicaciones
+                                                                .map((ubi) => `${ubi.nombre}: ${ubi.stock}`)
+                                                                .join(' · ')
+                                                            : `Stock ${alerta.stockActual} (mín. ${alerta.stockMinimo})`;
 
-                                            return user?.role === 'admin' ? (
-                                                <button
-                                                    key={solicitud.id}
-                                                    type="button"
-                                                    className="notification-item"
-                                                    onClick={handleNotificationOpen}
-                                                    title={"Abrir administraci\u00f3n de voluntariado"}
-                                                >
-                                                    {notificationContent}
-                                                </button>
-                                            ) : (
-                                                <article key={solicitud.id} className="notification-item notification-item--readonly">
-                                                    {notificationContent}
-                                                </article>
-                                            );
-                                        })}
+                                                    return (
+                                                        <button
+                                                            key={`stock-${alerta.id}`}
+                                                            type="button"
+                                                            className="notification-item"
+                                                            onClick={() => handleStockAlertOpen(alerta.id)}
+                                                            title="Abrir inventario del producto"
+                                                        >
+                                                            <div className="notification-item__main">
+                                                                <strong>{alerta.nombre}</strong>
+                                                                <span>
+                                                                    {alerta.agotado ? 'Agotado' : 'Bajo mínimo'}
+                                                                    {' · '}
+                                                                    {lugares}
+                                                                </span>
+                                                                <small className="notification-item__stock">
+                                                                    <Package size={12} aria-hidden="true" />
+                                                                    {" Reponer stock"}
+                                                                </small>
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </>
+                                        ) : null}
+
+                                        {solicitudesPendientesCount > 0 ? (
+                                            <>
+                                                {showStockAlerts && alertasStockCount > 0 ? (
+                                                    <p className="notifications-section-label">Voluntariado</p>
+                                                ) : null}
+                                                {solicitudesPendientes.map((solicitud) => {
+                                                    const notificationContent = (
+                                                        <div className="notification-item__main">
+                                                            <strong>{solicitud.tipoVoluntariado || solicitud.area || 'Voluntariado'}</strong>
+                                                            <span>{solicitud.fechaSolicitud || 'Fecha no disponible'}</span>
+                                                            {user?.role === 'admin' ? <small>{"Abrir en administraci\u00f3n"}</small> : null}
+                                                        </div>
+                                                    );
+
+                                                    return user?.role === 'admin' ? (
+                                                        <button
+                                                            key={solicitud.id}
+                                                            type="button"
+                                                            className="notification-item"
+                                                            onClick={handleNotificationOpen}
+                                                            title={"Abrir administraci\u00f3n de voluntariado"}
+                                                        >
+                                                            {notificationContent}
+                                                        </button>
+                                                    ) : (
+                                                        <article key={solicitud.id} className="notification-item notification-item--readonly">
+                                                            {notificationContent}
+                                                        </article>
+                                                    );
+                                                })}
+                                            </>
+                                        ) : null}
                                     </div>
                                 )}
                             </aside>

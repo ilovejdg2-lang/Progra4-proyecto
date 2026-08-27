@@ -83,10 +83,18 @@ const AdminPanel = () => {
                       <div>
                         <p className="admin-panel__alerta-nombre">{item.nombre}</p>
                         <p className="admin-panel__alerta-meta">
-                          Stock actual: <strong>{item.stockActual}</strong>
+                          Peor stock: <strong>{item.stockActual}</strong>
                           {" · "}
                           Mínimo: <strong>{item.stockMinimo}</strong>
                           {item.agotado ? " · Agotado" : " · Bajo mínimo"}
+                          {Array.isArray(item.ubicaciones) && item.ubicaciones.length > 0 ? (
+                            <>
+                              {" · "}
+                              {item.ubicaciones
+                                .map((ubi) => `${ubi.nombre}: ${ubi.stock}`)
+                                .join(", ")}
+                            </>
+                          ) : null}
                         </p>
                       </div>
                       <Link

@@ -315,7 +315,7 @@ export function ProductCatalogFormDrawer({
               <input name="peso" value={form.peso} onChange={handleChange} className={inputClassName} placeholder="500g / 1kg" />
             </label>
             <label className="grid gap-2 text-sm font-medium text-slate-700">
-              Stock mínimo (alerta)
+              Stock mínimo (alerta por punto de venta)
               <input
                 type="number"
                 name="stockMinimo"
@@ -325,6 +325,9 @@ export function ProductCatalogFormDrawer({
                 min="0"
                 step="1"
               />
+              <span className="text-[length:var(--text-body)] font-normal text-slate-500">
+                Se avisa si Bodega Central o cualquier punto de venta con stock (salvo Stand Ferias) queda en ese nivel o menos.
+              </span>
             </label>
             <div className="grid gap-4 md:col-span-2 md:grid-cols-2">
               <CategoriaCampo

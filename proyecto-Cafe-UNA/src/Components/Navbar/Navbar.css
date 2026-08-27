@@ -234,8 +234,23 @@
   border-radius: 999px;
   background: #fee2e2;
   color: #dc2626;
-  font-size: 0.78rem;
+  font-size: var(--text-body);
   font-weight: 800;
+}
+
+.notifications-section-label {
+  margin: 0.35rem 0 0.15rem;
+  color: #786b60;
+  font-size: var(--text-body);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.notification-item__stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .notifications-list {
