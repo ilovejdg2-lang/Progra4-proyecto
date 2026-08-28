@@ -189,6 +189,11 @@ const AboutUsRoute = createRoute({
     path: "/AboutUs",
     component: AboutUs,
 })
+const AboutUsGaleriaRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/AboutUs/galeria",
+    component: AboutUs,
+})
 const loginRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/login",
@@ -207,6 +212,11 @@ const adminInformacionPaginaPrincipalRoute = createRoute({
 const adminSobreNosotrosRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/sobre-nosotros",
+    component: AdminInformacionSobreNosotros,
+})
+const adminGaleriaRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/galeria",
     component: AdminInformacionSobreNosotros,
 })
 const adminProductoRoute = createRoute({
@@ -286,10 +296,12 @@ const adminPerfilRoute = createRoute({
 const routeTree= rootRoute.addChildren([
     home,
     AboutUsRoute,
+    AboutUsGaleriaRoute,
     loginRoute,
     adminPanelRoute,
     adminInformacionPaginaPrincipalRoute,
     adminSobreNosotrosRoute,
+    adminGaleriaRoute,
     adminProductoRoute,
     adminPuntosVentaRoute,
     adminActivosFijosRoute,

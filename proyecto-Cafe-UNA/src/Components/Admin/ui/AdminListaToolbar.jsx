@@ -2,10 +2,10 @@ import { Search, SlidersHorizontal, X } from "lucide-react";
 import { UiSelect } from "../../ui/Select";
 
 const inputCls =
-  "w-full min-w-0 max-w-full rounded-full border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
+  "h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
 
 const inputFechaCls =
-  "w-full min-w-0 max-w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
+  "h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
 
 export function AdminListaToolbar({
   busqueda,
@@ -19,9 +19,17 @@ export function AdminListaToolbar({
   compacto = false,
   extra = null,
 }) {
+  const indiceFooter = filtros.findIndex((filtro) => filtro.footer);
+  const indiceAnchoCompleto =
+    filtros.length % 2 === 1
+      ? indiceFooter >= 0
+        ? indiceFooter
+        : filtros.length - 1
+      : -1;
+
   return (
     <div
-      className={`min-w-0 space-y-4 overflow-x-hidden border-b border-slate-100 bg-white ${
+      className={`relative z-20 min-w-0 space-y-4 overflow-visible border-b border-slate-100 bg-transparent ${
         compacto ? "px-4 py-5 sm:px-6" : "px-4 py-5 sm:px-6"
       }`}
     >
@@ -39,16 +47,18 @@ export function AdminListaToolbar({
         </div>
 
         {filtros.length > 0 ? (
-          <div className="flex w-full min-w-0 flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-center xl:w-auto">
-            {filtros.map((filtro) => (
+          <div className="grid w-full min-w-0 grid-cols-2 gap-3 sm:flex sm:flex-row sm:flex-wrap sm:items-end sm:justify-center xl:w-auto">
+            {filtros.map((filtro, indice) => {
+              const ocupaDos = filtros.length === 1 || indice === indiceAnchoCompleto;
+              return (
               <div
                 key={filtro.id}
-                className={`grid w-full min-w-0 flex-1 gap-1.5 ${
-                  filtro.footer ? "sm:max-w-[18rem]" : "sm:max-w-[12.5rem]"
-                }`}
+                className={`relative grid min-w-0 gap-1.5 ${
+                  ocupaDos ? "col-span-2 sm:flex-1" : "col-span-1 sm:flex-1"
+                } ${filtro.footer || ocupaDos ? "sm:max-w-[18rem]" : "sm:max-w-[12.5rem]"}`}
               >
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
-                  <SlidersHorizontal className="size-3" aria-hidden="true" />
+                <span className="inline-flex items-center gap-1 text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-neutral-500">
+                  <SlidersHorizontal className="size-3.5 shrink-0" aria-hidden="true" />
                   {filtro.label}
                 </span>
                 {filtro.tipo === "fecha" ? (
@@ -69,7 +79,8 @@ export function AdminListaToolbar({
                   />
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : null}
       </div>
@@ -80,7 +91,7 @@ export function AdminListaToolbar({
         </div>
       ) : null}
 
-      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 text-[length:var(--text-body)] text-slate-500">
         <p>
           {hayFiltrosActivos ? (
             <>
@@ -99,9 +110,9 @@ export function AdminListaToolbar({
           <button
             type="button"
             onClick={onLimpiar}
-            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
+            className="inline-flex h-[var(--control-height)] items-center gap-1 rounded-full border border-slate-200 bg-white px-3 text-[length:var(--text-body)] font-semibold text-slate-600 transition hover:bg-slate-100"
           >
-            <X className="size-3" aria-hidden="true" />
+            <X className="size-3.5" aria-hidden="true" />
             Limpiar filtros
           </button>
         ) : null}
@@ -113,12 +124,12 @@ export function AdminListaToolbar({
 export function AdminListaVacia({ mensaje = "No hay resultados con los filtros actuales.", onLimpiar }) {
   return (
     <div className="px-4 py-12 text-center sm:px-6">
-      <p className="text-sm text-slate-500">{mensaje}</p>
+      <p className="text-[length:var(--text-body)] text-slate-500">{mensaje}</p>
       {onLimpiar ? (
         <button
           type="button"
           onClick={onLimpiar}
-          className="mt-3 text-sm font-semibold text-slate-800 underline-offset-2 hover:underline"
+          className="mt-3 text-[length:var(--text-body)] font-semibold text-slate-800 underline-offset-2 hover:underline"
         >
           Limpiar filtros
         </button>

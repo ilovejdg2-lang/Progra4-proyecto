@@ -1,8 +1,9 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import './Navbar.css';
 import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
-import { Bell, BookOpen, Coffee, HandHeart, Info, LayoutDashboard, LogOut, Menu, Minus, Package, Plus, ShoppingBag, ShoppingCart, Trash2, User, X } from 'lucide-react';
+import { Bell, BookOpen, ChevronDown, Coffee, HandHeart, Info, LayoutDashboard, LogOut, Menu, Minus, Package, Plus, ShoppingBag, ShoppingCart, Trash2, User, X } from 'lucide-react';
 import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
 import { FacebookIcon, InstagramIcon } from '../Footer/SocialIcons';
 import { normalizeImageUrl } from '../../lib/imageUtils';
@@ -15,8 +16,24 @@ import { rolesDeUsuario, tienePermiso } from '../../lib/permisos';
 import { requestAdminStockProduct } from '../../lib/adminStockAlert';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import { normalizePathname } from '../../lib/paths';
 
 import { clearCart as emptyCart, getStoredCart, saveCart } from '../../lib/cartStorage';
+
+const ABOUT_HISTORIA_PATH = '/AboutUs';
+const ABOUT_GALERIA_PATH = '/AboutUs/galeria';
+
+function isAboutNavLink(enlace) {
+    const ruta = String(enlace?.ruta ?? enlace?.Ruta ?? '').toLowerCase();
+    const etiqueta = String(enlace?.etiqueta ?? enlace?.Etiqueta ?? '').toLowerCase();
+    return (
+        ruta.includes('aboutus') ||
+        ruta.includes('/about') ||
+        ruta.includes('sobre') ||
+        etiqueta.includes('sobre nosotros') ||
+        (etiqueta.includes('nosotros') && !etiqueta.includes('product'))
+    );
+}
 
 const formatCRC = (amount) => {
     const value = Number.isFinite(amount) ? amount : 0;
@@ -36,6 +53,8 @@ const canSeeAllSolicitudes = (user) => {
     });
 };
 const canSeeStockAlerts = (user) => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
     const roles = rolesDeUsuario(user);
     return (
         tienePermiso(roles, 'ver_inventario') ||
@@ -102,6 +121,8 @@ const Navbar = () => {
     const [showDropdown, setShowDropdown] = useState(false);
     const [showCartDropdown, setShowCartDropdown] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
+    const [showAboutMenu, setShowAboutMenu] = useState(false);
+    const [showMobileAbout, setShowMobileAbout] = useState(true);
     const [isCartClosing, setIsCartClosing] = useState(false);
     const [user, setUser] = useState(null);
     const [cartItems, setCartItems] = useState([]);
@@ -119,6 +140,7 @@ const Navbar = () => {
     const cartContainerRef = useRef(null);
     const notificationsRef = useRef(null);
     const userMenuRef = useRef(null);
+    const aboutMenuRef = useRef(null);
     const cartCloseTimerRef = useRef(null);
     const navbarRef = useRef(null);
     const pathname = useRouterState({
@@ -187,12 +209,19 @@ const Navbar = () => {
             const solicitudesPromise = canSeeAllSolicitudes(currentUser)
                 ? obtenerSolicitudes()
                 : obtenerSolicitudesDeUsuario(String(userId));
-            const alertasPromise = canSeeStockAlerts(currentUser)
-                ? obtenerAlertasStock().catch(() => [])
-                : Promise.resolve([]);
 
-            const [data, alertas] = await Promise.all([solicitudesPromise, alertasPromise]);
-            setSolicitudes(data);
+            let alertas = [];
+            if (canSeeStockAlerts(currentUser)) {
+                try {
+                    alertas = await obtenerAlertasStock();
+                } catch (stockErr) {
+                    console.error('No se pudieron cargar las alertas de stock.', stockErr);
+                    alertas = [];
+                }
+            }
+
+            const data = await solicitudesPromise;
+            setSolicitudes(Array.isArray(data) ? data : []);
             setAlertasStock(Array.isArray(alertas) ? alertas : []);
         } catch (err) {
             console.error('No se pudieron cargar las notificaciones.', err);
@@ -216,8 +245,18 @@ const Navbar = () => {
         };
     }, [user, loadSolicitudesUsuario]);
 
+    const isMobileMenuOpenRef = useRef(false);
+    isMobileMenuOpenRef.current = isMobileMenuOpen;
+
     const syncScrolledState = useCallback(() => {
-        setIsScrolled(window.scrollY > 10);
+        if (isMobileMenuOpenRef.current) return;
+        let scrollY = window.scrollY || window.pageYOffset || 0;
+        if (document.documentElement.classList.contains("scroll-locked")) {
+            const top = document.body.style.top || "";
+            const lockedY = Math.abs(Number.parseInt(top, 10) || 0);
+            scrollY = lockedY || scrollY;
+        }
+        setIsScrolled(scrollY > 10);
     }, []);
 
     useEffect(() => {
@@ -241,7 +280,26 @@ const Navbar = () => {
 
     useEffect(() => {
         setIsMobileMenuOpen(false);
+        setShowAboutMenu(false);
     }, [pathname]);
+
+    useEffect(() => {
+        if (!showAboutMenu) return undefined;
+        const onPointerDown = (event) => {
+            if (aboutMenuRef.current && !aboutMenuRef.current.contains(event.target)) {
+                setShowAboutMenu(false);
+            }
+        };
+        const onEscape = (event) => {
+            if (event.key === 'Escape') setShowAboutMenu(false);
+        };
+        document.addEventListener('mousedown', onPointerDown);
+        document.addEventListener('keydown', onEscape);
+        return () => {
+            document.removeEventListener('mousedown', onPointerDown);
+            document.removeEventListener('keydown', onEscape);
+        };
+    }, [showAboutMenu]);
 
     useEffect(() => {
         if (!isMobileMenuOpen) {
@@ -476,7 +534,8 @@ const Navbar = () => {
         }
     };
 
-    const handleNotificationsClick = () => {
+    const handleNotificationsClick = (event) => {
+        event?.stopPropagation?.();
         const nextState = !showNotifications;
         setShowNotifications(nextState);
         setShowDropdown(false);
@@ -486,7 +545,8 @@ const Navbar = () => {
         }
     };
 
-    const handleNotificationOpen = () => {
+    const handleNotificationOpen = (event) => {
+        event?.stopPropagation?.();
         setShowNotifications(false);
         if (user?.role === 'admin') {
             navigate({ to: '/admin/voluntariado' });
@@ -574,13 +634,66 @@ const Navbar = () => {
             </div>
 
             <div className="navbar__menu">
-                {navLinks.map((enlace) => (
-                    <SiteNavLink
-                        key={enlace.id ?? enlace.ruta}
-                        enlace={enlace}
-                        activeProps={{ style: { fontWeight: '700' } }}
-                    />
-                ))}
+                {navLinks.map((enlace) => {
+                    if (isAboutNavLink(enlace)) {
+                        const pathNorm = normalizePathname(pathname);
+                        const aboutActive =
+                            pathNorm === normalizePathname(ABOUT_HISTORIA_PATH) ||
+                            pathNorm === normalizePathname(ABOUT_GALERIA_PATH) ||
+                            pathNorm.startsWith('/aboutus');
+                        return (
+                            <div
+                                key={enlace.id ?? enlace.ruta ?? 'about'}
+                                className={`navbar__about ${aboutActive ? 'is-current' : ''} ${showAboutMenu ? 'is-open' : ''}`}
+                                ref={aboutMenuRef}
+                            >
+                                <button
+                                    type="button"
+                                    className="navbar__about-trigger"
+                                    aria-expanded={showAboutMenu}
+                                    aria-haspopup="true"
+                                    onClick={() => {
+                                        setShowAboutMenu((open) => !open);
+                                        setShowDropdown(false);
+                                        setShowCartDropdown(false);
+                                        setShowNotifications(false);
+                                    }}
+                                >
+                                    <span>{enlace?.etiqueta ?? enlace?.Etiqueta ?? 'Sobre nosotros'}</span>
+                                    <ChevronDown size={16} strokeWidth={2.4} aria-hidden="true" />
+                                </button>
+                                {showAboutMenu ? (
+                                    <div className="navbar__about-menu" role="menu" aria-label="Sobre nosotros">
+                                        <Link
+                                            to={ABOUT_HISTORIA_PATH}
+                                            role="menuitem"
+                                            className="navbar__about-item"
+                                            onClick={() => setShowAboutMenu(false)}
+                                        >
+                                            Historia
+                                        </Link>
+                                        <Link
+                                            to={ABOUT_GALERIA_PATH}
+                                            role="menuitem"
+                                            className="navbar__about-item"
+                                            onClick={() => setShowAboutMenu(false)}
+                                        >
+                                            Galería
+                                        </Link>
+                                    </div>
+                                ) : null}
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <SiteNavLink
+                            key={enlace.id ?? enlace.ruta}
+                            enlace={enlace}
+                            activeProps={{ style: { fontWeight: '700' } }}
+                        />
+                    );
+                })}
             </div>
 
             <div className="navbar__actions">
@@ -898,95 +1011,150 @@ const Navbar = () => {
                 </button>
             </div>
 
-            <div
-                className={`navbar__mobile-drawer ${isMobileMenuOpen ? 'is-open' : ''}`}
-                inert={!isMobileMenuOpen || undefined}
-            >
-                <button
-                    type="button"
-                    className="navbar__mobile-backdrop"
-                    aria-label={"Cerrar men\u00fa"}
-                    tabIndex={isMobileMenuOpen ? 0 : -1}
-                    onClick={closeMobileMenu}
-                />
-                <aside
-                    id="navbar-mobile-menu"
-                    className="navbar__mobile-panel"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label={"Men\u00fa de navegaci\u00f3n"}
-                >
-                    <header className="navbar__mobile-header">
-                        <Link
-                            to="/"
-                            className="navbar__mobile-brand"
-                            aria-label="Ir al inicio"
-                            onClick={handleBrandClick}
-                        >
-                            {mobileMenuLogoSrc ? (
-                                <img
-                                    src={mobileMenuLogoSrc}
-                                    alt={"Caf\u00e9 UNA"}
-                                    className="navbar__mobile-brand-logo"
-                                    width={200}
-                                    height={44}
-                                    decoding="async"
-                                />
-                            ) : (
-                                <span className="navbar__mobile-brand-text">{"Caf\u00e9 UNA"}</span>
-                            )}
-                        </Link>
+            {typeof document !== 'undefined'
+                ? createPortal(
+                    <div
+                        className={`navbar__mobile-drawer ${isMobileMenuOpen ? 'is-open' : ''}`}
+                        inert={!isMobileMenuOpen || undefined}
+                    >
                         <button
                             type="button"
-                            className="navbar__mobile-close"
+                            className="navbar__mobile-backdrop"
                             aria-label={"Cerrar men\u00fa"}
+                            tabIndex={isMobileMenuOpen ? 0 : -1}
                             onClick={closeMobileMenu}
+                            onTouchMove={(event) => event.preventDefault()}
+                        />
+                        <aside
+                            id="navbar-mobile-menu"
+                            className="navbar__mobile-panel"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label={"Men\u00fa de navegaci\u00f3n"}
                         >
-                            <X size={20} strokeWidth={2.2} aria-hidden="true" />
-                        </button>
-                    </header>
-
-                    <nav className="navbar__mobile-links" aria-label="Secciones del sitio">
-                        {navLinks.map((enlace) => {
-                            const NavIcon = resolveMobileNavIcon(enlace?.ruta ?? enlace?.Ruta);
-                            const label = enlace?.etiqueta ?? enlace?.Etiqueta ?? 'Enlace';
-
-                            return (
-                                <SiteNavLink
-                                    key={`mobile-${enlace.id ?? enlace.ruta}`}
-                                    enlace={enlace}
-                                    className="navbar__mobile-link"
-                                    activeProps={{ className: 'navbar__mobile-link is-active' }}
+                            <header className="navbar__mobile-header">
+                                <Link
+                                    to="/"
+                                    className="navbar__mobile-brand"
+                                    aria-label="Ir al inicio"
+                                    onClick={handleBrandClick}
+                                >
+                                    {mobileMenuLogoSrc ? (
+                                        <img
+                                            src={mobileMenuLogoSrc}
+                                            alt={"Caf\u00e9 UNA"}
+                                            className="navbar__mobile-brand-logo"
+                                            width={200}
+                                            height={44}
+                                            decoding="async"
+                                        />
+                                    ) : (
+                                        <span className="navbar__mobile-brand-text">{"Caf\u00e9 UNA"}</span>
+                                    )}
+                                </Link>
+                                <button
+                                    type="button"
+                                    className="navbar__mobile-close"
+                                    aria-label={"Cerrar men\u00fa"}
                                     onClick={closeMobileMenu}
                                 >
-                                    <span className="navbar__mobile-link-content">
-                                        <NavIcon className="navbar__mobile-link-icon" size={22} strokeWidth={1.9} aria-hidden="true" />
-                                        <span className="navbar__mobile-link-label">{label}</span>
-                                    </span>
-                                </SiteNavLink>
-                            );
-                        })}
-                    </nav>
+                                    <X size={20} strokeWidth={2.2} aria-hidden="true" />
+                                </button>
+                            </header>
 
-                    {hasMobileSocial ? (
-                        <div className="navbar__mobile-social">
-                            <p className="navbar__mobile-social-title">Redes sociales</p>
-                            <div className="navbar__mobile-social-links">
-                                {instagramUrl ? (
-                                    <a href={instagramUrl} target="_blank" rel="noreferrer" aria-label="Instagram" onClick={closeMobileMenu}>
-                                        <InstagramIcon className="navbar__mobile-social-icon" />
-                                    </a>
-                                ) : null}
-                                {facebookUrl ? (
-                                    <a href={facebookUrl} target="_blank" rel="noreferrer" aria-label="Facebook" onClick={closeMobileMenu}>
-                                        <FacebookIcon className="navbar__mobile-social-icon" />
-                                    </a>
-                                ) : null}
-                            </div>
-                        </div>
-                    ) : null}
-                </aside>
-            </div>
+                            <nav className="navbar__mobile-links" aria-label="Secciones del sitio">
+                                {navLinks.map((enlace) => {
+                                    if (isAboutNavLink(enlace)) {
+                                        const pathNorm = normalizePathname(pathname);
+                                        const historiaActive = pathNorm === normalizePathname(ABOUT_HISTORIA_PATH);
+                                        const galeriaActive = pathNorm === normalizePathname(ABOUT_GALERIA_PATH);
+                                        return (
+                                            <div
+                                                key={`mobile-about-${enlace.id ?? enlace.ruta}`}
+                                                className={`navbar__mobile-about ${showMobileAbout ? 'is-open' : ''}`}
+                                            >
+                                                <button
+                                                    type="button"
+                                                    className="navbar__mobile-about-trigger"
+                                                    aria-expanded={showMobileAbout}
+                                                    onClick={() => setShowMobileAbout((open) => !open)}
+                                                >
+                                                    <span className="navbar__mobile-about-trigger-main">
+                                                        <span className="navbar__mobile-link-label">
+                                                            {enlace?.etiqueta ?? enlace?.Etiqueta ?? 'Sobre nosotros'}
+                                                        </span>
+                                                    </span>
+                                                    <ChevronDown
+                                                        className="navbar__mobile-about-chevron"
+                                                        size={18}
+                                                        strokeWidth={2.4}
+                                                        aria-hidden="true"
+                                                    />
+                                                </button>
+                                                {showMobileAbout ? (
+                                                    <div className="navbar__mobile-about-sub">
+                                                        <Link
+                                                            to={ABOUT_HISTORIA_PATH}
+                                                            className={`navbar__mobile-about-item ${historiaActive ? 'is-active' : ''}`}
+                                                            onClick={closeMobileMenu}
+                                                        >
+                                                            Historia
+                                                        </Link>
+                                                        <Link
+                                                            to={ABOUT_GALERIA_PATH}
+                                                            className={`navbar__mobile-about-item ${galeriaActive ? 'is-active' : ''}`}
+                                                            onClick={closeMobileMenu}
+                                                        >
+                                                            Galería
+                                                        </Link>
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        );
+                                    }
+
+                                    const NavIcon = resolveMobileNavIcon(enlace?.ruta ?? enlace?.Ruta);
+                                    const label = enlace?.etiqueta ?? enlace?.Etiqueta ?? 'Enlace';
+
+                                    return (
+                                        <SiteNavLink
+                                            key={`mobile-${enlace.id ?? enlace.ruta}`}
+                                            enlace={enlace}
+                                            className="navbar__mobile-link"
+                                            activeProps={{ className: 'navbar__mobile-link is-active' }}
+                                            onClick={closeMobileMenu}
+                                        >
+                                            <span className="navbar__mobile-link-content">
+                                                <NavIcon className="navbar__mobile-link-icon" size={22} strokeWidth={1.9} aria-hidden="true" />
+                                                <span className="navbar__mobile-link-label">{label}</span>
+                                            </span>
+                                        </SiteNavLink>
+                                    );
+                                })}
+                            </nav>
+
+                            {hasMobileSocial ? (
+                                <div className="navbar__mobile-social">
+                                    <p className="navbar__mobile-social-title">Redes sociales</p>
+                                    <div className="navbar__mobile-social-links">
+                                        {instagramUrl ? (
+                                            <a href={instagramUrl} target="_blank" rel="noreferrer" aria-label="Instagram" onClick={closeMobileMenu}>
+                                                <InstagramIcon className="navbar__mobile-social-icon" />
+                                            </a>
+                                        ) : null}
+                                        {facebookUrl ? (
+                                            <a href={facebookUrl} target="_blank" rel="noreferrer" aria-label="Facebook" onClick={closeMobileMenu}>
+                                                <FacebookIcon className="navbar__mobile-social-icon" />
+                                            </a>
+                                        ) : null}
+                                    </div>
+                                </div>
+                            ) : null}
+                        </aside>
+                    </div>,
+                    document.body,
+                )
+                : null}
         </nav>
     )
 }

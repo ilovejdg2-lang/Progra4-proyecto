@@ -33,7 +33,7 @@ import { obtenerCategorias } from '../../services/categoriasService';
 import { calcularPrecioConIVA } from '../../services/productosService';
 import { clasificarDisponibilidad } from '../../lib/productoDisponibilidad';
 
-const PRODUCTS_PER_PAGE = 8;
+const PRODUCTS_PER_PAGE = 10;
 
 function coincidenciaBusqueda(producto, query) {
   const q = String(query || '').trim().toLowerCase();
@@ -208,7 +208,7 @@ const Products = () => {
   });
 
   const asideNav = (
-    <nav className="products-page__aside-nav" aria-label="Categor\u00edas del cat\u00e1logo">
+    <nav className="products-page__aside-nav" aria-label={"Categor\u00edas del cat\u00e1logo"}>
       <button
         type="button"
         className={`products-page__aside-link${categoria === 'todas' ? ' is-active' : ''}`}
@@ -353,7 +353,7 @@ const Products = () => {
                     type="button"
                     className="products-page__search-clear"
                     onClick={() => setBusqueda('')}
-                    aria-label="Limpiar b\u00fasqueda"
+                    aria-label={"Limpiar b\u00fasqueda"}
                   >
                     <X size={16} aria-hidden="true" />
                   </button>
@@ -370,7 +370,7 @@ const Products = () => {
                 Filtros
               </button>
 
-              <div className="products-page__pills" role="group" aria-label="Filtro r\u00e1pido por categor\u00eda">
+              <div className="products-page__pills" role="group" aria-label={"Filtro r\u00e1pido por categor\u00eda"}>
                 <button
                   type="button"
                   className={`products-page__pill${categoria === 'todas' ? ' is-active' : ''}`}
@@ -476,8 +476,8 @@ const Products = () => {
               })}
             </section>
 
-            {productosFiltrados.length > 0 ? (
-              <nav className="products-page__pagination" aria-label="Paginaci\u00f3n de productos">
+            {totalPages > 1 ? (
+              <nav className="products-page__pagination" aria-label={"Paginaci\u00f3n de productos"}>
                 {Array.from({ length: totalPages }, (_, index) => {
                   const pageNumber = index + 1;
                   return (

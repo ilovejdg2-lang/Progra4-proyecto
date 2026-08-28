@@ -3,6 +3,7 @@ import { CheckCircle2, Pencil, Plus, Power, RefreshCw, X } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import {
   AdminModal,
   AdminModalActions,
@@ -11,6 +12,7 @@ import {
 } from "../../../Components/Admin/ui/AdminModal";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
+import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
 import {
@@ -112,7 +114,7 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
     "min-h-[var(--control-height)] rounded-full border border-slate-200 bg-slate-50 px-3 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white";
 
   return (
-    <AdminModal open onClose={onClose} maxWidth="max-w-2xl" labelledBy="activo-fijo-modal-title">
+    <AdminModal open onClose={onClose} maxWidth="max-w-xl" labelledBy="activo-fijo-modal-title">
       <AdminModalHeader>
         <h2 id="activo-fijo-modal-title" className="text-[length:var(--text-subtitle)] font-semibold text-slate-950">
           {editando ? "Editar activo fijo" : "Agregar activo fijo"}
@@ -279,6 +281,13 @@ export default function AdminActivosFijos() {
     [filters.filtrados],
   );
 
+  const {
+    page,
+    setPage,
+    pageItems: activosPagina,
+    totalPages,
+  } = useAdminPaginacion(filters.filtrados);
+
   const handleSave = async (payload) => {
     setIsSaving(true);
     setFormError("");
@@ -421,20 +430,21 @@ export default function AdminActivosFijos() {
               {filters.filtrados.length === 0 ? (
                 <AdminListaVacia onLimpiar={filters.limpiar} />
               ) : (
-                <div className="overflow-x-auto">
+                <>
+                <div className="admin-table-shell">
                   <table className="min-w-full text-left text-[length:var(--text-body)]">
-                    <thead className="border-y border-slate-100 bg-slate-50 text-slate-500">
+                    <thead>
                       <tr>
-                        <th className="px-4 py-3 font-semibold sm:px-6">Código</th>
-                        <th className="px-4 py-3 font-semibold">Nombre</th>
-                        <th className="hidden px-4 py-3 font-semibold md:table-cell">Compra</th>
-                        <th className="px-4 py-3 font-semibold">Valor</th>
-                        <th className="px-4 py-3 font-semibold">Estado</th>
-                        <th className="px-4 py-3 font-semibold sm:px-6">Acciones</th>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th className="hidden md:table-cell">Compra</th>
+                        <th>Valor</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filters.filtrados.map((activo) => (
+                      {activosPagina.map((activo) => (
                         <tr key={activo.id} className="border-b border-slate-100 align-top">
                           <td className="px-4 py-3 font-semibold text-slate-900 sm:px-6">{activo.codigo}</td>
                           <td className="px-4 py-3 text-slate-800">
@@ -497,6 +507,14 @@ export default function AdminActivosFijos() {
                     </tbody>
                   </table>
                 </div>
+                <AdminPaginacion
+                  page={page}
+                  totalPages={totalPages}
+                  total={filters.filtrados.length}
+                  onChange={setPage}
+                  label={"Paginaci\u00f3n de activos fijos"}
+                />
+                </>
               )}
             </section>
           )}

@@ -12,7 +12,9 @@ import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { AdminModal, AdminModalActions, AdminModalBody, AdminModalHeader, adminBtnCancel } from "../../../Components/Admin/ui/AdminModal";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
+import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
 import {
   obtenerUsuarios,
   actualizarUsuario,
@@ -680,6 +682,13 @@ const AdminUsuarios = () => {
     ],
   });
 
+  const {
+    page,
+    setPage,
+    pageItems: usuariosPagina,
+    totalPages,
+  } = useAdminPaginacion(usuariosFiltrados);
+
   const rolesDisponibles = useMemo(() => {
     const vistos = new Set();
     usuarios.forEach((usuario) => {
@@ -838,7 +847,7 @@ const AdminUsuarios = () => {
   // TanStack Table returns instance helpers by design; the warning is expected with React Compiler.
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data: usuariosFiltrados,
+    data: usuariosPagina,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
@@ -915,21 +924,21 @@ const AdminUsuarios = () => {
           <AdminListaVacia onLimpiar={limpiar} />
         ) : (
           <>
-            <div className="hidden overflow-x-auto md:block">
+            <div className="admin-table-shell hidden md:block">
               <table className="w-full text-sm">
                 <thead>
                   {table.getHeaderGroups().map((headerGroup) => (
-                    <tr key={headerGroup.id} className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    <tr key={headerGroup.id}>
                       {headerGroup.headers.map((header) => (
-                        <th key={header.id} className="px-6 py-3">
+                        <th key={header.id}>
                           {header.column.getCanSort() ? (
                             <button
                               type="button"
                               onClick={header.column.getToggleSortingHandler()}
-                              className="inline-flex items-center gap-1 uppercase tracking-wide transition hover:text-slate-800"
+                              className="admin-th-sort"
                             >
                               {flexRender(header.column.columnDef.header, header.getContext())}
-                              <span className="text-[10px]">
+                              <span className="admin-th-sort__icon" aria-hidden="true">
                                 {header.column.getIsSorted() === "asc" ? "▲" : header.column.getIsSorted() === "desc" ? "▼" : "↕"}
                               </span>
                             </button>
@@ -956,7 +965,7 @@ const AdminUsuarios = () => {
             </div>
 
             <div className="divide-y divide-slate-100 md:hidden">
-              {usuariosFiltrados.map((usuario) => {
+              {usuariosPagina.map((usuario) => {
                 const esMismoUsuario = actorId !== null && Number(usuario.id) === actorId;
                 const puedeCambiarEstado = esSuperAdmin && !esMismoUsuario;
 
@@ -992,6 +1001,13 @@ const AdminUsuarios = () => {
                 );
               })}
             </div>
+            <AdminPaginacion
+              page={page}
+              totalPages={totalPages}
+              total={usuariosFiltrados.length}
+              onChange={setPage}
+              label={"Paginaci\u00f3n de usuarios"}
+            />
           </>
         )}
       </section>

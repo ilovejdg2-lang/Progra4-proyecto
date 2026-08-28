@@ -1,12 +1,27 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format, startOfDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { Calendar as CalendarIcon, ArrowRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 
+function useMesesCalendario() {
+  const [meses, setMeses] = useState(1);
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const sync = () => setMeses(media.matches ? 2 : 1);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  return meses;
+}
+
 export function DatePickerWithRange({ dateRange, setDateRange, error }) {
   const hoy = useMemo(() => startOfDay(new Date()), []);
+  const numberOfMonths = useMesesCalendario();
 
   const formatearFecha = (fecha) => {
     if (!fecha) return "Por definir";
@@ -15,7 +30,6 @@ export function DatePickerWithRange({ dateRange, setDateRange, error }) {
 
   return (
     <div className={`calendario-fijo-wrapper ${error ? "calendario-fijo-wrapper--error" : ""}`}>
-      {/* Resumen de Fechas Seleccionadas */}
       <div className="calendario-resumen-fechas">
         <div className="fecha-badge fecha-badge--inicio">
           <span className="fecha-badge__label">Fecha de inicio</span>
@@ -25,7 +39,7 @@ export function DatePickerWithRange({ dateRange, setDateRange, error }) {
           </div>
         </div>
 
-        <ArrowRight size={18} className="fecha-badge__flecha" />
+        <ArrowRight size={18} className="fecha-badge__flecha" aria-hidden="true" />
 
         <div className="fecha-badge fecha-badge--fin">
           <span className="fecha-badge__label">Fecha de finalización</span>
@@ -36,7 +50,6 @@ export function DatePickerWithRange({ dateRange, setDateRange, error }) {
         </div>
       </div>
 
-      {/* Calendario Shadcn Siempre Visible y Centrado */}
       <div className="calendario-fijo-contenedor">
         <DayPicker
           mode="range"
@@ -44,7 +57,7 @@ export function DatePickerWithRange({ dateRange, setDateRange, error }) {
           selected={dateRange}
           onSelect={setDateRange}
           disabled={{ before: hoy }}
-          numberOfMonths={window.innerWidth < 768 ? 1 : 2}
+          numberOfMonths={numberOfMonths}
           locale={es}
           className="calendar-shadcn-custom"
           classNames={{
