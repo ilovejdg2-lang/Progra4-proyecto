@@ -1,19 +1,19 @@
 /* Café UNA — estilos públicos compartidos */
 
 :root {
-  --coffee-900: #1a0f0a;
-  --coffee-800: #2f251d;
+  --coffee-900: #2a1612;
+  --coffee-800: #3a221c;
   --coffee-700: #4d2b1f;
   --coffee-600: #6d432c;
   --coffee-500: #a7532d;
   --coffee-400: #c47a4a;
-  --coffee-muted: #5a5148;
-  --coffee-cream: #faf6f3;
-  --hero-gradient: linear-gradient(135deg, #4d2b1f 0%, #1f120c 100%);
+  --coffee-muted: #6b564c;
+  --coffee-cream: #fafafa;
+  --hero-gradient: linear-gradient(135deg, #4d2b1f 0%, #2a1612 100%);
   --section-max: 1120px;
 }
 
-/* Fondo blanco en páginas públicas */
+/* Fondo blanco suave (mínima diferencia) en páginas públicas */
 .site-main:has(.home-page),
 .site-main:has(.about-page),
 .site-main:has(.products-page),
@@ -22,7 +22,7 @@
 #center.site-main:has(.about-page),
 #center.site-main:has(.products-page),
 #center.site-main:has(.voluntariado-page) {
-  background: #ffffff;
+  background: #fafafa;
   place-items: stretch;
   align-items: stretch;
 }
@@ -30,7 +30,7 @@
 /* Tipografía de sección — solo título / subtítulo / cuerpo */
 .section-title {
   margin: 0;
-  color: #111;
+  color: #2a1612;
   font-size: var(--text-title);
   font-weight: 800;
   line-height: 1.2;

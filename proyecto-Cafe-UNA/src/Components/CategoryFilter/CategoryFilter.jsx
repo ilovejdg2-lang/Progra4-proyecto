@@ -15,7 +15,7 @@ export function CategoryFilter({
 
   return (
     <div className="category-filter-stack">
-      <div className="category-filter" role="group" aria-label="Filtro por categor\u00eda">
+      <div className="category-filter" role="group" aria-label={"Filtro por categor\u00eda"}>
         <button
           type="button"
           className={`category-filter__chip${valor === "todas" ? " is-active" : ""}`}
@@ -36,7 +36,7 @@ export function CategoryFilter({
       </div>
 
       {mostrarSub ? (
-        <div className="category-filter category-filter--sub" role="group" aria-label="Filtro por subcategor\u00eda">
+        <div className="category-filter category-filter--sub" role="group" aria-label={"Filtro por subcategor\u00eda"}>
           <button
             type="button"
             className={`category-filter__chip${subvalor === "todas" ? " is-active" : ""}`}

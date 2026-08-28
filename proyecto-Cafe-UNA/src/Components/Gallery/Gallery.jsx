@@ -16,14 +16,20 @@ function getGalleryItemClassName(index, count) {
   }
 
   if (index === count - 1 && count > 1) {
-    const remaining = count - 1;
+    const smallCount = count - 1;
 
-    if (remaining % 2 === 1) {
+    // Móvil 2 columnas: si queda 1 suelta, que ocupe el ancho.
+    if (smallCount % 2 === 1) {
       classes.push('gallery__item--fill-mobile');
     }
 
-    if (count > 5 && (count - 5) % 4 === 1) {
-      classes.push('gallery__item--fill-desktop');
+    // Desktop 4 columnas + featured 2x2: las 2 primeras van al lado del featured;
+    // el resto va de a 4. Si sobra 1, que ocupe toda la fila (sin hueco feo).
+    if (count > 3) {
+      const afterSide = Math.max(0, smallCount - 2);
+      if (afterSide % 4 === 1) {
+        classes.push('gallery__item--fill-desktop');
+      }
     }
   }
 
@@ -111,9 +117,11 @@ const Gallery = ({
 
   return (
     <section className="gallery" aria-label={ariaLabel}>
-      <header className="gallery__header">
-        <h2 className="section-title gallery__title">{title}</h2>
-      </header>
+      {title ? (
+        <header className="gallery__header">
+          <h2 className="section-title gallery__title">{title}</h2>
+        </header>
+      ) : null}
 
       <CategoryFilter categorias={categorias} valor={categoria} onChange={cambiarCategoria} />
 

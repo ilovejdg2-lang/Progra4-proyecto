@@ -24,7 +24,7 @@
   margin: 0 auto;
   padding: clamp(2.5rem, 5vw, 3.5rem) var(--home-page-pad-x) clamp(2.5rem, 5vw, 3rem);
   font-size: 16px;
-  background: #ffffff;
+  background: #fafafa;
 }
 
 .home-page__mission-spotlight,
@@ -51,7 +51,7 @@
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
   padding: clamp(1.25rem, 3vw, 2rem) clamp(0.75rem, 2vw, 1.5rem);
-  background: #ffffff;
+  background: #fafafa;
   scroll-margin-top: calc(var(--navbar-height) + 1rem);
   overflow-x: clip;
 }

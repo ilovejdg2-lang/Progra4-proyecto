@@ -91,7 +91,7 @@
   isolation: isolate;
   contain: paint;
   clip-path: inset(0);
-  background: var(--color-fondo, #faf7f4);
+  background: var(--color-fondo, #fafafa);
 }
 
 .admin-cms-preview-viewport.admin-cms-preview--hero {
@@ -140,7 +140,7 @@
   overflow: hidden;
   transform: scale(calc(100cqw / var(--cms-preview-canvas)));
   transform-origin: top left;
-  background: var(--color-fondo, #faf7f4);
+  background: var(--color-fondo, #fafafa);
 }
 
 .admin-cms-preview-viewport.admin-cms-preview--navbar > .admin-cms-preview.site-canvas {

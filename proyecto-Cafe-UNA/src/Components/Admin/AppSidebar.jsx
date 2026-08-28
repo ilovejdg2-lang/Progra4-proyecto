@@ -5,10 +5,12 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Box,
+  BookOpenText,
   ChevronDown,
-  ClipboardList,
   HandHeart,
+  Image,
   Info,
+  Landmark,
   LogOut,
   Package,
   Receipt,
@@ -60,6 +62,7 @@ import {
 
 const GENERAL_OPEN_KEY = "admin-sidebar-general-open";
 const INVENTORY_OPEN_KEY = "admin-sidebar-inventory-open";
+const SOBRE_NOSOTROS_OPEN_KEY = "admin-sidebar-sobre-nosotros-open";
 const linkActivo = {
   className: "text-slate-950",
 };
@@ -95,12 +98,19 @@ export function AppSidebar() {
   }, [avatarUrl]);
 
   const isGeneralRoute =
-    pathname === "/admin/informacion-pagina-principal" || pathname === "/admin/sobre-nosotros";
+    pathname === "/admin/informacion-pagina-principal" ||
+    pathname === "/admin/sobre-nosotros" ||
+    pathname === "/admin/galeria";
+  const isSobreNosotrosRoute = pathname === "/admin/sobre-nosotros" || pathname === "/admin/galeria";
   const isInventoryRoute = pathname === "/admin/producto" || pathname === "/admin/puntos-venta" || pathname === "/admin/activos-fijos" || pathname === "/admin/historial-ventas";
 
   const [generalOpen, setGeneralOpen] = useState(() => {
     const savedValue = localStorage.getItem(GENERAL_OPEN_KEY);
     return savedValue === null ? isGeneralRoute : savedValue === "true";
+  });
+  const [sobreNosotrosOpen, setSobreNosotrosOpen] = useState(() => {
+    const savedValue = localStorage.getItem(SOBRE_NOSOTROS_OPEN_KEY);
+    return savedValue === null ? isSobreNosotrosRoute : savedValue === "true";
   });
   const [logoUrl, setLogoUrl] = useState("");
 
@@ -141,6 +151,15 @@ export function AppSidebar() {
   }, [pathname, setOpenMobile]);
 
   useEffect(() => {
+    if (isSobreNosotrosRoute) {
+      setSobreNosotrosOpen(true);
+      localStorage.setItem(SOBRE_NOSOTROS_OPEN_KEY, "true");
+      setGeneralOpen(true);
+      localStorage.setItem(GENERAL_OPEN_KEY, "true");
+    }
+  }, [isSobreNosotrosRoute]);
+
+  useEffect(() => {
     let activo = true;
 
     obtenerNavbar()
@@ -165,6 +184,11 @@ export function AppSidebar() {
     localStorage.setItem(GENERAL_OPEN_KEY, String(open));
   };
 
+  const updateSobreNosotrosOpen = (open) => {
+    setSobreNosotrosOpen(open);
+    localStorage.setItem(SOBRE_NOSOTROS_OPEN_KEY, String(open));
+  };
+
   const updateInventoryOpen = (open) => {
     setInventoryOpen(open);
     localStorage.setItem(INVENTORY_OPEN_KEY, String(open));
@@ -175,6 +199,7 @@ export function AppSidebar() {
   const clearSidebarState = () => {
     localStorage.removeItem(GENERAL_OPEN_KEY);
     localStorage.removeItem(INVENTORY_OPEN_KEY);
+    localStorage.removeItem(SOBRE_NOSOTROS_OPEN_KEY);
   };
 
   const handleLogout = () => {
@@ -188,11 +213,11 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="offcanvas" className="bg-white">
+    <Sidebar collapsible="icon" className="bg-white">
       <SidebarHeader>
         <Link
           to="/"
-          className="block"
+          className="block group-data-[state=collapsed]/sidebar:flex group-data-[state=collapsed]/sidebar:justify-center"
           title="Ir al inicio"
           aria-label={"Ir al inicio de Caf\u00e9 UNA"}
           onClick={(event) => {
@@ -204,10 +229,12 @@ export function AppSidebar() {
             <img
               src={normalizeImageUrl(logoUrl, { width: 320 })}
               alt={"Caf\u00e9 UNA"}
-              className="h-[52px] w-auto max-w-[10rem] object-contain"
+              className="h-[52px] w-auto max-w-[10rem] object-contain group-data-[state=collapsed]/sidebar:h-8 group-data-[state=collapsed]/sidebar:max-w-10"
             />
           ) : (
-            <span className="text-[length:var(--text-subtitle)] font-bold text-slate-900">{"Caf\u00e9 UNA"}</span>
+            <span className="text-[length:var(--text-subtitle)] font-bold text-slate-900 group-data-[state=collapsed]/sidebar:text-[length:var(--text-body)]">
+              {"Caf\u00e9 UNA"}
+            </span>
           )}
         </Link>
       </SidebarHeader>
@@ -223,8 +250,8 @@ export function AppSidebar() {
             <SidebarGroupLabel asChild>
               <Collapsible.Trigger type="button">
                 <Settings />
-                <span>{"Configuraci\u00f3n general del sitio"}</span>
-                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                <span className="truncate">{"Configuraci\u00f3n general del sitio"}</span>
+                <ChevronDown className="ml-auto shrink-0 transition-transform group-data-[state=open]/collapsible:rotate-180" />
               </Collapsible.Trigger>
             </SidebarGroupLabel>
             <Collapsible.Content>
@@ -234,17 +261,45 @@ export function AppSidebar() {
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/informacion-pagina-principal" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Info />
-                        <span>{"Informaci\u00f3n p\u00e1gina principal"}</span>
+                        <span className="truncate">{"Informaci\u00f3n p\u00e1gina principal"}</span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                   <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild>
-                      <Link to="/admin/sobre-nosotros" activeProps={linkActivo} onClick={closeMobileSidebar}>
-                        <ClipboardList />
+                    <Collapsible.Root
+                      open={sobreNosotrosOpen}
+                      onOpenChange={updateSobreNosotrosOpen}
+                      className="group/sobre"
+                    >
+                      <Collapsible.Trigger
+                        type="button"
+                        className="flex h-8 w-full items-center gap-2 px-2 text-left text-sm text-slate-600 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0"
+                      >
+                        <BookOpenText />
                         <span>Sobre nosotros</span>
-                      </Link>
-                    </SidebarMenuSubButton>
+                        <ChevronDown className="ml-auto size-4 shrink-0 transition-transform group-data-[state=open]/sobre:rotate-180" />
+                      </Collapsible.Trigger>
+                      <Collapsible.Content>
+                        <SidebarMenuSub className="mt-1">
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild>
+                              <Link to="/admin/sobre-nosotros" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                                <Landmark />
+                                <span>Historia</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild>
+                              <Link to="/admin/galeria" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                                <Image />
+                                <span>Galería</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </Collapsible.Content>
+                    </Collapsible.Root>
                   </SidebarMenuSubItem>
                 </SidebarMenuSub>
               </SidebarGroupContent>
@@ -372,7 +427,7 @@ export function AppSidebar() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex w-full items-center gap-2 px-2 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950"
+              className="flex w-full items-center gap-2 px-2 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950 group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0"
             >
               {avatarUrl && !avatarRoto ? (
                 <img
@@ -391,11 +446,11 @@ export function AppSidebar() {
                   {inicialAvatar}
                 </span>
               )}
-              <span className="min-w-0 flex-1 text-left">
+              <span className="min-w-0 flex-1 text-left group-data-[state=collapsed]/sidebar:hidden">
                 <span className="block truncate">{displayName}</span>
                 {displayEmail ? <span className="block truncate text-xs font-normal text-slate-500">{displayEmail}</span> : null}
               </span>
-              <ChevronDown className="size-4 shrink-0" />
+              <ChevronDown className="size-4 shrink-0 group-data-[state=collapsed]/sidebar:hidden" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="end" className="z-[100] w-56">

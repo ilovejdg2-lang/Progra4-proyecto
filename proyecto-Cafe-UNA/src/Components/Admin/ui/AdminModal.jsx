@@ -11,7 +11,7 @@ export function AdminModal({
   open = true,
   onClose,
   children,
-  maxWidth = "max-w-2xl",
+  maxWidth = "max-w-xl",
   className,
   labelledBy,
   elevated = false,
@@ -71,7 +71,7 @@ export function AdminModalHeader({ children, className }) {
   return (
     <header
       className={cn(
-        "flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-6",
+        "flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-3 py-3 sm:px-4",
         className,
       )}
     >
@@ -84,7 +84,7 @@ export function AdminModalBody({ children, className, cms = false }) {
   return (
     <div
       className={cn(
-        "min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-4 sm:px-6 sm:py-5",
+        "min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-3 py-3 sm:px-4 sm:py-4",
         cms && "admin-modal-body--cms",
         className,
       )}
@@ -112,7 +112,7 @@ export function AdminModalFooter({ children, className }) {
   return (
     <footer
       className={cn(
-        "flex shrink-0 flex-row flex-wrap justify-end gap-2 border-t border-slate-200 px-4 py-4 sm:gap-3 sm:px-6",
+        "flex shrink-0 flex-row flex-wrap justify-end gap-2 border-t border-slate-200 px-3 py-3 sm:gap-3 sm:px-4",
         className,
       )}
     >

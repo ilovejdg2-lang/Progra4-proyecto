@@ -228,7 +228,7 @@ export function ProductCatalogFormDrawer({
       featuredOthers >= MAX_PRODUCTOS_DESTACADOS);
 
   return (
-    <AdminModal open onClose={onClose} maxWidth="max-w-2xl" labelledBy="admin-product-catalog-form-title">
+    <AdminModal open onClose={onClose} maxWidth="max-w-xl" labelledBy="admin-product-catalog-form-title">
       <AdminModalHeader>
         <h2 id="admin-product-catalog-form-title" className="text-lg font-semibold text-slate-950">
           {isEditing ? "Editar producto" : "Nuevo producto"}
