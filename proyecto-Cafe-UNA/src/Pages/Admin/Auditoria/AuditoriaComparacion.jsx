@@ -275,7 +275,7 @@ function PanelCampos({ titulo, datos, claves, cambiados, vacioTexto }) {
   const hayDatos = datos && typeof datos === "object" && claves.length > 0;
   return (
     <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{titulo}</p>
+      <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">{titulo}</p>
       {hayDatos ? (
         <dl className="mt-3 grid max-h-80 gap-2 overflow-auto pr-1">
           {claves.map((clave) => {
@@ -287,15 +287,15 @@ function PanelCampos({ titulo, datos, claves, cambiados, vacioTexto }) {
                   cambio ? "bg-amber-50 ring-1 ring-amber-100" : "bg-slate-50"
                 }`}
               >
-                <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                <dt className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">
                   {etiquetaCampo(clave)}
                   {cambio ? (
-                    <span className="ml-2 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+                    <span className="ml-2 rounded-full bg-amber-100 px-1.5 py-0.5 text-[length:var(--text-body)] font-bold text-amber-800">
                       Cambió
                     </span>
                   ) : null}
                 </dt>
-                <dd className="mt-0.5 break-words text-sm font-medium text-slate-800">
+                <dd className="mt-0.5 break-words text-[length:var(--text-body)] font-medium text-slate-800">
                   {formatearValor(clave, valorDe(datos, clave))}
                 </dd>
               </div>
@@ -303,7 +303,7 @@ function PanelCampos({ titulo, datos, claves, cambiados, vacioTexto }) {
           })}
         </dl>
       ) : (
-        <p className="mt-3 text-sm text-slate-500">{vacioTexto}</p>
+        <p className="mt-3 text-[length:var(--text-body)] text-slate-500">{vacioTexto}</p>
       )}
     </div>
   );
@@ -328,16 +328,16 @@ export function AuditoriaComparacion({ item }) {
   return (
     <div className="grid gap-3">
       <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Qué sucedió</p>
-        <p className="mt-1 text-sm font-semibold text-slate-900">{resumen}</p>
+        <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">Qué sucedió</p>
+        <p className="mt-1 text-[length:var(--text-body)] font-semibold text-slate-900">{resumen}</p>
         {nombre ? (
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-[length:var(--text-body)] text-slate-600">
             {item?.tabla === "usuarios" ? "Usuario" : "Nombre"}:{" "}
             <span className="font-semibold text-slate-800">{nombre}</span>
           </p>
         ) : null}
         {item?.idRegistro ? (
-          <p className="mt-1 text-xs text-slate-400">Registro #{item.idRegistro}</p>
+          <p className="mt-1 text-[length:var(--text-body)] text-slate-400">Registro #{item.idRegistro}</p>
         ) : null}
       </div>
 

@@ -2,7 +2,7 @@
 
 .site-main:has(.voluntariado-page),
 #center.site-main:has(.voluntariado-page) {
-  background: #ffffff;
+  background: #fafafa;
 }
 
 :root {
@@ -19,7 +19,7 @@
 }
 
 .voluntariado-page {
-  background: #ffffff;
+  background: #fafafa;
   min-height: 100vh;
   padding: 24px 0 60px;
   font-family: inherit;
@@ -67,6 +67,18 @@
   height: auto;
   margin-bottom: 16px;
   object-fit: contain;
+}
+
+.voluntariado-header__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .badge--voluntariado {
@@ -562,12 +574,14 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
+  max-width: 100%;
   border: 1px solid var(--borde-input);
-  background: #ffffff;
+  background: transparent;
   border-radius: var(--radius-ui);
-  padding: 20px;
+  padding: clamp(12px, 3vw, 20px);
   gap: 16px;
   transition: border-color 0.2s ease;
+  overflow: visible;
 }
 
 .calendario-fijo-wrapper--error {
@@ -576,12 +590,11 @@
 
 /* Badge de Resumen Superior */
 .calendario-resumen-fechas {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: 10px;
   width: 100%;
-  flex-wrap: wrap;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--fondo-soft);
 }
@@ -589,43 +602,110 @@
 .fecha-badge {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  justify-content: center;
+  gap: 0.2rem;
+  min-width: 0;
   background: var(--fondo-soft);
   border: 1px solid var(--borde-input);
-  padding: 8px 14px;
-  border-radius: 10px;
-  min-width: 180px;
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-ui, 16px);
+  overflow: visible;
+}
+
+.fecha-badge--inicio,
+.fecha-badge--fin {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
 }
 
 .fecha-badge__label {
-  font-size: 11px;
+  font-size: var(--text-body);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   color: var(--texto-secundario);
+  line-height: 1.2;
 }
 
 .fecha-badge__valor {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 0.45rem;
+  min-height: var(--control-height);
+  font-size: var(--text-body);
   font-weight: 600;
   color: var(--texto-principal);
+  line-height: 1.25;
+}
+
+.fecha-badge__valor svg {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  color: #64748b;
 }
 
 .fecha-badge__flecha {
+  align-self: center;
   color: var(--texto-secundario);
-  margin-top: 14px;
+  flex: 0 0 auto;
 }
 
-/* Contenedor Centrado */
 .calendario-fijo-contenedor {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.calendario-fijo-contenedor .rdp,
+.calendario-fijo-contenedor .calendar-shadcn-custom {
+  max-width: 100%;
+}
+
+.calendario-fijo-contenedor .rdp-months {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+@media (max-width: 767px) {
+  .calendario-resumen-fechas {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .fecha-badge__flecha {
+    display: none;
+  }
+
+  .fecha-badge {
+    padding: 0.5rem 0.7rem;
+  }
+
+  .fecha-badge__label {
+    font-size: var(--text-body);
+    letter-spacing: 0.02em;
+  }
+
+  .fecha-badge__valor {
+    min-height: 0;
+    gap: 0.35rem;
+  }
+
+  .calendario-fijo-contenedor .rdp-month,
+  .calendario-fijo-contenedor .rdp-months {
+    width: 100%;
+  }
+
+  .calendario-fijo-contenedor .rdp-table {
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 /* =========================

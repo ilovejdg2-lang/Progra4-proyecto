@@ -74,7 +74,7 @@ export default function HistorialVentas() {
     try {
       const result = await obtenerComprasAdmin({
         page,
-        pageSize: 20,
+        pageSize: 10,
         q: filtros.busqueda,
         estado: filtros.estado,
         desde: filtros.desde,
@@ -178,17 +178,17 @@ export default function HistorialVentas() {
             ) : compras.length === 0 ? (
               <AdminListaVacia onLimpiar={() => setFiltros({ busqueda: "", estado: "todos", desde: "", hasta: "" })} />
             ) : (
-              <div className="overflow-x-auto">
+              <div className="admin-table-shell">
                 <table className="w-full min-w-[760px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      <th className="px-6 py-4">Recibo</th>
-                      <th className="px-6 py-4">Fecha</th>
-                      <th className="px-6 py-4">Cliente</th>
-                      <th className="px-6 py-4">Productos</th>
-                      <th className="px-6 py-4">Total</th>
-                      <th className="px-6 py-4">Estado</th>
-                      <th className="px-6 py-4">Acciones</th>
+                    <tr>
+                      <th>Recibo</th>
+                      <th>Fecha</th>
+                      <th>Cliente</th>
+                      <th>Productos</th>
+                      <th>Total</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -216,11 +216,11 @@ export default function HistorialVentas() {
               </div>
             )}
 
-            {totalPages > 1 ? (
+            {total > 10 && totalPages > 1 ? (
               <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-4 py-3">
-                <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="rounded-full border border-slate-300 px-3 py-1.5 text-sm disabled:opacity-50">Anterior</button>
-                <span className="text-sm text-slate-600">{page} / {totalPages}</span>
-                <button type="button" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="rounded-full border border-slate-300 px-3 py-1.5 text-sm disabled:opacity-50">Siguiente</button>
+                <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="h-[var(--control-height)] rounded-full border border-slate-300 px-3 text-[length:var(--text-body)] disabled:opacity-50">Anterior</button>
+                <span className="text-[length:var(--text-body)] text-slate-600">{page} / {totalPages}</span>
+                <button type="button" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="h-[var(--control-height)] rounded-full border border-slate-300 px-3 text-[length:var(--text-body)] disabled:opacity-50">Siguiente</button>
               </div>
             ) : null}
           </section>

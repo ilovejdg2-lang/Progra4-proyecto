@@ -39,15 +39,15 @@ export function PointOfSaleStockTable({ products, stockByProductId, stockLoading
 
   return (
     <>
-      <div className="hidden overflow-x-auto md:block">
-        <table className="w-full min-w-[760px] text-left text-sm">
+      <div className="admin-table-shell hidden md:block">
+        <table className="w-full min-w-[640px] text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <th className="px-6 py-4">Producto</th>
-              <th className="px-6 py-4">Peso</th>
-              <th className="px-6 py-4">Estado</th>
-              <th className="px-6 py-4">Stock POS</th>
-              {canEdit ? <th className="px-6 py-4">Acciones</th> : null}
+            <tr>
+              <th>Producto</th>
+              <th>Peso</th>
+              <th>Estado</th>
+              <th>Stock POS</th>
+              {canEdit ? <th>Acciones</th> : null}
             </tr>
           </thead>
           <tbody>

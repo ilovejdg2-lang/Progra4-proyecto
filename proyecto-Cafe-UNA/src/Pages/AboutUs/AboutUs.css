@@ -1,10 +1,10 @@
-/* Full-bleed white page */
+/* Full-bleed soft white page */
 .about-page {
   position: relative;
   --about-accent: #6d4c3d;
   --about-muted: #6b6b6b;
-  --about-border: #d8d8d8;
-  --about-card-bg: #fafafa;
+  --about-border: #e5e5e5;
+  --about-card-bg: #ffffff;
 
   display: flex;
   flex-direction: column;
@@ -13,8 +13,8 @@
   max-width: 1120px;
   margin: 0 auto;
   padding: clamp(2.5rem, 6vw, 5rem) clamp(1.25rem, 4vw, 2.5rem) clamp(3.5rem, 8vw, 6rem);
-  background: #ffffff;
-  color: #1a1a1a;
+  background: #fafafa;
+  color: #2a1612;
 }
 
 .about-page > .page-back-link {
@@ -56,6 +56,44 @@
 .about-page__narratives {
   display: grid;
   gap: clamp(3.5rem, 8vw, 7rem);
+}
+
+.about-page__block {
+  scroll-margin-top: calc(var(--navbar-height) + 1rem);
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 2.25rem);
+  padding-top: clamp(0.5rem, 2vw, 1rem);
+  border-top: 1px solid var(--about-border);
+}
+
+.about-page__block--historia {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.about-page__block-head {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.about-page__block-title {
+  margin: 0;
+  color: #2a1612;
+  font-size: var(--text-title);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.about-page__block-title--center {
+  text-align: center;
+}
+
+.about-page__block-lead {
+  margin: 0;
+  color: var(--about-muted);
+  font-size: var(--text-body);
+  line-height: 1.5;
 }
 
 .about-narrative {

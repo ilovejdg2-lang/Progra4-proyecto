@@ -4,8 +4,10 @@ import { ChevronDown, ChevronRight, RefreshCw, ScrollText } from "lucide-react";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
+import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
 import { obtenerAuditoria } from "../../../services/auditoriaService";
 import { AuditoriaComparacion } from "./AuditoriaComparacion";
 import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
@@ -190,6 +192,13 @@ function AdminAuditoria() {
     ],
     filtrosConfig: [],
   });
+
+  const {
+    page,
+    setPage,
+    pageItems: registrosPagina,
+    totalPages,
+  } = useAdminPaginacion(registrosFiltrados);
 
   const usuariosDisponibles = useMemo(() => {
     const mapa = new Map();
@@ -415,19 +424,19 @@ function AdminAuditoria() {
                 </div>
               ) : (
                 <>
-                  <div className="mt-6 hidden overflow-x-auto md:block">
+                  <div className="admin-table-shell mt-6 hidden md:block">
                     <table className="min-w-full divide-y divide-slate-200 text-sm">
-                      <thead className="bg-slate-50">
+                      <thead>
                         <tr>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-600">Fecha</th>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-600">{"Acci\u00f3n"}</th>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-600">{"M\u00f3dulo"}</th>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-600">Detalle</th>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-600">Usuario</th>
+                          <th>Fecha</th>
+                          <th>{"Acci\u00f3n"}</th>
+                          <th>{"M\u00f3dulo"}</th>
+                          <th>Detalle</th>
+                          <th>Usuario</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white">
-                        {registrosFiltrados.map((item) => (
+                        {registrosPagina.map((item) => (
                           <FilaDetalle
                             key={item.id ?? `${item.tabla}-${item.idRegistro}-${item.fecha}`}
                             item={item}
@@ -440,7 +449,7 @@ function AdminAuditoria() {
                   </div>
 
                   <div className="mt-6 grid gap-3 md:hidden">
-                    {registrosFiltrados.map((item) => {
+                    {registrosPagina.map((item) => {
                       const abierta = Boolean(abiertos[item.id]);
                       const tieneCambios = item.datosAnteriores != null || item.datosNuevos != null;
                       return (
@@ -480,6 +489,13 @@ function AdminAuditoria() {
                       );
                     })}
                   </div>
+                  <AdminPaginacion
+                    page={page}
+                    totalPages={totalPages}
+                    total={registrosFiltrados.length}
+                    onChange={setPage}
+                    label={"Paginaci\u00f3n de auditor\u00eda"}
+                  />
                 </>
               )}
             </>

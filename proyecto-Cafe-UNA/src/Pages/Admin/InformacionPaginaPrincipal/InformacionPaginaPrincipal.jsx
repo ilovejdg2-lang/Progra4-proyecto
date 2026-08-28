@@ -1254,26 +1254,28 @@ const AdminInformacionPaginaPrincipal = () => {
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
     <AdminLayout>
-      <section className="space-y-5">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Secciones activas</p>
+      <section className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
+          <h1 className="text-[length:var(--text-title)] font-bold text-slate-950">
+            {"Informaci\u00f3n p\u00e1gina principal"}
+          </h1>
         </div>
 
         {cargando ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">{"Cargando informaci\u00f3n..."}</div>
+          <div className="p-8 text-[length:var(--text-body)] text-slate-500">{"Cargando informaci\u00f3n..."}</div>
         ) : error ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-sm font-semibold text-red-700">
+          <div className="p-8 text-[length:var(--text-body)] font-semibold text-red-700">
             {error}
             <button
               type="button"
               onClick={reload}
-              className="mt-4 block rounded-full bg-red-700 px-4 py-2 text-white"
+              className="mt-4 block h-[var(--control-height)] rounded-full bg-red-700 px-4 text-white"
             >
               Reintentar
             </button>
           </div>
         ) : (
-          <div className="space-y-5">
+          <>
             <AdminListaToolbar
               busqueda={busqueda}
               onBusquedaChange={setBusqueda}
@@ -1301,7 +1303,7 @@ const AdminInformacionPaginaPrincipal = () => {
             {seccionesFiltradas.length === 0 ? (
               <AdminListaVacia onLimpiar={limpiarFiltros} />
             ) : (
-              <div className="grid min-w-0 grid-cols-1 gap-4 overflow-x-hidden sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid min-w-0 grid-cols-1 gap-4 overflow-x-hidden p-4 sm:grid-cols-2 sm:px-6 sm:pb-6 xl:grid-cols-3">
             {idsVisibles.has("hero") ? (
             <AdminSeccionCard
               etiqueta="Hero section"
@@ -1369,7 +1371,7 @@ const AdminInformacionPaginaPrincipal = () => {
             ) : null}
               </div>
             )}
-          </div>
+          </>
         )}
       </section>
 

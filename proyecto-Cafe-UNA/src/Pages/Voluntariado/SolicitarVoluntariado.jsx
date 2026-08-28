@@ -18,7 +18,6 @@ import { getActiveSessionUser } from "../../services/sessionService";
 import { crearSolicitud } from "../../services/voluntariadoService";
 import { consultarCedulaDetallada } from "../../services/cedulaService";
 import { DatePickerWithRange } from "./DatePickerWithRange";
-import logoCafe from "/logo.webp";
 import "./SolicitarVoluntariado.css";
 
 function SectionCard({ icon: Icon, title, hint, children }) {
@@ -534,8 +533,6 @@ function SolicitarVoluntariado() {
 
         <section id="voluntariado" className="voluntariado-section">
           <div className="voluntariado-header">
-            <img src={logoCafe} alt="Logo CAFÉ-UNA" className="voluntariado-header__logo" />
-            <span className="badge--voluntariado">Programa de Voluntariado</span>
             <h1>Únete a nuestras iniciativas</h1>
             <p>Complete el siguiente formulario para aplicar al área de voluntariado de su interés.</p>
           </div>

@@ -103,7 +103,7 @@ export default function FeaturedCafesCarousel({ products = [] }) {
           <button type="button" className="featured-cafes__arrow" onClick={() => ir(-1)} aria-label="Anterior">
             <ChevronLeft size={20} aria-hidden="true" />
           </button>
-          <div className="featured-cafes__dots" role="tablist" aria-label="Caf\u00e9s destacados">
+          <div className="featured-cafes__dots" role="tablist" aria-label={"Caf\u00e9s destacados"}>
             {lista.map((producto, index) => (
               <button
                 key={producto.id ?? index}

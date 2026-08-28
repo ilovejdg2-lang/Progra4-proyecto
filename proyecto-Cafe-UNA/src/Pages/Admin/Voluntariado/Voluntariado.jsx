@@ -22,9 +22,11 @@ import { AdminModalActions, adminBtnCancel } from "../../../Components/Admin/ui/
 import { useAdminModalLock } from "../../../hooks/useBodyScrollLock";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { UiSelect } from "../../../Components/ui/Select";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
+import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
 import {
   actualizarSolicitud,
   eliminarSolicitud,
@@ -277,11 +279,11 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
             <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Datos de la solicitud</h4>
             <div className="grid gap-4 md:grid-cols-2">
               <DetailField icon={UserRound} label="Nombre completo" value={solicitud.nombre} />
-              <DetailField icon={Mail} label="Correo electr\u00f3nico" value={solicitud.email} />
-              <DetailField icon={Phone} label="Tel\u00e9fono" value={solicitud.telefono} />
-              <DetailField icon={Hash} label="Identificaci\u00f3n" value={solicitud.identificacion} />
-              <DetailField icon={GraduationCap} label="Instituci\u00f3n educativa" value={solicitud.institucion} />
-              <DetailField icon={MapPin} label="Pa\u00eds de residencia" value={solicitud.pais} />
+              <DetailField icon={Mail} label={"Correo electr\u00f3nico"} value={solicitud.email} />
+              <DetailField icon={Phone} label={"Tel\u00e9fono"} value={solicitud.telefono} />
+              <DetailField icon={Hash} label={"Identificaci\u00f3n"} value={solicitud.identificacion} />
+              <DetailField icon={GraduationCap} label={"Instituci\u00f3n educativa"} value={solicitud.institucion} />
+              <DetailField icon={MapPin} label={"Pa\u00eds de residencia"} value={solicitud.pais} />
               <DetailField
                 icon={Users}
                 label="Modalidad"
@@ -296,7 +298,7 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
               ) : null}
               <DetailField icon={GraduationCap} label="Tipo de voluntariado" value={solicitud.tipoVoluntariado} />
               <DetailField icon={Calendar} label="Fecha de solicitud" value={solicitud.fechaSolicitud} />
-              <DetailField icon={Calendar} label="Per\u00edodo de voluntariado" value={solicitud.dias} className="md:col-span-2" />
+              <DetailField icon={Calendar} label={"Per\u00edodo de voluntariado"} value={solicitud.dias} className="md:col-span-2" />
               <DetailField icon={Clock} label="Horario y disponibilidad" value={solicitud.horario} className="md:col-span-2" />
             </div>
           </section>
@@ -545,6 +547,13 @@ const AdminVoluntariado = () => {
     filtrosConfig,
   });
 
+  const {
+    page,
+    setPage,
+    pageItems: solicitudesPagina,
+    totalPages,
+  } = useAdminPaginacion(solicitudesFiltradas);
+
   const { showLoading, loadingMessage } = useAdminPageGate("/admin/voluntariado", !cargando);
 
   const cargarSolicitudes = useCallback(async () => {
@@ -699,7 +708,7 @@ const AdminVoluntariado = () => {
 
           {!cargando && !error && solicitudes.length > 0 ? (
             <>
-              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="overflow-visible rounded-xl border border-slate-200 bg-white shadow-sm">
                 <AdminListaToolbar
                   busqueda={busqueda}
                   onBusquedaChange={setBusqueda}
@@ -716,20 +725,20 @@ const AdminVoluntariado = () => {
                   <AdminListaVacia onLimpiar={limpiarFiltros} />
                 ) : (
                   <>
-                    <div className="hidden md:block">
-                      <div className="overflow-x-auto">
+                    <div className="hidden overflow-hidden md:block">
+                      <div className="admin-table-shell">
                         <table className="w-full min-w-[900px] border-collapse text-left text-sm">
-                          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
+                          <thead>
                             <tr>
-                              <th className="px-5 py-4 font-bold">Nombre</th>
-                              <th className="px-5 py-4 font-bold">Tipo de voluntariado</th>
-                              <th className="px-5 py-4 font-bold">Fecha</th>
-                              <th className="px-5 py-4 font-bold">Estado</th>
-                              <th className="px-5 py-4 font-bold">Acciones</th>
+                              <th>Nombre</th>
+                              <th>Tipo de voluntariado</th>
+                              <th>Fecha</th>
+                              <th>Estado</th>
+                              <th>Acciones</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
-                            {solicitudesFiltradas.map((solicitud) => (
+                            {solicitudesPagina.map((solicitud) => (
                               <tr key={solicitud.id} className="transition hover:bg-slate-50/60">
                                 <td className="px-5 py-4">
                                   <div className="font-semibold text-slate-950">{solicitud.nombre || "Sin nombre"}</div>
@@ -758,7 +767,7 @@ const AdminVoluntariado = () => {
                     </div>
 
                     <div className="divide-y divide-slate-100 md:hidden">
-                      {solicitudesFiltradas.map((solicitud) => (
+                      {solicitudesPagina.map((solicitud) => (
                         <article key={solicitud.id} className="space-y-3 px-4 py-4">
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
@@ -785,6 +794,13 @@ const AdminVoluntariado = () => {
                         </article>
                       ))}
                     </div>
+                    <AdminPaginacion
+                      page={page}
+                      totalPages={totalPages}
+                      total={solicitudesFiltradas.length}
+                      onChange={setPage}
+                      label={"Paginaci\u00f3n de voluntariado"}
+                    />
                   </>
                 )}
               </div>

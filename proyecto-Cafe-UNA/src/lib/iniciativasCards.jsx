@@ -6,7 +6,7 @@ export const ESTILOS_INICIATIVA = {
   },
   visitas: {
     accentColor: "#6d432c",
-    accentBg: "#faf6f3",
+    accentBg: "#fafafa",
     borderColor: "#e4d4c4",
   },
   voluntariado: {

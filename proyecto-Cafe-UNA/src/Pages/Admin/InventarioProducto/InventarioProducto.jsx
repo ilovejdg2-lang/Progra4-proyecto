@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { CategoriaNueva, CategoriaOpcionBorrar } from "../../../Components/Admin/ui/CategoriaCampo";
 import { ProductActions } from "./components/ProductActions";
 import { CentralStockEditor } from "./components/CentralStockEditor";
@@ -13,6 +14,7 @@ import { etiquetaEstadoProducto } from "./components/catalogFormatters";
 import { categoriasUnicas, esCategoriaRaiz, filtrarPorCategoria, TIPO_CATEGORIA_PRODUCTO } from "../../../lib/categorias";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
+import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
 import { useCentralStock } from "../../../hooks/useCentralStock";
 import { useProductCatalog } from "../../../hooks/useProductCatalog";
 import {
@@ -185,6 +187,14 @@ const AdminInventarioProducto = () => {
     filtrosConfig,
   });
 
+  const {
+    page,
+    setPage,
+    pageItems: productosPagina,
+    totalPages,
+    showPagination,
+  } = useAdminPaginacion(productosFiltrados);
+
   const cargarProductos = () => catalogState.retry();
 
   const handleCrear = async (form) => {
@@ -309,7 +319,7 @@ const AdminInventarioProducto = () => {
         isSaving={guardando}
       />
 
-      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <section className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
         {cargando ? (
           <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 px-4 py-14 text-center sm:px-6">
             <span className="admin-route-loading__spinner" aria-hidden="true" />
@@ -450,7 +460,7 @@ const AdminInventarioProducto = () => {
         ) : (
           <>
             <ProductCatalogTable
-              productos={productosFiltrados}
+              productos={productosPagina}
               destacadosEnUso={destacadosEnUso}
               maxDestacados={MAX_PRODUCTOS_DESTACADOS}
               puedeDestacarse={productoPuedeDestacarse}
@@ -469,7 +479,7 @@ const AdminInventarioProducto = () => {
               )}
             />
             <ProductCatalogMobileList
-              productos={productosFiltrados}
+              productos={productosPagina}
               destacadosEnUso={destacadosEnUso}
               maxDestacados={MAX_PRODUCTOS_DESTACADOS}
               puedeDestacarse={productoPuedeDestacarse}
@@ -488,6 +498,15 @@ const AdminInventarioProducto = () => {
                 />
               )}
             />
+            {showPagination ? (
+              <AdminPaginacion
+                page={page}
+                totalPages={totalPages}
+                total={productosFiltrados.length}
+                onChange={setPage}
+                label={"Paginaci\u00f3n de productos"}
+              />
+            ) : null}
           </>
         )}
           </>
