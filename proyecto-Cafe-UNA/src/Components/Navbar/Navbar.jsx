@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import './Navbar.css';
 import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
 import { Bell, BookOpen, ChevronDown, Coffee, HandHeart, Info, LayoutDashboard, LogOut, Menu, Minus, Package, Plus, ShoppingBag, ShoppingCart, Trash2, User, X } from 'lucide-react';
+import { LanguageSwitcher } from '../LanguageSwitcher/LanguageSwitcher';
 import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
 import { FacebookIcon, InstagramIcon } from '../Footer/SocialIcons';
 import { normalizeImageUrl } from '../../lib/imageUtils';
@@ -13,6 +14,9 @@ import { obtenerSolicitudes, obtenerSolicitudesDeUsuario } from '../../services/
 import { cancelPendingSessionRefresh } from '../../services/apiClient';
 import { beginLogout, clearSession, getActiveSessionUser } from '../../services/sessionService';
 import { rolesDeUsuario, tienePermiso } from '../../lib/permisos';
+import { textoIdioma } from '../../lib/idioma';
+import { useIdioma } from '../../lib/useIdioma';
+import { useTraducir } from '../../hooks/useTraducir';
 import { requestAdminStockProduct } from '../../lib/adminStockAlert';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
@@ -20,17 +24,29 @@ import { normalizePathname } from '../../lib/paths';
 
 import { clearCart as emptyCart, getStoredCart, saveCart } from '../../lib/cartStorage';
 
+function NombreCarrito({ nombre }) {
+    return useTraducir(nombre || '');
+}
+
 const ABOUT_HISTORIA_PATH = '/AboutUs';
 const ABOUT_GALERIA_PATH = '/AboutUs/galeria';
 
+function etiquetaEnlace(enlace, idioma) {
+    const es = enlace?.etiqueta ?? enlace?.Etiqueta ?? '';
+    return textoIdioma(es, null, idioma) || es;
+}
+
 function isAboutNavLink(enlace) {
     const ruta = String(enlace?.ruta ?? enlace?.Ruta ?? '').toLowerCase();
-    const etiqueta = String(enlace?.etiqueta ?? enlace?.Etiqueta ?? '').toLowerCase();
+    const etiqueta = String(
+        `${enlace?.etiqueta ?? enlace?.Etiqueta ?? ''} ${enlace?.etiquetaEn ?? enlace?.EtiquetaEn ?? ''}`,
+    ).toLowerCase();
     return (
         ruta.includes('aboutus') ||
         ruta.includes('/about') ||
         ruta.includes('sobre') ||
         etiqueta.includes('sobre nosotros') ||
+        etiqueta.includes('about us') ||
         (etiqueta.includes('nosotros') && !etiqueta.includes('product'))
     );
 }
@@ -115,6 +131,38 @@ function resolveMobileNavIcon(ruta) {
 }
 
 const Navbar = () => {
+    const { idioma } = useIdioma();
+    const labelHistoria = useTraducir('Historia');
+    const labelGaleria = useTraducir('Galería');
+    const labelNotificaciones = useTraducir('Notificaciones');
+    const labelStockBajo = useTraducir('STOCK BAJO');
+    const labelReponer = useTraducir('Reponer stock');
+    const labelAgotado = useTraducir('Agotado');
+    const labelBajoMinimo = useTraducir('Bajo mínimo');
+    const labelRedes = useTraducir('Redes sociales');
+    const labelSobreNosotros = useTraducir('Sobre nosotros');
+    const tCartResumen = useTraducir('Resumen del carrito');
+    const tCartVacio = useTraducir('Tu carrito está vacío');
+    const tCartVacioLead = useTraducir('Todavía no hay cafés por aquí. Explorá el catálogo y agregá el que más te guste.');
+    const tVerCatalogo = useTraducir('Ver catálogo');
+    const tVaciar = useTraducir('Vaciar carrito');
+    const tIrPagar = useTraducir('Ir a pagar');
+    const tSubtotal = useTraducir('Subtotal:');
+    const tIva = useTraducir('IVA:');
+    const tTotal = useTraducir('Total:');
+    const tCerrarCart = useTraducir('Cerrar carrito');
+    const tSinIva = useTraducir('Sin IVA:');
+    const tConIva = useTraducir('Con IVA:');
+    const tIniciarSesion = useTraducir('Iniciar sesión');
+    const tMiCuenta = useTraducir('Mi cuenta');
+    const tCerrarSesion = useTraducir('Cerrar sesión');
+    const tCerrarMenu = useTraducir('Cerrar menú');
+    const tCargandoNotif = useTraducir('Cargando notificaciones...');
+    const tNoHayNotif = useTraducir('No hay notificaciones pendientes.');
+    const tEliminarProducto = useTraducir('Eliminar producto');
+    const tMiPerfil = useTraducir('Mi perfil');
+    const tPanelAdmin = useTraducir('Panel administrativo');
+    const labelAbrirAdminNotif = useTraducir('Abrir en administración');
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -172,7 +220,7 @@ const Navbar = () => {
         return () => {
             activo = false;
         };
-    }, []);
+    }, [idioma]);
 
     useEffect(() => {
         const syncNavbarState = () => {
@@ -601,23 +649,37 @@ const Navbar = () => {
 
     const isTransparent = pathname === '/' && !isScrolled;
     const useSolidNavbar = isScrolled;
-    const brandLogoSrc = normalizeImageUrl(
-        isTransparent && !useSolidNavbar ? (logoClaroUrl || logoUrl) : logoUrl,
-        { width: 480 }
-    );
+    const showLogoClaro = isTransparent && !useSolidNavbar;
+    const brandLogoOscuroSrc = normalizeImageUrl(logoUrl, { width: 480 });
+    const brandLogoClaroSrc = normalizeImageUrl(logoClaroUrl || logoUrl, { width: 480 });
     const navLinks = filterNavLinks(enlacesNavbar);
     const mobileMenuLogoSrc = normalizeImageUrl(logoUrl || logoClaroUrl, { width: 320 });
     const hasMobileSocial = Boolean(instagramUrl || facebookUrl);
 
-    const brandMark = brandLogoSrc ? (
-        <img
-            src={brandLogoSrc}
-            alt={"Caf\u00e9 UNA"}
-            className="navbar__brand-logo"
-            width={240}
-            height={52}
-            decoding="async"
-        />
+    const brandMark = brandLogoOscuroSrc || brandLogoClaroSrc ? (
+        <span className="navbar__brand-logos">
+            {brandLogoOscuroSrc ? (
+                <img
+                    src={brandLogoOscuroSrc}
+                    alt={"Caf\u00e9 UNA"}
+                    className={`navbar__brand-logo navbar__brand-logo--dark${!showLogoClaro || !brandLogoClaroSrc ? ' is-visible' : ''}`}
+                    width={240}
+                    height={52}
+                    decoding="async"
+                />
+            ) : null}
+            {brandLogoClaroSrc ? (
+                <img
+                    src={brandLogoClaroSrc}
+                    alt=""
+                    aria-hidden="true"
+                    className={`navbar__brand-logo navbar__brand-logo--light${showLogoClaro || !brandLogoOscuroSrc ? ' is-visible' : ''}`}
+                    width={240}
+                    height={52}
+                    decoding="async"
+                />
+            ) : null}
+        </span>
     ) : (
         <span className="navbar__brand-text">{"Caf\u00e9 UNA"}</span>
     );
@@ -659,18 +721,18 @@ const Navbar = () => {
                                         setShowNotifications(false);
                                     }}
                                 >
-                                    <span>{enlace?.etiqueta ?? enlace?.Etiqueta ?? 'Sobre nosotros'}</span>
+                                    <span>{etiquetaEnlace(enlace, idioma) || labelSobreNosotros}</span>
                                     <ChevronDown size={16} strokeWidth={2.4} aria-hidden="true" />
                                 </button>
                                 {showAboutMenu ? (
-                                    <div className="navbar__about-menu" role="menu" aria-label="Sobre nosotros">
+                                    <div className="navbar__about-menu" role="menu" aria-label={labelSobreNosotros}>
                                         <Link
                                             to={ABOUT_HISTORIA_PATH}
                                             role="menuitem"
                                             className="navbar__about-item"
                                             onClick={() => setShowAboutMenu(false)}
                                         >
-                                            Historia
+                                            {labelHistoria}
                                         </Link>
                                         <Link
                                             to={ABOUT_GALERIA_PATH}
@@ -678,7 +740,7 @@ const Navbar = () => {
                                             className="navbar__about-item"
                                             onClick={() => setShowAboutMenu(false)}
                                         >
-                                            Galería
+                                            {labelGaleria}
                                         </Link>
                                     </div>
                                 ) : null}
@@ -697,6 +759,7 @@ const Navbar = () => {
             </div>
 
             <div className="navbar__actions">
+                <LanguageSwitcher compact className="navbar__lang" />
                 <div className="navbar__cart" ref={cartContainerRef} onClick={handleCartClick}>
                     <button
                         type="button"
@@ -712,47 +775,47 @@ const Navbar = () => {
                             className={`dropdown dropdown--cart dropdown--cart-panel ${isCartClosing ? 'is-closing' : 'is-open'}`}
                             role="dialog"
                             aria-modal="true"
-                            aria-label="Resumen del carrito"
+                            aria-label={tCartResumen}
                             onClick={(event) => event.stopPropagation()}
                         >
                             <header className="cart-drawer-header">
                                 <button
                                     type="button"
                                     className="cart-drawer__close-btn"
-                                    aria-label="Cerrar carrito"
-                                    title="Cerrar carrito"
+                                    aria-label={tCerrarCart}
+                                    title={tCerrarCart}
                                     onClick={(e) => { e.stopPropagation(); closeCartPanel(); }}
                                 >
                                     <X size={20} strokeWidth={2.4} aria-hidden="true" />
                                 </button>
-                                <h2>Resumen del carrito</h2>
+                                <h2>{tCartResumen}</h2>
                             </header>
                             {cartItems.length === 0 ? (
                                 <div className="cart-empty">
                                     <span className="cart-empty__icon" aria-hidden="true">
                                         <ShoppingBag size={28} strokeWidth={1.8} />
                                     </span>
-                                    <h3>Tu carrito está vacío</h3>
-                                    <p>Todavía no hay cafés por aquí. Explorá el catálogo y agregá el que más te guste.</p>
+                                    <h3>{tCartVacio}</h3>
+                                    <p>{tCartVacioLead}</p>
                                     <Link
                                         to="/productos"
                                         className="cart-empty__cta"
                                         onClick={() => closeCartPanel()}
                                     >
-                                        Ver catálogo
+                                        {tVerCatalogo}
                                     </Link>
                                 </div>
                             ) : (
                                 <>
-                                    <section className="cart-items" aria-label="Productos en el carrito">
+                                    <section className="cart-items" aria-label={tCartResumen}>
                                         {cartItems.map((item) => (
                                             <article key={item.id} className="cart-item">
                                                 <button
                                                     type="button"
                                                     className="cart-item__remove-inline"
                                                     onClick={() => removeLineItem(item.id)}
-                                                    aria-label={`Eliminar ${item.name || item.nombre || 'producto'} del carrito`}
-                                                    title="Eliminar producto"
+                                                    aria-label={`${tEliminarProducto}: ${item.name || item.nombre || 'producto'}`}
+                                                    title={tEliminarProducto}
                                                 >
                                                     <Trash2 size={16} strokeWidth={2.2} aria-hidden="true" />
                                                 </button>
@@ -768,11 +831,13 @@ const Navbar = () => {
                                                     )}
                                                 </div>
                                                 <div className="cart-item__details">
-                                                    <div className="cart-item__name">{item.nombre || item.name || 'Producto'}</div>
-                                                    <div className="cart-item__weight">{item.peso || item.quantity || 'Cantidad no disponible'} x {getQuantity(item)}</div>
+                                                    <div className="cart-item__name">
+                                                        <NombreCarrito nombre={item.nombre || item.name} />
+                                                    </div>
+                                                    <div className="cart-item__weight">{item.peso || item.quantity || '—'} x {getQuantity(item)}</div>
                                                     <div className="cart-item__prices">
-                                                        <span className="cart-item__price-pill">Sin IVA: {formatCRC(getUnitPriceWithoutIva(item))}</span>
-                                                        <span className="cart-item__price-pill cart-item__price-pill--strong">Con IVA: {formatCRC(getUnitPriceWithIva(item))}</span>
+                                                        <span className="cart-item__price-pill">{tSinIva} {formatCRC(getUnitPriceWithoutIva(item))}</span>
+                                                        <span className="cart-item__price-pill cart-item__price-pill--strong">{tConIva} {formatCRC(getUnitPriceWithIva(item))}</span>
                                                     </div>
                                                 </div>
                                                 <footer className="cart-item__bottom">
@@ -797,37 +862,37 @@ const Navbar = () => {
                                                         </button>
                                                     </div>
                                                     <div className="cart-item__line-total">
-                                                        <span className="cart-item__line-total-label">Subtotal</span>
+                                                        <span className="cart-item__line-total-label">{tSubtotal.replace(':', '')}</span>
                                                         <strong>{formatCRC(getUnitPriceWithIva(item) * getQuantity(item))}</strong>
                                                     </div>
                                                 </footer>
                                             </article>
                                         ))}
                                     </section>
-                                    <footer className="cart-subtotal" aria-label="Totales del carrito">
+                                    <footer className="cart-subtotal" aria-label={tCartResumen}>
                                         <div className="cart-subtotal-row">
-                                            <span>Subtotal:</span>
+                                            <span>{tSubtotal}</span>
                                             <strong>{formatCRC(cartSubtotal)}</strong>
                                         </div>
                                         <div className="cart-subtotal-row">
-                                            <span>IVA:</span>
+                                            <span>{tIva}</span>
                                             <strong>{formatCRC(cartIva)}</strong>
                                         </div>
                                         <div className="cart-total-row">
-                                            <strong>Total:</strong>
+                                            <strong>{tTotal}</strong>
                                             <strong>{formatCRC(cartTotal)}</strong>
                                         </div>
                                     </footer>
                                     <div className="cart-actions-row">
                                         <Link to="/checkout" className="cart-go-checkout" onClick={handleCheckoutClick}>
-                                            Ir a pagar
+                                            {tIrPagar}
                                         </Link>
                                         <button
                                             type="button"
                                             className="cart-clear-button"
                                             onClick={clearCartItems}
                                         >
-                                            Vaciar carrito
+                                            {tVaciar}
                                         </button>
                                     </div>
                                 </>
@@ -845,8 +910,8 @@ const Navbar = () => {
                         <button
                             type="button"
                             className="navbar__icon-button navbar__notifications-button"
-                            aria-label="Ver notificaciones"
-                            title="Notificaciones"
+                            aria-label={labelNotificaciones}
+                            title={labelNotificaciones}
                         >
                             <Bell size={25} strokeWidth={2.2} aria-hidden="true" />
                         </button>
@@ -854,23 +919,23 @@ const Navbar = () => {
                             <span className="notifications-badge">{notificationsCount}</span>
                         ) : null}
                         {showNotifications ? (
-                            <aside className="dropdown dropdown--notifications" aria-label="Notificaciones">
+                            <aside className="dropdown dropdown--notifications" aria-label={labelNotificaciones}>
                                 <header className="notifications-header">
-                                    <h2>Notificaciones</h2>
+                                    <h2>{labelNotificaciones}</h2>
                                     <span>{notificationsCount}</span>
                                 </header>
 
                                 {notificationsLoading ? (
-                                    <p className="dropdown__empty">Cargando notificaciones...</p>
+                                    <p className="dropdown__empty">{tCargandoNotif}</p>
                                 ) : notificationsError ? (
                                     <p className="dropdown__empty">{notificationsError}</p>
                                 ) : notificationsCount === 0 ? (
-                                    <p className="dropdown__empty">No hay notificaciones pendientes.</p>
+                                    <p className="dropdown__empty">{tNoHayNotif}</p>
                                 ) : (
                                     <div className="notifications-list">
                                         {showStockAlerts && alertasStockCount > 0 ? (
-                                            <section className="notifications-section" aria-label="Stock bajo">
-                                                <p className="notifications-section-label">Stock bajo</p>
+                                            <section className="notifications-section" aria-label={labelStockBajo}>
+                                                <p className="notifications-section-label">{labelStockBajo}</p>
                                                 {alertasStock.map((alerta) => {
                                                     const lugares =
                                                         Array.isArray(alerta.ubicaciones) && alerta.ubicaciones.length > 0
@@ -891,14 +956,16 @@ const Navbar = () => {
                                                                 <Package size={16} />
                                                             </span>
                                                             <div className="notification-item__main">
-                                                                <strong>{alerta.nombre}</strong>
+                                                                <strong>
+                                                                    <NombreCarrito nombre={alerta.nombre} />
+                                                                </strong>
                                                                 <span>
-                                                                    {alerta.agotado ? 'Agotado' : 'Bajo mínimo'}
+                                                                    {alerta.agotado ? labelAgotado : labelBajoMinimo}
                                                                     {' · '}
                                                                     {lugares}
                                                                 </span>
                                                                 <small className="notification-item__stock">
-                                                                    {"Reponer stock"}
+                                                                    {labelReponer}
                                                                 </small>
                                                             </div>
                                                         </button>
@@ -919,9 +986,14 @@ const Navbar = () => {
                                                                 <HandHeart size={16} />
                                                             </span>
                                                             <div className="notification-item__main">
-                                                                <strong>{solicitud.tipoVoluntariado || solicitud.area || 'Voluntariado'}</strong>
-                                                                <span>{solicitud.fechaSolicitud || 'Fecha no disponible'}</span>
-                                                                {user?.role === 'admin' ? <small>{"Abrir en administraci\u00f3n"}</small> : null}
+                                                                <strong>
+                                                                    <NombreCarrito
+                                                                        nombre={solicitud.tipoVoluntariado || solicitud.area || 'Voluntariado'}
+                                                                    />
+                                                                </strong>
+                                                                {user?.role === 'admin' ? (
+                                                                    <small>{labelAbrirAdminNotif}</small>
+                                                                ) : null}
                                                             </div>
                                                         </>
                                                     );
@@ -955,8 +1027,8 @@ const Navbar = () => {
                     <button
                         type="button"
                         className="navbar__icon-button navbar__user-button"
-                        aria-label={user ? 'Abrir men\u00fa de usuario' : 'Iniciar sesi\u00f3n'}
-                        title={user ? 'Mi cuenta' : 'Iniciar sesi\u00f3n'}
+                        aria-label={user ? 'Abrir men\u00fa de usuario' : tIniciarSesion}
+                        title={user ? tMiCuenta : tIniciarSesion}
                     >
                         <User size={24} strokeWidth={2} aria-hidden="true" />
                     </button>
@@ -977,18 +1049,18 @@ const Navbar = () => {
                             {user.role !== 'admin' ? (
                               <Link to="/perfil" className="dropdown__item" role="menuitem" onClick={() => setShowDropdown(false)}>
                                 <User size={16} strokeWidth={2.1} aria-hidden="true" />
-                                Mi perfil
+                                {tMiPerfil}
                               </Link>
                             ) : null}
                             {user.role === 'admin' ? (
                               <Link to="/admin" className="dropdown__item" role="menuitem" onClick={() => setShowDropdown(false)}>
                                 <LayoutDashboard size={16} strokeWidth={2.1} aria-hidden="true" />
-                                Panel administrativo
+                                {tPanelAdmin}
                               </Link>
                             ) : null}
                             <button type="button" className="dropdown__logout" role="menuitem" onClick={handleLogout}>
                               <LogOut size={16} strokeWidth={2.1} aria-hidden="true" />
-                              Cerrar sesión
+                              {tCerrarSesion}
                             </button>
                           </div>
                         </div>
@@ -998,7 +1070,7 @@ const Navbar = () => {
                 <button
                     type="button"
                     className="navbar__menu-toggle"
-                    aria-label={isMobileMenuOpen ? 'Cerrar men\u00fa' : 'Abrir men\u00fa'}
+                    aria-label={isMobileMenuOpen ? tCerrarMenu : 'Abrir men\u00fa'}
                     aria-expanded={isMobileMenuOpen}
                     aria-controls="navbar-mobile-menu"
                     onClick={handleMobileMenuToggle}
@@ -1020,7 +1092,7 @@ const Navbar = () => {
                         <button
                             type="button"
                             className="navbar__mobile-backdrop"
-                            aria-label={"Cerrar men\u00fa"}
+                            aria-label={tCerrarMenu}
                             tabIndex={isMobileMenuOpen ? 0 : -1}
                             onClick={closeMobileMenu}
                             onTouchMove={(event) => event.preventDefault()}
@@ -1052,14 +1124,17 @@ const Navbar = () => {
                                         <span className="navbar__mobile-brand-text">{"Caf\u00e9 UNA"}</span>
                                     )}
                                 </Link>
-                                <button
+                                <div className="flex items-center gap-2">
+                                    <LanguageSwitcher compact className="lang-switch--on-light" />
+                                    <button
                                     type="button"
                                     className="navbar__mobile-close"
-                                    aria-label={"Cerrar men\u00fa"}
+                                    aria-label={tCerrarMenu}
                                     onClick={closeMobileMenu}
                                 >
                                     <X size={20} strokeWidth={2.2} aria-hidden="true" />
                                 </button>
+                                </div>
                             </header>
 
                             <nav className="navbar__mobile-links" aria-label="Secciones del sitio">
@@ -1081,7 +1156,9 @@ const Navbar = () => {
                                                 >
                                                     <span className="navbar__mobile-about-trigger-main">
                                                         <span className="navbar__mobile-link-label">
-                                                            {enlace?.etiqueta ?? enlace?.Etiqueta ?? 'Sobre nosotros'}
+                                                            <NombreCarrito
+                                                                nombre={enlace?.etiqueta || enlace?.Etiqueta || 'Sobre nosotros'}
+                                                            />
                                                         </span>
                                                     </span>
                                                     <ChevronDown
@@ -1098,14 +1175,14 @@ const Navbar = () => {
                                                             className={`navbar__mobile-about-item ${historiaActive ? 'is-active' : ''}`}
                                                             onClick={closeMobileMenu}
                                                         >
-                                                            Historia
+                                                            {labelHistoria}
                                                         </Link>
                                                         <Link
                                                             to={ABOUT_GALERIA_PATH}
                                                             className={`navbar__mobile-about-item ${galeriaActive ? 'is-active' : ''}`}
                                                             onClick={closeMobileMenu}
                                                         >
-                                                            Galería
+                                                            {labelGaleria}
                                                         </Link>
                                                     </div>
                                                 ) : null}
@@ -1114,7 +1191,7 @@ const Navbar = () => {
                                     }
 
                                     const NavIcon = resolveMobileNavIcon(enlace?.ruta ?? enlace?.Ruta);
-                                    const label = enlace?.etiqueta ?? enlace?.Etiqueta ?? 'Enlace';
+                                    const label = enlace?.etiqueta || enlace?.Etiqueta || 'Enlace';
 
                                     return (
                                         <SiteNavLink
@@ -1126,7 +1203,9 @@ const Navbar = () => {
                                         >
                                             <span className="navbar__mobile-link-content">
                                                 <NavIcon className="navbar__mobile-link-icon" size={22} strokeWidth={1.9} aria-hidden="true" />
-                                                <span className="navbar__mobile-link-label">{label}</span>
+                                                <span className="navbar__mobile-link-label">
+                                                    <NombreCarrito nombre={label} />
+                                                </span>
                                             </span>
                                         </SiteNavLink>
                                     );
@@ -1135,7 +1214,7 @@ const Navbar = () => {
 
                             {hasMobileSocial ? (
                                 <div className="navbar__mobile-social">
-                                    <p className="navbar__mobile-social-title">Redes sociales</p>
+                                    <p className="navbar__mobile-social-title">{labelRedes}</p>
                                     <div className="navbar__mobile-social-links">
                                         {instagramUrl ? (
                                             <a href={instagramUrl} target="_blank" rel="noreferrer" aria-label="Instagram" onClick={closeMobileMenu}>

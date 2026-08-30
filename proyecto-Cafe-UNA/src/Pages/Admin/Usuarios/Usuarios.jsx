@@ -33,17 +33,20 @@ import {
   validateNombreUsuario,
   validatePassword,
 } from "../../../lib/formLimits";
+import { queueFocusFormError } from "../../../lib/formFocus";
+import { ST } from "../../../Components/T/ST";
+import { t } from "../../../lib/t";
 
 function Modal({ titulo, onClose, children }) {
   return (
-    <AdminModal open onClose={onClose} maxWidth="max-w-lg" labelledBy="admin-usuarios-modal-title">
+    <AdminModal open onClose={onClose} maxWidth="max-w-xl" labelledBy="admin-usuarios-modal-title">
       <AdminModalHeader>
         <h2 id="admin-usuarios-modal-title" className="text-lg font-semibold text-slate-900">{titulo}</h2>
         <button
           type="button"
           onClick={onClose}
           className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-          aria-label="Cerrar"
+          aria-label={t("Cerrar")}
         >
           <X className="size-5" />
         </button>
@@ -75,8 +78,8 @@ function claseRol(rol) {
 
 function BadgeRol({ rol }) {
   return (
-    <span className={`inline-block rounded-full px-3 py-0.5 text-xs font-semibold ${claseRol(rol)}`}>
-      {rol}
+    <span className={`inline-block rounded-full px-3 py-0.5 text-[length:var(--text-body)] font-semibold ${claseRol(rol)}`}>
+      <ST>{rol}</ST>
     </span>
   );
 }
@@ -138,11 +141,21 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 
       if (!payload.correo) {
         setErrorCorreo("Ingrese el correo.");
+        queueFocusFormError({
+          errors: { correo: true },
+          root: document.querySelector('[role="dialog"]'),
+          fieldMap: { correo: "correo" },
+        });
         return;
       }
 
       if (nextErrors.nombre) {
         setFieldErrors(nextErrors);
+        queueFocusFormError({
+          errors: nextErrors,
+          root: document.querySelector('[role="dialog"]'),
+          fieldOrder: ["nombre", "passwordHash", "passwordActual", "formulario"],
+        });
         return;
       }
 
@@ -151,6 +164,11 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
           const passwordError = validatePassword(value.passwordHash);
           if (passwordError) {
             setFieldErrors({ ...nextErrors, passwordHash: passwordError });
+            queueFocusFormError({
+              errors: { ...nextErrors, passwordHash: passwordError },
+              root: document.querySelector('[role="dialog"]'),
+              fieldOrder: ["nombre", "passwordHash"],
+            });
             return;
           }
           setFieldErrors(nextErrors);
@@ -200,10 +218,19 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
         const passwordError = validatePassword(value.passwordHash, { required: true });
         if (passwordError) {
           setFieldErrors({ ...nextErrors, passwordHash: passwordError });
+          queueFocusFormError({
+            errors: { ...nextErrors, passwordHash: passwordError },
+            root: document.querySelector('[role="dialog"]'),
+            fieldOrder: ["nombre", "passwordHash", "passwordActual"],
+          });
           return;
         }
         if (!value.passwordActual?.trim()) {
           setFieldErrors({ ...nextErrors, passwordActual: "Ingrese su contrase\u00f1a actual." });
+          queueFocusFormError({
+            errors: { passwordActual: true },
+            root: document.querySelector('[role="dialog"]'),
+          });
           return;
         }
         cambios.passwordHash = value.passwordHash;
@@ -321,11 +348,12 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
   return (
     <form onSubmit={handleSubmit} className="usuarios-form space-y-4">
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-600">Nombre</label>
+        <label className="mb-1 block text-xs font-medium text-slate-600"><ST>Nombre</ST></label>
         <form.Field name="nombre">
           {(field) => (
             <>
               <input
+                name="nombre"
                 className={`${inputCls} ${fieldErrors.nombre ? "border-red-500 focus:border-red-500" : ""}`}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -336,17 +364,21 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                 maxLength={MAX_NOMBRE_USUARIO}
                 required
                 disabled={!inicial && pasoCreacion === "codigo"}
+                aria-invalid={Boolean(fieldErrors.nombre)}
               />
-              {fieldErrors.nombre ? <p className="mt-1 text-xs text-red-600">{fieldErrors.nombre}</p> : null}
+              {fieldErrors.nombre ? (
+                <p className="mt-1 text-xs text-red-600" role="alert">{fieldErrors.nombre}</p>
+              ) : null}
             </>
           )}
         </form.Field>
       </div>
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-600">Correo</label>
+        <label className="mb-1 block text-xs font-medium text-slate-600"><ST>Correo</ST></label>
         <form.Field name="correo">
           {(field) => (
             <input
+              name="correo"
               type="email"
               className={inputCls}
               value={field.state.value}
@@ -429,6 +461,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                   {(field) => (
                     <>
                       <input
+                        name="passwordHash"
                         type="password"
                         className={`${inputCls} ${fieldErrors.passwordHash ? "border-red-500 focus:border-red-500" : ""}`}
                         value={field.state.value}
@@ -440,9 +473,10 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                         maxLength={MAX_PASSWORD}
                         required={!inicial}
                         placeholder={inicial ? "Dejar vac\u00edo para no cambiar" : ""}
+                        aria-invalid={Boolean(fieldErrors.passwordHash)}
                       />
                       {fieldErrors.passwordHash ? (
-                        <p className="mt-1 text-xs text-red-600">{fieldErrors.passwordHash}</p>
+                        <p className="mt-1 text-xs text-red-600" role="alert">{fieldErrors.passwordHash}</p>
                       ) : null}
                     </>
                   )}
@@ -455,6 +489,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                     {(field) => (
                       <>
                         <input
+                          name="passwordActual"
                           type="password"
                           className={`${inputCls} ${fieldErrors.passwordActual ? "border-red-500 focus:border-red-500" : ""}`}
                           value={field.state.value}
@@ -465,9 +500,10 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                           }}
                           maxLength={MAX_PASSWORD}
                           placeholder={"Requerida si cambia la contrase\u00f1a"}
+                          aria-invalid={Boolean(fieldErrors.passwordActual)}
                         />
                         {fieldErrors.passwordActual ? (
-                          <p className="mt-1 text-xs text-red-600">{fieldErrors.passwordActual}</p>
+                          <p className="mt-1 text-xs text-red-600" role="alert">{fieldErrors.passwordActual}</p>
                         ) : null}
                       </>
                     )}
@@ -476,10 +512,10 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
               ) : null}
             </>
           ) : (
-            <p className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-500">{"Solo puede cambiar su propia contrase\u00f1a."}</p>
+            <p className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-500"><ST>{"Solo puede cambiar su propia contrase\u00f1a."}</ST></p>
           )}
           <div>
-            <label className="mb-2 block text-xs font-medium text-slate-600">Roles</label>
+            <label className="mb-2 block text-xs font-medium text-slate-600"><ST>Roles</ST></label>
             {puedeEditarRoles ? (
               <form.Field name="roles">
                 {(field) => {
@@ -505,7 +541,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                               : "border border-slate-200 bg-white text-slate-500 hover:border-slate-300"
                           }`}
                         >
-                          {rol}
+                          <ST>{rol}</ST>
                         </button>
                       ))}
                     </div>
@@ -599,17 +635,17 @@ function AccionesUsuario({
       <div className="flex gap-1.5">
         <button type="button" onClick={onEditar} className={`${editarCls} h-8 px-2.5`}>
           <Pencil className="size-3 shrink-0" aria-hidden="true" />
-          <span>Editar</span>
+          <span><ST>Editar</ST></span>
         </button>
         <button
           type="button"
           onClick={onToggle}
           disabled={toggleando === usuario.id || !puedeCambiarEstado}
-          title={!puedeCambiarEstado ? "Solo SuperAdmin puede cambiar estado." : ""}
+          title={!puedeCambiarEstado ? t("Solo SuperAdmin puede cambiar estado.") : ""}
           className={`${toggleCls} h-8 px-2.5 disabled:cursor-not-allowed disabled:opacity-50`}
         >
           <Power className="size-3 shrink-0" aria-hidden="true" />
-          <span>{toggleLabel}</span>
+          <span>{toggleLabel === "..." ? "..." : <ST>{toggleLabel}</ST>}</span>
         </button>
       </div>
     );
@@ -619,17 +655,17 @@ function AccionesUsuario({
     <div className="flex gap-1">
       <button type="button" onClick={onEditar} className={`${editarCls} h-7 px-2`}>
         <Pencil className="size-3 shrink-0" aria-hidden="true" />
-        <span>Editar</span>
+        <span><ST>Editar</ST></span>
       </button>
       <button
         type="button"
         onClick={onToggle}
         disabled={toggleando === usuario.id || !puedeCambiarEstado}
-        title={!puedeCambiarEstado ? "Solo SuperAdmin puede cambiar estado." : ""}
+        title={!puedeCambiarEstado ? t("Solo SuperAdmin puede cambiar estado.") : ""}
         className={`${toggleCls} h-7 px-2 disabled:cursor-not-allowed disabled:opacity-50`}
       >
         <Power className="size-3 shrink-0" aria-hidden="true" />
-        <span>{toggleLabel}</span>
+        <span>{toggleLabel === "..." ? "..." : <ST>{toggleLabel}</ST>}</span>
       </button>
     </div>
   );
@@ -786,21 +822,21 @@ const AdminUsuarios = () => {
   const columns = useMemo(() => [
     {
       accessorKey: "nombre",
-      header: "Nombre",
+      header: () => <ST>Nombre</ST>,
       cell: ({ getValue }) => (
         <span className="font-medium text-slate-800">{getValue()}</span>
       ),
     },
     {
       accessorKey: "correo",
-      header: "Email",
+      header: () => <ST>Email</ST>,
       cell: ({ getValue }) => (
         <span className="text-slate-500">{getValue()}</span>
       ),
     },
     {
       accessorKey: "roles",
-      header: "Roles",
+      header: () => <ST>Roles</ST>,
       enableSorting: false,
       cell: ({ getValue }) => (
         <div className="flex flex-wrap gap-1">
@@ -810,21 +846,21 @@ const AdminUsuarios = () => {
     },
     {
       accessorKey: "estado",
-      header: "Estado",
+      header: () => <ST>Estado</ST>,
       cell: ({ getValue }) => {
         const estado = getValue();
         return (
           <span className={`text-xs font-medium ${
             esUsuarioActivo(estado) ? "text-green-700" : "text-red-600"
           }`}>
-            {esUsuarioActivo(estado) ? "Habilitado" : "Deshabilitado"}
+            <ST>{esUsuarioActivo(estado) ? "Habilitado" : "Deshabilitado"}</ST>
           </span>
         );
       },
     },
     {
       id: "acciones",
-      header: "Acciones",
+      header: () => <ST>Acciones</ST>,
       enableSorting: false,
       cell: ({ row }) => {
         const usuario = row.original;
@@ -863,14 +899,14 @@ const AdminUsuarios = () => {
         {/* Header */}
         <div className="flex flex-col gap-4 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">Administrar usuarios</h1>
-            <p className="mt-0.5 text-sm text-slate-600">{"Gesti\u00f3n de acceso y roles"}</p>
+            <h1 className="text-xl font-semibold text-slate-900"><ST>Administrar usuarios</ST></h1>
+            <p className="mt-0.5 text-sm text-slate-600"><ST>{"Gesti\u00f3n de acceso y roles"}</ST></p>
           </div>
           <button
             onClick={() => setModalCrear(true)}
             className="w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2 text-sm font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 sm:w-auto"
           >
-            Nuevo usuario +
+            <ST>Nuevo usuario +</ST>
           </button>
         </div>
 
@@ -911,21 +947,21 @@ const AdminUsuarios = () => {
 
         {cargando ? (
           <div className="flex items-center justify-center py-16 text-sm text-slate-600">
-            Cargando usuarios…
+            <ST>Cargando usuarios…</ST>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center gap-3 py-16 text-sm text-red-500">
-            {error}
-            <button onClick={cargar} className="text-slate-600 underline">Reintentar</button>
+            <ST>{error}</ST>
+            <button onClick={cargar} className="text-slate-600 underline"><ST>Reintentar</ST></button>
           </div>
         ) : usuarios.length === 0 ? (
-          <div className="py-16 text-center text-sm text-slate-600">No hay usuarios registrados.</div>
+          <div className="py-16 text-center text-sm text-slate-600"><ST>No hay usuarios registrados.</ST></div>
         ) : usuariosFiltrados.length === 0 ? (
           <AdminListaVacia onLimpiar={limpiar} />
         ) : (
           <>
             <div className="admin-table-shell hidden md:block">
-              <table className="w-full text-sm">
+              <table className="w-full text-left text-[length:var(--text-body)]">
                 <thead>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <tr key={headerGroup.id}>
@@ -1013,7 +1049,7 @@ const AdminUsuarios = () => {
       </section>
 
       {modalCrear ? (
-        <Modal titulo="Nuevo usuario" onClose={() => setModalCrear(false)}>
+        <Modal titulo={t("Nuevo usuario")} onClose={() => setModalCrear(false)}>
           <FormUsuario
             onCreado={handleCrear}
             onActualizado={handleEditar}
@@ -1025,7 +1061,7 @@ const AdminUsuarios = () => {
         </Modal>
       ) : null}
       {usuarioEditar ? (
-        <Modal titulo="Editar usuario" onClose={() => setUsuarioEditar(null)}>
+        <Modal titulo={t("Editar usuario")} onClose={() => setUsuarioEditar(null)}>
           <FormUsuario
             inicial={usuarioEditar}
             onCreado={handleCrear}

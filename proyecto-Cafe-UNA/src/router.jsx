@@ -3,6 +3,7 @@ import {
     createRootRoute,
     createRoute,
     createRouter,
+    Navigate,
     Outlet,
     useRouterState,
 } from "@tanstack/react-router";
@@ -10,13 +11,17 @@ import { lazy, Suspense, useEffect, useLayoutEffect } from "react";
 
 import AdminRouteLoading from "./Components/Admin/AdminRouteLoading";
 import CartAddedToast from "./Components/CartAddedToast/CartAddedToast";
+import ErrorBoundary from "./Components/ErrorBoundary/ErrorBoundary";
 import Footer from "./Components/Footer/Footer";
 import Navbar from './Components/Navbar/Navbar';
 import PageLoading from "./Components/PageLoading/PageLoading";
 import Home from "./Pages/Home/Home";
+import NotFound from "./Pages/NotFound/NotFound";
+import { usePublicPageLoadingGate } from "./hooks/usePublicPageLoadingGate";
 import { getRouteCacheKey, isPageInstantReady } from "./lib/pageSessionState";
 import { clearHomePageLoading, setHomePageLoading } from "./lib/homePageLoading";
-import { finishAdminBootLoading, finishSiteBootLoading, getSiteBootMessage } from "./lib/siteBootLoading";
+import { beginRouteLoading, endRouteLoading } from "./lib/routeLoadingLock";
+import { getSiteBootMessage } from "./lib/siteBootLoading";
 
 const AboutUs = lazy(() => import("./Pages/AboutUs/AboutUs"));
 const Products = lazy(() => import("./Pages/Products/Products"));
@@ -29,36 +34,26 @@ const AdminInformacionSobreNosotros = lazy(() => import("./Pages/Admin/Informaci
 const AdminInventarioProducto = lazy(() => import("./Pages/Admin/InventarioProducto/InventarioProducto"));
 const AdminPuntosVenta = lazy(() => import("./Pages/Admin/PuntosVenta/PuntosVenta"));
 const AdminActivosFijos = lazy(() => import("./Pages/Admin/ActivosFijos/ActivosFijos"));
+const AdminDistribucion = lazy(() => import("./Pages/Admin/Distribucion/Distribucion"));
+const AdminVentasPresenciales = lazy(() => import("./Pages/Admin/VentasPresenciales/VentasPresenciales"));
 const AdminVoluntariado = lazy(() => import("./Pages/Admin/Voluntariado/Voluntariado"));
 const AdminUsuarios = lazy(() => import("./Pages/Admin/Usuarios/Usuarios"));
-const AdminAuditoria = lazy(() => import("./Pages/Admin/Auditoria/Auditoria"));
 const AdminHistorialVentas = lazy(() => import("./Pages/Admin/HistorialVentas/HistorialVentas"));
+const AdminAjustes = lazy(() => import("./Pages/Admin/Ajustes/Ajustes"));
 const Checkout = lazy(() => import("./Pages/Checkout/Checkout"));
 const Perfil = lazy(() => import("./Pages/Perfil/Perfil"));
 const HistorialComprasCliente = lazy(() => import("./Pages/HistorialCompras/HistorialComprasCliente"));
 const AdminPerfil = lazy(() => import("./Pages/Admin/Perfil/AdminPerfil"));
 
 function HomeRouteLoading() {
-    if (isPageInstantReady('home')) {
-        return null;
-    }
-
     return <PageLoading message="Cargando inicio..." />;
 }
 
-function SiteRouteLoading({ message = 'Cargando p\u00e1gina...', cacheKey }) {
-    if (cacheKey && isPageInstantReady(cacheKey)) {
-        return null;
-    }
-
+function SiteRouteLoading({ message = 'Cargando p\u00e1gina...' }) {
     return <PageLoading message={message} />;
 }
 
-function AdminRouteLoadingGate({ cacheKey }) {
-    if (cacheKey && isPageInstantReady(cacheKey)) {
-        return null;
-    }
-
+function AdminRouteLoadingGate() {
     return <AdminRouteLoading />;
 }
 
@@ -70,38 +65,53 @@ function PublicRouteOutlet() {
     const pathname = useRouterState({
         select: (state) => state.location.pathname,
     });
-    const cacheKey = getRouteCacheKey(pathname);
-    const isHomeRoute = cacheKey === 'home';
 
-    useLayoutEffect(() => {
-        const key = isHomeRoute ? 'home' : cacheKey;
-        if (key && !isPageInstantReady(key)) return;
-        finishSiteBootLoading();
-    }, [cacheKey, isHomeRoute]);
-
-    return <Outlet />;
+    return (
+        <ErrorBoundary key={pathname}>
+            <Outlet />
+        </ErrorBoundary>
+    );
 }
 
 function AdminRouteOutlet() {
     const pathname = useRouterState({
         select: (state) => state.location.pathname,
     });
-    const cacheKey = getRouteCacheKey(pathname);
 
-    useLayoutEffect(() => {
-        if (cacheKey && !isPageInstantReady(cacheKey)) return;
-        finishAdminBootLoading();
-    }, [cacheKey]);
-
-    return <Outlet />;
+    return (
+        <ErrorBoundary
+            key={pathname}
+            message="Algo salió mal en el panel. Podés recargar o volver al inicio."
+        >
+            <Outlet />
+        </ErrorBoundary>
+    );
 }
 
 function ChromelessRouteOutlet() {
+    const pathname = useRouterState({
+        select: (state) => state.location.pathname,
+    });
+    const cacheKey = getRouteCacheKey(pathname) || pathname;
+    const showLoading = usePublicPageLoadingGate(cacheKey, true);
+
+    if (showLoading) {
+        return <PageLoading message={getRouteLoadingMessage(pathname)} />;
+    }
+
+    return (
+        <ErrorBoundary key={pathname}>
+            <Outlet />
+        </ErrorBoundary>
+    );
+}
+
+function NotFoundRouteComponent() {
     useLayoutEffect(() => {
-        finishSiteBootLoading();
+        endRouteLoading(null);
     }, []);
 
-    return <Outlet />;
+    return <NotFound />;
 }
 
 const rootRoute = createRootRoute({
@@ -113,29 +123,38 @@ const rootRoute = createRootRoute({
         const isHomeRoute = cacheKey === 'home';
         const isAdminRoute = pathname.startsWith("/admin");
         const isLoginRoute = pathname === "/login";
-        const isPerfilRoute = pathname === "/perfil";
+        const isPerfilRoute = pathname === "/perfil" || pathname.startsWith("/perfil/");
         const isCheckoutRoute = pathname === "/checkout";
         const isChromelessRoute = isLoginRoute || isPerfilRoute || isCheckoutRoute;
+        const loadingKey = isHomeRoute ? 'home' : cacheKey || pathname;
+
+        // Durante el render: activar overlay antes del paint (evita blanco).
+        if (typeof document !== 'undefined' && !isPageInstantReady(loadingKey)) {
+            beginRouteLoading(
+                loadingKey,
+                isAdminRoute ? 'admin' : isHomeRoute ? 'home' : 'site',
+            );
+        }
 
         useLayoutEffect(() => {
-            if (!isHomeRoute) {
-                clearHomePageLoading();
+            if (isPageInstantReady(loadingKey)) {
+                endRouteLoading(loadingKey);
+                if (isHomeRoute) clearHomePageLoading();
                 return;
             }
 
-            if (isPageInstantReady('home')) {
-                clearHomePageLoading();
-            } else {
-                setHomePageLoading(true);
-            }
-        }, [isHomeRoute]);
+            const mode = isAdminRoute ? 'admin' : isHomeRoute ? 'home' : 'site';
+            beginRouteLoading(loadingKey, mode);
+            if (isHomeRoute) setHomePageLoading(true);
+            else clearHomePageLoading();
+        }, [loadingKey, isAdminRoute, isHomeRoute]);
 
         useEffect(() => {
             document.body.classList.toggle("admin-route-active", isAdminRoute);
             document.body.classList.toggle("perfil-route-active", isPerfilRoute);
             document.body.classList.toggle("checkout-route-active", isCheckoutRoute);
             if (isAdminRoute || isPerfilRoute || isCheckoutRoute) {
-                document.body.classList.remove("app-route-loading", "home-hero-ready");
+                document.body.classList.remove("home-hero-ready");
                 clearHomePageLoading();
             }
 
@@ -150,7 +169,7 @@ const rootRoute = createRootRoute({
             return (
                 <Suspense fallback={
                     isAdminRoute
-                        ? <AdminRouteLoadingGate cacheKey={cacheKey} />
+                        ? <AdminRouteLoadingGate />
                         : <PageLoading message={getRouteLoadingMessage(pathname)} />
                 }>
                     {isAdminRoute ? <AdminRouteOutlet /> : <ChromelessRouteOutlet />}
@@ -168,7 +187,7 @@ const rootRoute = createRootRoute({
                     <Suspense fallback={
                         isHomeRoute
                             ? <HomeRouteLoading />
-                            : <SiteRouteLoading message={getRouteLoadingMessage(pathname)} cacheKey={cacheKey} />
+                            : <SiteRouteLoading message={getRouteLoadingMessage(pathname)} />
                     }>
                         <PublicRouteOutlet />
                     </Suspense>
@@ -178,6 +197,7 @@ const rootRoute = createRootRoute({
             </div>
         )
     },
+    notFoundComponent: NotFoundRouteComponent,
 })
 const home = createRoute({
     getParentRoute: () => rootRoute,
@@ -234,6 +254,16 @@ const adminActivosFijosRoute = createRoute({
     path: "/admin/activos-fijos",
     component: AdminActivosFijos,
 })
+const adminDistribucionRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/distribucion",
+    component: AdminDistribucion,
+})
+const adminVentasPresencialesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/ventas-presenciales",
+    component: AdminVentasPresenciales,
+})
 const adminVoluntariadoRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/voluntariado",
@@ -252,7 +282,27 @@ const adminHistorialVentasRoute = createRoute({
 const adminAuditoriaRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/auditoria",
-    component: AdminAuditoria,
+    component: () => <Navigate to="/admin" />,
+})
+const adminAjustesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/ajustes",
+    component: AdminAjustes,
+})
+const adminAjustesHorariosRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/ajustes/horarios",
+    component: AdminAjustes,
+})
+const adminAjustesPermisosRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/ajustes/permisos",
+    component: AdminAjustes,
+})
+const adminAjustesIdiomaRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/ajustes/idioma",
+    component: AdminAjustes,
 })
 const productsRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -289,9 +339,11 @@ const adminPerfilRoute = createRoute({
     path: "/admin/perfil",
     component: AdminPerfil,
 })
-
-
-
+const notFoundCatchAllRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/$",
+    component: NotFoundRouteComponent,
+})
 
 const routeTree= rootRoute.addChildren([
     home,
@@ -305,10 +357,16 @@ const routeTree= rootRoute.addChildren([
     adminProductoRoute,
     adminPuntosVentaRoute,
     adminActivosFijosRoute,
+    adminDistribucionRoute,
+    adminVentasPresencialesRoute,
     adminHistorialVentasRoute,
     adminVoluntariadoRoute,
     adminUsuariosRoute,
     adminAuditoriaRoute,
+    adminAjustesRoute,
+    adminAjustesHorariosRoute,
+    adminAjustesPermisosRoute,
+    adminAjustesIdiomaRoute,
     productsRoute,
     productDetailRoute,
     checkoutRoute,
@@ -316,7 +374,9 @@ const routeTree= rootRoute.addChildren([
     perfilRoute,
     historialComprasClienteRoute,
     adminPerfilRoute,
+    notFoundCatchAllRoute,
 ])
 export const router = createRouter({
-    routeTree
+    routeTree,
+    defaultNotFoundComponent: NotFoundRouteComponent,
 })

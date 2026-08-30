@@ -22,11 +22,13 @@ import {
   actualizarStockCentral,
   crearProducto,
 } from "../../../services/productosService";
+import { asegurarCamposEnEspanol } from "../../../lib/traducir";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { obtenerCategorias } from "../../../services/categoriasService";
 import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
 import { contactSupportMessage } from "../../../lib/formLimits";
 import { ADMIN_STOCK_PRODUCT_EVENT, clearPendingStockProduct, peekPendingStockProduct } from "../../../lib/adminStockAlert";
+import { ST } from "../../../Components/T/ST";
 import {
   productoPuedeDestacarse,
   productoPuedeDeshabilitarse,
@@ -150,7 +152,7 @@ const AdminInventarioProducto = () => {
         id: "categoria",
         aplicar: (lista, valor) => filtrarPorCategoria(lista, valor === "todos" ? "todas" : valor),
       },
-      { id: "estado", obtenerValor: (producto) => producto.estado },
+      { id: "estado", obtenerValor: (producto) => etiquetaEstadoProducto(producto).texto },
       {
         id: "destacado",
         aplicar: (lista, valor) => {
@@ -200,7 +202,8 @@ const AdminInventarioProducto = () => {
   const handleCrear = async (form) => {
     setGuardando(true);
     try {
-      await crearProducto(form);
+      const paraGuardar = await asegurarCamposEnEspanol(form, ["nombre", "descripcion", "categoria", "subcategoria"]);
+      await crearProducto(paraGuardar);
       await Promise.all([catalogState.retry(), stockState.retry()]);
       setModalCrear(false);
     } finally {
@@ -211,7 +214,8 @@ const AdminInventarioProducto = () => {
   const handleEditar = async (form) => {
     setGuardando(true);
     try {
-      await actualizarProducto(productoEditar.id, form);
+      const paraGuardar = await asegurarCamposEnEspanol(form, ["nombre", "descripcion", "categoria", "subcategoria"]);
+      await actualizarProducto(productoEditar.id, paraGuardar);
       await Promise.all([catalogState.retry(), stockState.retry()]);
       setProductoEditar(null);
     } finally {
@@ -323,40 +327,40 @@ const AdminInventarioProducto = () => {
         {cargando ? (
           <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 px-4 py-14 text-center sm:px-6">
             <span className="admin-route-loading__spinner" aria-hidden="true" />
-            <p className="text-sm font-semibold text-slate-600">Cargando productos...</p>
+            <p className="text-sm font-semibold text-slate-600"><ST>Cargando productos...</ST></p>
           </div>
         ) : error ? (
           <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 px-4 py-14 text-center sm:px-6">
-            <p className="max-w-md text-sm font-semibold text-red-600">{error}</p>
+            <p className="max-w-md text-sm font-semibold text-red-600"><ST>{error}</ST></p>
             <p className="max-w-md text-xs text-slate-500">{contactSupportMessage()}</p>
             <button
               type="button"
               onClick={cargarProductos}
               className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              Reintentar
+              <ST>Reintentar</ST>
             </button>
           </div>
         ) : (
           <>
         {stockState.error ? (
           <div className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between sm:px-6" role="status">
-            <span>El catálogo está disponible, pero no se pudo cargar el stock de Bodega Central.</span>
+            <span><ST>El catálogo está disponible, pero no se pudo cargar el stock de Bodega Central.</ST></span>
             <button
               type="button"
               onClick={stockState.retry}
               className="min-h-11 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
             >
-              Reintentar stock
+              <ST>Reintentar stock</ST>
             </button>
           </div>
         ) : null}
         <div className="flex flex-col gap-4 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <div>
-            <h1 className="text-xl font-semibold text-slate-950 sm:text-2xl">Productos</h1>
-            <p className="mt-1 text-sm text-slate-500">{"Administraci\u00f3n de inventario"}</p>
+            <h1 className="text-xl font-semibold text-slate-950 sm:text-2xl"><ST>Productos</ST></h1>
+            <p className="mt-1 text-sm text-slate-500"><ST>{"Administraci\u00f3n de inventario"}</ST></p>
             <p className="mt-1 text-xs text-slate-400">
-              Destacados en inicio: {destacadosEnUso}/{MAX_PRODUCTOS_DESTACADOS}
+              <ST>Destacados en inicio</ST>: {destacadosEnUso}/{MAX_PRODUCTOS_DESTACADOS}
             </p>
           </div>
 
@@ -366,7 +370,7 @@ const AdminInventarioProducto = () => {
             onClick={() => setModalCrear(true)}
             className="w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2 text-sm font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700 sm:w-auto"
           >
-            + Nuevo producto
+            <ST>+ Nuevo producto</ST>
           </button>
           ) : null}
         </div>
@@ -434,8 +438,9 @@ const AdminInventarioProducto = () => {
                 onChange: (valor) => setValorFiltro("estado", valor),
                 opciones: [
                   { value: "todos", label: "Todos" },
-                  { value: "Habilitado", label: "Habilitado" },
-                  { value: "Deshabilitado", label: "Deshabilitado" },
+                  { value: "Activo", label: "Activo" },
+                  { value: "Inactivo", label: "Inactivo" },
+                  { value: "Agotado", label: "Agotado" },
                 ],
               },
               {
@@ -454,7 +459,7 @@ const AdminInventarioProducto = () => {
         ) : null}
 
         {productos.length === 0 ? (
-          <div className="px-4 py-14 text-center text-sm text-slate-500 sm:px-6">No hay productos registrados.</div>
+          <div className="px-4 py-14 text-center text-sm text-slate-500 sm:px-6"><ST>No hay productos registrados.</ST></div>
         ) : productosFiltrados.length === 0 ? (
           <AdminListaVacia onLimpiar={limpiar} />
         ) : (

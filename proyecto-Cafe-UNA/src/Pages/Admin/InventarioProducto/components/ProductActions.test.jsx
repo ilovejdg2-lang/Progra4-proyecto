@@ -23,6 +23,7 @@ describe("ProductActions", () => {
     );
 
     expect(screen.queryByRole("button", { name: "Editar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Desactivar" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Inhabilitar" })).not.toBeInTheDocument();
   });
 });

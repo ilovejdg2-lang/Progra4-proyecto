@@ -3,11 +3,12 @@ import { ProductCatalogFeaturedToggle } from "./ProductCatalogFeaturedToggle";
 import { destacadoDeshabilitado, etiquetaEstadoProducto, formatearPrecio } from "./catalogFormatters";
 import { etiquetaCategoriaProducto } from "../../../../lib/categorias";
 import { imagenPrincipalProducto } from "../../../../lib/productoImagenes";
+import { ST } from "../../../../Components/T/ST";
 
 function SortHeader({ label, active, direction, onClick }) {
   return (
     <button type="button" className="admin-th-sort" onClick={onClick}>
-      <span>{label}</span>
+      <span><ST>{label}</ST></span>
       <span className="admin-th-sort__icon" aria-hidden="true">
         {active ? (direction === "asc" ? "▲" : "▼") : "↕"}
       </span>
@@ -54,11 +55,21 @@ export function ProductCatalogTable({
   };
 
   return (
-    <div className="admin-table-shell hidden min-w-0 md:block">
-      <table className="w-full text-left text-[length:var(--text-body)]">
+    <div className="admin-table-shell admin-table-shell--productos hidden min-w-0 md:block">
+      <table className="w-full text-[length:var(--text-body)]">
+        <colgroup>
+          <col style={{ width: "4.5rem" }} />
+          <col style={{ width: "18%" }} />
+          <col style={{ width: "12%" }} />
+          <col style={{ width: "7.5rem" }} />
+          <col style={{ width: "5.5rem" }} />
+          <col style={{ width: "6.5rem" }} />
+          <col style={{ width: "7rem" }} />
+          <col style={{ width: "12rem" }} />
+        </colgroup>
         <thead>
           <tr>
-            <th scope="col">Imagen</th>
+            <th scope="col"><ST>Img</ST></th>
             <th scope="col">
               <SortHeader
                 label="Nombre"
@@ -91,59 +102,75 @@ export function ProductCatalogTable({
                 onClick={() => toggleSort("stock")}
               />
             </th>
-            <th scope="col">Estado</th>
-            <th scope="col">Destacado</th>
-            <th scope="col">Acciones</th>
+            <th scope="col"><ST>Estado</ST></th>
+            <th scope="col"><ST>Destacado</ST></th>
+            <th scope="col"><ST>Acciones</ST></th>
           </tr>
         </thead>
         <tbody>
           {ordenados.map((producto) => {
             const foto = imagenPrincipalProducto(producto);
             const estadoProducto = etiquetaEstadoProducto(producto);
+            const categoria = etiquetaCategoriaProducto(producto) || "—";
+            const stockTexto =
+              producto.centralStock?.confidence === "known"
+                ? String(producto.centralStock.stock)
+                : stockLoading
+                  ? "…"
+                  : "—";
 
             return (
               <tr key={producto.id} className="border-b border-slate-100 last:border-b-0">
-                <td className="py-3 align-middle">
+                <td className="py-2.5">
                   {foto ? (
                     <img
                       src={foto}
-                      alt={producto.nombre}
-                      className="h-12 w-12 rounded-xl object-cover ring-1 ring-slate-200"
+                      alt=""
+                      className="mx-auto h-10 w-10 rounded-lg object-cover ring-1 ring-slate-200"
                     />
                   ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-200 text-[length:var(--text-body)] text-slate-500">
-                      Sin foto
+                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-slate-200 text-[length:var(--text-body)] text-slate-500">
+                      —
                     </div>
                   )}
                 </td>
-                <td className="px-4 py-3 align-middle">
-                  <div className="font-medium text-[#2a1612]">{producto.nombre}</div>
-                  <div className="mt-1 line-clamp-2 max-w-xs text-[length:var(--text-body)] leading-5 text-slate-500">
-                    {producto.descripcion}
+                <td className="px-2 py-2.5">
+                  <div className="truncate font-medium text-[#2a1612]" title={producto.nombre}>
+                    <ST>{producto.nombre}</ST>
                   </div>
                 </td>
-                <td className="px-4 py-3 align-middle text-slate-600">{etiquetaCategoriaProducto(producto) || "—"}</td>
-                <td className="px-4 py-3 align-middle whitespace-nowrap text-slate-700">{formatearPrecio(producto.precioNormal)}</td>
-                <td className="px-4 py-3 align-middle text-slate-700">
-                  {producto.centralStock?.confidence === "known"
-                    ? producto.centralStock.stock
-                    : stockLoading
-                      ? "Cargando..."
-                      : "No disponible"}
-                </td>
-                <td className="px-4 py-3 align-middle">
-                  <span className={`text-[length:var(--text-body)] font-semibold ${estadoProducto.clase}`}>
-                    {estadoProducto.texto}
+                <td className="px-2 py-2.5">
+                  <span className="block truncate text-slate-600" title={categoria}>
+                    <ST>{categoria}</ST>
                   </span>
                 </td>
-                <td className="px-4 py-3 align-middle">
-                  <ProductCatalogFeaturedToggle
-                    producto={producto}
-                    disabled={destacadoDeshabilitado(producto, destacadosEnUso, maxDestacados, puedeDestacarse)}
-                    onToggle={() => onToggleDestacado(producto)}
-                  />
+                <td className="px-2 py-2.5 whitespace-nowrap text-slate-700">
+                  {formatearPrecio(producto.precioNormal)}
                 </td>
-                <td className="py-3 align-middle">{renderAcciones(producto)}</td>
+                <td className="px-2 py-2.5 whitespace-nowrap text-slate-700">{stockTexto}</td>
+                <td className="px-2 py-2.5">
+                  <span className={`font-semibold ${estadoProducto.clase}`}>
+                    <ST>{estadoProducto.texto}</ST>
+                  </span>
+                </td>
+                <td className="px-2 py-2.5">
+                  <div className="flex justify-center">
+                    <ProductCatalogFeaturedToggle
+                      producto={producto}
+                      disabled={destacadoDeshabilitado(
+                        producto,
+                        destacadosEnUso,
+                        maxDestacados,
+                        puedeDestacarse,
+                      )}
+                      onToggle={() => onToggleDestacado(producto)}
+                      compact
+                    />
+                  </div>
+                </td>
+                <td className="px-2 py-2.5">
+                  <div className="flex justify-center">{renderAcciones(producto)}</div>
+                </td>
               </tr>
             );
           })}

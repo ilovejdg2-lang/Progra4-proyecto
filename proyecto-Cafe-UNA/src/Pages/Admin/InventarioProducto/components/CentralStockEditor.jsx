@@ -8,8 +8,12 @@ import {
   AdminModalBody,
   AdminModalHeader,
 } from "../../../../Components/Admin/ui/AdminModal";
+import { NumericInput } from "../../../../Components/NumericInput/NumericInput";
 import { sanitizeUserFacingError } from "../../../../lib/formLimits";
 import { ProductLocationStockPanel } from "./ProductLocationStockPanel";
+import { ST } from "../../../../Components/T/ST";
+import { useTraducir } from "../../../../hooks/useTraducir";
+import { t } from "../../../../lib/t";
 
 const MAX_STOCK = 2147483647;
 
@@ -31,6 +35,10 @@ export function CentralStockEditor({
   const [submitError, setSubmitError] = useState("");
   const submitGuard = useRef(false);
   const lastSyncedStock = useRef(initialValue(stockRecord));
+  const tTitulo = useTraducir("Stock de Bodega Central");
+  const tGuardando = useTraducir("Guardando...");
+  const tGuardarStock = useTraducir("Guardar stock");
+  const tProducto = useTraducir("Producto");
 
   useEffect(() => {
     if (!open) {
@@ -83,16 +91,16 @@ export function CentralStockEditor({
           </span>
           <div className="min-w-0">
             <h2 id="central-stock-editor-title" className="truncate text-lg font-semibold text-slate-950">
-              Stock de Bodega Central
+              {tTitulo}
             </h2>
-            <p className="truncate text-sm text-slate-500">{product?.nombre || "Producto"}</p>
+            <p className="truncate text-sm text-slate-500">{product?.nombre || tProducto}</p>
           </div>
         </div>
         <button
           type="button"
           onClick={onClose}
           className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-          aria-label="Cerrar editor de stock central"
+          aria-label={t("Cerrar editor de stock central")}
         >
           <X className="size-5" aria-hidden="true" />
         </button>
@@ -101,28 +109,23 @@ export function CentralStockEditor({
       <AdminModalBody>
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ubicación</p>
-            <p className="mt-1 text-sm font-semibold text-slate-900">Bodega Central</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500"><ST>Ubicación</ST></p>
+            <p className="mt-1 text-sm font-semibold text-slate-900"><ST>Bodega Central</ST></p>
             <p className="mt-1 text-xs text-slate-500">
-              Este valor no modifica activos ni el stock de los puntos de venta.
+              <ST>Este valor no modifica activos ni el stock de los puntos de venta.</ST>
             </p>
           </div>
 
           {stockRecord?.confidence !== "known" ? (
             <p className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700" role="status">
-              No se pudo confirmar el stock actual. Ingresa el valor correcto para continuar.
+              <ST>No se pudo confirmar el stock actual. Ingresa el valor correcto para continuar.</ST>
             </p>
           ) : null}
 
           <label className="grid gap-2 text-sm font-medium text-slate-700">
-            Unidades disponibles
-            <input
+            <ST>Unidades disponibles</ST>
+            <NumericInput
               name="stockCentral"
-              type="number"
-              min="0"
-              max={MAX_STOCK}
-              step="1"
-              inputMode="numeric"
               value={value}
               disabled={isSaving}
               onChange={(event) => {
@@ -135,7 +138,7 @@ export function CentralStockEditor({
               aria-describedby={message ? "central-stock-error" : undefined}
               required
             />
-            <span className="text-xs font-normal text-slate-500">Usa únicamente números enteros.</span>
+            <span className="text-xs font-normal text-slate-500"><ST>Usa únicamente números enteros.</ST></span>
           </label>
 
           {message ? (
@@ -153,7 +156,7 @@ export function CentralStockEditor({
             <AdminModalActions
               className="w-full justify-start"
               onCancel={onClose}
-              primaryLabel={isSaving ? "Guardando..." : "Guardar stock"}
+              primaryLabel={isSaving ? tGuardando : tGuardarStock}
               primaryDisabled={isSaving}
             />
           </div>

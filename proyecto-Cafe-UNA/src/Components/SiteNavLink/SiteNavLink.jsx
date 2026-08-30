@@ -1,5 +1,6 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import { normalizePathname } from '../../lib/paths';
+import { useTraducir } from '../../hooks/useTraducir';
 import {
   clearHomeScrollTarget,
   navigateToHomeSection,
@@ -19,12 +20,23 @@ function scrollHomeSectionAfterMenuClose(sectionId) {
   });
 }
 
+function esTextoPlano(valor) {
+  return typeof valor === 'string' || typeof valor === 'number';
+}
+
 const SiteNavLink = ({ enlace, className, activeProps, children, onClick }) => {
   const navigate = useNavigate();
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
-  const etiqueta = children ?? enlace?.etiqueta;
+  const childrenEsCustom = children != null && !esTextoPlano(children);
+  const etiquetaBase = String(
+    (esTextoPlano(children) ? children : null)
+      ?? enlace?.etiqueta
+      ?? enlace?.Etiqueta
+      ?? '',
+  );
+  const etiqueta = useTraducir(etiquetaBase);
   const ruta = enlace?.ruta;
   const homeSection = resolveHomeSectionFromRoute(ruta);
   const currentPath = normalizePathname(pathname);
@@ -43,6 +55,8 @@ const SiteNavLink = ({ enlace, className, activeProps, children, onClick }) => {
     return null;
   }
 
+  const contenido = childrenEsCustom ? children : etiqueta;
+
   if (esRutaExterna(ruta)) {
     return (
       <a
@@ -52,7 +66,7 @@ const SiteNavLink = ({ enlace, className, activeProps, children, onClick }) => {
         target={enlace.abrirEnNuevaPestana ? '_blank' : undefined}
         rel={enlace.abrirEnNuevaPestana ? 'noreferrer' : undefined}
       >
-        {etiqueta}
+        {contenido}
       </a>
     );
   }
@@ -83,7 +97,7 @@ const SiteNavLink = ({ enlace, className, activeProps, children, onClick }) => {
       activeProps={activeProps}
       onClick={handleClick}
     >
-      {etiqueta}
+      {contenido}
     </Link>
   );
 };

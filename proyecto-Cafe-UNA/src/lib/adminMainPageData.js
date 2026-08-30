@@ -12,10 +12,10 @@ function textoCampo(valor) {
 
 function mapSeccionInicio(data) {
   return {
-    eyebrow: textoCampo(data?.eyebrow),
-    title: textoCampo(data?.title),
-    description: textoCampo(data?.description),
-    image: textoCampo(data?.image),
+    eyebrow: textoCampo(data?.eyebrow ?? data?.Eyebrow),
+    title: textoCampo(data?.title ?? data?.Title),
+    description: textoCampo(data?.description ?? data?.Description),
+    image: textoCampo(data?.image ?? data?.Image),
     linkUrl: textoCampo(data?.linkUrl) || textoCampo(data?.LinkUrl),
     linkText: textoCampo(data?.linkText) || textoCampo(data?.LinkText),
   };

@@ -1,4 +1,5 @@
 import { invalidateAllPageCaches } from "../lib/pageDataCache";
+import { cacheBrandLogos } from "../lib/brandLogoCache";
 import { createDomainRequest, createKeyedCache } from "./serviceHelpers";
 
 const BASE_URL = `${import.meta.env.BACKEND_URL}/informacion`;
@@ -8,6 +9,11 @@ const cache = createKeyedCache(CACHE_TTL_MS);
 function clearInfoCache() {
   cache.clear();
   invalidateAllPageCaches();
+}
+
+/** Limpia la caché HTTP de información (hero, secciones, etc.). */
+export function clearInformacionHttpCache() {
+  cache.clear();
 }
 
 const request = createDomainRequest(
@@ -83,7 +89,12 @@ export async function obtenerHero() {
 }
 
 export async function obtenerNavbar() {
-  return cache.get("navbar", () => domainRequest(`${BASE_URL}/navbar`));
+  const data = await cache.get("navbar", () => domainRequest(`${BASE_URL}/navbar`));
+  cacheBrandLogos({
+    logoUrl: data?.logoUrl ?? data?.LogoUrl,
+    logoClaroUrl: data?.logoClaroUrl ?? data?.LogoClaroUrl,
+  });
+  return data;
 }
 
 export async function actualizarNavbar(cambios) {
@@ -92,6 +103,10 @@ export async function actualizarNavbar(cambios) {
     data: cambios,
   });
   clearInfoCache();
+  cacheBrandLogos({
+    logoUrl: result?.logoUrl ?? result?.LogoUrl ?? cambios?.logoUrl,
+    logoClaroUrl: result?.logoClaroUrl ?? result?.LogoClaroUrl ?? cambios?.logoClaroUrl,
+  });
   return result;
 }
 

@@ -29,7 +29,7 @@ export function registrarVenta(venta) {
     subtotal: Number(venta.subtotal) || 0,
     iva: Number(venta.iva) || 0,
     total: Number(venta.total) || 0,
-    estadoPago: venta.estadoPago || "Pagado",
+    estadoPago: venta.estadoPago || "Pendiente",
     metodo: venta.metodo || "Tarjeta",
   };
   ventas.push(registro);

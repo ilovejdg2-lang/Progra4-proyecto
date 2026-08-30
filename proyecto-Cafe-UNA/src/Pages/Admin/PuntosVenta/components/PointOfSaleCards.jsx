@@ -1,5 +1,7 @@
 import { MapPin, Pencil, Power, Store } from "lucide-react";
 
+import { ST } from "../../../../Components/T/ST";
+
 export function PointOfSaleCards({
   locations,
   selectedCode,
@@ -11,7 +13,7 @@ export function PointOfSaleCards({
 }) {
   return (
     <section aria-labelledby="puntos-venta-heading" className="grid gap-3 md:grid-cols-3">
-      <h2 id="puntos-venta-heading" className="sr-only">Puntos de venta disponibles</h2>
+      <h2 id="puntos-venta-heading" className="sr-only"><ST>Puntos de venta disponibles</ST></h2>
       {locations.map((location) => {
         const selected = location.code === selectedCode;
         const activo = location.activo !== false;
@@ -46,7 +48,7 @@ export function PointOfSaleCards({
                         : "bg-slate-100 text-slate-600"
                   }`}
                 >
-                  {activo ? "Activo" : "Inactivo"}
+                  {activo ? <ST>Activo</ST> : <ST>Inactivo</ST>}
                 </span>
               </span>
               <span className="mt-4 block text-base font-semibold">{location.name}</span>
@@ -55,7 +57,7 @@ export function PointOfSaleCards({
                 {location.code}
               </span>
               <span className={`mt-4 block text-xs font-medium ${selected ? "text-slate-200" : "text-slate-600"}`}>
-                {selected ? "Ubicación seleccionada" : activo ? "Ver inventario" : "Punto inactivo"}
+                {selected ? <ST>Ubicación seleccionada</ST> : activo ? <ST>Ver inventario</ST> : <ST>Punto inactivo</ST>}
               </span>
             </button>
             {canManage ? (
@@ -70,7 +72,7 @@ export function PointOfSaleCards({
                   }`}
                 >
                   <Pencil className="size-3 shrink-0" aria-hidden="true" />
-                  <span>Editar</span>
+                  <span><ST>Editar</ST></span>
                 </button>
                 <button
                   type="button"
@@ -87,7 +89,7 @@ export function PointOfSaleCards({
                   }`}
                 >
                   <Power className="size-3 shrink-0" aria-hidden="true" />
-                  <span>{toggling ? "..." : activo ? "Inactivar" : "Activar"}</span>
+                  <span>{toggling ? "..." : activo ? <ST>Inactivar</ST> : <ST>Activar</ST>}</span>
                 </button>
               </div>
             ) : null}

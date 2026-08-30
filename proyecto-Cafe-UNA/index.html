@@ -36,6 +36,11 @@
       html.home-page-loading,
       html.home-page-loading body {
         overflow: hidden;
+        background: #fdf8f5;
+      }
+
+      html.admin-boot-loading,
+      html.admin-boot-loading body {
         background: #ffffff;
       }
 
@@ -52,38 +57,83 @@
       html.site-boot-loading #site-initial-loader,
       html.admin-boot-loading #site-initial-loader,
       body.site-boot-loading #site-initial-loader,
-      body.admin-boot-loading #site-initial-loader {
+      body.admin-boot-loading #site-initial-loader,
+      body.app-route-loading #site-initial-loader,
+      body.admin-route-loading-active #site-initial-loader,
+      body.home-page-loading #site-initial-loader {
         position: fixed;
         inset: 0;
-        z-index: 100001;
-        display: flex;
+        z-index: 100002;
+        display: flex !important;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 1rem;
-        background: #ffffff;
+        gap: 1.15rem;
+        padding: 1.5rem;
+        background:
+          radial-gradient(ellipse at 50% 32%, rgba(196, 149, 106, 0.2) 0%, rgba(253, 248, 245, 0) 55%),
+          linear-gradient(180deg, #fffdfb 0%, #fdf8f5 48%, #f7efe8 100%);
         color: #4d2b1f;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        font-size: 1rem;
+        text-align: center;
       }
 
       html.admin-boot-loading #site-initial-loader,
-      html.admin-boot-loading #site-boot-message {
-        color: #334155;
+      body.admin-boot-loading #site-initial-loader,
+      body.admin-route-loading-active #site-initial-loader,
+      #site-initial-loader.site-initial-loader--admin {
+        background:
+          radial-gradient(ellipse at 50% 32%, rgba(148, 163, 184, 0.22) 0%, rgba(255, 255, 255, 0) 55%),
+          #ffffff;
+        color: #1e293b;
+      }
+
+      .site-initial-mark {
+        display: grid;
+        place-items: center;
+        min-height: 4.5rem;
+        width: min(11rem, 46vw);
+        animation: site-initial-breathe 2.4s ease-in-out infinite;
+      }
+
+      .site-initial-logo {
+        display: block;
+        width: auto;
+        max-width: 100%;
+        max-height: 4.75rem;
+        height: auto;
+        object-fit: contain;
+        filter: drop-shadow(0 8px 18px rgba(77, 43, 31, 0.12));
+      }
+
+      .site-initial-wordmark {
+        margin: 0;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: clamp(1.65rem, 5vw, 2.15rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
       }
 
       .site-initial-spinner {
-        width: 40px;
-        height: 40px;
-        border: 3px solid rgba(107, 68, 35, 0.15);
+        width: 2.35rem;
+        height: 2.35rem;
+        border: 3px solid rgba(107, 68, 35, 0.14);
         border-top-color: #6b4423;
         border-radius: 50%;
-        animation: site-initial-spin 0.8s linear infinite;
+        animation: site-initial-spin 0.75s linear infinite;
       }
 
       html.admin-boot-loading .site-initial-spinner {
-        border-color: rgba(51, 65, 85, 0.16);
+        border-color: rgba(51, 65, 85, 0.14);
         border-top-color: #334155;
+      }
+
+      #site-boot-message {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
       }
 
       @keyframes site-initial-spin {
@@ -91,12 +141,27 @@
           transform: rotate(360deg);
         }
       }
+
+      @keyframes site-initial-breathe {
+        0%,
+        100% {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: translateY(-3px) scale(1.02);
+          opacity: 0.94;
+        }
+      }
     </style>
   </head>
   <body>
     <div id="site-initial-loader" role="status" aria-live="polite">
+      <div class="site-initial-mark" id="site-boot-mark">
+        <p class="site-initial-wordmark" id="site-boot-wordmark">Café UNA</p>
+      </div>
       <div class="site-initial-spinner" aria-hidden="true"></div>
-      <p id="site-boot-message" style="margin:0;">Cargando página...</p>
+      <p id="site-boot-message">Cargando página...</p>
     </div>
     <script>
       (function () {
@@ -106,8 +171,9 @@
         }
 
         var message = 'Cargando página...';
+        var isAdmin = path.indexOf('/admin') === 0;
 
-        if (path.indexOf('/admin') === 0) {
+        if (isAdmin) {
           document.documentElement.classList.add('admin-boot-loading');
           document.body.classList.add('admin-boot-loading');
           message = 'Cargando panel administrativo...';
@@ -120,7 +186,8 @@
             document.body.classList.add('home-page-loading');
             message = 'Cargando inicio...';
           } else if (path === '/productos') message = 'Cargando productos...';
-          else if (path === '/AboutUs') message = 'Cargando sobre nosotros...';
+          else if (path.indexOf('/AboutUs/galeria') === 0) message = 'Cargando galería...';
+          else if (path === '/AboutUs' || path.indexOf('/AboutUs/') === 0) message = 'Cargando sobre nosotros...';
           else if (path.indexOf('/voluntariado') === 0) message = 'Cargando voluntariado...';
           else if (path === '/checkout') message = 'Cargando checkout...';
           else if (path === '/login') message = 'Cargando...';
@@ -129,6 +196,84 @@
 
         var label = document.getElementById('site-boot-message');
         if (label) label.textContent = message;
+
+        function paintBootLogo(logoUrl) {
+          if (!logoUrl || typeof logoUrl !== 'string') return false;
+          var trimmed = logoUrl.trim();
+          if (!trimmed) return false;
+          var mark = document.getElementById('site-boot-mark');
+          if (!mark) return false;
+          mark.innerHTML = '';
+          var img = document.createElement('img');
+          img.className = 'site-initial-logo';
+          img.alt = '';
+          img.decoding = 'async';
+          img.src = trimmed;
+          img.onerror = function () {
+            mark.innerHTML = '<p class="site-initial-wordmark" id="site-boot-wordmark">Café UNA</p>';
+          };
+          mark.appendChild(img);
+          try {
+            var prev = {};
+            try {
+              prev = JSON.parse(localStorage.getItem('cafe-una-brand-logos') || '{}') || {};
+            } catch (ignore) {}
+            localStorage.setItem(
+              'cafe-una-brand-logos',
+              JSON.stringify({
+                logoUrl: trimmed,
+                logoClaroUrl: (prev.logoClaroUrl || '').trim(),
+                updatedAt: Date.now(),
+              }),
+            );
+          } catch (e) {}
+          return true;
+        }
+
+        try {
+          var raw = localStorage.getItem('cafe-una-brand-logos');
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            paintBootLogo((parsed && (parsed.logoUrl || parsed.logoClaroUrl)) || '');
+          }
+        } catch (e) {}
+
+        // Siempre pedir el logo del navbar (Supabase vía API) para el cargando.
+        try {
+          var req = new XMLHttpRequest();
+          req.open('GET', '/api/informacion/navbar', true);
+          req.timeout = 8000;
+          req.onload = function () {
+            if (req.status < 200 || req.status >= 300) return;
+            try {
+              var data = JSON.parse(req.responseText);
+              var fromApi =
+                (data && (data.logoUrl || data.LogoUrl)) ||
+                (data && (data.logoClaroUrl || data.LogoClaroUrl)) ||
+                '';
+              if (fromApi && typeof fromApi === 'string') {
+                try {
+                  var prevApi = {};
+                  try {
+                    prevApi = JSON.parse(localStorage.getItem('cafe-una-brand-logos') || '{}') || {};
+                  } catch (ignore2) {}
+                  localStorage.setItem(
+                    'cafe-una-brand-logos',
+                    JSON.stringify({
+                      logoUrl: String(data.logoUrl || data.LogoUrl || prevApi.logoUrl || '').trim(),
+                      logoClaroUrl: String(
+                        data.logoClaroUrl || data.LogoClaroUrl || prevApi.logoClaroUrl || '',
+                      ).trim(),
+                      updatedAt: Date.now(),
+                    }),
+                  );
+                } catch (ignore3) {}
+                paintBootLogo(fromApi);
+              }
+            } catch (err) {}
+          };
+          req.send();
+        } catch (e) {}
       })();
     </script>
     <div id="root"></div>

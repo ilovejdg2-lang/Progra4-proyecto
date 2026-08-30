@@ -10,11 +10,15 @@ import { etiquetaCategoriaProducto } from '../../lib/categorias';
 import { imagenPrincipalProducto, parsearImagenesProducto } from '../../lib/productoImagenes';
 import { calcularPrecioConIVA, obtenerProductoPorId, obtenerProductos } from '../../services/productosService';
 import { clasificarDisponibilidad } from '../../lib/productoDisponibilidad';
+import { useTraducir, useTraducirLista, useTraducirObjeto } from '../../hooks/useTraducir';
+import { ST } from '../../Components/T/ST';
 import './ProductDetail.css';
 
 function formatCRC(value) {
   return `\u20A1${(Number(value) || 0).toLocaleString('es-CR')}`;
 }
+
+const CAMPOS_PRODUCTO = ['nombre', 'descripcion', 'categoria', 'subcategoria'];
 
 const ProductDetail = () => {
   const navigate = useNavigate();
@@ -26,6 +30,28 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [fotoActiva, setFotoActiva] = useState(0);
   const [specsAbiertas, setSpecsAbiertas] = useState(true);
+
+  const tVolver = useTraducir('Volver al catálogo');
+  const tIva = useTraducir('IVA incluido');
+  const tPresentacion = useTraducir('Presentación');
+  const tCantidad = useTraducir('Cantidad');
+  const tAgotado = useTraducir('Agotado');
+  const tAnadir = useTraducir('Añadir al carrito');
+  const tFicha = useTraducir('Ficha técnica');
+  const tCategoria = useTraducir('Categoría');
+  const tSubcategoria = useTraducir('Subcategoría');
+  const tPrecioSin = useTraducir('Precio (sin IVA)');
+  const tDisponibles = useTraducir('Disponibles');
+  const tTambien = useTraducir('También te puede gustar');
+  const tVerCat = useTraducir('Ver catálogo');
+  const tUnidades = useTraducir('unidades');
+
+  const productoUi = useTraducirObjeto(
+    product ?? { nombre: '', descripcion: '', categoria: '', subcategoria: '' },
+    CAMPOS_PRODUCTO,
+  );
+  const relacionadosUi = useTraducirLista(relacionados, ['nombre']);
+  const display = product ? (productoUi || product) : null;
 
   const numericId = Number(productId);
   const isReady = !loading;
@@ -125,16 +151,16 @@ const ProductDetail = () => {
     >
       <main className="product-detail-page">
         <Link to="/productos" className="product-detail-page__back">
-          <ArrowLeft size={18} aria-hidden="true" />{"Volver al cat\u00e1logo"}</Link>
+          <ArrowLeft size={18} aria-hidden="true" />{tVolver}</Link>
 
         {!product && !loading ? (
           <section className="product-detail-page__empty">
             <p>{loadError || 'Producto no encontrado.'}</p>
-            <button type="button" className="product-detail-page__close-btn" onClick={handleBack}>{"Volver al cat\u00e1logo"}</button>
+            <button type="button" className="product-detail-page__close-btn" onClick={handleBack}>{tVolver}</button>
           </section>
         ) : null}
 
-        {product ? (
+        {product && display ? (
           <>
           <article className="product-detail-page__layout">
             <div className="product-detail-page__gallery">
@@ -142,7 +168,7 @@ const ProductDetail = () => {
                 {fotoActual ? (
                   <OptimizedImage
                     src={fotoActual}
-                    alt={product.nombre}
+                    alt={display.nombre}
                     width={960}
                     height={960}
                     priority
@@ -160,7 +186,7 @@ const ProductDetail = () => {
                       type="button"
                       className={`product-detail-page__thumb${index === fotoActiva ? ' is-active' : ''}`}
                       onClick={() => setFotoActiva(index)}
-                      aria-label={`Foto ${index + 1} de ${product.nombre}`}
+                      aria-label={`Foto ${index + 1} de ${display.nombre}`}
                     >
                       <img src={src} alt="" />
                     </button>
@@ -171,11 +197,19 @@ const ProductDetail = () => {
 
             <div className="product-detail-page__content">
               <header className="product-detail-page__header">
-                <h1>{product.nombre}</h1>
+                <h1>{display.nombre}</h1>
                 {(() => {
-                  const etiqueta = etiquetaCategoriaProducto(product);
-                  if (product.peso && etiqueta) {
-                    return <p className="product-detail-page__series">{`${etiqueta} · ${product.peso}`}</p>;
+                  const etiquetaRaw = etiquetaCategoriaProducto(product);
+                  const etiqueta = etiquetaRaw ? (
+                    <ST>{etiquetaRaw}</ST>
+                  ) : null;
+                  if (product.peso && etiquetaRaw) {
+                    return (
+                      <p className="product-detail-page__series">
+                        <ST>{etiquetaRaw}</ST>
+                        {` · ${product.peso}`}
+                      </p>
+                    );
                   }
                   if (product.peso) return <p className="product-detail-page__series">{product.peso}</p>;
                   if (etiqueta) return <p className="product-detail-page__series">{etiqueta}</p>;
@@ -184,28 +218,28 @@ const ProductDetail = () => {
               </header>
 
               <p className="product-detail-page__price">{formatCRC(precioConIVA)}</p>
-              <p className="product-detail-page__vat">IVA incluido</p>
+              <p className="product-detail-page__vat">{tIva}</p>
 
-              {product.descripcion ? (
-                <p className="product-detail-page__description">{product.descripcion}</p>
+              {display.descripcion ? (
+                <p className="product-detail-page__description">{display.descripcion}</p>
               ) : null}
 
               {product.peso ? (
                 <div className="product-detail-page__chips">
-                  <p className="product-detail-page__chips-label">{"Presentaci\u00f3n"}</p>
+                  <p className="product-detail-page__chips-label">{tPresentacion}</p>
                   <span className="product-detail-page__chip is-active">{product.peso}</span>
                 </div>
               ) : null}
 
               <div className="product-detail-page__quantity-row">
-                <span className="product-detail-page__quantity-label">Cantidad</span>
-                <div className="product-detail-page__quantity-stepper" aria-label="Selector de cantidad">
+                <span className="product-detail-page__quantity-label">{tCantidad}</span>
+                <div className="product-detail-page__quantity-stepper" aria-label={tCantidad}>
                   <button
                     type="button"
                     className="product-detail-page__quantity-btn"
                     onClick={() => changeQuantity(-1)}
                     disabled={quantity <= 1}
-                    aria-label="Disminuir cantidad"
+                    aria-label="−"
                   >
                     −
                   </button>
@@ -215,7 +249,7 @@ const ProductDetail = () => {
                     className="product-detail-page__quantity-btn"
                     onClick={() => changeQuantity(1)}
                     disabled={quantity >= stockDisponible}
-                    aria-label="Aumentar cantidad"
+                    aria-label="+"
                   >
                     +
                   </button>
@@ -230,10 +264,10 @@ const ProductDetail = () => {
                   disabled={estaAgotado}
                 >
                   <ShoppingBag size={18} aria-hidden="true" />
-                  {estaAgotado ? 'Agotado' : 'A\u00f1adir al carrito'}
+                  {estaAgotado ? tAgotado : tAnadir}
                 </button>
                 <button type="button" className="product-detail-page__close-btn" onClick={handleBack}>
-                  {"Volver al cat\u00e1logo"}
+                  {tVolver}
                 </button>
               </div>
 
@@ -244,36 +278,36 @@ const ProductDetail = () => {
                   onClick={() => setSpecsAbiertas((open) => !open)}
                   aria-expanded={specsAbiertas}
                 >
-                  {"Ficha t\u00e9cnica"}
+                  {tFicha}
                   <ChevronDown size={18} className={specsAbiertas ? 'is-open' : ''} aria-hidden="true" />
                 </button>
                 {specsAbiertas ? (
                   <dl className="product-detail-page__meta">
                     <div className="product-detail-page__meta-row">
-                      <dt>Categoría</dt>
-                      <dd>{product.categoria || '—'}</dd>
+                      <dt>{tCategoria}</dt>
+                      <dd>{display.categoria || '—'}</dd>
                     </div>
-                    {product.subcategoria ? (
+                    {display.subcategoria ? (
                       <div className="product-detail-page__meta-row">
-                        <dt>Subcategoría</dt>
-                        <dd>{product.subcategoria}</dd>
+                        <dt>{tSubcategoria}</dt>
+                        <dd>{display.subcategoria}</dd>
                       </div>
                     ) : null}
                     <div className="product-detail-page__meta-row">
-                      <dt>{"Presentaci\u00f3n"}</dt>
+                      <dt>{tPresentacion}</dt>
                       <dd>{product.peso || '—'}</dd>
                     </div>
                     <div className="product-detail-page__meta-row">
-                      <dt>Precio (sin IVA)</dt>
+                      <dt>{tPrecioSin}</dt>
                       <dd>{formatCRC(precioNormal)}</dd>
                     </div>
                     <div className="product-detail-page__meta-row">
-                      <dt>Disponibles</dt>
+                      <dt>{tDisponibles}</dt>
                       <dd>
                         <span className={`product-detail-page__stock product-detail-page__stock--${disponibilidad.codigo}`}>
                           <span className="product-detail-page__stock-dot" aria-hidden="true" />
-                          {disponibilidad.etiqueta}
-                          {disponibilidad.codigo !== 'agotado' ? ` · ${stockDisponible} unidades` : ''}
+                          <ST>{disponibilidad.etiqueta}</ST>
+                          {disponibilidad.codigo !== 'agotado' ? ` · ${stockDisponible} ${tUnidades}` : ''}
                         </span>
                       </dd>
                     </div>
@@ -283,14 +317,14 @@ const ProductDetail = () => {
             </div>
           </article>
 
-          {relacionados.length > 0 ? (
+          {(relacionadosUi || relacionados).length > 0 ? (
             <section className="product-detail-page__related" aria-labelledby="productos-relacionados-title">
               <div className="product-detail-page__related-header">
-                <h2 id="productos-relacionados-title">{"Tambi\u00e9n te puede gustar"}</h2>
-                <Link to="/productos">{"Ver catálogo"}</Link>
+                <h2 id="productos-relacionados-title">{tTambien}</h2>
+                <Link to="/productos">{tVerCat}</Link>
               </div>
               <div className="product-detail-page__related-grid">
-                {relacionados.map((item) => (
+                {(relacionadosUi || relacionados).map((item) => (
                   <Link
                     key={item.id}
                     to="/productos/$productId"

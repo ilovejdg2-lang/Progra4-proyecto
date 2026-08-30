@@ -5,6 +5,7 @@ export function Switch({
   checked,
   onCheckedChange,
   label,
+  ariaLabel,
   disabled = false,
   className = "",
 }) {
@@ -15,7 +16,7 @@ export function Switch({
         type="button"
         role="switch"
         aria-checked={checked}
-        aria-label={label}
+        aria-label={ariaLabel || label}
         disabled={disabled}
         className={`ui-switch__track${checked ? " is-on" : ""}${disabled ? " is-disabled" : ""}`}
         onClick={() => {

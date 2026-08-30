@@ -6,16 +6,22 @@ export function formatearPrecio(valor) {
   }).format(valor || 0);
 }
 
+/** Etiqueta visible de estado: Activo | Inactivo | Agotado */
 export function etiquetaEstadoProducto(producto) {
   if (producto?.estado === "Deshabilitado") {
-    return { texto: "Deshabilitado", clase: "text-red-600" };
+    return { texto: "Inactivo", clase: "text-red-600", clave: "inactivo" };
   }
 
-  if ((Number(producto?.stock) || 0) <= 0) {
-    return { texto: "Agotado", clase: "text-amber-800" };
+  const stock =
+    producto?.centralStock?.confidence === "known"
+      ? Number(producto.centralStock.stock)
+      : Number(producto?.stock);
+
+  if (Number.isFinite(stock) && stock <= 0) {
+    return { texto: "Agotado", clase: "text-amber-800", clave: "agotado" };
   }
 
-  return { texto: "Habilitado", clase: "text-green-700" };
+  return { texto: "Activo", clase: "text-green-700", clave: "activo" };
 }
 
 export function destacadoDeshabilitado(producto, destacadosEnUso, maxDestacados, puedeDestacarse) {

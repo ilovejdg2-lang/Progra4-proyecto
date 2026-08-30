@@ -4,6 +4,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { imagenPrincipalProducto } from "../../lib/productoImagenes";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { calcularPrecioConIVA } from "../../services/productosService";
+import { useTraducir } from "../../hooks/useTraducir";
+import { ST } from "../T/ST";
 import "./FeaturedCafesCarousel.css";
 
 function formatCRC(value) {
@@ -19,10 +21,24 @@ function posicionDeCarta(index, activo, total) {
   return "hidden";
 }
 
+function StockLabel({ stock }) {
+  const agotado = useTraducir("Agotado");
+  const disponibles = useTraducir(`${stock} disponibles`);
+  return stock <= 0 ? agotado : disponibles;
+}
+
+function CategoriaLabel({ texto }) {
+  return useTraducir(texto);
+}
+
 export default function FeaturedCafesCarousel({ products = [] }) {
   const [activo, setActivo] = useState(0);
   const lista = useMemo(() => products.filter(Boolean), [products]);
   const total = lista.length;
+  const ariaSeleccion = useTraducir("Selección destacada de cafés");
+  const ariaCafes = useTraducir("Cafés destacados");
+  const ariaAnterior = useTraducir("Anterior");
+  const ariaSiguiente = useTraducir("Siguiente");
 
   if (total === 0) return null;
 
@@ -32,7 +48,7 @@ export default function FeaturedCafesCarousel({ products = [] }) {
 
   return (
     <div className="featured-cafes" data-count={total}>
-      <div className="featured-cafes__stage" aria-label={"Selecci\u00f3n destacada de caf\u00e9s"}>
+      <div className="featured-cafes__stage" aria-label={ariaSeleccion}>
         {lista.map((producto, index) => {
           const posicion = posicionDeCarta(index, activo, total);
           const imagen = normalizeImageUrl(imagenPrincipalProducto(producto), { width: 800 })
@@ -61,14 +77,16 @@ export default function FeaturedCafesCarousel({ products = [] }) {
               </div>
               <div className="featured-cafes__body">
                 {categoria || peso ? (
-                  <p className="featured-cafes__eyebrow">{categoria || peso}</p>
+                  <p className="featured-cafes__eyebrow">
+                    {categoria ? <CategoriaLabel texto={categoria} /> : peso}
+                  </p>
                 ) : null}
-                <h3>{producto.nombre}</h3>
+                <h3><ST>{producto.nombre}</ST></h3>
                 {producto.descripcion ? <p className="featured-cafes__desc">{producto.descripcion}</p> : null}
                 <div className="featured-cafes__meta">
                   <span className="featured-cafes__price">{formatCRC(precio)}</span>
                   <span className={`featured-cafes__stock${stock <= 0 ? " is-out" : ""}`}>
-                    {stock <= 0 ? "Agotado" : `${stock} disponibles`}
+                    <StockLabel stock={stock} />
                   </span>
                 </div>
               </div>
@@ -100,22 +118,22 @@ export default function FeaturedCafesCarousel({ products = [] }) {
 
       {total > 1 ? (
         <div className="featured-cafes__controls">
-          <button type="button" className="featured-cafes__arrow" onClick={() => ir(-1)} aria-label="Anterior">
+          <button type="button" className="featured-cafes__arrow" onClick={() => ir(-1)} aria-label={ariaAnterior}>
             <ChevronLeft size={20} aria-hidden="true" />
           </button>
-          <div className="featured-cafes__dots" role="tablist" aria-label={"Caf\u00e9s destacados"}>
+          <div className="featured-cafes__dots" role="tablist" aria-label={ariaCafes}>
             {lista.map((producto, index) => (
               <button
                 key={producto.id ?? index}
                 type="button"
                 className={`featured-cafes__dot${index === activo ? " is-active" : ""}`}
                 onClick={() => setActivo(index)}
-                aria-label={`Ver ${producto.nombre || `caf\u00e9 ${index + 1}`}`}
+                aria-label={`Ver ${producto.nombre || `café ${index + 1}`}`}
                 aria-current={index === activo ? "true" : undefined}
               />
             ))}
           </div>
-          <button type="button" className="featured-cafes__arrow" onClick={() => ir(1)} aria-label="Siguiente">
+          <button type="button" className="featured-cafes__arrow" onClick={() => ir(1)} aria-label={ariaSiguiente}>
             <ChevronRight size={20} aria-hidden="true" />
           </button>
         </div>
