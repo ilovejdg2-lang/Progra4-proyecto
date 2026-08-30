@@ -1,4 +1,5 @@
 import OptimizedImage from '../OptimizedImage/OptimizedImage';
+import { ST } from '../T/ST';
 
 export function AboutNarrativeBlock({
   eyebrow = '',
@@ -23,9 +24,9 @@ export function AboutNarrativeBlock({
     <article className={clases}>
       {hasCopy ? (
         <div className="about-narrative__copy">
-          {eyebrow ? <p className="about-narrative__eyebrow">{eyebrow}</p> : null}
-          {title ? <h2>{title}</h2> : null}
-          {description ? <p>{description}</p> : null}
+          {eyebrow ? <p className="about-narrative__eyebrow"><ST>{eyebrow}</ST></p> : null}
+          {title ? <h2><ST>{title}</ST></h2> : null}
+          {description ? <p><ST>{description}</ST></p> : null}
         </div>
       ) : null}
       {hasImage ? (

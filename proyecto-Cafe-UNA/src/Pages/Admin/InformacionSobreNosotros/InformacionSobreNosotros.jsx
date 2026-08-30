@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { BookOpenText, Eye, Image, ImagePlus, Pencil, Target, Trash2, X } from "lucide-react";
 import { useRouterState } from "@tanstack/react-router";
 
@@ -30,6 +30,20 @@ import {
 import { obtenerCategorias } from "../../../services/categoriasService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { tienePermiso } from "../../../lib/permisos";
+import { CampoLimitePalabras } from "../../../Components/Admin/ui/CampoLimitePalabras";
+import {
+  MAX_PALABRAS_ETIQUETA,
+  MAX_PALABRAS_TEXTO_LARGO,
+  MAX_PALABRAS_TITULO,
+} from "../../../lib/formLimits";
+import { ST } from "../../../Components/T/ST";
+import { useTraducir } from "../../../hooks/useTraducir";
+import { t } from "../../../lib/t";
+import { useIdioma } from "../../../lib/useIdioma";
+import { asegurarCamposEnEspanol, pareceIngles, traducirCamposObjeto } from "../../../lib/traducir";
+
+const TEXTO_CAMPOS = ["eyebrow", "title", "description"];
+const FOTO_CAMPOS = ["title", "categoria"];
 
 const infoInicial = {
   hero: {},
@@ -57,21 +71,21 @@ const infoInicial = {
 const estilos = {
   historia: {
     borde: "border-amber-700",
-    icono: "bg-amber-50 text-amber-700",
+    icono: "text-amber-700",
     etiqueta: "Historia",
     resumen: "Resumen institucional de nuestra historia.",
     Icon: BookOpenText,
   },
   mission: {
     borde: "border-amber-700",
-    icono: "bg-amber-50 text-amber-700",
+    icono: "text-amber-700",
     etiqueta: "Misi\u00f3n",
     resumen: "Texto institucional de misi\u00f3n.",
     Icon: Target,
   },
   vision: {
     borde: "border-amber-700",
-    icono: "bg-amber-50 text-amber-700",
+    icono: "text-amber-700",
     etiqueta: "Visi\u00f3n",
     resumen: "Texto institucional de visi\u00f3n.",
     Icon: Eye,
@@ -79,35 +93,52 @@ const estilos = {
 };
 
 function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
+  const { idioma } = useIdioma();
   const [form, setForm] = useState(() => ({ title: "", description: "", image: "", eyebrow: "", ...data }));
   const estilo = estilos[tipo];
   const Icon = estilo.Icon;
+  const tEtiqueta = useTraducir(estilo.etiqueta);
+
+  useEffect(() => {
+    let cancelado = false;
+    const base = { title: "", description: "", image: "", eyebrow: "", ...data };
+    if (idioma !== "en") {
+      setForm(base);
+      return undefined;
+    }
+    (async () => {
+      const traducido = await traducirCamposObjeto(base, TEXTO_CAMPOS);
+      if (!cancelado) setForm(traducido);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [data, idioma]);
 
   const cambiarCampo = (event) => {
     const { name, value } = event.target;
     setForm((actual) => ({ ...actual, [name]: value }));
   };
 
-  const enviar = (event) => {
+  const enviar = async (event) => {
     event.preventDefault();
-    onGuardar(tipo, form);
+    const paraGuardar = await asegurarCamposEnEspanol(form, TEXTO_CAMPOS);
+    onGuardar(tipo, paraGuardar);
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-5xl" labelledBy="admin-texto-modal-title">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-texto-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-3">
-            <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${estilo.icono}`}>
-              <Icon className="size-5" />
-            </span>
-            <h2 id="admin-texto-modal-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">{form.title || estilo.etiqueta}</h2>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Icon className={`size-6 shrink-0 ${estilo.icono}`} strokeWidth={1.75} aria-hidden="true" />
+            <h2 id="admin-texto-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">{form.title || tEtiqueta}</h2>
           </div>
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-full bg-stone-100 p-2 text-slate-600 transition hover:bg-stone-200"
-            aria-label="Cerrar"
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label={t("Cerrar")}
           >
             <X className="size-5" />
           </button>
@@ -115,41 +146,42 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
 
         <AdminModalBody cms>
           <AdminEditorConPreview preview={<PreviewTextoInstitucionalLive form={form} tipo={tipo} />}>
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">{"Etiqueta superior"}<input
-                name="eyebrow"
-                value={form.eyebrow}
-                onChange={cambiarCampo}
-                className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
-              />
-            </label>
+            <CampoLimitePalabras
+              label={"Etiqueta superior"}
+              name="eyebrow"
+              value={form.eyebrow}
+              onChange={cambiarCampo}
+              maxPalabras={MAX_PALABRAS_ETIQUETA}
+            />
 
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">{"T\u00edtulo de la secci\u00f3n"}<input
-                name="title"
-                value={form.title}
-                onChange={cambiarCampo}
-                className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
-                required
-              />
-            </label>
+            <CampoLimitePalabras
+              label={"T\u00edtulo de la secci\u00f3n"}
+              name="title"
+              value={form.title}
+              onChange={cambiarCampo}
+              maxPalabras={MAX_PALABRAS_TITULO}
+              required
+            />
 
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">{"Texto de la secci\u00f3n"}<textarea
-                name="description"
-                value={form.description}
-                onChange={cambiarCampo}
-                rows={8}
-                className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
-                required
-              />
-            </label>
+            <CampoLimitePalabras
+              label={"Texto de la secci\u00f3n"}
+              name="description"
+              value={form.description}
+              onChange={cambiarCampo}
+              maxPalabras={MAX_PALABRAS_TEXTO_LARGO}
+              multiline
+              rows={8}
+              required
+            />
 
             <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-              URL de foto
+              <ST>URL de foto</ST>
               <input
                 name="image"
                 value={form.image}
                 onChange={cambiarCampo}
                 placeholder="https://..."
-                className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
+                className="h-[var(--control-height)] w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-[length:var(--text-body)] font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
               />
             </label>
 
@@ -170,50 +202,76 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
 }
 
 function ModalFoto({ onCerrar, onGuardar, categorias = [], inicial = null, guardando = false }) {
+  const { idioma } = useIdioma();
   const esEdicion = Boolean(inicial);
+  const tEditar = useTraducir("Editar");
+  const tNuevaFoto = useTraducir("Nueva foto");
   const [form, setForm] = useState({
     title: inicial?.title || "",
     image: inicial?.image || "",
     categoria: inicial?.categoria || "",
   });
 
+  useEffect(() => {
+    let cancelado = false;
+    const base = {
+      title: inicial?.title || "",
+      image: inicial?.image || "",
+      categoria: inicial?.categoria || "",
+    };
+    if (idioma !== "en") {
+      setForm(base);
+      return undefined;
+    }
+    (async () => {
+      const traducido = await traducirCamposObjeto(base, FOTO_CAMPOS);
+      if (!cancelado) setForm(traducido);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [inicial, idioma]);
+
   const cambiarCampo = (event) => {
     const { name, value } = event.target;
     setForm((actual) => ({ ...actual, [name]: value }));
   };
 
-  const enviar = (event) => {
+  const enviar = async (event) => {
     event.preventDefault();
     if (guardando) return;
-    const title = form.title.trim();
+    const paraGuardar = await asegurarCamposEnEspanol(form, FOTO_CAMPOS);
+    const title = paraGuardar.title.trim();
     const image = form.image.trim();
     if (!title || !image) return;
     onGuardar({
       id: inicial?.id,
       title,
       image,
-      categoria: form.categoria.trim(),
+      categoria: (paraGuardar.categoria || "").trim(),
     });
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-lg" labelledBy="admin-foto-title" elevated>
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-foto-title" elevated>
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-teal-50 text-teal-700">
-              {esEdicion ? <Pencil className="size-5" /> : <ImagePlus className="size-5" />}
-            </span>
-            <h2 id="admin-foto-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">
-              {esEdicion ? "Editar foto" : "Nueva foto"}
+          <div className="flex min-w-0 items-center gap-2.5">
+            {esEdicion ? (
+              <Pencil className="size-6 shrink-0 text-teal-700" strokeWidth={1.75} aria-hidden="true" />
+            ) : (
+              <ImagePlus className="size-6 shrink-0 text-teal-700" strokeWidth={1.75} aria-hidden="true" />
+            )}
+            <h2 id="admin-foto-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">
+              {esEdicion ? tEditar : tNuevaFoto}
             </h2>
           </div>
           <button
             type="button"
             onClick={onCerrar}
             disabled={guardando}
-            className="rounded-full bg-stone-100 p-2 text-slate-600 transition hover:bg-stone-200 disabled:opacity-60"
-            aria-label="Cerrar"
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-60"
+            aria-label={t("Cerrar")}
           >
             <X className="size-5" />
           </button>
@@ -230,20 +288,18 @@ function ModalFoto({ onCerrar, onGuardar, categorias = [], inicial = null, guard
             </div>
           )}
 
-          <label className="grid gap-2 text-[length:var(--text-body)] font-bold uppercase tracking-wide text-slate-500">
-            {"T\u00edtulo"}
-            <input
-              name="title"
-              value={form.title}
-              onChange={cambiarCampo}
-              placeholder={"Ej. Feria del caf\u00e9"}
-              className="h-[var(--control-height)] rounded-full border border-slate-200 bg-slate-50 px-4 text-[length:var(--text-body)] font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-slate-400 focus:bg-white"
-              required
-            />
-          </label>
+          <CampoLimitePalabras
+            label={"T\u00edtulo"}
+            name="title"
+            value={form.title}
+            onChange={cambiarCampo}
+            maxPalabras={MAX_PALABRAS_TITULO}
+            placeholder={"Ej. Feria del caf\u00e9"}
+            required
+          />
 
           <label className="grid gap-2 text-[length:var(--text-body)] font-bold uppercase tracking-wide text-slate-500">
-            URL de imagen
+            <ST>URL de imagen</ST>
             <input
               name="image"
               value={form.image}
@@ -290,7 +346,7 @@ function GaleriaAcciones({ puedeEliminar, onEditar, onEliminar }) {
         className="inline-flex h-8 items-center justify-center gap-1 rounded-full border border-slate-950 bg-slate-950 px-2.5 text-[length:var(--text-body)] font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700"
       >
         <Pencil className="size-3 shrink-0" aria-hidden="true" />
-        <span>Editar</span>
+        <span><ST>Editar</ST></span>
       </button>
       {puedeEliminar ? (
         <button
@@ -299,7 +355,7 @@ function GaleriaAcciones({ puedeEliminar, onEditar, onEliminar }) {
           className="inline-flex h-8 items-center justify-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2.5 text-[length:var(--text-body)] font-semibold text-rose-700 transition hover:bg-rose-100"
         >
           <Trash2 className="size-3 shrink-0" aria-hidden="true" />
-          <span>Eliminar</span>
+          <span><ST>Eliminar</ST></span>
         </button>
       ) : null}
     </div>
@@ -313,10 +369,43 @@ function GaleriaInlineEditor({ galleryInicial, onRecargar, puedeEliminar }) {
   const [modalFoto, setModalFoto] = useState(null);
   const [categoriasApi, setCategoriasApi] = useState([]);
   const [guardando, setGuardando] = useState(false);
+  const reparacionHecha = useRef(false);
 
   useEffect(() => {
     setGallery(Array.isArray(galleryInicial) ? galleryInicial : []);
   }, [galleryInicial]);
+
+  // Si quedó inglés en Supabase, lo corrige a español una vez al cargar
+  useEffect(() => {
+    const items = Array.isArray(galleryInicial) ? galleryInicial : [];
+    if (!items.length || reparacionHecha.current) return undefined;
+    let cancelado = false;
+    (async () => {
+      let cambio = false;
+      for (const item of items) {
+        if (!item?.id || typeof item.title !== "string" || !item.title.trim()) continue;
+        if (!pareceIngles(item.title)) continue;
+        const titleEs = await asegurarCamposEnEspanol({ title: item.title }, ["title"]);
+        const nuevo = String(titleEs.title || "").trim();
+        if (!nuevo || nuevo === item.title.trim()) continue;
+        try {
+          await actualizarGaleriaItem(item.id, {
+            title: nuevo,
+            image: item.image,
+            categoria: item.categoria || "",
+          });
+          cambio = true;
+        } catch {
+          /* ignore item */
+        }
+      }
+      reparacionHecha.current = true;
+      if (!cancelado && cambio) await onRecargar();
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [galleryInicial, onRecargar]);
 
   const recargarCategorias = () =>
     obtenerCategorias(TIPO_CATEGORIA_GALERIA)
@@ -391,7 +480,7 @@ function GaleriaInlineEditor({ galleryInicial, onRecargar, puedeEliminar }) {
     <>
       <div className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-          <h1 className="text-[length:var(--text-title)] font-bold text-slate-950">{"Galer\u00eda"}</h1>
+          <h1 className="text-[length:var(--text-title)] font-bold text-slate-950"><ST>{"Galer\u00eda"}</ST></h1>
           <button
             type="button"
             disabled={guardando}
@@ -399,7 +488,7 @@ function GaleriaInlineEditor({ galleryInicial, onRecargar, puedeEliminar }) {
             className="inline-flex h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 text-[length:var(--text-body)] font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700 disabled:opacity-60 sm:w-auto"
           >
             <ImagePlus className="size-4" />
-            Agregar foto
+            <ST>Agregar foto</ST>
           </button>
         </div>
 
@@ -482,10 +571,10 @@ function GaleriaInlineEditor({ galleryInicial, onRecargar, puedeEliminar }) {
               <table className="w-full text-left text-[length:var(--text-body)]">
                 <thead>
                   <tr>
-                    <th scope="col">Imagen</th>
-                    <th scope="col">{"T\u00edtulo"}</th>
-                    <th scope="col">{"Categor\u00eda"}</th>
-                    <th scope="col">Acciones</th>
+                    <th scope="col"><ST>Imagen</ST></th>
+                    <th scope="col"><ST>{"T\u00edtulo"}</ST></th>
+                    <th scope="col"><ST>{"Categor\u00eda"}</ST></th>
+                    <th scope="col"><ST>Acciones</ST></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -505,10 +594,10 @@ function GaleriaInlineEditor({ galleryInicial, onRecargar, puedeEliminar }) {
                         )}
                       </td>
                       <td className="px-4 py-3 align-middle font-medium text-slate-900">
-                        {item.title || "—"}
+                        {item.title ? <ST>{item.title}</ST> : "—"}
                       </td>
                       <td className="px-4 py-3 align-middle text-slate-600">
-                        {item.categoria || "—"}
+                        {item.categoria ? <ST>{item.categoria}</ST> : "—"}
                       </td>
                       <td className="py-3 align-middle">
                         <GaleriaAcciones
@@ -539,8 +628,8 @@ function GaleriaInlineEditor({ galleryInicial, onRecargar, puedeEliminar }) {
                   )}
                   <div className="min-w-0 flex-1 space-y-2">
                     <div>
-                      <p className="font-semibold text-slate-950">{item.title || "Sin título"}</p>
-                      <p className="text-slate-500">{item.categoria || "Sin categoría"}</p>
+                      <p className="font-semibold text-slate-950">{item.title ? <ST>{item.title}</ST> : <ST>Sin título</ST>}</p>
+                      <p className="text-slate-500">{item.categoria ? <ST>{item.categoria}</ST> : <ST>Sin categoría</ST>}</p>
                     </div>
                     <GaleriaAcciones
                       puedeEliminar={puedeEliminar}
@@ -685,7 +774,7 @@ const AdminInformacionSobreNosotros = () => {
         <section className="space-y-5">
           {cargando ? (
             <div className="rounded-xl border border-slate-200 bg-white p-8 text-[length:var(--text-body)] text-slate-500 shadow-sm">
-              {"Cargando informaci\u00f3n..."}
+              <ST>{"Cargando informaci\u00f3n..."}</ST>
             </div>
           ) : error ? (
             <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-[length:var(--text-body)] font-semibold text-red-700">
@@ -695,7 +784,7 @@ const AdminInformacionSobreNosotros = () => {
                 onClick={reload}
                 className="mt-4 block h-[var(--control-height)] rounded-full bg-red-700 px-4 text-white"
               >
-                Reintentar
+                <ST>Reintentar</ST>
               </button>
             </div>
           ) : (
@@ -709,11 +798,11 @@ const AdminInformacionSobreNosotros = () => {
       ) : (
         <section className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
-            <h1 className="text-[length:var(--text-title)] font-bold text-slate-950">Historia</h1>
+            <h1 className="text-[length:var(--text-title)] font-bold text-slate-950"><ST>Historia</ST></h1>
           </div>
 
           {cargando ? (
-            <div className="p-8 text-[length:var(--text-body)] text-slate-500">{"Cargando informaci\u00f3n..."}</div>
+            <div className="p-8 text-[length:var(--text-body)] text-slate-500"><ST>{"Cargando informaci\u00f3n..."}</ST></div>
           ) : error ? (
             <div className="p-8 text-[length:var(--text-body)] font-semibold text-red-700">
               {error}
@@ -722,7 +811,7 @@ const AdminInformacionSobreNosotros = () => {
                 onClick={reload}
                 className="mt-4 block h-[var(--control-height)] rounded-full bg-red-700 px-4 text-white"
               >
-                Reintentar
+                <ST>Reintentar</ST>
               </button>
             </div>
           ) : (

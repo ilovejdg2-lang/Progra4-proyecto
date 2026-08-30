@@ -23,6 +23,7 @@ import "../../Footer/Footer.css";
 import "../../Navbar/Navbar.css";
 import "./AdminCmsPreview.css";
 
+import { useTraducir } from "../../../hooks/useTraducir";
 import { buildIniciativasCards } from "../../../lib/iniciativasCards";
 
 function useProductosDestacados(enabled) {
@@ -532,6 +533,10 @@ function PreviewEnlaces({ items = [], variante = "navbar", navbar, footer }) {
 
 export function AdminEditorConPreview({ preview, children, ayuda }) {
   const [mostrandoVistaPrevia, setMostrandoVistaPrevia] = useState(false);
+  const tVolver = useTraducir("Volver a edición");
+  const tEdicion = useTraducir("Edición");
+  const tPrevisualizar = useTraducir("Previsualizar");
+  const tAyuda = useTraducir(ayuda || "");
 
   return (
     <div className="admin-cms-editor">
@@ -543,23 +548,23 @@ export function AdminEditorConPreview({ preview, children, ayuda }) {
             onClick={() => setMostrandoVistaPrevia(false)}
             className={adminBtnVoluntariadoCancel}
           >
-            Volver a edición
+            {tVolver}
           </button>
         </section>
       ) : null}
 
       <section className="admin-cms-editor__form-section">
         <div className="admin-cms-editor__form-header">
-          <h3 className="admin-cms-editor__form-title">{"Edici\u00f3n"}</h3>
+          <h3 className="admin-cms-editor__form-title">{tEdicion}</h3>
           <button
             type="button"
             onClick={() => setMostrandoVistaPrevia(true)}
             className={adminBtnVoluntariadoPrimary}
           >
-            Previsualizar
+            {tPrevisualizar}
           </button>
         </div>
-        {ayuda ? <p className="admin-cms-editor__ayuda">{ayuda}</p> : null}
+        {ayuda ? <p className="admin-cms-editor__ayuda">{tAyuda}</p> : null}
         <div className="admin-cms-editor__fields">{children}</div>
       </section>
     </div>

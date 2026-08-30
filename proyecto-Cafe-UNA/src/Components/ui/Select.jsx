@@ -1,7 +1,12 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
+import { useTraducir } from "../../hooks/useTraducir";
 import "./Select.css";
+
+function TextoOpcion({ texto }) {
+  return useTraducir(texto || "");
+}
 
 export function UiSelect({
   id,
@@ -100,7 +105,9 @@ export function UiSelect({
         className="ui-select__trigger"
         onClick={() => setOpen((actualOpen) => !actualOpen)}
       >
-        <span className="ui-select__value">{actual?.label || ""}</span>
+        <span className="ui-select__value">
+          {actual?.label ? <TextoOpcion texto={actual.label} /> : null}
+        </span>
         <ChevronDown className="ui-select__chevron" size={16} aria-hidden="true" />
       </button>
       {open && menuStyle
@@ -122,7 +129,7 @@ export function UiSelect({
                         }
                       }}
                     >
-                      {opcion.label}
+                      <TextoOpcion texto={opcion.label} />
                     </span>
                     {renderOptionEnd?.(opcion)}
                   </li>

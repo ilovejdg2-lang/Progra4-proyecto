@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Pencil, Plus, Power, RefreshCw, X } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
@@ -22,6 +22,18 @@ import {
   obtenerActivosFijos,
 } from "../../../services/activosFijosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
+import { queueFocusFormError } from "../../../lib/formFocus";
+import { ContadorPalabras } from "../../../Components/Admin/ui/CampoLimitePalabras";
+import { NumericInput } from "../../../Components/NumericInput/NumericInput";
+import {
+  limitarPalabras,
+  MAX_PALABRAS_TEXTO_BREVE,
+  MAX_PALABRAS_TITULO,
+} from "../../../lib/formLimits";
+
+import { ST } from "../../../Components/T/ST";
+import { useTraducir } from "../../../hooks/useTraducir";
+import { t } from "../../../lib/t";
 
 const EMPTY_FORM = {
   codigo: "",
@@ -56,6 +68,8 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
   const [form, setForm] = useState(() => ({ ...EMPTY_FORM, ...inicial }));
   const [validationError, setValidationError] = useState("");
   const editando = Boolean(inicial?.id);
+  const tEditar = useTraducir("Editar activo fijo");
+  const tAgregar = useTraducir("Agregar activo fijo");
 
   useEffect(() => {
     if (!open) return;
@@ -74,7 +88,14 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
 
   const message = validationError || error;
   const setField = (key) => (event) => {
-    setForm((current) => ({ ...current, [key]: event.target.value }));
+    let value = event.target.value;
+    if (key === "nombre" || key === "nombreCompleto" || key === "modelo") {
+      value = limitarPalabras(value, MAX_PALABRAS_TITULO);
+    }
+    if (key === "descripcionResponsable" || key === "descripcionProyecto") {
+      value = limitarPalabras(value, MAX_PALABRAS_TEXTO_BREVE);
+    }
+    setForm((current) => ({ ...current, [key]: value }));
     setValidationError("");
   };
 
@@ -84,15 +105,27 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
     const nombre = form.nombre.trim();
     if (!codigo || codigo.length > 50) {
       setValidationError("El código es obligatorio (máx. 50 caracteres).");
+      queueFocusFormError({
+        errors: { codigo: true },
+        root: document.querySelector('[role="dialog"]'),
+      });
       return;
     }
     if (nombre.length < 2 || nombre.length > 200) {
       setValidationError("El nombre debe tener entre 2 y 200 caracteres.");
+      queueFocusFormError({
+        errors: { nombre: true },
+        root: document.querySelector('[role="dialog"]'),
+      });
       return;
     }
     const valor = Number(form.valorEnLibro);
     if (!Number.isFinite(valor) || valor < 0) {
       setValidationError("El valor en libro debe ser un número mayor o igual a 0.");
+      queueFocusFormError({
+        errors: { valorEnLibro: true },
+        root: document.querySelector('[role="dialog"]'),
+      });
       return;
     }
 
@@ -117,13 +150,13 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
     <AdminModal open onClose={onClose} maxWidth="max-w-xl" labelledBy="activo-fijo-modal-title">
       <AdminModalHeader>
         <h2 id="activo-fijo-modal-title" className="text-[length:var(--text-subtitle)] font-semibold text-slate-950">
-          {editando ? "Editar activo fijo" : "Agregar activo fijo"}
+          {editando ? tEditar : tAgregar}
         </h2>
         <button
           type="button"
           onClick={onClose}
           className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100"
-          aria-label="Cerrar"
+          aria-label={t("Cerrar")}
         >
           <X className="size-5" />
         </button>
@@ -132,23 +165,24 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700">
-              Código
+              <ST>Código</ST>
               <input name="codigo" value={form.codigo} onChange={setField("codigo")} className={fieldClass} required />
             </label>
             <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700">
-              Nombre
+              <ST>Nombre</ST>
               <input name="nombre" value={form.nombre} onChange={setField("nombre")} className={fieldClass} required />
+              <ContadorPalabras value={form.nombre} maxPalabras={MAX_PALABRAS_TITULO} />
             </label>
             <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700">
-              Modelo
+              <ST>Modelo</ST>
               <input name="modelo" value={form.modelo} onChange={setField("modelo")} className={fieldClass} />
             </label>
             <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700">
-              Número de serie
+              <ST>Número de serie</ST>
               <input name="numeroSerie" value={form.numeroSerie} onChange={setField("numeroSerie")} className={fieldClass} />
             </label>
             <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700">
-              Fecha de compra
+              <ST>Fecha de compra</ST>
               <input
                 name="fechaCompra"
                 type="date"
@@ -158,42 +192,42 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
               />
             </label>
             <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700">
-              Valor en libro
-              <input
+              <ST>Valor en libro</ST>
+              <NumericInput
                 name="valorEnLibro"
-                type="number"
-                min="0"
-                step="0.01"
+                decimal
                 value={form.valorEnLibro}
                 onChange={setField("valorEnLibro")}
                 className={fieldClass}
               />
             </label>
             <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700">
-              Código de proyecto
+              <ST>Código de proyecto</ST>
               <input name="codigoProyecto" value={form.codigoProyecto} onChange={setField("codigoProyecto")} className={fieldClass} />
             </label>
             <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700">
-              Nombre completo
+              <ST>Nombre completo</ST>
               <input name="nombreCompleto" value={form.nombreCompleto} onChange={setField("nombreCompleto")} className={fieldClass} />
             </label>
             <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700 sm:col-span-2">
-              Responsable
+              <ST>Responsable</ST>
               <input
                 name="descripcionResponsable"
                 value={form.descripcionResponsable}
                 onChange={setField("descripcionResponsable")}
                 className={fieldClass}
               />
+              <ContadorPalabras value={form.descripcionResponsable} maxPalabras={MAX_PALABRAS_TEXTO_BREVE} />
             </label>
             <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700 sm:col-span-2">
-              Descripción del proyecto
+              <ST>Descripción del proyecto</ST>
               <input
                 name="descripcionProyecto"
                 value={form.descripcionProyecto}
                 onChange={setField("descripcionProyecto")}
                 className={fieldClass}
               />
+              <ContadorPalabras value={form.descripcionProyecto} maxPalabras={MAX_PALABRAS_TEXTO_BREVE} />
             </label>
           </div>
           {message ? (
@@ -334,11 +368,11 @@ export default function AdminActivosFijos() {
           <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-[0.16em] text-amber-800">
-                Inventario
+                <ST>Inventario</ST>
               </p>
-              <h1 className="mt-1 text-[length:var(--text-title)] font-semibold text-slate-950">Activos fijos</h1>
+              <h1 className="mt-1 text-[length:var(--text-title)] font-semibold text-slate-950"><ST>Activos fijos</ST></h1>
               <p className="mt-2 max-w-2xl text-[length:var(--text-body)] text-slate-500">
-                Equipo y mobiliario en un solo inventario, sin ubicaciones de punto de venta.
+                <ST>Equipo y mobiliario en un solo inventario, sin ubicaciones de punto de venta.</ST>
               </p>
             </div>
             {puedeCrear ? (
@@ -351,7 +385,7 @@ export default function AdminActivosFijos() {
                 className="inline-flex min-h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 text-[length:var(--text-body)] font-semibold text-white hover:bg-neutral-800"
               >
                 <Plus className="size-4" aria-hidden="true" />
-                Agregar activo
+                <ST>Agregar activo</ST>
               </button>
             ) : null}
           </header>
@@ -368,15 +402,15 @@ export default function AdminActivosFijos() {
 
           {!puedeVer ? (
             <section className="rounded-2xl border border-slate-200 bg-white px-5 py-14 text-center shadow-sm">
-              <h2 className="text-[length:var(--text-subtitle)] font-semibold text-slate-950">Acceso restringido</h2>
+              <h2 className="text-[length:var(--text-subtitle)] font-semibold text-slate-950"><ST>Acceso restringido</ST></h2>
               <p className="mx-auto mt-2 max-w-md text-[length:var(--text-body)] text-slate-500">
-                No tenés permiso para consultar activos fijos.
+                <ST>No tenés permiso para consultar activos fijos.</ST>
               </p>
             </section>
           ) : status === "loading" ? (
             <section className="flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white shadow-sm">
               <span className="admin-route-loading__spinner" aria-hidden="true" />
-              <p className="text-[length:var(--text-body)] font-semibold text-slate-600">Cargando activos fijos...</p>
+              <p className="text-[length:var(--text-body)] font-semibold text-slate-600"><ST>Cargando activos fijos...</ST></p>
             </section>
           ) : status === "error" ? (
             <section className="flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-2xl border border-amber-200 bg-white px-5 text-center">
@@ -387,7 +421,7 @@ export default function AdminActivosFijos() {
                 className="inline-flex min-h-[var(--control-height)] items-center gap-2 rounded-full border border-amber-800 bg-amber-800 px-4 text-[length:var(--text-body)] font-semibold text-white"
               >
                 <RefreshCw className="size-4" aria-hidden="true" />
-                Reintentar
+                <ST>Reintentar</ST>
               </button>
             </section>
           ) : (
@@ -395,13 +429,13 @@ export default function AdminActivosFijos() {
               <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div>
                   <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">
-                    Total en libro (filtro actual)
+                    <ST>Total en libro (filtro actual)</ST>
                   </p>
                   <p className="mt-1 text-[length:var(--text-subtitle)] font-semibold text-slate-950">
                     {formatCRC(totalValor)}
                   </p>
                 </div>
-                <p className="text-[length:var(--text-body)] text-slate-500">{filters.visibles} activos visibles</p>
+                <p className="text-[length:var(--text-body)] text-slate-500">{filters.visibles} <ST>activos visibles</ST></p>
               </div>
 
               <AdminListaToolbar
@@ -435,12 +469,12 @@ export default function AdminActivosFijos() {
                   <table className="min-w-full text-left text-[length:var(--text-body)]">
                     <thead>
                       <tr>
-                        <th>Código</th>
-                        <th>Nombre</th>
-                        <th className="hidden md:table-cell">Compra</th>
-                        <th>Valor</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
+                        <th><ST>Código</ST></th>
+                        <th><ST>Nombre</ST></th>
+                        <th className="hidden md:table-cell"><ST>Compra</ST></th>
+                        <th><ST>Valor</ST></th>
+                        <th><ST>Estado</ST></th>
+                        <th><ST>Acciones</ST></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -450,7 +484,10 @@ export default function AdminActivosFijos() {
                           <td className="px-4 py-3 text-slate-800">
                             <div>{activo.nombre}</div>
                             {activo.descripcionResponsable ? (
-                              <div className="mt-1 text-slate-500">{activo.descripcionResponsable}</div>
+                              <div className="mt-1 text-slate-500"><ST>{activo.descripcionResponsable}</ST></div>
+                            ) : null}
+                            {activo.descripcionProyecto ? (
+                              <div className="mt-1 text-slate-500"><ST>{activo.descripcionProyecto}</ST></div>
                             ) : null}
                           </td>
                           <td className="hidden px-4 py-3 text-slate-600 md:table-cell">{formatFecha(activo.fechaCompra)}</td>
@@ -461,7 +498,7 @@ export default function AdminActivosFijos() {
                                 activo.activo ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"
                               }`}
                             >
-                              {activo.activo ? "Activo" : "Inactivo"}
+                              {activo.activo ? <ST>Activo</ST> : <ST>Inactivo</ST>}
                             </span>
                           </td>
                           <td className="px-4 py-3 sm:px-6">
@@ -476,7 +513,7 @@ export default function AdminActivosFijos() {
                                   className="inline-flex h-7 items-center justify-center gap-1 rounded-full border border-slate-950 bg-slate-950 px-2 text-[11px] font-semibold leading-none text-white transition hover:border-neutral-700 hover:bg-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1"
                                 >
                                   <Pencil className="size-3 shrink-0" aria-hidden="true" />
-                                  <span>Editar</span>
+                                  <span><ST>Editar</ST></span>
                                 </button>
                               ) : null}
                               {puedeInactivar ? (
@@ -495,8 +532,8 @@ export default function AdminActivosFijos() {
                                     {togglingId === activo.id
                                       ? "..."
                                       : activo.activo
-                                        ? "Inactivar"
-                                        : "Activar"}
+                                        ? <ST>Inactivar</ST>
+                                        : <ST>Activar</ST>}
                                   </span>
                                 </button>
                               ) : null}

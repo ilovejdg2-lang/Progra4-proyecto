@@ -3,15 +3,15 @@ const AD = "Admin";
 const VE = "Vendedor";
 const CL = "Cliente";
 const US = "Usuario";
-const VI = "Visitante";
 
-const todos = [SA, AD, VE, CL, US, VI];
 const logueados = [SA, AD, VE, CL, US];
 const staff = [SA, AD, VE];
 const admins = [SA, AD];
+const todosRoles = [SA, AD, VE, CL, US];
 
-export const PERMISOS_POR_ROL = {
-  ver_informacion: todos,
+/** Matriz en memoria; se puede refrescar desde /api/ajustes/permisos. */
+export let PERMISOS_POR_ROL = {
+  ver_informacion: todosRoles,
   agregar_imagenes_galeria: admins,
   actualizar_informacion: admins,
   inactivar_informacion: admins,
@@ -30,20 +30,20 @@ export const PERMISOS_POR_ROL = {
   ver_ventas: staff,
   cancelar_ventas: staff,
   ver_reportes: staff,
-  ver_productos: todos,
+  ver_productos: todosRoles,
   crear_productos: [SA],
   comprar_productos: [CL],
   actualizar_stock_productos: staff,
+  ajustar_stock_ubicaciones: staff,
   actualizar_productos: admins,
-  inactivar_productos: [SA],
+  inactivar_productos: admins,
   ver_historial_compras_clientes: staff,
   ver_historial_compras_propio: [CL],
   ver_inventario: admins,
-  ajustar_stock_ubicaciones: staff,
   actualizar_inventario: admins,
   agregar_articulo_inventario: admins,
   inactivar_articulo_inventario: admins,
-  ver_productores: todos,
+  ver_productores: todosRoles,
   administrar_solicitudes_productores: admins,
   agregar_productor: admins,
   actualizar_productor: [SA],
@@ -56,7 +56,7 @@ export const PERMISOS_POR_ROL = {
   descargar_su_propia_factura: [SA, AD, VE, CL],
   descargar_facturas: staff,
   inactivar_facturas: staff,
-  ver_documentacion_visible: todos,
+  ver_documentacion_visible: todosRoles,
   ver_documentacion_privada: admins,
   crear_documentacion: admins,
   actualizar_documentacion: admins,
@@ -79,6 +79,11 @@ export const PERMISOS_POR_ROL = {
   ver_auditoria: [SA],
 };
 
+export function aplicarMatrizPermisos(matriz) {
+  if (!matriz || typeof matriz !== "object") return;
+  PERMISOS_POR_ROL = { ...PERMISOS_POR_ROL, ...matriz };
+}
+
 function normalizarRol(rol) {
   const valor = String(rol ?? "").trim().toLowerCase();
   if (valor === "superadmin") return SA;
@@ -86,7 +91,6 @@ function normalizarRol(rol) {
   if (valor === "vendedor") return VE;
   if (valor === "cliente") return CL;
   if (valor === "usuario") return US;
-  if (valor === "visitante") return VI;
   return String(rol ?? "").trim();
 }
 

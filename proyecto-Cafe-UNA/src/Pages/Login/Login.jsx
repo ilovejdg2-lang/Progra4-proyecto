@@ -18,7 +18,10 @@ import {
   validateNombreUsuario,
   validatePassword,
 } from '../../lib/formLimits';
+import { queueFocusFormError } from '../../lib/formFocus';
 import { saveAuthenticatedUser } from '../../services/sessionService';
+import { useTraducir } from '../../hooks/useTraducir';
+import { ST } from '../../Components/T/ST';
 import './Login.css';
 
 function PasswordField({
@@ -34,26 +37,29 @@ function PasswordField({
   ariaDescribedBy,
 }) {
   const Icon = visible ? Eye : EyeOff;
+  const tOcultar = useTraducir('Ocultar contraseña');
+  const tMostrar = useTraducir('Mostrar contraseña');
 
   return (
     <div className="login-password-wrapper">
-      <input
-        id={id}
-        type={visible ? 'text' : 'password'}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        value={value}
-        onChange={onChange}
-        className={className}
-        aria-invalid={ariaInvalid}
-        aria-describedby={ariaDescribedBy}
-        required
-      />
+        <input
+          id={id}
+          name={id}
+          type={visible ? 'text' : 'password'}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          value={value}
+          onChange={onChange}
+          className={className}
+          aria-invalid={ariaInvalid}
+          aria-describedby={ariaDescribedBy}
+          required
+        />
       <button
         type="button"
         className="login-password-toggle"
         onClick={onToggle}
-        aria-label={visible ? 'Ocultar contrase\u00f1a' : 'Mostrar contrase\u00f1a'}
+        aria-label={visible ? tOcultar : tMostrar}
       >
         <Icon className="login-password-icon" aria-hidden="true" />
       </button>
@@ -63,6 +69,40 @@ function PasswordField({
 
 
 const Login = () => {
+  const tVolver = useTraducir('Volver');
+  const tCorreoUsuario = useTraducir('Correo o Usuario');
+  const tPhCorreoUsuario = useTraducir('correo o usuario');
+  const tContrasena = useTraducir('Contraseña');
+  const tOlvido = useTraducir('¿Olvidó su contraseña?');
+  const tIngresando = useTraducir('Ingresando...');
+  const tIngresar = useTraducir('INGRESAR');
+  const tNombre = useTraducir('Nombre');
+  const tCorreo = useTraducir('Correo');
+  const tConfirmar = useTraducir('Confirmar contraseña');
+  const tEnviandoCodigo = useTraducir('Enviando código...');
+  const tRegistrarme = useTraducir('REGISTRARME');
+  const tVolverLogin = useTraducir('Volver a iniciar sesión');
+  const tCodigoHintAntes = useTraducir('Enviamos un código a');
+  const tCodigoHintDespues = useTraducir('. Ingrésalo para activar tu cuenta.');
+  const tSpamHint = useTraducir('Si no lo ve, revise la carpeta de');
+  const tSpam = useTraducir('spam');
+  const tO = useTraducir('o');
+  const tCorreoNoDeseado = useTraducir('correo no deseado');
+  const tComunYahoo = useTraducir('(común en Yahoo y Gmail).');
+  const tNoPudimos = useTraducir('No pudimos enviar el correo a');
+  const tReviseEscribio = useTraducir('. Revise que lo escribiera bien o trate de contactar a Café UNA.');
+  const tCodigoRecibido = useTraducir('Código recibido');
+  const tVerificando = useTraducir('Verificando...');
+  const tVerificarCuenta = useTraducir('VERIFICAR CUENTA');
+  const tReenviar = useTraducir('Reenviar código');
+  const tVolverForm = useTraducir('Volver al formulario');
+  const tNuevaPass = useTraducir('Nueva contraseña');
+  const tConfirmarNueva = useTraducir('Confirmar nueva contraseña');
+  const tEnviar = useTraducir('ENVIAR');
+  const tActualizar = useTraducir('ACTUALIZAR');
+  const tNoTieneCuenta = useTraducir('¿No tiene una cuenta?');
+  const tRegistrarse = useTraducir('Registrarse');
+
   const [mode, setMode] = useState('login');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -165,14 +205,20 @@ const Login = () => {
     }
 
     setFieldErrors(nextErrors);
-    return !nextErrors.identifier && !nextErrors.password;
+    return nextErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
 
-    if (!validateForm()) {
+    const nextErrors = validateForm();
+    if (nextErrors.identifier || nextErrors.password) {
+      queueFocusFormError({
+        errors: nextErrors,
+        root: e.currentTarget,
+        fieldOrder: ['identifier', 'password'],
+      });
       return;
     }
 
@@ -187,6 +233,7 @@ const Login = () => {
       const token = result?.token || result?.Token;
       if (!token) {
         setFormError('Credenciales incorrectas');
+        queueFocusFormError({ root: e.currentTarget.closest('.login-card') || e.currentTarget });
         return;
       }
 
@@ -197,6 +244,7 @@ const Login = () => {
       window.location.href = redirectTo;
     } catch (err) {
       setFormError(sanitizeUserFacingError(err.message || 'Ocurri\u00f3 un error al iniciar sesi\u00f3n.'));
+      queueFocusFormError({ root: e.currentTarget.closest('.login-card') || document });
     } finally {
       setIsLoading(false);
     }
@@ -226,7 +274,7 @@ const Login = () => {
     }
 
     setRegisterFieldErrors(nextErrors);
-    return !Object.values(nextErrors).some(Boolean);
+    return nextErrors;
   };
 
   const handleRegister = async (event) => {
@@ -234,7 +282,18 @@ const Login = () => {
     setFormError('');
     setSuccessMessage('');
 
-    if (!validateRegisterForm()) {
+    const nextErrors = validateRegisterForm();
+    if (Object.values(nextErrors).some(Boolean)) {
+      queueFocusFormError({
+        errors: nextErrors,
+        root: event.currentTarget,
+        fieldMap: {
+          correo: 'correoRegistro',
+          password: 'passwordRegistro',
+          confirmPassword: 'confirmPasswordRegistro',
+        },
+        fieldOrder: ['nombre', 'correo', 'password', 'confirmPassword'],
+      });
       return;
     }
 
@@ -250,6 +309,7 @@ const Login = () => {
       setRegisterStep('verify');
     } catch (err) {
       setFormError(sanitizeUserFacingError(err.message || 'No se pudo registrar la cuenta.'));
+      queueFocusFormError({ root: event.currentTarget.closest('.login-card') || document });
     } finally {
       setIsLoading(false);
     }
@@ -326,12 +386,16 @@ const Login = () => {
     setIsLoading(true);
     try {
       const result = await solicitarRecuperacion(recoverForm.identifier.trim());
-      if (result?.found) {
-        setSuccessMessage(result?.message || 'Solicitud enviada.');
-        setRecoverForm((prev) => ({ ...prev, token: '', nuevaPassword: '', confirmPassword: '' }));
-      } else {
-        setFormError(result?.message || 'No hay ning\u00fan usuario con ese correo o nombre de usuario.');
-      }
+      setSuccessMessage(
+        result?.message ||
+          'Si existe una cuenta con esos datos, enviamos un código de recuperación al correo registrado.',
+      );
+      setRecoverForm((prev) => ({
+        ...prev,
+        token: '',
+        nuevaPassword: '',
+        confirmPassword: '',
+      }));
     } catch (err) {
       setFormError(err.message || 'No se pudo iniciar la recuperaci\u00f3n.');
     } finally {
@@ -365,6 +429,7 @@ const Login = () => {
     setIsLoading(true);
     try {
       const result = await restablecerPassword({
+        identifier: recoverForm.identifier.trim(),
         token: recoverForm.token.trim(),
         nuevaPassword: recoverForm.nuevaPassword,
       });
@@ -390,7 +455,7 @@ const Login = () => {
             strokeLinejoin="round"
           />
         </svg>
-        Volver
+        {tVolver}
       </Link>
 
       <div className="login-card">
@@ -408,21 +473,21 @@ const Login = () => {
 
         {successMessage ? (
           <p className={successLooksLikeError ? 'login-error-banner' : 'login-success'}>
-            {successMessage}
+            <ST>{successMessage}</ST>
           </p>
         ) : null}
-        {mode === 'recover' && formError ? <p className="login-error-banner">{formError}</p> : null}
-        {mode === 'login' && formError ? <p className="login-error-banner">{formError}</p> : null}
-        {mode === 'register' && formError ? <p className="login-error-banner">{formError}</p> : null}
+        {mode === 'recover' && formError ? <p className="login-error-banner" role="alert"><ST>{formError}</ST></p> : null}
+        {mode === 'login' && formError ? <p className="login-error-banner" role="alert"><ST>{formError}</ST></p> : null}
+        {mode === 'register' && formError ? <p className="login-error-banner" role="alert"><ST>{formError}</ST></p> : null}
         {mode === 'login' ? (
           <form className="login-form" onSubmit={handleSubmit} noValidate>
           <div className="login-field">
-            <label htmlFor="identifier">Correo o Usuario</label>
+            <label htmlFor="identifier">{tCorreoUsuario}</label>
             <input
               id="identifier"
               name="identifier"
               type="text"
-              placeholder="correo o usuario"
+              placeholder={tPhCorreoUsuario}
               autoComplete="username"
               value={identifier}
               onChange={(e) => {
@@ -434,12 +499,12 @@ const Login = () => {
               aria-describedby={fieldErrors.identifier ? 'identifier-error' : undefined}
             />
             {fieldErrors.identifier && (
-              <p id="identifier-error" className="login-field-error">{fieldErrors.identifier}</p>
+              <p id="identifier-error" className="login-field-error"><ST>{fieldErrors.identifier}</ST></p>
             )}
           </div>
 
           <div className="login-field">
-            <label htmlFor="password">{"Contrase\u00f1a"}</label>
+            <label htmlFor="password">{tContrasena}</label>
             <PasswordField
               id="password"
               visible={visiblePasswords.login}
@@ -456,14 +521,14 @@ const Login = () => {
             />
             {fieldErrors.password && (
               <p id="password-error" className="login-field-error">
-                {fieldErrors.password}
+                <ST>{fieldErrors.password}</ST>
               </p>
             )}
-            <button type="button" className="login-forgot-link" onClick={() => switchMode('recover')}>{"\u00bfOlvid\u00f3 su contrase\u00f1a?"}</button>
+            <button type="button" className="login-forgot-link" onClick={() => switchMode('recover')}>{tOlvido}</button>
           </div>
 
           <button type="submit" className="login-button" disabled={isLoading}>
-            {isLoading ? 'Ingresando...' : 'INGRESAR'}
+            {isLoading ? tIngresando : tIngresar}
           </button>
           </form>
         ) : null}
@@ -472,9 +537,10 @@ const Login = () => {
           registerStep === 'form' ? (
           <form className="login-form" onSubmit={handleRegister} noValidate>
             <div className="login-field">
-              <label htmlFor="nombre">Nombre</label>
+              <label htmlFor="nombre">{tNombre}</label>
               <input
                 id="nombre"
+                name="nombre"
                 type="text"
                 value={registerForm.nombre}
                 onChange={(e) => {
@@ -483,16 +549,18 @@ const Login = () => {
                 }}
                 maxLength={MAX_NOMBRE_USUARIO}
                 className={registerFieldErrors.nombre ? 'input-error' : ''}
+                aria-invalid={Boolean(registerFieldErrors.nombre)}
                 required
               />
               {registerFieldErrors.nombre ? (
-                <p className="login-field-error">{registerFieldErrors.nombre}</p>
+                <p className="login-field-error" role="alert"><ST>{registerFieldErrors.nombre}</ST></p>
               ) : null}
             </div>
             <div className="login-field">
-              <label htmlFor="correoRegistro">Correo</label>
+              <label htmlFor="correoRegistro">{tCorreo}</label>
               <input
                 id="correoRegistro"
+                name="correoRegistro"
                 type="email"
                 value={registerForm.correo}
                 onChange={(e) => {
@@ -500,14 +568,15 @@ const Login = () => {
                   setRegisterForm((prev) => ({ ...prev, correo: e.target.value }));
                 }}
                 className={registerFieldErrors.correo ? 'input-error' : ''}
+                aria-invalid={Boolean(registerFieldErrors.correo)}
                 required
               />
               {registerFieldErrors.correo ? (
-                <p className="login-field-error">{registerFieldErrors.correo}</p>
+                <p className="login-field-error"><ST>{registerFieldErrors.correo}</ST></p>
               ) : null}
             </div>
             <div className="login-field">
-              <label htmlFor="passwordRegistro">{"Contrase\u00f1a"}</label>
+              <label htmlFor="passwordRegistro">{tContrasena}</label>
               <PasswordField
                 id="passwordRegistro"
                 visible={visiblePasswords.register}
@@ -523,11 +592,11 @@ const Login = () => {
                 ariaDescribedBy={registerFieldErrors.password ? 'password-registro-error' : undefined}
               />
               {registerFieldErrors.password ? (
-                <p id="password-registro-error" className="login-field-error">{registerFieldErrors.password}</p>
+                <p id="password-registro-error" className="login-field-error"><ST>{registerFieldErrors.password}</ST></p>
               ) : null}
             </div>
             <div className="login-field">
-              <label htmlFor="confirmPasswordRegistro">{"Confirmar contrase\u00f1a"}</label>
+              <label htmlFor="confirmPasswordRegistro">{tConfirmar}</label>
               <PasswordField
                 id="confirmPasswordRegistro"
                 visible={visiblePasswords.registerConfirm}
@@ -543,29 +612,37 @@ const Login = () => {
                 ariaDescribedBy={registerFieldErrors.confirmPassword ? 'confirm-password-registro-error' : undefined}
               />
               {registerFieldErrors.confirmPassword ? (
-                <p id="confirm-password-registro-error" className="login-field-error">{registerFieldErrors.confirmPassword}</p>
+                <p id="confirm-password-registro-error" className="login-field-error"><ST>{registerFieldErrors.confirmPassword}</ST></p>
               ) : null}
             </div>
             <button type="submit" className="login-button" disabled={isLoading}>
-              {isLoading ? 'Enviando c\u00f3digo...' : 'REGISTRARME'}
+              {isLoading ? tEnviandoCodigo : tRegistrarme}
             </button>
-            <button type="button" className="login-alt-link" onClick={() => switchMode('login')}>{"Volver a iniciar sesi\u00f3n"}</button>
+            <button type="button" className="login-alt-link" onClick={() => switchMode('login')}>{tVolverLogin}</button>
           </form>
           ) : (
           <form className="login-form" onSubmit={handleVerifyRegistration} noValidate>
             <p className="login-verify-hint">
               {registerEmailSent ? (
-                <>{"Enviamos un c\u00f3digo a "}<strong>{registerForm.correo}</strong>{". Ingr\u00e9salo para activar tu cuenta."}
-                  {' '}Si no lo ve, revise la carpeta de <strong>spam</strong> o <strong>correo no deseado</strong> (común en Yahoo y Gmail).
+                <>
+                  {tCodigoHintAntes}{' '}
+                  <strong>{registerForm.correo}</strong>
+                  {tCodigoHintDespues}
+                  {' '}
+                  {tSpamHint}{' '}
+                  <strong>{tSpam}</strong>
+                  {' '}{tO}{' '}
+                  <strong>{tCorreoNoDeseado}</strong>
+                  {' '}{tComunYahoo}
                 </>
               ) : (
                 <>
-                  No pudimos enviar el correo a <strong>{registerForm.correo}</strong>. Revise que lo escribiera bien o trate de contactar a Café UNA.
+                  {tNoPudimos} <strong>{registerForm.correo}</strong>{tReviseEscribio}
                 </>
               )}
             </p>
             <div className="login-field">
-              <label htmlFor="registerToken">Código recibido</label>
+              <label htmlFor="registerToken">{tCodigoRecibido}</label>
               <input
                 id="registerToken"
                 type="text"
@@ -575,7 +652,7 @@ const Login = () => {
               />
             </div>
             <button type="submit" className="login-button" disabled={isLoading}>
-              {isLoading ? 'Verificando...' : 'VERIFICAR CUENTA'}
+              {isLoading ? tVerificando : tVerificarCuenta}
             </button>
             <button
               type="button"
@@ -583,10 +660,10 @@ const Login = () => {
               onClick={handleResendRegistrationCode}
               disabled={isLoading}
             >
-              Reenviar código
+              {tReenviar}
             </button>
             <button type="button" className="login-alt-link" onClick={() => setRegisterStep('form')}>
-              Volver al formulario
+              {tVolverForm}
             </button>
           </form>
           )
@@ -596,7 +673,7 @@ const Login = () => {
           <div className="login-recover">
             <form className="login-form" onSubmit={handleRequestRecovery} noValidate>
               <div className="login-field">
-                <label htmlFor="recoverIdentifier">Correo o Usuario</label>
+                <label htmlFor="recoverIdentifier">{tCorreoUsuario}</label>
                 <input
                   id="recoverIdentifier"
                   type="text"
@@ -606,13 +683,13 @@ const Login = () => {
                 />
               </div>
               <button type="submit" className="login-button" disabled={isLoading}>
-                ENVIAR
+                {tEnviar}
               </button>
             </form>
 
             <form className="login-form login-form--compact" onSubmit={handleResetPassword} noValidate>
               <div className="login-field">
-                <label htmlFor="recoverToken">{"C\u00f3digo recibido"}</label>
+                <label htmlFor="recoverToken">{tCodigoRecibido}</label>
                 <input
                   id="recoverToken"
                   type="text"
@@ -622,7 +699,7 @@ const Login = () => {
                 />
               </div>
               <div className="login-field">
-                <label htmlFor="newPassword">{"Nueva contrase\u00f1a"}</label>
+                <label htmlFor="newPassword">{tNuevaPass}</label>
                 <PasswordField
                   id="newPassword"
                   visible={visiblePasswords.recoverNew}
@@ -638,11 +715,11 @@ const Login = () => {
                   ariaDescribedBy={recoverFieldErrors.nuevaPassword ? 'recover-password-error' : undefined}
                 />
                 {recoverFieldErrors.nuevaPassword ? (
-                  <p id="recover-password-error" className="login-field-error">{recoverFieldErrors.nuevaPassword}</p>
+                  <p id="recover-password-error" className="login-field-error"><ST>{recoverFieldErrors.nuevaPassword}</ST></p>
                 ) : null}
               </div>
               <div className="login-field">
-                <label htmlFor="confirmNewPassword">{"Confirmar nueva contrase\u00f1a"}</label>
+                <label htmlFor="confirmNewPassword">{tConfirmarNueva}</label>
                 <PasswordField
                   id="confirmNewPassword"
                   visible={visiblePasswords.recoverConfirm}
@@ -658,23 +735,23 @@ const Login = () => {
                   ariaDescribedBy={recoverFieldErrors.confirmPassword ? 'recover-confirm-password-error' : undefined}
                 />
                 {recoverFieldErrors.confirmPassword ? (
-                  <p id="recover-confirm-password-error" className="login-field-error">{recoverFieldErrors.confirmPassword}</p>
+                  <p id="recover-confirm-password-error" className="login-field-error"><ST>{recoverFieldErrors.confirmPassword}</ST></p>
                 ) : null}
               </div>
               <button type="submit" className="login-button" disabled={isLoading}>
-                ACTUALIZAR
+                {tActualizar}
               </button>
-              <button type="button" className="login-alt-link" onClick={() => switchMode('login')}>{"Volver a iniciar sesi\u00f3n"}</button>
+              <button type="button" className="login-alt-link" onClick={() => switchMode('login')}>{tVolverLogin}</button>
             </form>
           </div>
         ) : null}
 
         {mode === 'login' ? (
           <p className="login-register">
-            {"\u00bfNo tiene una cuenta?"}
+            {tNoTieneCuenta}
             {' '}
             <button type="button" className="login-register-link" onClick={() => switchMode('register')}>
-              Registrarse
+              {tRegistrarse}
             </button>
           </p>
         ) : null}

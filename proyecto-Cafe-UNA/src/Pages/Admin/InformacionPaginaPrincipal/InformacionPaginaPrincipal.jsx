@@ -14,6 +14,7 @@ import {
   PreviewTarjetasInicioLive,
 } from "../../../Components/Admin/ui/AdminCmsPreview";
 import { AdminSeccionCard } from "../../../Components/Admin/ui/AdminSeccionCard";
+import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
@@ -33,6 +34,27 @@ import {
 } from "../../../services/informacionService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { tienePermiso } from "../../../lib/permisos";
+import { CampoLimitePalabras } from "../../../Components/Admin/ui/CampoLimitePalabras";
+import {
+  MAX_PALABRAS_BOTON,
+  MAX_PALABRAS_ETIQUETA,
+  MAX_PALABRAS_TEXTO,
+  MAX_PALABRAS_TEXTO_BREVE,
+  MAX_PALABRAS_TITULO,
+  etiquetaContadorPalabras,
+  limitarPalabras,
+} from "../../../lib/formLimits";
+import { ST } from "../../../Components/T/ST";
+import { useTraducir } from "../../../hooks/useTraducir";
+import { t } from "../../../lib/t";
+import { useIdioma } from "../../../lib/useIdioma";
+import { asegurarCamposEnEspanol, traducirCamposObjeto, traducirListaObjetos } from "../../../lib/traducir";
+
+const HERO_CAMPOS_TEXTO = ["eyebrow", "title", "subtitle", "primaryButtonText", "buttonText"];
+const SECCION_CAMPOS_TEXTO = ["eyebrow", "title", "description", "linkText"];
+const TARJETA_CAMPOS_TEXTO = ["etiqueta", "titulo", "descripcion", "textoBoton"];
+const FOOTER_CAMPOS_TEXTO = ["fraseMarca", "textoCopyright"];
+const ENLACE_CAMPOS_TEXTO = ["etiqueta"];
 
 const heroInicial = {
   eyebrow: "",
@@ -162,54 +184,139 @@ const CONFIG_ENLACES = {
   },
 };
 
-function CampoTexto({ label, name, value, onChange, type = "text", placeholder, hint, required }) {
+function CampoTexto({
+  label,
+  name,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+  hint,
+  required,
+  maxPalabras = MAX_PALABRAS_TITULO,
+  sinLimite = false,
+  soloNumeros = false,
+  maxLength,
+}) {
+  const tLabel = useTraducir(label || "");
+  const tPlaceholder = useTraducir(placeholder || "");
+  const tHint = useTraducir(hint || "");
+  // URLs, teléfonos, correos y rutas no llevan tope de palabras.
+  if (soloNumeros) {
+    return (
+      <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+        {tLabel}
+        <NumericInput
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={tPlaceholder || undefined}
+          required={required}
+          maxLength={maxLength}
+          className="h-[var(--control-height)] w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-[length:var(--text-body)] font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
+        />
+        {hint ? (
+          <span className="text-xs font-medium normal-case tracking-normal text-slate-400">{tHint}</span>
+        ) : null}
+      </label>
+    );
+  }
+
+  if (sinLimite || type === "url" || type === "email" || type === "tel") {
+    return (
+      <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+        {tLabel}
+        <input
+          name={name}
+          type={type === "url" ? "text" : type}
+          value={value}
+          onChange={onChange}
+          placeholder={tPlaceholder || undefined}
+          required={required}
+          className="h-[var(--control-height)] w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-[length:var(--text-body)] font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
+        />
+        {hint ? (
+          <span className="text-xs font-medium normal-case tracking-normal text-slate-400">{tHint}</span>
+        ) : null}
+      </label>
+    );
+  }
+
   return (
-    <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-      {label}
-      <input
-        name={name}
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        required={required}
-        className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
-      />
-      {hint ? (
-        <span className="text-xs font-medium normal-case tracking-normal text-slate-400">{hint}</span>
-      ) : null}
-    </label>
+    <CampoLimitePalabras
+      label={label}
+      name={name}
+      value={value}
+      onChange={onChange}
+      maxPalabras={maxPalabras}
+      type={type}
+      placeholder={placeholder}
+      hint={hint}
+      required={required}
+    />
+  );
+}
+
+function CampoArea({ label, name, value, onChange, rows = 4, required, maxPalabras = MAX_PALABRAS_TEXTO, hint }) {
+  return (
+    <CampoLimitePalabras
+      label={label}
+      name={name}
+      value={value}
+      onChange={onChange}
+      maxPalabras={maxPalabras}
+      multiline
+      rows={rows}
+      required={required}
+      hint={hint}
+    />
   );
 }
 
 function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
+  const { idioma } = useIdioma();
   const [form, setForm] = useState(() => ({ ...heroInicial, ...hero }));
+
+  useEffect(() => {
+    let cancelado = false;
+    const base = { ...heroInicial, ...hero };
+    if (idioma !== "en") {
+      setForm(base);
+      return undefined;
+    }
+    (async () => {
+      const traducido = await traducirCamposObjeto(base, HERO_CAMPOS_TEXTO);
+      if (!cancelado) setForm(traducido);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [hero, idioma]);
 
   const cambiarCampo = (event) => {
     const { name, value } = event.target;
     setForm((actual) => ({ ...actual, [name]: value }));
   };
 
-  const enviar = (event) => {
+  const enviar = async (event) => {
     event.preventDefault();
-    onGuardar(form);
+    const paraGuardar = await asegurarCamposEnEspanol(form, HERO_CAMPOS_TEXTO);
+    onGuardar(paraGuardar);
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-5xl" labelledBy="admin-hero-modal-title">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-hero-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
-              <Image className="size-5" />
-            </span>
-            <h2 id="admin-hero-modal-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">Hero section</h2>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Image className="size-6 shrink-0 text-amber-700" strokeWidth={1.75} aria-hidden="true" />
+            <h2 id="admin-hero-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">Hero section</h2>
           </div>
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-full bg-stone-100 p-2 text-slate-600 transition hover:bg-stone-200"
-            aria-label="Cerrar"
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label={t("Cerrar")}
           >
             <X className="size-5" />
           </button>
@@ -226,6 +333,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
             value={form.eyebrow}
             onChange={cambiarCampo}
             hint={"Texto peque\u00f1o que aparece sobre el t\u00edtulo principal."}
+            maxPalabras={MAX_PALABRAS_ETIQUETA}
           />
 
           <CampoTexto
@@ -235,19 +343,18 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
             onChange={cambiarCampo}
             required
             hint={"Puedes usar Enter para forzar un salto de l\u00ednea en el t\u00edtulo."}
+            maxPalabras={MAX_PALABRAS_TITULO}
           />
 
-          <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-            {"Subt\u00edtulo"}
-            <textarea
-              name="subtitle"
-              value={form.subtitle}
-              onChange={cambiarCampo}
-              rows={4}
-              className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
-              required
-            />
-          </label>
+          <CampoArea
+            label={"Subt\u00edtulo"}
+            name="subtitle"
+            value={form.subtitle}
+            onChange={cambiarCampo}
+            rows={4}
+            required
+            maxPalabras={MAX_PALABRAS_TEXTO}
+          />
 
           <div className="grid gap-4 md:grid-cols-2">
             <CampoTexto
@@ -255,10 +362,12 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
               name="primaryButtonText"
               value={form.primaryButtonText}
               onChange={cambiarCampo}
+              maxPalabras={MAX_PALABRAS_BOTON}
             />
             <CampoTexto
               label={"Enlace bot\u00f3n principal"}
               name="primaryButtonUrl"
+            sinLimite
               value={form.primaryButtonUrl}
               onChange={cambiarCampo}
               placeholder="/productos o https://..."
@@ -269,10 +378,12 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
               name="buttonText"
               value={form.buttonText}
               onChange={cambiarCampo}
+              maxPalabras={MAX_PALABRAS_BOTON}
             />
             <CampoTexto
               label={"Enlace bot\u00f3n secundario"}
               name="buttonUrl"
+            sinLimite
               value={form.buttonUrl}
               onChange={cambiarCampo}
               placeholder="/AboutUs o https://..."
@@ -283,6 +394,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
           <CampoTexto
             label="Imagen de fondo URL"
             name="backgroundImage"
+            sinLimite
             value={form.backgroundImage}
             onChange={cambiarCampo}
             placeholder="https://..."
@@ -304,35 +416,52 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
 }
 
 function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar, onGuardar, guardando }) {
+  const { idioma } = useIdioma();
   const [form, setForm] = useState(() => ({ ...seccionInicioVacia, ...data }));
+  const tModalTitle = useTraducir(config.modalTitle || "");
+
+  useEffect(() => {
+    let cancelado = false;
+    const base = { ...seccionInicioVacia, ...data };
+    if (idioma !== "en") {
+      setForm(base);
+      return undefined;
+    }
+    (async () => {
+      const traducido = await traducirCamposObjeto(base, SECCION_CAMPOS_TEXTO);
+      if (!cancelado) setForm(traducido);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [data, idioma]);
 
   const cambiarCampo = (event) => {
     const { name, value } = event.target;
     setForm((actual) => ({ ...actual, [name]: value }));
   };
 
-  const enviar = (event) => {
+  const enviar = async (event) => {
     event.preventDefault();
-    onGuardar(form);
+    const paraGuardar = await asegurarCamposEnEspanol(form, SECCION_CAMPOS_TEXTO);
+    onGuardar(paraGuardar);
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-5xl" labelledBy="admin-seccion-inicio-modal-title">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-seccion-inicio-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
-              <config.icon className="size-5" />
-            </span>
-            <h2 id="admin-seccion-inicio-modal-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">
-              {config.modalTitle}
+          <div className="flex min-w-0 items-center gap-2.5">
+            <config.icon className="size-6 shrink-0 text-amber-700" strokeWidth={1.75} aria-hidden="true" />
+            <h2 id="admin-seccion-inicio-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">
+              {tModalTitle}
             </h2>
           </div>
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-full bg-stone-100 p-2 text-slate-600 transition hover:bg-stone-200"
-            aria-label="Cerrar"
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label={t("Cerrar")}
           >
             <X className="size-5" />
           </button>
@@ -349,40 +478,47 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
             )}
             ayuda={config.ayuda}
           >
-
           {config.showEyebrow ? (
             <CampoTexto
               label={config.eyebrowLabel || "Etiqueta superior"}
               name="eyebrow"
               value={form.eyebrow}
               onChange={cambiarCampo}
+              maxPalabras={MAX_PALABRAS_ETIQUETA}
             />
           ) : null}
-
           <CampoTexto
             label={config.titleLabel || "T\u00edtulo"}
             name="title"
             value={form.title}
             onChange={cambiarCampo}
             required
+            maxPalabras={MAX_PALABRAS_TITULO}
           />
-
-          <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-            {config.descriptionLabel || "Descripci\u00f3n"}
-            <textarea
-              name="description"
-              value={form.description}
+          <CampoArea
+            label={config.descriptionLabel || "Descripci\u00f3n"}
+            name="description"
+            value={form.description}
+            onChange={cambiarCampo}
+            rows={4}
+            required
+            maxPalabras={MAX_PALABRAS_TEXTO}
+          />
+          {config.showLinkText ? (
+            <CampoTexto
+              label={config.linkTextLabel || "Texto del bot\u00f3n"}
+              name="linkText"
+              value={form.linkText}
               onChange={cambiarCampo}
-              rows={4}
-              className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
-              required
+              maxPalabras={MAX_PALABRAS_BOTON}
             />
-          </label>
+          ) : null}
 
           {config.showImage ? (
             <CampoTexto
               label="Imagen URL"
               name="image"
+            sinLimite
               value={form.image}
               onChange={cambiarCampo}
               placeholder="https://..."
@@ -394,18 +530,10 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
             <CampoTexto
               label={config.linkUrlLabel || "Enlace"}
               name="linkUrl"
+            sinLimite
               value={form.linkUrl}
               onChange={cambiarCampo}
               placeholder="/productos o https://..."
-            />
-          ) : null}
-
-          {config.showLinkText ? (
-            <CampoTexto
-              label={config.linkTextLabel || "Texto del bot\u00f3n"}
-              name="linkText"
-              value={form.linkText}
-              onChange={cambiarCampo}
             />
           ) : null}
           </AdminEditorConPreview>
@@ -425,8 +553,9 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
 }
 
 function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
-  const [form, setForm] = useState(() =>
-    tarjetas.map((tarjeta) => ({
+  const { idioma } = useIdioma();
+  const mapTarjetas = (lista) =>
+    (Array.isArray(lista) ? lista : []).map((tarjeta) => ({
       ...tarjetaInicioVacia,
       ...tarjeta,
       clave: tarjeta.clave || tarjeta.Clave || "",
@@ -435,8 +564,25 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
       descripcion: tarjeta.descripcion || tarjeta.Descripcion || "",
       ruta: tarjeta.ruta || tarjeta.Ruta || "",
       textoBoton: tarjeta.textoBoton || tarjeta.TextoBoton || "",
-    })),
-  );
+    }));
+
+  const [form, setForm] = useState(() => mapTarjetas(tarjetas));
+
+  useEffect(() => {
+    let cancelado = false;
+    const base = mapTarjetas(tarjetas);
+    if (idioma !== "en") {
+      setForm(base);
+      return undefined;
+    }
+    (async () => {
+      const traducido = await traducirListaObjetos(base, TARJETA_CAMPOS_TEXTO);
+      if (!cancelado) setForm(traducido);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [tarjetas, idioma]);
 
   const cambiarCampo = (index, name, value) => {
     setForm((actual) =>
@@ -444,37 +590,39 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
     );
   };
 
-  const enviar = (event) => {
+  const enviar = async (event) => {
     event.preventDefault();
-    onGuardar(
-      form.map((tarjeta) => ({
-        clave: tarjeta.clave,
-        etiqueta: tarjeta.etiqueta,
-        titulo: tarjeta.titulo,
-        descripcion: tarjeta.descripcion,
-        ruta: tarjeta.ruta,
-        textoBoton: tarjeta.textoBoton,
-      })),
+    const normalizadas = await Promise.all(
+      form.map(async (tarjeta) => {
+        const enEs = await asegurarCamposEnEspanol(tarjeta, TARJETA_CAMPOS_TEXTO);
+        return {
+          clave: enEs.clave,
+          etiqueta: enEs.etiqueta,
+          titulo: enEs.titulo,
+          descripcion: enEs.descripcion,
+          ruta: enEs.ruta,
+          textoBoton: enEs.textoBoton,
+        };
+      }),
     );
+    onGuardar(normalizadas);
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-5xl" labelledBy="admin-tarjetas-inicio-modal-title">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-tarjetas-inicio-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
-              <ClipboardList className="size-5" />
-            </span>
-            <h2 id="admin-tarjetas-inicio-modal-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <ClipboardList className="size-6 shrink-0 text-emerald-700" strokeWidth={1.75} aria-hidden="true" />
+            <h2 id="admin-tarjetas-inicio-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">
               Mini formularios del inicio
             </h2>
           </div>
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-full bg-stone-100 p-2 text-slate-600 transition hover:bg-stone-200"
-            aria-label="Cerrar"
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label={t("Cerrar")}
           >
             <X className="size-5" />
           </button>
@@ -498,6 +646,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
                 value={tarjeta.etiqueta}
                 onChange={(event) => cambiarCampo(index, "etiqueta", event.target.value)}
                 required
+                maxPalabras={MAX_PALABRAS_ETIQUETA}
               />
 
               <CampoTexto
@@ -506,16 +655,18 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
                 value={tarjeta.titulo}
                 onChange={(event) => cambiarCampo(index, "titulo", event.target.value)}
                 required
+                maxPalabras={MAX_PALABRAS_TITULO}
               />
 
-              <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">{"Descripci\u00f3n"}<textarea
-                  value={tarjeta.descripcion}
-                  onChange={(event) => cambiarCampo(index, "descripcion", event.target.value)}
-                  rows={3}
-                  className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-normal normal-case leading-7 tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
-                  required
-                />
-              </label>
+              <CampoArea
+                label={"Descripci\u00f3n"}
+                name={`descripcion-${index}`}
+                value={tarjeta.descripcion}
+                onChange={(event) => cambiarCampo(index, "descripcion", event.target.value)}
+                rows={3}
+                required
+                maxPalabras={MAX_PALABRAS_TEXTO_BREVE}
+              />
 
               {tarjeta.clave === "voluntariado" ? (
                 <CampoTexto
@@ -525,6 +676,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
                   onChange={(event) => cambiarCampo(index, "ruta", event.target.value)}
                   placeholder="/voluntariado/solicitar"
                   hint={"Ruta interna del bot\u00f3n."}
+                  sinLimite
                 />
               ) : null}
 
@@ -533,6 +685,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
                 name={`textoBoton-${index}`}
                 value={tarjeta.textoBoton}
                 onChange={(event) => cambiarCampo(index, "textoBoton", event.target.value)}
+                maxPalabras={MAX_PALABRAS_BOTON}
               />
             </div>
           ))}
@@ -566,20 +719,18 @@ function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-5xl" labelledBy="admin-navbar-modal-title">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-navbar-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
-              <LayoutTemplate className="size-5" />
-            </span>
-            <h2 id="admin-navbar-modal-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">Navbar</h2>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <LayoutTemplate className="size-6 shrink-0 text-amber-700" strokeWidth={1.75} aria-hidden="true" />
+            <h2 id="admin-navbar-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">Navbar</h2>
           </div>
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-full bg-stone-100 p-2 text-slate-600 transition hover:bg-stone-200"
-            aria-label="Cerrar"
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label={t("Cerrar")}
           >
             <X className="size-5" />
           </button>
@@ -593,6 +744,7 @@ function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
           <CampoTexto
             label="Logo URL"
             name="logoUrl"
+            sinLimite
             value={form.logoUrl}
             onChange={cambiarCampo}
             placeholder="https://..."
@@ -601,6 +753,7 @@ function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
           <CampoTexto
             label="Logo claro URL"
             name="logoClaroUrl"
+            sinLimite
             value={form.logoClaroUrl}
             onChange={cambiarCampo}
             placeholder="https://..."
@@ -623,33 +776,49 @@ function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
 }
 
 function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
+  const { idioma } = useIdioma();
   const [form, setForm] = useState(() => ({ ...footerInicial, ...footer }));
+
+  useEffect(() => {
+    let cancelado = false;
+    const base = { ...footerInicial, ...footer };
+    if (idioma !== "en") {
+      setForm(base);
+      return undefined;
+    }
+    (async () => {
+      const traducido = await traducirCamposObjeto(base, FOOTER_CAMPOS_TEXTO);
+      if (!cancelado) setForm(traducido);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [footer, idioma]);
 
   const cambiarCampo = (event) => {
     const { name, value } = event.target;
     setForm((actual) => ({ ...actual, [name]: value }));
   };
 
-  const enviar = (event) => {
+  const enviar = async (event) => {
     event.preventDefault();
-    onGuardar(form);
+    const paraGuardar = await asegurarCamposEnEspanol(form, FOOTER_CAMPOS_TEXTO);
+    onGuardar(paraGuardar);
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-5xl" labelledBy="admin-footer-modal-title">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-footer-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
-              <PanelBottom className="size-5" />
-            </span>
-            <h2 id="admin-footer-modal-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">Footer</h2>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <PanelBottom className="size-6 shrink-0 text-amber-700" strokeWidth={1.75} aria-hidden="true" />
+            <h2 id="admin-footer-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">Footer</h2>
           </div>
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-full bg-stone-100 p-2 text-slate-600 transition hover:bg-stone-200"
-            aria-label="Cerrar"
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label={t("Cerrar")}
           >
             <X className="size-5" />
           </button>
@@ -664,6 +833,7 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
             <CampoTexto
               label="Logo URL"
               name="logoUrl"
+            sinLimite
               value={form.logoUrl}
               onChange={cambiarCampo}
               placeholder="https://..."
@@ -671,6 +841,7 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
             <CampoTexto
               label="Logo claro URL"
               name="logoClaroUrl"
+            sinLimite
               value={form.logoClaroUrl}
               onChange={cambiarCampo}
               placeholder="https://..."
@@ -683,6 +854,7 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
             value={form.fraseMarca}
             onChange={cambiarCampo}
             placeholder="Ej. Cultivando futuro desde la UNA"
+            maxPalabras={MAX_PALABRAS_TEXTO_BREVE}
           />
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -691,7 +863,10 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
               name="telefono"
               value={form.telefono}
               onChange={cambiarCampo}
-              placeholder="8888-8888"
+              placeholder="88888888"
+              soloNumeros
+              maxLength={8}
+              sinLimite
             />
             <CampoTexto
               label="Correo"
@@ -707,6 +882,7 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
             <CampoTexto
               label="Facebook URL"
               name="facebookUrl"
+            sinLimite
               value={form.facebookUrl}
               onChange={cambiarCampo}
               placeholder="https://facebook.com/..."
@@ -714,6 +890,7 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
             <CampoTexto
               label="Instagram URL"
               name="instagramUrl"
+            sinLimite
               value={form.instagramUrl}
               onChange={cambiarCampo}
               placeholder="https://instagram.com/..."
@@ -723,6 +900,7 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
           <CampoTexto
             label="Google Maps URL"
             name="mapsUrl"
+            sinLimite
             value={form.mapsUrl}
             onChange={cambiarCampo}
             placeholder="https://maps.google.com/..."
@@ -734,6 +912,7 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
             value={form.textoCopyright}
             onChange={cambiarCampo}
             placeholder="Ej. © 2026 Nombre del sitio. Todos los derechos reservados."
+            maxPalabras={MAX_PALABRAS_TEXTO_BREVE}
           />
           </AdminEditorConPreview>
         </AdminModalBody>
@@ -752,8 +931,26 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
 }
 
 function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, guardando, puedeEliminar }) {
+  const { idioma } = useIdioma();
   const [items, setItems] = useState(() => (Array.isArray(enlaces) ? enlaces : []));
   const [busqueda, setBusqueda] = useState("");
+  const tTitulo = useTraducir(config.titulo);
+
+  useEffect(() => {
+    let cancelado = false;
+    const base = Array.isArray(enlaces) ? enlaces : [];
+    if (idioma !== "en") {
+      setItems(base);
+      return undefined;
+    }
+    (async () => {
+      const traducido = await traducirListaObjetos(base, ENLACE_CAMPOS_TEXTO);
+      if (!cancelado) setItems(traducido);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [enlaces, idioma]);
 
   const itemsFiltrados = useMemo(
     () => filtrarPorBusqueda(items, busqueda, (item) => [item.etiqueta, item.ruta]),
@@ -761,7 +958,11 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
   );
 
   const cambiarItem = (id, campo, valor) => {
-    setItems((actual) => actual.map((item) => (item.id === id ? { ...item, [campo]: valor } : item)));
+    let next = valor;
+    if (campo === "etiqueta" && typeof valor === "string") {
+      next = limitarPalabras(valor, MAX_PALABRAS_BOTON);
+    }
+    setItems((actual) => actual.map((item) => (item.id === id ? { ...item, [campo]: next } : item)));
   };
 
   const agregarItem = () => {
@@ -782,30 +983,30 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
     setItems((actual) => actual.filter((item) => item.id !== id));
   };
 
-  const enviar = (event) => {
+  const enviar = async (event) => {
     event.preventDefault();
-    onGuardar(
-      items.filter((item) => item.etiqueta?.trim() && item.ruta?.trim())
+    const validos = items.filter((item) => item.etiqueta?.trim() && item.ruta?.trim());
+    const normalizados = await Promise.all(
+      validos.map((item) => asegurarCamposEnEspanol(item, ENLACE_CAMPOS_TEXTO)),
     );
+    onGuardar(normalizados);
   };
 
   return (
-    <AdminModal open onClose={onCerrar} maxWidth="max-w-5xl" labelledBy="admin-enlaces-modal-title">
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-enlaces-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
         <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
-              <Link2 className="size-5" />
-            </span>
-            <h2 id="admin-enlaces-modal-title" className="truncate text-lg font-bold text-slate-950 sm:text-xl">
-              {config.titulo}
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Link2 className="size-6 shrink-0 text-amber-700" strokeWidth={1.75} aria-hidden="true" />
+            <h2 id="admin-enlaces-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">
+              {tTitulo}
             </h2>
           </div>
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-full bg-stone-100 p-2 text-slate-600 transition hover:bg-stone-200"
-            aria-label="Cerrar"
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label={t("Cerrar")}
           >
             <X className="size-5" />
           </button>
@@ -824,14 +1025,14 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
             ayuda={`Gestion\u00e1 los enlaces de ${config.titulo.toLowerCase()}.`}
           >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Enlaces actuales</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500"><ST>Enlaces actuales</ST></p>
             <button
               type="button"
               onClick={agregarItem}
               className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 py-2 text-sm font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 sm:w-auto"
             >
               <Plus className="size-4" />
-              Agregar enlace
+              <ST>Agregar enlace</ST>
             </button>
           </div>
 
@@ -848,7 +1049,7 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
 
           {items.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-              No hay enlaces configurados. Agregue uno para mostrarlo en el sitio.
+              <ST>No hay enlaces configurados. Agregue uno para mostrarlo en el sitio.</ST>
             </p>
           ) : itemsFiltrados.length === 0 ? (
             <AdminListaVacia onLimpiar={() => setBusqueda("")} />
@@ -858,33 +1059,34 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
                 <div key={item.id} className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-[1fr_auto]">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                      Etiqueta
+                      <ST>Etiqueta</ST>
                       <input
                         value={item.etiqueta ?? ""}
                         onChange={(event) => cambiarItem(item.id, "etiqueta", event.target.value)}
                         placeholder={`Enlace ${index + 1}`}
-                        className="rounded-full border border-slate-200 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
+                        className="h-[var(--control-height)] rounded-full border border-slate-200 bg-white px-4 text-[length:var(--text-body)] font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
                         required
                       />
+                      <span className="text-xs font-medium normal-case tracking-normal text-slate-400">
+                        {etiquetaContadorPalabras(item.etiqueta ?? "", MAX_PALABRAS_BOTON)}
+                      </span>
                     </label>
                     <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                      Ruta
+                      <ST>Ruta</ST>
                       <input
                         value={item.ruta ?? ""}
                         onChange={(event) => cambiarItem(item.id, "ruta", event.target.value)}
                         placeholder="/productos o https://..."
-                        className="rounded-full border border-slate-200 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
+                        className="h-[var(--control-height)] rounded-full border border-slate-200 bg-white px-4 text-[length:var(--text-body)] font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
                         required
                       />
                     </label>
                     <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                      Orden
-                      <input
-                        type="number"
-                        min="1"
+                      <ST>Orden</ST>
+                      <NumericInput
                         value={item.orden ?? index + 1}
                         onChange={(event) => cambiarItem(item.id, "orden", event.target.value)}
-                        className="rounded-full border border-slate-200 bg-white px-4 py-3 text-base font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
+                        className="h-[var(--control-height)] rounded-full border border-slate-200 bg-white px-4 text-[length:var(--text-body)] font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
                       />
                     </label>
                     <label className="flex items-end gap-2 pb-3 text-sm font-medium text-slate-700">
@@ -894,7 +1096,7 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
                         onChange={(event) => cambiarItem(item.id, "abrirEnNuevaPestana", event.target.checked)}
                         className="size-4 rounded border-slate-300"
                       />
-                      Abrir en nueva pestana
+                      <ST>Abrir en nueva pestana</ST>
                     </label>
                   </div>
 
@@ -903,12 +1105,12 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
                       type="button"
                       onClick={() => eliminarItem(item.id)}
                       className="inline-flex size-10 items-center justify-center self-start rounded-full bg-red-50 text-red-700 transition hover:bg-red-100 md:self-center"
-                      aria-label="Eliminar enlace"
+                      aria-label={t("Eliminar enlace")}
                     >
                       <Trash2 className="size-5" />
                     </button>
                   ) : (
-                    <span className="self-start text-xs font-semibold text-slate-400 md:self-center">Sin eliminar</span>
+                    <span className="self-start text-xs font-semibold text-slate-400 md:self-center"><ST>Sin eliminar</ST></span>
                   )}
                 </div>
               ))}
@@ -1031,7 +1233,16 @@ const AdminInformacionPaginaPrincipal = () => {
   const guardarHero = async (form) => {
     try {
       setGuardando(true);
-      const actualizado = await actualizarSeccion("hero", form);
+      const actualizado = await actualizarSeccion("hero", {
+        eyebrow: form.eyebrow,
+        title: form.title,
+        subtitle: form.subtitle,
+        primaryButtonText: form.primaryButtonText,
+        primaryButtonUrl: form.primaryButtonUrl,
+        buttonText: form.buttonText,
+        buttonUrl: form.buttonUrl,
+        backgroundImage: form.backgroundImage,
+      });
       setHero(mapHero(actualizado));
       await reload();
       setEditando(null);
@@ -1045,10 +1256,18 @@ const AdminInformacionPaginaPrincipal = () => {
   const guardarSeccionInicio = async (clave, form) => {
     try {
       setGuardando(true);
-      const actualizado = await actualizarSeccion(clave, form);
+      const payload = {
+        eyebrow: form.eyebrow ?? "",
+        title: form.title ?? "",
+        description: form.description ?? "",
+        image: form.image ?? "",
+        linkUrl: form.linkUrl ?? "",
+        linkText: form.linkText ?? "",
+      };
+      const actualizado = await actualizarSeccion(clave, payload);
       setSeccionesInicio((actual) => ({
         ...actual,
-        [clave]: mapSeccionInicio(actualizado ?? form),
+        [clave]: mapSeccionInicio(actualizado ?? payload),
       }));
       await reload();
       setEditando(null);
@@ -1090,7 +1309,18 @@ const AdminInformacionPaginaPrincipal = () => {
   const guardarFooter = async (form) => {
     try {
       setGuardando(true);
-      const actualizado = await actualizarFooter(form);
+      const payload = {
+        logoUrl: form.logoUrl ?? "",
+        logoClaroUrl: form.logoClaroUrl ?? "",
+        fraseMarca: form.fraseMarca ?? "",
+        telefono: form.telefono ?? "",
+        correo: form.correo ?? "",
+        facebookUrl: form.facebookUrl ?? "",
+        instagramUrl: form.instagramUrl ?? "",
+        mapsUrl: form.mapsUrl ?? "",
+        textoCopyright: form.textoCopyright ?? "",
+      };
+      const actualizado = await actualizarFooter(payload);
       setFooter({ ...footerInicial, ...actualizado });
       await reload();
       setEditando(null);
@@ -1257,12 +1487,12 @@ const AdminInformacionPaginaPrincipal = () => {
       <section className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
           <h1 className="text-[length:var(--text-title)] font-bold text-slate-950">
-            {"Informaci\u00f3n p\u00e1gina principal"}
+            <ST>{"Informaci\u00f3n p\u00e1gina principal"}</ST>
           </h1>
         </div>
 
         {cargando ? (
-          <div className="p-8 text-[length:var(--text-body)] text-slate-500">{"Cargando informaci\u00f3n..."}</div>
+          <div className="p-8 text-[length:var(--text-body)] text-slate-500"><ST>{"Cargando informaci\u00f3n..."}</ST></div>
         ) : error ? (
           <div className="p-8 text-[length:var(--text-body)] font-semibold text-red-700">
             {error}
@@ -1271,7 +1501,7 @@ const AdminInformacionPaginaPrincipal = () => {
               onClick={reload}
               className="mt-4 block h-[var(--control-height)] rounded-full bg-red-700 px-4 text-white"
             >
-              Reintentar
+              <ST>Reintentar</ST>
             </button>
           </div>
         ) : (
