@@ -14,12 +14,15 @@ import {
   LogOut,
   Package,
   Receipt,
-  ScrollText,
   Settings,
+  ShoppingBag,
   Store,
+  Truck,
   UserRound,
   Users,
   Wrench,
+  CalendarClock,
+  Shield,
 } from "lucide-react";
 
 import {
@@ -59,10 +62,12 @@ import {
   getStoredUser,
   SESSION_UPDATED_EVENT,
 } from "../../services/sessionService";
+import { ST } from "../T/ST";
 
 const GENERAL_OPEN_KEY = "admin-sidebar-general-open";
 const INVENTORY_OPEN_KEY = "admin-sidebar-inventory-open";
 const SOBRE_NOSOTROS_OPEN_KEY = "admin-sidebar-sobre-nosotros-open";
+const AJUSTES_OPEN_KEY = "admin-sidebar-ajustes-open";
 const linkActivo = {
   className: "text-slate-950",
 };
@@ -80,7 +85,7 @@ export function AppSidebar() {
   const puedeVentas =
     tienePermiso(roles, "ver_ventas") ||
     tienePermiso(roles, "ver_historial_compras_clientes");
-  const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
+  const puedeAjustes = tienePermiso(roles, "administrar_roles_permisos");
   const puedePerfil = tienePermiso(roles, "ver_perfil_propio");
   const avatarUrl = user?.fotoPerfilUrl?.trim()
     ? normalizeImageUrl(user.fotoPerfilUrl.trim(), { width: 96 })
@@ -102,7 +107,16 @@ export function AppSidebar() {
     pathname === "/admin/sobre-nosotros" ||
     pathname === "/admin/galeria";
   const isSobreNosotrosRoute = pathname === "/admin/sobre-nosotros" || pathname === "/admin/galeria";
-  const isInventoryRoute = pathname === "/admin/producto" || pathname === "/admin/puntos-venta" || pathname === "/admin/activos-fijos" || pathname === "/admin/historial-ventas";
+  const isInventoryRoute =
+    pathname === "/admin/producto" ||
+    pathname === "/admin/puntos-venta" ||
+    pathname === "/admin/activos-fijos" ||
+    pathname === "/admin/distribucion" ||
+    pathname === "/admin/ventas-presenciales" ||
+    pathname === "/admin/historial-ventas";
+  const isAjustesRoute =
+    pathname === "/admin/ajustes" ||
+    pathname.startsWith("/admin/ajustes/");
 
   const [generalOpen, setGeneralOpen] = useState(() => {
     const savedValue = localStorage.getItem(GENERAL_OPEN_KEY);
@@ -160,6 +174,13 @@ export function AppSidebar() {
   }, [isSobreNosotrosRoute]);
 
   useEffect(() => {
+    if (isAjustesRoute) {
+      setAjustesOpen(true);
+      localStorage.setItem(AJUSTES_OPEN_KEY, "true");
+    }
+  }, [isAjustesRoute]);
+
+  useEffect(() => {
     let activo = true;
 
     obtenerNavbar()
@@ -178,6 +199,10 @@ export function AppSidebar() {
     const savedValue = localStorage.getItem(INVENTORY_OPEN_KEY);
     return savedValue === null ? isInventoryRoute : savedValue === "true";
   });
+  const [ajustesOpen, setAjustesOpen] = useState(() => {
+    const savedValue = localStorage.getItem(AJUSTES_OPEN_KEY);
+    return savedValue === null ? isAjustesRoute : savedValue === "true";
+  });
 
   const updateGeneralOpen = (open) => {
     setGeneralOpen(open);
@@ -194,12 +219,18 @@ export function AppSidebar() {
     localStorage.setItem(INVENTORY_OPEN_KEY, String(open));
   };
 
+  const updateAjustesOpen = (open) => {
+    setAjustesOpen(open);
+    localStorage.setItem(AJUSTES_OPEN_KEY, String(open));
+  };
+
   const closeMobileSidebar = () => setOpenMobile(false);
 
   const clearSidebarState = () => {
     localStorage.removeItem(GENERAL_OPEN_KEY);
     localStorage.removeItem(INVENTORY_OPEN_KEY);
     localStorage.removeItem(SOBRE_NOSOTROS_OPEN_KEY);
+    localStorage.removeItem(AJUSTES_OPEN_KEY);
   };
 
   const handleLogout = () => {
@@ -250,7 +281,7 @@ export function AppSidebar() {
             <SidebarGroupLabel asChild>
               <Collapsible.Trigger type="button">
                 <Settings />
-                <span className="truncate">{"Configuraci\u00f3n general del sitio"}</span>
+                <span className="truncate"><ST>Configuración general del sitio</ST></span>
                 <ChevronDown className="ml-auto shrink-0 transition-transform group-data-[state=open]/collapsible:rotate-180" />
               </Collapsible.Trigger>
             </SidebarGroupLabel>
@@ -261,7 +292,7 @@ export function AppSidebar() {
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/informacion-pagina-principal" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Info />
-                        <span className="truncate">{"Informaci\u00f3n p\u00e1gina principal"}</span>
+                        <span className="truncate"><ST>Información página principal</ST></span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
@@ -276,7 +307,7 @@ export function AppSidebar() {
                         className="flex h-8 w-full items-center gap-2 px-2 text-left text-sm text-slate-600 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0"
                       >
                         <BookOpenText />
-                        <span>Sobre nosotros</span>
+                        <span><ST>Sobre nosotros</ST></span>
                         <ChevronDown className="ml-auto size-4 shrink-0 transition-transform group-data-[state=open]/sobre:rotate-180" />
                       </Collapsible.Trigger>
                       <Collapsible.Content>
@@ -285,7 +316,7 @@ export function AppSidebar() {
                             <SidebarMenuSubButton asChild>
                               <Link to="/admin/sobre-nosotros" activeProps={linkActivo} onClick={closeMobileSidebar}>
                                 <Landmark />
-                                <span>Historia</span>
+                                <span><ST>Historia</ST></span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
@@ -293,7 +324,7 @@ export function AppSidebar() {
                             <SidebarMenuSubButton asChild>
                               <Link to="/admin/galeria" activeProps={linkActivo} onClick={closeMobileSidebar}>
                                 <Image />
-                                <span>Galería</span>
+                                <span><ST>Galería</ST></span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
@@ -318,7 +349,7 @@ export function AppSidebar() {
             <SidebarGroupLabel asChild>
               <Collapsible.Trigger type="button">
                 <Package />
-                <span>Manejo de inventario</span>
+                <span><ST>Manejo de inventario</ST></span>
                 <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
               </Collapsible.Trigger>
             </SidebarGroupLabel>
@@ -329,7 +360,7 @@ export function AppSidebar() {
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/producto" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Box />
-                        <span>Producto</span>
+                        <span><ST>Producto</ST></span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
@@ -337,7 +368,7 @@ export function AppSidebar() {
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/puntos-venta" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Store />
-                        <span>Puntos de venta</span>
+                        <span><ST>Puntos de venta</ST></span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
@@ -345,7 +376,23 @@ export function AppSidebar() {
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/activos-fijos" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Wrench />
-                        <span>Activos fijos</span>
+                        <span><ST>Activos fijos</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/distribucion" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <Truck />
+                        <span><ST>Distribución</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/ventas-presenciales" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <ShoppingBag />
+                        <span><ST>Ventas presenciales</ST></span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
@@ -354,7 +401,7 @@ export function AppSidebar() {
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/historial-ventas" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Receipt />
-                        <span>Historial de ventas</span>
+                        <span><ST>Historial de ventas</ST></span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
@@ -373,7 +420,7 @@ export function AppSidebar() {
               <SidebarMenuButton asChild>
                 <Link to="/admin/historial-ventas" activeProps={linkActivo} onClick={closeMobileSidebar}>
                   <Receipt />
-                  <span>Historial de ventas</span>
+                  <span><ST>Historial de ventas</ST></span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -383,7 +430,7 @@ export function AppSidebar() {
               <SidebarMenuButton asChild>
                 <Link to="/admin/voluntariado" activeProps={linkActivo} onClick={closeMobileSidebar}>
                   <HandHeart />
-                  <span>Administrar voluntariado</span>
+                  <span><ST>Administrar voluntariado</ST></span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -393,27 +440,55 @@ export function AppSidebar() {
               <SidebarMenuButton asChild>
                 <Link to="/admin/usuarios" activeProps={linkActivo} onClick={closeMobileSidebar}>
                   <Users />
-                  <span>Administrar usuarios</span>
+                  <span><ST>Administrar usuarios</ST></span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             ) : null}
-            {puedeAuditoria ? (
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link to="/admin/auditoria" activeProps={linkActivo} onClick={closeMobileSidebar}>
-                  <ScrollText />
-                  <span>{"Auditor\u00eda"}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {puedeAjustes ? (
+            <Collapsible.Root
+              open={ajustesOpen}
+              onOpenChange={updateAjustesOpen}
+              className="group/ajustes"
+            >
+              <SidebarMenuItem>
+                <Collapsible.Trigger
+                  type="button"
+                  className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0"
+                >
+                  <Wrench />
+                  <span className="truncate"><ST>Ajustes del sistema</ST></span>
+                  <ChevronDown className="ml-auto size-4 shrink-0 transition-transform group-data-[state=open]/ajustes:rotate-180" />
+                </Collapsible.Trigger>
+                <Collapsible.Content>
+                  <SidebarMenuSub className="mt-1">
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild>
+                        <Link to="/admin/ajustes/horarios" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                          <CalendarClock />
+                          <span><ST>Horarios</ST></span>
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild>
+                        <Link to="/admin/ajustes/permisos" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                          <Shield />
+                          <span><ST>Permisos</ST></span>
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                </Collapsible.Content>
+              </SidebarMenuItem>
+            </Collapsible.Root>
             ) : null}
             {puedePerfil ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <Link to="/admin/perfil" activeProps={linkActivo} onClick={closeMobileSidebar}>
                   <UserRound />
-                  <span>Mi perfil</span>
+                  <span><ST>Mi perfil</ST></span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -461,7 +536,7 @@ export function AppSidebar() {
             <DropdownMenuItem asChild>
               <Link to="/admin/perfil" className="cursor-pointer" activeProps={linkActivo}>
                 <UserRound className="size-4" />
-                <span>Mi perfil</span>
+                <span><ST>Mi perfil</ST></span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -472,7 +547,7 @@ export function AppSidebar() {
               }}
             >
               <LogOut className="size-4" />
-              <span>{"Cerrar sesi\u00f3n"}</span>
+                <span><ST>Cerrar sesión</ST></span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

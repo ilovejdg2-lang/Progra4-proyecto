@@ -1,6 +1,7 @@
 import { useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { removeSiteBootLoading } from '../../lib/siteBootLoading';
+import { isRouteLoadingLocked } from '../../lib/routeLoadingLock';
+import BrandLoader from './BrandLoader';
 
 let activeLoaders = 0;
 let pendingRemoveFrame = null;
@@ -17,6 +18,8 @@ function addGlobalLoading() {
 function removeGlobalLoading() {
   activeLoaders = Math.max(activeLoaders - 1, 0);
   if (activeLoaders > 0) return;
+  // Si la ruta sigue bloqueada, el lock mantiene el overlay.
+  if (isRouteLoadingLocked()) return;
 
   if (pendingRemoveFrame !== null) {
     cancelAnimationFrame(pendingRemoveFrame);
@@ -24,7 +27,7 @@ function removeGlobalLoading() {
 
   pendingRemoveFrame = requestAnimationFrame(() => {
     pendingRemoveFrame = null;
-    if (activeLoaders === 0) {
+    if (activeLoaders === 0 && !isRouteLoadingLocked()) {
       document.body.classList.remove('app-route-loading');
     }
   });
@@ -38,9 +41,13 @@ const PageLoading = ({
   retryLabel = 'Reintentar',
   variant = 'default',
 }) => {
+  // Durante el render: asegurar clase antes del paint (sin quitar el boot HTML).
+  if (typeof document !== 'undefined' && variant !== 'hero') {
+    document.body.classList.add('app-route-loading');
+  }
+
   useLayoutEffect(() => {
     if (variant === 'hero') {
-      removeSiteBootLoading();
       document.body.classList.add('app-route-loading-hero');
       return () => {
         document.body.classList.remove('app-route-loading-hero');
@@ -48,12 +55,13 @@ const PageLoading = ({
     }
 
     addGlobalLoading();
-    removeSiteBootLoading();
 
     return () => {
       removeGlobalLoading();
     };
   }, [variant]);
+
+  const tone = variant === 'hero' ? 'hero' : 'site';
 
   const content = (
     <div
@@ -61,14 +69,18 @@ const PageLoading = ({
       role="status"
       aria-live="polite"
     >
-      {isError ? null : <span className="page-loading__spinner" aria-hidden="true" />}
-      <p>{message}</p>
-      {detail ? <span className="page-loading__detail">{detail}</span> : null}
-      {isError && onRetry ? (
-        <button type="button" className="page-loading__retry" onClick={onRetry}>
-          {retryLabel}
-        </button>
-      ) : null}
+      <BrandLoader
+        message={message}
+        detail={detail}
+        tone={tone}
+        showSpinner={!isError}
+      >
+        {isError && onRetry ? (
+          <button type="button" className="page-loading__retry" onClick={onRetry}>
+            {retryLabel}
+          </button>
+        ) : null}
+      </BrandLoader>
     </div>
   );
 
