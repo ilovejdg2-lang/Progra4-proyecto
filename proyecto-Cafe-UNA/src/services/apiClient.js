@@ -93,6 +93,9 @@ export async function apiRequest(url, options = {}) {
 
   const isGet = (method || "GET").toUpperCase() === "GET";
   const requestTimeout = typeof timeout === "number" ? timeout : (isGet ? 20000 : 30000);
+  const payload = data ?? parseBody(body);
+  const isFormData =
+    typeof FormData !== "undefined" && payload instanceof FormData;
 
   try {
     const authHeaders = sessionUser?.token
@@ -102,9 +105,9 @@ export async function apiRequest(url, options = {}) {
     const response = await axios({
       url,
       method,
-      data: data ?? parseBody(body),
+      data: payload,
       headers: {
-        ...(isGet ? {} : { "Content-Type": "application/json" }),
+        ...(isGet || isFormData ? {} : { "Content-Type": "application/json" }),
         ...authHeaders,
         ...(headers || {}),
       },

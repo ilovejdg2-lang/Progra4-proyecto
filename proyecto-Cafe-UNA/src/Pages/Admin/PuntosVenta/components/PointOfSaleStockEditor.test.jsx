@@ -29,9 +29,14 @@ describe("PointOfSaleStockEditor", () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
     render(<PointOfSaleStockEditor {...props} onSave={onSave} />);
 
-    await user.clear(screen.getByRole("textbox", { name: /Unidades disponibles/i }));
-    await user.type(screen.getByRole("textbox", { name: /Unidades disponibles/i }), "7");
-    await user.type(screen.getByRole("textbox", { name: /Motivo del ajuste/i }), "  Conteo inicial  ");
+    const stockInput = screen.getByRole("textbox", { name: /Unidades disponibles/i });
+    const reasonInput = screen.getByRole("textbox", { name: /Motivo del ajuste/i });
+
+    await user.clear(stockInput);
+    await user.type(stockInput, "7");
+    await user.click(reasonInput);
+    await user.clear(reasonInput);
+    await user.paste("  Conteo inicial  ");
     await user.click(screen.getByRole("button", { name: /Guardar stock/i }));
 
     expect(onSave).toHaveBeenCalledWith(7, "Conteo inicial");

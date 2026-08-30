@@ -148,6 +148,7 @@ describe('InventarioProducto characterization', () => {
     expect(await screen.findAllByText('Café Premium')).toHaveLength(2)
     expect(screen.queryByRole('button', { name: /nuevo producto/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Desactivar' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Inhabilitar' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Eliminar' })).not.toBeInTheDocument()
   })

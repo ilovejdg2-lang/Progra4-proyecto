@@ -1,30 +1,33 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { readPageCache, readStalePageCache, writePageCache } from '../lib/pageDataCache';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { readPageCache, readStalePageCache, writePageCache } from "../lib/pageDataCache";
+import { IDIOMA_CHANGED_EVENT } from "../lib/idioma";
 
 /**
  * Carga datos de página con caché de sesión.
- * Primera visita: loading → fetch → guardar.
- * Visitas siguientes en la misma pestaña: muestra caché al instante y refresca en segundo plano.
+ * Al cambiar idioma, vuelve a pedir datos frescos (incluye campos *En).
  */
 export function useCachedPageData(cacheKey, fetcher) {
   const cachedInitial = useRef(readPageCache(cacheKey) ?? readStalePageCache(cacheKey));
   const hadFreshCache = useRef(Boolean(readPageCache(cacheKey)));
   const [data, setData] = useState(cachedInitial.current);
-  const [status, setStatus] = useState(cachedInitial.current ? 'ready' : 'loading');
-  const [error, setError] = useState('');
+  const [status, setStatus] = useState(cachedInitial.current ? "ready" : "loading");
+  const [error, setError] = useState("");
 
-  const applyFresh = useCallback((fresh) => {
-    writePageCache(cacheKey, fresh);
-    cachedInitial.current = fresh;
-    hadFreshCache.current = true;
-    setData(fresh);
-    setError('');
-    setStatus('ready');
-  }, [cacheKey]);
+  const applyFresh = useCallback(
+    (fresh) => {
+      writePageCache(cacheKey, fresh);
+      cachedInitial.current = fresh;
+      hadFreshCache.current = true;
+      setData(fresh);
+      setError("");
+      setStatus("ready");
+    },
+    [cacheKey],
+  );
 
   const reload = useCallback(async () => {
-    setStatus(cachedInitial.current ? 'ready' : 'loading');
-    setError('');
+    setStatus(cachedInitial.current ? "ready" : "loading");
+    setError("");
 
     try {
       const fresh = await fetcher();
@@ -34,12 +37,12 @@ export function useCachedPageData(cacheKey, fetcher) {
       if (stale) {
         cachedInitial.current = stale;
         setData(stale);
-        setError('');
-        setStatus('ready');
+        setError("");
+        setStatus("ready");
         return;
       }
-      setError(err?.message || 'No se pudo cargar la p\u00e1gina.');
-      setStatus('error');
+      setError(err?.message || "No se pudo cargar la página.");
+      setStatus("error");
     }
   }, [applyFresh, cacheKey, fetcher]);
 
@@ -57,7 +60,7 @@ export function useCachedPageData(cacheKey, fetcher) {
         return;
       }
 
-      setStatus('loading');
+      setStatus("loading");
       try {
         const fresh = await fetcher();
         if (!activo) return;
@@ -68,11 +71,11 @@ export function useCachedPageData(cacheKey, fetcher) {
         if (stale) {
           cachedInitial.current = stale;
           setData(stale);
-          setStatus('ready');
+          setStatus("ready");
           return;
         }
-        setError(err?.message || 'No se pudo cargar la p\u00e1gina.');
-        setStatus('error');
+        setError(err?.message || "No se pudo cargar la página.");
+        setStatus("error");
       }
     }
 
@@ -82,6 +85,15 @@ export function useCachedPageData(cacheKey, fetcher) {
       activo = false;
     };
   }, [cacheKey, fetcher, applyFresh]);
+
+  useEffect(() => {
+    const onIdioma = () => {
+      hadFreshCache.current = false;
+      void reload();
+    };
+    window.addEventListener(IDIOMA_CHANGED_EVENT, onIdioma);
+    return () => window.removeEventListener(IDIOMA_CHANGED_EVENT, onIdioma);
+  }, [reload]);
 
   return { data, status, error, reload };
 }

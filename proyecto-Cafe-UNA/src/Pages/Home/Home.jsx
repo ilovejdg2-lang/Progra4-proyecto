@@ -11,6 +11,7 @@ import { HomeActionLink } from '../../lib/homeActionLink';
 import { collectHomeImageUrls } from '../../lib/homeImageUrls';
 import { isPageInstantReady, markPageRevealed } from '../../lib/pageSessionState';
 import { removeHomeInitialLoader, setHomePageLoading } from '../../lib/homePageLoading';
+import { endRouteLoading } from '../../lib/routeLoadingLock';
 import { runHomeScrollWhenReady } from '../../lib/homeScrollTarget';
 import { productoPuedeDestacarse } from '../../lib/productoDisponibilidad';
 import { readPageCache, readStalePageCache } from '../../lib/pageDataCache';
@@ -20,7 +21,15 @@ import { normalizeImageUrl } from '../../lib/imageUtils';
 import { toGoogleMapsEmbedUrl } from '../../lib/googleMaps';
 import { buildIniciativasCards } from '../../lib/iniciativasCards';
 import { useRevealOnScroll } from '../../hooks/useRevealOnScroll';
+import { useTraducirLista, useTraducirObjeto } from '../../hooks/useTraducir';
 import './Home.css';
+
+const CAMPOS_TEASER = ['title', 'description', 'linkText'];
+const CAMPOS_FEATURED = ['title', 'description', 'linkText'];
+const CAMPOS_INICIATIVAS = ['eyebrow', 'title', 'description'];
+const CAMPOS_UBICACION = ['eyebrow', 'title', 'description', 'linkText'];
+const CAMPOS_TARJETAS = ['etiqueta', 'titulo', 'descripcion', 'textoBoton'];
+const CAMPOS_PRODUCTOS = ['nombre', 'descripcion', 'categoria', 'subcategoria'];
 
 function getPreloadSource(pageStatus, data) {
   if (pageStatus === 'ready' && data) return data;
@@ -37,17 +46,29 @@ const Home = () => {
   const { data, status: pageStatus, error: loadError, reload } = useCachedPageData('home', loadHome);
 
   const hero = data?.hero ?? {};
-  const aboutTeaser = data?.aboutTeaser ?? { title: '', description: '', image: '', linkUrl: '', linkText: '' };
-  const featuredSection = data?.featuredSection ?? { title: '', description: '', linkUrl: '', linkText: '' };
-  const iniciativasSection = data?.iniciativasSection ?? { eyebrow: '', title: '', description: '' };
-  const locationSection = data?.locationSection ?? { eyebrow: '', title: '', description: '', image: '', linkUrl: '', linkText: '' };
+  const aboutTeaser = useTraducirObjeto(
+    data?.aboutTeaser ?? { title: '', description: '', image: '', linkUrl: '', linkText: '' },
+    CAMPOS_TEASER,
+  );
+  const featuredSection = useTraducirObjeto(
+    data?.featuredSection ?? { title: '', description: '', linkUrl: '', linkText: '' },
+    CAMPOS_FEATURED,
+  );
+  const iniciativasSection = useTraducirObjeto(
+    data?.iniciativasSection ?? { eyebrow: '', title: '', description: '' },
+    CAMPOS_INICIATIVAS,
+  );
+  const locationSection = useTraducirObjeto(
+    data?.locationSection ?? { eyebrow: '', title: '', description: '', image: '', linkUrl: '', linkText: '' },
+    CAMPOS_UBICACION,
+  );
   const locationMapUrl = locationSection.linkUrl?.trim() ?? '';
   const locationMapEmbedUrl = useMemo(
     () => toGoogleMapsEmbedUrl(locationMapUrl),
     [locationMapUrl],
   );
-  const tarjetasInicio = data?.tarjetasInicio ?? [];
-  const products = data?.products ?? [];
+  const tarjetasInicio = useTraducirLista(data?.tarjetasInicio ?? [], CAMPOS_TARJETAS);
+  const products = useTraducirLista(data?.products ?? [], CAMPOS_PRODUCTOS);
 
   const preloadSource = getPreloadSource(pageStatus, data);
   const imageUrls = useMemo(
@@ -95,8 +116,9 @@ const Home = () => {
 
   useEffect(() => {
     if (isFullyVisible) {
-      removeHomeInitialLoader();
       markPageRevealed('home');
+      endRouteLoading('home');
+      removeHomeInitialLoader();
       setHomePageLoading(false);
     }
   }, [isFullyVisible]);

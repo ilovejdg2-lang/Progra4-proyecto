@@ -1,5 +1,7 @@
 import { Pencil } from "lucide-react";
 
+import { ST } from "../../T/ST";
+
 export function AdminSeccionCard({
   etiqueta,
   titulo,
@@ -17,7 +19,7 @@ export function AdminSeccionCard({
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 sm:p-3.5">
         <p className="shrink-0 truncate text-center text-[length:var(--text-body)] font-bold uppercase tracking-wide text-slate-400">
-          {etiqueta}
+          <ST>{etiqueta}</ST>
         </p>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center gap-2 overflow-hidden px-1 py-1.5 text-center">
@@ -25,7 +27,7 @@ export function AdminSeccionCard({
             <Icon className="size-6 sm:size-7" strokeWidth={1.75} />
           </span>
           <h2 className="max-w-full break-words text-[length:var(--text-subtitle)] font-bold leading-snug text-[#2a1612]">
-            {titulo}
+            <ST>{titulo}</ST>
           </h2>
         </div>
 
@@ -36,7 +38,7 @@ export function AdminSeccionCard({
             className={`inline-flex h-[var(--control-height)] items-center justify-center rounded-full border px-3.5 text-[length:var(--text-body)] font-bold transition ${botonCls}`}
           >
             <Pencil className="mr-1 size-3.5" aria-hidden="true" />
-            Editar
+            <ST>Editar</ST>
           </button>
         </div>
       </div>

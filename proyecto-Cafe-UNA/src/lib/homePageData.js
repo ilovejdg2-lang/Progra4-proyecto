@@ -8,17 +8,26 @@ function pickString(data, camelKey, pascalKey) {
   return typeof value === 'string' ? textoVisible(value.trim()) : '';
 }
 
-function trimSection(section) {
+/** Sección bilingüe cruda (ES + EN) para localizar al renderizar. */
+function trimSectionRaw(section) {
   return {
     title: pickString(section, 'title', 'Title'),
+    titleEn: pickString(section, 'titleEn', 'TitleEn'),
     description: pickString(section, 'description', 'Description'),
+    descriptionEn: pickString(section, 'descriptionEn', 'DescriptionEn'),
     eyebrow: pickString(section, 'eyebrow', 'Eyebrow'),
+    eyebrowEn: pickString(section, 'eyebrowEn', 'EyebrowEn'),
     image: pickString(section, 'image', 'Image'),
     linkUrl: pickString(section, 'linkUrl', 'LinkUrl'),
     linkText: pickString(section, 'linkText', 'LinkText'),
+    linkTextEn: pickString(section, 'linkTextEn', 'LinkTextEn'),
   };
 }
 
+/**
+ * Datos del inicio en bruto (español + inglés).
+ * La UI elige el idioma al mostrar con localizarObjeto / mapHeroLocalizado.
+ */
 export async function fetchHomePageData() {
   const [
     heroInfo,
@@ -42,54 +51,47 @@ export async function fetchHomePageData() {
     obtenerEnlaces('Navbar').catch(() => []),
   ]);
 
-  const spotlightData = trimSection(spotlight);
-  const featuredData = trimSection(featured);
-  const iniciativasData = trimSection(iniciativas);
-  const locationData = trimSection(location);
-
   return {
     hero: mapHero(heroInfo),
     navbar: {
       logoUrl: typeof navbarInfo?.logoUrl === 'string' ? navbarInfo.logoUrl.trim() : '',
       logoClaroUrl: typeof navbarInfo?.logoClaroUrl === 'string' ? navbarInfo.logoClaroUrl.trim() : '',
     },
-    enlacesNavbar: Array.isArray(navLinks) ? navLinks : [],
-    aboutTeaser: {
-      title: spotlightData.title,
-      description: spotlightData.description,
-      image: spotlightData.image,
-      linkUrl: spotlightData.linkUrl,
-      linkText: spotlightData.linkText,
-    },
-    featuredSection: {
-      title: featuredData.title,
-      description: featuredData.description,
-      linkUrl: featuredData.linkUrl,
-      linkText: featuredData.linkText,
-    },
-    iniciativasSection: {
-      eyebrow: iniciativasData.eyebrow,
-      title: iniciativasData.title,
-      description: iniciativasData.description,
-    },
-    locationSection: {
-      eyebrow: locationData.eyebrow,
-      title: locationData.title,
-      description: locationData.description,
-      image: locationData.image,
-      linkUrl: locationData.linkUrl,
-      linkText: locationData.linkText,
-    },
+    enlacesNavbar: Array.isArray(navLinks)
+      ? navLinks.map((enlace) => ({
+          ...enlace,
+          etiqueta: enlace.etiqueta ?? enlace.Etiqueta ?? '',
+          etiquetaEn: enlace.etiquetaEn ?? enlace.EtiquetaEn ?? '',
+          Etiqueta: enlace.etiqueta ?? enlace.Etiqueta ?? '',
+          EtiquetaEn: enlace.etiquetaEn ?? enlace.EtiquetaEn ?? '',
+        }))
+      : [],
+    aboutTeaser: trimSectionRaw(spotlight),
+    featuredSection: trimSectionRaw(featured),
+    iniciativasSection: trimSectionRaw(iniciativas),
+    locationSection: trimSectionRaw(location),
     tarjetasInicio: Array.isArray(tarjetas)
       ? tarjetas.map((item) => ({
           clave: item.clave || item.Clave || '',
           etiqueta: item.etiqueta || item.Etiqueta || '',
+          etiquetaEn: item.etiquetaEn || item.EtiquetaEn || '',
           titulo: item.titulo || item.Titulo || '',
+          tituloEn: item.tituloEn || item.TituloEn || '',
           descripcion: item.descripcion || item.Descripcion || '',
+          descripcionEn: item.descripcionEn || item.DescripcionEn || '',
           ruta: item.ruta || item.Ruta || '',
           textoBoton: item.textoBoton || item.TextoBoton || '',
+          textoBotonEn: item.textoBotonEn || item.TextoBotonEn || '',
         }))
       : [],
-    products: Array.isArray(productList) ? productList : [],
+    products: Array.isArray(productList)
+      ? productList.map((item) => ({
+          ...item,
+          nombre: item?.nombre ?? item?.Nombre ?? '',
+          nombreEn: item?.nombreEn ?? item?.NombreEn ?? '',
+          descripcion: item?.descripcion ?? item?.Descripcion ?? '',
+          descripcionEn: item?.descripcionEn ?? item?.DescripcionEn ?? '',
+        }))
+      : [],
   };
 }
