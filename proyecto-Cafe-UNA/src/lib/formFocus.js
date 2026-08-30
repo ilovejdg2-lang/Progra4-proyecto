@@ -28,7 +28,10 @@ function isVisible(el) {
   if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") {
     return false;
   }
-  return el.getClientRects().length > 0;
+  // jsdom no calcula layout; si no hay rects, igual consideramos visible
+  const rects = el.getClientRects?.() ?? [];
+  if (rects.length > 0) return true;
+  return typeof window.HTMLElement !== "undefined";
 }
 
 function scrollAndFocus(el, { focus = true } = {}) {

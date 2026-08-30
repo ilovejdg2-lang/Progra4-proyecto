@@ -166,6 +166,10 @@ function SolicitarVoluntariado() {
   const tHorarioPh = useTraducir(
     "Describa el horario detallado de su voluntariado por días y horas asignadas. Ejemplo: Lunes (8am - 12pm), Martes (1pm - 5pm), Miércoles (9am - 11am).",
   );
+  const tInfoGrupo = useTraducir("Información del grupo");
+  const tInfoGrupoHint = useTraducir("Datos del grupo y responsable");
+  const tCantParticipantes = useTraducir("Cantidad de participantes");
+  const tPhCantidad = useTraducir("Ej. 15");
   const [usuario] = useState(() => obtenerUsuarioActual());
   const [formulario, setFormulario] = useState(() => crearFormularioInicial(obtenerUsuarioActual()));
   const [dateRange, setDateRange] = useState({ from: undefined, to: undefined });
@@ -719,7 +723,7 @@ function SolicitarVoluntariado() {
                       </label>
                     </div>
                     {errores.esNacional && (
-                      <span className="mensaje-error">{errores.esNacional}</span>
+                      <span className="mensaje-error"><ST>{errores.esNacional}</ST></span>
                     )}
                   </div>
 
@@ -803,12 +807,12 @@ function SolicitarVoluntariado() {
                   )}
                   {!consultandoCedula && avisoCedula && (
                     <span className={esAvisoCedulaInformativo(avisoCedula) ? "mensaje-info" : "mensaje-error"}>
-                      {avisoCedula}
+                      <ST>{avisoCedula}</ST>
                     </span>
                   )}
                   {(errores.identificacion || errores.nombre || errores.primerApellido) && (
                     <span className="mensaje-error">
-                      {errores.identificacion || errores.nombre || errores.primerApellido}
+                      <ST>{errores.identificacion || errores.nombre || errores.primerApellido}</ST>
                     </span>
                   )}
 
@@ -827,7 +831,7 @@ function SolicitarVoluntariado() {
                         disabled={!formulario.esNacional}
                       />
                       {errores.institucion && (
-                        <span className="mensaje-error">{errores.institucion}</span>
+                        <span className="mensaje-error"><ST>{errores.institucion}</ST></span>
                       )}
                     </div>
 
@@ -844,7 +848,7 @@ function SolicitarVoluntariado() {
                         readOnly={esNacionalCr}
                         disabled={!formulario.esNacional}
                       />
-                      {errores.pais && <span className="mensaje-error">{errores.pais}</span>}
+                      {errores.pais && <span className="mensaje-error"><ST>{errores.pais}</ST></span>}
                     </div>
                   </div>
                 </SectionCard>
@@ -862,7 +866,7 @@ function SolicitarVoluntariado() {
                         value={formulario.correo}
                         onChange={handleChange}
                       />
-                      {errores.correo && <span className="mensaje-error">{errores.correo}</span>}
+                      {errores.correo && <span className="mensaje-error"><ST>{errores.correo}</ST></span>}
                     </div>
 
                     <div className="campo">
@@ -877,7 +881,7 @@ function SolicitarVoluntariado() {
                         onChange={handleChange}
                       />
                       {errores.telefono && (
-                        <span className="mensaje-error">{errores.telefono}</span>
+                        <span className="mensaje-error"><ST>{errores.telefono}</ST></span>
                       )}
                     </div>
                   </div>
@@ -886,22 +890,22 @@ function SolicitarVoluntariado() {
                 {esGrupal && (
                   <SectionCard
                     icon={Users}
-                    title="Información del grupo"
-                    hint="Datos del grupo y responsable"
+                    title={tInfoGrupo}
+                    hint={tInfoGrupoHint}
                   >
                     <div className="form-grid">
                       <div className="campo">
                         <label>
-                          Cantidad de participantes <span className="req">*</span>
+                          {tCantParticipantes} <span className="req">*</span>
                         </label>
                         <NumericInput
                           name="cantidadParticipantes"
-                          placeholder="Ej. 15"
+                          placeholder={tPhCantidad}
                           value={formulario.cantidadParticipantes}
                           onChange={handleChange}
                         />
                         {errores.cantidadParticipantes && (
-                          <span className="mensaje-error">{errores.cantidadParticipantes}</span>
+                          <span className="mensaje-error"><ST>{errores.cantidadParticipantes}</ST></span>
                         )}
                       </div>
                     </div>
@@ -920,7 +924,7 @@ function SolicitarVoluntariado() {
                     />
                     {(errores.fechaInicio || errores.fechaFin) && (
                       <span className="mensaje-error">
-                        {errores.fechaInicio || errores.fechaFin}
+                        <ST>{errores.fechaInicio || errores.fechaFin}</ST>
                       </span>
                     )}
                   </div>
@@ -942,7 +946,7 @@ function SolicitarVoluntariado() {
                       {etiquetaContadorPalabras(formulario.horarioDetallado, MAX_PALABRAS_NOTAS)}
                     </span>
                     {errores.horarioDetallado && (
-                      <span className="mensaje-error">{errores.horarioDetallado}</span>
+                      <span className="mensaje-error"><ST>{errores.horarioDetallado}</ST></span>
                     )}
                   </div>
                 </SectionCard>
@@ -981,16 +985,16 @@ function SolicitarVoluntariado() {
                         onChange={handleChange}
                       />
                       {errores.tipoOtro && (
-                        <span className="mensaje-error">{errores.tipoOtro}</span>
+                        <span className="mensaje-error"><ST>{errores.tipoOtro}</ST></span>
                       )}
                     </div>
                   )}
 
-                  {errores.tipo && <span className="mensaje-error">{errores.tipo}</span>}
+                  {errores.tipo && <span className="mensaje-error"><ST>{errores.tipo}</ST></span>}
                 </SectionCard>
               </div>
 
-              {errorApi && <p className="form-error" role="alert" data-form-error>{errorApi}</p>}
+              {errorApi && <p className="form-error" role="alert" data-form-error><ST>{errorApi}</ST></p>}
 
               {!usuario ? (
                 <div className="auth-banner">

@@ -1,3 +1,5 @@
+import { textoIdioma } from "./idioma";
+
 export const MAX_NOMBRE_USUARIO = 20;
 export const MAX_PASSWORD = 64;
 export const MIN_PASSWORD = 6;
@@ -17,22 +19,30 @@ export const MAX_PALABRAS_PRODUCTO_DESCRIPCION = 80;
 export const MAX_PALABRAS_MOTIVO = 40;
 
 export function contactSupportMessage() {
-  return "Si el problema contin\u00faa, comun\u00edquese con el administrador del sitio.";
+  return textoIdioma(
+    "Si el problema contin\u00faa, comun\u00edquese con el administrador del sitio.",
+  );
 }
 
 const TECHNICAL_ERROR_PATTERN =
   /monster|runasp|supabase|bad gateway|err_network|axios|502|503|servidor de autenticaci\u00f3n|tiempo de espera agotado|error en la solicitud \(\d+\)|internal server error|exception|stack trace/i;
 
+const MSG_ACCION_FALLIDA =
+  "No se pudo completar la acci\u00f3n. Si el problema contin\u00faa, comun\u00edquese con el administrador del sitio.";
+const MSG_ACCION_FALLIDA_AHORA =
+  "No se pudo completar la acci\u00f3n en este momento. Si el problema contin\u00faa, comun\u00edquese con el administrador del sitio.";
+
+/** Mensaje seguro para UI; en EN ya sale traducido (diccionario/caché). */
 export function sanitizeUserFacingError(message) {
   if (!message || typeof message !== "string") {
-    return `No se pudo completar la acci\u00f3n. ${contactSupportMessage()}`;
+    return textoIdioma(MSG_ACCION_FALLIDA);
   }
 
   if (TECHNICAL_ERROR_PATTERN.test(message)) {
-    return `No se pudo completar la acci\u00f3n en este momento. ${contactSupportMessage()}`;
+    return textoIdioma(MSG_ACCION_FALLIDA_AHORA);
   }
 
-  return message;
+  return textoIdioma(message);
 }
 
 export function contarPalabras(texto) {

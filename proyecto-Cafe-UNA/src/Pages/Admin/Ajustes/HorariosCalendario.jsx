@@ -510,7 +510,7 @@ export function HorariosCalendario({ onMessage, onError }) {
                   </div>
                   {errorHoras ? (
                     <p className="text-[length:var(--text-body)] text-red-600" role="alert">
-                      {errorHoras}
+                      <ST>{errorHoras}</ST>
                     </p>
                   ) : (
                     <p className="text-[length:var(--text-body)] text-slate-500">

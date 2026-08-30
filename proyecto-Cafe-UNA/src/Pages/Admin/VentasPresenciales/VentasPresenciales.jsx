@@ -22,6 +22,7 @@ import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
 import { ST } from "../../../Components/T/ST";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
+import { asegurarCamposEnEspanol } from "../../../lib/traducir";
 import { obtenerCatalogoProductos, obtenerStockPorUbicacion } from "../../../services/productosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import {
@@ -122,7 +123,7 @@ export default function AdminVentasPresenciales() {
   const opcionesPunto = useMemo(
     () => [
       { value: "", label: t("Seleccionar...") },
-      ...puntos.map((p) => ({ value: p.code, label: p.name || p.code })),
+      ...puntos.map((p) => ({ value: p.code, label: t(p.name || p.code) })),
     ],
     [puntos, idioma],
   );
@@ -207,12 +208,15 @@ export default function AdminVentasPresenciales() {
     setIsSaving(true);
     setFormError("");
     try {
+      const notasEs = notas.trim()
+        ? (await asegurarCamposEnEspanol({ notas: notas.trim() }, ["notas"])).notas
+        : "";
       await registrarVentaPresencial({
         productoId,
         ubicacionCodigo,
         cantidad: cantidadNum,
         fecha: `${fecha}T12:00:00`,
-        notas,
+        notas: notasEs,
       });
       setConfirmOpen(false);
       setSuccessMessage("Venta presencial registrada correctamente.");
@@ -262,11 +266,11 @@ export default function AdminVentasPresenciales() {
 
           {successMessage ? (
             <p className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-[length:var(--text-body)] text-slate-800">
-              <CheckCircle2 className="size-4" /> {successMessage}
+              <CheckCircle2 className="size-4" /> <ST>{successMessage}</ST>
             </p>
           ) : null}
           {loadError ? (
-            <p className="text-[length:var(--text-body)] text-slate-700" role="alert">{loadError}</p>
+            <p className="text-[length:var(--text-body)] text-slate-700" role="alert"><ST>{loadError}</ST></p>
           ) : null}
 
           {puedeRegistrar ? (
@@ -339,7 +343,7 @@ export default function AdminVentasPresenciales() {
                   />
                   {stockError ? (
                     <span className="text-[length:var(--text-body)] font-normal text-red-600" role="alert">
-                      {stockError}
+                      <ST>{stockError}</ST>
                     </span>
                   ) : null}
                 </label>
@@ -368,7 +372,7 @@ export default function AdminVentasPresenciales() {
 
                 {formError ? (
                   <p className="text-[length:var(--text-body)] text-slate-700 sm:col-span-2" role="alert">
-                    {formError}
+                    <ST>{formError}</ST>
                   </p>
                 ) : null}
 
@@ -406,8 +410,8 @@ export default function AdminVentasPresenciales() {
             </AdminModalHeader>
             <AdminModalBody>
               <div className="space-y-2 text-[length:var(--text-body)] text-slate-700">
-                <p><span className="font-semibold text-slate-900"><ST>Punto:</ST></span> {puntoSeleccionado?.name}</p>
-                <p><span className="font-semibold text-slate-900"><ST>Producto:</ST></span> <ST>{productoSeleccionado?.nombre}</ST></p>
+                <p><span className="font-semibold text-slate-900"><ST>Punto:</ST></span> {puntoSeleccionado?.name ? <ST>{puntoSeleccionado.name}</ST> : null}</p>
+                <p><span className="font-semibold text-slate-900"><ST>Producto:</ST></span> {productoSeleccionado?.nombre ? <ST>{productoSeleccionado.nombre}</ST> : null}</p>
                 <p><span className="font-semibold text-slate-900"><ST>Cantidad:</ST></span> {cantidadNum}</p>
                 <p><span className="font-semibold text-slate-900"><ST>Fecha:</ST></span> {fecha}</p>
                 {notas.trim() ? (

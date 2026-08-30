@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Store, X } from "lucide-react";
 
 import {
@@ -10,6 +10,10 @@ import {
 import { ST } from "../../../../Components/T/ST";
 import { useTraducir } from "../../../../hooks/useTraducir";
 import { t } from "../../../../lib/t";
+import { useIdioma } from "../../../../lib/useIdioma";
+import { asegurarCamposEnEspanol, camposParaVistaAdmin } from "../../../../lib/traducir";
+
+const CAMPOS_TEXTO = ["nombre"];
 
 export function PointOfSaleLocationEditor({
   open,
@@ -20,12 +24,36 @@ export function PointOfSaleLocationEditor({
   error = "",
 }) {
   const isEdit = Boolean(location?.code);
+  const { idioma } = useIdioma();
   const tEditar = useTraducir("Editar punto de venta");
   const tAgregar = useTraducir("Agregar punto de venta");
   const tHint = useTraducir("Bodega Central no se modifica desde aquí.");
-  const [nombre, setNombre] = useState(() => location?.name || "");
-  const [codigo, setCodigo] = useState(() => location?.code || "");
+  const [nombre, setNombre] = useState("");
+  const [codigo, setCodigo] = useState("");
   const [validationError, setValidationError] = useState("");
+
+  useEffect(() => {
+    if (!open) return undefined;
+    let cancelado = false;
+    const base = {
+      nombre: location?.name || "",
+      codigo: location?.code || "",
+    };
+    setValidationError("");
+    setNombre(base.nombre);
+    setCodigo(base.codigo);
+
+    if (idioma !== "en") return undefined;
+
+    (async () => {
+      const traducido = await camposParaVistaAdmin(base, CAMPOS_TEXTO, idioma);
+      if (!cancelado) setNombre(traducido.nombre || "");
+    })();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [open, location, idioma]);
 
   if (!open) return null;
 
@@ -39,6 +67,11 @@ export function PointOfSaleLocationEditor({
       return;
     }
 
+    const paraGuardar = await asegurarCamposEnEspanol(
+      { nombre: normalizedNombre },
+      CAMPOS_TEXTO,
+    );
+
     if (!isEdit) {
       const normalizedCodigo = codigo.trim().toUpperCase();
       if (normalizedCodigo && !/^POS_[A-Z0-9_]{1,45}$/.test(normalizedCodigo)) {
@@ -47,14 +80,14 @@ export function PointOfSaleLocationEditor({
       }
       setValidationError("");
       await onSave({
-        nombre: normalizedNombre,
+        nombre: paraGuardar.nombre,
         codigo: normalizedCodigo || undefined,
       });
       return;
     }
 
     setValidationError("");
-    await onSave({ nombre: normalizedNombre });
+    await onSave({ nombre: paraGuardar.nombre });
   };
 
   return (
@@ -125,7 +158,7 @@ export function PointOfSaleLocationEditor({
           ) : null}
           {message ? (
             <p className="text-sm text-red-600" role="alert" aria-live="assertive">
-              {message}
+              <ST>{message}</ST>
             </p>
           ) : null}
           <div className="border-t border-slate-100 pt-4">

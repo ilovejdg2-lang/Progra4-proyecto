@@ -51,7 +51,7 @@ export function PointOfSaleCards({
                   {activo ? <ST>Activo</ST> : <ST>Inactivo</ST>}
                 </span>
               </span>
-              <span className="mt-4 block text-base font-semibold">{location.name}</span>
+              <span className="mt-4 block text-base font-semibold"><ST>{location.name}</ST></span>
               <span className={`mt-1 flex items-center gap-1 text-xs ${selected ? "text-slate-200" : "text-slate-500"}`}>
                 <MapPin className="size-3.5" aria-hidden="true" />
                 {location.code}
