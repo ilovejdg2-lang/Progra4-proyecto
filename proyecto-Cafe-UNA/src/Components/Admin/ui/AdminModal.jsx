@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 
 import { useAdminModalLock } from "../../../hooks/useBodyScrollLock";
+import { useTraducir } from "../../../hooks/useTraducir";
 
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -95,18 +96,18 @@ export function AdminModalBody({ children, className, cms = false }) {
 }
 
 export const adminBtnCancel =
-  "w-full rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto";
+  "inline-flex min-h-[var(--control-height)] w-full items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-[length:var(--text-body)] font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto";
 
 export const adminBtnPrimary =
-  "w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
+  "inline-flex min-h-[var(--control-height)] w-full items-center justify-center rounded-full border border-slate-950 bg-slate-950 px-5 text-[length:var(--text-body)] font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
 
 // Shared with the buttons in Voluntariado; CMS editors opt in instead of
 // maintaining a second copy of the same visual treatment.
 export const adminBtnVoluntariadoPrimary =
-  "inline-flex items-center justify-center rounded-full border border-slate-950 bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-[var(--control-height)] items-center justify-center rounded-full border border-slate-950 bg-slate-950 px-5 text-[length:var(--text-body)] font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60";
 
 export const adminBtnVoluntariadoCancel =
-  "inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-[var(--control-height)] items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-[length:var(--text-body)] font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60";
 
 export function AdminModalFooter({ children, className }) {
   return (
@@ -134,6 +135,8 @@ export function AdminModalActions({
   className,
 }) {
   const usesVoluntariadoStyle = buttonStyle === "voluntariado";
+  const tCancel = useTraducir(cancelLabel);
+  const tPrimary = useTraducir(primaryLabel || "");
 
   return (
     <div className={cn("flex flex-row flex-wrap justify-end gap-3 sm:gap-4", className)}>
@@ -143,10 +146,10 @@ export function AdminModalActions({
         onClick={onPrimary}
         className={primaryClassName || (usesVoluntariadoStyle ? adminBtnVoluntariadoPrimary : adminBtnPrimary)}
       >
-        {primaryLabel}
+        {tPrimary}
       </button>
       <button type="button" onClick={onCancel} className={cancelClassName || (usesVoluntariadoStyle ? adminBtnVoluntariadoCancel : adminBtnCancel)}>
-        {cancelLabel}
+        {tCancel}
       </button>
     </div>
   );

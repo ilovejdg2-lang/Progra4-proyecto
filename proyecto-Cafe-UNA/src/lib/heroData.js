@@ -1,8 +1,11 @@
+import { localizarObjeto, obtenerIdioma } from './idioma';
+
 function pickString(data, camelKey, pascalKey) {
   const value = data?.[camelKey] ?? data?.[pascalKey];
   return typeof value === 'string' ? value.trim() : '';
 }
 
+/** Mapea campos del hero (fuente en español; EN se traduce en la vista pública). */
 export function mapHero(data) {
   if (!data || typeof data !== 'object') {
     return {
@@ -27,6 +30,15 @@ export function mapHero(data) {
     buttonUrl: pickString(data, 'buttonUrl', 'ButtonUrl'),
     backgroundImage: pickString(data, 'backgroundImage', 'BackgroundImage'),
   };
+}
+
+/** Hero listo para mostrar según idioma actual (fallback a español). */
+export function mapHeroLocalizado(data, idioma = obtenerIdioma()) {
+  return localizarObjeto(
+    mapHero(data),
+    ['eyebrow', 'title', 'subtitle', 'primaryButtonText', 'buttonText'],
+    idioma,
+  );
 }
 
 export function isExternalHeroUrl(url) {

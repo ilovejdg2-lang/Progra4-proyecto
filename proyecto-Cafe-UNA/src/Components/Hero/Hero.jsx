@@ -1,8 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { isExternalHeroUrl, mapHero } from "../../lib/heroData";
+import { useTraducirObjeto } from "../../hooks/useTraducir";
 import "./Hero.css";
+
+const CAMPOS_HERO = ["eyebrow", "title", "subtitle", "primaryButtonText", "buttonText"];
 
 function renderHeroTitle(title) {
   const text = title?.trim();
@@ -45,7 +48,8 @@ function HeroActionLink({ href, className, children }) {
 }
 
 const Hero = ({ data = {}, onBackgroundReady }) => {
-  const hero = mapHero(data);
+  const heroBase = useMemo(() => mapHero(data), [data]);
+  const hero = useTraducirObjeto(heroBase, CAMPOS_HERO);
   const backgroundUrl = normalizeImageUrl(hero.backgroundImage, { width: 1920 });
   const [bgReady, setBgReady] = useState(!backgroundUrl);
   const imgRef = useRef(null);
