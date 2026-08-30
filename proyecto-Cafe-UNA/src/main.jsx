@@ -8,21 +8,19 @@ import { refreshSessionIfNeeded } from './services/apiClient'
 import { getActiveSessionUser, isLoggingOut, touchSession } from './services/sessionService'
 import { installNativeInvalidFocus } from './lib/formFocus'
 import { obtenerNavbar } from './services/informacionService'
-import { obtenerIdiomaPredeterminado } from './services/ajustesService'
 import { guardarIdioma, obtenerIdioma } from './lib/idioma'
 
 // Calienta el logo del navbar para loaders (caché localStorage).
 void obtenerNavbar().catch(() => {})
 
-// Si no hay idioma guardado en el navegador, usa el predeterminado de Supabase.
-void (async () => {
+// Idioma por defecto: español. Solo se respeta EN si el usuario ya lo eligió.
+void (() => {
   try {
     if (localStorage.getItem('cafe-una-idioma')) {
       document.documentElement.lang = obtenerIdioma() === 'en' ? 'en' : 'es'
       return
     }
-    const def = await obtenerIdiomaPredeterminado()
-    guardarIdioma(def)
+    guardarIdioma('es')
   } catch {
     document.documentElement.lang = 'es'
   }

@@ -4,6 +4,7 @@ import { ArrowLeft, Eye, X } from "lucide-react";
 
 import { AdminModal, AdminModalBody, AdminModalHeader } from "../../Components/Admin/ui/AdminModal";
 import { PublicPageGate } from "../../Components/PublicPageGate/PublicPageGate";
+import { ST } from "../../Components/T/ST";
 import { usePublicPageLoadingGate } from "../../hooks/usePublicPageLoadingGate";
 import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
 import { obtenerCompraPorId, obtenerMisCompras } from "../../services/comprasService";
@@ -148,7 +149,7 @@ export default function HistorialComprasCliente() {
           <p className="rounded-2xl border border-slate-200 bg-white px-4 py-10 text-center text-sm text-slate-500">Cargando historial...</p>
         ) : status === "error" ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-8 text-center">
-            <p className="text-sm font-semibold text-red-700">{error}</p>
+            <p className="text-sm font-semibold text-red-700"><ST>{error}</ST></p>
             <button type="button" onClick={load} className="mt-3 rounded-full border border-red-700 px-4 py-2 text-sm font-semibold text-red-700">Reintentar</button>
           </div>
         ) : compras.length === 0 ? (

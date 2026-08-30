@@ -3,24 +3,17 @@ import { createPortal } from 'react-dom';
 import { AlertCircle, Check, ShoppingBag, X } from 'lucide-react';
 import { imagenPrincipalProducto } from '../../lib/productoImagenes';
 import { useTraducir } from '../../hooks/useTraducir';
+import { ST } from '../T/ST';
 import './CartAddedToast.css';
 
 function ToastBody({ toast, onDismiss }) {
   const tTituloOk = useTraducir('Añadido al carrito');
   const tTituloError = useTraducir('No se pudo agregar');
-  const tUnidades = useTraducir('unidades');
-  const tNombre = useTraducir(toast.nombre || 'Producto');
-  const tErrorMsg = useTraducir(toast.errorMessage || 'Revisá la disponibilidad.');
   const tCerrar = useTraducir('Cerrar aviso');
 
   const esError = toast.type === 'error';
   const units = Number(toast.quantity) || 1;
   const title = esError ? tTituloError : tTituloOk;
-  const message = esError
-    ? tErrorMsg
-    : units > 1
-      ? `${tNombre} · ${units} ${tUnidades}`
-      : tNombre;
 
   return (
     <div
@@ -41,13 +34,25 @@ function ToastBody({ toast, onDismiss }) {
           {!esError ? <ShoppingBag size={14} aria-hidden="true" /> : null}
           {title}
         </p>
-        <p className="cart-added-toast__message">{message}</p>
+        <p className="cart-added-toast__message">
+          {esError ? (
+            <ST>{toast.errorMessage || 'Revisá la disponibilidad.'}</ST>
+          ) : units > 1 ? (
+            <>
+              <ST>{toast.nombre || 'Producto'}</ST>
+              {` · ${units} `}
+              <ST>unidades</ST>
+            </>
+          ) : (
+            <ST>{toast.nombre || 'Producto'}</ST>
+          )}
+        </p>
       </div>
 
       <button
         type="button"
-        className="cart-added-toast__close"
         onClick={onDismiss}
+        className="cart-added-toast__close"
         aria-label={tCerrar}
       >
         <X size={16} aria-hidden="true" />

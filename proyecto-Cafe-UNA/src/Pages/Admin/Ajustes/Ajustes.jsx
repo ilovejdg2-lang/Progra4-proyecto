@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate, useRouterState } from "@tanstack/react-router";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
+import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { aplicarMatrizPermisos, rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
 import { sanitizeUserFacingError } from "../../../lib/formLimits";
+import { t } from "../../../lib/t";
 import {
   guardarMatrizPermisos,
   obtenerMatrizPermisos,
@@ -125,7 +127,7 @@ export default function AdminAjustes() {
   };
 
   const guardarMatriz = async () => {
-    if (!window.confirm("¿Guardar la matriz de permisos? Los cambios aplican de inmediato.")) return;
+    if (!window.confirm(t("¿Guardar la matriz de permisos? Los cambios aplican de inmediato."))) return;
     setGuardandoMatriz(true);
     setError("");
     try {
@@ -153,12 +155,12 @@ export default function AdminAjustes() {
 
           {error ? (
             <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[length:var(--text-body)] text-red-700" role="alert">
-              {error}
+              <ST>{error}</ST>
             </p>
           ) : null}
           {okMsg ? (
             <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[length:var(--text-body)] text-emerald-800">
-              {okMsg}
+              <ST>{okMsg}</ST>
             </p>
           ) : null}
 

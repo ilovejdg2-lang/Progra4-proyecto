@@ -143,7 +143,7 @@ export function CentralStockEditor({
 
           {message ? (
             <p id="central-stock-error" className="text-sm text-red-600" role="alert" aria-live="assertive">
-              {message}
+              <ST>{message}</ST>
             </p>
           ) : null}
 
