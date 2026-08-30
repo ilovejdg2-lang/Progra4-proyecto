@@ -1,0 +1,117 @@
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.15rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: transparent;
+  min-height: 0;
+  transition: border-color 0.45s ease, background-color 0.45s ease;
+}
+
+.lang-switch--compact {
+  padding: 0.1rem;
+}
+
+.lang-switch__btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.72rem;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  min-height: 1.65rem;
+  min-width: 1.65rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.45s ease, color 0.45s ease, box-shadow 0.45s ease;
+}
+
+.lang-switch--compact .lang-switch__btn {
+  font-size: 0.68rem;
+  min-height: 1.45rem;
+  min-width: 1.45rem;
+  padding: 0 0.38rem;
+}
+
+.lang-switch__btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.lang-switch__btn.is-active {
+  background: #fff;
+  color: #111;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+/* Admin / fondos claros: borde suave y texto oscuro inactivo */
+.lang-switch--on-light,
+.admin-layout .lang-switch,
+[data-admin-shell] .lang-switch {
+  border-color: rgba(15, 23, 42, 0.18);
+  background: transparent;
+}
+
+.lang-switch--on-light .lang-switch__btn,
+.admin-layout .lang-switch__btn,
+[data-admin-shell] .lang-switch__btn {
+  color: #334155;
+}
+
+.lang-switch--on-light .lang-switch__btn:hover,
+.admin-layout .lang-switch__btn:hover,
+[data-admin-shell] .lang-switch__btn:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.lang-switch--on-light .lang-switch__btn.is-active,
+.admin-layout .lang-switch__btn.is-active,
+[data-admin-shell] .lang-switch__btn.is-active {
+  background: #0f172a;
+  color: #fff;
+}
+
+/* Navbar con scroll (fondo claro) */
+.navbar--scrolled .lang-switch,
+.navbar--solid .lang-switch {
+  border-color: rgba(15, 23, 42, 0.18);
+}
+
+.navbar--scrolled .lang-switch__btn,
+.navbar--solid .lang-switch__btn {
+  color: #334155;
+}
+
+.navbar--scrolled .lang-switch__btn:hover,
+.navbar--solid .lang-switch__btn:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.navbar--scrolled .lang-switch__btn.is-active,
+.navbar--solid .lang-switch__btn.is-active {
+  background: #0f172a;
+  color: #fff;
+}
+
+/* Navbar transparente (hero): transparente + letras blancas; activo blanco + negro */
+.navbar--transparent .lang-switch {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: transparent;
+}
+
+.navbar--transparent .lang-switch__btn {
+  color: #fff;
+}
+
+.navbar--transparent .lang-switch__btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.navbar--transparent .lang-switch__btn.is-active {
+  background: #fff;
+  color: #111;
+}

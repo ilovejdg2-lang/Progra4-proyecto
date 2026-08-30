@@ -32,8 +32,14 @@ import { fetchProductsPageData } from '../../lib/productsPageData';
 import { obtenerCategorias } from '../../services/categoriasService';
 import { calcularPrecioConIVA } from '../../services/productosService';
 import { clasificarDisponibilidad } from '../../lib/productoDisponibilidad';
+import { useTraducir, useTraducirLista } from '../../hooks/useTraducir';
 
 const PRODUCTS_PER_PAGE = 10;
+const CAMPOS_PRODUCTO = ['nombre', 'descripcion'];
+
+function Etiqueta({ texto }) {
+  return useTraducir(texto);
+}
 
 function coincidenciaBusqueda(producto, query) {
   const q = String(query || '').trim().toLowerCase();
@@ -64,6 +70,28 @@ const Products = () => {
     loadingMessage,
   } = useCachedPublicPage('products', fetchProductsPageData);
   const products = data?.products ?? [];
+  const productosTrad = useTraducirLista(products, CAMPOS_PRODUCTO);
+  const nombrePorId = useMemo(() => {
+    const map = new Map();
+    for (const p of productosTrad || []) {
+      if (p?.id != null) map.set(p.id, p.nombre);
+    }
+    return map;
+  }, [productosTrad]);
+
+  const tProductos = useTraducir('Productos');
+  const tLead = useTraducir('Explora nuestro catálogo disponible.');
+  const tProducto = useTraducir('producto');
+  const tProductosCount = useTraducir('productos');
+  const tFiltros = useTraducir('Filtros');
+  const tCategoria = useTraducir('Categoría');
+  const tTodas = useTraducir('Todas');
+  const tBuscar = useTraducir('Buscar productos.');
+  const tLimpiar = useTraducir('Limpiar');
+  const tDetalles = useTraducir('Detalles');
+  const tSinStock = useTraducir('Sin unidades disponibles');
+  const tVacio = useTraducir('No hay productos disponibles en este momento.');
+
   const [currentPage, setCurrentPage] = useState(1);
   const [categoria, setCategoria] = useState('todas');
   const [subcategoria, setSubcategoria] = useState('todas');
@@ -219,7 +247,7 @@ const Products = () => {
         ) : (
           <Package size={16} aria-hidden="true" />
         )}
-        <span>Todas</span>
+        <span>{tTodas}</span>
       </button>
 
       {categorias.map((nombre) => {
@@ -241,7 +269,7 @@ const Products = () => {
                 ) : (
                   <Icono size={16} aria-hidden="true" />
                 )}
-                <span>{nombre}</span>
+                <span><Etiqueta texto={nombre} /></span>
               </button>
               {hijas.length > 0 ? (
                 <button
@@ -270,7 +298,7 @@ const Products = () => {
                       onClick={() => cambiarSubcategoria(nombre, sub)}
                     >
                       <span className="products-page__aside-dot" aria-hidden="true" />
-                      <span>{sub}</span>
+                      <span><Etiqueta texto={sub} /></span>
                     </button>
                   </li>
                 ))}
@@ -295,25 +323,25 @@ const Products = () => {
         <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.products} />
         <section className="products-page__hero">
           <div className="products-page__hero-copy">
-            <h1>Productos</h1>
-            <p className="products-page__hero-lead">Explora nuestro catálogo disponible.</p>
+            <h1>{tProductos}</h1>
+            <p className="products-page__hero-lead">{tLead}</p>
           </div>
           <p className="products-page__count-badge" aria-live="polite">
             <Package size={15} aria-hidden="true" />
             <span>
               {productosFiltrados.length}{' '}
-              {productosFiltrados.length === 1 ? 'producto' : 'productos'}
-              {etiquetaActiva !== 'Todas' ? ` · ${etiquetaActiva}` : ''}
+              {productosFiltrados.length === 1 ? tProducto : tProductosCount}
+              {etiquetaActiva !== 'Todas' ? <> · <Etiqueta texto={etiquetaActiva} /></> : ''}
             </span>
           </p>
         </section>
 
         <div className="products-page__shop">
-          <aside className="products-page__aside" aria-label="Filtros">
+          <aside className="products-page__aside" aria-label={tFiltros}>
             <div className="products-page__aside-head">
               <h2>
                 <Filter size={16} aria-hidden="true" />
-                Filtros
+                {tFiltros}
               </h2>
               {hayFiltros ? (
                 <button
@@ -325,12 +353,12 @@ const Products = () => {
                     setBusqueda('');
                   }}
                 >
-                  Limpiar
+                  {tLimpiar}
                 </button>
               ) : null}
             </div>
             <div className="products-page__aside-block">
-              <h3>Categoría</h3>
+              <h3>{tCategoria}</h3>
               {asideNav}
             </div>
           </aside>
@@ -339,13 +367,13 @@ const Products = () => {
             <div className="products-page__toolbar">
               <label className="products-page__search">
                 <Search className="products-page__search-icon" size={18} aria-hidden="true" />
-                <span className="sr-only">Buscar productos</span>
+                <span className="sr-only">{tBuscar}</span>
                 <input
                   type="search"
                   value={busqueda}
                   onChange={(event) => setBusqueda(event.target.value)}
-                  placeholder="Buscar productos."
-                  aria-label="Buscar productos"
+                  placeholder={tBuscar}
+                  aria-label={tBuscar}
                   autoComplete="off"
                 />
                 {busqueda ? (
@@ -367,16 +395,16 @@ const Products = () => {
                 aria-expanded={filtrosAbiertos}
               >
                 <SlidersHorizontal size={16} aria-hidden="true" />
-                Filtros
+                {tFiltros}
               </button>
 
-              <div className="products-page__pills" role="group" aria-label={"Filtro r\u00e1pido por categor\u00eda"}>
+              <div className="products-page__pills" role="group" aria-label={tCategoria}>
                 <button
                   type="button"
                   className={`products-page__pill${categoria === 'todas' ? ' is-active' : ''}`}
                   onClick={() => cambiarCategoria('todas')}
                 >
-                  Todas
+                  {tTodas}
                 </button>
                 {categorias.map((nombre) => {
                   const activa = nombreCategoria(categoria).toLowerCase() === nombre.toLowerCase();
@@ -387,24 +415,28 @@ const Products = () => {
                       className={`products-page__pill${activa ? ' is-active' : ''}`}
                       onClick={() => cambiarCategoria(nombre)}
                     >
-                      {nombre}
+                      <Etiqueta texto={nombre} />
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            <section className="products-page__grid" aria-label="Lista de productos">
+            <section className="products-page__grid" aria-label={tProductos}>
               {productCards.length === 0 && (
                 <p className="products-page__empty">
                   {hayFiltros
-                    ? 'No hay productos con esos filtros. Prob\u00e1 otra b\u00fasqueda o categor\u00eda.'
-                    : 'No hay productos disponibles en este momento.'}
+                    ? 'No hay productos con esos filtros. Probá otra búsqueda o categoría.'
+                    : tVacio}
                 </p>
               )}
               {productCards.map((card, index) => {
                 const { product, precioConIVA, estaAgotado, disponibilidad } = card;
                 const foto = imagenPrincipalProducto(product);
+                const nombreUi = nombrePorId.get(product.id) || product.nombre;
+                const stockLine = estaAgotado
+                  ? tSinStock
+                  : `${disponibilidad.stock} unidad${disponibilidad.stock === 1 ? '' : 'es'} en bodega`;
 
                 return (
                   <article
@@ -416,14 +448,14 @@ const Products = () => {
                       params={{ productId: String(product.id) }}
                       className="products-page__card-hit"
                     >
-                      <span className="sr-only">{`Ver detalles de ${product.nombre}`}</span>
+                      <span className="sr-only">{`Ver detalles de ${nombreUi}`}</span>
                     </Link>
 
                     {foto ? (
                       <div className="products-page__card-media">
                         <OptimizedImage
                           src={foto}
-                          alt={product.nombre}
+                          alt={nombreUi}
                           width={640}
                           height={480}
                           priority={index < 4}
@@ -438,12 +470,10 @@ const Products = () => {
                     )}
 
                     <div className="products-page__card-body">
-                      <h2>{product.nombre}</h2>
+                      <h2>{nombreUi}</h2>
                       <p className="products-page__price">CRC {precioConIVA.toLocaleString('es-CR')}</p>
                       <p className="products-page__stock-line">
-                        {estaAgotado
-                          ? 'Sin unidades disponibles'
-                          : `${disponibilidad.stock} unidad${disponibilidad.stock === 1 ? '' : 'es'} en bodega`}
+                        {estaAgotado ? stockLine : <Etiqueta texto={stockLine} />}
                       </p>
                     </div>
 
@@ -453,7 +483,7 @@ const Products = () => {
                         params={{ productId: String(product.id) }}
                         className="products-page__details-btn"
                       >
-                        Detalles
+                        {tDetalles}
                       </Link>
 
                       <button

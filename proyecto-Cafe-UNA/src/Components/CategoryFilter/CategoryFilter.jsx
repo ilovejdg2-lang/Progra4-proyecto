@@ -1,3 +1,9 @@
+import { useTraducir } from "../../hooks/useTraducir";
+
+function ChipLabel({ texto }) {
+  return useTraducir(texto);
+}
+
 export function CategoryFilter({
   categorias = [],
   valor = "todas",
@@ -8,6 +14,11 @@ export function CategoryFilter({
   todasLabel = "Todas",
   todasSubLabel = "Todos",
 }) {
+  const labelTodas = useTraducir(todasLabel);
+  const labelTodasSub = useTraducir(todasSubLabel);
+  const ariaCat = useTraducir("Filtro por categoría");
+  const ariaSub = useTraducir("Filtro por subcategoría");
+
   if (!categorias.length) return null;
 
   const mostrarSub =
@@ -15,13 +26,13 @@ export function CategoryFilter({
 
   return (
     <div className="category-filter-stack">
-      <div className="category-filter" role="group" aria-label={"Filtro por categor\u00eda"}>
+      <div className="category-filter" role="group" aria-label={ariaCat}>
         <button
           type="button"
           className={`category-filter__chip${valor === "todas" ? " is-active" : ""}`}
           onClick={() => onChange("todas")}
         >
-          {todasLabel}
+          {labelTodas}
         </button>
         {categorias.map((categoria) => (
           <button
@@ -30,19 +41,19 @@ export function CategoryFilter({
             className={`category-filter__chip${valor === categoria ? " is-active" : ""}`}
             onClick={() => onChange(categoria)}
           >
-            {categoria}
+            <ChipLabel texto={categoria} />
           </button>
         ))}
       </div>
 
       {mostrarSub ? (
-        <div className="category-filter category-filter--sub" role="group" aria-label={"Filtro por subcategor\u00eda"}>
+        <div className="category-filter category-filter--sub" role="group" aria-label={ariaSub}>
           <button
             type="button"
             className={`category-filter__chip${subvalor === "todas" ? " is-active" : ""}`}
             onClick={() => onSubChange("todas")}
           >
-            {todasSubLabel}
+            {labelTodasSub}
           </button>
           {subcategorias.map((subcategoria) => (
             <button
@@ -51,7 +62,7 @@ export function CategoryFilter({
               className={`category-filter__chip${subvalor === subcategoria ? " is-active" : ""}`}
               onClick={() => onSubChange(subcategoria)}
             >
-              {subcategoria}
+              <ChipLabel texto={subcategoria} />
             </button>
           ))}
         </div>

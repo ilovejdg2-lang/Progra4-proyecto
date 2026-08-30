@@ -20,6 +20,8 @@ import {
   validatePassword,
 } from "../../lib/formLimits";
 import PageLoading from "../PageLoading/PageLoading";
+import { useTraducir } from "../../hooks/useTraducir";
+import { ST } from "../T/ST";
 import "./PerfilContent.css";
 
 const FEEDBACK_AUTO_HIDE_MS = 4000;
@@ -35,10 +37,12 @@ function claseRolPerfil(rol) {
 
 function PerfilPasswordField({ label, value, onChange, visible, onToggle, autoFocus = false, error = "" }) {
   const Icon = visible ? Eye : EyeOff;
+  const tOcultar = useTraducir("Ocultar contraseña");
+  const tMostrar = useTraducir("Mostrar contraseña");
 
   return (
     <label className="perfil-field perfil-password-field">
-      <span>{label}</span>
+      <span><ST>{label}</ST></span>
       <div className="perfil-password-field__input-wrap">
         <input
           type={visible ? "text" : "password"}
@@ -54,12 +58,12 @@ function PerfilPasswordField({ label, value, onChange, visible, onToggle, autoFo
           type="button"
           className="perfil-password-field__toggle"
           onClick={onToggle}
-          aria-label={visible ? "Ocultar contrase\u00f1a" : "Mostrar contrase\u00f1a"}
+          aria-label={visible ? tOcultar : tMostrar}
         >
           <Icon size={18} aria-hidden="true" />
         </button>
       </div>
-      {error ? <p className="perfil-field-error">{error}</p> : null}
+      {error ? <p className="perfil-field-error"><ST>{error}</ST></p> : null}
     </label>
   );
 }
@@ -74,28 +78,42 @@ function ImageUrlModal({
   onSave,
   saving,
 }) {
+  const tCerrar = useTraducir("Cerrar");
+  const tCambiarFoto = useTraducir("Cambiar foto de perfil");
+  const tCambiarBanner = useTraducir("Cambiar banner");
+  const tUrlImagen = useTraducir("URL de la imagen");
+  const tVistaPreviaAvatarAdmin = useTraducir("Vista previa (96×96 px)");
+  const tVistaPreviaAvatar = useTraducir("Vista previa (112×112 px)");
+  const tVistaPreviaBannerAdmin = useTraducir("Vista previa (220 px de alto)");
+  const tVistaPreviaBanner = useTraducir("Vista previa (280 px de alto)");
+  const tVistaPrevia = useTraducir("Vista previa");
+  const tPegaEnlace = useTraducir("Pega un enlace para ver la vista previa al tamaño real.");
+  const tGuardando = useTraducir("Guardando...");
+  const tGuardarImagen = useTraducir("Guardar imagen");
+  const tCancelar = useTraducir("Cancelar");
+
   if (!open) return null;
 
   const isAvatar = type === "avatar";
   const isAdmin = variant === "admin";
   const preview = value ? normalizeImageUrl(value, { width: isAvatar ? 320 : 1600 }) : "";
   const previewLabel = isAvatar
-    ? `Vista previa (${isAdmin ? "96×96" : "112×112"} px)`
-    : `Vista previa (${isAdmin ? "220" : "280"} px de alto)`;
+    ? (isAdmin ? tVistaPreviaAvatarAdmin : tVistaPreviaAvatar)
+    : (isAdmin ? tVistaPreviaBannerAdmin : tVistaPreviaBanner);
 
   return (
     <div className="perfil-modal" role="dialog" aria-modal="true">
-      <button type="button" className="perfil-modal__backdrop" aria-label="Cerrar" onClick={onClose} />
+      <button type="button" className="perfil-modal__backdrop" aria-label={tCerrar} onClick={onClose} />
       <div className={`perfil-modal__card perfil-modal__card--image ${isAvatar ? "perfil-modal__card--avatar" : "perfil-modal__card--banner"}`}>
         <header className="perfil-modal__header">
-          <h3>{isAvatar ? "Cambiar foto de perfil" : "Cambiar banner"}</h3>
-          <button type="button" className="perfil-modal__close" onClick={onClose} aria-label="Cerrar">
+          <h3>{isAvatar ? tCambiarFoto : tCambiarBanner}</h3>
+          <button type="button" className="perfil-modal__close" onClick={onClose} aria-label={tCerrar}>
             <X size={18} />
           </button>
         </header>
 
         <label className="perfil-field">
-          <span>URL de la imagen</span>
+          <span>{tUrlImagen}</span>
           <input
             value={value}
             onChange={(e) => onChange(e.target.value)}
@@ -118,22 +136,22 @@ function ImageUrlModal({
             >
               <img
                 src={preview}
-                alt="Vista previa"
+                alt={tVistaPrevia}
                 className="perfil-modal__preview-img"
                 draggable={false}
               />
             </div>
           </div>
         ) : (
-          <p className="perfil-modal__empty-preview">{"Pega un enlace para ver la vista previa al tama\u00f1o real."}</p>
+          <p className="perfil-modal__empty-preview">{tPegaEnlace}</p>
         )}
 
         <div className="perfil-modal__actions">
           <button type="button" className="perfil-button" onClick={onSave} disabled={saving || !value.trim()}>
-            {saving ? "Guardando..." : "Guardar imagen"}
+            {saving ? tGuardando : tGuardarImagen}
           </button>
           <button type="button" className="perfil-button perfil-button--ghost" onClick={onClose}>
-            Cancelar
+            {tCancelar}
           </button>
         </div>
       </div>
@@ -144,11 +162,40 @@ function ImageUrlModal({
 export function PerfilContent({ variant = "standalone" }) {
   const sessionUser = getActiveSessionUser();
   const sessionUserId = Number(sessionUser?.id) || null;
+  const tCargandoPerfil = useTraducir("Cargando perfil...");
+  const tCambiarBanner = useTraducir("Cambiar banner");
+  const tCambiarFoto = useTraducir("Cambiar foto de perfil");
+  const tMiPerfil = useTraducir("Mi perfil");
+  const tCompras = useTraducir("Compras");
+  const tRevisaPedidos = useTraducir("Revisá pedidos, totales y detalle.");
+  const tVerHistorial = useTraducir("Ver historial de compras");
+  const tInfoPersonal = useTraducir("Información personal");
+  const tSinNombre = useTraducir("Sin nombre");
+  const tCambiarNombre = useTraducir("Cambiar nombre");
+  const tNuevoNombre = useTraducir("Nuevo nombre");
+  const tGuardando = useTraducir("Guardando...");
+  const tGuardarNombre = useTraducir("Guardar nombre");
+  const tCancelar = useTraducir("Cancelar");
+  const tCorreoElectronico = useTraducir("Correo electrónico");
+  const tCambiarCorreo = useTraducir("Cambiar correo");
+  const tNuevoCorreo = useTraducir("Nuevo correo");
+  const tCodigoVerif = useTraducir("Código de verificación");
+  const tSeisDigitos = useTraducir("6 dígitos");
+  const tProcesando = useTraducir("Procesando...");
+  const tEnviarCodigo = useTraducir("Enviar código");
+  const tConfirmarCorreo = useTraducir("Confirmar correo");
+  const tSeguridad = useTraducir("Seguridad");
+  const tCambiarPass = useTraducir("Cambiar contraseña");
+  const tActualizando = useTraducir("Actualizando...");
+  const tActualizarPass = useTraducir("Actualizar contraseña");
+  const tVolverInicio = useTraducir("Volver al inicio");
   const [perfil, setPerfil] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
+  const tErrorCarga = useTraducir(error || "No se pudo cargar el perfil.");
+  const tMensaje = useTraducir(mensaje);
   const [imageModal, setImageModal] = useState(null);
   const [imageDraft, setImageDraft] = useState("");
   const [form, setForm] = useState({
@@ -479,7 +526,7 @@ export function PerfilContent({ variant = "standalone" }) {
   if (cargando) {
     return (
       <div className={`perfil-page perfil-page--${variant}`}>
-        <PageLoading message="Cargando perfil..." />
+        <PageLoading message={tCargandoPerfil} />
       </div>
     );
   }
@@ -489,7 +536,7 @@ export function PerfilContent({ variant = "standalone" }) {
       <div className={`perfil-page perfil-page--${variant}`}>
         <PageLoading
           isError
-          message={error || "No se pudo cargar el perfil."}
+          message={tErrorCarga}
           detail={contactSupportMessage()}
           onRetry={sessionUserId ? cargarPerfil : undefined}
         />
@@ -504,7 +551,7 @@ export function PerfilContent({ variant = "standalone" }) {
           type="button"
           className="perfil-hero__banner-btn"
           onClick={() => openImageModal("banner")}
-          aria-label="Cambiar banner"
+          aria-label={tCambiarBanner}
         >
           {bannerSrc ? (
           <img
@@ -521,7 +568,7 @@ export function PerfilContent({ variant = "standalone" }) {
           )}
           <span className="perfil-hero__change">
             <Camera size={18} />
-            Cambiar banner
+            {tCambiarBanner}
           </span>
         </button>
         <div className="perfil-hero__overlay" />
@@ -533,7 +580,7 @@ export function PerfilContent({ variant = "standalone" }) {
               e.stopPropagation();
               openImageModal("avatar");
             }}
-            aria-label="Cambiar foto de perfil"
+            aria-label={tCambiarFoto}
           >
             {avatarSrc && !avatarRoto ? (
               <img
@@ -555,7 +602,7 @@ export function PerfilContent({ variant = "standalone" }) {
             </span>
           </button>
           <div className="perfil-hero__info">
-            <h1>{form.nombre || "Mi perfil"}</h1>
+            <h1>{form.nombre || tMiPerfil}</h1>
             <p className="perfil-hero__email">
               <Mail size={16} />
               {form.correo}
@@ -575,11 +622,11 @@ export function PerfilContent({ variant = "standalone" }) {
         <section className="perfil-card" style={{ marginBottom: "1rem" }}>
           <header className="perfil-card__header">
             <UserRound size={18} />
-            <h2>Compras</h2>
+            <h2>{tCompras}</h2>
           </header>
-          <p className="perfil-card__current-value">Revisá pedidos, totales y detalle.</p>
+          <p className="perfil-card__current-value">{tRevisaPedidos}</p>
           <Link to="/perfil/compras" className="perfil-link-action">
-            Ver historial de compras
+            {tVerHistorial}
             <ChevronRight size={16} />
           </Link>
         </section>
@@ -589,10 +636,10 @@ export function PerfilContent({ variant = "standalone" }) {
         <section className="perfil-card">
           <header className="perfil-card__header">
             <UserRound size={18} />
-            <h2>{"Informaci\u00f3n personal"}</h2>
+            <h2>{tInfoPersonal}</h2>
           </header>
 
-          <p className="perfil-card__current-value">{form.nombre || "Sin nombre"}</p>
+          <p className="perfil-card__current-value">{form.nombre || tSinNombre}</p>
 
           {nombreForm.step === "view" ? (
             <button
@@ -603,13 +650,13 @@ export function PerfilContent({ variant = "standalone" }) {
                 setNombreForm({ nombre: form.nombre, step: "edit" });
               }}
             >
-              Cambiar nombre
+              {tCambiarNombre}
               <ChevronRight size={16} />
             </button>
           ) : (
             <form onSubmit={handleGuardarNombre}>
               <label className="perfil-field">
-                <span>Nuevo nombre</span>
+                <span>{tNuevoNombre}</span>
                 <input
                   value={nombreForm.nombre}
                   onChange={(e) => {
@@ -621,19 +668,19 @@ export function PerfilContent({ variant = "standalone" }) {
                   required
                   autoFocus
                 />
-                {nombreError ? <p className="perfil-field-error">{nombreError}</p> : null}
+                {nombreError ? <p className="perfil-field-error"><ST>{nombreError}</ST></p> : null}
               </label>
 
               <div className="perfil-card__actions">
                 <button type="submit" className="perfil-button" disabled={guardando}>
-                  {guardando ? "Guardando..." : "Guardar nombre"}
+                  {guardando ? tGuardando : tGuardarNombre}
                 </button>
                 <button
                   type="button"
                   className="perfil-button perfil-button--ghost"
                   onClick={() => setNombreForm({ nombre: form.nombre, step: "view" })}
                 >
-                  Cancelar
+                  {tCancelar}
                 </button>
               </div>
             </form>
@@ -643,7 +690,7 @@ export function PerfilContent({ variant = "standalone" }) {
         <section className="perfil-card">
           <header className="perfil-card__header">
             <Mail size={18} />
-            <h2>{"Correo electr\u00f3nico"}</h2>
+            <h2>{tCorreoElectronico}</h2>
           </header>
 
           <p className="perfil-card__current-value">{form.correo}</p>
@@ -657,13 +704,13 @@ export function PerfilContent({ variant = "standalone" }) {
                 setEmailForm((prev) => ({ ...prev, step: "edit" }));
               }}
             >
-              Cambiar correo
+              {tCambiarCorreo}
               <ChevronRight size={16} />
             </button>
           ) : (
             <form onSubmit={emailForm.step === "edit" ? handleSolicitarCambioCorreo : handleConfirmarCambioCorreo}>
               <label className="perfil-field">
-                <span>Nuevo correo</span>
+                <span>{tNuevoCorreo}</span>
                 <input
                   type="email"
                   value={emailForm.nuevoCorreo}
@@ -676,7 +723,7 @@ export function PerfilContent({ variant = "standalone" }) {
                   disabled={emailForm.step === "verify"}
                   autoFocus={emailForm.step === "edit"}
                 />
-                {emailErrors.nuevoCorreo ? <p className="perfil-field-error">{emailErrors.nuevoCorreo}</p> : null}
+                {emailErrors.nuevoCorreo ? <p className="perfil-field-error"><ST>{emailErrors.nuevoCorreo}</ST></p> : null}
               </label>
 
               {emailForm.step === "edit" ? (
@@ -698,7 +745,7 @@ export function PerfilContent({ variant = "standalone" }) {
 
               {emailForm.step === "verify" ? (
                 <label className="perfil-field">
-                  <span>{"C\u00f3digo de verificaci\u00f3n"}</span>
+                  <span>{tCodigoVerif}</span>
                   <input
                     value={emailForm.token}
                     onChange={(e) => {
@@ -706,23 +753,23 @@ export function PerfilContent({ variant = "standalone" }) {
                       setEmailForm((prev) => ({ ...prev, token: e.target.value }));
                     }}
                     className={emailErrors.token ? "input-error" : ""}
-                    placeholder={"6 d\u00edgitos"}
+                    placeholder={tSeisDigitos}
                     required
                     autoFocus
                   />
-                  {emailErrors.token ? <p className="perfil-field-error">{emailErrors.token}</p> : null}
+                  {emailErrors.token ? <p className="perfil-field-error"><ST>{emailErrors.token}</ST></p> : null}
                 </label>
               ) : null}
 
-              {emailErrors.formulario ? <p className="perfil-field-error">{emailErrors.formulario}</p> : null}
+              {emailErrors.formulario ? <p className="perfil-field-error"><ST>{emailErrors.formulario}</ST></p> : null}
 
               <div className="perfil-card__actions">
                 <button type="submit" className="perfil-button" disabled={guardando}>
                   {guardando
-                    ? "Procesando..."
+                    ? tProcesando
                     : emailForm.step === "edit"
-                      ? "Enviar c\u00f3digo"
-                      : "Confirmar correo"}
+                      ? tEnviarCodigo
+                      : tConfirmarCorreo}
                 </button>
                 <button
                   type="button"
@@ -733,7 +780,7 @@ export function PerfilContent({ variant = "standalone" }) {
                     setShowPasswords((prev) => ({ ...prev, email: false }));
                   }}
                 >
-                  Cancelar
+                  {tCancelar}
                 </button>
               </div>
             </form>
@@ -743,13 +790,13 @@ export function PerfilContent({ variant = "standalone" }) {
         <section className="perfil-card perfil-card--wide">
           <header className="perfil-card__header">
             <KeyRound size={18} />
-            <h2>Seguridad</h2>
+            <h2>{tSeguridad}</h2>
           </header>
 
           <p className="perfil-card__current-value perfil-card__current-value--masked">••••••••</p>
 
           {passwordForm.step === "view" ? (
-            <button type="button" className="perfil-link-action" onClick={openPasswordEdit}>{"Cambiar contrase\u00f1a"}<ChevronRight size={16} />
+            <button type="button" className="perfil-link-action" onClick={openPasswordEdit}>{tCambiarPass}<ChevronRight size={16} />
             </button>
           ) : (
             <form className="perfil-password-form" onSubmit={handleCambiarPassword}>
@@ -794,10 +841,10 @@ export function PerfilContent({ variant = "standalone" }) {
 
               <div className="perfil-card__actions perfil-card__actions--wide">
                 <button type="submit" className="perfil-button" disabled={guardando}>
-                  {guardando ? "Actualizando..." : "Actualizar contraseña"}
+                  {guardando ? tActualizando : tActualizarPass}
                 </button>
                 <button type="button" className="perfil-button perfil-button--ghost" onClick={closePasswordEdit}>
-                  Cancelar
+                  {tCancelar}
                 </button>
               </div>
             </form>
@@ -805,12 +852,12 @@ export function PerfilContent({ variant = "standalone" }) {
         </section>
       </div>
 
-      {mensaje ? <p className="perfil-feedback perfil-feedback--ok">{mensaje}</p> : null}
-      {error && perfil ? <p className="perfil-feedback perfil-feedback--error">{error}</p> : null}
+      {mensaje ? <p className="perfil-feedback perfil-feedback--ok">{tMensaje}</p> : null}
+      {error && perfil ? <p className="perfil-feedback perfil-feedback--error"><ST>{error}</ST></p> : null}
 
       {variant === "standalone" ? (
         <p className="perfil-back-admin">
-          <Link to="/">Volver al inicio</Link>
+          <Link to="/">{tVolverInicio}</Link>
         </p>
       ) : null}
 

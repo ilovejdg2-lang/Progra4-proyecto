@@ -4,9 +4,12 @@ import { ArrowLeft, Coffee, CreditCard, ShoppingBasket } from 'lucide-react';
 import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { Switch } from '../../Components/ui/Switch';
 import { usePublicPageLoadingGate } from '../../hooks/usePublicPageLoadingGate';
+import { useTraducir, useTraducirLista } from '../../hooks/useTraducir';
+import { ST } from '../../Components/T/ST';
+import { t } from '../../lib/t';
 import { getLoadingMessageForCacheKey } from '../../lib/pageLoadingMessages';
 import './Checkout.css';
-import { ajustarStockProductos, calcularPrecioConIVA } from '../../services/productosService';
+import { calcularPrecioConIVA } from '../../services/productosService';
 import { registrarCompra } from '../../services/comprasService';
 import { getActiveSessionUser } from '../../services/sessionService';
 import { clearCart, getStoredCart } from '../../lib/cartStorage';
@@ -32,8 +35,39 @@ const Checkout = () => {
   const [paymentError, setPaymentError] = useState(null);
   const [pedidoRevisado, setPedidoRevisado] = useState(true);
 
+  const tGracias = useTraducir('Gracias por tu compra');
+  const tPedidoPendiente = useTraducir(
+    'Tu pedido quedó pendiente de revisión. Te avisamos cuando se apruebe y envíe.',
+  );
+  const tRedirigido = useTraducir('Serás redirigido a inicio automáticamente en unos segundos.');
+  const tVolverInicio = useTraducir('Volver al inicio');
+  const tSeguir = useTraducir('Seguir comprando');
+  const tResumen = useTraducir('Resumen de tu pedido');
+  const tVolverCatalogo = useTraducir('Volver al catálogo');
+  const tVacio = useTraducir('No hay productos en el carrito.');
+  const tPago = useTraducir('Pago');
+  const tTotalPedido = useTraducir('Total del pedido');
+  const tSubtotal = useTraducir('Subtotal (sin IVA)');
+  const tIva = useTraducir('IVA (13%)');
+  const tTotal = useTraducir('Total');
+  const tYaRevise = useTraducir('Ya revisé mi pedido');
+  const tActivaSwitch = useTraducir('Activá el switch para confirmar el pedido.');
+  const tProcesando = useTraducir('Procesando...');
+  const tFinalizar = useTraducir('Finalizar pedido');
+  const tCantidadNoDisp = useTraducir('Cantidad no disponible');
+
   const showLoading = usePublicPageLoadingGate('checkout', true);
   const loadingMessage = getLoadingMessageForCacheKey('checkout');
+
+  const cartItemsConNombre = useMemo(
+    () =>
+      cartItems.map((item) => ({
+        ...item,
+        nombre: item.nombre || item.name || 'Producto',
+      })),
+    [cartItems],
+  );
+  const cartItemsUi = useTraducirLista(cartItemsConNombre, ['nombre']);
 
   useEffect(() => {
     return () => {
@@ -101,9 +135,9 @@ const Checkout = () => {
       setPaymentError(null);
 
       handleValidateCartItems(cartItems);
-      await ajustarStockProductos(cartItems);
 
       const usuario = getCurrentUser();
+      // Precios y stock los calcula/aplica el backend en la misma transacción.
       const payload = {
         clienteNombre: usuario?.name || usuario?.username || usuario?.email || "Cliente",
         clienteCorreo: usuario?.email || usuario?.correo || "",
@@ -111,13 +145,7 @@ const Checkout = () => {
           id: item.id,
           nombre: item.nombre || item.name || "Producto",
           cantidad: getQuantity(item),
-          precioUnitario: getUnitPriceWithIva(item),
-          subtotal: getUnitPriceWithIva(item) * getQuantity(item),
         })),
-        subtotal: subtotalSinIva,
-        impuestos: ivaTotal,
-        total: totalConIva,
-        estado: "Pagado",
         metodoPago: "Tarjeta",
       };
 
@@ -127,17 +155,17 @@ const Checkout = () => {
         registrarVenta({
           cliente: payload.clienteNombre,
           correo: payload.clienteCorreo,
-          items: payload.items.map((item) => ({
+          items: cartItems.map((item) => ({
             id: item.id,
-            nombre: item.nombre,
-            units: item.cantidad,
-            precioUnitario: item.precioUnitario,
-            total: item.subtotal,
+            nombre: item.nombre || item.name || "Producto",
+            units: getQuantity(item),
+            precioUnitario: getUnitPriceWithIva(item),
+            total: getUnitPriceWithIva(item) * getQuantity(item),
           })),
-          subtotal: payload.subtotal,
-          iva: payload.impuestos,
-          total: payload.total,
-          estadoPago: payload.estado,
+          subtotal: subtotalSinIva,
+          iva: ivaTotal,
+          total: totalConIva,
+          estadoPago: "Pendiente",
           metodo: payload.metodoPago,
         });
       }
@@ -152,7 +180,7 @@ const Checkout = () => {
     } catch (error) {
       const message = error?.message || 'No se pudo completar la compra por falta de stock.';
       setPaymentError(message);
-      window.alert(message);
+      window.alert(t(message));
     } finally {
       setProcessingPayment(false);
     }
@@ -167,16 +195,16 @@ const Checkout = () => {
             <Coffee size={88} strokeWidth={1.9} aria-hidden="true" className="checkout-success-card__icon" />
           </div>
           <div className="checkout-success-card__body">
-            <h2>Gracias por tu compra</h2>
-            <p>Tu pedido fue procesado correctamente.</p>
-            <span className="checkout-success-card__hint">Serás redirigido a inicio automáticamente en unos segundos.</span>
+            <h2>{tGracias}</h2>
+            <p>{tPedidoPendiente}</p>
+            <span className="checkout-success-card__hint">{tRedirigido}</span>
           </div>
           <div className="checkout-success-card__actions">
             <button type="button" className="checkout-success-card__primary" onClick={() => navigate({ to: '/' })}>
-              Volver al inicio
+              {tVolverInicio}
             </button>
             <button type="button" className="checkout-success-card__secondary" onClick={handleContinueShopping}>
-              Seguir comprando
+              {tSeguir}
             </button>
           </div>
           <p className="checkout-success-card__brand">Café UNA</p>
@@ -187,28 +215,28 @@ const Checkout = () => {
       <div className="checkout-shell">
       <section className="checkout-shell__order">
         <header className="checkout-page__header">
-          <button type="button" className="checkout-page__back" onClick={() => navigate({ to: '/productos' })} aria-label="Volver al catálogo">
+          <button type="button" className="checkout-page__back" onClick={() => navigate({ to: '/productos' })} aria-label={tVolverCatalogo}>
             <ArrowLeft size={22} strokeWidth={2.4} aria-hidden="true" />
           </button>
-          <h1>Resumen de tu pedido</h1>
+          <h1>{tResumen}</h1>
         </header>
-        {paymentError && cartItems.length === 0 ? <p className="checkout-page__error">{paymentError}</p> : null}
+        {paymentError && cartItems.length === 0 ? <p className="checkout-page__error"><ST>{paymentError}</ST></p> : null}
         {cartItems.length === 0 ? (
-          <p className="checkout-page__empty">No hay productos en el carrito.</p>
+          <p className="checkout-page__empty">{tVacio}</p>
         ) : (
             <div className="checkout-page__items">
-              {cartItems.map((item) => (
+              {cartItemsUi.map((item) => (
                 <div className="checkout-item" key={item.id}>
                   <div className="checkout-item__media">
                     {item.imagen ? (
-                      <img className="checkout-item__image" src={item.imagen} alt={item.nombre || item.name || 'Producto'} />
+                      <img className="checkout-item__image" src={item.imagen} alt={item.nombre || 'Producto'} />
                     ) : (
                       <div className="checkout-item__image checkout-item__image--placeholder" aria-hidden="true" />
                     )}
                   </div>
                   <div className="checkout-item__left">
-                    <div className="checkout-item__name">{item.nombre || item.name || 'Producto'}</div>
-                    <div className="checkout-item__meta">{item.peso || item.quantity || 'Cantidad no disponible'} × {getQuantity(item)}</div>
+                    <div className="checkout-item__name">{item.nombre}</div>
+                    <div className="checkout-item__meta">{item.peso || item.quantity || tCantidadNoDisp} × {getQuantity(item)}</div>
                   </div>
                   <div className="checkout-item__price">{formatCRC(getUnitPriceWithIva(item) * getQuantity(item))}</div>
                 </div>
@@ -219,20 +247,20 @@ const Checkout = () => {
 
       {cartItems.length > 0 ? (
       <aside className="checkout-shell__pay">
-        <p className="checkout-pay__title">Pago</p>
-        <h2 className="checkout-pay__heading">Total del pedido</h2>
-            {paymentError ? <p className="checkout-page__error">{paymentError}</p> : null}
+        <p className="checkout-pay__title">{tPago}</p>
+        <h2 className="checkout-pay__heading">{tTotalPedido}</h2>
+            {paymentError ? <p className="checkout-page__error"><ST>{paymentError}</ST></p> : null}
             <div className="checkout-page__totals">
               <div className="checkout-page__subtotal-row">
-                <span>Subtotal (sin IVA)</span>
+                <span>{tSubtotal}</span>
                 <strong>{formatCRC(subtotalSinIva)}</strong>
               </div>
               <div className="checkout-page__subtotal-row">
-                <span>IVA (13%)</span>
+                <span>{tIva}</span>
                 <strong>{formatCRC(ivaTotal)}</strong>
               </div>
               <div className="checkout-page__total-row">
-                <span>Total</span>
+                <span>{tTotal}</span>
                 <strong>{formatCRC(totalConIva)}</strong>
               </div>
             </div>
@@ -244,20 +272,20 @@ const Checkout = () => {
                 setPedidoRevisado(value);
                 if (value) setPaymentError(null);
               }}
-              label="Ya revisé mi pedido"
+              label={tYaRevise}
             />
             {!pedidoRevisado ? (
-              <p className="checkout-page__hint">Activá el switch para confirmar el pedido.</p>
+              <p className="checkout-page__hint">{tActivaSwitch}</p>
             ) : null}
 
             <div className="checkout-page__actions">
               <button className="checkout-page__pay" type="button" onClick={handlePay} disabled={processingPayment}>
                 <CreditCard size={18} strokeWidth={2.3} aria-hidden="true" className="checkout-page__button-icon" />
-                {processingPayment ? 'Procesando...' : 'Finalizar pedido'}
+                {processingPayment ? tProcesando : tFinalizar}
               </button>
               <button className="checkout-page__continue" type="button" onClick={handleContinueShopping}>
                 <ShoppingBasket size={18} strokeWidth={2.3} aria-hidden="true" className="checkout-page__button-icon" />
-                <span>Seguir comprando</span>
+                <span>{tSeguir}</span>
               </button>
             </div>
       </aside>

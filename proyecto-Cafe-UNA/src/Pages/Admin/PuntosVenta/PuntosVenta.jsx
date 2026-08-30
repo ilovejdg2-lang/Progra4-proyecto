@@ -17,6 +17,7 @@ import {
 } from "../../../services/productosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
+import { ST } from "../../../Components/T/ST";
 import { PointOfSaleCards } from "./components/PointOfSaleCards";
 import { PointOfSaleLocationEditor } from "./components/PointOfSaleLocationEditor";
 import { PointOfSaleStockEditor } from "./components/PointOfSaleStockEditor";
@@ -131,25 +132,25 @@ const AdminPuntosVenta = () => {
 
   const content = !puedeVer ? (
     <section className="rounded-2xl border border-slate-200 bg-white px-5 py-14 text-center shadow-sm">
-      <h1 className="text-xl font-semibold text-slate-950">Acceso restringido</h1>
-      <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">No tienes permiso para consultar el inventario de puntos de venta.</p>
+      <h1 className="text-xl font-semibold text-slate-950"><ST>Acceso restringido</ST></h1>
+      <p className="mx-auto mt-2 max-w-md text-sm text-slate-500"><ST>No tienes permiso para consultar el inventario de puntos de venta.</ST></p>
     </section>
   ) : locationsState.loading || catalogState.loading ? (
     <section className="flex min-h-[360px] flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white shadow-sm">
       <span className="admin-route-loading__spinner" aria-hidden="true" />
-      <p className="text-sm font-semibold text-slate-600">Cargando puntos de venta...</p>
+      <p className="text-sm font-semibold text-slate-600"><ST>Cargando puntos de venta...</ST></p>
     </section>
   ) : locationsState.error ? (
     <section className="flex min-h-[360px] flex-col items-center justify-center gap-3 rounded-2xl border border-amber-200 bg-white px-5 text-center">
       <p className="text-sm font-semibold text-red-700">{locationsState.error.message}</p>
       <button type="button" onClick={locationsState.retry} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-amber-800 bg-amber-800 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
         <RefreshCw className="size-4" aria-hidden="true" />
-        Reintentar
+        <ST>Reintentar</ST>
       </button>
     </section>
   ) : locationsState.data.length === 0 && !puedeEditar ? (
     <section className="rounded-2xl border border-slate-200 bg-white px-5 py-14 text-center shadow-sm">
-      <p className="text-sm text-slate-500">No hay puntos de venta configurados.</p>
+      <p className="text-sm text-slate-500"><ST>No hay puntos de venta configurados.</ST></p>
     </section>
   ) : (
     <section className="space-y-5">
@@ -164,13 +165,13 @@ const AdminPuntosVenta = () => {
             className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           >
             <Plus className="size-4" aria-hidden="true" />
-            Agregar punto de venta
+            <ST>Agregar punto de venta</ST>
           </button>
         </div>
       ) : null}
       {locationsState.data.length === 0 ? (
         <section className="rounded-2xl border border-slate-200 bg-white px-5 py-14 text-center shadow-sm">
-          <p className="text-sm text-slate-500">Todavía no hay puntos de venta. Agregá el primero para operar stock por ubicación.</p>
+          <p className="text-sm text-slate-500"><ST>Todavía no hay puntos de venta. Agregá el primero para operar stock por ubicación.</ST></p>
         </section>
       ) : (
         <PointOfSaleCards
@@ -195,29 +196,29 @@ const AdminPuntosVenta = () => {
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Inventario por ubicación</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500"><ST>Inventario por ubicación</ST></p>
               <h2 className="mt-1 text-lg font-semibold text-slate-950">{selectedLocation.name}</h2>
               <p className="mt-1 text-sm text-slate-500">
                 {selectedIsActive
-                  ? "Stock independiente de Bodega Central."
-                  : "Este punto está inhabilitado. Activalo para consultar o ajustar stock."}
+                  ? <ST>Stock independiente de Bodega Central.</ST>
+                  : <ST>Este punto está inhabilitado. Activalo para consultar o ajustar stock.</ST>}
               </p>
             </div>
             {selectedIsActive && stockState.error ? (
               <button type="button" onClick={stockState.retry} className="inline-flex min-h-10 items-center gap-2 self-start rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
                 <RefreshCw className="size-4" aria-hidden="true" />
-                Reintentar stock
+                <ST>Reintentar stock</ST>
               </button>
             ) : null}
           </div>
           {!selectedIsActive ? (
             <div className="px-5 py-10 text-center">
-              <p className="text-sm text-slate-500">No se opera inventario en puntos inactivos.</p>
+              <p className="text-sm text-slate-500"><ST>No se opera inventario en puntos inactivos.</ST></p>
             </div>
           ) : catalogState.error ? (
             <div className="px-5 py-8 text-center">
               <p className="text-sm font-semibold text-red-600">{catalogState.error.message}</p>
-              <button type="button" onClick={catalogState.retry} className="mt-3 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Reintentar catálogo</button>
+              <button type="button" onClick={catalogState.retry} className="mt-3 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"><ST>Reintentar catálogo</ST></button>
             </div>
           ) : stockState.error ? (
             <div className="px-5 py-8 text-center">
@@ -277,10 +278,10 @@ const AdminPuntosVenta = () => {
       <AdminLayout>
         <div className="mx-auto max-w-7xl space-y-6">
           <header>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-amber-800">Inventario</p>
-            <h1 className="mt-1 text-2xl font-semibold text-slate-950 sm:text-3xl">Puntos de venta</h1>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-amber-800"><ST>Inventario</ST></p>
+            <h1 className="mt-1 text-2xl font-semibold text-slate-950 sm:text-3xl"><ST>Puntos de venta</ST></h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-500">
-              Administrá ubicaciones y actualizá el stock de cada punto sin mezclarlo con Bodega Central.
+              <ST>Administrá ubicaciones y actualizá el stock de cada punto sin mezclarlo con Bodega Central.</ST>
             </p>
           </header>
           {successMessage ? (

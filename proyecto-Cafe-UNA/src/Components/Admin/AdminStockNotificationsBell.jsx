@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { Bell, HandHeart, Package } from "lucide-react";
 
@@ -7,7 +8,13 @@ import { obtenerSolicitudes } from "../../services/voluntariadoService";
 import { getActiveSessionUser } from "../../services/sessionService";
 import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
 import { requestAdminStockProduct } from "../../lib/adminStockAlert";
+import { useTraducir } from "../../hooks/useTraducir";
+import { ST } from "../T/ST";
 import "../Navbar/Navbar.css";
+
+function NombreNotif({ texto }) {
+  return useTraducir(texto || "");
+}
 
 function puedeVerAlertasStock(user) {
   const roles = rolesDeUsuario(user);
@@ -38,12 +45,25 @@ export function AdminStockNotificationsBell() {
   const puedeVoluntariado = puedeVerVoluntariado(user);
   const enabled = puedeStock || puedeVoluntariado;
 
+  const labelNotificaciones = useTraducir("Notificaciones");
+  const labelStockBajo = useTraducir("STOCK BAJO");
+  const labelReponer = useTraducir("Reponer stock");
+  const labelAgotado = useTraducir("Agotado");
+  const labelBajoMinimo = useTraducir("Bajo mínimo");
+  const labelCargando = useTraducir("Cargando notificaciones...");
+  const labelVacias = useTraducir("No hay notificaciones pendientes.");
+  const labelVol = useTraducir("Voluntariado");
+  const labelAbrirAdmin = useTraducir("Abrir en administración");
+
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [alertas, setAlertas] = useState([]);
   const [solicitudes, setSolicitudes] = useState([]);
+  const [panelStyle, setPanelStyle] = useState(null);
   const rootRef = useRef(null);
+  const buttonRef = useRef(null);
+  const panelRef = useRef(null);
 
   const loadNotificaciones = useCallback(async () => {
     if (!enabled) {
@@ -83,13 +103,52 @@ export function AdminStockNotificationsBell() {
     };
   }, [enabled, loadNotificaciones]);
 
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) {
+      setPanelStyle(null);
+      return undefined;
+    }
+
+    const sync = () => {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const viewportPad = 12;
+      const gap = 8;
+      const width = Math.min(380, window.innerWidth - viewportPad * 2);
+      let left = rect.right - width;
+      if (left < viewportPad) left = viewportPad;
+      if (left + width > window.innerWidth - viewportPad) {
+        left = Math.max(viewportPad, window.innerWidth - width - viewportPad);
+      }
+      const top = rect.bottom + gap;
+      const maxHeight = Math.max(160, window.innerHeight - top - viewportPad);
+
+      setPanelStyle({
+        position: "fixed",
+        top: `${top}px`,
+        left: `${left}px`,
+        width: `${width}px`,
+        maxHeight: `${maxHeight}px`,
+        right: "auto",
+        zIndex: 100040,
+      });
+    };
+
+    sync();
+    window.addEventListener("resize", sync);
+    window.addEventListener("scroll", sync, true);
+    return () => {
+      window.removeEventListener("resize", sync);
+      window.removeEventListener("scroll", sync, true);
+    };
+  }, [open]);
+
   useEffect(() => {
     if (!open) return undefined;
 
     const onPointerDown = (event) => {
-      if (rootRef.current && !rootRef.current.contains(event.target)) {
-        setOpen(false);
-      }
+      const target = event.target;
+      if (rootRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      setOpen(false);
     };
     const onEscape = (event) => {
       if (event.key === "Escape") setOpen(false);
@@ -123,13 +182,111 @@ export function AdminStockNotificationsBell() {
     navigate({ to: "/admin/voluntariado" });
   };
 
+  const panel =
+    open && panelStyle
+      ? createPortal(
+          <aside
+            ref={panelRef}
+            className="dropdown dropdown--notifications dropdown--notifications-portal"
+            style={panelStyle}
+            aria-label={labelNotificaciones}
+          >
+            <header className="notifications-header">
+              <h2>{labelNotificaciones}</h2>
+              <span>{count}</span>
+            </header>
+
+            {loading ? (
+              <p className="dropdown__empty">{labelCargando}</p>
+            ) : error ? (
+              <p className="dropdown__empty">
+                <ST>{error}</ST>
+              </p>
+            ) : count === 0 ? (
+              <p className="dropdown__empty">{labelVacias}</p>
+            ) : (
+              <div className="notifications-list">
+                {alertasCount > 0 ? (
+                  <section className="notifications-section" aria-label={labelStockBajo}>
+                    <p className="notifications-section-label">{labelStockBajo}</p>
+                    {alertas.map((item) => {
+                      const lugares =
+                        Array.isArray(item.ubicaciones) && item.ubicaciones.length > 0
+                          ? item.ubicaciones.map((ubi) => `${ubi.nombre}: ${ubi.stock}`).join(" · ")
+                          : `Stock ${item.stockActual} (mín. ${item.stockMinimo})`;
+
+                      return (
+                        <button
+                          key={`stock-${item.id}`}
+                          type="button"
+                          className={`notification-item ${item.agotado ? "notification-item--agotado" : "notification-item--bajo"}`}
+                          onClick={() => openProducto(item)}
+                          title={labelReponer}
+                        >
+                          <span className="notification-item__icon" aria-hidden="true">
+                            <Package size={16} />
+                          </span>
+                          <div className="notification-item__main">
+                            <strong>
+                              <NombreNotif texto={item.nombre} />
+                            </strong>
+                            <span>
+                              {item.agotado ? labelAgotado : labelBajoMinimo}
+                              {" · "}
+                              {lugares}
+                            </span>
+                            <small className="notification-item__stock">{labelReponer}</small>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </section>
+                ) : null}
+
+                {voluntariadoCount > 0 ? (
+                  <section className="notifications-section" aria-label={labelVol}>
+                    {alertasCount > 0 ? (
+                      <p className="notifications-section-label">{labelVol}</p>
+                    ) : null}
+                    {solicitudesPendientes.map((solicitud) => (
+                      <button
+                        key={`vol-${solicitud.id}`}
+                        type="button"
+                        className="notification-item notification-item--voluntariado"
+                        onClick={openVoluntariado}
+                        title={labelAbrirAdmin}
+                      >
+                        <span className="notification-item__icon" aria-hidden="true">
+                          <HandHeart size={16} />
+                        </span>
+                        <div className="notification-item__main">
+                          <strong>
+                            <NombreNotif
+                              texto={solicitud.tipoVoluntariado || solicitud.area || "Voluntariado"}
+                            />
+                          </strong>
+                          <small>{labelAbrirAdmin}</small>
+                        </div>
+                      </button>
+                    ))}
+                  </section>
+                ) : null}
+              </div>
+            )}
+          </aside>,
+          document.body,
+        )
+      : null;
+
   return (
     <div className="navbar__notifications relative ml-auto" ref={rootRef}>
       <button
+        ref={buttonRef}
         type="button"
         className="navbar__icon-button"
         aria-label="Ver notificaciones"
-        title="Notificaciones"
+        title={labelNotificaciones}
+        aria-expanded={open}
         onClick={() => {
           const next = !open;
           setOpen(next);
@@ -141,86 +298,7 @@ export function AdminStockNotificationsBell() {
       {count > 0 ? (
         <span className="notifications-badge">{count > 99 ? "99+" : count}</span>
       ) : null}
-
-      {open ? (
-        <aside className="dropdown dropdown--notifications" aria-label="Notificaciones">
-          <header className="notifications-header">
-            <h2>Notificaciones</h2>
-            <span>{count}</span>
-          </header>
-
-          {loading ? (
-            <p className="dropdown__empty">Cargando notificaciones...</p>
-          ) : error ? (
-            <p className="dropdown__empty">{error}</p>
-          ) : count === 0 ? (
-            <p className="dropdown__empty">No hay notificaciones pendientes.</p>
-          ) : (
-            <div className="notifications-list">
-              {alertasCount > 0 ? (
-                <section className="notifications-section" aria-label="Stock bajo">
-                  <p className="notifications-section-label">Stock bajo</p>
-                  {alertas.map((item) => {
-                    const lugares =
-                      Array.isArray(item.ubicaciones) && item.ubicaciones.length > 0
-                        ? item.ubicaciones.map((ubi) => `${ubi.nombre}: ${ubi.stock}`).join(" · ")
-                        : `Stock ${item.stockActual} (mín. ${item.stockMinimo})`;
-
-                    return (
-                      <button
-                        key={`stock-${item.id}`}
-                        type="button"
-                        className={`notification-item ${item.agotado ? "notification-item--agotado" : "notification-item--bajo"}`}
-                        onClick={() => openProducto(item)}
-                        title="Abrir inventario del producto"
-                      >
-                        <span className="notification-item__icon" aria-hidden="true">
-                          <Package size={16} />
-                        </span>
-                        <div className="notification-item__main">
-                          <strong>{item.nombre}</strong>
-                          <span>
-                            {item.agotado ? "Agotado" : "Bajo mínimo"}
-                            {" · "}
-                            {lugares}
-                          </span>
-                          <small className="notification-item__stock">Reponer stock</small>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </section>
-              ) : null}
-
-              {voluntariadoCount > 0 ? (
-                <section className="notifications-section" aria-label="Voluntariado">
-                  {alertasCount > 0 ? (
-                    <p className="notifications-section-label">Voluntariado</p>
-                  ) : null}
-                  {solicitudesPendientes.map((solicitud) => (
-                    <button
-                      key={`vol-${solicitud.id}`}
-                      type="button"
-                      className="notification-item notification-item--voluntariado"
-                      onClick={openVoluntariado}
-                      title={"Abrir administraci\u00f3n de voluntariado"}
-                    >
-                      <span className="notification-item__icon" aria-hidden="true">
-                        <HandHeart size={16} />
-                      </span>
-                      <div className="notification-item__main">
-                        <strong>{solicitud.tipoVoluntariado || solicitud.area || "Voluntariado"}</strong>
-                        <span>{solicitud.fechaSolicitud || "Fecha no disponible"}</span>
-                        <small>{"Abrir en administraci\u00f3n"}</small>
-                      </div>
-                    </button>
-                  ))}
-                </section>
-              ) : null}
-            </div>
-          )}
-        </aside>
-      ) : null}
+      {panel}
     </div>
   );
 }

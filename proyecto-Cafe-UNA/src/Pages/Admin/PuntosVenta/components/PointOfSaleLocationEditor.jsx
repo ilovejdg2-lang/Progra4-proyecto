@@ -7,6 +7,9 @@ import {
   AdminModalBody,
   AdminModalHeader,
 } from "../../../../Components/Admin/ui/AdminModal";
+import { ST } from "../../../../Components/T/ST";
+import { useTraducir } from "../../../../hooks/useTraducir";
+import { t } from "../../../../lib/t";
 
 export function PointOfSaleLocationEditor({
   open,
@@ -17,6 +20,9 @@ export function PointOfSaleLocationEditor({
   error = "",
 }) {
   const isEdit = Boolean(location?.code);
+  const tEditar = useTraducir("Editar punto de venta");
+  const tAgregar = useTraducir("Agregar punto de venta");
+  const tHint = useTraducir("Bodega Central no se modifica desde aquí.");
   const [nombre, setNombre] = useState(() => location?.name || "");
   const [codigo, setCodigo] = useState(() => location?.code || "");
   const [validationError, setValidationError] = useState("");
@@ -60,10 +66,10 @@ export function PointOfSaleLocationEditor({
           </span>
           <div className="min-w-0">
             <h2 id="pos-location-editor-title" className="truncate text-lg font-semibold text-slate-950">
-              {isEdit ? "Editar punto de venta" : "Agregar punto de venta"}
+              {isEdit ? tEditar : tAgregar}
             </h2>
             <p className="truncate text-sm text-slate-500">
-              {isEdit ? location.code : "Bodega Central no se modifica desde aquí."}
+              {isEdit ? location.code : tHint}
             </p>
           </div>
         </div>
@@ -71,7 +77,7 @@ export function PointOfSaleLocationEditor({
           type="button"
           onClick={onClose}
           className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-          aria-label="Cerrar editor de punto de venta"
+          aria-label={t("Cerrar editor de punto de venta")}
         >
           <X className="size-5" aria-hidden="true" />
         </button>
@@ -79,7 +85,7 @@ export function PointOfSaleLocationEditor({
       <AdminModalBody>
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
           <label className="grid gap-2 text-sm font-medium text-slate-700">
-            Nombre
+            <ST>Nombre</ST>
             <input
               name="nombre"
               type="text"
@@ -97,7 +103,7 @@ export function PointOfSaleLocationEditor({
           </label>
           {!isEdit ? (
             <label className="grid gap-2 text-sm font-medium text-slate-700">
-              Código (opcional)
+              <ST>Código (opcional)</ST>
               <input
                 name="codigo"
                 type="text"
@@ -113,7 +119,7 @@ export function PointOfSaleLocationEditor({
                 aria-invalid={Boolean(message)}
               />
               <span className="text-xs font-normal text-slate-500">
-                Si lo dejás vacío, se genera automáticamente a partir del nombre.
+                <ST>Si lo dejás vacío, se genera automáticamente a partir del nombre.</ST>
               </span>
             </label>
           ) : null}

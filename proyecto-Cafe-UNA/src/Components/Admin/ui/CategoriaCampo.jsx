@@ -3,6 +3,8 @@ import { Trash2 } from "lucide-react";
 import { crearCategoria, eliminarCategoria, obtenerCategorias } from "../../../services/categoriasService";
 import { categoriasUnicas, esCategoriaRaiz, nombreCategoria } from "../../../lib/categorias";
 import { UiSelect } from "../../ui/Select";
+import { ST } from "../../T/ST";
+import { useTraducir } from "../../../hooks/useTraducir";
 
 const inputCls =
   "w-full rounded-[var(--ui-radius)] border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
@@ -19,6 +21,11 @@ export function CategoriaNueva({
   const [nueva, setNueva] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
+  const tEtiqueta = useTraducir(etiqueta);
+  const tPlaceholder = useTraducir(placeholder);
+  const tPhMenu = useTraducir(padre ? "Nueva subcategoría" : "Nueva categoría");
+  const tAgregar = useTraducir("Agregar");
+  const tAgregando = useTraducir("Agregando...");
 
   const agregar = async () => {
     const nombre = nombreCategoria(nueva);
@@ -46,7 +53,7 @@ export function CategoriaNueva({
     <div className={enMenu ? "grid gap-1.5" : compacto ? "grid gap-1.5" : "grid w-full max-w-xl gap-1.5"}>
       {enMenu ? null : (
         <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-          {etiqueta}
+          {tEtiqueta}
         </span>
       )}
       <div className={enMenu ? "grid gap-1.5" : "flex flex-col gap-2 sm:flex-row"}>
@@ -62,7 +69,7 @@ export function CategoriaNueva({
               agregar();
             }
           }}
-          placeholder={enMenu ? (padre ? "Nueva subcategoría" : "Nueva categoría") : placeholder}
+          placeholder={enMenu ? tPhMenu : tPlaceholder}
           className={inputCls}
         />
         <button
@@ -71,12 +78,12 @@ export function CategoriaNueva({
           disabled={!nombreCategoria(nueva) || guardando}
           className="categoria-nueva__agregar inline-flex min-h-10 items-center justify-center border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {guardando ? "Agregando..." : "Agregar"}
+          {guardando ? tAgregando : tAgregar}
         </button>
       </div>
       {error ? (
         <p className="text-xs font-semibold text-red-700" role="alert">
-          {error}
+          <ST>{error}</ST>
         </p>
       ) : null}
     </div>
@@ -181,7 +188,7 @@ export function CategoriaCampo({
   return (
     <div className="grid gap-2">
       <div className="grid gap-2 text-sm font-medium text-slate-700">
-        {label}
+        <ST>{label}</ST>
         <UiSelect
           ariaLabel={label}
           value={value}

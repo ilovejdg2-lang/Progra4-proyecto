@@ -1,14 +1,22 @@
 import { Switch } from "../../../../Components/ui/Switch";
 
-export function ProductCatalogFeaturedToggle({ producto, disabled, onToggle, variant = "table" }) {
+export function ProductCatalogFeaturedToggle({
+  producto,
+  disabled,
+  onToggle,
+  variant = "table",
+  compact = false,
+}) {
   const esMovil = variant === "mobile";
-  const etiqueta = esMovil
-    ? producto.esDestacado
-      ? "Destacado en inicio"
-      : "Marcar como destacado"
-    : producto.esDestacado
-      ? "Sí"
-      : "No";
+  const etiqueta = compact
+    ? undefined
+    : esMovil
+      ? producto.esDestacado
+        ? "Destacado en inicio"
+        : "Marcar como destacado"
+      : producto.esDestacado
+        ? "Sí"
+        : "No";
 
   return (
     <Switch
@@ -17,6 +25,7 @@ export function ProductCatalogFeaturedToggle({ producto, disabled, onToggle, var
       disabled={disabled}
       onCheckedChange={() => onToggle()}
       label={etiqueta}
+      ariaLabel={producto.esDestacado ? "Quitar de destacados" : "Marcar como destacado"}
     />
   );
 }

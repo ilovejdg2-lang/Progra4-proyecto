@@ -2,6 +2,7 @@ import { ProductCatalogFeaturedToggle } from "./ProductCatalogFeaturedToggle";
 import { destacadoDeshabilitado, etiquetaEstadoProducto, formatearPrecio } from "./catalogFormatters";
 import { etiquetaCategoriaProducto } from "../../../../lib/categorias";
 import { imagenPrincipalProducto } from "../../../../lib/productoImagenes";
+import { ST } from "../../../../Components/T/ST";
 
 export function ProductCatalogMobileList({
   productos,
@@ -29,33 +30,32 @@ export function ProductCatalogMobileList({
                 />
               ) : (
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-xs text-slate-500">
-                  Sin foto
+                  <ST>Sin foto</ST>
                 </div>
               )}
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-semibold text-slate-900">{producto.nombre}</h3>
+                  <h3 className="font-semibold text-slate-900"><ST>{producto.nombre}</ST></h3>
                   <span className={`shrink-0 text-xs font-semibold ${estadoProducto.clase}`}>
-                    {estadoProducto.texto}
+                    <ST>{estadoProducto.texto}</ST>
                   </span>
                 </div>
-                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{producto.descripcion}</p>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-3 text-sm text-slate-600">
-              <span><strong className="text-slate-800">Precio:</strong> {formatearPrecio(producto.precioNormal)}</span>
+              <span><strong className="text-slate-800"><ST>Precio</ST>:</strong> {formatearPrecio(producto.precioNormal)}</span>
               <span>
-                <strong className="text-slate-800">Stock central:</strong>{" "}
+                <strong className="text-slate-800"><ST>Stock central</ST>:</strong>{" "}
                 {producto.centralStock?.confidence === "known"
                   ? producto.centralStock.stock
                   : stockLoading
-                    ? "Cargando..."
-                    : "No disponible"}
+                    ? <ST>Cargando...</ST>
+                    : <ST>No disponible</ST>}
               </span>
-              {producto.peso ? <span><strong className="text-slate-800">Peso:</strong> {producto.peso}</span> : null}
+              {producto.peso ? <span><strong className="text-slate-800"><ST>Peso</ST>:</strong> {producto.peso}</span> : null}
               {etiquetaCategoriaProducto(producto) ? (
-                <span><strong className="text-slate-800">Categoría:</strong> {etiquetaCategoriaProducto(producto)}</span>
+                <span><strong className="text-slate-800"><ST>Categoría</ST>:</strong> <ST>{etiquetaCategoriaProducto(producto)}</ST></span>
               ) : null}
             </div>
 

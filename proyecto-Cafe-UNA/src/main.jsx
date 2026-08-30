@@ -6,6 +6,27 @@ import { RouterProvider } from '@tanstack/react-router'
 import { router } from './router'
 import { refreshSessionIfNeeded } from './services/apiClient'
 import { getActiveSessionUser, isLoggingOut, touchSession } from './services/sessionService'
+import { installNativeInvalidFocus } from './lib/formFocus'
+import { obtenerNavbar } from './services/informacionService'
+import { obtenerIdiomaPredeterminado } from './services/ajustesService'
+import { guardarIdioma, obtenerIdioma } from './lib/idioma'
+
+// Calienta el logo del navbar para loaders (caché localStorage).
+void obtenerNavbar().catch(() => {})
+
+// Si no hay idioma guardado en el navegador, usa el predeterminado de Supabase.
+void (async () => {
+  try {
+    if (localStorage.getItem('cafe-una-idioma')) {
+      document.documentElement.lang = obtenerIdioma() === 'en' ? 'en' : 'es'
+      return
+    }
+    const def = await obtenerIdiomaPredeterminado()
+    guardarIdioma(def)
+  } catch {
+    document.documentElement.lang = 'es'
+  }
+})()
 
 const ACTIVITY_THROTTLE_MS = 60_000;
 const SESSION_ACTIVITY_EVENTS = ['click', 'keydown', 'scroll'];
@@ -16,6 +37,8 @@ function runSessionRefresh() {
 }
 
 function SessionSync() {
+  useEffect(() => installNativeInvalidFocus(), []);
+
   useEffect(() => {
     if (!getActiveSessionUser()) return undefined;
 

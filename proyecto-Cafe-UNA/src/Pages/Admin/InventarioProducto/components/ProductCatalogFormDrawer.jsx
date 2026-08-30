@@ -8,19 +8,28 @@ import {
   AdminModalBody,
   AdminModalHeader,
 } from "../../../../Components/Admin/ui/AdminModal";
+import { ST } from "../../../../Components/T/ST";
+import { useTraducir } from "../../../../hooks/useTraducir";
+import { t } from "../../../../lib/t";
 import {
+  etiquetaContadorPalabras,
   hasFieldErrors,
+  limitarPalabras,
+  MAX_PALABRAS_PRODUCTO_DESCRIPCION,
+  MAX_PALABRAS_PRODUCTO_NOMBRE,
   MAX_PRODUCTO_DESCRIPCION,
   MAX_PRODUCTO_NOMBRE,
   sanitizeUserFacingError,
   validateProductoForm,
 } from "../../../../lib/formLimits";
+import { queueFocusFormError } from "../../../../lib/formFocus";
 import {
   parsearImagenesProducto,
   serializarImagenesProducto,
 } from "../../../../lib/productoImagenes";
 import { TIPO_CATEGORIA_PRODUCTO } from "../../../../lib/categorias";
 import { CategoriaCampo } from "../../../../Components/Admin/ui/CategoriaCampo";
+import { NumericInput } from "../../../../Components/NumericInput/NumericInput";
 import { Switch } from "../../../../Components/ui/Switch";
 import { UiSelect } from "../../../../Components/ui/Select";
 import {
@@ -149,7 +158,7 @@ export function ProductCatalogFormDrawer({
       if (!productoPuedeDestacarse(draft)) {
         setSubmitError(
           productoEstaDeshabilitado(draft)
-            ? "No puedes destacar un producto deshabilitado."
+            ? "No puedes destacar un producto inactivo."
             : "No puedes destacar un producto sin stock.",
         );
         return;
@@ -157,14 +166,18 @@ export function ProductCatalogFormDrawer({
     }
 
     if (name === "estado" && value === "Deshabilitado" && form.esDestacado) {
-      setSubmitError("Quita el producto de destacados antes de deshabilitarlo.");
+      setSubmitError("Quita el producto de destacados antes de desactivarlo.");
       return;
     }
 
+    let nextValue = type === "checkbox" ? checked : value;
+    if (name === "nombre") nextValue = limitarPalabras(value, MAX_PALABRAS_PRODUCTO_NOMBRE);
+    if (name === "descripcion") nextValue = limitarPalabras(value, MAX_PALABRAS_PRODUCTO_DESCRIPCION);
+
     setForm((current) => ({
       ...current,
-      [name]: type === "checkbox" ? checked : value,
-      precioConIVA: name === "precioNormal" ? calcularPrecioConIVA(value) : current.precioConIVA,
+      [name]: nextValue,
+      precioConIVA: name === "precioNormal" ? calcularPrecioConIVA(nextValue) : current.precioConIVA,
     }));
 
     if (name === "nombre" || name === "descripcion") setFieldError(name, "");
@@ -172,9 +185,10 @@ export function ProductCatalogFormDrawer({
   };
 
   const focusFirstInvalidField = (errors) => {
-    const firstField = Object.keys(errors).find((field) => errors[field]);
-    if (!firstField) return;
-    window.requestAnimationFrame(() => document.querySelector(`[name="${firstField}"]`)?.focus());
+    queueFocusFormError({
+      errors,
+      root: document.querySelector('[role="dialog"]'),
+    });
   };
 
   const handleSubmit = async (event) => {
@@ -194,7 +208,7 @@ export function ProductCatalogFormDrawer({
     if (payload.esDestacado && !productoPuedeDestacarse(eligibilityInput)) {
       setSubmitError(
         productoEstaDeshabilitado(eligibilityInput)
-          ? "No puedes destacar un producto deshabilitado."
+          ? "No puedes destacar un producto inactivo."
           : "No puedes destacar un producto sin stock.",
       );
       return;
@@ -226,18 +240,23 @@ export function ProductCatalogFormDrawer({
     !form.esDestacado &&
     (!productoPuedeDestacarse({ estado: form.estado, stock: stockForEligibility }) ||
       featuredOthers >= MAX_PRODUCTOS_DESTACADOS);
+  const tTituloEditar = useTraducir("Editar producto");
+  const tTituloNuevo = useTraducir("Nuevo producto");
+  const tGuardando = useTraducir("Guardando...");
+  const tGuardarCambios = useTraducir("Guardar cambios");
+  const tCrearProducto = useTraducir("Crear producto");
 
   return (
     <AdminModal open onClose={onClose} maxWidth="max-w-xl" labelledBy="admin-product-catalog-form-title">
       <AdminModalHeader>
         <h2 id="admin-product-catalog-form-title" className="text-lg font-semibold text-slate-950">
-          {isEditing ? "Editar producto" : "Nuevo producto"}
+          {isEditing ? tTituloEditar : tTituloNuevo}
         </h2>
         <button
           type="button"
           onClick={onClose}
           className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-          aria-label="Cerrar"
+          aria-label={t("Cerrar")}
         >
           <X className="size-5" />
         </button>
@@ -246,7 +265,7 @@ export function ProductCatalogFormDrawer({
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-              Nombre
+              <ST>Nombre</ST>
               <input
                 name="nombre"
                 value={form.nombre}
@@ -258,6 +277,9 @@ export function ProductCatalogFormDrawer({
                 aria-describedby={fieldDescription("nombre")}
                 required
               />
+              <span className="text-xs font-normal text-slate-400">
+                {etiquetaContadorPalabras(form.nombre, MAX_PALABRAS_PRODUCTO_NOMBRE)}
+              </span>
               {fieldErrors.nombre ? (
                 <span id={errorId("nombre")} className={fieldErrorClassName} role="alert">
                   {fieldErrors.nombre}
@@ -266,7 +288,7 @@ export function ProductCatalogFormDrawer({
             </label>
 
             <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-              Descripción
+              <ST>Descripción</ST>
               <textarea
                 name="descripcion"
                 value={form.descripcion}
@@ -279,6 +301,9 @@ export function ProductCatalogFormDrawer({
                 aria-describedby={fieldDescription("descripcion")}
                 required
               />
+              <span className="text-xs font-normal text-slate-400">
+                {etiquetaContadorPalabras(form.descripcion, MAX_PALABRAS_PRODUCTO_DESCRIPCION)}
+              </span>
               {fieldErrors.descripcion ? (
                 <span id={errorId("descripcion")} className={fieldErrorClassName} role="alert">
                   {fieldErrors.descripcion}
@@ -287,46 +312,43 @@ export function ProductCatalogFormDrawer({
             </label>
 
             <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-              Foto principal (URL)
+              <ST>Foto principal (URL)</ST>
               <input name="imagen" value={form.imagen} onChange={handleChange} className={inputClassName} />
             </label>
             <label className="grid gap-2 text-sm font-medium text-slate-700">
-              Foto extra 2
+              <ST>Foto extra 2</ST>
               <input name="imagen2" value={form.imagen2} onChange={handleChange} className={inputClassName} />
             </label>
             <label className="grid gap-2 text-sm font-medium text-slate-700">
-              Foto extra 3
+              <ST>Foto extra 3</ST>
               <input name="imagen3" value={form.imagen3} onChange={handleChange} className={inputClassName} />
             </label>
             <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-              Foto extra 4
+              <ST>Foto extra 4</ST>
               <input name="imagen4" value={form.imagen4} onChange={handleChange} className={inputClassName} />
             </label>
             <label className="grid gap-2 text-sm font-medium text-slate-700">
-              Precio normal
-              <input type="number" name="precioNormal" value={form.precioNormal} onChange={handleChange} className={inputClassName} min="0" required />
+              <ST>Precio normal</ST>
+              <NumericInput decimal name="precioNormal" value={form.precioNormal} onChange={handleChange} className={inputClassName} required />
             </label>
             <label className="grid gap-2 text-sm font-medium text-slate-700">
-              Precio con IVA
-              <input type="number" name="precioConIVA" value={form.precioConIVA} className={inputClassName} min="0" readOnly aria-readonly="true" />
+              <ST>Precio con IVA</ST>
+              <NumericInput decimal name="precioConIVA" value={form.precioConIVA} className={inputClassName} readOnly aria-readonly="true" />
             </label>
             <label className="grid gap-2 text-sm font-medium text-slate-700">
-              Peso
+              <ST>Peso</ST>
               <input name="peso" value={form.peso} onChange={handleChange} className={inputClassName} placeholder="500g / 1kg" />
             </label>
             <label className="grid gap-2 text-sm font-medium text-slate-700">
-              Stock mínimo (alerta por punto de venta)
-              <input
-                type="number"
+              <ST>Stock mínimo (alerta por punto de venta)</ST>
+              <NumericInput
                 name="stockMinimo"
                 value={form.stockMinimo}
                 onChange={handleChange}
                 className={inputClassName}
-                min="0"
-                step="1"
               />
               <span className="text-[length:var(--text-body)] font-normal text-slate-500">
-                Se avisa si Bodega Central o cualquier punto de venta con stock (salvo Stand Ferias) queda en ese nivel o menos.
+                <ST>Se avisa si Bodega Central o cualquier punto de venta con stock (salvo Stand Ferias) queda en ese nivel o menos.</ST>
               </span>
             </label>
             <div className="grid gap-4 md:col-span-2 md:grid-cols-2">
@@ -358,14 +380,14 @@ export function ProductCatalogFormDrawer({
               />
             </div>
             <div className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-              Estado
+              <ST>Estado</ST>
               <UiSelect
-                ariaLabel="Estado"
+                ariaLabel={t("Estado")}
                 value={form.estado}
                 onChange={(valor) => handleChange({ target: { name: "estado", value: valor } })}
                 options={[
-                  { value: "Habilitado", label: "Habilitado" },
-                  { value: "Deshabilitado", label: "Deshabilitado" },
+                  { value: "Habilitado", label: t("Activo") },
+                  { value: "Deshabilitado", label: t("Inactivo") },
                 ]}
               />
             </div>
@@ -379,20 +401,32 @@ export function ProductCatalogFormDrawer({
                     target: { name: "esDestacado", type: "checkbox", checked },
                   });
                 }}
-                label="Mostrar como destacado en el inicio"
+                label={t("Mostrar como destacado en el inicio")}
               />
             </div>
             <p className="text-xs text-slate-500 md:col-span-2" aria-live="polite">
-              Máximo {MAX_PRODUCTOS_DESTACADOS} productos destacados en el inicio ({Math.min(featuredOthers + (form.esDestacado ? 1 : 0), MAX_PRODUCTOS_DESTACADOS)}/{MAX_PRODUCTOS_DESTACADOS}).
-              {productoEstaDeshabilitado(form) ? " Un producto deshabilitado no puede destacarse." : null}
-              {!productoEstaDeshabilitado(form) && productoSinStock({ stock: stockForEligibility }) ? " Un producto sin stock no puede destacarse." : null}
+              <ST>Máximo 3 productos destacados en el inicio</ST>
+              {" "}
+              ({Math.min(featuredOthers + (form.esDestacado ? 1 : 0), MAX_PRODUCTOS_DESTACADOS)}/{MAX_PRODUCTOS_DESTACADOS}).
+              {productoEstaDeshabilitado(form) ? (
+                <>
+                  {" "}
+                  <ST>Un producto inactivo no puede destacarse.</ST>
+                </>
+              ) : null}
+              {!productoEstaDeshabilitado(form) && productoSinStock({ stock: stockForEligibility }) ? (
+                <>
+                  {" "}
+                  <ST>Un producto sin stock no puede destacarse.</ST>
+                </>
+              ) : null}
             </p>
           </div>
           {submitError ? <p className={fieldErrorClassName} role="alert" aria-live="assertive">{submitError}</p> : null}
           <div className="flex flex-row flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
             <AdminModalActions
               onCancel={onClose}
-              primaryLabel={isSaving ? "Guardando..." : isEditing ? "Guardar cambios" : "Crear producto"}
+              primaryLabel={isSaving ? tGuardando : isEditing ? tGuardarCambios : tCrearProducto}
               primaryDisabled={isSaving}
             />
           </div>

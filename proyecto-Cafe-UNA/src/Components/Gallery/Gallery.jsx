@@ -4,6 +4,7 @@ import { categoriasUnicas, filtrarPorCategoria } from '../../lib/categorias';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { CategoryFilter } from '../CategoryFilter/CategoryFilter';
 import OptimizedImage from '../OptimizedImage/OptimizedImage';
+import { useTraducir } from '../../hooks/useTraducir';
 import './Gallery.css';
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -36,6 +37,18 @@ function getGalleryItemClassName(index, count) {
   return classes.join(' ');
 }
 
+function GalleryCaption({ title }) {
+  const titulo = useTraducir(title || "");
+  if (!title) return null;
+  return <figcaption className="gallery__caption">{titulo}</figcaption>;
+}
+
+function GalleryCaptionLightbox({ title }) {
+  const titulo = useTraducir(title || "");
+  if (!title) return null;
+  return <figcaption className="gallery-lightbox__caption">{titulo}</figcaption>;
+}
+
 const Gallery = ({
   items = [],
   pageSize = DEFAULT_PAGE_SIZE,
@@ -46,6 +59,9 @@ const Gallery = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [activeIndex, setActiveIndex] = useState(null);
   const [categoria, setCategoria] = useState('todas');
+  const tituloUi = useTraducir(title || '');
+  const ariaUi = useTraducir(ariaLabel || title || 'Galería de fotos');
+  const vacioUi = useTraducir('No hay fotos en esta categoría.');
 
   const categorias = useMemo(() => categoriasUnicas(items), [items]);
   const filtrados = useMemo(
@@ -116,17 +132,17 @@ const Gallery = ({
   if (items.length === 0) return null;
 
   return (
-    <section className="gallery" aria-label={ariaLabel}>
+    <section className="gallery" aria-label={ariaUi}>
       {title ? (
         <header className="gallery__header">
-          <h2 className="section-title gallery__title">{title}</h2>
+          <h2 className="section-title gallery__title">{tituloUi}</h2>
         </header>
       ) : null}
 
       <CategoryFilter categorias={categorias} valor={categoria} onChange={cambiarCategoria} />
 
       {filtrados.length === 0 ? (
-        <p className="gallery__empty">{"No hay fotos en esta categoría."}</p>
+        <p className="gallery__empty">{vacioUi}</p>
       ) : (
       <div className="gallery__bento" data-count={pageItems.length}>
         {pageItems.map((item, index) => {
@@ -156,7 +172,7 @@ const Gallery = ({
                 />
               </button>
               {item.title ? (
-                <figcaption className="gallery__caption">{item.title}</figcaption>
+                <GalleryCaption title={item.title} />
               ) : null}
             </figure>
           );
@@ -242,7 +258,7 @@ const Gallery = ({
                 className="gallery-lightbox__image"
               />
               {activeItem.title ? (
-                <figcaption className="gallery-lightbox__caption">{activeItem.title}</figcaption>
+                <GalleryCaptionLightbox title={activeItem.title} />
               ) : null}
             </figure>
 
