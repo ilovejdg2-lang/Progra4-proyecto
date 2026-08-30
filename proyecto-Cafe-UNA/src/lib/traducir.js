@@ -1,12 +1,13 @@
 /**
- * Traducción automática ES → EN sin columnas *En en Supabase.
- * 1) Diccionario de frases del sitio
- * 2) Caché en sessionStorage
- * 3) API MyMemory (gratis) para textos largos desconocidos
+ * Traducción automática ES ↔ EN (función dinámica vía API).
+ * - Muestra EN: Google Translate (gtx) → MyMemory → caché
+ * - Guarda BD: siempre español (asegurarEspanolParaBd)
+ * - Café UNA nunca se traduce
+ * El diccionario local solo acelera UI conocida o sirve de respaldo si la API falla.
  */
 
-const CACHE_KEY = "cafe-una-traducciones-es-en-v2";
-const CACHE_KEY_EN_ES = "cafe-una-traducciones-en-es-v2";
+const CACHE_KEY = "cafe-una-traducciones-es-en-v6";
+const CACHE_KEY_EN_ES = "cafe-una-traducciones-en-es-v6";
 const memoria = new Map();
 const memoriaEnEs = new Map();
 const inflight = new Map();
@@ -19,6 +20,10 @@ const DICCIONARIO = {
   "Café UNA": "Café UNA",
   "Cafe UNA": "Café UNA",
   "CAFÉ UNA": "Café UNA",
+  "FUNDA-UNA": "FUNDA-UNA",
+  "FUNDA UNA": "FUNDA-UNA",
+  "FundaUNA": "FUNDA-UNA",
+  "fundauna": "FUNDA-UNA",
   "Bolsa de café UNA": "Café UNA coffee bag",
   "Información del café para nuevos estudiantes": "Coffee information for new students",
   "Puesto de café UNA": "Café UNA booth",
@@ -27,6 +32,13 @@ const DICCIONARIO = {
   "Puesto de Café UNA en feria": "Café UNA booth at the fair",
   "Bienvenida a nuevos estudiantes": "Welcome to new students",
   "Venta de café": "Coffee sale",
+  // Hero / inicio (frases frecuentes de CMS; no depender de cuota MyMemory)
+  "El mejor café para el universitario.": "The best coffee for the university student.",
+  "El mejor café para el universitario": "The best coffee for the university student.",
+  "Ven a deleitarte con este café tan espectacular.": "Come enjoy this spectacular coffee.",
+  "Ven a deleitarte con este café tan espectacular": "Come enjoy this spectacular coffee.",
+  "Artesanal y orgánico": "Artisanal & organic",
+  "ARTESANAL Y ORGÁNICO": "ARTISANAL & ORGANIC",
   "Productos": "Products",
   "Voluntariado": "Volunteering",
   "Donaciones": "Donations",
@@ -264,6 +276,27 @@ const DICCIONARIO = {
   "Aceptado": "Accepted",
   "Activo": "Active",
   "Inactivo": "Inactive",
+  "activo": "active",
+  "inactivo": "inactive",
+  "Sin dato": "No data",
+  "Imagen adjunta": "Attached image",
+  "Enlace adjunto": "Attached link",
+  "Ninguno": "None",
+  "Qué sucedió": "What happened",
+  "Datos anteriores": "Previous data",
+  "Datos nuevos": "New data",
+  "Contraseña": "Password",
+  "Registro": "Record",
+  "Cambió": "Changed",
+  "Título": "Title",
+  "Imagen": "Image",
+  "Categoría": "Category",
+  "Acciones": "Actions",
+  "Eliminar": "Delete",
+  "Editar": "Edit",
+  "Bolsas": "Bags",
+  "Feria": "Fair",
+  "Inactivo": "Inactive",
   "Cliente": "Customer",
   "Estado": "Status",
   "Fecha": "Date",
@@ -424,6 +457,103 @@ const DICCIONARIO = {
   "Rol": "Role",
   "Roles": "Roles",
   "Solo SuperAdmin puede cambiar estado.": "Only SuperAdmin can change status.",
+  "Solo un SuperAdmin puede inactivar o activar usuarios.":
+    "Only a SuperAdmin can deactivate or activate users.",
+  "No puede inactivarse a sí mismo.": "You cannot deactivate yourself.",
+  "Error al cambiar el estado.": "Error changing status.",
+  "Error al actualizar la solicitud. Intentá de nuevo.":
+    "Error updating the request. Please try again.",
+  "Error al eliminar la solicitud. Intentá de nuevo.":
+    "Error deleting the request. Please try again.",
+  "Solo SuperAdmin puede eliminar solicitudes de voluntariado.":
+    "Only SuperAdmin can delete volunteering requests.",
+  "No tiene permiso para habilitar o inhabilitar productos.":
+    "You do not have permission to enable or disable products.",
+  "Quita el producto de destacados antes de deshabilitarlo.":
+    "Remove the product from featured before disabling it.",
+  "No se pudo cambiar el estado del producto.": "Could not change the product status.",
+  "Solo puedes destacar hasta 3 productos en el inicio.":
+    "You can feature up to 3 products on the home page.",
+  "No puedes destacar un producto deshabilitado.": "You cannot feature a disabled product.",
+  "No puedes destacar un producto sin stock.": "You cannot feature a product with no stock.",
+  "No se pudo cambiar el estado destacado.": "Could not change the featured status.",
+
+  // Validación / errores de formularios (UI)
+  "Indique su nacionalidad": "Indicate your nationality",
+  "El nombre es obligatorio": "Name is required",
+  "Mínimo 2 caracteres": "Minimum 2 characters",
+  "El primer apellido es obligatorio": "First surname is required",
+  "La identificación es obligatoria": "ID is required",
+  "La cédula costarricense debe tener 9 dígitos": "Costa Rican ID must have 9 digits",
+  "La cédula costarricense debe tener 9 dígitos.": "Costa Rican ID must have 9 digits.",
+  "Ingrese la institución educativa": "Enter the educational institution",
+  "Ingrese el país de procedencia": "Enter the country of origin",
+  "El correo es obligatorio": "Email is required",
+  "Correo electrónico inválido": "Invalid email address",
+  "El teléfono es obligatorio": "Phone number is required",
+  "Seleccione el tipo de voluntariado": "Select the type of volunteering",
+  "Especifique el tipo de voluntariado": "Specify the type of volunteering",
+  "Describa los días y horas disponibles": "Describe the available days and hours",
+  "Ingrese la cantidad (mínimo 2)": "Enter the quantity (minimum 2)",
+  "Máximo 100 participantes": "Maximum 100 participants",
+  "No se pudo completar la acción. Si el problema continúa, comuníquese con el administrador del sitio.":
+    "The action could not be completed. If the problem continues, please contact the site administrator.",
+  "No se pudo completar la acción en este momento. Si el problema continúa, comuníquese con el administrador del sitio.":
+    "The action could not be completed at this time. If the problem continues, please contact the site administrator.",
+  "Si el problema continúa, comuníquese con el administrador del sitio.":
+    "If the problem continues, please contact the site administrator.",
+  "Algo salió mal al mostrar esta sección. Podés recargar o volver al inicio.":
+    "Something went wrong while showing this section. You can reload or go back home.",
+  "No se pudo cargar la página": "Could not load the page",
+  "Recargar": "Reload",
+  "Ir al inicio": "Go home",
+  "Seleccione la fecha de inicio": "Select the start date",
+  "La fecha de inicio no puede ser anterior a hoy": "The start date cannot be earlier than today",
+  "Seleccione la fecha de finalización": "Select the end date",
+  "La fecha de finalización no puede ser anterior a la fecha de inicio":
+    "The end date cannot be earlier than the start date",
+  "No se encontraron datos para esta cédula. Complete los datos manualmente.":
+    "No data was found for this ID. Complete the fields manually.",
+  "Datos cargados automáticamente. Puede editarlos si es necesario.":
+    "Data loaded automatically. You can edit it if needed.",
+  "Ingrese su nombre o verifique la cédula.": "Enter your name or verify the ID.",
+  "Debe iniciar sesión antes de enviar una solicitud de voluntariado.":
+    "You must sign in before submitting a volunteering request.",
+  "Ocurrió un error al enviar la solicitud. Intente nuevamente.":
+    "An error occurred while submitting the request. Please try again.",
+  "No se pudo consultar la cédula.": "Could not look up the ID.",
+  "El código es obligatorio (máx. 50 caracteres).": "Code is required (max. 50 characters).",
+  "El nombre debe tener entre 2 y 200 caracteres.": "Name must be between 2 and 200 characters.",
+  "El nombre debe tener entre 2 y 100 caracteres.": "Name must be between 2 and 100 characters.",
+  "El valor en libro debe ser un número mayor o igual a 0.":
+    "Book value must be a number greater than or equal to 0.",
+  "No se pudieron cargar los activos.": "Could not load fixed assets.",
+  "No se pudo guardar el activo.": "Could not save the fixed asset.",
+  "Seleccioná el punto de venta.": "Select the point of sale.",
+  "Seleccioná el producto.": "Select the product.",
+  "Seleccioná un producto.": "Select a product.",
+  "Seleccioná el punto de venta destino.": "Select the destination point of sale.",
+  "La cantidad debe ser un entero positivo.": "Quantity must be a positive integer.",
+  "La fecha es obligatoria.": "Date is required.",
+  "No se pudo registrar la venta.": "Could not register the sale.",
+  "No se pudo cargar el formulario.": "Could not load the form.",
+  "No hay stock disponible en Bodega Central para ese producto.":
+    "No stock available in Central Warehouse for that product.",
+  "No se pudo completar la distribución.": "Could not complete the distribution.",
+  "Seleccioná un proveedor.": "Select a supplier.",
+  "Agregá al menos un producto con cantidad entera mayor a 0.":
+    "Add at least one product with a whole quantity greater than 0.",
+  "La proforma debe ser un PDF.": "The proforma must be a PDF.",
+  "El PDF no puede superar 5 MB.": "The PDF cannot exceed 5 MB.",
+  "El nombre del proveedor debe tener al menos 2 caracteres.":
+    "Supplier name must be at least 2 characters.",
+  "No se pudo crear el proveedor.": "Could not create the supplier.",
+  "El código debe iniciar con POS_ y usar solo letras, números o guion bajo.":
+    "Code must start with POS_ and use only letters, numbers, or underscore.",
+  "Ingrese un nombre de usuario.": "Enter a username.",
+  "El nombre no puede tener más de 20 caracteres.": "Name cannot be more than 20 characters.",
+  "La contraseña no puede tener más de 64 caracteres.": "Password cannot be more than 64 characters.",
+  "La contraseña debe tener al menos 6 caracteres.": "Password must be at least 6 characters.",
   "Nuevo producto": "New product",
   "+ Nuevo producto": "+ New product",
   "Administración de inventario": "Inventory administration",
@@ -608,6 +738,7 @@ const DICCIONARIO = {
   "Sin enlaces en la columna Explorar del pie de página.": "No links in the Explore column of the footer.",
   "Español": "Spanish",
   "Mini formularios": "Mini forms",
+  "Mini formularios del inicio": "Home mini forms",
   "Barra de navegación": "Navigation bar",
   "Pie de página": "Footer",
   "Buscar por etiqueta o ruta...": "Search by label or path...",
@@ -639,6 +770,18 @@ const DICCIONARIO = {
   "URL de foto": "Photo URL",
   "URL de imagen": "Image URL",
   "¿Eliminar esta foto de la galería?": "Delete this photo from the gallery?",
+  "No se pudo guardar el hero.": "Could not save the hero.",
+  "No se pudo guardar la sección del inicio.": "Could not save the home section.",
+  "No se pudieron guardar los mini formularios.": "Could not save the mini forms.",
+  "No se pudo guardar el navbar.": "Could not save the navbar.",
+  "No se pudo guardar el footer.": "Could not save the footer.",
+  "No se pudieron guardar los enlaces.": "Could not save the links.",
+  "No se pudo guardar la foto.": "Could not save the photo.",
+  "No se pudo eliminar la foto.": "Could not delete the photo.",
+  "No se pudo guardar la sección.": "Could not save the section.",
+  "No se pudo borrar la categoría.": "Could not delete the category.",
+  "¿Deseás eliminar la solicitud de esta persona?":
+    "Do you want to delete this person's request?",
   "Buscar historia, misión o visión...": "Search history, mission or vision...",
   "Resumen institucional de nuestra historia.": "Institutional summary of our history.",
   "Texto institucional de misión.": "Institutional mission text.",
@@ -776,6 +919,9 @@ const DICCIONARIO = {
   "Seleccionar...": "Select...",
   "Seleccionar": "Select",
   "Horario flexible": "Flexible schedule",
+  "Lunes a viernes, 8:00 a. m. a 12:00 p. m.": "Monday to Friday, 8:00 a.m. to 12:00 p.m.",
+  "Lunes a viernes, 1:00 p. m. a 5:00 p. m.": "Monday to Friday, 1:00 p.m. to 5:00 p.m.",
+  "Lunes a viernes, 8:00 a. m. a 5:00 p. m.": "Monday to Friday, 8:00 a.m. to 5:00 p.m.",
   "Cargando inicio...": "Loading home...",
   "Cargando galería...": "Loading gallery...",
   "Cargando galeria...": "Loading gallery...",
@@ -899,6 +1045,23 @@ const DICCIONARIO = {
   "Actividades de limpieza y mantenimiento": "Cleaning and maintenance activities",
   "Idioma predeterminado del sitio (cuando alguien entra por primera vez). Cualquier visitante puede cambiarlo en la barra superior (ES / EN). El contenido se guarda en español en Supabase y se traduce automáticamente al mostrar en inglés.":
     "Default site language (first visit). Anyone can change it in the top bar (ES / EN). Content is stored in Spanish in Supabase and is translated automatically when shown in English.",
+
+  // Errores / validación UI (ST)
+  "Ingrese el nombre del producto.": "Enter the product name.",
+  "Ingrese la descripción del producto.": "Enter the product description.",
+  "El nombre no puede tener más de 12 palabras.": "Name cannot be more than 12 words.",
+  "El nombre no puede tener más de 200 caracteres.": "Name cannot be more than 200 characters.",
+  "La descripción no puede tener más de 80 palabras.": "Description cannot be more than 80 words.",
+  "La descripción no puede tener más de 2000 caracteres.": "Description cannot be more than 2000 characters.",
+  "Ingrese un entero entre 0 y 2147483647.": "Enter an integer between 0 and 2147483647.",
+  "El motivo es obligatorio (máx. 40 palabras).": "Reason is required (max. 40 words).",
+  "Usa un número entero entre 0 y 2147483647.": "Use an integer between 0 and 2147483647.",
+  "No se pudo actualizar el stock central.": "Could not update central stock.",
+  "No se pudo guardar el ajuste.": "Could not save the adjustment.",
+  "No se pudo guardar el punto de venta.": "Could not save the point of sale.",
+  "No se pudo cambiar el estado.": "Could not change the status.",
+  "No se pudo cargar el historial.": "Could not load the history.",
+  "No se pudieron cargar las solicitudes.": "Could not load the requests.",
 };
 
 function normalizarClave(texto) {
@@ -907,14 +1070,18 @@ function normalizarClave(texto) {
 
 /** Nombre de marca: nunca se traduce. */
 const MARCA_CAFE_UNA = "Café UNA";
-/** Tokens ASCII estables; MyMemory suele dejarlos intactos. */
+const MARCA_FUNDA_UNA = "FUNDA-UNA";
+/** Tokens ASCII estables; los proveedores de traducción suelen dejarlos intactos. */
 const TOKEN_MARCA = "XXCAFEUNAXX";
 const TOKEN_UNA = "XXUNAINSTXX";
+const TOKEN_FUNDA = "XXFUNDAUNAXX";
 
 function protegerMarca(texto) {
   return String(texto ?? "")
     // Primero la marca completa
     .replace(/\b[Cc]af[eé]\s+UNA\b/gi, TOKEN_MARCA)
+    // Punto de venta / fundación: FUNDA-UNA, FUNDA UNA, FundaUNA…
+    .replace(/\bFUNDA[\s_-]*UNA\b/gi, TOKEN_FUNDA)
     // "la UNA" / "de la UNA" (universidad), no "ONE"
     .replace(/\b(?:de\s+)?la\s+UNA\b/gi, TOKEN_UNA);
 }
@@ -924,7 +1091,8 @@ function restaurarMarca(texto) {
 
   // Bloques [[...]] / ⟦...⟧ basura de traducciones viejas
   t = t.replace(/[\[⟦]{1,2}([^\]⟧]*)[\]⟧]{1,2}/g, (full, inner) => {
-    if (!/(?:CAF[EÉ]|COFFEE|UNA|ONE)/i.test(inner)) return full;
+    if (!/(?:CAF[EÉ]|COFFEE|UNA|ONE|FUNDA)/i.test(inner)) return full;
+    if (/FUNDA/i.test(inner)) return MARCA_FUNDA_UNA;
     const rest = String(inner)
       .replace(/(?:CAF[EÉ]|COFFEE)/gi, " ")
       .replace(/[_\s-]*(?:UNA|ONE)\b/gi, " ")
@@ -934,13 +1102,20 @@ function restaurarMarca(texto) {
     return rest ? `${MARCA_CAFE_UNA} ${rest}` : MARCA_CAFE_UNA;
   });
 
-  t = t.replace(new RegExp(TOKEN_MARCA, "gi"), MARCA_CAFE_UNA);
+  // Si MyMemory dejó "Café/Coffee" pegado al token → una sola marca
+  t = t.replace(/(?:\bCaf[eé]\s+|\bCoffee\s+)?XXCAFEUNAXX\b/gi, MARCA_CAFE_UNA);
+  t = t.replace(new RegExp(TOKEN_FUNDA, "gi"), MARCA_FUNDA_UNA);
   t = t.replace(new RegExp(TOKEN_UNA, "gi"), "UNA");
 
   // Variantes erróneas típicas de la marca
   t = t.replace(/\bCoffee\s*(?:UNA|ONE)\b/gi, MARCA_CAFE_UNA);
   t = t.replace(/\bCaf[eé]\s*(?:UNA|ONE)\b/gi, MARCA_CAFE_UNA);
-  t = t.replace(/\bUNA\s*Coffee\b/gi, MARCA_CAFE_UNA);
+  // No usar /\bUNA\s*Coffee\b/: rompe "Café UNA coffee bag" → "Café Café UNA bag"
+  // Marca duplicada: "Café Café UNA" / "Coffee Café UNA"
+  t = t.replace(/\b(?:Caf[eé]|Coffee)\s+(?:Caf[eé]|Coffee)\s+UNA\b/gi, MARCA_CAFE_UNA);
+  // FUNDA-UNA / variantes mal traducidas
+  t = t.replace(/\bFUNDA[\s_-]*UNA\b/gi, MARCA_FUNDA_UNA);
+  t = t.replace(/\bFUNDA[\s_-]*(?:ONE|University)\b/gi, MARCA_FUNDA_UNA);
   // "the ONE" suelto (universidad mal traducida)
   t = t.replace(/\bthe\s+ONE\b/gi, "UNA");
   t = t.replace(/\bof\s+ONE\b/gi, "of UNA");
@@ -951,9 +1126,12 @@ function restaurarMarca(texto) {
 function traducirCacheInvalida(valor) {
   const v = String(valor || "");
   if (/QUERY LENGTH LIMIT|MAX ALLOWED QUERY|MYMEMORY WARNING/i.test(v)) return true;
-  if (/[\[⟦]{1,2}[^\]]*?(?:CAF[EÉ]|COFFEE)/i.test(v)) return true;
+  if (/[\[⟦]{1,2}[^\]]*?(?:CAF[EÉ]|COFFEE|FUNDA)/i.test(v)) return true;
   if (new RegExp(TOKEN_MARCA, "i").test(v)) return true;
+  if (new RegExp(TOKEN_FUNDA, "i").test(v)) return true;
   if (new RegExp(TOKEN_UNA, "i").test(v)) return true;
+  // Traducciones basura conocidas de la API
+  if (/^(Asset|Qualification|Eliminate)$/i.test(v.trim())) return true;
   return false;
 }
 
@@ -1023,6 +1201,10 @@ const DICCIONARIO_EN_ES = (() => {
     "People of the ONE tasting Café UNA": "Personas de la UNA degustando Café UNA",
     "People from UNA tasting Café UNA": "Personas de la UNA degustando Café UNA",
     "Café UNA coffee bag": "Bolsa de café UNA",
+    "Café Café UNA bag": "Bolsa de café UNA",
+    "Café Café UNA coffee bag": "Bolsa de café UNA",
+    "Café UNA bag": "Bolsa de café UNA",
+    "Coffee UNA bag": "Bolsa de café UNA",
     "Coffee information for new students": "Información del café para nuevos estudiantes",
     "Café UNA booth": "Puesto de café UNA",
     "Café UNA at the fair": "Café UNA en la feria",
@@ -1030,6 +1212,12 @@ const DICCIONARIO_EN_ES = (() => {
     "Welcome to new students": "Bienvenida a nuevos estudiantes",
     "Coffee sale": "Venta de café",
     "Newcomer info": "Información del café para nuevos estudiantes",
+    "History": "Historia",
+    "Mission": "Misión",
+    "Vision": "Visión",
+    "Bags": "Bolsas",
+    "Fair": "Feria",
+    "Coffee": "Café",
   });
   return rev;
 })();
@@ -1038,6 +1226,7 @@ function textoSinMarca(texto) {
   return String(texto ?? "")
     .replace(/\b[Cc]af[eé]\s+UNA\b/gi, " ")
     .replace(/\bCoffee\s+(?:UNA|ONE)\b/gi, " ")
+    .replace(/\bFUNDA[\s_-]*UNA\b/gi, " ")
     .replace(/\b(?:de\s+)?la\s+UNA\b/gi, " ")
     .replace(/\bUNA\b/g, " ")
     .replace(/\s+/g, " ")
@@ -1071,13 +1260,17 @@ export async function asegurarEspanolParaBd(texto) {
   const key = normalizarClave(texto);
   if (!key) return "";
   const limpio = restaurarMarca(key);
+  if (/^funda[\s_-]*una$/i.test(limpio)) return MARCA_FUNDA_UNA;
+  if (/^caf[eé]\s*una$/i.test(limpio)) return MARCA_CAFE_UNA;
 
   // Ya es una frase conocida en español
   if (
     DICCIONARIO[limpio]
     || Object.keys(DICCIONARIO).some((es) => es.toLowerCase() === limpio.toLowerCase())
   ) {
-    return limpio;
+    // Si la clave es ES conocida, devolver la forma canónica en español del diccionario
+    const canon = Object.keys(DICCIONARIO).find((es) => es.toLowerCase() === limpio.toLowerCase());
+    return restaurarMarca(canon || limpio);
   }
 
   // Inglés conocido → español
@@ -1113,18 +1306,11 @@ function delDiccionario(texto) {
   if (!key) return "";
   // Marca completa
   if (/^caf[eé]\s*una$/i.test(key)) return MARCA_CAFE_UNA;
+  if (/^funda[\s_-]*una$/i.test(key)) return MARCA_FUNDA_UNA;
   if (DICCIONARIO[key]) return restaurarMarca(DICCIONARIO[key]);
   const lower = key.toLowerCase();
   for (const [es, en] of Object.entries(DICCIONARIO)) {
     if (es.toLowerCase() === lower) return restaurarMarca(en);
-  }
-  // Prefijo Café / Cafe en nombres de producto (nunca "Café UNA")
-  const mCafe = key.match(/^(caf[eé])\s+(.+)$/i);
-  if (mCafe) {
-    const resto = String(mCafe[2] || "").trim();
-    if (/^una$/i.test(resto)) return MARCA_CAFE_UNA;
-    const restoTr = delDiccionario(resto);
-    if (restoTr != null) return restaurarMarca(`Coffee ${restoTr}`);
   }
   // Sufijos frecuentes: "72 disponibles"
   const mDisp = key.match(/^(\d+)\s+disponibles?$/i);
@@ -1142,6 +1328,28 @@ function delDiccionario(texto) {
     const n = mBod[1];
     return Number(n) === 1 ? `${n} unit in stock` : `${n} units in stock`;
   }
+  const mEntero = key.match(/^Ingrese un entero entre 0 y (\d+)\.?$/i);
+  if (mEntero) return `Enter an integer between 0 and ${mEntero[1]}.`;
+  const mUsaEntero = key.match(/^Usa un n[uú]mero entero entre 0 y (\d+)\.?$/i);
+  if (mUsaEntero) return `Use an integer between 0 and ${mUsaEntero[1]}.`;
+  const mNombrePalabras = key.match(/^El nombre no puede tener m[aá]s de (\d+) palabras\.?$/i);
+  if (mNombrePalabras) return `Name cannot be more than ${mNombrePalabras[1]} words.`;
+  const mNombreChars = key.match(/^El nombre no puede tener m[aá]s de (\d+) caracteres\.?$/i);
+  if (mNombreChars) return `Name cannot be more than ${mNombreChars[1]} characters.`;
+  const mDescPalabras = key.match(/^La descripci[oó]n no puede tener m[aá]s de (\d+) palabras\.?$/i);
+  if (mDescPalabras) return `Description cannot be more than ${mDescPalabras[1]} words.`;
+  const mDescChars = key.match(/^La descripci[oó]n no puede tener m[aá]s de (\d+) caracteres\.?$/i);
+  if (mDescChars) return `Description cannot be more than ${mDescChars[1]} characters.`;
+  const mMotivo = key.match(/^El motivo es obligatorio \(m[aá]x\. (\d+) palabras\)\.?$/i);
+  if (mMotivo) return `Reason is required (max. ${mMotivo[1]} words).`;
+  const mHorarioEsp = key.match(/^El horario especial debe estar entre (.+) y (.+)\.?$/i);
+  if (mHorarioEsp) return `The special schedule must be between ${mHorarioEsp[1]} and ${mHorarioEsp[2]}.`;
+  const mEliminarSol = key.match(/^\¿Dese[aá]s eliminar la solicitud de (.+)\?$/i);
+  if (mEliminarSol) return `Do you want to delete the request from ${mEliminarSol[1]}?`;
+  const mCambiaHoras = key.match(/^Cambi[aá] las horas \(ej\. (.+)\)\. (.+) es el horario normal\.?$/i);
+  if (mCambiaHoras) return `Change the hours (e.g. ${mCambiaHoras[1]}). ${mCambiaHoras[2]} is the normal schedule.`;
+  const mHorarioGuardado = key.match(/^Horario especial guardado: (.+)\.?$/i);
+  if (mHorarioGuardado) return `Special schedule saved: ${mHorarioGuardado[1]}.`;
   return null;
 }
 
@@ -1150,6 +1358,7 @@ export function traducirSync(texto) {
   const key = normalizarClave(texto);
   if (!key) return "";
   if (/^caf[eé]\s*una$/i.test(key)) return MARCA_CAFE_UNA;
+  if (/^funda[\s_-]*una$/i.test(key)) return MARCA_FUNDA_UNA;
   const dict = delDiccionario(key);
   if (dict != null) return restaurarMarca(dict);
   if (memoria.has(key)) {
@@ -1163,6 +1372,32 @@ export function traducirSync(texto) {
   return restaurarMarca(key);
 }
 
+async function pedirGoogleGtx(texto, langpair = "es|en") {
+  const [sl, tl] = String(langpair).split("|");
+  if (!sl || !tl) throw new Error("bad langpair");
+  const url =
+    `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(sl)}`
+    + `&tl=${encodeURIComponent(tl)}&dt=t&q=${encodeURIComponent(texto)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("gtx failed");
+  const data = await res.json();
+  if (!Array.isArray(data?.[0])) throw new Error("gtx empty");
+  const joined = data[0]
+    .map((parte) => (Array.isArray(parte) ? parte[0] : ""))
+    .filter(Boolean)
+    .join("");
+  const limpio = String(joined || "").trim();
+  if (!limpio) throw new Error("gtx empty");
+  if (
+    langpair === "es|en"
+    && limpio.toLowerCase() === String(texto || "").trim().toLowerCase()
+    && /[áéíóúñü]/i.test(limpio)
+  ) {
+    throw new Error("untranslated");
+  }
+  return limpio;
+}
+
 async function pedirMyMemory(texto, langpair = "es|en") {
   const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(texto)}&langpair=${langpair}`;
   const res = await fetch(url);
@@ -1173,13 +1408,36 @@ async function pedirMyMemory(texto, langpair = "es|en") {
     throw new Error("empty translation");
   }
   const limpio = translated.trim();
-  if (/MYMEMORY WARNING|QUERY LENGTH LIMIT|MAX ALLOWED QUERY/i.test(limpio)) {
+  if (
+    data?.responseStatus === 429
+    || /MYMEMORY WARNING|QUERY LENGTH LIMIT|MAX ALLOWED QUERY|AVAILABLE FREE TRANSLATIONS/i.test(limpio)
+  ) {
     throw new Error("query too long");
+  }
+  if (
+    langpair === "es|en"
+    && limpio.toLowerCase() === String(texto || "").trim().toLowerCase()
+    && /[áéíóúñü]/i.test(limpio)
+  ) {
+    throw new Error("untranslated");
   }
   return limpio;
 }
 
-/** Parte textos largos para no pasar el tope de ~500 chars de MyMemory. */
+/** Traduce un trozo con varios proveedores (dinámico; no hace falta diccionario). */
+async function pedirTraduccionProveedores(texto, langpair = "es|en") {
+  const errores = [];
+  for (const pedir of [pedirGoogleGtx, pedirMyMemory]) {
+    try {
+      return await pedir(texto, langpair);
+    } catch (err) {
+      errores.push(err);
+    }
+  }
+  throw errores[errores.length - 1] || new Error("translate failed");
+}
+
+/** Parte textos largos para no pasar el tope de ~500 chars de MyMemory / URL de gtx. */
 function trocearParaTraducir(texto, maxLen = 450) {
   const t = String(texto || "").trim();
   if (!t) return [];
@@ -1219,14 +1477,14 @@ async function traducirConApi(texto, langpair = "es|en") {
   const trozos = trocearParaTraducir(protegido);
   let resultado;
   if (trozos.length <= 1) {
-    resultado = await pedirMyMemory(protegido, langpair);
+    resultado = await pedirTraduccionProveedores(protegido, langpair);
   } else {
     const traducciones = [];
     for (const trozo of trozos) {
       if (traducciones.length > 0) {
-        await new Promise((r) => setTimeout(r, 120));
+        await new Promise((r) => setTimeout(r, 80));
       }
-      traducciones.push(await pedirMyMemory(trozo, langpair));
+      traducciones.push(await pedirTraduccionProveedores(trozo, langpair));
     }
     resultado = traducciones.join(" ").replace(/\s+/g, " ").trim();
   }
@@ -1262,13 +1520,11 @@ export function traducirEnAEsSync(texto) {
   return restaurarMarca(conMarca);
 }
 
-/** Traduce EN→ES para guardar en Supabase en español. */
+/** Traduce EN→ES para guardar en Supabase en español (API dinámica). */
 export async function traducirEnAEs(texto) {
   const key = normalizarClave(texto);
   if (!key) return "";
 
-  const dict = delDiccionarioEnEs(key);
-  if (dict != null) return restaurarMarca(dict);
   if (memoriaEnEs.has(key)) return restaurarMarca(memoriaEnEs.get(key));
   if (inflightEnEs.has(key)) return inflightEnEs.get(key);
 
@@ -1281,8 +1537,9 @@ export async function traducirEnAEs(texto) {
       return fijo;
     })
     .catch(() => {
+      const dict = delDiccionarioEnEs(key);
       inflightEnEs.delete(key);
-      return restaurarMarca(key);
+      return restaurarMarca(dict != null ? dict : key);
     });
 
   inflightEnEs.set(key, job);
@@ -1304,18 +1561,22 @@ export async function asegurarCamposEnEspanol(obj, campos) {
 }
 
 /**
- * Traduce ES→EN. Usa diccionario, caché y API.
- * Si falla la red, deja el español.
+ * Traduce ES→EN con función dinámica (API). Cualquier texto nuevo se traduce
+ * sin tener que agregarlo al diccionario. Si la API falla, usa caché/diccionario.
+ * El diccionario gana primero para no traducir mal UI fija (Activo→Active, no Asset).
  */
 export async function traducirEsAEn(texto) {
   const key = normalizarClave(texto);
   if (!key) return "";
+  if (/^caf[eé]\s*una$/i.test(key)) return MARCA_CAFE_UNA;
+  if (/^funda[\s_-]*una$/i.test(key)) return MARCA_FUNDA_UNA;
 
   const dict = delDiccionario(key);
   if (dict != null) return restaurarMarca(dict);
+
   if (memoria.has(key)) {
     const cached = memoria.get(key);
-    if (traducirCacheInvalida(cached)) {
+    if (traducirCacheInvalida(cached) || cached === key) {
       memoria.delete(key);
     } else {
       return restaurarMarca(cached);
@@ -1376,6 +1637,16 @@ export async function traducirCamposObjeto(obj, campos) {
     }),
   );
   return out;
+}
+
+/**
+ * Vista admin: ES muestra BD tal cual; EN traduce campos de texto para editar.
+ * Al guardar usar asegurarCamposEnEspanol.
+ */
+export async function camposParaVistaAdmin(obj, campos, idioma) {
+  const base = obj && typeof obj === "object" ? { ...obj } : {};
+  if (idioma !== "en") return base;
+  return traducirCamposObjeto(base, campos);
 }
 
 export async function traducirListaObjetos(lista, campos) {

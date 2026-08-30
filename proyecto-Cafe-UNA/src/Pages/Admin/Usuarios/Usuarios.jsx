@@ -367,7 +367,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                 aria-invalid={Boolean(fieldErrors.nombre)}
               />
               {fieldErrors.nombre ? (
-                <p className="mt-1 text-xs text-red-600" role="alert">{fieldErrors.nombre}</p>
+                <p className="mt-1 text-xs text-red-600" role="alert"><ST>{fieldErrors.nombre}</ST></p>
               ) : null}
             </>
           )}
@@ -408,7 +408,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                 maxLength={MAX_PASSWORD}
                 placeholder={editandoPropioUsuario ? "Requerida para cambiar el correo" : "Contrase\u00f1a del usuario"}
               />
-              {errorPasswordCorreo ? <p className="mt-1 text-xs text-red-600">{errorPasswordCorreo}</p> : null}
+              {errorPasswordCorreo ? <p className="mt-1 text-xs text-red-600"><ST>{errorPasswordCorreo}</ST></p> : null}
             </label>
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <button
@@ -435,7 +435,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
           </div>
         ) : null}
         {mensajeCorreo ? <p className="mt-2 text-xs text-emerald-700">{mensajeCorreo}</p> : null}
-        {errorCorreo ? <p className="mt-2 text-xs text-red-600">{errorCorreo}</p> : null}
+        {errorCorreo ? <p className="mt-2 text-xs text-red-600"><ST>{errorCorreo}</ST></p> : null}
       </div>
       {!inicial && pasoCreacion === "codigo" ? (
         <div>
@@ -476,7 +476,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                         aria-invalid={Boolean(fieldErrors.passwordHash)}
                       />
                       {fieldErrors.passwordHash ? (
-                        <p className="mt-1 text-xs text-red-600" role="alert">{fieldErrors.passwordHash}</p>
+                        <p className="mt-1 text-xs text-red-600" role="alert"><ST>{fieldErrors.passwordHash}</ST></p>
                       ) : null}
                     </>
                   )}
@@ -503,7 +503,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                           aria-invalid={Boolean(fieldErrors.passwordActual)}
                         />
                         {fieldErrors.passwordActual ? (
-                          <p className="mt-1 text-xs text-red-600" role="alert">{fieldErrors.passwordActual}</p>
+                          <p className="mt-1 text-xs text-red-600" role="alert"><ST>{fieldErrors.passwordActual}</ST></p>
                         ) : null}
                       </>
                     )}
@@ -563,7 +563,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
         </>
       ) : null}
 
-      {fieldErrors.formulario ? <p className="text-xs text-red-600">{fieldErrors.formulario}</p> : null}
+      {fieldErrors.formulario ? <p className="text-xs text-red-600"><ST>{fieldErrors.formulario}</ST></p> : null}
 
       <div className="flex flex-row flex-wrap justify-end gap-2 pt-2">
         <AdminModalActions
@@ -799,11 +799,11 @@ const AdminUsuarios = () => {
   const handleToggle = useCallback(async (usuario) => {
     const esMismoUsuario = actorId !== null && Number(usuario.id) === actorId;
     if (!esSuperAdmin) {
-      alert("Solo un SuperAdmin puede inactivar o activar usuarios.");
+      alert(t("Solo un SuperAdmin puede inactivar o activar usuarios."));
       return;
     }
     if (esMismoUsuario) {
-      alert("No puede inactivarse a s\u00ed mismo.");
+      alert(t("No puede inactivarse a sí mismo."));
       return;
     }
 
@@ -813,7 +813,7 @@ const AdminUsuarios = () => {
       const actualizado = await cambiarEstadoUsuario(usuario.id, nuevoEstado);
       setUsuarios((prev) => prev.map((u) => (u.id === actualizado.id ? mapUsuario(actualizado) : u)));
     } catch (err) {
-      alert(err?.message || "Error al cambiar el estado.");
+      alert(t(err?.message || "Error al cambiar el estado."));
     } finally {
       setToggleando(null);
     }

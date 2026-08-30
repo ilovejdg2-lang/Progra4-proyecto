@@ -37,8 +37,11 @@ import {
   productoPuedeDestacarse,
   productoSinStock,
 } from "../../../../lib/productoDisponibilidad";
+import { useIdioma } from "../../../../lib/useIdioma";
+import { camposParaVistaAdmin } from "../../../../lib/traducir";
 
 const MAX_PRODUCTOS_DESTACADOS = 3;
+const CAMPOS_TEXTO_PRODUCTO = ["nombre", "descripcion"];
 
 const FORM_VACIO = {
   nombre: "",
@@ -124,14 +127,36 @@ export function ProductCatalogFormDrawer({
   const isEditing = Boolean(initial);
   const featuredOthers = contarDestacados(products, initial?.id);
   const stockForEligibility = Number(initial?.stock) || 0;
+  const { idioma } = useIdioma();
+  const tTituloEditar = useTraducir("Editar producto");
+  const tTituloNuevo = useTraducir("Nuevo producto");
+  const tGuardando = useTraducir("Guardando...");
+  const tGuardarCambios = useTraducir("Guardar cambios");
+  const tCrearProducto = useTraducir("Crear producto");
 
   useEffect(() => {
-    if (!open) return;
-    setForm(formDesdeProducto(initial));
+    if (!open) return undefined;
+    let cancelado = false;
+    const base = formDesdeProducto(initial);
     setFieldErrors({});
     setSubmitError("");
     submitGuard.current = false;
-  }, [open, initial]);
+
+    if (idioma !== "en") {
+      setForm(base);
+      return undefined;
+    }
+
+    setForm(base);
+    (async () => {
+      const traducido = await camposParaVistaAdmin(base, CAMPOS_TEXTO_PRODUCTO, idioma);
+      if (!cancelado) setForm(traducido);
+    })();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [open, initial, idioma]);
 
   if (!open) return null;
 
@@ -240,11 +265,6 @@ export function ProductCatalogFormDrawer({
     !form.esDestacado &&
     (!productoPuedeDestacarse({ estado: form.estado, stock: stockForEligibility }) ||
       featuredOthers >= MAX_PRODUCTOS_DESTACADOS);
-  const tTituloEditar = useTraducir("Editar producto");
-  const tTituloNuevo = useTraducir("Nuevo producto");
-  const tGuardando = useTraducir("Guardando...");
-  const tGuardarCambios = useTraducir("Guardar cambios");
-  const tCrearProducto = useTraducir("Crear producto");
 
   return (
     <AdminModal open onClose={onClose} maxWidth="max-w-xl" labelledBy="admin-product-catalog-form-title">
@@ -282,7 +302,7 @@ export function ProductCatalogFormDrawer({
               </span>
               {fieldErrors.nombre ? (
                 <span id={errorId("nombre")} className={fieldErrorClassName} role="alert">
-                  {fieldErrors.nombre}
+                  <ST>{fieldErrors.nombre}</ST>
                 </span>
               ) : null}
             </label>
@@ -306,7 +326,7 @@ export function ProductCatalogFormDrawer({
               </span>
               {fieldErrors.descripcion ? (
                 <span id={errorId("descripcion")} className={fieldErrorClassName} role="alert">
-                  {fieldErrors.descripcion}
+                  <ST>{fieldErrors.descripcion}</ST>
                 </span>
               ) : null}
             </label>
@@ -422,7 +442,7 @@ export function ProductCatalogFormDrawer({
               ) : null}
             </p>
           </div>
-          {submitError ? <p className={fieldErrorClassName} role="alert" aria-live="assertive">{submitError}</p> : null}
+          {submitError ? <p className={fieldErrorClassName} role="alert" aria-live="assertive"><ST>{submitError}</ST></p> : null}
           <div className="flex flex-row flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
             <AdminModalActions
               onCancel={onClose}

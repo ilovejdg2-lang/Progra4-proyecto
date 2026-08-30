@@ -14,6 +14,7 @@ import {
   LogOut,
   Package,
   Receipt,
+  ScrollText,
   Settings,
   ShoppingBag,
   Store,
@@ -86,6 +87,7 @@ export function AppSidebar() {
     tienePermiso(roles, "ver_ventas") ||
     tienePermiso(roles, "ver_historial_compras_clientes");
   const puedeAjustes = tienePermiso(roles, "administrar_roles_permisos");
+  const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
   const puedePerfil = tienePermiso(roles, "ver_perfil_propio");
   const avatarUrl = user?.fotoPerfilUrl?.trim()
     ? normalizeImageUrl(user.fotoPerfilUrl.trim(), { width: 96 })
@@ -482,6 +484,16 @@ export function AppSidebar() {
                 </Collapsible.Content>
               </SidebarMenuItem>
             </Collapsible.Root>
+            ) : null}
+            {puedeAuditoria ? (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link to="/admin/auditoria" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                  <ScrollText />
+                  <span><ST>{"Auditor\u00eda"}</ST></span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             ) : null}
             {puedePerfil ? (
             <SidebarMenuItem>

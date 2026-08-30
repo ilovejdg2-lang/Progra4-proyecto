@@ -5,6 +5,7 @@ import { categoriasUnicas, esCategoriaRaiz, nombreCategoria } from "../../../lib
 import { UiSelect } from "../../ui/Select";
 import { ST } from "../../T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
+import { t } from "../../../lib/t";
 
 const inputCls =
   "w-full rounded-[var(--ui-radius)] border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
@@ -113,7 +114,7 @@ export function CategoriaOpcionBorrar({ categoria, nombresEnUso = [], onEliminad
       await eliminarCategoria(categoria.id);
       onEliminada?.(categoria.nombre);
     } catch (err) {
-      window.alert(err?.message || "No se pudo borrar la categoría.");
+      window.alert(t(err?.message || "No se pudo borrar la categoría."));
     } finally {
       setBorrando(false);
     }

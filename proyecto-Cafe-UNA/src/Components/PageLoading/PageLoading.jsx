@@ -1,6 +1,7 @@
 import { useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { isRouteLoadingLocked } from '../../lib/routeLoadingLock';
+import { ST } from '../T/ST';
 import BrandLoader from './BrandLoader';
 
 let activeLoaders = 0;
@@ -77,7 +78,7 @@ const PageLoading = ({
       >
         {isError && onRetry ? (
           <button type="button" className="page-loading__retry" onClick={onRetry}>
-            {retryLabel}
+            {typeof retryLabel === 'string' ? <ST>{retryLabel}</ST> : retryLabel}
           </button>
         ) : null}
       </BrandLoader>

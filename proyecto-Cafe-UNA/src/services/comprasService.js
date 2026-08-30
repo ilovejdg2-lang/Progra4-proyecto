@@ -44,9 +44,7 @@ export function normalizarCompra(compra) {
     ganado: (() => {
       const raw = firstDefined(compra, ["ganado", "Ganado"]);
       if (raw === null || raw === undefined) {
-        return estado === "Enviado"
-          ? Number(firstDefined(compra, ["total", "Total"]) || 0)
-          : null;
+        return estado === "Enviado" ? Number(firstDefined(compra, ["total", "Total"]) || 0) : null;
       }
       return Number(raw);
     })(),

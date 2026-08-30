@@ -36,6 +36,7 @@ import {
 import { ST } from "../../../Components/T/ST";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
+import { asegurarCamposEnEspanol } from "../../../lib/traducir";
 
 const fieldClass =
   "min-h-[var(--control-height)] w-full rounded-full border border-slate-200 bg-slate-50 px-3 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white";
@@ -108,7 +109,7 @@ export default function AdminDistribucion() {
       { value: "", label: t("Seleccionar…") },
       ...puntosVenta.map((pos) => ({
         value: pos.code,
-        label: pos.name || pos.code,
+        label: t(pos.name || pos.code),
       })),
     ],
     [puntosVenta, idioma],
@@ -238,11 +239,15 @@ export default function AdminDistribucion() {
     setIsSaving(true);
     setFormError("");
     try {
+      const notasTrim = notas.trim();
+      const notasEs = notasTrim
+        ? (await asegurarCamposEnEspanol({ notas: notasTrim }, ["notas"])).notas
+        : undefined;
       await crearTransferencia({
         productoId,
         cantidad: cantidadNum,
         ubicacionDestino: destinoCodigo,
-        notas: notas.trim() || undefined,
+        notas: notasEs,
       });
       limpiarInventarioUbicacionCache();
       setConfirmOpen(false);
@@ -277,13 +282,13 @@ export default function AdminDistribucion() {
 
           {successMessage ? (
             <p className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-[length:var(--text-body)] text-emerald-800">
-              <CheckCircle2 className="size-4" /> {successMessage}
+              <CheckCircle2 className="size-4" /> <ST>{successMessage}</ST>
             </p>
           ) : null}
 
           {catalogError ? (
             <p className="text-[length:var(--text-body)] text-red-600" role="alert">
-              {catalogError}
+              <ST>{catalogError}</ST>
             </p>
           ) : null}
 
@@ -343,7 +348,7 @@ export default function AdminDistribucion() {
                   <ContadorPalabras value={notas} maxPalabras={MAX_PALABRAS_NOTAS} />
                 </label>
                 {formError ? (
-                  <p className="text-[length:var(--text-body)] text-red-600 sm:col-span-2" role="alert">{formError}</p>
+                  <p className="text-[length:var(--text-body)] text-red-600 sm:col-span-2" role="alert"><ST>{formError}</ST></p>
                 ) : null}
                 <button
                   type="submit"
@@ -429,7 +434,7 @@ export default function AdminDistribucion() {
             />
 
             {histError ? (
-              <p className="text-[length:var(--text-body)] text-red-600" role="alert">{histError}</p>
+              <p className="text-[length:var(--text-body)] text-red-600" role="alert"><ST>{histError}</ST></p>
             ) : null}
 
             {histStatus === "error" && !historial.length ? (
@@ -454,11 +459,17 @@ export default function AdminDistribucion() {
                       {historial.map((row) => (
                         <tr key={row.id} className="border-b border-slate-50 last:border-0">
                           <td className="px-4 py-3 whitespace-nowrap">{formatFechaHora(row.fecha)}</td>
-                          <td className="px-4 py-3">{row.productoNombre || row.productoId}</td>
+                          <td className="px-4 py-3">
+                            {row.productoNombre ? <ST>{row.productoNombre}</ST> : row.productoId}
+                          </td>
                           <td className="px-4 py-3">{row.cantidad}</td>
-                          <td className="px-4 py-3">{row.destinoNombre || row.destinoCodigo}</td>
+                          <td className="px-4 py-3">
+                            {row.destinoNombre ? <ST>{row.destinoNombre}</ST> : row.destinoCodigo}
+                          </td>
                           <td className="px-4 py-3">{row.responsableNombre || "—"}</td>
-                          <td className="px-4 py-3">{row.notas || "—"}</td>
+                          <td className="px-4 py-3">
+                            {row.notas ? <ST>{row.notas}</ST> : "—"}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -509,10 +520,10 @@ export default function AdminDistribucion() {
           </AdminModalHeader>
           <AdminModalBody>
             <div className="space-y-2 text-[length:var(--text-body)] text-slate-700">
-              <p><span className="font-semibold text-slate-900"><ST>Producto:</ST></span> {productoSeleccionado?.nombre}</p>
+              <p><span className="font-semibold text-slate-900"><ST>Producto:</ST></span> {productoSeleccionado?.nombre ? <ST>{productoSeleccionado.nombre}</ST> : null}</p>
               <p><span className="font-semibold text-slate-900"><ST>Cantidad:</ST></span> {cantidadNum}</p>
               <p><span className="font-semibold text-slate-900"><ST>Origen:</ST></span> <ST>Bodega Central</ST></p>
-              <p><span className="font-semibold text-slate-900"><ST>Destino:</ST></span> {destinoSeleccionado?.name || destinoCodigo}</p>
+              <p><span className="font-semibold text-slate-900"><ST>Destino:</ST></span> {destinoSeleccionado?.name ? <ST>{destinoSeleccionado.name}</ST> : destinoCodigo}</p>
               {notas.trim() ? <p><span className="font-semibold text-slate-900"><ST>Notas:</ST></span> {notas.trim()}</p> : null}
             </div>
             <div className="mt-4 border-t border-slate-100 pt-4">

@@ -103,7 +103,7 @@ function BadgeAccion({ accion }) {
         estilos[accion] ?? "border-slate-200 bg-slate-50 text-slate-600"
       }`}
     >
-      {ETIQUETAS_ACCION[accion] ? <ST>{ETIQUETAS_ACCION[accion]}</ST> : accion}
+      {ETIQUETAS_ACCION[accion] ? <ST>{ETIQUETAS_ACCION[accion]}</ST> : <ST>{accion}</ST>}
     </span>
   );
 }
@@ -132,7 +132,7 @@ function FilaDetalle({ item, abierta, onToggle }) {
               </button>
             ) : null}
             <span>
-              {item.detalle || "—"}
+              {item.detalle ? <ST>{item.detalle}</ST> : "—"}
               {item.idRegistro ? (
                 <span className="mt-1 block text-xs text-slate-400">Registro #{item.idRegistro}</span>
               ) : null}
@@ -341,7 +341,7 @@ function AdminAuditoria() {
 
           {error ? (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
+              <ST>{error}</ST>
             </div>
           ) : null}
 
@@ -468,7 +468,7 @@ function AdminAuditoria() {
                             </div>
                             <BadgeAccion accion={item.accion} />
                           </div>
-                          <p className="mt-3 text-sm text-slate-700">{item.detalle || "—"}</p>
+                          <p className="mt-3 text-sm text-slate-700">{item.detalle ? <ST>{item.detalle}</ST> : "—"}</p>
                           <p className="mt-2 text-xs text-slate-500">
                             Usuario: {item.usuario || "Sistema"}
                             {item.idRegistro ? ` · Registro #${item.idRegistro}` : ""}

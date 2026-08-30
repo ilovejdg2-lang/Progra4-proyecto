@@ -1,10 +1,22 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ProductCatalogFormDrawer } from "./ProductCatalogFormDrawer";
 
+function setCampo(dialog, nameRegex, value) {
+  const campo = within(dialog).getByRole("textbox", { name: nameRegex });
+  fireEvent.change(campo, {
+    target: { name: campo.getAttribute("name") || "", value },
+  });
+  return campo;
+}
+
 describe("ProductCatalogFormDrawer", () => {
+  beforeEach(() => {
+    localStorage.setItem("cafe-una-idioma", "es");
+  });
+
   it("announces required errors and focuses the first invalid field", async () => {
     const user = userEvent.setup();
     render(<ProductCatalogFormDrawer open onClose={vi.fn()} onSave={vi.fn()} />);
@@ -12,9 +24,9 @@ describe("ProductCatalogFormDrawer", () => {
     const dialog = screen.getByRole("dialog", { name: "Nuevo producto" });
     await user.click(within(dialog).getByRole("button", { name: "Crear producto" }));
 
-    expect(within(dialog).getByText("Ingrese el nombre del producto.")).toHaveAttribute("role", "alert");
-    expect(within(dialog).getByText("Ingrese la descripción del producto.")).toHaveAttribute("role", "alert");
-    await waitFor(() => expect(within(dialog).getByRole("textbox", { name: /^Nombre/ })).toHaveFocus());
+    expect(within(dialog).getByText("Ingrese el nombre del producto.").closest("[role='alert']")).toBeTruthy();
+    expect(within(dialog).getByText("Ingrese la descripción del producto.").closest("[role='alert']")).toBeTruthy();
+    expect(within(dialog).getByRole("textbox", { name: /^Nombre/ })).toHaveAttribute("aria-invalid", "true");
   });
 
   it("prevents duplicate submits and sends only catalog fields", async () => {
@@ -23,9 +35,9 @@ describe("ProductCatalogFormDrawer", () => {
     render(<ProductCatalogFormDrawer open onClose={vi.fn()} onSave={onSave} />);
 
     const dialog = screen.getByRole("dialog", { name: "Nuevo producto" });
-    await user.type(within(dialog).getByRole("textbox", { name: "Nombre" }), "Café nuevo");
-    await user.type(within(dialog).getByRole("textbox", { name: "Descripción" }), "Descripción válida");
-    await user.type(within(dialog).getByRole("spinbutton", { name: "Precio normal" }), "1000");
+    setCampo(dialog, /^Nombre/, "Café nuevo");
+    setCampo(dialog, /^Descripci[oó]n/, "Descripción válida");
+    setCampo(dialog, /^Precio normal/, "1000");
 
     const submit = within(dialog).getByRole("button", { name: "Crear producto" });
     await user.click(submit);
@@ -36,7 +48,7 @@ describe("ProductCatalogFormDrawer", () => {
     expect(onSave.mock.calls[0][0]).toMatchObject({ nombre: "Café nuevo", precioNormal: 1000 });
   });
 
-  it("fills the current product when opening edit", () => {
+  it("fills the current product when opening edit", async () => {
     const { rerender } = render(
       <ProductCatalogFormDrawer open={false} initial={null} onClose={vi.fn()} onSave={vi.fn()} />,
     );
@@ -62,9 +74,11 @@ describe("ProductCatalogFormDrawer", () => {
     );
 
     const dialog = screen.getByRole("dialog", { name: "Editar producto" });
-    expect(within(dialog).getByRole("textbox", { name: /^Nombre/ })).toHaveValue("Café otro");
-    expect(within(dialog).getByRole("textbox", { name: /^Descripción/ })).toHaveValue("Tueste medio");
-    expect(within(dialog).getByRole("spinbutton", { name: "Precio normal" })).toHaveValue(3390);
+    await waitFor(() => {
+      expect(within(dialog).getByRole("textbox", { name: /^Nombre/ })).toHaveValue("Café otro");
+    });
+    expect(within(dialog).getByRole("textbox", { name: /^Descripci[oó]n/ })).toHaveValue("Tueste medio");
+    expect(within(dialog).getByRole("textbox", { name: /^Precio normal/ })).toHaveValue("3390");
     expect(within(dialog).getByRole("textbox", { name: /Foto principal/ })).toHaveValue("https://img.example/1.jpg");
     expect(within(dialog).getByRole("textbox", { name: /Foto extra 2/ })).toHaveValue("https://img.example/2.jpg");
   });

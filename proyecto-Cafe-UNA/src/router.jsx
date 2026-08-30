@@ -39,6 +39,7 @@ const AdminVentasPresenciales = lazy(() => import("./Pages/Admin/VentasPresencia
 const AdminVoluntariado = lazy(() => import("./Pages/Admin/Voluntariado/Voluntariado"));
 const AdminUsuarios = lazy(() => import("./Pages/Admin/Usuarios/Usuarios"));
 const AdminHistorialVentas = lazy(() => import("./Pages/Admin/HistorialVentas/HistorialVentas"));
+const AdminAuditoria = lazy(() => import("./Pages/Admin/Auditoria/Auditoria"));
 const AdminAjustes = lazy(() => import("./Pages/Admin/Ajustes/Ajustes"));
 const Checkout = lazy(() => import("./Pages/Checkout/Checkout"));
 const Perfil = lazy(() => import("./Pages/Perfil/Perfil"));
@@ -282,7 +283,7 @@ const adminHistorialVentasRoute = createRoute({
 const adminAuditoriaRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/auditoria",
-    component: () => <Navigate to="/admin" />,
+    component: AdminAuditoria,
 })
 const adminAjustesRoute = createRoute({
     getParentRoute: () => rootRoute,

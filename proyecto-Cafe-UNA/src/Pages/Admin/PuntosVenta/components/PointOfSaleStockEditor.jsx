@@ -12,8 +12,10 @@ import {
 import { ST } from "../../../../Components/T/ST";
 import { useTraducir } from "../../../../hooks/useTraducir";
 import { t } from "../../../../lib/t";
+import { asegurarCamposEnEspanol } from "../../../../lib/traducir";
 
 const MAX_STOCK = 2147483647;
+const CAMPOS_TEXTO = ["motivo"];
 
 export function PointOfSaleStockEditor({ open, location, product, stockRecord, onSave, onClose, isSaving = false, error = "" }) {
   const tTitulo = useTraducir("Editar stock del punto");
@@ -37,7 +39,11 @@ export function PointOfSaleStockEditor({ open, location, product, stockRecord, o
       return;
     }
     setValidationError("");
-    await onSave(parsedStock, normalizedReason);
+    const paraGuardar = await asegurarCamposEnEspanol(
+      { motivo: normalizedReason },
+      CAMPOS_TEXTO,
+    );
+    await onSave(parsedStock, paraGuardar.motivo);
   };
 
   return (
@@ -52,7 +58,7 @@ export function PointOfSaleStockEditor({ open, location, product, stockRecord, o
               {tTitulo}
             </h2>
             <p className="truncate text-[length:var(--text-body)] text-slate-500">
-              {product.nombre} · {location?.name}
+              <ST>{product.nombre}</ST> · <ST>{location?.name}</ST>
             </p>
           </div>
         </div>
@@ -71,7 +77,7 @@ export function PointOfSaleStockEditor({ open, location, product, stockRecord, o
             <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">
               <ST>Ubicación</ST>
             </p>
-            <p className="mt-1 text-[length:var(--text-body)] font-semibold text-slate-900">{location?.name}</p>
+            <p className="mt-1 text-[length:var(--text-body)] font-semibold text-slate-900"><ST>{location?.name}</ST></p>
             <p className="mt-1 text-[length:var(--text-body)] text-slate-500">
               <ST>Este ajuste modifica únicamente el stock de este punto de venta.</ST>
             </p>
@@ -91,7 +97,7 @@ export function PointOfSaleStockEditor({ open, location, product, stockRecord, o
               required
             />
             <span id="pos-stock-help" className="text-[length:var(--text-body)] font-normal text-slate-500">
-              Usa un número entero entre 0 y {MAX_STOCK}.
+              <ST>{`Usa un número entero entre 0 y ${MAX_STOCK}.`}</ST>
             </span>
           </label>
           <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700">
@@ -113,7 +119,7 @@ export function PointOfSaleStockEditor({ open, location, product, stockRecord, o
           </label>
           {message ? (
             <p id="pos-stock-error" className="text-[length:var(--text-body)] text-red-600" role="alert" aria-live="assertive">
-              {message}
+              <ST>{message}</ST>
             </p>
           ) : null}
           <div className="border-t border-slate-100 pt-4">

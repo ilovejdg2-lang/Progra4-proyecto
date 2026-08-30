@@ -11,7 +11,22 @@ function textoPlano(children) {
   return "";
 }
 
-/** Texto ES→EN automático según idioma. */
-export function ST({ children }) {
-  return useTraducir(textoPlano(children));
+/** Texto ES→EN automático según idioma. Nunca con subrayado. */
+export function ST({ children, className = "" }) {
+  const texto = useTraducir(textoPlano(children));
+  return (
+    <span
+      className={["st-texto", className].filter(Boolean).join(" ")}
+      style={{
+        textDecoration: "none",
+        textDecorationLine: "none",
+        textUnderlineOffset: 0,
+        borderBottom: "none",
+        boxShadow: "none",
+      }}
+      spellCheck={false}
+    >
+      {texto}
+    </span>
+  );
 }

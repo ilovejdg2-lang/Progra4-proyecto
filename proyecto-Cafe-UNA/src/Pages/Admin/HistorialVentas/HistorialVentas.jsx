@@ -16,6 +16,7 @@ import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { ST } from "../../../Components/T/ST";
 import { t } from "../../../lib/t";
+import { useTraducir } from "../../../hooks/useTraducir";
 
 function formatCRC(value) {
   return new Intl.NumberFormat("es-CR", {
@@ -27,30 +28,30 @@ function formatCRC(value) {
 
 function formatFecha(fecha) {
   const valor = new Date(fecha);
-  if (Number.isNaN(valor.getTime())) return "Sin fecha";
+  if (Number.isNaN(valor.getTime())) return t("Sin fecha");
   return valor.toLocaleString("es-CR", { dateStyle: "short", timeStyle: "short" });
 }
 
 function normalizarEstadoUi(estadoRaw) {
-  const estado = String(estadoRaw || "Pendiente");
+  const estado = String(estadoRaw || "Pendiente").trim();
   if (estado === "Aprobado" || estado === "Aprobada") return "Aceptado";
   if (estado === "Recibido" || estado === "Enviada" || estado === "Pagado") return "Enviado";
   if (estado === "Rechazada") return "Rechazado";
   return estado;
 }
 
-function claseEstado(estado) {
-  switch (estado) {
+function badgeEstado(estadoRaw) {
+  switch (normalizarEstadoUi(estadoRaw)) {
     case "Pendiente":
-      return "text-amber-700";
+      return "bg-amber-50 text-amber-800";
     case "Aceptado":
-      return "text-sky-700";
+      return "bg-sky-50 text-sky-800";
     case "Enviado":
-      return "text-green-700";
+      return "bg-emerald-50 text-emerald-800";
     case "Rechazado":
-      return "text-red-600";
+      return "bg-rose-50 text-rose-800";
     default:
-      return "text-slate-700";
+      return "bg-slate-100 text-slate-700";
   }
 }
 
@@ -79,6 +80,20 @@ function mapLocalVenta(venta) {
       subtotal: item.total || 0,
     })),
   };
+}
+
+function BadgeEstadoCompra({ estado }) {
+  const normalizado = normalizarEstadoUi(estado);
+  const etiqueta = useTraducir(normalizado);
+  return (
+    <span
+      className={`admin-chip-estado inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeEstado(normalizado)}`}
+      style={{ textDecoration: "none", textDecorationLine: "none" }}
+      spellCheck={false}
+    >
+      {etiqueta}
+    </span>
+  );
 }
 
 export default function HistorialVentas() {
@@ -174,7 +189,7 @@ export default function HistorialVentas() {
 
   if (!puedeVer) {
     return (
-      <AdminPageGate showLoading={showLoading} loadingMessage={loadingMessage}>
+      <AdminPageGate showLoading={showLoading} message={loadingMessage}>
         <AdminLayout>
           <section className="rounded-2xl border border-slate-200 bg-white px-5 py-14 text-center shadow-sm">
             <h1 className="text-[length:var(--text-title)] font-semibold text-slate-950"><ST>Acceso restringido</ST></h1>
@@ -187,17 +202,24 @@ export default function HistorialVentas() {
     );
   }
 
+  const estadoDetalle = normalizarEstadoUi(detalle?.estado);
+  const editableDetalle =
+    detalle?.editable ??
+    (estadoDetalle === "Pendiente" || estadoDetalle === "Aceptado" || estadoDetalle === "Rechazado");
+
   return (
-    <AdminPageGate showLoading={showLoading} loadingMessage={loadingMessage}>
+    <AdminPageGate showLoading={showLoading} message={loadingMessage}>
       <AdminLayout>
         <div className="space-y-4">
           <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
               <h1 className="text-[length:var(--text-title)] font-semibold text-slate-900"><ST>Historial de ventas</ST></h1>
               <p className="mt-1 text-[length:var(--text-body)] text-slate-500">
-                <ST>Pendiente: aceptá o rechazá. Aceptado: enviá o volvé a pendiente (se restaura el stock). Enviado ya no se edita.</ST>
+                <ST>
+                  Pendiente: aceptá o rechazá. Aceptado: enviá o volvé a pendiente (se restaura el stock). Enviado ya no se edita.
+                </ST>
               </p>
-              {error ? <p className="mt-2 text-[length:var(--text-body)] text-slate-700 no-underline"><ST>{error}</ST></p> : null}
+              {error ? <p className="mt-2 text-[length:var(--text-body)] text-amber-700 no-underline"><ST>{error}</ST></p> : null}
             </div>
 
             <div className="grid gap-3 border-b border-slate-100 px-4 py-4 sm:grid-cols-3 sm:px-6">
@@ -270,14 +292,12 @@ export default function HistorialVentas() {
                     {compras.map((compra) => (
                       <tr key={compra.id || compra.numero} className="border-b border-slate-100 last:border-b-0">
                         <td className="px-6 py-4 font-medium text-slate-900">{compra.numero}</td>
-                        <td className="px-6 py-4 text-slate-600">{formatFecha(compra.fecha)}</td>
+                        <td className="px-6 py-4 text-slate-600"><ST>{formatFecha(compra.fecha)}</ST></td>
                         <td className="px-6 py-4 text-slate-700">{compra.clienteNombre}</td>
                         <td className="px-6 py-4 text-slate-700">{compra.cantidadProductos}</td>
                         <td className="px-6 py-4 text-slate-800">{formatCRC(compra.total)}</td>
                         <td className="px-6 py-4">
-                          <span className={`text-[length:var(--text-body)] font-semibold no-underline ${claseEstado(compra.estado)}`}>
-                            <ST>{compra.estado}</ST>
-                          </span>
+                          <BadgeEstadoCompra estado={compra.estado} />
                         </td>
                         <td className="px-6 py-4">
                           <button
@@ -318,22 +338,34 @@ export default function HistorialVentas() {
             </AdminModalHeader>
             <AdminModalBody>
               {actionError ? (
-                <p className="mb-3 text-[length:var(--text-body)] text-slate-700 no-underline" role="alert"><ST>{actionError}</ST></p>
+                <p className="mb-3 text-[length:var(--text-body)] text-rose-700 no-underline" role="alert"><ST>{actionError}</ST></p>
               ) : null}
               <dl className="grid gap-2 text-[length:var(--text-body)]">
-                <div className="flex justify-between gap-3 border-b border-slate-100 py-2"><dt className="text-slate-500"><ST>Cliente</ST></dt><dd className="font-medium text-slate-900">{detalle.clienteNombre}</dd></div>
-                <div className="flex justify-between gap-3 border-b border-slate-100 py-2"><dt className="text-slate-500"><ST>Fecha</ST></dt><dd className="font-medium text-slate-900">{formatFecha(detalle.fecha)}</dd></div>
-                <div className="flex justify-between gap-3 border-b border-slate-100 py-2"><dt className="text-slate-500"><ST>Método</ST></dt><dd className="font-medium text-slate-900">{detalle.metodoPago}</dd></div>
+                <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+                  <dt className="text-slate-500"><ST>Cliente</ST></dt>
+                  <dd className="font-medium text-slate-900 no-underline">{detalle.clienteNombre}</dd>
+                </div>
+                <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+                  <dt className="text-slate-500"><ST>Fecha</ST></dt>
+                  <dd className="font-medium text-slate-900 no-underline"><ST>{formatFecha(detalle.fecha)}</ST></dd>
+                </div>
+                <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+                  <dt className="text-slate-500"><ST>Método</ST></dt>
+                  <dd className="font-medium text-slate-900 no-underline"><ST>{detalle.metodoPago}</ST></dd>
+                </div>
                 <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
                   <dt className="text-slate-500"><ST>Estado</ST></dt>
-                  <dd className={`font-semibold no-underline ${claseEstado(detalle.estado)}`}><ST>{detalle.estado}</ST></dd>
+                  <dd><BadgeEstadoCompra estado={detalle.estado} /></dd>
                 </div>
               </dl>
               <ul className="mt-4 space-y-2 text-[length:var(--text-body)]">
                 {(detalle.items || []).map((item, index) => (
                   <li key={`${item.nombre}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                    <div className="flex justify-between gap-3"><span className="font-medium"><ST>{item.nombre}</ST></span><span className="font-semibold">{formatCRC(item.subtotal)}</span></div>
-                    <p className="mt-1 text-slate-500">{item.cantidad} × {formatCRC(item.precioUnitario)}</p>
+                    <div className="flex justify-between gap-3">
+                      <span className="font-medium no-underline"><ST>{item.nombre}</ST></span>
+                      <span className="font-semibold">{formatCRC(item.subtotal)}</span>
+                    </div>
+                    <p className="mt-1 text-[length:var(--text-body)] text-slate-500">{item.cantidad} × {formatCRC(item.precioUnitario)}</p>
                   </li>
                 ))}
               </ul>
@@ -349,13 +381,13 @@ export default function HistorialVentas() {
                 </p>
               ) : null}
 
-              {!detalle.editable ? (
+              {!editableDetalle ? (
                 <p className="mt-3 inline-flex items-center gap-2 text-[length:var(--text-body)] text-slate-500">
                   <PackageCheck className="size-4" /> <ST>Pedido cerrado: ya no se puede editar.</ST>
                 </p>
               ) : null}
 
-              {puedeGestionar && detalle.estado === "Pendiente" ? (
+              {puedeGestionar && estadoDetalle === "Pendiente" ? (
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -376,7 +408,7 @@ export default function HistorialVentas() {
                 </div>
               ) : null}
 
-              {puedeGestionar && detalle.estado === "Aceptado" ? (
+              {puedeGestionar && estadoDetalle === "Aceptado" ? (
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -397,7 +429,7 @@ export default function HistorialVentas() {
                 </div>
               ) : null}
 
-              {puedeGestionar && detalle.estado === "Rechazado" ? (
+              {puedeGestionar && estadoDetalle === "Rechazado" ? (
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
                     type="button"

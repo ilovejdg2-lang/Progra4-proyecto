@@ -4,8 +4,10 @@ import {
   AdminListaToolbar,
   AdminListaVacia,
 } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
+import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
 import { moduloDePermiso } from "./permisosModulos";
@@ -79,6 +81,13 @@ export function PermisosMatriz({
   const hayFiltrosActivos = filtroModulo !== "todos" || busqueda.trim() !== "";
   const tGuardando = useTraducir("Guardando…");
   const tGuardarMatriz = useTraducir("Guardar matriz");
+  const {
+    page,
+    setPage,
+    pageItems,
+    totalPages,
+    showPagination,
+  } = useAdminPaginacion(filtrados);
 
   const limpiar = () => {
     setBusqueda("");
@@ -147,65 +156,76 @@ export function PermisosMatriz({
           onLimpiar={hayFiltrosActivos ? limpiar : undefined}
         />
       ) : (
-        <div className="overflow-x-auto px-2 pb-4 sm:px-4">
-          <table className="min-w-full border-collapse text-left text-[length:var(--text-body)]">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/90">
-                <th className="sticky left-0 z-10 bg-slate-50 px-3 py-3 font-semibold text-slate-500">
-                  <ST>Acción</ST>
-                </th>
-                    {(roles || []).map((rol) => (
-                  <th
-                    key={rol}
-                    className="min-w-[5.5rem] px-2 py-3 text-center font-semibold text-slate-600"
-                  >
-                    <ST>{rol}</ST>
+        <>
+          <div className="overflow-x-auto px-2 pb-4 sm:px-4">
+            <table className="min-w-full border-collapse text-left text-[length:var(--text-body)]">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/90">
+                  <th className="sticky left-0 z-10 bg-slate-50 px-3 py-3 font-semibold text-slate-500">
+                    <ST>Acción</ST>
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtrados.map((p) => {
-                const meta = p.modulo || moduloDePermiso(p);
-                if (!meta) return null;
-                const Icon = meta.Icon;
-                return (
-                  <tr
-                    key={p.codigo}
-                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"
-                  >
-                    <td className="sticky left-0 z-10 bg-white px-3 py-2.5">
-                      <div className="flex min-w-[14rem] items-start gap-3">
-                        <span className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700">
-                          <Icon className="size-4" />
-                        </span>
-                        <div>
-                          <p className="font-semibold text-slate-900"><ST>{p.nombre}</ST></p>
-                          <p className="text-slate-400"><ST>{meta.label}</ST></p>
+                  {(roles || []).map((rol) => (
+                    <th
+                      key={rol}
+                      className="min-w-[5.5rem] px-2 py-3 text-center font-semibold text-slate-600"
+                    >
+                      <ST>{rol}</ST>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {pageItems.map((p) => {
+                  const meta = p.modulo || moduloDePermiso(p);
+                  if (!meta) return null;
+                  const Icon = meta.Icon;
+                  return (
+                    <tr
+                      key={p.codigo}
+                      className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"
+                    >
+                      <td className="sticky left-0 z-10 bg-white px-3 py-2.5">
+                        <div className="flex min-w-[14rem] items-start gap-3">
+                          <span className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+                            <Icon className="size-4" />
+                          </span>
+                          <div>
+                            <p className="font-semibold text-slate-900"><ST>{p.nombre}</ST></p>
+                            <p className="text-slate-400"><ST>{meta.label}</ST></p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    {(roles || []).map((rol) => {
-                      const activo = (matrizLocal[p.codigo] || []).includes(rol);
-                      return (
-                        <td
-                          key={`${p.codigo}-${rol}`}
-                          className="px-2 py-2 text-center align-middle"
-                        >
-                          <TogglePermiso
-                            activo={activo}
-                            onClick={() => onToggle(p.codigo, rol)}
-                            label={`${p.nombre} — ${rol}`}
-                          />
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                      {(roles || []).map((rol) => {
+                        const activo = (matrizLocal[p.codigo] || []).includes(rol);
+                        return (
+                          <td
+                            key={`${p.codigo}-${rol}`}
+                            className="px-2 py-2 text-center align-middle"
+                          >
+                            <TogglePermiso
+                              activo={activo}
+                              onClick={() => onToggle(p.codigo, rol)}
+                              label={`${p.nombre} — ${rol}`}
+                            />
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {showPagination ? (
+            <AdminPaginacion
+              page={page}
+              totalPages={totalPages}
+              total={filtrados.length}
+              onChange={setPage}
+              label="Paginación de permisos"
+            />
+          ) : null}
+        </>
       )}
     </section>
   );

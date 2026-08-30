@@ -156,6 +156,31 @@ body.admin-route-active #root {
   background: #fafafa;
 }
 
+/* Traducciones ST: nunca subrayadas (ni en chips de estado) */
+.st-texto,
+.st-texto * {
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+  text-underline-offset: 0 !important;
+  text-decoration-thickness: 0 !important;
+  -webkit-text-decoration-line: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+/* Chips de estado admin: el subrayado del ancestro no debe atravesar el texto */
+.admin-chip-estado,
+.admin-chip-estado .st-texto,
+.admin-chip-estado span {
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+  text-underline-offset: 0 !important;
+  text-decoration-thickness: 0 !important;
+  -webkit-text-decoration-line: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
 /* Tablas admin: no desbordan el ancho; scroll horizontal si hace falta */
 .admin-table-shell {
   width: 100%;
@@ -204,9 +229,11 @@ body.admin-route-active #root {
 .admin-table-shell tbody td span,
 .admin-table-shell tbody td button,
 .admin-table-shell tbody td a,
-.admin-table-shell tbody td label {
+.admin-table-shell tbody td label,
+.admin-table-shell tbody td .st-texto {
   font-size: var(--text-body);
-  text-decoration: none;
+  text-decoration: none !important;
+  text-decoration-line: none !important;
 }
 
 .admin-table-shell thead th:first-child,

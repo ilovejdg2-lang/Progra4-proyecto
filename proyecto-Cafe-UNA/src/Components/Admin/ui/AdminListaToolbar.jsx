@@ -140,18 +140,16 @@ export function AdminListaToolbar({
 }
 
 export function AdminListaVacia({ mensaje = "No hay resultados con los filtros actuales.", onLimpiar }) {
-  const tMensaje = useTraducir(mensaje);
-  const tLimpiar = useTraducir("Limpiar filtros");
   return (
     <div className="px-4 py-12 text-center sm:px-6">
-      <p className="text-[length:var(--text-body)] text-slate-500">{tMensaje}</p>
+      <p className="text-[length:var(--text-body)] text-slate-500"><ST>{mensaje}</ST></p>
       {onLimpiar ? (
         <button
           type="button"
           onClick={onLimpiar}
           className="mt-3 text-[length:var(--text-body)] font-semibold text-slate-800 underline-offset-2 hover:underline"
         >
-          {tLimpiar}
+          <ST>Limpiar filtros</ST>
         </button>
       ) : null}
     </div>

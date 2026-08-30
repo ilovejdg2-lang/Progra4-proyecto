@@ -5,6 +5,7 @@ import {
 } from "../../lib/brandLogoCache";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { obtenerNavbar } from "../../services/informacionService";
+import { ST } from "../T/ST";
 import "./BrandLoader.css";
 
 function pickNavbarLogo(navbar) {
@@ -80,8 +81,16 @@ export default function BrandLoader({
       <BrandLoaderLogo />
       {showSpinner ? <span className="brand-loader__spinner" aria-hidden="true" /> : null}
       <div className="brand-loader__copy">
-        {message ? <p className="brand-loader__message">{message}</p> : null}
-        {detail ? <p className="brand-loader__detail">{detail}</p> : null}
+        {message ? (
+          <p className="brand-loader__message">
+            {typeof message === "string" ? <ST>{message}</ST> : message}
+          </p>
+        ) : null}
+        {detail ? (
+          <p className="brand-loader__detail">
+            {typeof detail === "string" ? <ST>{detail}</ST> : detail}
+          </p>
+        ) : null}
         {children}
       </div>
     </div>

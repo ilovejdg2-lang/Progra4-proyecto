@@ -1,5 +1,6 @@
 import { Component } from "react";
 import { Link } from "@tanstack/react-router";
+import { textoIdioma } from "../../lib/idioma";
 import "./ErrorBoundary.css";
 
 export class ErrorBoundary extends Component {
@@ -29,23 +30,24 @@ export class ErrorBoundary extends Component {
       return this.props.children;
     }
 
-    const mensaje =
+    const mensaje = textoIdioma(
       this.props.message ||
-      "Algo salió mal al mostrar esta sección. Podés recargar o volver al inicio.";
+        "Algo salió mal al mostrar esta sección. Podés recargar o volver al inicio.",
+    );
 
     return (
       <main className="error-boundary site-canvas" role="alert" aria-labelledby="error-boundary-title">
-        <p className="error-boundary__eyebrow">Error</p>
+        <p className="error-boundary__eyebrow">{textoIdioma("Error")}</p>
         <h1 id="error-boundary-title" className="error-boundary__title">
-          No se pudo cargar la página
+          {textoIdioma("No se pudo cargar la página")}
         </h1>
         <p className="error-boundary__text">{mensaje}</p>
         <div className="error-boundary__actions">
           <button type="button" className="error-boundary__button" onClick={this.handleReload}>
-            Recargar
+            {textoIdioma("Recargar")}
           </button>
           <Link to="/" className="error-boundary__button error-boundary__button--ghost" onClick={this.handleReset}>
-            Ir al inicio
+            {textoIdioma("Ir al inicio")}
           </Link>
         </div>
       </main>

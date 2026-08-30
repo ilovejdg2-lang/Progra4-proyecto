@@ -23,6 +23,7 @@ import {
   crearProducto,
 } from "../../../services/productosService";
 import { asegurarCamposEnEspanol } from "../../../lib/traducir";
+import { t } from "../../../lib/t";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { obtenerCategorias } from "../../../services/categoriasService";
 import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
@@ -240,14 +241,14 @@ const AdminInventarioProducto = () => {
 
   const handleToggleEstado = async (producto) => {
     if (!puedeInactivar) {
-      alert("No tiene permiso para habilitar o inhabilitar productos.");
+      alert(t("No tiene permiso para habilitar o inhabilitar productos."));
       return;
     }
 
     const nuevoEstado = producto.estado === "Deshabilitado" ? "Habilitado" : "Deshabilitado";
 
     if (nuevoEstado === "Deshabilitado" && !productoPuedeDeshabilitarse(producto)) {
-      alert("Quita el producto de destacados antes de deshabilitarlo.");
+      alert(t("Quita el producto de destacados antes de deshabilitarlo."));
       return;
     }
 
@@ -258,22 +259,22 @@ const AdminInventarioProducto = () => {
       });
       await catalogState.retry();
     } catch (err) {
-      alert(err?.message || "No se pudo cambiar el estado del producto.");
+      alert(t(err?.message || "No se pudo cambiar el estado del producto."));
     }
   };
 
   const handleToggleDestacado = async (producto) => {
     if (!producto.esDestacado) {
       if (contarDestacados(productos) >= MAX_PRODUCTOS_DESTACADOS) {
-        alert(`Solo puedes destacar hasta ${MAX_PRODUCTOS_DESTACADOS} productos en el inicio.`);
+        alert(t(`Solo puedes destacar hasta ${MAX_PRODUCTOS_DESTACADOS} productos en el inicio.`));
         return;
       }
 
       if (!productoPuedeDestacarse(producto)) {
         if (productoEstaDeshabilitado(producto)) {
-          alert("No puedes destacar un producto deshabilitado.");
+          alert(t("No puedes destacar un producto deshabilitado."));
         } else {
-          alert("No puedes destacar un producto sin stock.");
+          alert(t("No puedes destacar un producto sin stock."));
         }
         return;
       }
@@ -285,7 +286,7 @@ const AdminInventarioProducto = () => {
       });
       await catalogState.retry();
     } catch (err) {
-      alert(err?.message || "No se pudo cambiar el estado destacado.");
+      alert(t(err?.message || "No se pudo cambiar el estado destacado."));
     }
   };
 

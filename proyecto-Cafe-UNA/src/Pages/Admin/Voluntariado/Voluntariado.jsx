@@ -45,6 +45,8 @@ import {
 import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
+import { useIdioma } from "../../../lib/useIdioma";
+import { asegurarCamposEnEspanol, camposParaVistaAdmin } from "../../../lib/traducir";
 
 const ESTADOS = ["Pendiente", "En revisi\u00f3n", "Aprobado", "Rechazado"];
 
@@ -54,6 +56,14 @@ const TIPOS_VOLUNTARIADO = [
   "Investigaci\u00f3n Acad\u00e9mica",
   "Actividades de limpieza y mantenimiento",
   "Otro",
+];
+
+/** Valores frecuentes de horario (se guardan en español; UiSelect los muestra traducidos). */
+const HORARIOS_VOLUNTARIADO = [
+  "Horario flexible",
+  "Lunes a viernes, 8:00 a. m. a 12:00 p. m.",
+  "Lunes a viernes, 1:00 p. m. a 5:00 p. m.",
+  "Lunes a viernes, 8:00 a. m. a 5:00 p. m.",
 ];
 
 const accionBtnBase =
@@ -103,9 +113,14 @@ function claseEstado(estado) {
 
 function BadgeEstado({ estado }) {
   const estadoNormalizado = normalizarEstado(estado);
+  const etiqueta = useTraducir(estadoNormalizado);
   return (
-    <span className={`text-[length:var(--text-body)] font-semibold ${claseEstado(estadoNormalizado)}`}>
-      <ST>{estadoNormalizado}</ST>
+    <span
+      className={`admin-chip-estado text-[length:var(--text-body)] font-semibold ${claseEstado(estadoNormalizado)}`}
+      style={{ textDecoration: "none", textDecorationLine: "none" }}
+      spellCheck={false}
+    >
+      {etiqueta}
     </span>
   );
 }
@@ -116,9 +131,18 @@ const CAMPOS_EDITABLES = [
   { name: "identificacion", label: "Identificaci\u00f3n" },
   { name: "institucion", label: "Instituci\u00f3n educativa" },
   { name: "pais", label: "Pa\u00eds de residencia" },
-  { name: "tipoVoluntariado", label: "Tipo de voluntariado" },
-  { name: "horario", label: "Horario y disponibilidad" },
 ];
+
+/** Contenido descriptivo ES en BD; no nombres de persona ni contactos. */
+const CAMPOS_TEXTO_VOL = ["institucion", "pais", "observacionesAdmin"];
+
+function opcionesConValorActual(lista, valorActual) {
+  const actual = String(valorActual || "").trim();
+  const base = lista.map((item) => ({ value: item, label: item }));
+  if (!actual) return base;
+  if (lista.some((item) => item === actual)) return base;
+  return [{ value: actual, label: actual }, ...base];
+}
 
 function partirNombreCompleto(completo = "") {
   const parts = String(completo || "")
@@ -261,10 +285,26 @@ function AccionesSolicitud({
 
 function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
   useAdminModalLock(true);
+  const { idioma } = useIdioma();
   const [estado, setEstado] = useState(normalizarEstado(solicitud.estado));
   const [observacionesAdmin, setObservacionesAdmin] = useState(solicitud.observacionesAdmin || "");
   const [guardando, setGuardando] = useState(false);
   const esGrupal = solicitud.modalidad === "grupal";
+
+  useEffect(() => {
+    let cancelado = false;
+    const base = { observacionesAdmin: solicitud.observacionesAdmin || "" };
+    setEstado(normalizarEstado(solicitud.estado));
+    setObservacionesAdmin(base.observacionesAdmin);
+    if (idioma !== "en") return undefined;
+    (async () => {
+      const vista = await camposParaVistaAdmin(base, ["observacionesAdmin"], idioma);
+      if (!cancelado) setObservacionesAdmin(vista.observacionesAdmin || "");
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [solicitud, idioma]);
 
   const btnEstadoBase = `${accionBtnBase} px-3 py-2 disabled:cursor-not-allowed disabled:opacity-50`;
   const btnRevision = `${btnEstadoBase} border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-300`;
@@ -274,9 +314,13 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
   const guardarCambios = async (nuevoEstado = estado) => {
     setGuardando(true);
     try {
+      const textoEs = await asegurarCamposEnEspanol(
+        { observacionesAdmin },
+        ["observacionesAdmin"],
+      );
       await onGuardar(solicitud.id, {
         estado: nuevoEstado,
-        observacionesAdmin,
+        observacionesAdmin: textoEs.observacionesAdmin,
       });
       onCerrar();
     } finally {
@@ -345,8 +389,8 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
               <DetailField icon={Mail} label={"Correo electr\u00f3nico"} value={solicitud.email} />
               <DetailField icon={Phone} label={"Tel\u00e9fono"} value={solicitud.telefono} />
               <DetailField icon={Hash} label={"Identificaci\u00f3n"} value={solicitud.identificacion} />
-              <DetailField icon={GraduationCap} label={"Instituci\u00f3n educativa"} value={solicitud.institucion} />
-              <DetailField icon={MapPin} label={"Pa\u00eds de residencia"} value={solicitud.pais} />
+              <DetailField icon={GraduationCap} label={"Instituci\u00f3n educativa"} value={solicitud.institucion} traducirValor />
+              <DetailField icon={MapPin} label={"Pa\u00eds de residencia"} value={solicitud.pais} traducirValor />
               <DetailField
                 icon={Users}
                 label="Modalidad"
@@ -423,9 +467,10 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
 
 function ModalEditar({ solicitud, onGuardar, onCerrar }) {
   useAdminModalLock(true);
+  const { idioma } = useIdioma();
   const partesNombre = partirNombreCompleto(solicitud.nombre);
   const periodo = partirPeriodo(solicitud.dias);
-  const [form, setForm] = useState(() => ({
+  const formBase = () => ({
     estado: normalizarEstado(solicitud.estado),
     nombre: partesNombre.nombre,
     primerApellido: partesNombre.primerApellido,
@@ -442,8 +487,23 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
     modalidad: solicitud.modalidad || "individual",
     cantidadParticipantes: solicitud.cantidadParticipantes || 1,
     observacionesAdmin: solicitud.observacionesAdmin || "",
-  }));
+  });
+  const [form, setForm] = useState(formBase);
   const [guardando, setGuardando] = useState(false);
+
+  useEffect(() => {
+    let cancelado = false;
+    const base = formBase();
+    setForm(base);
+    if (idioma !== "en") return undefined;
+    (async () => {
+      const vista = await camposParaVistaAdmin(base, CAMPOS_TEXTO_VOL, idioma);
+      if (!cancelado) setForm(vista);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [solicitud, idioma]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -456,8 +516,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
       name === "segundoApellido" ||
       name === "institucion" ||
       name === "carrera" ||
-      name === "lugar" ||
-      name === "horario"
+      name === "lugar"
     ) {
       next = limitarPalabras(value, MAX_PALABRAS_TITULO);
     }
@@ -467,22 +526,26 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setGuardando(true);
-    await onGuardar(solicitud.id, {
-      estado: form.estado,
-      nombre: unirNombreCompleto(form),
-      email: form.email,
-      telefono: form.telefono,
-      tipoVoluntariado: form.tipoVoluntariado,
-      identificacion: form.identificacion,
-      institucion: form.institucion,
-      pais: form.pais,
-      horario: form.horario,
-      dias: unirPeriodo(form.fechaInicio, form.fechaFin),
-      modalidad: form.modalidad,
-      cantidadParticipantes: form.cantidadParticipantes,
-      observacionesAdmin: form.observacionesAdmin,
-    });
-    setGuardando(false);
+    try {
+      const textoEs = await asegurarCamposEnEspanol(form, CAMPOS_TEXTO_VOL);
+      await onGuardar(solicitud.id, {
+        estado: form.estado,
+        nombre: unirNombreCompleto(form),
+        email: form.email,
+        telefono: form.telefono,
+        tipoVoluntariado: form.tipoVoluntariado,
+        identificacion: form.identificacion,
+        institucion: textoEs.institucion,
+        pais: textoEs.pais,
+        horario: form.horario,
+        dias: unirPeriodo(form.fechaInicio, form.fechaFin),
+        modalidad: form.modalidad,
+        cantidadParticipantes: form.cantidadParticipantes,
+        observacionesAdmin: textoEs.observacionesAdmin,
+      });
+    } finally {
+      setGuardando(false);
+    }
   };
 
   return createPortal(
@@ -567,7 +630,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
             </label>
 
             {CAMPOS_EDITABLES.map((campo) => (
-              <label key={campo.name} className={`grid gap-2 text-sm font-medium text-slate-700 ${campo.name === "horario" ? "md:col-span-2" : ""}`}>
+              <label key={campo.name} className="grid gap-2 text-sm font-medium text-slate-700">
                 <ST>{campo.label}</ST>
                 {campo.name === "telefono" ? (
                   <NumericInput
@@ -588,6 +651,26 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
                 )}
               </label>
             ))}
+
+            <div className="grid gap-2 text-sm font-medium text-slate-700">
+              <ST>Tipo de voluntariado</ST>
+              <UiSelect
+                ariaLabel={t("Tipo de voluntariado")}
+                value={form.tipoVoluntariado || TIPOS_VOLUNTARIADO[0]}
+                onChange={(valor) => handleChange({ target: { name: "tipoVoluntariado", value: valor } })}
+                options={opcionesConValorActual(TIPOS_VOLUNTARIADO, form.tipoVoluntariado)}
+              />
+            </div>
+
+            <div className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
+              <ST>Horario y disponibilidad</ST>
+              <UiSelect
+                ariaLabel={t("Horario y disponibilidad")}
+                value={form.horario || HORARIOS_VOLUNTARIADO[0]}
+                onChange={(valor) => handleChange({ target: { name: "horario", value: valor } })}
+                options={opcionesConValorActual(HORARIOS_VOLUNTARIADO, form.horario)}
+              />
+            </div>
 
             <label className="grid gap-2 text-sm font-medium text-slate-700">
               <ST>Fecha de inicio</ST>
@@ -761,18 +844,20 @@ const AdminVoluntariado = () => {
       setViendo(null);
       window.dispatchEvent(new Event("voluntariado-updated"));
     } catch (err) {
-      alert("Error al actualizar la solicitud. Intent\u00e1 de nuevo.");
+      alert(t("Error al actualizar la solicitud. Intentá de nuevo."));
       console.error(err);
     }
   };
 
   const handleEliminar = async (solicitud) => {
     if (!esSuperAdmin) {
-      alert("Solo SuperAdmin puede eliminar solicitudes de voluntariado.");
+      alert(t("Solo SuperAdmin puede eliminar solicitudes de voluntariado."));
       return;
     }
 
-    const confirmar = window.confirm(`\u00bfDese\u00e1s eliminar la solicitud de ${solicitud.nombre || "esta persona"}?`);
+    const confirmar = window.confirm(
+      t(`\u00bfDese\u00e1s eliminar la solicitud de ${solicitud.nombre || "esta persona"}?`),
+    );
     if (!confirmar) return;
 
     setEliminando(solicitud.id);
@@ -781,7 +866,7 @@ const AdminVoluntariado = () => {
       setSolicitudes((prev) => prev.filter((item) => item.id !== solicitud.id));
       window.dispatchEvent(new Event("voluntariado-updated"));
     } catch (err) {
-      alert("Error al eliminar la solicitud. Intent\u00e1 de nuevo.");
+      alert(t("Error al eliminar la solicitud. Intentá de nuevo."));
       console.error(err);
     } finally {
       setEliminando(null);
