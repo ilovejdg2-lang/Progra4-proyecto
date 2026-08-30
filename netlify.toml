@@ -1,18 +1,18 @@
-# Café UNA — sitio Netlify (usar con Base directory = proyecto-Cafe-UNA)
+# Café UNA — Netlify (monorepo)
 # Sitio activo: https://cafeunaing.netlify.app
-# También hay netlify.toml en la raíz del monorepo por si Netlify construye desde ahí.
+# El frontend vive en proyecto-Cafe-UNA/; este archivo evita el 404
+# cuando Netlify construye desde la raíz del repo.
 
 [build]
+  base = "proyecto-Cafe-UNA"
   command = "npm run build"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"
-  # BACKEND_URL: configurar en Netlify → Environment variables (no commitear en el repo)
+  # BACKEND_URL: Site configuration → Environment variables (URL del API + /api)
 
-# El proxy /api/* se genera en public/_redirects durante npm run build (scripts/generate-redirects.mjs)
-
-# React Router / TanStack Router — SPA fallback (debe ir al final)
+# SPA fallback (TanStack Router)
 [[redirects]]
   from = "/*"
   to = "/index.html"
