@@ -1,6 +1,7 @@
 import { useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { finishAdminBootLoading, removeAdminBootLoading } from '../../lib/siteBootLoading';
+import { isRouteLoadingLocked } from '../../lib/routeLoadingLock';
+import BrandLoader from '../PageLoading/BrandLoader';
 
 let activeAdminLoaders = 0;
 
@@ -11,14 +12,17 @@ function addAdminRouteLoading() {
 
 function removeAdminRouteLoading() {
   activeAdminLoaders = Math.max(activeAdminLoaders - 1, 0);
-  if (activeAdminLoaders === 0) {
-    document.body.classList.remove('admin-route-loading-active');
-  }
+  if (activeAdminLoaders > 0) return;
+  if (isRouteLoadingLocked()) return;
+  document.body.classList.remove('admin-route-loading-active');
 }
 
 const AdminRouteLoading = ({ message = 'Cargando panel administrativo...' }) => {
+  if (typeof document !== 'undefined') {
+    document.body.classList.add('admin-route-loading-active');
+  }
+
   useLayoutEffect(() => {
-    removeAdminBootLoading();
     addAdminRouteLoading();
 
     return () => {
@@ -28,8 +32,7 @@ const AdminRouteLoading = ({ message = 'Cargando panel administrativo...' }) => 
 
   return createPortal(
     <div className="admin-route-loading admin-route-loading--overlay" role="status" aria-live="polite">
-      <span className="admin-route-loading__spinner" aria-hidden="true" />
-      <p>{message}</p>
+      <BrandLoader message={message} tone="admin" />
     </div>,
     document.body,
   );

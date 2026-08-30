@@ -1,4 +1,5 @@
 import { useLayoutEffect, useState } from 'react';
+import { endRouteLoading } from '../lib/routeLoadingLock';
 import { isPageInstantReady, markPageRevealed } from '../lib/pageSessionState';
 
 /**
@@ -11,7 +12,10 @@ export function usePublicPageLoadingGate(cacheKey, isReady) {
   const [revealed, setRevealed] = useState(instant);
 
   useLayoutEffect(() => {
-    if (instant) return undefined;
+    if (instant) {
+      endRouteLoading(cacheKey);
+      return undefined;
+    }
 
     if (!isReady) {
       setRevealed(false);
@@ -24,6 +28,7 @@ export function usePublicPageLoadingGate(cacheKey, isReady) {
       requestAnimationFrame(() => {
         if (cancelled) return;
         markPageRevealed(cacheKey);
+        endRouteLoading(cacheKey);
         setRevealed(true);
       });
     });
