@@ -35,6 +35,7 @@ const AdminInventarioProducto = lazy(() => import("./Pages/Admin/InventarioProdu
 const AdminPuntosVenta = lazy(() => import("./Pages/Admin/PuntosVenta/PuntosVenta"));
 const AdminActivosFijos = lazy(() => import("./Pages/Admin/ActivosFijos/ActivosFijos"));
 const AdminDistribucion = lazy(() => import("./Pages/Admin/Distribucion/Distribucion"));
+const AdminVentasPresenciales = lazy(() => import("./Pages/Admin/VentasPresenciales/VentasPresenciales"));
 const AdminVoluntariado = lazy(() => import("./Pages/Admin/Voluntariado/Voluntariado"));
 const AdminUsuarios = lazy(() => import("./Pages/Admin/Usuarios/Usuarios"));
 const AdminHistorialVentas = lazy(() => import("./Pages/Admin/HistorialVentas/HistorialVentas"));
@@ -258,6 +259,11 @@ const adminDistribucionRoute = createRoute({
     path: "/admin/distribucion",
     component: AdminDistribucion,
 })
+const adminVentasPresencialesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/ventas-presenciales",
+    component: AdminVentasPresenciales,
+})
 const adminVoluntariadoRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/voluntariado",
@@ -352,6 +358,7 @@ const routeTree= rootRoute.addChildren([
     adminPuntosVentaRoute,
     adminActivosFijosRoute,
     adminDistribucionRoute,
+    adminVentasPresencialesRoute,
     adminHistorialVentasRoute,
     adminVoluntariadoRoute,
     adminUsuariosRoute,
