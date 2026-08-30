@@ -134,6 +134,10 @@ const DICCIONARIO = {
   "Ej. Costa Rica": "e.g. Costa Rica",
 
   // Iniciativas (copy frecuente)
+  "Cada aporte, visita o colaboración deja una huella especial.":
+    "Every contribution, visit or collaboration leaves a special mark.",
+  "Elegí cómo querés involucrarte con el Café UNA y completá el formulario correspondiente.":
+    "Choose how you want to get involved with Café UNA and complete the matching form.",
   "Cada aporte transforma una vida": "Every contribution transforms a life",
   "Tu contribución financia iniciativas sostenibles, investigaciones y programas de bienestar que impactan a toda la comunidad universitaria.":
     "Your contribution funds sustainable initiatives, research and wellness programs that impact the whole university community.",
