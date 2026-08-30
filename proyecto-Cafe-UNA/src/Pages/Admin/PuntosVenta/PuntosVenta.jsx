@@ -142,7 +142,7 @@ const AdminPuntosVenta = () => {
     </section>
   ) : locationsState.error ? (
     <section className="flex min-h-[360px] flex-col items-center justify-center gap-3 rounded-2xl border border-amber-200 bg-white px-5 text-center">
-      <p className="text-sm font-semibold text-red-700">{locationsState.error.message}</p>
+      <p className="text-sm font-semibold text-red-700"><ST>{locationsState.error.message}</ST></p>
       <button type="button" onClick={locationsState.retry} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-amber-800 bg-amber-800 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
         <RefreshCw className="size-4" aria-hidden="true" />
         <ST>Reintentar</ST>
@@ -197,7 +197,7 @@ const AdminPuntosVenta = () => {
           <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500"><ST>Inventario por ubicación</ST></p>
-              <h2 className="mt-1 text-lg font-semibold text-slate-950">{selectedLocation.name}</h2>
+              <h2 className="mt-1 text-lg font-semibold text-slate-950"><ST>{selectedLocation.name}</ST></h2>
               <p className="mt-1 text-sm text-slate-500">
                 {selectedIsActive
                   ? <ST>Stock independiente de Bodega Central.</ST>
@@ -217,12 +217,12 @@ const AdminPuntosVenta = () => {
             </div>
           ) : catalogState.error ? (
             <div className="px-5 py-8 text-center">
-              <p className="text-sm font-semibold text-red-600">{catalogState.error.message}</p>
+              <p className="text-sm font-semibold text-red-600"><ST>{catalogState.error.message}</ST></p>
               <button type="button" onClick={catalogState.retry} className="mt-3 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"><ST>Reintentar catálogo</ST></button>
             </div>
           ) : stockState.error ? (
             <div className="px-5 py-8 text-center">
-              <p className="text-sm font-semibold text-red-600">{stockState.error.message}</p>
+              <p className="text-sm font-semibold text-red-600"><ST>{stockState.error.message}</ST></p>
             </div>
           ) : (
             <>
@@ -287,12 +287,12 @@ const AdminPuntosVenta = () => {
           {successMessage ? (
             <div className="flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800" role="status" aria-live="polite">
               <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              {successMessage}
+              <ST>{successMessage}</ST>
             </div>
           ) : null}
           {locationError && !locationEditor ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700" role="alert">
-              {locationError}
+              <ST>{locationError}</ST>
             </div>
           ) : null}
           {content}

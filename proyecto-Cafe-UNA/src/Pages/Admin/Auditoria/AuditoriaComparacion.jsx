@@ -1,3 +1,5 @@
+import { ST } from "../../../Components/T/ST";
+
 const ETIQUETAS_CAMPO = {
   id: "ID",
   nombre: "Nombre",
@@ -29,17 +31,30 @@ const ETIQUETAS_CAMPO = {
   idubicacion: "Ubicación",
   idproducto: "Producto",
   idusuario: "Usuario",
+  passwordhash: "Contraseña",
+  password: "Contraseña",
+  contrasena: "Contraseña",
+  contraseña: "Contraseña",
 };
 
-const CAMPOS_OCULTOS = new Set([
-  "password",
-  "contrasena",
-  "contraseña",
-  "hash",
-  "salt",
-  "token",
-  "refreshtoken",
-]);
+function claveNormalizada(clave) {
+  return String(clave || "")
+    .replace(/[_-]/g, "")
+    .toLowerCase();
+}
+
+function esCampoSecreto(clave) {
+  const normal = claveNormalizada(clave);
+  return (
+    normal.includes("password") ||
+    normal.includes("contrasena") ||
+    normal.includes("contraseña") ||
+    normal === "hash" ||
+    normal === "salt" ||
+    normal.includes("token") ||
+    normal.includes("secret")
+  );
+}
 
 const CAMPOS_TECNICOS = new Set([
   "createdat",
@@ -66,12 +81,6 @@ function parseDatos(valor) {
   return { valor };
 }
 
-function claveNormalizada(clave) {
-  return String(clave || "")
-    .replace(/[_-]/g, "")
-    .toLowerCase();
-}
-
 function etiquetaCampo(clave) {
   const normal = claveNormalizada(clave);
   if (ETIQUETAS_CAMPO[normal]) return ETIQUETAS_CAMPO[normal];
@@ -83,6 +92,10 @@ function etiquetaCampo(clave) {
 
 function esUrl(valor) {
   return typeof valor === "string" && /^https?:\/\//i.test(valor.trim());
+}
+
+function esCorreo(valor) {
+  return typeof valor === "string" && /@/.test(valor) && /\./.test(valor);
 }
 
 function valoresIguales(a, b) {
@@ -98,7 +111,26 @@ function valoresIguales(a, b) {
   return String(a) === String(b);
 }
 
+/** Nunca muestra texto plano; bcrypt se muestra truncado como hash. */
+function formatearSecreto(valor) {
+  if (valor == null || valor === "") return "Sin dato";
+  const texto = String(valor).trim();
+  if (!texto || texto === "[hash]" || texto === "[redacted]") return "[hash]";
+  if (texto.startsWith("$2")) {
+    return `${texto.slice(0, 12)}…`;
+  }
+  return "[hash]";
+}
+
+function redactarTextoLibre(texto) {
+  return String(texto ?? "").replace(
+    /("?(?:PasswordHash|password|contrase[nñ]a|token|secret)"?\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s,;}+]+)/gi,
+    '$1"[hash]"',
+  );
+}
+
 function formatearValor(clave, valor) {
+  if (esCampoSecreto(clave)) return formatearSecreto(valor);
   if (valor == null || valor === "") return "Sin dato";
   if (typeof valor === "boolean") return valor ? "Sí" : "No";
   const normal = claveNormalizada(clave);
@@ -114,6 +146,9 @@ function formatearValor(clave, valor) {
         return "Imagen adjunta";
       }
       return "Enlace adjunto";
+    }
+    if (normal === "detalle" || /password|contrasen|hash/i.test(valor)) {
+      return redactarTextoLibre(valor);
     }
     return valor;
   }
@@ -137,13 +172,28 @@ function formatearValor(clave, valor) {
       valor.codigo ??
       valor.Codigo ??
       Object.entries(valor)
-        .filter(([k]) => !CAMPOS_OCULTOS.has(claveNormalizada(k)))
+        .filter(([k]) => !esCampoSecreto(k))
         .slice(0, 4)
         .map(([k, v]) => `${etiquetaCampo(k)}: ${v == null ? "Sin dato" : String(v)}`)
         .join(" · ")
     );
   }
   return String(valor);
+}
+
+function ValorVisible({ clave, valor }) {
+  const texto = formatearValor(clave, valor);
+  const normal = claveNormalizada(clave);
+  if (
+    esCampoSecreto(clave) ||
+    esCorreo(valor) ||
+    (typeof valor === "number" && Number.isFinite(valor)) ||
+    (typeof valor === "string" && esUrl(valor)) ||
+    normal === "id"
+  ) {
+    return texto;
+  }
+  return <ST>{texto}</ST>;
 }
 
 function extraerNombre(datos) {
@@ -175,7 +225,11 @@ function clavesVisibles(datos) {
   if (!datos || typeof datos !== "object" || Array.isArray(datos)) return [];
   return Object.keys(datos).filter((clave) => {
     const normal = claveNormalizada(clave);
-    return !CAMPOS_OCULTOS.has(normal) && !CAMPOS_TECNICOS.has(normal);
+    if (esCampoSecreto(clave) && (normal.includes("password") || normal.includes("contrasen"))) {
+      return true;
+    }
+    if (esCampoSecreto(clave)) return false;
+    return !CAMPOS_TECNICOS.has(normal);
   });
 }
 
@@ -201,6 +255,7 @@ function unirClaves(anteriores, nuevos) {
     "disponible",
     "descripcion",
     "motivo",
+    "passwordhash",
   ];
   const porNormal = new Map();
   for (const clave of [...clavesVisibles(anteriores), ...clavesVisibles(nuevos)]) {
@@ -275,7 +330,9 @@ function PanelCampos({ titulo, datos, claves, cambiados, vacioTexto }) {
   const hayDatos = datos && typeof datos === "object" && claves.length > 0;
   return (
     <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-3">
-      <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">{titulo}</p>
+      <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">
+        <ST>{titulo}</ST>
+      </p>
       {hayDatos ? (
         <dl className="mt-3 grid max-h-80 gap-2 overflow-auto pr-1">
           {claves.map((clave) => {
@@ -288,22 +345,22 @@ function PanelCampos({ titulo, datos, claves, cambiados, vacioTexto }) {
                 }`}
               >
                 <dt className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">
-                  {etiquetaCampo(clave)}
+                  <ST>{etiquetaCampo(clave)}</ST>
                   {cambio ? (
                     <span className="ml-2 rounded-full bg-amber-100 px-1.5 py-0.5 text-[length:var(--text-body)] font-bold text-amber-800">
-                      Cambió
+                      <ST>{"Cambi\u00f3"}</ST>
                     </span>
                   ) : null}
                 </dt>
                 <dd className="mt-0.5 break-words text-[length:var(--text-body)] font-medium text-slate-800">
-                  {formatearValor(clave, valorDe(datos, clave))}
+                  <ValorVisible clave={clave} valor={valorDe(datos, clave)} />
                 </dd>
               </div>
             );
           })}
         </dl>
       ) : (
-        <p className="mt-3 text-[length:var(--text-body)] text-slate-500">{vacioTexto}</p>
+        <p className="mt-3 text-[length:var(--text-body)] text-slate-500"><ST>{vacioTexto}</ST></p>
       )}
     </div>
   );
@@ -328,16 +385,24 @@ export function AuditoriaComparacion({ item }) {
   return (
     <div className="grid gap-3">
       <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
-        <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">Qué sucedió</p>
-        <p className="mt-1 text-[length:var(--text-body)] font-semibold text-slate-900">{resumen}</p>
+        <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">
+          <ST>{"Qu\u00e9 sucedi\u00f3"}</ST>
+        </p>
+        <p className="mt-1 text-[length:var(--text-body)] font-semibold text-slate-900">
+          <ST>{resumen}</ST>
+        </p>
         {nombre ? (
           <p className="mt-1 text-[length:var(--text-body)] text-slate-600">
-            {item?.tabla === "usuarios" ? "Usuario" : "Nombre"}:{" "}
-            <span className="font-semibold text-slate-800">{nombre}</span>
+            <ST>{item?.tabla === "usuarios" ? "Usuario" : "Nombre"}</ST>:{" "}
+            <span className="font-semibold text-slate-800">
+              {item?.tabla === "usuarios" ? nombre : <ST>{nombre}</ST>}
+            </span>
           </p>
         ) : null}
         {item?.idRegistro ? (
-          <p className="mt-1 text-[length:var(--text-body)] text-slate-400">Registro #{item.idRegistro}</p>
+          <p className="mt-1 text-[length:var(--text-body)] text-slate-400">
+            <ST>Registro</ST> #{item.idRegistro}
+          </p>
         ) : null}
       </div>
 

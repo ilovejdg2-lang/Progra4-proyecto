@@ -39,11 +39,12 @@ import {
 import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
+import { asegurarCamposEnEspanol, camposParaVistaAdmin } from "../../../lib/traducir";
 import { useIdioma } from "../../../lib/useIdioma";
-import { asegurarCamposEnEspanol, pareceIngles, traducirCamposObjeto } from "../../../lib/traducir";
 
 const TEXTO_CAMPOS = ["eyebrow", "title", "description"];
 const FOTO_CAMPOS = ["title", "categoria"];
+const FOTO_CAMPOS_VISTA_EN = ["title"];
 
 const infoInicial = {
   hero: {},
@@ -93,22 +94,19 @@ const estilos = {
 };
 
 function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
-  const { idioma } = useIdioma();
   const [form, setForm] = useState(() => ({ title: "", description: "", image: "", eyebrow: "", ...data }));
   const estilo = estilos[tipo];
   const Icon = estilo.Icon;
   const tEtiqueta = useTraducir(estilo.etiqueta);
+  const { idioma } = useIdioma();
 
   useEffect(() => {
     let cancelado = false;
     const base = { title: "", description: "", image: "", eyebrow: "", ...data };
-    if (idioma !== "en") {
-      setForm(base);
-      return undefined;
-    }
+    setForm(base);
     (async () => {
-      const traducido = await traducirCamposObjeto(base, TEXTO_CAMPOS);
-      if (!cancelado) setForm(traducido);
+      const vista = await camposParaVistaAdmin(base, TEXTO_CAMPOS, idioma);
+      if (!cancelado) setForm(vista);
     })();
     return () => {
       cancelado = true;
@@ -202,10 +200,10 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
 }
 
 function ModalFoto({ onCerrar, onGuardar, categorias = [], inicial = null, guardando = false }) {
-  const { idioma } = useIdioma();
   const esEdicion = Boolean(inicial);
   const tEditar = useTraducir("Editar");
   const tNuevaFoto = useTraducir("Nueva foto");
+  const { idioma } = useIdioma();
   const [form, setForm] = useState({
     title: inicial?.title || "",
     image: inicial?.image || "",
@@ -219,13 +217,10 @@ function ModalFoto({ onCerrar, onGuardar, categorias = [], inicial = null, guard
       image: inicial?.image || "",
       categoria: inicial?.categoria || "",
     };
-    if (idioma !== "en") {
-      setForm(base);
-      return undefined;
-    }
+    setForm(base);
     (async () => {
-      const traducido = await traducirCamposObjeto(base, FOTO_CAMPOS);
-      if (!cancelado) setForm(traducido);
+      const vista = await camposParaVistaAdmin(base, FOTO_CAMPOS_VISTA_EN, idioma);
+      if (!cancelado) setForm(vista);
     })();
     return () => {
       cancelado = true;
@@ -375,7 +370,7 @@ function GaleriaInlineEditor({ galleryInicial, onRecargar, puedeEliminar }) {
     setGallery(Array.isArray(galleryInicial) ? galleryInicial : []);
   }, [galleryInicial]);
 
-  // Si quedó inglés en Supabase, lo corrige a español una vez al cargar
+  // Si quedó inglés o marca rota en Supabase, lo corrige a español una vez al cargar
   useEffect(() => {
     const items = Array.isArray(galleryInicial) ? galleryInicial : [];
     if (!items.length || reparacionHecha.current) return undefined;
@@ -384,7 +379,6 @@ function GaleriaInlineEditor({ galleryInicial, onRecargar, puedeEliminar }) {
       let cambio = false;
       for (const item of items) {
         if (!item?.id || typeof item.title !== "string" || !item.title.trim()) continue;
-        if (!pareceIngles(item.title)) continue;
         const titleEs = await asegurarCamposEnEspanol({ title: item.title }, ["title"]);
         const nuevo = String(titleEs.title || "").trim();
         if (!nuevo || nuevo === item.title.trim()) continue;
@@ -456,21 +450,21 @@ function GaleriaInlineEditor({ galleryInicial, onRecargar, puedeEliminar }) {
       await onRecargar();
       await recargarCategorias();
     } catch (err) {
-      alert(err?.message || "No se pudo guardar la foto.");
+      alert(t(err?.message || "No se pudo guardar la foto."));
     } finally {
       setGuardando(false);
     }
   };
 
   const eliminarItem = async (id) => {
-    if (!window.confirm("¿Eliminar esta foto de la galería?")) return;
+    if (!window.confirm(t("¿Eliminar esta foto de la galería?"))) return;
     try {
       setGuardando(true);
       await eliminarGaleriaItem(id);
       await onRecargar();
       await recargarCategorias();
     } catch (err) {
-      alert(err?.message || "No se pudo eliminar la foto.");
+      alert(t(err?.message || "No se pudo eliminar la foto."));
     } finally {
       setGuardando(false);
     }
@@ -628,8 +622,12 @@ function GaleriaInlineEditor({ galleryInicial, onRecargar, puedeEliminar }) {
                   )}
                   <div className="min-w-0 flex-1 space-y-2">
                     <div>
-                      <p className="font-semibold text-slate-950">{item.title ? <ST>{item.title}</ST> : <ST>Sin título</ST>}</p>
-                      <p className="text-slate-500">{item.categoria ? <ST>{item.categoria}</ST> : <ST>Sin categoría</ST>}</p>
+                      <p className="font-semibold text-slate-950">
+                        {item.title ? <ST>{item.title}</ST> : <ST>Sin título</ST>}
+                      </p>
+                      <p className="text-slate-500">
+                        {item.categoria ? <ST>{item.categoria}</ST> : <ST>Sin categoría</ST>}
+                      </p>
                     </div>
                     <GaleriaAcciones
                       puedeEliminar={puedeEliminar}
@@ -751,7 +749,7 @@ const AdminInformacionSobreNosotros = () => {
       await reload();
       setEditandoTexto(null);
     } catch (err) {
-      alert(err.message || "No se pudo guardar la secci\u00f3n.");
+      alert(t(err.message || "No se pudo guardar la secci\u00f3n."));
     } finally {
       setGuardando(false);
     }
@@ -778,7 +776,7 @@ const AdminInformacionSobreNosotros = () => {
             </div>
           ) : error ? (
             <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-[length:var(--text-body)] font-semibold text-red-700">
-              {error}
+              <ST>{error}</ST>
               <button
                 type="button"
                 onClick={reload}
@@ -805,7 +803,7 @@ const AdminInformacionSobreNosotros = () => {
             <div className="p-8 text-[length:var(--text-body)] text-slate-500"><ST>{"Cargando informaci\u00f3n..."}</ST></div>
           ) : error ? (
             <div className="p-8 text-[length:var(--text-body)] font-semibold text-red-700">
-              {error}
+              <ST>{error}</ST>
               <button
                 type="button"
                 onClick={reload}

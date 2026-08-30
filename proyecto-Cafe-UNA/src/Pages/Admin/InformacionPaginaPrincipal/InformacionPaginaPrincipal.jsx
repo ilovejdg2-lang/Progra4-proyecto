@@ -47,8 +47,8 @@ import {
 import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
+import { asegurarCamposEnEspanol, camposParaVistaAdmin, traducirListaObjetos } from "../../../lib/traducir";
 import { useIdioma } from "../../../lib/useIdioma";
-import { asegurarCamposEnEspanol, traducirCamposObjeto, traducirListaObjetos } from "../../../lib/traducir";
 
 const HERO_CAMPOS_TEXTO = ["eyebrow", "title", "subtitle", "primaryButtonText", "buttonText"];
 const SECCION_CAMPOS_TEXTO = ["eyebrow", "title", "description", "linkText"];
@@ -274,19 +274,18 @@ function CampoArea({ label, name, value, onChange, rows = 4, required, maxPalabr
 }
 
 function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
-  const { idioma } = useIdioma();
   const [form, setForm] = useState(() => ({ ...heroInicial, ...hero }));
+  const { idioma } = useIdioma();
+  const tGuardando = useTraducir("Guardando...");
+  const tGuardarCambios = useTraducir("Guardar cambios");
 
   useEffect(() => {
     let cancelado = false;
     const base = { ...heroInicial, ...hero };
-    if (idioma !== "en") {
-      setForm(base);
-      return undefined;
-    }
+    setForm(base);
     (async () => {
-      const traducido = await traducirCamposObjeto(base, HERO_CAMPOS_TEXTO);
-      if (!cancelado) setForm(traducido);
+      const vista = await camposParaVistaAdmin(base, HERO_CAMPOS_TEXTO, idioma);
+      if (!cancelado) setForm(vista);
     })();
     return () => {
       cancelado = true;
@@ -406,7 +405,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
           <AdminModalActions
             buttonStyle="voluntariado"
             onCancel={onCerrar}
-            primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
+            primaryLabel={guardando ? tGuardando : tGuardarCambios}
             primaryDisabled={guardando}
           />
         </AdminModalFooter>
@@ -416,20 +415,19 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
 }
 
 function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar, onGuardar, guardando }) {
-  const { idioma } = useIdioma();
   const [form, setForm] = useState(() => ({ ...seccionInicioVacia, ...data }));
   const tModalTitle = useTraducir(config.modalTitle || "");
+  const tGuardando = useTraducir("Guardando...");
+  const tGuardarCambios = useTraducir("Guardar cambios");
+  const { idioma } = useIdioma();
 
   useEffect(() => {
     let cancelado = false;
     const base = { ...seccionInicioVacia, ...data };
-    if (idioma !== "en") {
-      setForm(base);
-      return undefined;
-    }
+    setForm(base);
     (async () => {
-      const traducido = await traducirCamposObjeto(base, SECCION_CAMPOS_TEXTO);
-      if (!cancelado) setForm(traducido);
+      const vista = await camposParaVistaAdmin(base, SECCION_CAMPOS_TEXTO, idioma);
+      if (!cancelado) setForm(vista);
     })();
     return () => {
       cancelado = true;
@@ -543,7 +541,7 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
           <AdminModalActions
             buttonStyle="voluntariado"
             onCancel={onCerrar}
-            primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
+            primaryLabel={guardando ? tGuardando : tGuardarCambios}
             primaryDisabled={guardando}
           />
         </AdminModalFooter>
@@ -553,7 +551,6 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
 }
 
 function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
-  const { idioma } = useIdioma();
   const mapTarjetas = (lista) =>
     (Array.isArray(lista) ? lista : []).map((tarjeta) => ({
       ...tarjetaInicioVacia,
@@ -567,17 +564,22 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
     }));
 
   const [form, setForm] = useState(() => mapTarjetas(tarjetas));
+  const { idioma } = useIdioma();
+  const tTituloMini = useTraducir("Mini formularios del inicio");
+  const tGuardando = useTraducir("Guardando...");
+  const tGuardarCambios = useTraducir("Guardar cambios");
 
   useEffect(() => {
     let cancelado = false;
     const base = mapTarjetas(tarjetas);
-    if (idioma !== "en") {
-      setForm(base);
-      return undefined;
-    }
+    setForm(base);
     (async () => {
-      const traducido = await traducirListaObjetos(base, TARJETA_CAMPOS_TEXTO);
-      if (!cancelado) setForm(traducido);
+      if (idioma !== "en") {
+        if (!cancelado) setForm(base);
+        return;
+      }
+      const vista = await traducirListaObjetos(base, TARJETA_CAMPOS_TEXTO);
+      if (!cancelado) setForm(vista);
     })();
     return () => {
       cancelado = true;
@@ -615,7 +617,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
           <div className="flex min-w-0 items-center gap-2.5">
             <ClipboardList className="size-6 shrink-0 text-emerald-700" strokeWidth={1.75} aria-hidden="true" />
             <h2 id="admin-tarjetas-inicio-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">
-              Mini formularios del inicio
+              {tTituloMini}
             </h2>
           </div>
           <button
@@ -696,7 +698,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
           <AdminModalActions
             buttonStyle="voluntariado"
             onCancel={onCerrar}
-            primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
+            primaryLabel={guardando ? tGuardando : tGuardarCambios}
             primaryDisabled={guardando}
           />
         </AdminModalFooter>
@@ -707,6 +709,8 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
 
 function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
   const [form, setForm] = useState(() => ({ ...navbarInicial, ...navbar }));
+  const tGuardando = useTraducir("Guardando...");
+  const tGuardarCambios = useTraducir("Guardar cambios");
 
   const cambiarCampo = (event) => {
     const { name, value } = event.target;
@@ -766,7 +770,7 @@ function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
           <AdminModalActions
             buttonStyle="voluntariado"
             onCancel={onCerrar}
-            primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
+            primaryLabel={guardando ? tGuardando : tGuardarCambios}
             primaryDisabled={guardando}
           />
         </AdminModalFooter>
@@ -776,19 +780,18 @@ function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
 }
 
 function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
-  const { idioma } = useIdioma();
   const [form, setForm] = useState(() => ({ ...footerInicial, ...footer }));
+  const { idioma } = useIdioma();
+  const tGuardando = useTraducir("Guardando...");
+  const tGuardarCambios = useTraducir("Guardar cambios");
 
   useEffect(() => {
     let cancelado = false;
     const base = { ...footerInicial, ...footer };
-    if (idioma !== "en") {
-      setForm(base);
-      return undefined;
-    }
+    setForm(base);
     (async () => {
-      const traducido = await traducirCamposObjeto(base, FOOTER_CAMPOS_TEXTO);
-      if (!cancelado) setForm(traducido);
+      const vista = await camposParaVistaAdmin(base, FOOTER_CAMPOS_TEXTO, idioma);
+      if (!cancelado) setForm(vista);
     })();
     return () => {
       cancelado = true;
@@ -921,7 +924,7 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
           <AdminModalActions
             buttonStyle="voluntariado"
             onCancel={onCerrar}
-            primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
+            primaryLabel={guardando ? tGuardando : tGuardarCambios}
             primaryDisabled={guardando}
           />
         </AdminModalFooter>
@@ -931,21 +934,24 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
 }
 
 function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, guardando, puedeEliminar }) {
-  const { idioma } = useIdioma();
   const [items, setItems] = useState(() => (Array.isArray(enlaces) ? enlaces : []));
   const [busqueda, setBusqueda] = useState("");
   const tTitulo = useTraducir(config.titulo);
+  const tGuardando = useTraducir("Guardando...");
+  const tGuardarCambios = useTraducir("Guardar cambios");
+  const { idioma } = useIdioma();
 
   useEffect(() => {
     let cancelado = false;
     const base = Array.isArray(enlaces) ? enlaces : [];
-    if (idioma !== "en") {
-      setItems(base);
-      return undefined;
-    }
+    setItems(base);
     (async () => {
-      const traducido = await traducirListaObjetos(base, ENLACE_CAMPOS_TEXTO);
-      if (!cancelado) setItems(traducido);
+      if (idioma !== "en") {
+        if (!cancelado) setItems(base);
+        return;
+      }
+      const vista = await traducirListaObjetos(base, ENLACE_CAMPOS_TEXTO);
+      if (!cancelado) setItems(vista);
     })();
     return () => {
       cancelado = true;
@@ -1123,7 +1129,7 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
           <AdminModalActions
             buttonStyle="voluntariado"
             onCancel={onCerrar}
-            primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
+            primaryLabel={guardando ? tGuardando : tGuardarCambios}
             primaryDisabled={guardando}
           />
         </AdminModalFooter>
@@ -1247,7 +1253,7 @@ const AdminInformacionPaginaPrincipal = () => {
       await reload();
       setEditando(null);
     } catch (err) {
-      alert(err.message || "No se pudo guardar el hero.");
+      alert(t(err.message || "No se pudo guardar el hero."));
     } finally {
       setGuardando(false);
     }
@@ -1272,7 +1278,7 @@ const AdminInformacionPaginaPrincipal = () => {
       await reload();
       setEditando(null);
     } catch (err) {
-      alert(err.message || "No se pudo guardar la secci\u00f3n del inicio.");
+      alert(t(err.message || "No se pudo guardar la secci\u00f3n del inicio."));
     } finally {
       setGuardando(false);
     }
@@ -1286,7 +1292,7 @@ const AdminInformacionPaginaPrincipal = () => {
       await reload();
       setEditando(null);
     } catch (err) {
-      alert(err.message || "No se pudieron guardar los mini formularios.");
+      alert(t(err.message || "No se pudieron guardar los mini formularios."));
     } finally {
       setGuardando(false);
     }
@@ -1300,7 +1306,7 @@ const AdminInformacionPaginaPrincipal = () => {
       await reload();
       setEditando(null);
     } catch (err) {
-      alert(err.message || "No se pudo guardar el navbar.");
+      alert(t(err.message || "No se pudo guardar el navbar."));
     } finally {
       setGuardando(false);
     }
@@ -1325,7 +1331,7 @@ const AdminInformacionPaginaPrincipal = () => {
       await reload();
       setEditando(null);
     } catch (err) {
-      alert(err.message || "No se pudo guardar el footer.");
+      alert(t(err.message || "No se pudo guardar el footer."));
     } finally {
       setGuardando(false);
     }
@@ -1388,7 +1394,7 @@ const AdminInformacionPaginaPrincipal = () => {
       await reload();
       setEditando(null);
     } catch (err) {
-      alert(err.message || "No se pudieron guardar los enlaces.");
+      alert(t(err.message || "No se pudieron guardar los enlaces."));
     } finally {
       setGuardando(false);
     }
@@ -1495,7 +1501,7 @@ const AdminInformacionPaginaPrincipal = () => {
           <div className="p-8 text-[length:var(--text-body)] text-slate-500"><ST>{"Cargando informaci\u00f3n..."}</ST></div>
         ) : error ? (
           <div className="p-8 text-[length:var(--text-body)] font-semibold text-red-700">
-            {error}
+            <ST>{error}</ST>
             <button
               type="button"
               onClick={reload}

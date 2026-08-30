@@ -1,15 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
-import { Banknote, Eye, Receipt, ShoppingBag, Ticket, X } from "lucide-react";
+import { Check, Eye, PackageCheck, RotateCcw, Truck, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
-import { obtenerCompraPorId, obtenerComprasAdmin } from "../../../services/comprasService";
+import {
+  cambiarEstadoCompra,
+  obtenerCompraPorId,
+  obtenerComprasAdmin,
+} from "../../../services/comprasService";
 import { obtenerVentas } from "../../../lib/ventasStorage";
 import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
 import { getActiveSessionUser } from "../../../services/sessionService";
+import { ST } from "../../../Components/T/ST";
+import { t } from "../../../lib/t";
+import { useTraducir } from "../../../hooks/useTraducir";
 
 function formatCRC(value) {
   return new Intl.NumberFormat("es-CR", {
@@ -21,11 +28,36 @@ function formatCRC(value) {
 
 function formatFecha(fecha) {
   const valor = new Date(fecha);
-  if (Number.isNaN(valor.getTime())) return "Sin fecha";
+  if (Number.isNaN(valor.getTime())) return t("Sin fecha");
   return valor.toLocaleString("es-CR", { dateStyle: "short", timeStyle: "short" });
 }
 
+function normalizarEstadoUi(estadoRaw) {
+  const estado = String(estadoRaw || "Pendiente").trim();
+  if (estado === "Aprobado" || estado === "Aprobada") return "Aceptado";
+  if (estado === "Recibido" || estado === "Enviada" || estado === "Pagado") return "Enviado";
+  if (estado === "Rechazada") return "Rechazado";
+  return estado;
+}
+
+function badgeEstado(estadoRaw) {
+  switch (normalizarEstadoUi(estadoRaw)) {
+    case "Pendiente":
+      return "bg-amber-50 text-amber-800";
+    case "Aceptado":
+      return "bg-sky-50 text-sky-800";
+    case "Enviado":
+      return "bg-emerald-50 text-emerald-800";
+    case "Rechazado":
+      return "bg-rose-50 text-rose-800";
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
+}
+
 function mapLocalVenta(venta) {
+  const estado = normalizarEstadoUi(venta.estadoPago || "Pendiente");
+  const total = venta.total;
   return {
     id: venta.id,
     numero: venta.id,
@@ -35,10 +67,12 @@ function mapLocalVenta(venta) {
     cantidadProductos: (venta.items || []).reduce((acc, item) => acc + (Number(item.units) || 1), 0),
     subtotal: venta.subtotal,
     impuestos: venta.iva,
-    total: venta.total,
+    total,
     metodoPago: venta.metodo,
-    estado: venta.estadoPago,
+    estado,
     facturaId: null,
+    editable: estado === "Pendiente" || estado === "Aceptado" || estado === "Rechazado",
+    ganado: estado === "Enviado" ? total : null,
     items: (venta.items || []).map((item) => ({
       nombre: item.nombre,
       cantidad: item.units || 1,
@@ -48,15 +82,33 @@ function mapLocalVenta(venta) {
   };
 }
 
+function BadgeEstadoCompra({ estado }) {
+  const normalizado = normalizarEstadoUi(estado);
+  const etiqueta = useTraducir(normalizado);
+  return (
+    <span
+      className={`admin-chip-estado inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeEstado(normalizado)}`}
+      style={{ textDecoration: "none", textDecorationLine: "none" }}
+      spellCheck={false}
+    >
+      {etiqueta}
+    </span>
+  );
+}
+
 export default function HistorialVentas() {
   const user = getActiveSessionUser();
   const roles = rolesDeUsuario(user);
   const puedeVer = tienePermiso(roles, "ver_ventas") || tienePermiso(roles, "ver_historial_compras_clientes");
+  const puedeGestionar =
+    tienePermiso(roles, "actualizar_ventas") || tienePermiso(roles, "registrar_ventas");
   const { showLoading, loadingMessage } = useAdminPageGate("/admin/historial-ventas", true);
   const [detalle, setDetalle] = useState(null);
   const [compras, setCompras] = useState([]);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [actionLoading, setActionLoading] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -99,6 +151,7 @@ export default function HistorialVentas() {
   }, [load]);
 
   const abrirDetalle = async (compra) => {
+    setActionError("");
     try {
       const detalleApi = await obtenerCompraPorId(compra.id);
       setDetalle(detalleApi);
@@ -107,18 +160,43 @@ export default function HistorialVentas() {
     }
   };
 
+  const actualizarEstado = async (compra, estado) => {
+    if (!puedeGestionar || !compra?.id) return;
+    setActionLoading(`${compra.id}:${estado}`);
+    setActionError("");
+    try {
+      const actualizada = await cambiarEstadoCompra(compra.id, estado);
+      setCompras((prev) =>
+        prev.map((row) => (String(row.id) === String(actualizada.id) ? actualizada : row)),
+      );
+      setDetalle(actualizada);
+      await load();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "No se pudo actualizar el estado.");
+    } finally {
+      setActionLoading("");
+    }
+  };
+
   if (!puedeVer) {
     return (
       <AdminPageGate showLoading={showLoading} message={loadingMessage}>
         <AdminLayout>
           <section className="rounded-2xl border border-slate-200 bg-white px-5 py-14 text-center shadow-sm">
-            <h1 className="text-xl font-semibold text-slate-950">Acceso restringido</h1>
-            <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">No tiene permiso para ver el historial de ventas.</p>
+            <h1 className="text-xl font-semibold text-slate-950"><ST>Acceso restringido</ST></h1>
+            <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+              <ST>No tiene permiso para ver el historial de ventas.</ST>
+            </p>
           </section>
         </AdminLayout>
       </AdminPageGate>
     );
   }
+
+  const estadoDetalle = normalizarEstadoUi(detalle?.estado);
+  const editableDetalle =
+    detalle?.editable ??
+    (estadoDetalle === "Pendiente" || estadoDetalle === "Aceptado" || estadoDetalle === "Rechazado");
 
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
@@ -126,19 +204,25 @@ export default function HistorialVentas() {
         <div className="space-y-4">
           <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
-              <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">Historial de ventas</h1>
-              <p className="mt-1 text-sm text-slate-500">Compras registradas automáticamente al completar el checkout.</p>
-              {error ? <p className="mt-2 text-xs text-amber-700">{error}</p> : null}
+              <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl"><ST>Historial de ventas</ST></h1>
+              <p className="mt-1 text-sm text-slate-500">
+                <ST>
+                  Pendiente: aceptá o rechazá. Aceptado: enviá o volvé a pendiente (se restaura el stock). Enviado ya no se edita.
+                </ST>
+              </p>
+              {error ? <p className="mt-2 text-xs text-amber-700 no-underline"><ST>{error}</ST></p> : null}
             </div>
 
             <div className="grid gap-3 border-b border-slate-100 px-4 py-4 sm:grid-cols-4 sm:px-6">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Compras</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500"><ST>Compras</ST></p>
                 <p className="mt-1 text-lg font-semibold text-slate-950">{total}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 sm:col-span-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Filtros backend</p>
-                <p className="mt-1 text-sm text-slate-600">Cliente, número, fecha y estado se consultan en el servidor.</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500"><ST>Filtros</ST></p>
+                <p className="mt-1 text-sm text-slate-600">
+                  <ST>Cliente, número, fecha y estado se consultan en el servidor.</ST>
+                </p>
               </div>
             </div>
 
@@ -166,15 +250,17 @@ export default function HistorialVentas() {
                   onChange: (valor) => { setPage(1); setFiltros((c) => ({ ...c, estado: valor })); },
                   opciones: [
                     { value: "todos", label: "Todos" },
-                    { value: "Pagado", label: "Pagado" },
                     { value: "Pendiente", label: "Pendiente" },
+                    { value: "Aceptado", label: "Aceptado" },
+                    { value: "Enviado", label: "Enviado" },
+                    { value: "Rechazado", label: "Rechazado" },
                   ],
                 },
               ]}
             />
 
             {status === "loading" ? (
-              <div className="px-4 py-14 text-center text-sm text-slate-500">Cargando compras...</div>
+              <div className="px-4 py-14 text-center text-sm text-slate-500"><ST>Cargando compras...</ST></div>
             ) : compras.length === 0 ? (
               <AdminListaVacia onLimpiar={() => setFiltros({ busqueda: "", estado: "todos", desde: "", hasta: "" })} />
             ) : (
@@ -182,31 +268,34 @@ export default function HistorialVentas() {
                 <table className="w-full min-w-[760px] text-left text-sm">
                   <thead>
                     <tr>
-                      <th>Recibo</th>
-                      <th>Fecha</th>
-                      <th>Cliente</th>
-                      <th>Productos</th>
-                      <th>Total</th>
-                      <th>Estado</th>
-                      <th>Acciones</th>
+                      <th><ST>Recibo</ST></th>
+                      <th><ST>Fecha</ST></th>
+                      <th><ST>Cliente</ST></th>
+                      <th><ST>Productos</ST></th>
+                      <th><ST>Total</ST></th>
+                      <th><ST>Estado</ST></th>
+                      <th><ST>Acciones</ST></th>
                     </tr>
                   </thead>
                   <tbody>
                     {compras.map((compra) => (
                       <tr key={compra.id || compra.numero} className="border-b border-slate-100 last:border-b-0">
                         <td className="px-6 py-4 font-medium text-slate-900">{compra.numero}</td>
-                        <td className="px-6 py-4 text-slate-600">{formatFecha(compra.fecha)}</td>
+                        <td className="px-6 py-4 text-slate-600"><ST>{formatFecha(compra.fecha)}</ST></td>
                         <td className="px-6 py-4 text-slate-700">{compra.clienteNombre}</td>
                         <td className="px-6 py-4 text-slate-700">{compra.cantidadProductos}</td>
                         <td className="px-6 py-4 text-slate-800">{formatCRC(compra.total)}</td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                            compra.estado === "Pagado" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
-                          }`}>{compra.estado}</span>
+                          <BadgeEstadoCompra estado={compra.estado} />
                         </td>
                         <td className="px-6 py-4">
-                          <button type="button" onClick={() => abrirDetalle(compra)} className="inline-flex size-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700" aria-label={`Ver compra ${compra.numero}`}>
-                            <Eye className="size-4" />
+                          <button
+                            type="button"
+                            onClick={() => abrirDetalle(compra)}
+                            className="inline-flex h-[var(--control-height)] items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-[length:var(--text-body)] font-semibold text-slate-700"
+                            aria-label={`${t("Ver compra")} ${compra.numero}`}
+                          >
+                            <Eye className="size-4" /> <ST>Ver</ST>
                           </button>
                         </td>
                       </tr>
@@ -218,9 +307,9 @@ export default function HistorialVentas() {
 
             {total > 10 && totalPages > 1 ? (
               <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-4 py-3">
-                <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="h-[var(--control-height)] rounded-full border border-slate-300 px-3 text-[length:var(--text-body)] disabled:opacity-50">Anterior</button>
+                <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="h-[var(--control-height)] rounded-full border border-slate-300 px-3 text-[length:var(--text-body)] disabled:opacity-50"><ST>Anterior</ST></button>
                 <span className="text-[length:var(--text-body)] text-slate-600">{page} / {totalPages}</span>
-                <button type="button" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="h-[var(--control-height)] rounded-full border border-slate-300 px-3 text-[length:var(--text-body)] disabled:opacity-50">Siguiente</button>
+                <button type="button" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="h-[var(--control-height)] rounded-full border border-slate-300 px-3 text-[length:var(--text-body)] disabled:opacity-50"><ST>Siguiente</ST></button>
               </div>
             ) : null}
           </section>
@@ -229,32 +318,112 @@ export default function HistorialVentas() {
         {detalle ? (
           <AdminModal open onClose={() => setDetalle(null)} maxWidth="max-w-lg" labelledBy="venta-detalle-title">
             <AdminModalHeader>
-              <h2 id="venta-detalle-title" className="text-lg font-semibold text-slate-900">Compra {detalle.numero}</h2>
-              <button type="button" onClick={() => setDetalle(null)} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100" aria-label="Cerrar"><X className="size-5" /></button>
+              <h2 id="venta-detalle-title" className="text-lg font-semibold text-slate-900">
+                <ST>Compra</ST> {detalle.numero}
+              </h2>
+              <button type="button" onClick={() => setDetalle(null)} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100" aria-label={t("Cerrar")}>
+                <X className="size-5" />
+              </button>
             </AdminModalHeader>
             <AdminModalBody>
+              {actionError ? (
+                <p className="mb-3 text-sm text-rose-700 no-underline" role="alert"><ST>{actionError}</ST></p>
+              ) : null}
               <dl className="grid gap-2 text-sm">
-                <div className="flex justify-between gap-3 border-b border-slate-100 py-2"><dt className="text-slate-500">Cliente</dt><dd className="font-medium text-slate-900">{detalle.clienteNombre}</dd></div>
-                <div className="flex justify-between gap-3 border-b border-slate-100 py-2"><dt className="text-slate-500">Fecha</dt><dd className="font-medium text-slate-900">{formatFecha(detalle.fecha)}</dd></div>
-                <div className="flex justify-between gap-3 border-b border-slate-100 py-2"><dt className="text-slate-500">Método</dt><dd className="font-medium text-slate-900">{detalle.metodoPago}</dd></div>
-                <div className="flex justify-between gap-3 border-b border-slate-100 py-2"><dt className="text-slate-500">Estado</dt><dd className="font-medium text-slate-900">{detalle.estado}</dd></div>
+                <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+                  <dt className="text-slate-500"><ST>Cliente</ST></dt>
+                  <dd className="font-medium text-slate-900 no-underline">{detalle.clienteNombre}</dd>
+                </div>
+                <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+                  <dt className="text-slate-500"><ST>Fecha</ST></dt>
+                  <dd className="font-medium text-slate-900 no-underline"><ST>{formatFecha(detalle.fecha)}</ST></dd>
+                </div>
+                <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+                  <dt className="text-slate-500"><ST>Método</ST></dt>
+                  <dd className="font-medium text-slate-900 no-underline"><ST>{detalle.metodoPago}</ST></dd>
+                </div>
+                <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+                  <dt className="text-slate-500"><ST>Estado</ST></dt>
+                  <dd><BadgeEstadoCompra estado={detalle.estado} /></dd>
+                </div>
               </dl>
               <ul className="mt-4 space-y-2 text-sm">
                 {(detalle.items || []).map((item, index) => (
                   <li key={`${item.nombre}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                    <div className="flex justify-between gap-3"><span className="font-medium">{item.nombre}</span><span className="font-semibold">{formatCRC(item.subtotal)}</span></div>
+                    <div className="flex justify-between gap-3">
+                      <span className="font-medium no-underline"><ST>{item.nombre}</ST></span>
+                      <span className="font-semibold">{formatCRC(item.subtotal)}</span>
+                    </div>
                     <p className="mt-1 text-xs text-slate-500">{item.cantidad} × {formatCRC(item.precioUnitario)}</p>
                   </li>
                 ))}
               </ul>
               <dl className="mt-4 grid gap-1 text-sm">
-                <div className="flex justify-between"><dt className="text-slate-500">Subtotal</dt><dd>{formatCRC(detalle.subtotal)}</dd></div>
-                <div className="flex justify-between"><dt className="text-slate-500">Impuestos</dt><dd>{formatCRC(detalle.impuestos)}</dd></div>
-                <div className="flex justify-between font-bold"><dt>Total</dt><dd>{formatCRC(detalle.total)}</dd></div>
+                <div className="flex justify-between"><dt className="text-slate-500"><ST>Subtotal</ST></dt><dd>{formatCRC(detalle.subtotal)}</dd></div>
+                <div className="flex justify-between"><dt className="text-slate-500"><ST>Impuestos</ST></dt><dd>{formatCRC(detalle.impuestos)}</dd></div>
+                <div className="flex justify-between font-bold"><dt><ST>Total</ST></dt><dd>{formatCRC(detalle.total)}</dd></div>
               </dl>
-              <p className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                Factura: {detalle.facturaId || "pendiente de integración"} · Recibo {detalle.numero}
-              </p>
+
+              {!editableDetalle ? (
+                <p className="mt-3 inline-flex items-center gap-2 text-sm text-slate-500">
+                  <PackageCheck className="size-4" /> <ST>Pedido cerrado: ya no se puede editar.</ST>
+                </p>
+              ) : null}
+
+              {puedeGestionar && estadoDetalle === "Pendiente" ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={Boolean(actionLoading)}
+                    onClick={() => actualizarEstado(detalle, "Aceptado")}
+                    className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full bg-slate-800 px-4 text-[length:var(--text-body)] font-semibold text-white disabled:opacity-50"
+                  >
+                    <Check className="size-4" /> <ST>Aceptado</ST>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={Boolean(actionLoading)}
+                    onClick={() => actualizarEstado(detalle, "Rechazado")}
+                    className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 disabled:opacity-50"
+                  >
+                    <X className="size-4" /> <ST>Rechazado</ST>
+                  </button>
+                </div>
+              ) : null}
+
+              {puedeGestionar && estadoDetalle === "Aceptado" ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={Boolean(actionLoading)}
+                    onClick={() => actualizarEstado(detalle, "Enviado")}
+                    className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full bg-slate-800 px-4 text-[length:var(--text-body)] font-semibold text-white disabled:opacity-50"
+                  >
+                    <Truck className="size-4" /> <ST>Enviado</ST>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={Boolean(actionLoading)}
+                    onClick={() => actualizarEstado(detalle, "Pendiente")}
+                    className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 disabled:opacity-50"
+                  >
+                    <RotateCcw className="size-4" /> <ST>Marcar como pendiente</ST>
+                  </button>
+                </div>
+              ) : null}
+
+              {puedeGestionar && estadoDetalle === "Rechazado" ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={Boolean(actionLoading)}
+                    onClick={() => actualizarEstado(detalle, "Pendiente")}
+                    className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 disabled:opacity-50"
+                  >
+                    <RotateCcw className="size-4" /> <ST>Reabrir como pendiente</ST>
+                  </button>
+                </div>
+              ) : null}
             </AdminModalBody>
           </AdminModal>
         ) : null}

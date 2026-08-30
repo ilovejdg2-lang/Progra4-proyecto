@@ -41,6 +41,7 @@ import { conLimitePalabras, MAX_PALABRAS_NOTAS } from "../../../lib/formLimits";
 import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
+import { asegurarCamposEnEspanol } from "../../../lib/traducir";
 
 const MAX_PDF_BYTES = 5 * 1024 * 1024;
 const ESTADOS = [
@@ -163,7 +164,7 @@ function SolicitudFormModal({
     await onSave({
       proveedorId,
       fechaEstimadaEntrega: fechaEstimadaEntrega || undefined,
-      notas: notas.trim(),
+      notas: (await asegurarCamposEnEspanol({ notas: notas.trim() }, ["notas"])).notas,
       detalles,
       proformaFile: pdf || undefined,
     });
@@ -178,7 +179,8 @@ function SolicitudFormModal({
     setCreandoProveedor(true);
     setValidationError("");
     try {
-      const creado = await onCrearProveedor({ nombre });
+      const paraGuardar = await asegurarCamposEnEspanol({ nombre }, ["nombre"]);
+      const creado = await onCrearProveedor(paraGuardar);
       if (creado?.id) setProveedorId(creado.id);
       setNuevoProveedor("");
     } catch (err) {
@@ -211,7 +213,7 @@ function SolicitudFormModal({
             >
               <option value="">{tSeleccionar}</option>
               {proveedores.map((p) => (
-                <option key={p.id} value={p.id}>{p.nombre}</option>
+                <option key={p.id} value={p.id}>{t(p.nombre)}</option>
               ))}
             </select>
           </label>
@@ -259,7 +261,7 @@ function SolicitudFormModal({
                 >
                   <option value="">{tProducto}</option>
                   {productos.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nombre}</option>
+                    <option key={p.id} value={p.id}>{t(p.nombre)}</option>
                   ))}
                 </select>
                 <NumericInput
@@ -307,7 +309,7 @@ function SolicitudFormModal({
           </label>
 
           {message ? (
-            <p className="text-[length:var(--text-body)] text-red-600" role="alert">{message}</p>
+            <p className="text-[length:var(--text-body)] text-red-600" role="alert"><ST>{message}</ST></p>
           ) : null}
 
           <div className="border-t border-slate-100 pt-4">
@@ -362,10 +364,10 @@ function DetalleModal({ open, solicitud, onClose }) {
       </AdminModalHeader>
       <AdminModalBody>
         <div className="space-y-4 text-[length:var(--text-body)] text-slate-700">
-          <p><span className="font-semibold text-slate-900"><ST>Proveedor:</ST></span> {solicitud.proveedorNombre || "—"}</p>
+          <p><span className="font-semibold text-slate-900"><ST>Proveedor:</ST></span> {solicitud.proveedorNombre ? <ST>{solicitud.proveedorNombre}</ST> : "—"}</p>
           <p><span className="font-semibold text-slate-900"><ST>Estado:</ST></span> <ST>{solicitud.estado}</ST></p>
           <p><span className="font-semibold text-slate-900"><ST>Entrega estimada:</ST></span> {formatFecha(solicitud.fechaEstimadaEntrega)}</p>
-          {solicitud.notas ? <p><span className="font-semibold text-slate-900"><ST>Notas:</ST></span> {solicitud.notas}</p> : null}
+          {solicitud.notas ? <p><span className="font-semibold text-slate-900"><ST>Notas:</ST></span> <ST>{solicitud.notas}</ST></p> : null}
           {tieneProforma ? (
             <p>
               <span className="font-semibold text-slate-900"><ST>Proforma:</ST> </span>
@@ -381,14 +383,14 @@ function DetalleModal({ open, solicitud, onClose }) {
             <p><ST>Sin proforma adjunta.</ST></p>
           )}
           {proformaError ? (
-            <p className="text-red-600" role="alert">{proformaError}</p>
+            <p className="text-red-600" role="alert"><ST>{proformaError}</ST></p>
           ) : null}
           <div>
             <p className="mb-2 font-semibold text-slate-900"><ST>Ítems</ST></p>
             <ul className="space-y-1 rounded-2xl border border-slate-100 bg-slate-50 p-3">
               {(solicitud.detalles || []).map((d) => (
                 <li key={d.id || `${d.productoId}-${d.cantidadSolicitada}`}>
-                  {d.productoNombre || `Producto ${d.productoId}`} — {d.cantidadSolicitada}
+                  {d.productoNombre ? <ST>{d.productoNombre}</ST> : `Producto ${d.productoId}`} — {d.cantidadSolicitada}
                 </li>
               ))}
             </ul>
@@ -399,7 +401,7 @@ function DetalleModal({ open, solicitud, onClose }) {
               <ul className="space-y-1 rounded-2xl border border-slate-100 bg-slate-50 p-3">
                 {solicitud.historialEstados.map((h, i) => (
                   <li key={`${h.estado}-${h.fecha || i}`}>
-                    {h.estado} · {formatFecha(h.fecha)}
+                    <ST>{h.estado}</ST> · {formatFecha(h.fecha)}
                   </li>
                 ))}
               </ul>
@@ -570,11 +572,11 @@ export default function AdminSolicitudesCompra() {
 
           {successMessage ? (
             <p className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-[length:var(--text-body)] text-emerald-800">
-              <CheckCircle2 className="size-4" /> {successMessage}
+              <CheckCircle2 className="size-4" /> <ST>{successMessage}</ST>
             </p>
           ) : null}
           {loadError ? (
-            <p className="text-[length:var(--text-body)] text-red-600" role="alert">{loadError}</p>
+            <p className="text-[length:var(--text-body)] text-red-600" role="alert"><ST>{loadError}</ST></p>
           ) : null}
 
           <AdminListaToolbar
@@ -631,7 +633,7 @@ export default function AdminSolicitudesCompra() {
                     {pageItems.map((item) => (
                       <tr key={item.id} className="border-b border-slate-50 last:border-0">
                         <td className="px-4 py-3">{formatFecha(item.creadoEn)}</td>
-                        <td className="px-4 py-3">{item.proveedorNombre || "—"}</td>
+                        <td className="px-4 py-3">{item.proveedorNombre ? <ST>{item.proveedorNombre}</ST> : "—"}</td>
                         <td className="px-4 py-3">{item.detalles?.length || item.cantidadItems || 0}</td>
                         <td className="px-4 py-3">{formatFecha(item.fechaEstimadaEntrega)}</td>
                         <td className="px-4 py-3">

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Pencil, Plus, Power, RefreshCw, X } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
@@ -34,6 +34,8 @@ import {
 import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
+import { useIdioma } from "../../../lib/useIdioma";
+import { asegurarCamposEnEspanol, camposParaVistaAdmin } from "../../../lib/traducir";
 
 const EMPTY_FORM = {
   codigo: "",
@@ -47,6 +49,14 @@ const EMPTY_FORM = {
   descripcionResponsable: "",
   descripcionProyecto: "",
 };
+
+/** Texto libre de activo (no códigos ni nombre de persona). */
+const CAMPOS_TEXTO_ACTIVO = [
+  "nombre",
+  "modelo",
+  "descripcionResponsable",
+  "descripcionProyecto",
+];
 
 function formatCRC(value) {
   return new Intl.NumberFormat("es-CR", {
@@ -68,21 +78,35 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
   const [form, setForm] = useState(() => ({ ...EMPTY_FORM, ...inicial }));
   const [validationError, setValidationError] = useState("");
   const editando = Boolean(inicial?.id);
+  const { idioma } = useIdioma();
   const tEditar = useTraducir("Editar activo fijo");
   const tAgregar = useTraducir("Agregar activo fijo");
 
   useEffect(() => {
-    if (!open) return;
-    setForm({
+    if (!open) return undefined;
+    let cancelado = false;
+    const base = {
       ...EMPTY_FORM,
       ...(inicial || {}),
       valorEnLibro:
         inicial?.valorEnLibro === undefined || inicial?.valorEnLibro === null
           ? "0"
           : String(inicial.valorEnLibro),
-    });
+    };
     setValidationError("");
-  }, [open, inicial]);
+    setForm(base);
+
+    if (idioma !== "en") return undefined;
+
+    (async () => {
+      const traducido = await camposParaVistaAdmin(base, CAMPOS_TEXTO_ACTIVO, idioma);
+      if (!cancelado) setForm(traducido);
+    })();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [open, inicial, idioma]);
 
   if (!open) return null;
 
@@ -129,17 +153,27 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
       return;
     }
 
+    const textoEs = await asegurarCamposEnEspanol(
+      {
+        nombre,
+        modelo: form.modelo.trim(),
+        descripcionResponsable: form.descripcionResponsable.trim(),
+        descripcionProyecto: form.descripcionProyecto.trim(),
+      },
+      CAMPOS_TEXTO_ACTIVO,
+    );
+
     await onSave({
       codigo,
-      nombre,
-      modelo: form.modelo.trim(),
+      nombre: textoEs.nombre,
+      modelo: textoEs.modelo,
       numeroSerie: form.numeroSerie.trim(),
       fechaCompra: form.fechaCompra || null,
       valorEnLibro: valor,
       codigoProyecto: form.codigoProyecto.trim(),
       nombreCompleto: form.nombreCompleto.trim(),
-      descripcionResponsable: form.descripcionResponsable.trim(),
-      descripcionProyecto: form.descripcionProyecto.trim(),
+      descripcionResponsable: textoEs.descripcionResponsable,
+      descripcionProyecto: textoEs.descripcionProyecto,
     });
   };
 
@@ -232,7 +266,7 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
           </div>
           {message ? (
             <p className="text-[length:var(--text-body)] text-red-600" role="alert">
-              {message}
+              <ST>{message}</ST>
             </p>
           ) : null}
           <div className="border-t border-slate-100 pt-4">
@@ -396,7 +430,7 @@ export default function AdminActivosFijos() {
               role="status"
             >
               <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              {successMessage}
+              <ST>{successMessage}</ST>
             </div>
           ) : null}
 
@@ -414,7 +448,7 @@ export default function AdminActivosFijos() {
             </section>
           ) : status === "error" ? (
             <section className="flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-2xl border border-amber-200 bg-white px-5 text-center">
-              <p className="text-[length:var(--text-body)] font-semibold text-red-700">{loadError}</p>
+              <p className="text-[length:var(--text-body)] font-semibold text-red-700"><ST>{loadError}</ST></p>
               <button
                 type="button"
                 onClick={load}
@@ -482,7 +516,7 @@ export default function AdminActivosFijos() {
                         <tr key={activo.id} className="border-b border-slate-100 align-top">
                           <td className="px-4 py-3 font-semibold text-slate-900 sm:px-6">{activo.codigo}</td>
                           <td className="px-4 py-3 text-slate-800">
-                            <div>{activo.nombre}</div>
+                            <div><ST>{activo.nombre}</ST></div>
                             {activo.descripcionResponsable ? (
                               <div className="mt-1 text-slate-500"><ST>{activo.descripcionResponsable}</ST></div>
                             ) : null}
@@ -494,11 +528,13 @@ export default function AdminActivosFijos() {
                           <td className="px-4 py-3 font-medium text-slate-900">{formatCRC(activo.valorEnLibro)}</td>
                           <td className="px-4 py-3">
                             <span
-                              className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                              className={`admin-chip-estado inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                                 activo.activo ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"
                               }`}
+                              style={{ textDecoration: "none", textDecorationLine: "none" }}
+                              spellCheck={false}
                             >
-                              {activo.activo ? <ST>Activo</ST> : <ST>Inactivo</ST>}
+                              {activo.activo ? t("Activo") : t("Inactivo")}
                             </span>
                           </td>
                           <td className="px-4 py-3 sm:px-6">

@@ -15,6 +15,15 @@ export function normalizarCompra(compra) {
   const numero = firstDefined(compra, ["numero", "Numero"]);
   if (id == null && !numero) return null;
   const itemsRaw = firstDefined(compra, ["items", "Items"]) || [];
+  const estadoRaw = String(firstDefined(compra, ["estado", "Estado", "estadoPago"]) || "Pendiente");
+  const estado =
+    estadoRaw === "Aprobado" || estadoRaw === "Aprobada"
+      ? "Aceptado"
+      : estadoRaw === "Recibido" || estadoRaw === "Enviada" || estadoRaw === "Pagado"
+        ? "Enviado"
+        : estadoRaw === "Rechazada"
+          ? "Rechazado"
+          : estadoRaw;
   return {
     id: String(id ?? ""),
     numero: String(numero || id || ""),
@@ -26,8 +35,19 @@ export function normalizarCompra(compra) {
     impuestos: Number(firstDefined(compra, ["impuestos", "Impuestos", "iva", "Iva"]) || 0),
     total: Number(firstDefined(compra, ["total", "Total"]) || 0),
     metodoPago: String(firstDefined(compra, ["metodoPago", "MetodoPago", "metodo"]) || "Tarjeta"),
-    estado: String(firstDefined(compra, ["estado", "Estado", "estadoPago"]) || "Pagado"),
+    estado,
     facturaId: firstDefined(compra, ["facturaId", "FacturaId"]) || null,
+    editable: Boolean(
+      firstDefined(compra, ["editable", "Editable"]) ??
+        (estado === "Pendiente" || estado === "Aceptado" || estado === "Rechazado"),
+    ),
+    ganado: (() => {
+      const raw = firstDefined(compra, ["ganado", "Ganado"]);
+      if (raw === null || raw === undefined) {
+        return estado === "Enviado" ? Number(firstDefined(compra, ["total", "Total"]) || 0) : null;
+      }
+      return Number(raw);
+    })(),
     items: (Array.isArray(itemsRaw) ? itemsRaw : []).map((item) => ({
       productoId: String(firstDefined(item, ["productoId", "ProductoId", "id"]) || ""),
       nombre: String(firstDefined(item, ["nombre", "Nombre"]) || ""),
@@ -86,6 +106,15 @@ export async function obtenerComprasAdmin(params = {}) {
 export async function obtenerCompraPorId(id) {
   const data = await apiRequest(`${BASE_URL}/${encodeURIComponent(id)}`, {
     errorPrefix: "Error al consultar la compra",
+  });
+  return normalizarCompra(data);
+}
+
+export async function cambiarEstadoCompra(id, estado) {
+  const data = await apiRequest(`${BASE_URL}/${encodeURIComponent(id)}/estado`, {
+    method: "PATCH",
+    body: JSON.stringify({ estado }),
+    errorPrefix: "Error al actualizar el estado de la compra",
   });
   return normalizarCompra(data);
 }
