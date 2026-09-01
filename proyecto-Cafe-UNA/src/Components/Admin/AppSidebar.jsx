@@ -80,12 +80,25 @@ export function AppSidebar() {
   const displayEmail = user?.email || user?.correo || "";
   const roles = rolesDeUsuario(user);
   const puedeCms = tienePermiso(roles, "actualizar_informacion");
+  const puedeGaleria = tienePermiso(roles, "agregar_imagenes_galeria");
+  const puedeVerCmsGrupo = puedeCms || puedeGaleria;
+
   const puedeInventario = tienePermiso(roles, "ver_inventario");
-  const puedeVoluntariado = tienePermiso(roles, "ver_solicitudes_voluntariado");
-  const puedeUsuarios = tienePermiso(roles, "editar_usuarios");
+  const puedePuntosVenta = tienePermiso(roles, "ver_inventario") || tienePermiso(roles, "actualizar_inventario");
+  const puedeActivosFijos = tienePermiso(roles, "ver_inventario") || tienePermiso(roles, "actualizar_inventario");
+  const puedeDistribucion = tienePermiso(roles, "ver_inventario");
+  const puedeProductos = tienePermiso(roles, "ver_productos") || tienePermiso(roles, "ver_inventario");
+  const puedeVentasPresenciales =
+    tienePermiso(roles, "registrar_ventas") ||
+    tienePermiso(roles, "ajustar_stock_ubicaciones");
   const puedeVentas =
     tienePermiso(roles, "ver_ventas") ||
     tienePermiso(roles, "ver_historial_compras_clientes");
+  const puedeVerInventarioGrupo =
+    puedeInventario || puedePuntosVenta || puedeActivosFijos || puedeDistribucion || puedeProductos || puedeVentasPresenciales || puedeVentas;
+
+  const puedeVoluntariado = tienePermiso(roles, "ver_solicitudes_voluntariado") || tienePermiso(roles, "administrar_solicitudes_voluntariado");
+  const puedeUsuarios = tienePermiso(roles, "editar_usuarios") || tienePermiso(roles, "crear_usuarios");
   const puedeAjustes = tienePermiso(roles, "administrar_roles_permisos");
   const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
   const puedePerfil = tienePermiso(roles, "ver_perfil_propio");
@@ -273,7 +286,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {puedeCms ? (
+        {puedeVerCmsGrupo ? (
         <Collapsible.Root
           open={generalOpen}
           onOpenChange={updateGeneralOpen}
@@ -290,6 +303,7 @@ export function AppSidebar() {
             <Collapsible.Content>
               <SidebarGroupContent>
                 <SidebarMenuSub>
+                  {puedeCms ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/informacion-pagina-principal" activeProps={linkActivo} onClick={closeMobileSidebar}>
@@ -298,6 +312,8 @@ export function AppSidebar() {
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
+                  ) : null}
+                  {puedeCms || puedeGaleria ? (
                   <SidebarMenuSubItem>
                     <Collapsible.Root
                       open={sobreNosotrosOpen}
@@ -314,6 +330,7 @@ export function AppSidebar() {
                       </Collapsible.Trigger>
                       <Collapsible.Content>
                         <SidebarMenuSub className="mt-1">
+                          {puedeCms ? (
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
                               <Link to="/admin/sobre-nosotros" activeProps={linkActivo} onClick={closeMobileSidebar}>
@@ -322,6 +339,8 @@ export function AppSidebar() {
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
+                          ) : null}
+                          {puedeGaleria ? (
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
                               <Link to="/admin/galeria" activeProps={linkActivo} onClick={closeMobileSidebar}>
@@ -330,10 +349,12 @@ export function AppSidebar() {
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
+                          ) : null}
                         </SidebarMenuSub>
                       </Collapsible.Content>
                     </Collapsible.Root>
                   </SidebarMenuSubItem>
+                  ) : null}
                 </SidebarMenuSub>
               </SidebarGroupContent>
             </Collapsible.Content>
@@ -341,7 +362,7 @@ export function AppSidebar() {
         </Collapsible.Root>
         ) : null}
 
-        {puedeInventario ? (
+        {puedeVerInventarioGrupo ? (
         <Collapsible.Root
           open={inventoryOpen}
           onOpenChange={updateInventoryOpen}
@@ -358,6 +379,7 @@ export function AppSidebar() {
             <Collapsible.Content>
               <SidebarGroupContent>
                 <SidebarMenuSub>
+                  {puedeProductos ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/producto" activeProps={linkActivo} onClick={closeMobileSidebar}>
@@ -366,6 +388,8 @@ export function AppSidebar() {
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
+                  ) : null}
+                  {puedePuntosVenta ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/puntos-venta" activeProps={linkActivo} onClick={closeMobileSidebar}>
@@ -374,6 +398,8 @@ export function AppSidebar() {
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
+                  ) : null}
+                  {puedeActivosFijos ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/activos-fijos" activeProps={linkActivo} onClick={closeMobileSidebar}>
@@ -382,6 +408,8 @@ export function AppSidebar() {
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
+                  ) : null}
+                  {puedeDistribucion ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/distribucion" activeProps={linkActivo} onClick={closeMobileSidebar}>
@@ -390,6 +418,8 @@ export function AppSidebar() {
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
+                  ) : null}
+                  {puedeVentasPresenciales ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/ventas-presenciales" activeProps={linkActivo} onClick={closeMobileSidebar}>
@@ -398,6 +428,7 @@ export function AppSidebar() {
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
+                  ) : null}
                   {puedeVentas ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
@@ -417,16 +448,6 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarMenu>
-            {puedeVentas && !puedeInventario ? (
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link to="/admin/historial-ventas" activeProps={linkActivo} onClick={closeMobileSidebar}>
-                  <Receipt />
-                  <span><ST>Historial de ventas</ST></span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            ) : null}
             {puedeVoluntariado ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
