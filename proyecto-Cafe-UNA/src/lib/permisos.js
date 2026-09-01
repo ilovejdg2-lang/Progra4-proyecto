@@ -103,6 +103,16 @@ export function tienePermiso(roles, codigo) {
 
 export function rolesDeUsuario(user) {
   if (Array.isArray(user?.roles) && user.roles.length > 0) return user.roles;
-  if (user?.role) return [user.role];
+  if (Array.isArray(user?.Roles) && user.Roles.length > 0) return user.Roles;
+  if (typeof user?.rol === "string" && user.rol.trim()) return [user.rol.trim()];
+  if (typeof user?.Rol === "string" && user.Rol.trim()) return [user.Rol.trim()];
+  if (
+    typeof user?.role === "string" &&
+    user.role.trim() &&
+    user.role.toLowerCase() !== "admin" &&
+    user.role.toLowerCase() !== "user"
+  ) {
+    return [user.role.trim()];
+  }
   return [];
 }

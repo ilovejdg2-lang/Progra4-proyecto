@@ -396,7 +396,7 @@ export default function AdminActivosFijos() {
   };
 
   return (
-    <AdminPageGate showLoading={showLoading} message={loadingMessage}>
+    <AdminPageGate showLoading={showLoading} message={loadingMessage} allowed={puedeVer}>
       <AdminLayout>
         <div className="mx-auto max-w-7xl space-y-6">
           <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

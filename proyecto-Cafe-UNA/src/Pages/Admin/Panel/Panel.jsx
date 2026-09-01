@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Package } from "lucide-react";
+import { AlertTriangle, Package, ShoppingBag, Receipt, Box, User } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 import { AdminLayout } from "../layouts/AdminLayout";
@@ -39,9 +39,16 @@ function AlertaMeta({ item, tPeor, tMinimo, tAgotado, tBajo }) {
 const AdminPanel = () => {
   const user = getActiveSessionUser();
   const roles = rolesDeUsuario(user);
-  const puedeVerAlertas =
-    tienePermiso(roles, "ver_inventario") ||
-    tienePermiso(roles, "ver_panel_administrativo");
+  const puedeVerAlertas = tienePermiso(roles, "ver_inventario");
+  const puedeVentasPresenciales =
+    tienePermiso(roles, "registrar_ventas") ||
+    tienePermiso(roles, "ajustar_stock_ubicaciones");
+  const puedeVentas =
+    tienePermiso(roles, "ver_ventas") ||
+    tienePermiso(roles, "ver_historial_compras_clientes");
+  const puedeProductos =
+    tienePermiso(roles, "ver_productos") ||
+    tienePermiso(roles, "ver_inventario");
   const { showLoading, loadingMessage } = useAdminPageGate("/admin", true);
 
   const tPanel = useTraducir("Panel Administrativo");
@@ -95,6 +102,88 @@ const AdminPanel = () => {
           <h2>{tPanel}</h2>
           <p>{tBienvenido} {user?.name}!</p>
           <p>{tGestion}</p>
+
+          {!puedeVerAlertas && (puedeVentasPresenciales || puedeVentas || puedeProductos) ? (
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {puedeVentasPresenciales ? (
+                <Link
+                  to="/admin/ventas-presenciales"
+                  className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-400 hover:shadow-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-black p-3 text-white">
+                      <ShoppingBag className="size-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900"><ST>Ventas Presenciales</ST></h3>
+                      <p className="text-xs text-slate-500"><ST>Registrar compras en punto físico</ST></p>
+                    </div>
+                  </div>
+                  <span className="mt-4 text-xs font-semibold text-slate-950 underline underline-offset-4">
+                    <ST>Ir a ventas &rarr;</ST>
+                  </span>
+                </Link>
+              ) : null}
+
+              {puedeVentas ? (
+                <Link
+                  to="/admin/historial-ventas"
+                  className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-400 hover:shadow-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-black p-3 text-white">
+                      <Receipt className="size-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900"><ST>Historial de Ventas</ST></h3>
+                      <p className="text-xs text-slate-500"><ST>Consultar ventas registradas</ST></p>
+                    </div>
+                  </div>
+                  <span className="mt-4 text-xs font-semibold text-slate-950 underline underline-offset-4">
+                    <ST>Ver historial &rarr;</ST>
+                  </span>
+                </Link>
+              ) : null}
+
+              {puedeProductos ? (
+                <Link
+                  to="/admin/producto"
+                  className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-400 hover:shadow-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-black p-3 text-white">
+                      <Box className="size-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900"><ST>Catálogo de Productos</ST></h3>
+                      <p className="text-xs text-slate-500"><ST>Ver productos y presentaciones</ST></p>
+                    </div>
+                  </div>
+                  <span className="mt-4 text-xs font-semibold text-slate-950 underline underline-offset-4">
+                    <ST>Ver catálogo &rarr;</ST>
+                  </span>
+                </Link>
+              ) : null}
+
+              <Link
+                to="/admin/perfil"
+                className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-400 hover:shadow-md"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-xl bg-black p-3 text-white">
+                    <User className="size-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900"><ST>Mi Perfil</ST></h3>
+                    <p className="text-xs text-slate-500"><ST>Gestionar datos y contraseña</ST></p>
+                  </div>
+                </div>
+                <span className="mt-4 text-xs font-semibold text-slate-950 underline underline-offset-4">
+                  <ST>Editar perfil &rarr;</ST>
+                </span>
+              </Link>
+            </div>
+          ) : null}
 
           {puedeVerAlertas ? (
             <section className="admin-panel__alertas" aria-label={tAlertas}>
