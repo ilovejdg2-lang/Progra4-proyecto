@@ -99,6 +99,7 @@ function BadgeEstadoCompra({ estado }) {
 export default function HistorialVentas() {
   const user = getActiveSessionUser();
   const roles = rolesDeUsuario(user);
+  const esAdmin = roles.includes("SuperAdmin") || roles.includes("Admin");
   const puedeVer = tienePermiso(roles, "ver_ventas") || tienePermiso(roles, "ver_historial_compras_clientes");
   const puedeGestionar =
     tienePermiso(roles, "actualizar_ventas") || tienePermiso(roles, "registrar_ventas");
@@ -213,12 +214,25 @@ export default function HistorialVentas() {
         <div className="space-y-4">
           <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
-              <h1 className="text-[length:var(--text-title)] font-semibold text-slate-900"><ST>Historial de ventas</ST></h1>
-              <p className="mt-1 text-[length:var(--text-body)] text-slate-500">
-                <ST>
-                  Pendiente: aceptá o rechazá. Aceptado: enviá o volvé a pendiente (se restaura el stock). Enviado ya no se edita.
-                </ST>
-              </p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <h1 className="text-[length:var(--text-title)] font-semibold text-slate-900">
+                    <ST>{esAdmin ? "Historial de ventas (Todos los vendedores)" : "Historial de ventas personales"}</ST>
+                  </h1>
+                  <p className="mt-1 text-[length:var(--text-body)] text-slate-500">
+                    <ST>
+                      {esAdmin
+                        ? "Supervisión y control de ventas realizadas por todos los vendedores en puntos físicos y web."
+                        : "Mostrando únicamente las ventas registradas por su usuario."}
+                    </ST>
+                  </p>
+                </div>
+                {!esAdmin ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900 border border-amber-200">
+                    <span>{user?.nombre || user?.correo || "Vendedor"}</span>
+                  </span>
+                ) : null}
+              </div>
               {error ? <p className="mt-2 text-[length:var(--text-body)] text-amber-700 no-underline"><ST>{error}</ST></p> : null}
             </div>
 
@@ -281,6 +295,7 @@ export default function HistorialVentas() {
                     <tr>
                       <th><ST>Recibo</ST></th>
                       <th><ST>Fecha</ST></th>
+                      {esAdmin ? <th><ST>Vendedor</ST></th> : null}
                       <th><ST>Cliente</ST></th>
                       <th><ST>Productos</ST></th>
                       <th><ST>Total</ST></th>
@@ -293,6 +308,11 @@ export default function HistorialVentas() {
                       <tr key={compra.id || compra.numero} className="border-b border-slate-100 last:border-b-0">
                         <td className="px-6 py-4 font-medium text-slate-900">{compra.numero}</td>
                         <td className="px-6 py-4 text-slate-600"><ST>{formatFecha(compra.fecha)}</ST></td>
+                        {esAdmin ? (
+                          <td className="px-6 py-4 text-slate-700 font-medium">
+                            {compra.vendedorNombre || compra.vendedorCorreo || "—"}
+                          </td>
+                        ) : null}
                         <td className="px-6 py-4 text-slate-700">{compra.clienteNombre}</td>
                         <td className="px-6 py-4 text-slate-700">{compra.cantidadProductos}</td>
                         <td className="px-6 py-4 text-slate-800">{formatCRC(compra.total)}</td>
@@ -341,6 +361,14 @@ export default function HistorialVentas() {
                 <p className="mb-3 text-[length:var(--text-body)] text-rose-700 no-underline" role="alert"><ST>{actionError}</ST></p>
               ) : null}
               <dl className="grid gap-2 text-[length:var(--text-body)]">
+                {detalle.vendedorNombre || detalle.vendedorCorreo ? (
+                  <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+                    <dt className="text-slate-500"><ST>Vendedor</ST></dt>
+                    <dd className="font-medium text-slate-900 no-underline">
+                      {detalle.vendedorNombre || detalle.vendedorCorreo}
+                    </dd>
+                  </div>
+                ) : null}
                 <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
                   <dt className="text-slate-500"><ST>Cliente</ST></dt>
                   <dd className="font-medium text-slate-900 no-underline">{detalle.clienteNombre}</dd>

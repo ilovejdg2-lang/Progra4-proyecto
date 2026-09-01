@@ -98,11 +98,16 @@ export function saveAuthenticatedUser(user) {
 export function applyPerfilToSession(perfil) {
   if (!perfil) return null;
 
+  const roles = Array.isArray(perfil.roles)
+    ? perfil.roles
+    : (Array.isArray(perfil.Roles) ? perfil.Roles : (perfil.rol ? [perfil.rol] : []));
+
   return updateSessionUser({
     name: perfil.nombre,
     username: perfil.nombre,
     email: perfil.correo,
     correo: perfil.correo,
+    ...(roles.length > 0 ? { roles } : {}),
     fotoPerfilUrl: perfil.fotoPerfilUrl || "",
     fotoBannerUrl: perfil.fotoBannerUrl || "",
     fotoPerfilPosicion: perfil.fotoPerfilPosicion || "",

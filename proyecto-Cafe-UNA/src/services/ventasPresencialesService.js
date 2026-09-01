@@ -24,8 +24,24 @@ export function normalizarPuntoPresencial(raw) {
 
 export function normalizarVentaPresencial(raw) {
   if (!raw) return null;
+  const itemsRaw = Array.isArray(raw.items)
+    ? raw.items
+    : Array.isArray(raw.Items)
+      ? raw.Items
+      : [];
+
+  const items = itemsRaw.map((item) => ({
+    productoId: String(firstDefined(item, ["productoId", "ProductoId", "id"]) || ""),
+    productoNombre: String(firstDefined(item, ["productoNombre", "ProductoNombre", "nombre"]) || ""),
+    cantidad: Number(firstDefined(item, ["cantidad", "Cantidad"]) || 0),
+    precioUnitario: Number(firstDefined(item, ["precioUnitario", "PrecioUnitario"]) || 0),
+    subtotal: Number(firstDefined(item, ["subtotal", "Subtotal"]) || 0),
+    stockRestante: Number(firstDefined(item, ["stockRestante", "StockRestante"]) || 0),
+  }));
+
   return {
     id: String(firstDefined(raw, ["id", "Id"]) || ""),
+    numero: String(firstDefined(raw, ["numero", "Numero"]) || ""),
     productoId: String(firstDefined(raw, ["productoId", "ProductoId"]) || ""),
     productoNombre: String(firstDefined(raw, ["productoNombre", "ProductoNombre"]) || ""),
     ubicacionId: Number(firstDefined(raw, ["ubicacionId", "UbicacionId"]) || 0),
@@ -36,6 +52,20 @@ export function normalizarVentaPresencial(raw) {
     notas: String(firstDefined(raw, ["notas", "Notas"]) || ""),
     stockRestante: Number(firstDefined(raw, ["stockRestante", "StockRestante"]) || 0),
     responsableId: firstDefined(raw, ["responsableId", "ResponsableId"]) ?? null,
+    responsableNombre: String(firstDefined(raw, ["responsableNombre", "ResponsableNombre"]) || ""),
+    clienteNombre: String(firstDefined(raw, ["clienteNombre", "ClienteNombre"]) || ""),
+    clienteCorreo: String(firstDefined(raw, ["clienteCorreo", "ClienteCorreo"]) || ""),
+    metodoPago: String(firstDefined(raw, ["metodoPago", "MetodoPago"]) || "Efectivo"),
+    total: Number(firstDefined(raw, ["total", "Total"]) || 0),
+    correoEnviado: Boolean(firstDefined(raw, ["correoEnviado", "CorreoEnviado"])),
+    items: items.length > 0 ? items : (raw.productoId ? [{
+      productoId: String(raw.productoId),
+      productoNombre: String(raw.productoNombre || ""),
+      cantidad: Number(raw.cantidad || 0),
+      precioUnitario: Number(raw.total || 0) / Math.max(1, Number(raw.cantidad || 1)),
+      subtotal: Number(raw.total || 0),
+      stockRestante: Number(raw.stockRestante || 0),
+    }] : []),
   };
 }
 
@@ -54,4 +84,12 @@ export async function registrarVentaPresencial(payload) {
     errorPrefix: "Error al registrar la venta presencial",
   });
   return normalizarVentaPresencial(data);
+}
+
+export async function enviarComprobanteVentaFisica(payload) {
+  return apiRequest(`${BASE_URL}/enviar-comprobante`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+    errorPrefix: "Error al enviar el comprobante por correo",
+  });
 }
