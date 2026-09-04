@@ -595,6 +595,15 @@
   color: #3f5a43;
 }
 
+.notification-item--donacion {
+  border-left: 3px solid #b45309;
+}
+
+.notification-item--donacion .notification-item__icon {
+  background: #fff4e8;
+  color: #9a4b16;
+}
+
 .notification-item__stock {
   display: inline-flex;
   align-items: center;

@@ -37,7 +37,95 @@ export function normalizarSolicitudDonacion(raw) {
       firstDefined(raw, ["necesidadTitulo", "NecesidadTitulo"]) || "",
     ).trim(),
     usuarioNombre: String(firstDefined(raw, ["usuarioNombre", "UsuarioNombre"]) || "").trim(),
+    usuarioCorreo: String(firstDefined(raw, ["usuarioCorreo", "UsuarioCorreo"]) || "").trim(),
+    donanteNombre: String(firstDefined(raw, ["donanteNombre", "DonanteNombre"]) || "").trim(),
+    detalles: firstDefined(raw, ["detalles", "Detalles"]) || null,
     createdAt: firstDefined(raw, ["createdAt", "CreatedAt"]) || "",
+  };
+}
+
+function textoDetalle(detalles, ...claves) {
+  if (!detalles || typeof detalles !== "object") return "";
+  for (const clave of claves) {
+    const valor = detalles[clave];
+    if (valor !== undefined && valor !== null && String(valor).trim()) {
+      return String(valor).trim();
+    }
+  }
+  return "";
+}
+
+function formatHoraDonacion(valor) {
+  const crudo = String(valor || "").trim();
+  if (!crudo) return "";
+  const etiquetas = { manana: "Mañana", tarde: "Tarde", fines: "Fines de semana" };
+  if (etiquetas[crudo]) return etiquetas[crudo];
+  const match = crudo.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return crudo;
+  const horas = Number(match[1]);
+  const minutos = match[2];
+  const periodo = horas >= 12 ? "p.m." : "a.m.";
+  const horas12 = horas % 12 || 12;
+  return `${horas12}:${minutos} ${periodo}`;
+}
+
+export function camposSolicitudDonacion(row) {
+  const detalles = row?.detalles && typeof row.detalles === "object" ? row.detalles : {};
+  const fotos = Array.isArray(detalles.fotos) ? detalles.fotos : [];
+  const horariosRaw = Array.isArray(detalles.horarios) ? detalles.horarios : [];
+  const metodo = textoDetalle(detalles, "metodoEntrega", "MetodoEntrega");
+  const tipoId = textoDetalle(detalles, "tipoIdentificacion", "TipoIdentificacion");
+  const tipoDonante = textoDetalle(detalles, "tipoDonante", "TipoDonante") || "persona";
+  const etiquetasMetodo = {
+    entrega: "Lo entregaré personalmente",
+    recoleccion: "Solicito la recolección a domicilio",
+  };
+  const etiquetasId = {
+    cedula: "Cédula física",
+    juridica: "Cédula jurídica",
+    pasaporte: "Pasaporte",
+  };
+
+  return {
+    donanteNombre: row?.donanteNombre || row?.usuarioNombre || "",
+    tipoDonante: tipoDonante === "organizacion" ? "Organización" : "Persona",
+    esOrganizacion: tipoDonante === "organizacion",
+    nombre: textoDetalle(detalles, "nombre", "Nombre"),
+    primerApellido: textoDetalle(detalles, "primerApellido", "PrimerApellido"),
+    segundoApellido: textoDetalle(detalles, "segundoApellido", "SegundoApellido"),
+    tipoIdentificacion: etiquetasId[tipoId] || tipoId,
+    numeroIdentificacion: textoDetalle(detalles, "numeroIdentificacion", "NumeroIdentificacion"),
+    correo: textoDetalle(detalles, "correo", "Correo") || row?.usuarioCorreo || "",
+    telefono: textoDetalle(detalles, "telefono", "Telefono"),
+    categoria: row?.necesidadTitulo || row?.tipo || "",
+    descripcion: row?.descripcion || "",
+    cantidadEstimada: textoDetalle(detalles, "cantidadEstimada", "CantidadEstimada"),
+    estadoArticulos: textoDetalle(detalles, "estadoArticulos", "EstadoArticulos"),
+    metodoEntrega: etiquetasMetodo[metodo] || metodo,
+    direccionRecoleccion: textoDetalle(detalles, "direccionRecoleccion", "DireccionRecoleccion"),
+    horaEntrega:
+      formatHoraDonacion(textoDetalle(detalles, "horaEntrega", "HoraEntrega")) ||
+      horariosRaw.map((item) => formatHoraDonacion(item)).filter(Boolean).join(", "),
+    valorEstimado: textoDetalle(detalles, "valorEstimado", "ValorEstimado"),
+    fechaSolicitud:
+      textoDetalle(detalles, "fechaSolicitud", "FechaSolicitud") ||
+      (textoDetalle(detalles, "fechaEntrega", "FechaEntrega")
+        ? String(row?.createdAt || "").slice(0, 10)
+        : row?.fechaPropuesta || String(row?.createdAt || "").slice(0, 10)),
+    fechaEntrega:
+      textoDetalle(detalles, "fechaEntrega", "FechaEntrega") || row?.fechaPropuesta || "",
+    estado: row?.estado || "",
+    fotos: fotos.filter((foto) => String(foto?.url || foto?.Url || "").startsWith("data:image")),
+  };
+}
+
+export function resumenSolicitudDonacion(row) {
+  const campos = camposSolicitudDonacion(row);
+  return {
+    fotoUrl: String(campos.fotos[0]?.url || campos.fotos[0]?.Url || "").trim(),
+    valorEstimado: campos.valorEstimado,
+    estadoArticulos: campos.estadoArticulos,
+    fotos: campos.fotos,
   };
 }
 
@@ -107,4 +195,14 @@ export async function obtenerSolicitudesDonacionAdmin() {
     errorPrefix: "Error al consultar solicitudes de donación",
   });
   return (Array.isArray(data) ? data : []).map(normalizarSolicitudDonacion).filter(Boolean);
+}
+
+export async function actualizarEstadoSolicitudDonacion(id, estado) {
+  return normalizarSolicitudDonacion(
+    await apiRequest(`${BASE}/solicitudes/${id}/estado`, {
+      method: "PATCH",
+      body: JSON.stringify({ estado }),
+      errorPrefix: "Error al actualizar el estado de la donación",
+    }),
+  );
 }

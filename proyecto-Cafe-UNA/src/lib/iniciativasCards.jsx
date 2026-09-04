@@ -42,13 +42,20 @@ export function buildIniciativasCards(tarjetas = []) {
   return tarjetas.map((tarjeta) => {
     const clave = (tarjeta.clave || "").toLowerCase();
     const estilo = ESTILOS_INICIATIVA[clave] || {};
+    let ruta = tarjeta.ruta || "";
+    if (clave === "donaciones") {
+      const actual = String(ruta).trim();
+      if (!actual || actual.startsWith("/donaciones/necesidades")) {
+        ruta = "/donaciones/solicitar";
+      }
+    }
 
     return {
       id: clave || tarjeta.clave,
       etiqueta: tarjeta.etiqueta,
       titulo: tarjeta.titulo,
       descripcion: tarjeta.descripcion,
-      ruta: tarjeta.ruta || "",
+      ruta,
       textoBoton: tarjeta.textoBoton || "",
       icono: ICONOS_INICIATIVA[clave] ?? null,
       accentColor: estilo.accentColor,

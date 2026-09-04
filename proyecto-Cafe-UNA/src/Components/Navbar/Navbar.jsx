@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import './Navbar.css';
 import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
-import { Bell, BookOpen, ChevronDown, Coffee, HandHeart, Info, LayoutDashboard, LogOut, Menu, Minus, Package, Plus, ShoppingBag, ShoppingCart, Trash2, User, X } from 'lucide-react';
+import { Bell, BookOpen, ChevronDown, ClipboardList, Coffee, Gift, HandHeart, Info, LayoutDashboard, LogOut, Menu, Minus, Package, Plus, ShoppingBag, ShoppingCart, Trash2, User, X } from 'lucide-react';
 import { LanguageSwitcher } from '../LanguageSwitcher/LanguageSwitcher';
 import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
 import { FacebookIcon, InstagramIcon } from '../Footer/SocialIcons';
@@ -11,6 +11,10 @@ import { normalizeImageUrl } from '../../lib/imageUtils';
 import { useHomeBrandNavigation } from '../../hooks/useHomeBrandNavigation';
 import { readPageCache } from '../../lib/pageDataCache';
 import { obtenerSolicitudes, obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService';
+import {
+    obtenerMisSolicitudesDonacion,
+    obtenerSolicitudesDonacionAdmin,
+} from '../../services/donacionesService';
 import { cancelPendingSessionRefresh } from '../../services/apiClient';
 import { beginLogout, clearSession, getActiveSessionUser } from '../../services/sessionService';
 import { rolesDeUsuario, tienePermiso } from '../../lib/permisos';
@@ -34,6 +38,20 @@ const ABOUT_GALERIA_PATH = '/AboutUs/galeria';
 function etiquetaEnlace(enlace, idioma) {
     const es = enlace?.etiqueta ?? enlace?.Etiqueta ?? '';
     return textoIdioma(es, null, idioma) || es;
+}
+
+function isFormsNavLink(enlace) {
+    const ruta = String(enlace?.ruta ?? enlace?.Ruta ?? '').toLowerCase();
+    const etiqueta = String(
+        `${enlace?.etiqueta ?? enlace?.Etiqueta ?? ''} ${enlace?.etiquetaEn ?? enlace?.EtiquetaEn ?? ''}`,
+    ).toLowerCase();
+    return (
+        ruta.includes('voluntariado') ||
+        etiqueta.includes('voluntariado') ||
+        etiqueta.includes('volunteering') ||
+        etiqueta.includes('formularios') ||
+        (etiqueta.includes('forms') && !etiqueta.includes('about'))
+    );
 }
 
 function isAboutNavLink(enlace) {
@@ -75,6 +93,15 @@ const canSeeStockAlerts = (user) => {
     return (
         tienePermiso(roles, 'ver_inventario') ||
         tienePermiso(roles, 'ver_panel_administrativo')
+    );
+};
+const canSeeAllDonaciones = (user) => {
+    if (!user) return false;
+    if (canSeeAllSolicitudes(user) || user.role === 'admin') return true;
+    const roles = rolesDeUsuario(user);
+    return (
+        tienePermiso(roles, 'ver_solicitudes_donacion') ||
+        tienePermiso(roles, 'administrar_solicitudes_donaciones')
     );
 };
 const isSolicitudPendiente = (solicitud) =>
@@ -123,7 +150,7 @@ function resolveMobileNavIcon(ruta) {
 
     if (normalized.includes('product')) return Coffee;
     if (normalized.includes('about') || normalized.includes('sobre')) return BookOpen;
-    if (normalized.includes('volunt')) return HandHeart;
+    if (normalized.includes('volunt') || normalized.includes('formulario') || normalized.includes('donacion')) return ClipboardList;
     if (normalized.includes('iniciativa') || normalized.includes('gallery') || normalized.includes('galer')) return Info;
     if (normalized.includes('checkout') || normalized.includes('cart')) return ShoppingCart;
 
@@ -141,6 +168,9 @@ const Navbar = () => {
     const labelBajoMinimo = useTraducir('Bajo mínimo');
     const labelRedes = useTraducir('Redes sociales');
     const labelSobreNosotros = useTraducir('Sobre nosotros');
+    const labelFormularios = useTraducir('Formularios');
+    const labelVoluntariado = useTraducir('Voluntariado');
+    const labelDonaciones = useTraducir('Donaciones');
     const tCartResumen = useTraducir('Resumen del carrito');
     const tCartVacio = useTraducir('Tu carrito está vacío');
     const tCartVacioLead = useTraducir('Todavía no hay cafés por aquí. Explorá el catálogo y agregá el que más te guste.');
@@ -170,11 +200,14 @@ const Navbar = () => {
     const [showCartDropdown, setShowCartDropdown] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showAboutMenu, setShowAboutMenu] = useState(false);
+    const [showFormsMenu, setShowFormsMenu] = useState(false);
     const [showMobileAbout, setShowMobileAbout] = useState(true);
+    const [showMobileForms, setShowMobileForms] = useState(true);
     const [isCartClosing, setIsCartClosing] = useState(false);
     const [user, setUser] = useState(null);
     const [cartItems, setCartItems] = useState([]);
     const [solicitudes, setSolicitudes] = useState([]);
+    const [solicitudesDonacion, setSolicitudesDonacion] = useState([]);
     const [alertasStock, setAlertasStock] = useState([]);
     const [notificationsLoading, setNotificationsLoading] = useState(false);
     const [notificationsError, setNotificationsError] = useState('');
@@ -189,6 +222,7 @@ const Navbar = () => {
     const notificationsRef = useRef(null);
     const userMenuRef = useRef(null);
     const aboutMenuRef = useRef(null);
+    const formsMenuRef = useRef(null);
     const cartCloseTimerRef = useRef(null);
     const navbarRef = useRef(null);
     const pathname = useRouterState({
@@ -230,6 +264,7 @@ const Navbar = () => {
             setCartItems(Array.isArray(storedCart) ? storedCart : []);
             if (!storedUser) {
                 setSolicitudes([]);
+                setSolicitudesDonacion([]);
                 setAlertasStock([]);
                 setShowNotifications(false);
             }
@@ -246,6 +281,7 @@ const Navbar = () => {
     const loadSolicitudesUsuario = useCallback(async (currentUser = user) => {
         if (!currentUser) {
             setSolicitudes([]);
+            setSolicitudesDonacion([]);
             setAlertasStock([]);
             return;
         }
@@ -257,6 +293,9 @@ const Navbar = () => {
             const solicitudesPromise = canSeeAllSolicitudes(currentUser)
                 ? obtenerSolicitudes()
                 : obtenerSolicitudesDeUsuario(String(userId));
+            const donacionesPromise = canSeeAllDonaciones(currentUser)
+                ? obtenerSolicitudesDonacionAdmin()
+                : obtenerMisSolicitudesDonacion();
 
             let alertas = [];
             if (canSeeStockAlerts(currentUser)) {
@@ -268,8 +307,12 @@ const Navbar = () => {
                 }
             }
 
-            const data = await solicitudesPromise;
+            const [data, donaciones] = await Promise.all([
+                solicitudesPromise.catch(() => []),
+                donacionesPromise.catch(() => []),
+            ]);
             setSolicitudes(Array.isArray(data) ? data : []);
+            setSolicitudesDonacion(Array.isArray(donaciones) ? donaciones : []);
             setAlertasStock(Array.isArray(alertas) ? alertas : []);
         } catch (err) {
             console.error('No se pudieron cargar las notificaciones.', err);
@@ -287,9 +330,11 @@ const Navbar = () => {
 
         const syncSolicitudes = () => loadSolicitudesUsuario(user);
         window.addEventListener('voluntariado-updated', syncSolicitudes);
+        window.addEventListener('donaciones-updated', syncSolicitudes);
         return () => {
             window.clearTimeout(initialLoadId);
             window.removeEventListener('voluntariado-updated', syncSolicitudes);
+            window.removeEventListener('donaciones-updated', syncSolicitudes);
         };
     }, [user, loadSolicitudesUsuario]);
 
@@ -329,17 +374,24 @@ const Navbar = () => {
     useEffect(() => {
         setIsMobileMenuOpen(false);
         setShowAboutMenu(false);
+        setShowFormsMenu(false);
     }, [pathname]);
 
     useEffect(() => {
-        if (!showAboutMenu) return undefined;
+        if (!showAboutMenu && !showFormsMenu) return undefined;
         const onPointerDown = (event) => {
-            if (aboutMenuRef.current && !aboutMenuRef.current.contains(event.target)) {
+            if (showAboutMenu && aboutMenuRef.current && !aboutMenuRef.current.contains(event.target)) {
                 setShowAboutMenu(false);
+            }
+            if (showFormsMenu && formsMenuRef.current && !formsMenuRef.current.contains(event.target)) {
+                setShowFormsMenu(false);
             }
         };
         const onEscape = (event) => {
-            if (event.key === 'Escape') setShowAboutMenu(false);
+            if (event.key === 'Escape') {
+                setShowAboutMenu(false);
+                setShowFormsMenu(false);
+            }
         };
         document.addEventListener('mousedown', onPointerDown);
         document.addEventListener('keydown', onEscape);
@@ -347,7 +399,7 @@ const Navbar = () => {
             document.removeEventListener('mousedown', onPointerDown);
             document.removeEventListener('keydown', onEscape);
         };
-    }, [showAboutMenu]);
+    }, [showAboutMenu, showFormsMenu]);
 
     useEffect(() => {
         if (!isMobileMenuOpen) {
@@ -491,8 +543,10 @@ const Navbar = () => {
     const userDisplayName = user?.username?.includes('@') ? user?.name : user?.username || user?.name;
     const solicitudesPendientes = solicitudes.filter(isSolicitudPendiente);
     const solicitudesPendientesCount = solicitudesPendientes.length;
+    const donacionesPendientes = solicitudesDonacion.filter(isSolicitudPendiente);
+    const donacionesPendientesCount = donacionesPendientes.length;
     const alertasStockCount = alertasStock.length;
-    const notificationsCount = solicitudesPendientesCount + alertasStockCount;
+    const notificationsCount = solicitudesPendientesCount + donacionesPendientesCount + alertasStockCount;
     const showStockAlerts = canSeeStockAlerts(user);
 
     const persistCart = (updatedCart) => {
@@ -596,8 +650,16 @@ const Navbar = () => {
     const handleNotificationOpen = (event) => {
         event?.stopPropagation?.();
         setShowNotifications(false);
-        if (user?.role === 'admin') {
+        if (user?.role === 'admin' || canSeeAllSolicitudes(user)) {
             navigate({ to: '/admin/voluntariado' });
+        }
+    };
+
+    const handleDonacionNotificationOpen = (event) => {
+        event?.stopPropagation?.();
+        setShowNotifications(false);
+        if (user?.role === 'admin' || canSeeAllDonaciones(user)) {
+            navigate({ to: '/admin/donaciones/solicitudes' });
         }
     };
 
@@ -716,6 +778,7 @@ const Navbar = () => {
                                     aria-haspopup="true"
                                     onClick={() => {
                                         setShowAboutMenu((open) => !open);
+                                        setShowFormsMenu(false);
                                         setShowDropdown(false);
                                         setShowCartDropdown(false);
                                         setShowNotifications(false);
@@ -741,6 +804,56 @@ const Navbar = () => {
                                             onClick={() => setShowAboutMenu(false)}
                                         >
                                             {labelGaleria}
+                                        </Link>
+                                    </div>
+                                ) : null}
+                            </div>
+                        );
+                    }
+
+                    if (isFormsNavLink(enlace)) {
+                        const pathNorm = normalizePathname(pathname);
+                        const formsActive =
+                            pathNorm.startsWith('/voluntariado') || pathNorm.startsWith('/donaciones');
+                        return (
+                            <div
+                                key={enlace.id ?? enlace.ruta ?? 'forms'}
+                                className={`navbar__about ${formsActive ? 'is-current' : ''} ${showFormsMenu ? 'is-open' : ''}`}
+                                ref={formsMenuRef}
+                            >
+                                <button
+                                    type="button"
+                                    className="navbar__about-trigger"
+                                    aria-expanded={showFormsMenu}
+                                    aria-haspopup="true"
+                                    onClick={() => {
+                                        setShowFormsMenu((open) => !open);
+                                        setShowAboutMenu(false);
+                                        setShowDropdown(false);
+                                        setShowCartDropdown(false);
+                                        setShowNotifications(false);
+                                    }}
+                                >
+                                    <span>{labelFormularios}</span>
+                                    <ChevronDown size={16} strokeWidth={2.4} aria-hidden="true" />
+                                </button>
+                                {showFormsMenu ? (
+                                    <div className="navbar__about-menu" role="menu" aria-label={labelFormularios}>
+                                        <Link
+                                            to="/voluntariado/solicitar"
+                                            role="menuitem"
+                                            className="navbar__about-item"
+                                            onClick={() => setShowFormsMenu(false)}
+                                        >
+                                            {labelVoluntariado}
+                                        </Link>
+                                        <Link
+                                            to="/donaciones/solicitar"
+                                            role="menuitem"
+                                            className="navbar__about-item"
+                                            onClick={() => setShowFormsMenu(false)}
+                                        >
+                                            {labelDonaciones}
                                         </Link>
                                     </div>
                                 ) : null}
@@ -1016,6 +1129,51 @@ const Navbar = () => {
                                                 })}
                                             </section>
                                         ) : null}
+
+                                        {donacionesPendientesCount > 0 ? (
+                                            <section className="notifications-section" aria-label={labelDonaciones}>
+                                                <p className="notifications-section-label">{labelDonaciones}</p>
+                                                {donacionesPendientes.map((solicitud) => {
+                                                    const puedeAbrir = Boolean(user?.role === 'admin' || canSeeAllDonaciones(user));
+                                                    const notificationContent = (
+                                                        <>
+                                                            <span className="notification-item__icon" aria-hidden="true">
+                                                                <Gift size={16} />
+                                                            </span>
+                                                            <div className="notification-item__main">
+                                                                <strong>
+                                                                    <NombreCarrito
+                                                                        nombre={solicitud.necesidadTitulo || solicitud.tipo || 'Donación'}
+                                                                    />
+                                                                </strong>
+                                                                {puedeAbrir ? (
+                                                                    <small>{labelAbrirAdminNotif}</small>
+                                                                ) : null}
+                                                            </div>
+                                                        </>
+                                                    );
+
+                                                    return puedeAbrir ? (
+                                                        <button
+                                                            key={`donacion-${solicitud.id}`}
+                                                            type="button"
+                                                            className="notification-item notification-item--donacion"
+                                                            onClick={handleDonacionNotificationOpen}
+                                                            title={labelAbrirAdminNotif}
+                                                        >
+                                                            {notificationContent}
+                                                        </button>
+                                                    ) : (
+                                                        <article
+                                                            key={`donacion-${solicitud.id}`}
+                                                            className="notification-item notification-item--donacion notification-item--readonly"
+                                                        >
+                                                            {notificationContent}
+                                                        </article>
+                                                    );
+                                                })}
+                                            </section>
+                                        ) : null}
                                     </div>
                                 )}
                             </aside>
@@ -1183,6 +1341,55 @@ const Navbar = () => {
                                                             onClick={closeMobileMenu}
                                                         >
                                                             {labelGaleria}
+                                                        </Link>
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        );
+                                    }
+
+                                    if (isFormsNavLink(enlace)) {
+                                        const pathNorm = normalizePathname(pathname);
+                                        const voluntariadoActive = pathNorm.startsWith('/voluntariado');
+                                        const donacionesActive = pathNorm.startsWith('/donaciones');
+                                        return (
+                                            <div
+                                                key={`mobile-forms-${enlace.id ?? enlace.ruta}`}
+                                                className={`navbar__mobile-about ${showMobileForms ? 'is-open' : ''}`}
+                                            >
+                                                <button
+                                                    type="button"
+                                                    className="navbar__mobile-about-trigger"
+                                                    aria-expanded={showMobileForms}
+                                                    onClick={() => setShowMobileForms((open) => !open)}
+                                                >
+                                                    <span className="navbar__mobile-about-trigger-main">
+                                                        <span className="navbar__mobile-link-label">
+                                                            {labelFormularios}
+                                                        </span>
+                                                    </span>
+                                                    <ChevronDown
+                                                        className="navbar__mobile-about-chevron"
+                                                        size={18}
+                                                        strokeWidth={2.4}
+                                                        aria-hidden="true"
+                                                    />
+                                                </button>
+                                                {showMobileForms ? (
+                                                    <div className="navbar__mobile-about-sub">
+                                                        <Link
+                                                            to="/voluntariado/solicitar"
+                                                            className={`navbar__mobile-about-item ${voluntariadoActive ? 'is-active' : ''}`}
+                                                            onClick={closeMobileMenu}
+                                                        >
+                                                            {labelVoluntariado}
+                                                        </Link>
+                                                        <Link
+                                                            to="/donaciones/solicitar"
+                                                            className={`navbar__mobile-about-item ${donacionesActive ? 'is-active' : ''}`}
+                                                            onClick={closeMobileMenu}
+                                                        >
+                                                            {labelDonaciones}
                                                         </Link>
                                                     </div>
                                                 ) : null}
