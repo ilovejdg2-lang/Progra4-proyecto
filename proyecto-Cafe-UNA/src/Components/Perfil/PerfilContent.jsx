@@ -661,8 +661,8 @@ export function PerfilContent({ variant = "standalone" }) {
               ))}
             </ul>
           )}
-          <Link to="/donaciones/necesidades" className="perfil-link-action">
-            <ST>Ver catálogo de necesidades</ST>
+          <Link to="/donaciones/solicitar" className="perfil-link-action">
+            <ST>Registrar donación</ST>
             <ChevronRight size={16} />
           </Link>
         </section>
