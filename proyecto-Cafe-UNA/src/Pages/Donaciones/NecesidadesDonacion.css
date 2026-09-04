@@ -1,0 +1,146 @@
+.necesidades-page {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.necesidades-page__title {
+  font-size: var(--text-title);
+  font-weight: 700;
+  color: #3a2418;
+}
+
+.necesidades-page__lead,
+.necesidades-page__vacio,
+.necesidades-page__error,
+.necesidad-card__texto,
+.necesidad-card__meta {
+  font-size: var(--text-body);
+}
+
+.necesidades-page__lead {
+  margin-top: 0.5rem;
+  color: #5c4638;
+  max-width: 40rem;
+}
+
+.necesidades-page__error {
+  color: #9f1239;
+}
+
+.necesidades-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 0;
+  list-style: none;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+}
+
+.necesidad-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid #efc4ad;
+  border-radius: 1.25rem;
+  background: #fffaf6;
+  padding: 1.25rem;
+}
+
+.necesidad-card__prioridad {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height);
+  width: fit-content;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+
+.necesidad-card__prioridad--alta {
+  background: #ffe4e6;
+  color: #9f1239;
+}
+
+.necesidad-card__prioridad--media {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.necesidad-card__prioridad--baja {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.necesidad-card__titulo {
+  font-size: var(--text-subtitle);
+  font-weight: 700;
+  color: #3a2418;
+}
+
+.necesidad-card__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--control-height);
+  margin-top: auto;
+  border-radius: 999px;
+  background: #a7532d;
+  color: #fff;
+  font-size: var(--text-body);
+  font-weight: 700;
+  text-decoration: none;
+  padding: 0 1rem;
+}
+
+.necesidad-form {
+  display: grid;
+  gap: 0.85rem;
+  max-width: 32rem;
+  margin-top: 1.25rem;
+}
+
+.necesidad-form label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: #3a2418;
+}
+
+.necesidad-form input,
+.necesidad-form textarea,
+.necesidad-form select {
+  min-height: var(--control-height);
+  border: 1px solid #e4d4c4;
+  border-radius: 0.85rem;
+  padding: 0 0.85rem;
+  font-size: var(--text-body);
+  background: #fff;
+}
+
+.necesidad-form textarea {
+  min-height: 7rem;
+  padding: 0.75rem 0.85rem;
+  resize: vertical;
+}
+
+.necesidad-form button {
+  min-height: var(--control-height);
+  border: 0;
+  border-radius: 999px;
+  background: #a7532d;
+  color: #fff;
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+
+.necesidad-ok {
+  border: 1px solid #b7d4c4;
+  background: #f1f8f4;
+  border-radius: 1rem;
+  padding: 1rem;
+  font-size: var(--text-body);
+  color: #166534;
+}

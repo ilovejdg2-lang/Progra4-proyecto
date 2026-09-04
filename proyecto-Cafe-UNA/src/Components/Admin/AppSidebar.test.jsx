@@ -74,6 +74,23 @@ describe("AppSidebar", () => {
       "href",
       "/admin/activos-fijos",
     );
+    expect(screen.getAllByRole("link", { name: /Historial de movimientos/i })[0]).toHaveAttribute(
+      "href",
+      "/admin/historial-movimientos",
+    );
+    expect(screen.getByText("Formularios")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /^Voluntariado$/i })[0]).toHaveAttribute(
+      "href",
+      "/admin/voluntariado",
+    );
+    expect(screen.getAllByRole("link", { name: /Necesidades de donación/i })[0]).toHaveAttribute(
+      "href",
+      "/admin/donaciones/necesidades",
+    );
+    expect(screen.getAllByRole("link", { name: /Solicitudes de donación/i })[0]).toHaveAttribute(
+      "href",
+      "/admin/donaciones/solicitudes",
+    );
   });
 
   it("does not expose inventory navigation without permission", () => {

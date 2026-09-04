@@ -8,6 +8,7 @@ import {
   BookOpenText,
   ChevronDown,
   HandHeart,
+  History,
   Image,
   Info,
   Landmark,
@@ -24,6 +25,8 @@ import {
   Wrench,
   CalendarClock,
   Shield,
+  HandCoins,
+  ClipboardList,
 } from "lucide-react";
 
 import {
@@ -67,6 +70,7 @@ import { ST } from "../T/ST";
 
 const GENERAL_OPEN_KEY = "admin-sidebar-general-open";
 const INVENTORY_OPEN_KEY = "admin-sidebar-inventory-open";
+const FORMULARIOS_OPEN_KEY = "admin-sidebar-formularios-open";
 const SOBRE_NOSOTROS_OPEN_KEY = "admin-sidebar-sobre-nosotros-open";
 const AJUSTES_OPEN_KEY = "admin-sidebar-ajustes-open";
 const linkActivo = {
@@ -98,6 +102,15 @@ export function AppSidebar() {
     puedeInventario || puedePuntosVenta || puedeActivosFijos || puedeDistribucion || puedeProductos || puedeVentasPresenciales || puedeVentas;
 
   const puedeVoluntariado = tienePermiso(roles, "ver_solicitudes_voluntariado") || tienePermiso(roles, "administrar_solicitudes_voluntariado");
+  const puedeDonacionesNecesidades =
+    tienePermiso(roles, "administrar_solicitudes_donaciones") ||
+    tienePermiso(roles, "ver_solicitudes_donacion") ||
+    tienePermiso(roles, "inactivar_donacion");
+  const puedeDonacionesSolicitudes =
+    tienePermiso(roles, "ver_solicitudes_donacion") ||
+    tienePermiso(roles, "administrar_solicitudes_donaciones");
+  const puedeVerFormulariosGrupo =
+    puedeVoluntariado || puedeDonacionesNecesidades || puedeDonacionesSolicitudes;
   const puedeUsuarios = tienePermiso(roles, "editar_usuarios") || tienePermiso(roles, "crear_usuarios");
   const puedeAjustes = tienePermiso(roles, "administrar_roles_permisos");
   const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
@@ -128,10 +141,14 @@ export function AppSidebar() {
     pathname === "/admin/activos-fijos" ||
     pathname === "/admin/distribucion" ||
     pathname === "/admin/ventas-presenciales" ||
-    pathname === "/admin/historial-ventas";
+    pathname === "/admin/historial-ventas" ||
+    pathname === "/admin/historial-movimientos";
   const isAjustesRoute =
     pathname === "/admin/ajustes" ||
     pathname.startsWith("/admin/ajustes/");
+  const isFormulariosRoute =
+    pathname === "/admin/voluntariado" ||
+    pathname.startsWith("/admin/donaciones/");
 
   const [generalOpen, setGeneralOpen] = useState(() => {
     const savedValue = localStorage.getItem(GENERAL_OPEN_KEY);
@@ -196,6 +213,13 @@ export function AppSidebar() {
   }, [isAjustesRoute]);
 
   useEffect(() => {
+    if (isFormulariosRoute) {
+      setFormulariosOpen(true);
+      localStorage.setItem(FORMULARIOS_OPEN_KEY, "true");
+    }
+  }, [isFormulariosRoute]);
+
+  useEffect(() => {
     let activo = true;
 
     obtenerNavbar()
@@ -213,6 +237,10 @@ export function AppSidebar() {
   const [inventoryOpen, setInventoryOpen] = useState(() => {
     const savedValue = localStorage.getItem(INVENTORY_OPEN_KEY);
     return savedValue === null ? isInventoryRoute : savedValue === "true";
+  });
+  const [formulariosOpen, setFormulariosOpen] = useState(() => {
+    const savedValue = localStorage.getItem(FORMULARIOS_OPEN_KEY);
+    return savedValue === null ? isFormulariosRoute : savedValue === "true";
   });
   const [ajustesOpen, setAjustesOpen] = useState(() => {
     const savedValue = localStorage.getItem(AJUSTES_OPEN_KEY);
@@ -234,6 +262,11 @@ export function AppSidebar() {
     localStorage.setItem(INVENTORY_OPEN_KEY, String(open));
   };
 
+  const updateFormulariosOpen = (open) => {
+    setFormulariosOpen(open);
+    localStorage.setItem(FORMULARIOS_OPEN_KEY, String(open));
+  };
+
   const updateAjustesOpen = (open) => {
     setAjustesOpen(open);
     localStorage.setItem(AJUSTES_OPEN_KEY, String(open));
@@ -244,6 +277,7 @@ export function AppSidebar() {
   const clearSidebarState = () => {
     localStorage.removeItem(GENERAL_OPEN_KEY);
     localStorage.removeItem(INVENTORY_OPEN_KEY);
+    localStorage.removeItem(FORMULARIOS_OPEN_KEY);
     localStorage.removeItem(SOBRE_NOSOTROS_OPEN_KEY);
     localStorage.removeItem(AJUSTES_OPEN_KEY);
   };
@@ -419,6 +453,16 @@ export function AppSidebar() {
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                   ) : null}
+                  {puedeInventario ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/historial-movimientos" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <History />
+                        <span><ST>Historial de movimientos</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
                   {puedeVentasPresenciales ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
@@ -446,18 +490,62 @@ export function AppSidebar() {
         </Collapsible.Root>
         ) : null}
 
+        {puedeVerFormulariosGrupo ? (
+        <Collapsible.Root
+          open={formulariosOpen}
+          onOpenChange={updateFormulariosOpen}
+          className="group/formularios"
+        >
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <Collapsible.Trigger type="button">
+                <ClipboardList />
+                <span><ST>Formularios</ST></span>
+                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/formularios:rotate-180" />
+              </Collapsible.Trigger>
+            </SidebarGroupLabel>
+            <Collapsible.Content>
+              <SidebarGroupContent>
+                <SidebarMenuSub>
+                  {puedeVoluntariado ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/voluntariado" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <HandHeart />
+                        <span><ST>Voluntariado</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
+                  {puedeDonacionesNecesidades ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/donaciones/necesidades" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <HandCoins />
+                        <span><ST>Necesidades de donación</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
+                  {puedeDonacionesSolicitudes ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/donaciones/solicitudes" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <HandCoins />
+                        <span><ST>Solicitudes de donación</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
+                </SidebarMenuSub>
+              </SidebarGroupContent>
+            </Collapsible.Content>
+          </SidebarGroup>
+        </Collapsible.Root>
+        ) : null}
+
         <SidebarGroup>
           <SidebarMenu>
-            {puedeVoluntariado ? (
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link to="/admin/voluntariado" activeProps={linkActivo} onClick={closeMobileSidebar}>
-                  <HandHeart />
-                  <span><ST>Administrar voluntariado</ST></span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            ) : null}
             {puedeUsuarios ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
