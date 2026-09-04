@@ -355,9 +355,16 @@
 
 .perfil-card__current-value {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--text-body);
   color: #334155;
   word-break: break-word;
+}
+
+.perfil-donaciones-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: var(--text-body);
+  color: #334155;
 }
 
 .perfil-card__current-value--masked {

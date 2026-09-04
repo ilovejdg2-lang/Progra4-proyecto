@@ -129,6 +129,7 @@ export function normalizarUbicacion(ubicacion) {
   const fallbackName = FALLBACK_LOCATION_NAMES[normalizedCode] || normalizedCode;
   const rawActivo = firstDefined(ubicacion, ["activo", "Activo"]);
   return {
+    id: firstDefined(ubicacion, ["id", "Id"]) ?? null,
     code: normalizedCode,
     name: hasIdentity(name) ? String(name).trim() : fallbackName,
     activo: rawActivo === undefined || rawActivo === null ? true : toBoolean(rawActivo),
