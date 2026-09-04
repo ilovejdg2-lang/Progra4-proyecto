@@ -676,7 +676,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
                   name={`ruta-${index}`}
                   value={tarjeta.ruta}
                   onChange={(event) => cambiarCampo(index, "ruta", event.target.value)}
-                  placeholder={tarjeta.clave === "donaciones" ? "/donaciones/necesidades" : "/voluntariado/solicitar"}
+                  placeholder={tarjeta.clave === "donaciones" ? "/donaciones/solicitar" : "/voluntariado/solicitar"}
                   hint={"Ruta interna del bot\u00f3n."}
                   sinLimite
                 />

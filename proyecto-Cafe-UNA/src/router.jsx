@@ -27,6 +27,7 @@ const AboutUs = lazy(() => import("./Pages/AboutUs/AboutUs"));
 const Products = lazy(() => import("./Pages/Products/Products"));
 const ProductDetail = lazy(() => import("./Pages/ProductDetail/ProductDetail"));
 const SolicitarVoluntariado = lazy(() => import("./Pages/Voluntariado/SolicitarVoluntariado"));
+const SolicitarDonacion = lazy(() => import("./Pages/Donaciones/SolicitarDonacion"));
 const NecesidadesDonacion = lazy(() => import("./Pages/Donaciones/NecesidadesDonacion"));
 const DonarMaterial = lazy(() => import("./Pages/Donaciones/DonarMaterial"));
 const AdminNecesidadesDonacion = lazy(() => import("./Pages/Admin/Donaciones/Necesidades"));
@@ -335,6 +336,11 @@ const voluntariadoSolicitarRoute = createRoute({
     path: "/voluntariado/solicitar",
     component: SolicitarVoluntariado,
 })
+const donacionesSolicitarRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/donaciones/solicitar",
+    component: SolicitarDonacion,
+})
 const donacionesNecesidadesRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/donaciones/necesidades",
@@ -405,6 +411,7 @@ const routeTree= rootRoute.addChildren([
     productDetailRoute,
     checkoutRoute,
     voluntariadoSolicitarRoute,
+    donacionesSolicitarRoute,
     donacionesNecesidadesRoute,
     donarMaterialRoute,
     perfilRoute,

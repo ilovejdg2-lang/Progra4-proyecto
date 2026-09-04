@@ -7,6 +7,7 @@ import {
   AdminModal,
   AdminModalActions,
   AdminModalBody,
+  AdminModalFooter,
   AdminModalHeader,
 } from "../../../Components/Admin/ui/AdminModal";
 import { AdminLayout } from "../layouts/AdminLayout";
@@ -283,7 +284,7 @@ export default function AdminNecesidadesDonacion() {
                                 <button
                                   type="button"
                                   onClick={() => abrirEditar(row)}
-                                  className="inline-flex h-7 items-center justify-center gap-1 rounded-full border border-slate-950 bg-slate-950 px-2 text-[length:var(--text-body)] font-semibold leading-none text-white transition hover:border-neutral-700 hover:bg-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1"
+                                  className="inline-flex h-8 min-w-0 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border border-slate-950 bg-slate-950 px-3 text-[length:var(--text-body)] font-semibold leading-none text-white transition hover:border-neutral-700 hover:bg-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1"
                                 >
                                   <Pencil className="size-3 shrink-0" aria-hidden="true" />
                                   <span><ST>Editar</ST></span>
@@ -291,7 +292,7 @@ export default function AdminNecesidadesDonacion() {
                                 <button
                                   type="button"
                                   onClick={() => toggleEstado(row)}
-                                  className={`inline-flex h-7 items-center justify-center gap-1 rounded-full border px-2 text-[length:var(--text-body)] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
+                                  className={`inline-flex h-8 min-w-0 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border px-3 text-[length:var(--text-body)] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
                                     row.estado === "ACTIVA"
                                       ? "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300"
                                       : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300"
@@ -361,23 +362,15 @@ export default function AdminNecesidadesDonacion() {
             {formError ? <p className="text-rose-700">{formError}</p> : null}
           </div>
         </AdminModalBody>
-        <AdminModalActions>
-          <button
-            type="button"
-            onClick={() => setFormOpen(false)}
-            className="h-[var(--control-height)] rounded-full border border-slate-200 px-4 font-semibold"
-          >
-            <ST>Cancelar</ST>
-          </button>
-          <button
-            type="button"
-            disabled={saving}
-            onClick={guardar}
-            className="h-[var(--control-height)] rounded-full bg-slate-900 px-4 font-semibold text-white"
-          >
-            <ST>{saving ? "Guardando..." : "Guardar"}</ST>
-          </button>
-        </AdminModalActions>
+        <AdminModalFooter>
+          <AdminModalActions
+            onCancel={() => setFormOpen(false)}
+            onPrimary={guardar}
+            primaryType="button"
+            primaryDisabled={saving}
+            primaryLabel={saving ? "Guardando..." : editando ? "Guardar" : "Crear"}
+          />
+        </AdminModalFooter>
       </AdminModal>
     </AdminLayout>
   );

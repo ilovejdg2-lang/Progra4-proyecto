@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Bell, HandHeart, Package } from "lucide-react";
+import { Bell, Gift, HandHeart, Package } from "lucide-react";
 
 import { obtenerAlertasStock } from "../../services/productosService";
 import { obtenerSolicitudes } from "../../services/voluntariadoService";
+import { obtenerSolicitudesDonacionAdmin } from "../../services/donacionesService";
 import { getActiveSessionUser } from "../../services/sessionService";
 import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
 import { requestAdminStockProduct } from "../../lib/adminStockAlert";
@@ -33,6 +34,15 @@ function puedeVerVoluntariado(user) {
   );
 }
 
+function puedeVerDonaciones(user) {
+  const roles = rolesDeUsuario(user);
+  return (
+    tienePermiso(roles, "ver_solicitudes_donacion") ||
+    tienePermiso(roles, "administrar_solicitudes_donaciones") ||
+    tienePermiso(roles, "ver_panel_administrativo")
+  );
+}
+
 function esSolicitudPendiente(solicitud) {
   return String(solicitud?.estado || "").trim().toLowerCase() === "pendiente";
 }
@@ -43,7 +53,8 @@ export function AdminStockNotificationsBell() {
   const user = getActiveSessionUser();
   const puedeStock = puedeVerAlertasStock(user);
   const puedeVoluntariado = puedeVerVoluntariado(user);
-  const enabled = puedeStock || puedeVoluntariado;
+  const puedeDonaciones = puedeVerDonaciones(user);
+  const enabled = puedeStock || puedeVoluntariado || puedeDonaciones;
 
   const labelNotificaciones = useTraducir("Notificaciones");
   const labelStockBajo = useTraducir("STOCK BAJO");
@@ -53,6 +64,7 @@ export function AdminStockNotificationsBell() {
   const labelCargando = useTraducir("Cargando notificaciones...");
   const labelVacias = useTraducir("No hay notificaciones pendientes.");
   const labelVol = useTraducir("Voluntariado");
+  const labelDon = useTraducir("Donaciones");
   const labelAbrirAdmin = useTraducir("Abrir en administración");
 
   const [open, setOpen] = useState(false);
@@ -60,6 +72,7 @@ export function AdminStockNotificationsBell() {
   const [error, setError] = useState("");
   const [alertas, setAlertas] = useState([]);
   const [solicitudes, setSolicitudes] = useState([]);
+  const [solicitudesDonacion, setSolicitudesDonacion] = useState([]);
   const [panelStyle, setPanelStyle] = useState(null);
   const rootRef = useRef(null);
   const buttonRef = useRef(null);
@@ -69,25 +82,29 @@ export function AdminStockNotificationsBell() {
     if (!enabled) {
       setAlertas([]);
       setSolicitudes([]);
+      setSolicitudesDonacion([]);
       return;
     }
     setLoading(true);
     setError("");
     try {
-      const [stockData, voluntariadoData] = await Promise.all([
+      const [stockData, voluntariadoData, donacionesData] = await Promise.all([
         puedeStock ? obtenerAlertasStock().catch(() => []) : Promise.resolve([]),
         puedeVoluntariado ? obtenerSolicitudes().catch(() => []) : Promise.resolve([]),
+        puedeDonaciones ? obtenerSolicitudesDonacionAdmin().catch(() => []) : Promise.resolve([]),
       ]);
       setAlertas(Array.isArray(stockData) ? stockData : []);
       setSolicitudes(Array.isArray(voluntariadoData) ? voluntariadoData : []);
+      setSolicitudesDonacion(Array.isArray(donacionesData) ? donacionesData : []);
     } catch (err) {
       setAlertas([]);
       setSolicitudes([]);
+      setSolicitudesDonacion([]);
       setError(err?.message || "No se pudieron cargar las notificaciones.");
     } finally {
       setLoading(false);
     }
-  }, [enabled, puedeStock, puedeVoluntariado]);
+  }, [enabled, puedeStock, puedeVoluntariado, puedeDonaciones]);
 
   useEffect(() => {
     if (!enabled) return undefined;
@@ -97,9 +114,11 @@ export function AdminStockNotificationsBell() {
 
     const syncVoluntariado = () => loadNotificaciones();
     window.addEventListener("voluntariado-updated", syncVoluntariado);
+    window.addEventListener("donaciones-updated", syncVoluntariado);
     return () => {
       window.clearTimeout(id);
       window.removeEventListener("voluntariado-updated", syncVoluntariado);
+      window.removeEventListener("donaciones-updated", syncVoluntariado);
     };
   }, [enabled, loadNotificaciones]);
 
@@ -165,9 +184,11 @@ export function AdminStockNotificationsBell() {
   if (!enabled) return null;
 
   const solicitudesPendientes = solicitudes.filter(esSolicitudPendiente);
+  const donacionesPendientes = solicitudesDonacion.filter(esSolicitudPendiente);
   const alertasCount = puedeStock ? alertas.length : 0;
   const voluntariadoCount = puedeVoluntariado ? solicitudesPendientes.length : 0;
-  const count = alertasCount + voluntariadoCount;
+  const donacionesCount = puedeDonaciones ? donacionesPendientes.length : 0;
+  const count = alertasCount + voluntariadoCount + donacionesCount;
 
   const openProducto = (item) => {
     setOpen(false);
@@ -180,6 +201,11 @@ export function AdminStockNotificationsBell() {
   const openVoluntariado = () => {
     setOpen(false);
     navigate({ to: "/admin/voluntariado" });
+  };
+
+  const openDonaciones = () => {
+    setOpen(false);
+    navigate({ to: "/admin/donaciones/solicitudes" });
   };
 
   const panel =
@@ -263,6 +289,33 @@ export function AdminStockNotificationsBell() {
                           <strong>
                             <NombreNotif
                               texto={solicitud.tipoVoluntariado || solicitud.area || "Voluntariado"}
+                            />
+                          </strong>
+                          <small>{labelAbrirAdmin}</small>
+                        </div>
+                      </button>
+                    ))}
+                  </section>
+                ) : null}
+
+                {donacionesCount > 0 ? (
+                  <section className="notifications-section" aria-label={labelDon}>
+                    <p className="notifications-section-label">{labelDon}</p>
+                    {donacionesPendientes.map((solicitud) => (
+                      <button
+                        key={`donacion-${solicitud.id}`}
+                        type="button"
+                        className="notification-item notification-item--donacion"
+                        onClick={openDonaciones}
+                        title={labelAbrirAdmin}
+                      >
+                        <span className="notification-item__icon" aria-hidden="true">
+                          <Gift size={16} />
+                        </span>
+                        <div className="notification-item__main">
+                          <strong>
+                            <NombreNotif
+                              texto={solicitud.necesidadTitulo || solicitud.tipo || "Donación"}
                             />
                           </strong>
                           <small>{labelAbrirAdmin}</small>

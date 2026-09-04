@@ -1,0 +1,318 @@
+/* Estilos extra del formulario de donación; reutiliza SolicitarVoluntariado.css */
+
+.donacion-page .section-card__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 8px;
+}
+
+.donacion-page .section-card__paso {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--negro-principal);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.donacion-page .section-card__header h4 {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.donacion-page .section-card__icon-inline {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  margin-left: 0;
+  color: var(--negro-principal);
+}
+
+.donacion-page .section-card__hint {
+  grid-column: 1 / -1;
+  margin-top: 0;
+  margin-left: 36px;
+}
+
+.donacion-page .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 480px) {
+  .donacion-page .section-card__hint {
+    margin-left: 0;
+  }
+}
+
+.donacion-page .section-card .tipo-postulacion {
+  margin-bottom: 4px;
+}
+
+.donacion-page .campo-con-icono {
+  position: relative;
+}
+
+.donacion-page .campo .campo-con-icono input:not([type="checkbox"]):not([type="radio"]) {
+  padding-left: 2.7rem;
+}
+
+.donacion-page .campo-con-icono__icono {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.donacion-page .campo-prefijo {
+  display: flex;
+  align-items: stretch;
+}
+
+.donacion-page .campo-prefijo__simbolo {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid var(--borde-input);
+  border-right: 0;
+  border-radius: var(--radius-ui) 0 0 var(--radius-ui);
+  background: var(--fondo-soft);
+  color: var(--texto-secundario);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.donacion-page .campo-prefijo input {
+  border-radius: 0 var(--radius-ui) var(--radius-ui) 0;
+}
+
+.donacion-entrega {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.donacion-entrega__card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--borde-input);
+  border-radius: var(--radius-ui);
+  cursor: pointer;
+  background: #fff;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.donacion-entrega__card input {
+  margin-top: 3px;
+  accent-color: var(--negro-principal);
+}
+
+.donacion-entrega__card:has(input:checked) {
+  border-color: var(--negro-principal);
+  background: var(--fondo-soft);
+}
+
+.donacion-entrega__card strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto-principal);
+}
+
+.donacion-entrega__card span {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--texto-secundario);
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.donacion-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 160px;
+  padding: 24px 16px;
+  border: 1.5px dashed var(--borde-input);
+  border-radius: var(--radius-ui);
+  background: var(--fondo-soft);
+  color: var(--texto-secundario);
+  text-align: center;
+  cursor: pointer;
+}
+
+.donacion-dropzone:hover,
+.donacion-dropzone--activa {
+  border-color: var(--negro-principal);
+  background: #f1f5f9;
+}
+
+.donacion-dropzone p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto-principal);
+  font-weight: 500;
+}
+
+.donacion-dropzone small {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.donacion-fotos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.donacion-fotos__item {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid var(--borde-input);
+}
+
+.donacion-fotos__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.donacion-fotos__ver {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.donacion-fotos__quitar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.donacion-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.donacion-checks label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--texto-principal);
+  cursor: pointer;
+}
+
+.donacion-checks input {
+  margin-top: 3px;
+  accent-color: var(--negro-principal);
+  flex-shrink: 0;
+}
+
+.donacion-page .acciones-formulario--split {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.donacion-page .btn-cancelar {
+  border: 1px solid var(--borde-input);
+  background: #fff;
+  color: var(--texto-principal);
+  padding: 12px 20px;
+  border-radius: var(--radius-ui);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+.donacion-page .btn-cancelar:hover {
+  background: var(--fondo-soft);
+}
+
+.donacion-page .btn-enviar--compacto {
+  width: auto;
+  min-width: 180px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.donacion-page .contador-caracteres {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--texto-secundario);
+  text-align: right;
+}
+
+@media (max-width: 720px) {
+  .donacion-entrega {
+    grid-template-columns: 1fr;
+  }
+
+  .donacion-page .acciones-formulario--split {
+    flex-direction: column-reverse;
+  }
+
+  .donacion-page .btn-cancelar,
+  .donacion-page .btn-enviar--compacto {
+    width: 100%;
+  }
+}
+
+.donacion-page .donacion-fecha-fija:disabled {
+  cursor: not-allowed;
+  background: var(--fondo-soft);
+  color: var(--texto-principal);
+  opacity: 1;
+}
