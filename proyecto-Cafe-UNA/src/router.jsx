@@ -27,6 +27,10 @@ const AboutUs = lazy(() => import("./Pages/AboutUs/AboutUs"));
 const Products = lazy(() => import("./Pages/Products/Products"));
 const ProductDetail = lazy(() => import("./Pages/ProductDetail/ProductDetail"));
 const SolicitarVoluntariado = lazy(() => import("./Pages/Voluntariado/SolicitarVoluntariado"));
+const NecesidadesDonacion = lazy(() => import("./Pages/Donaciones/NecesidadesDonacion"));
+const DonarMaterial = lazy(() => import("./Pages/Donaciones/DonarMaterial"));
+const AdminNecesidadesDonacion = lazy(() => import("./Pages/Admin/Donaciones/Necesidades"));
+const AdminSolicitudesDonacion = lazy(() => import("./Pages/Admin/Donaciones/Solicitudes"));
 const Login = lazy(() => import("./Pages/Login/Login"));
 const AdminPanel = lazy(() => import("./Pages/Admin/Panel/Panel"));
 const AdminInformacionPaginaPrincipal = lazy(() => import("./Pages/Admin/InformacionPaginaPrincipal/InformacionPaginaPrincipal"));
@@ -39,6 +43,7 @@ const AdminVentasPresenciales = lazy(() => import("./Pages/Admin/VentasPresencia
 const AdminVoluntariado = lazy(() => import("./Pages/Admin/Voluntariado/Voluntariado"));
 const AdminUsuarios = lazy(() => import("./Pages/Admin/Usuarios/Usuarios"));
 const AdminHistorialVentas = lazy(() => import("./Pages/Admin/HistorialVentas/HistorialVentas"));
+const AdminHistorialMovimientos = lazy(() => import("./Pages/Admin/HistorialMovimientos/HistorialMovimientos"));
 const AdminAuditoria = lazy(() => import("./Pages/Admin/Auditoria/Auditoria"));
 const AdminAjustes = lazy(() => import("./Pages/Admin/Ajustes/Ajustes"));
 const Checkout = lazy(() => import("./Pages/Checkout/Checkout"));
@@ -280,6 +285,11 @@ const adminHistorialVentasRoute = createRoute({
     path: "/admin/historial-ventas",
     component: AdminHistorialVentas,
 })
+const adminHistorialMovimientosRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/historial-movimientos",
+    component: AdminHistorialMovimientos,
+})
 const adminAuditoriaRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/auditoria",
@@ -325,6 +335,26 @@ const voluntariadoSolicitarRoute = createRoute({
     path: "/voluntariado/solicitar",
     component: SolicitarVoluntariado,
 })
+const donacionesNecesidadesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/donaciones/necesidades",
+    component: NecesidadesDonacion,
+})
+const donarMaterialRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/donaciones/necesidades/$necesidadId/donar",
+    component: DonarMaterial,
+})
+const adminNecesidadesDonacionRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/donaciones/necesidades",
+    component: AdminNecesidadesDonacion,
+})
+const adminSolicitudesDonacionRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/donaciones/solicitudes",
+    component: AdminSolicitudesDonacion,
+})
 const perfilRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/perfil",
@@ -361,7 +391,10 @@ const routeTree= rootRoute.addChildren([
     adminDistribucionRoute,
     adminVentasPresencialesRoute,
     adminHistorialVentasRoute,
+    adminHistorialMovimientosRoute,
     adminVoluntariadoRoute,
+    adminNecesidadesDonacionRoute,
+    adminSolicitudesDonacionRoute,
     adminUsuariosRoute,
     adminAuditoriaRoute,
     adminAjustesRoute,
@@ -372,6 +405,8 @@ const routeTree= rootRoute.addChildren([
     productDetailRoute,
     checkoutRoute,
     voluntariadoSolicitarRoute,
+    donacionesNecesidadesRoute,
+    donarMaterialRoute,
     perfilRoute,
     historialComprasClienteRoute,
     adminPerfilRoute,

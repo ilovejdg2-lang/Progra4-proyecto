@@ -130,10 +130,10 @@ describe("productosService contract", () => {
     expect(["BODEGA_CENTRAL", "POS_FUNA_UNA", "POS_EDITORIAL", "POS_STAND_FERIAS", "POS_NUEVO"]
       .every((code) => validarCodigoUbicacion(code))).toBe(true);
     expect(normalizarUbicacion({ Code: "POS_EDITORIAL", Nombre: "Editorial", Activo: true })).toEqual({
-      code: "POS_EDITORIAL", name: "Editorial", activo: true,
+      id: null, code: "POS_EDITORIAL", name: "Editorial", activo: true,
     });
     expect(normalizarUbicacion({ codigo: "POS_NUEVO", nombre: "Kiosco", activo: false })).toEqual({
-      code: "POS_NUEVO", name: "Kiosco", activo: false,
+      id: null, code: "POS_NUEVO", name: "Kiosco", activo: false,
     });
     expect(normalizarUbicacion({ codigo: "bad code!" })).toBeNull();
     expect(validarCodigoUbicacion("bad code!")).toBe(false);

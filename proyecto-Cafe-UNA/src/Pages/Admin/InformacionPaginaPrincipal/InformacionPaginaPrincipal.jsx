@@ -670,13 +670,13 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
                 maxPalabras={MAX_PALABRAS_TEXTO_BREVE}
               />
 
-              {tarjeta.clave === "voluntariado" ? (
+              {tarjeta.clave === "voluntariado" || tarjeta.clave === "donaciones" ? (
                 <CampoTexto
                   label="Ruta del formulario"
                   name={`ruta-${index}`}
                   value={tarjeta.ruta}
                   onChange={(event) => cambiarCampo(index, "ruta", event.target.value)}
-                  placeholder="/voluntariado/solicitar"
+                  placeholder={tarjeta.clave === "donaciones" ? "/donaciones/necesidades" : "/voluntariado/solicitar"}
                   hint={"Ruta interna del bot\u00f3n."}
                   sinLimite
                 />

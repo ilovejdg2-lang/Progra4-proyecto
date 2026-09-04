@@ -9,6 +9,7 @@ export function getRouteCacheKey(pathname = normalizePathname()) {
   if (path.startsWith('/productos/')) return 'product-detail';
   if (path === '/AboutUs' || path.startsWith('/AboutUs/')) return 'about';
   if (path.startsWith('/voluntariado')) return 'voluntariado';
+  if (path.startsWith('/donaciones')) return 'donaciones';
   if (path === '/checkout') return 'checkout';
   if (path === '/login') return 'login';
   if (path === '/perfil') return 'perfil';
