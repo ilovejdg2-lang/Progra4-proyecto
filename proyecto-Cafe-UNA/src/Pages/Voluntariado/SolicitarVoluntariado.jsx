@@ -1,15 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
+  CalendarCheck2,
   Check,
+  Clock,
+  FileText,
   HandHeart,
   Lock,
   Mail,
   Sprout,
+  Trash2,
+  UploadCloud,
   User,
   Users,
 } from "lucide-react";
 import { format, isBefore, parseISO, startOfDay } from "date-fns";
+import { es, enUS } from "date-fns/locale";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
 import { NumericInput } from "../../Components/NumericInput/NumericInput";
 import { HOME_SCROLL_SECTIONS } from "../../lib/homeScrollTarget";
@@ -18,16 +24,16 @@ import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
 import { getActiveSessionUser } from "../../services/sessionService";
 import { crearSolicitud } from "../../services/voluntariadoService";
 import { consultarCedulaDetallada } from "../../services/cedulaService";
-import { DatePickerWithRange } from "./DatePickerWithRange";
+import { obtenerFechasDisponibles } from "../../services/voluntariadoFechasService";
+import { Calendar } from "@/components/ui/calendar";
 import { queueFocusFormError } from "../../lib/formFocus";
 import { filtrarEnteros } from "../../lib/numericInput";
 import {
-  etiquetaContadorPalabras,
   limitarPalabras,
-  MAX_PALABRAS_NOTAS,
   MAX_PALABRAS_TITULO,
 } from "../../lib/formLimits";
 import { useTraducir } from "../../hooks/useTraducir";
+import { useIdioma } from "../../lib/useIdioma";
 import { ST } from "../../Components/T/ST";
 import { asegurarCamposEnEspanol } from "../../lib/traducir";
 import "./SolicitarVoluntariado.css";
@@ -55,6 +61,27 @@ const TIPOS_VOLUNTARIADO = [
   "Otro",
 ];
 
+const OPCIONES_DISPONIBILIDAD = [
+  {
+    id: "manana",
+    valor: "Mañana (8:00 a. m. – 12:00 m.)",
+    titulo: "Mañana",
+    horario: "8:00 a. m. – 12:00 m.",
+  },
+  {
+    id: "tarde",
+    valor: "Tarde (1:00 p. m. – 5:00 p. m.)",
+    titulo: "Tarde",
+    horario: "1:00 p. m. – 5:00 p. m.",
+  },
+  {
+    id: "completo",
+    valor: "Horario completo (8:00 a. m. – 5:00 p. m.)",
+    titulo: "Horario completo",
+    horario: "8:00 a. m. – 5:00 p. m.",
+  },
+];
+
 const FORM_INICIAL = {
   modalidad: "individual",
   cantidadParticipantes: "",
@@ -69,9 +96,8 @@ const FORM_INICIAL = {
   pais: "",
   correo: "",
   telefono: "",
-  fechaInicio: "",
-  fechaFin: "",
-  horarioDetallado: "",
+  fechaVoluntariado: "",
+  disponibilidad: "",
 };
 
 function normalizarCedulaCr(valor) {
@@ -90,28 +116,6 @@ function esAvisoCedulaInformativo(mensaje) {
   return /cargad[oa]s?\s+autom[aá]ticamente/i.test(mensaje) || /datos cargados/i.test(mensaje);
 }
 
-function validarFechasVoluntariado(fechaInicio, fechaFin) {
-  const errores = {};
-  const hoy = startOfDay(new Date());
-
-  if (!fechaInicio) {
-    errores.fechaInicio = "Seleccione la fecha de inicio";
-  } else if (isBefore(startOfDay(parseISO(fechaInicio)), hoy)) {
-    errores.fechaInicio = "La fecha de inicio no puede ser anterior a hoy";
-  }
-
-  if (!fechaFin) {
-    errores.fechaFin = "Seleccione la fecha de finalización";
-  } else if (
-    fechaInicio &&
-    isBefore(startOfDay(parseISO(fechaFin)), startOfDay(parseISO(fechaInicio)))
-  ) {
-    errores.fechaFin = "La fecha de finalización no puede ser anterior a la fecha de inicio";
-  }
-
-  return errores;
-}
-
 function crearFormularioInicial(user) {
   return {
     ...FORM_INICIAL,
@@ -123,6 +127,9 @@ const VOLUNTARIADO_LOGIN_REDIRECT = "/voluntariado/solicitar";
 
 function SolicitarVoluntariado() {
   const navigate = useNavigate();
+  const { idioma } = useIdioma();
+  const locale = idioma === "en" ? enUS : es;
+
   const tTitulo = useTraducir("Únete a nuestras iniciativas");
   const tSub = useTraducir(
     "Complete el siguiente formulario para aplicar al área de voluntariado de su interés.",
@@ -130,7 +137,12 @@ function SolicitarVoluntariado() {
   const tComo = useTraducir("¿Cómo desea participar?");
   const tIndividual = useTraducir("Individual");
   const tGrupal = useTraducir("Grupal");
-  const tInfoPersonal = useTraducir("Información personal");
+
+  const tInfoPersonal = useTraducir("Información personal del solicitante");
+  const tInfoPersonalHint = useTraducir("Datos personales y de contacto del voluntario");
+  const tInfoResponsable = useTraducir("Información del responsable del grupo");
+  const tInfoResponsableHint = useTraducir("Datos personales y de contacto de la persona a cargo de la coordinación del grupo");
+
   const tNacional = useTraducir("¿Es nacional costarricense?");
   const tSi = useTraducir("Sí");
   const tNo = useTraducir("No");
@@ -147,11 +159,16 @@ function SolicitarVoluntariado() {
   const tPais = useTraducir("País de residencia");
   const tPhInstitucion = useTraducir("Ej. Universidad Nacional");
   const tPhPais = useTraducir("Ej. Costa Rica");
-  const tContacto = useTraducir("Contacto al solicitante");
+  const tContacto = useTraducir("Contacto del solicitante");
+  const tContactoResp = useTraducir("Contacto del responsable del grupo");
   const tCorreo = useTraducir("Correo electrónico");
   const tTelefono = useTraducir("Número de teléfono");
-  const tInfoVol = useTraducir("Información del voluntariado");
-  const tPeriodo = useTraducir("Período de voluntariado (Desde — Hasta)");
+
+  const tFechaVoluntariado = useTraducir("Fecha del voluntariado");
+  const tFechaVoluntariadoHint = useTraducir("Seleccione una de las fechas habilitadas en el calendario");
+  const tDisponibilidad = useTraducir("Disponibilidad");
+  const tDisponibilidadHint = useTraducir("Seleccione la jornada en la que asistirá");
+
   const tTipoVol = useTraducir("Tipo de voluntariado");
   const tTipoHint = useTraducir("Seleccione una única opción");
   const tLoginMsg = useTraducir("Debe iniciar sesión para enviar su solicitud de voluntariado.");
@@ -159,20 +176,21 @@ function SolicitarVoluntariado() {
   const tEnviar = useTraducir("Enviar Solicitud");
   const tEnviando = useTraducir("Enviando...");
   const tLoginBtn = useTraducir("Inicie sesión para enviar");
-  const tHorarioTitulo = useTraducir("Horario preferido y disponibilidad detallada");
-  const tHorarioInfo = useTraducir(
-    "El horario para realizar el voluntariado es de 8:00 a. m. a 5:00 p. m., con un período de almuerzo de 12:00 p. m. a 1:00 p. m.",
-  );
-  const tHorarioPh = useTraducir(
-    "Describa el horario detallado de su voluntariado por días y horas asignadas. Ejemplo: Lunes (8am - 12pm), Martes (1pm - 5pm), Miércoles (9am - 11am).",
-  );
+
   const tInfoGrupo = useTraducir("Información del grupo");
-  const tInfoGrupoHint = useTraducir("Datos del grupo y responsable");
+  const tInfoGrupoHint = useTraducir("Datos de los participantes que asistirán al voluntariado");
   const tCantParticipantes = useTraducir("Cantidad de participantes");
   const tPhCantidad = useTraducir("Ej. 15");
+  const tDocIntegrantes = useTraducir("Lista de integrantes del grupo");
+
   const [usuario] = useState(() => obtenerUsuarioActual());
   const [formulario, setFormulario] = useState(() => crearFormularioInicial(obtenerUsuarioActual()));
-  const [dateRange, setDateRange] = useState({ from: undefined, to: undefined });
+
+  const [fechasDisponibles, setFechasDisponibles] = useState([]);
+  const [cargandoFechas, setCargandoFechas] = useState(true);
+  const [fechaSeleccionada, setFechaSeleccionada] = useState(undefined);
+  const [documentoGrupo, setDocumentoGrupo] = useState(null);
+
   const [errores, setErrores] = useState({});
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
@@ -193,6 +211,60 @@ function SolicitarVoluntariado() {
   const esTipoOtro = formulario.tipo === "Otro";
   const esNacionalCr = formulario.esNacional === "si";
   const consultaCedulaRef = useRef({ digitos: "", enCurso: false });
+
+  // Cargar fechas habilitadas configuradas por el Administrador
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      try {
+        const data = await obtenerFechasDisponibles();
+        if (!cancelado) {
+          setFechasDisponibles(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.warn("No se pudieron cargar las fechas disponibles:", err);
+      } finally {
+        if (!cancelado) setCargandoFechas(false);
+      }
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, []);
+
+  // Mapeo de fechas habilitadas (string YYYY-MM-DD -> boolean)
+  const fechasHabilitadasMap = useMemo(() => {
+    const map = new Map();
+    for (const f of fechasDisponibles) {
+      const iso = String(f.Fecha || f.fecha || "").slice(0, 10);
+      if (iso && (f.Habilitada || f.habilitada)) {
+        map.set(iso, f);
+      }
+    }
+    return map;
+  }, [fechasDisponibles]);
+
+  // Lista de objetos Date habilitados para modifiers de Calendar
+  const fechasHabilitadasDates = useMemo(() => {
+    const list = [];
+    for (const [iso] of fechasHabilitadasMap) {
+      const [y, m, d] = iso.split("-").map(Number);
+      if (y && m && d) list.push(new Date(y, m - 1, d));
+    }
+    return list;
+  }, [fechasHabilitadasMap]);
+
+  // Función para deshabilitar días en el calendario:
+  // Solo se pueden seleccionar fechas habilitadas por el Administrador
+  const isDateDisabled = useCallback(
+    (date) => {
+      const hoy = startOfDay(new Date());
+      if (isBefore(startOfDay(date), hoy)) return true;
+      const iso = format(date, "yyyy-MM-dd");
+      return !fechasHabilitadasMap.has(iso);
+    },
+    [fechasHabilitadasMap]
+  );
 
   const redirectToLogin = useCallback(() => {
     sessionStorage.setItem("postLoginRedirect", VOLUNTARIADO_LOGIN_REDIRECT);
@@ -307,32 +379,42 @@ function SolicitarVoluntariado() {
     return () => window.clearTimeout(timeoutId);
   }, [formulario.identificacion, esNacionalCr, consultarDatosCedula]);
 
-  const handleRangeChange = (range) => {
-    const fechaInicioStr = range?.from ? format(range.from, "yyyy-MM-dd") : "";
-    const fechaFinStr = range?.to ? format(range.to, "yyyy-MM-dd") : "";
-    const erroresFechas = validarFechasVoluntariado(fechaInicioStr, fechaFinStr);
-
-    setDateRange(range);
+  const handleSelectFecha = (date) => {
+    setFechaSeleccionada(date);
+    const isoStr = date ? format(date, "yyyy-MM-dd") : "";
     setFormulario((prev) => ({
       ...prev,
-      fechaInicio: fechaInicioStr,
-      fechaFin: fechaFinStr,
+      fechaVoluntariado: isoStr,
     }));
+    limpiarError("fechaVoluntariado");
+  };
 
-    setErrores((prev) => {
-      const next = { ...prev };
-      delete next.fechaInicio;
-      delete next.fechaFin;
+  const handleDisponibilidad = (valor) => {
+    setFormulario((prev) => ({
+      ...prev,
+      disponibilidad: valor,
+    }));
+    limpiarError("disponibilidad");
+  };
 
-      if (erroresFechas.fechaInicio) {
-        next.fechaInicio = erroresFechas.fechaInicio;
-      }
-      if (erroresFechas.fechaFin) {
-        next.fechaFin = erroresFechas.fechaFin;
-      }
+  const handleDocumentoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      return next;
-    });
+    if (file.size > 10 * 1024 * 1024) {
+      setErrores((prev) => ({
+        ...prev,
+        documentoGrupo: "El archivo excede el tamaño máximo permitido (10 MB)",
+      }));
+      return;
+    }
+
+    setDocumentoGrupo(file);
+    limpiarError("documentoGrupo");
+  };
+
+  const handleRemoverDocumento = () => {
+    setDocumentoGrupo(null);
   };
 
   const handleChange = (e) => {
@@ -380,9 +462,6 @@ function SolicitarVoluntariado() {
       name === "tipoOtro"
     ) {
       valor = limitarPalabras(valor, MAX_PALABRAS_TITULO);
-    }
-    if (name === "horarioDetallado") {
-      valor = limitarPalabras(valor, MAX_PALABRAS_NOTAS);
     }
 
     setFormulario((prev) => ({
@@ -456,9 +535,11 @@ function SolicitarVoluntariado() {
     }));
 
     if (modalidad === "individual") {
+      setDocumentoGrupo(null);
       setErrores((prev) => {
         const next = { ...prev };
         delete next.cantidadParticipantes;
+        delete next.documentoGrupo;
         return next;
       });
     }
@@ -511,13 +592,14 @@ function SolicitarVoluntariado() {
       nuevosErrores.tipoOtro = "Especifique el tipo de voluntariado";
     }
 
-    Object.assign(
-      nuevosErrores,
-      validarFechasVoluntariado(formulario.fechaInicio, formulario.fechaFin)
-    );
+    if (!formulario.fechaVoluntariado) {
+      nuevosErrores.fechaVoluntariado = "Seleccione una fecha disponible en el calendario";
+    } else if (!fechasHabilitadasMap.has(formulario.fechaVoluntariado)) {
+      nuevosErrores.fechaVoluntariado = "La fecha seleccionada no está habilitada para voluntariados";
+    }
 
-    if (!formulario.horarioDetallado?.trim()) {
-      nuevosErrores.horarioDetallado = "Describa los días y horas disponibles";
+    if (!formulario.disponibilidad) {
+      nuevosErrores.disponibilidad = "Seleccione su disponibilidad horaria (mañana, tarde o horario completo)";
     }
 
     if (esGrupal) {
@@ -527,6 +609,10 @@ function SolicitarVoluntariado() {
       } else if (cantidad > 100) {
         nuevosErrores.cantidadParticipantes = "Máximo 100 participantes";
       }
+
+      if (!documentoGrupo) {
+        nuevosErrores.documentoGrupo = "Debe subir un documento con los nombres de las personas del grupo";
+      }
     }
 
     setErrores(nuevosErrores);
@@ -535,11 +621,13 @@ function SolicitarVoluntariado() {
 
   const VOLUNTARIADO_FIELD_MAP = {
     tipo: "tipoVoluntariado",
+    fechaVoluntariado: "fechaVoluntariado",
   };
 
   const resetFormulario = () => {
     setFormulario(crearFormularioInicial(usuario));
-    setDateRange({ from: undefined, to: undefined });
+    setFechaSeleccionada(undefined);
+    setDocumentoGrupo(null);
     setErrores({});
     setErrorApi(null);
     setAvisoCedula(null);
@@ -571,9 +659,9 @@ function SolicitarVoluntariado() {
           "correo",
           "telefono",
           "cantidadParticipantes",
-          "fechaInicio",
-          "fechaFin",
-          "horarioDetallado",
+          "documentoGrupo",
+          "fechaVoluntariado",
+          "disponibilidad",
           "tipo",
           "tipoOtro",
         ],
@@ -592,50 +680,58 @@ function SolicitarVoluntariado() {
 
     const tipoFinal = esTipoOtro ? formulario.tipoOtro.trim() : formulario.tipo;
 
-    const datosEnvio = {
-      nombre: formulario.nombre.trim(),
-      primerApellido: formulario.primerApellido.trim(),
-      segundoApellido: formulario.segundoApellido.trim(),
-      email: formulario.correo.trim(),
-      telefono: formulario.telefono.trim(),
-      tipoVoluntariado: tipoFinal,
-      identificacion: esNacionalCr
+    // Crear FormData para enviar tanto campos de texto como el archivo adjunto
+    const formData = new FormData();
+    formData.append("nombre", formulario.nombre.trim());
+    formData.append("primerApellido", formulario.primerApellido.trim());
+    formData.append("segundoApellido", formulario.segundoApellido.trim());
+    formData.append("email", formulario.correo.trim());
+    formData.append("telefono", formulario.telefono.trim());
+    formData.append("tipoVoluntariado", tipoFinal);
+    formData.append(
+      "identificacion",
+      esNacionalCr
         ? normalizarCedulaCr(formulario.identificacion)
-        : formulario.identificacion.trim(),
-      institucion: formulario.institucion.trim(),
-      pais: formulario.pais.trim(),
-      modalidad: formulario.modalidad,
-      cantidadParticipantes: esGrupal ? Number(formulario.cantidadParticipantes) : 1,
-      residencia: "",
-      horario: formulario.horarioDetallado.trim(),
-      dias: `${formulario.fechaInicio} - ${formulario.fechaFin}`,
-      area: tipoFinal,
-      descripcion: `Período: ${formulario.fechaInicio} - ${formulario.fechaFin}.${
+        : formulario.identificacion.trim()
+    );
+    formData.append("institucion", formulario.institucion.trim());
+    formData.append("pais", formulario.pais.trim());
+    formData.append("modalidad", formulario.modalidad);
+    formData.append(
+      "cantidadParticipantes",
+      esGrupal ? String(formulario.cantidadParticipantes) : "1"
+    );
+    formData.append("residencia", "");
+    formData.append("horario", formulario.disponibilidad);
+    formData.append("dias", formulario.fechaVoluntariado);
+    formData.append("area", tipoFinal);
+    formData.append(
+      "descripcion",
+      `Fecha: ${formulario.fechaVoluntariado}. Disponibilidad: ${formulario.disponibilidad}.${
         esGrupal ? ` Cantidad de participantes: ${formulario.cantidadParticipantes}.` : ""
-      }`,
-      motivacion: "",
-    };
+      }`
+    );
+    formData.append("motivacion", "");
+
+    if (esGrupal && documentoGrupo) {
+      formData.append("documento", documentoGrupo);
+    }
 
     setEnviando(true);
     setErrorApi(null);
 
     try {
-      const datosEs = await asegurarCamposEnEspanol(datosEnvio, [
-        "tipoVoluntariado",
-        "institucion",
-        "pais",
-        "horario",
-        "area",
-        "descripcion",
-        "motivacion",
-      ]);
-      await crearSolicitud(datosEs);
+      await crearSolicitud(formData);
       window.dispatchEvent(new Event("voluntariado-updated"));
       resetFormulario();
       setEnviado(true);
     } catch (err) {
-      setErrorApi("Ocurrió un error al enviar la solicitud. Intente nuevamente.");
-      console.error(err);
+      console.error("Error al enviar solicitud:", err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Ocurrió un error al enviar la solicitud. Intente nuevamente.";
+      setErrorApi(msg);
       queueFocusFormError({ root: e.currentTarget });
     } finally {
       setEnviando(false);
@@ -666,6 +762,7 @@ function SolicitarVoluntariado() {
               onFocusCapture={handleFormInteractionCapture}
               onPointerDownCapture={handleFormInteractionCapture}
             >
+              {/* Selección de Modalidad */}
               <div className="campo full tipo-postulacion">
                 <p className="campo-pregunta">
                   {tComo}<span className="req">*</span>
@@ -695,7 +792,12 @@ function SolicitarVoluntariado() {
               </div>
 
               <div className="form-secciones">
-                <SectionCard icon={User} title={tInfoPersonal}>
+                {/* Información Personal (o del Responsable si es grupal) */}
+                <SectionCard
+                  icon={User}
+                  title={esGrupal ? tInfoResponsable : tInfoPersonal}
+                  hint={esGrupal ? tInfoResponsableHint : tInfoPersonalHint}
+                >
                   <div className="campo full">
                     <p className="campo-pregunta">
                       {tNacional}<span className="req">*</span>
@@ -853,7 +955,8 @@ function SolicitarVoluntariado() {
                   </div>
                 </SectionCard>
 
-                <SectionCard icon={Mail} title={tContacto}>
+                {/* Contacto */}
+                <SectionCard icon={Mail} title={esGrupal ? tContactoResp : tContacto}>
                   <div className="form-grid">
                     <div className="campo">
                       <label>
@@ -887,6 +990,7 @@ function SolicitarVoluntariado() {
                   </div>
                 </SectionCard>
 
+                {/* Información específica de Grupos */}
                 {esGrupal && (
                   <SectionCard
                     icon={Users}
@@ -909,48 +1013,173 @@ function SolicitarVoluntariado() {
                         )}
                       </div>
                     </div>
+
+                    {/* Espacio para subir documento con nombres de integrantes */}
+                    <div className="campo full mt-4">
+                      <label>
+                        {tDocIntegrantes} <span className="req">*</span>
+                      </label>
+                      <div className="documento-upload-wrapper">
+                        {!documentoGrupo ? (
+                          <label className="documento-upload-dropzone">
+                            <input
+                              type="file"
+                              accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
+                              onChange={handleDocumentoChange}
+                            />
+                            <div className="documento-upload-dropzone__icon">
+                              <UploadCloud size={22} />
+                            </div>
+                            <span className="documento-upload-dropzone__texto">
+                              <ST>Haga clic aquí para subir la lista de integrantes</ST>
+                            </span>
+                            <span className="documento-upload-dropzone__hint">
+                              <ST>Archivos soportados: PDF, Word (.docx), Excel (.xlsx), CSV o texto (.txt) (máx. 10 MB)</ST>
+                            </span>
+                          </label>
+                        ) : (
+                          <div className="documento-preview-card">
+                            <div className="documento-preview__info">
+                              <FileText className="documento-preview__icon size-5" />
+                              <div>
+                                <p className="documento-preview__nombre">{documentoGrupo.name}</p>
+                                <p className="documento-preview__tamano">
+                                  {(documentoGrupo.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleRemoverDocumento}
+                              className="documento-preview__eliminar"
+                              title="Eliminar archivo"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        )}
+                        {errores.documentoGrupo && (
+                          <span className="mensaje-error"><ST>{errores.documentoGrupo}</ST></span>
+                        )}
+                      </div>
+                    </div>
                   </SectionCard>
                 )}
 
-                <SectionCard icon={HandHeart} title={tInfoVol}>
-                  <div className="campo full">
-                    <p className="campo-pregunta">
-                      {tPeriodo} <span className="req">*</span>
-                    </p>
-                    <DatePickerWithRange
-                      dateRange={dateRange}
-                      setDateRange={handleRangeChange}
-                      error={errores.fechaInicio || errores.fechaFin}
-                    />
-                    {(errores.fechaInicio || errores.fechaFin) && (
-                      <span className="mensaje-error">
-                        <ST>{errores.fechaInicio || errores.fechaFin}</ST>
-                      </span>
+                {/* Selección de Fecha con el Calendario shadcn UI */}
+                <SectionCard
+                  icon={CalendarCheck2}
+                  title={tFechaVoluntariado}
+                  hint={tFechaVoluntariadoHint}
+                >
+                  <div className="campo full flex flex-col items-center">
+                    {fechaSeleccionada && (
+                      <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-900 bg-white px-5 py-2 shadow-xs">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                          <ST>FECHA SELECCIONADA:</ST>
+                        </span>
+                        <span className="text-xs font-bold text-slate-950 capitalize">
+                          {format(fechaSeleccionada, "EEEE, dd 'de' MMMM 'de' yyyy", { locale })}
+                        </span>
+                      </div>
                     )}
-                  </div>
 
-                  <div className="campo full">
-                    <p className="campo-pregunta" id="horario-detallado-label">
-                      {tHorarioTitulo} <span className="req">*</span>
-                    </p>
-                    <p className="mensaje-info">{tHorarioInfo}</p>
-                    <textarea
-                      name="horarioDetallado"
-                      rows={3}
-                      aria-labelledby="horario-detallado-label"
-                      placeholder={tHorarioPh}
-                      value={formulario.horarioDetallado}
-                      onChange={handleChange}
-                    />
-                    <span className="mensaje-info">
-                      {etiquetaContadorPalabras(formulario.horarioDetallado, MAX_PALABRAS_NOTAS)}
-                    </span>
-                    {errores.horarioDetallado && (
-                      <span className="mensaje-error"><ST>{errores.horarioDetallado}</ST></span>
+                    <div className="flex justify-center my-1 w-full">
+                      <Calendar
+                        mode="single"
+                        selected={fechaSeleccionada}
+                        onSelect={handleSelectFecha}
+                        disabled={isDateDisabled}
+                        locale={locale}
+                        modifiers={{
+                          habilitado: fechasHabilitadasDates,
+                        }}
+                        modifiersClassNames={{
+                          habilitado: "rdp-day-habilitado",
+                        }}
+                        captionLayout="dropdown"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-600 mt-4 pt-2">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex size-5 items-center justify-center rounded-full border-2 border-slate-950 bg-white font-bold text-slate-950 text-[11px]">
+                          15
+                        </span>
+                        <span><ST>Fecha disponible (Habilitada)</ST></span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex size-5 items-center justify-center text-slate-400 opacity-40 text-[11px]">
+                          15
+                        </span>
+                        <span><ST>Fecha no disponible (Bloqueada)</ST></span>
+                      </div>
+                    </div>
+
+                    {fechasDisponibles.length === 0 && !cargandoFechas && (
+                      <p className="text-xs text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-200 text-center w-full mt-3">
+                        <ST>Actualmente no hay fechas habilitadas para voluntariados. Por favor consulte más tarde.</ST>
+                      </p>
+                    )}
+
+                    {errores.fechaVoluntariado && (
+                      <span className="mensaje-error text-center block w-full mt-2">
+                        <ST>{errores.fechaVoluntariado}</ST>
+                      </span>
                     )}
                   </div>
                 </SectionCard>
 
+                {/* Disponibilidad: Opciones formales (Mañana, Tarde, Mixta) */}
+                <SectionCard
+                  icon={Clock}
+                  title={tDisponibilidad}
+                  hint={tDisponibilidadHint}
+                >
+                  <div className="campo full">
+                    <div className="opciones-disponibilidad-grid">
+                      {OPCIONES_DISPONIBILIDAD.map((opcion) => {
+                        const esActiva = formulario.disponibilidad === opcion.valor;
+                        return (
+                          <label
+                            key={opcion.id}
+                            className={`opcion-disponibilidad-card ${esActiva ? "opcion-disponibilidad-card--activa" : ""}`}
+                          >
+                            <input
+                              type="radio"
+                              name="disponibilidad"
+                              value={opcion.valor}
+                              checked={esActiva}
+                              onChange={() => handleDisponibilidad(opcion.valor)}
+                            />
+                            <div className="opcion-disponibilidad__header">
+                              <span className="opcion-disponibilidad__titulo">
+                                <ST>{opcion.titulo}</ST>
+                              </span>
+                              <span className="opcion-disponibilidad__radio-dot" />
+                            </div>
+                            <span className="opcion-disponibilidad__horario">
+                              <Clock size={14} />
+                              {opcion.horario}
+                            </span>
+                            {opcion.descripcion ? (
+                              <span className="opcion-disponibilidad__desc">
+                                <ST>{opcion.descripcion}</ST>
+                              </span>
+                            ) : null}
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {errores.disponibilidad && (
+                      <span className="mensaje-error mt-2 block">
+                        <ST>{errores.disponibilidad}</ST>
+                      </span>
+                    )}
+                  </div>
+                </SectionCard>
+
+                {/* Tipo de voluntariado */}
                 <SectionCard
                   icon={Sprout}
                   title={tTipoVol}
@@ -1031,13 +1260,12 @@ function SolicitarVoluntariado() {
               <div className="confirmacion__icono">
                 <Check size={28} strokeWidth={2.2} aria-hidden="true" />
               </div>
-              <h2>Solicitud enviada correctamente</h2>
+              <h2><ST>Solicitud enviada correctamente</ST></h2>
               <p>
-                Tu solicitud de voluntariado fue recibida y está siendo revisada por
-                el equipo de Café UNA. Recibirás información en tu correo electrónico.
+                <ST>Tu solicitud de voluntariado fue recibida y está siendo revisada por el equipo de Café UNA. Recibirás información en tu correo electrónico.</ST>
               </p>
               <button type="button" className="btn-enviar" onClick={() => setEnviado(false)}>
-                Realizar otra solicitud
+                <ST>Realizar otra solicitud</ST>
               </button>
             </div>
           )}

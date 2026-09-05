@@ -57,3 +57,10 @@ export async function eliminarSolicitud(id) {
   });
   return true;
 }
+
+export async function descargarDocumentoIntegrantes(id) {
+  return apiRequest(`${BASE_URL}/${id}/documento`, {
+    responseType: "blob",
+  });
+}
+

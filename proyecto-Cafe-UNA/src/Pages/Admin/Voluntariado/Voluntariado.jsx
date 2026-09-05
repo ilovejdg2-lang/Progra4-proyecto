@@ -2,8 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Calendar,
+  CalendarDays,
+  ClipboardList,
   Clock,
+  Download,
   Eye,
+  FileText,
   GraduationCap,
   Hash,
   Mail,
@@ -29,9 +33,11 @@ import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
 import {
   actualizarSolicitud,
+  descargarDocumentoIntegrantes,
   eliminarSolicitud,
   obtenerSolicitudes,
 } from "../../../services/voluntariadoService";
+import { GestionFechasVoluntariado } from "./GestionFechasVoluntariado";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { tienePermiso } from "../../../lib/permisos";
 import { ContadorPalabras } from "../../../Components/Admin/ui/CampoLimitePalabras";
@@ -60,10 +66,10 @@ const TIPOS_VOLUNTARIADO = [
 
 /** Valores frecuentes de horario (se guardan en español; UiSelect los muestra traducidos). */
 const HORARIOS_VOLUNTARIADO = [
+  "Mañana (8:00 a. m. – 12:00 m.)",
+  "Tarde (1:00 p. m. – 5:00 p. m.)",
+  "Horario completo (8:00 a. m. – 5:00 p. m.)",
   "Horario flexible",
-  "Lunes a viernes, 8:00 a. m. a 12:00 p. m.",
-  "Lunes a viernes, 1:00 p. m. a 5:00 p. m.",
-  "Lunes a viernes, 8:00 a. m. a 5:00 p. m.",
 ];
 
 const accionBtnBase =
@@ -104,6 +110,8 @@ function normalizarSolicitud(solicitud) {
     estado: normalizarEstado(solicitud?.estado),
     observacionesAdmin:
       solicitud?.observacionesAdmin ?? solicitud?.ObservacionesAdmin ?? "",
+    documentoAdjunto:
+      solicitud?.documentoAdjunto ?? solicitud?.DocumentoAdjunto ?? null,
   };
 }
 
@@ -289,7 +297,30 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
   const [estado, setEstado] = useState(normalizarEstado(solicitud.estado));
   const [observacionesAdmin, setObservacionesAdmin] = useState(solicitud.observacionesAdmin || "");
   const [guardando, setGuardando] = useState(false);
+  const [descargandoDoc, setDescargandoDoc] = useState(false);
   const esGrupal = solicitud.modalidad === "grupal";
+
+  const handleDescargarDoc = async () => {
+    if (!solicitud?.id) return;
+    setDescargandoDoc(true);
+    try {
+      const response = await descargarDocumentoIntegrantes(solicitud.id);
+      const blob = new Blob([response.data || response]);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = solicitud.documentoAdjunto || "integrantes-grupo.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert(t("No se pudo descargar el documento adjunto."));
+    } finally {
+      setDescargandoDoc(false);
+    }
+  };
 
   useEffect(() => {
     let cancelado = false;
@@ -398,24 +429,64 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
                 traducirValor
               />
               {esGrupal ? (
-                <DetailField
-                  icon={Users}
-                  label="Cantidad de participantes"
-                  value={String(solicitud.cantidadParticipantes || "")}
-                />
+                <>
+                  <DetailField
+                    icon={Users}
+                    label="Cantidad de participantes"
+                    value={String(solicitud.cantidadParticipantes || "")}
+                  />
+                  {solicitud.documentoAdjunto ? (
+                    <div className="grid gap-1.5 md:col-span-2">
+                      <span className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+                        <FileText className="size-4 text-slate-500" />
+                        <ST>Documento con integrantes del grupo</ST>
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleDescargarDoc}
+                          disabled={descargandoDoc}
+                          className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 disabled:opacity-50"
+                        >
+                          <Download className="size-4 text-slate-700" />
+                          <span>
+                            {descargandoDoc
+                              ? t("Descargando...")
+                              : `${t("Descargar lista de integrantes")} (${solicitud.documentoAdjunto})`}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
               ) : null}
               <DetailField icon={GraduationCap} label="Tipo de voluntariado" value={solicitud.tipoVoluntariado} traducirValor />
               <DetailField icon={Calendar} label="Fecha de solicitud" value={solicitud.fechaSolicitud} />
               {(() => {
                 const periodo = partirPeriodo(solicitud.dias);
+                if (periodo.fechaInicio && periodo.fechaFin && periodo.fechaInicio !== periodo.fechaFin) {
+                  return (
+                    <>
+                      <DetailField icon={Calendar} label="Fecha de inicio" value={periodo.fechaInicio} />
+                      <DetailField icon={Calendar} label="Fecha de finalización" value={periodo.fechaFin} />
+                    </>
+                  );
+                }
                 return (
-                  <>
-                    <DetailField icon={Calendar} label="Fecha de inicio" value={periodo.fechaInicio} />
-                    <DetailField icon={Calendar} label="Fecha de finalización" value={periodo.fechaFin} />
-                  </>
+                  <DetailField
+                    icon={Calendar}
+                    label="Fecha de voluntariado"
+                    value={solicitud.dias || "No indicada"}
+                  />
                 );
               })()}
-              <DetailField icon={Clock} label="Horario y disponibilidad" value={solicitud.horario} className="md:col-span-2" traducirValor />
+              <DetailField
+                icon={Clock}
+                label="Disponibilidad"
+                value={solicitud.horario}
+                className="md:col-span-2"
+                traducirValor
+              />
             </div>
           </section>
 
@@ -903,11 +974,68 @@ const AdminVoluntariado = () => {
     },
   ];
 
+  const [tabActiva, setTabActiva] = useState(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      return p.get("tab") === "fechas" ? "fechas" : "solicitudes";
+    } catch {
+      return "solicitudes";
+    }
+  });
+
+  const cambiarTab = (nuevaTab) => {
+    setTabActiva(nuevaTab);
+    try {
+      const url = new URL(window.location);
+      if (nuevaTab === "fechas") {
+        url.searchParams.set("tab", "fechas");
+      } else {
+        url.searchParams.delete("tab");
+      }
+      window.history.replaceState({}, "", url);
+    } catch (e) {
+      console.warn("No se pudo actualizar URL:", e);
+    }
+  };
+
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
       <AdminLayout>
-        <section className="space-y-6">
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+        <div className="space-y-6">
+          {/* Navegación de pestañas: Solicitudes vs Gestión de fechas */}
+          <div className="flex border-b border-slate-200 gap-2">
+            <button
+              type="button"
+              onClick={() => cambiarTab("solicitudes")}
+              className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition ${
+                tabActiva === "solicitudes"
+                  ? "border-slate-950 text-slate-950"
+                  : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
+              }`}
+            >
+              <ClipboardList className="size-4" />
+              <span><ST>Solicitudes registradas</ST></span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => cambiarTab("fechas")}
+              className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition ${
+                tabActiva === "fechas"
+                  ? "border-slate-950 text-slate-950"
+                  : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
+              }`}
+            >
+              <CalendarDays className="size-4" />
+              <span><ST>Gestión de fechas de voluntariado</ST></span>
+            </button>
+          </div>
+
+          {tabActiva === "fechas" ? (
+            <GestionFechasVoluntariado esSuperAdmin={esSuperAdmin} />
+          ) : (
+            <section className="space-y-6">
+              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl"><ST>Solicitudes registradas</ST></h1>
@@ -1062,6 +1190,8 @@ const AdminVoluntariado = () => {
             </>
           ) : null}
         </section>
+        )}
+        </div>
 
         {viendo ? (
           <ModalDetalle solicitud={viendo} onGuardar={handleActualizar} onCerrar={() => setViendo(null)} />

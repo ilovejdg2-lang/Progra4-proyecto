@@ -1,0 +1,280 @@
+/* calendar.css - Estilos shadcn compactos para el calendario de voluntariado */
+
+.shadcn-calendar {
+  width: fit-content !important;
+  max-width: 284px !important;
+  margin: 0 auto !important;
+  background-color: #ffffff !important;
+  border-radius: 1.25rem !important;
+  border: 1px solid #e2e8f0 !important;
+  padding: 0.85rem !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04) !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+}
+
+.shadcn-calendar .rdp-root {
+  --rdp-accent-color: #09090b;
+  --rdp-accent-background-color: #f4f4f5;
+  --rdp-day-height: 34px;
+  --rdp-day-width: 34px;
+  --rdp-day_button-height: 30px;
+  --rdp-day_button-width: 30px;
+  --rdp-day_button-border-radius: 9999px;
+  --rdp-nav_button-height: 26px;
+  --rdp-nav_button-width: 26px;
+  --rdp-nav-height: 28px;
+
+  position: relative !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+.shadcn-calendar .rdp-months {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.shadcn-calendar .rdp-month {
+  width: 100% !important;
+  position: relative !important;
+}
+
+/* Cabecera del mes con flechas en los extremos y dropdowns en el centro */
+.shadcn-calendar .rdp-month_caption {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 28px !important;
+  margin-bottom: 0.65rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  color: #09090b !important;
+}
+
+.shadcn-calendar .rdp-button_previous {
+  position: absolute !important;
+  left: 0 !important;
+  top: 1px !important;
+  height: 26px !important;
+  width: 26px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 0.375rem !important;
+  border: none !important;
+  background: transparent !important;
+  color: #334155 !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  transition: background 0.15s ease, color 0.15s ease !important;
+}
+
+.shadcn-calendar .rdp-button_previous:hover:not(:disabled) {
+  background: #f1f5f9 !important;
+  color: #09090b !important;
+}
+
+.shadcn-calendar .rdp-button_next {
+  position: absolute !important;
+  right: 0 !important;
+  top: 1px !important;
+  height: 26px !important;
+  width: 26px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 0.375rem !important;
+  border: none !important;
+  background: transparent !important;
+  color: #334155 !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  transition: background 0.15s ease, color 0.15s ease !important;
+}
+
+.shadcn-calendar .rdp-button_next:hover:not(:disabled) {
+  background: #f1f5f9 !important;
+  color: #09090b !important;
+}
+
+.shadcn-calendar .rdp-button_previous:disabled,
+.shadcn-calendar .rdp-button_next:disabled {
+  opacity: 0.2 !important;
+  cursor: not-allowed !important;
+}
+
+/* Menús desplegables (mes y año) centrados */
+.shadcn-calendar .rdp-dropdowns {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem !important;
+}
+
+.shadcn-calendar .rdp-dropdown_root {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.15rem !important;
+  font-size: 0.925rem !important;
+  font-weight: 600 !important;
+  color: #09090b !important;
+  padding: 2px 4px !important;
+  border-radius: 0.375rem !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.shadcn-calendar .rdp-dropdown_root:hover {
+  background-color: #f1f5f9 !important;
+}
+
+.shadcn-calendar .rdp-dropdown {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 0 !important;
+  cursor: pointer !important;
+  z-index: 10 !important;
+}
+
+/* Tabla del mes */
+.shadcn-calendar .rdp-month_grid {
+  width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 4px !important;
+  table-layout: fixed !important;
+  margin: 0 auto !important;
+}
+
+/* Fila de días de la semana */
+.shadcn-calendar .rdp-weekdays {
+  display: table-row !important;
+}
+
+.shadcn-calendar .rdp-weekday {
+  display: table-cell !important;
+  width: 34px !important;
+  height: 26px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  color: #94a3b8 !important; /* Gris tenue como en el shadcn original */
+  text-transform: capitalize !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+/* Cuerpo de semanas y días */
+.shadcn-calendar .rdp-weeks {
+  display: table-row-group !important;
+}
+
+.shadcn-calendar .rdp-week {
+  display: table-row !important;
+}
+
+.shadcn-calendar .rdp-day {
+  display: table-cell !important;
+  width: 34px !important;
+  height: 34px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Botón individual del día */
+.shadcn-calendar .rdp-day_button {
+  width: 30px !important;
+  height: 30px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 9999px !important;
+  font-size: 0.825rem !important;
+  font-weight: 400 !important;
+  color: #18181b !important;
+  background: transparent !important;
+  border: 2px solid transparent !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+}
+
+.shadcn-calendar .rdp-day_button:hover:not(:disabled) {
+  background-color: #f1f5f9 !important;
+}
+
+/* Día de hoy */
+.shadcn-calendar .rdp-today .rdp-day_button {
+  font-weight: 700 !important;
+}
+
+/* Días de otros meses */
+.shadcn-calendar .rdp-outside .rdp-day_button {
+  color: #94a3b8 !important;
+  opacity: 0.45 !important;
+}
+
+/* Días inhabilitados / bloqueados */
+.shadcn-calendar .rdp-disabled .rdp-day_button,
+.shadcn-calendar .rdp-day_button:disabled {
+  color: #cbd5e1 !important;
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+/* MODIFICADOR: DÍA HABILITADO (Círculo negro alrededor del número del día) */
+.shadcn-calendar .rdp-day-habilitado .rdp-day_button,
+.shadcn-calendar .rdp-day_habilitado .rdp-day_button,
+.shadcn-calendar .rdp-day_button.rdp-day-habilitado,
+.shadcn-calendar .rdp-day_button.rdp-day_habilitado {
+  border: 2px solid #09090b !important; /* Círculo negro definido */
+  border-radius: 9999px !important;
+  font-weight: 700 !important;
+  color: #09090b !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.shadcn-calendar .rdp-day-habilitado .rdp-day_button:hover:not(:disabled),
+.shadcn-calendar .rdp-day_button.rdp-day-habilitado:hover:not(:disabled) {
+  background-color: #f4f4f5 !important;
+  border-color: #09090b !important;
+}
+
+/* DÍA SELECCIONADO: Círculo negro relleno con número blanco */
+.shadcn-calendar .rdp-selected .rdp-day_button,
+.shadcn-calendar .rdp-day_button[aria-selected="true"],
+.shadcn-calendar .rdp-day-habilitado.rdp-selected .rdp-day_button,
+.shadcn-calendar .rdp-selected .rdp-day-habilitado .rdp-day_button,
+.shadcn-calendar .rdp-selected.rdp-day-habilitado .rdp-day_button {
+  background-color: #09090b !important;
+  color: #ffffff !important;
+  border: 2px solid #09090b !important;
+  border-radius: 9999px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+}
+
+.shadcn-calendar .rdp-selected .rdp-day_button:hover {
+  background-color: #18181b !important;
+  color: #ffffff !important;
+}
+
+/* Enfoque en día seleccionado en panel admin si está activo */
+.shadcn-calendar .rdp-focused:not(.rdp-selected) .rdp-day_button {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 1px !important;
+}
