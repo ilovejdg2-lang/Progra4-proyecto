@@ -24,6 +24,7 @@ import {
   Users,
   Wrench,
   CalendarClock,
+  CalendarDays,
   Shield,
   HandCoins,
   ClipboardList,
@@ -508,6 +509,7 @@ export function AppSidebar() {
               <SidebarGroupContent>
                 <SidebarMenuSub>
                   {puedeVoluntariado ? (
+                  <>
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/voluntariado" activeProps={linkActivo} onClick={closeMobileSidebar}>
@@ -516,6 +518,20 @@ export function AppSidebar() {
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link
+                        to="/admin/voluntariado"
+                        search={{ tab: "fechas" }}
+                        activeProps={linkActivo}
+                        onClick={closeMobileSidebar}
+                      >
+                        <CalendarDays />
+                        <span><ST>Fechas disponibles</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  </>
                   ) : null}
                   {puedeDonacionesNecesidades ? (
                   <SidebarMenuSubItem>
