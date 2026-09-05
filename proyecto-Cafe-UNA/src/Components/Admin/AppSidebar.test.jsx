@@ -49,7 +49,7 @@ describe("AppSidebar", () => {
     Object.defineProperty(window, "localStorage", {
       configurable: true,
       value: {
-        getItem: vi.fn(() => null),
+        getItem: vi.fn((key) => (key === "admin-sidebar-formularios-open" ? "true" : null)),
         setItem: vi.fn(),
         removeItem: vi.fn(),
       },
@@ -78,7 +78,7 @@ describe("AppSidebar", () => {
       "href",
       "/admin/historial-movimientos",
     );
-    expect(screen.getByText("Formularios")).toBeInTheDocument();
+    expect(screen.getAllByText("Formularios")[0]).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /^Voluntariado$/i })[0]).toHaveAttribute(
       "href",
       "/admin/voluntariado",
@@ -94,7 +94,9 @@ describe("AppSidebar", () => {
   });
 
   it("does not expose inventory navigation without permission", () => {
-    permissions.tienePermiso.mockImplementation((_, permission) => permission !== "ver_inventario");
+    permissions.tienePermiso.mockImplementation(
+      (_, permission) => !permission.includes("inventario") && permission !== "ver_productos",
+    );
 
     render(
       <SidebarProvider>

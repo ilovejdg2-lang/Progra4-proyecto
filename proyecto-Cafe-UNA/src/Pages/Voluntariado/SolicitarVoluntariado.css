@@ -823,3 +823,248 @@
 .calendar-shadcn-custom .rdp-disabled .rdp-day_button:hover {
   background-color: transparent !important;
 }
+
+/* =======================================================
+   OPCIONES FORMALES DE DISPONIBILIDAD (MAÑANA, TARDE, MIXTA)
+======================================================= */
+
+.opciones-disponibilidad-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.opcion-disponibilidad-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px;
+  border: 1.5px solid var(--borde-input);
+  border-radius: var(--radius-ui);
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.opcion-disponibilidad-card:hover {
+  border-color: var(--borde-hover);
+  background: #fafafa;
+}
+
+.opcion-disponibilidad-card--activa {
+  border-color: var(--negro-principal) !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 1px var(--negro-principal), 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.opcion-disponibilidad-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.opcion-disponibilidad__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.opcion-disponibilidad__titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--texto-principal);
+}
+
+.opcion-disponibilidad__radio-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--borde-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.opcion-disponibilidad-card--activa .opcion-disponibilidad__radio-dot {
+  border-color: var(--negro-principal);
+  background: var(--negro-principal);
+}
+
+.opcion-disponibilidad-card--activa .opcion-disponibilidad__radio-dot::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.opcion-disponibilidad__horario {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 4px;
+}
+
+.opcion-disponibilidad__desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--texto-secundario);
+}
+
+/* =======================================================
+   SUBIDA DE DOCUMENTO CON INTEGRANTES DEL GRUPO
+======================================================= */
+
+.documento-upload-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.documento-upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  border: 2px dashed var(--borde-input);
+  border-radius: var(--radius-ui);
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.documento-upload-dropzone:hover {
+  border-color: var(--negro-principal);
+  background: #f1f5f9;
+}
+
+.documento-upload-dropzone input[type="file"] {
+  display: none;
+}
+
+.documento-upload-dropzone__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--negro-principal);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  margin-bottom: 12px;
+}
+
+.documento-upload-dropzone__texto {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto-principal);
+}
+
+.documento-upload-dropzone__hint {
+  font-size: 12px;
+  color: var(--texto-secundario);
+  margin-top: 4px;
+}
+
+.documento-preview-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 1px solid var(--borde-input);
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.documento-preview__info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.documento-preview__icon {
+  color: var(--negro-principal);
+  flex-shrink: 0;
+}
+
+.documento-preview__nombre {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto-principal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 380px;
+}
+
+.documento-preview__tamano {
+  font-size: 12px;
+  color: var(--texto-secundario);
+}
+
+.documento-preview__eliminar {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  color: #94a3b8;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.documento-preview__eliminar:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+/* =======================================================
+   CALENDARIO PÚBLICO: DÍA SELECCIONADO Y DISPONIBILIDAD
+======================================================= */
+
+.calendario-publico-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+}
+
+.calendario-fecha-badge-seleccionada {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: #ffffff;
+  border: 1.5px solid var(--negro-principal);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  margin-bottom: 8px;
+}
+
+.calendario-fecha-badge__label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--texto-secundario);
+}
+
+.calendario-fecha-badge__valor {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--negro-principal);
+  text-transform: capitalize;
+}
