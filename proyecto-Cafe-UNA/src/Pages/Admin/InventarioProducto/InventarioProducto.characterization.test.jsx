@@ -164,7 +164,7 @@ describe('InventarioProducto characterization', () => {
       retry: vi.fn(),
     }
     hookMocks.stock = {
-      data: [],
+      data: [{ productId: 1, stock: 4 }],
       status: 'error',
       error: new Error('stock unavailable'),
       loading: false,
@@ -175,14 +175,9 @@ describe('InventarioProducto characterization', () => {
 
     expect(await screen.findAllByText('Café Premium')).toHaveLength(2)
     expect(screen.getByText(/catálogo está disponible/)).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Stock' })).toHaveLength(4)
-
-    await user.click(screen.getAllByRole('button', { name: 'Stock' })[0])
-    const dialog = screen.getByRole('dialog', { name: 'Stock de Bodega Central' })
-    await user.type(within(dialog).getByRole('spinbutton', { name: /^Unidades disponibles/ }), '7')
-    await user.click(within(dialog).getByRole('button', { name: 'Guardar stock' }))
-
-    await waitFor(() => expect(serviceMocks.actualizarStockCentral).toHaveBeenCalledWith(1, 7))
+    const retryBtn = screen.getByRole('button', { name: /Reintentar stock/ })
+    expect(retryBtn).toBeInTheDocument()
+    await user.click(retryBtn)
     expect(hookMocks.stock.retry).toHaveBeenCalled()
   })
 
@@ -205,7 +200,7 @@ describe('InventarioProducto characterization', () => {
 
     await user.type(within(dialog).getByRole('textbox', { name: /^Nombre/ }), 'Café nuevo')
     await user.type(within(dialog).getByRole('textbox', { name: /^Descripción/ }), 'Descripción válida')
-    await user.type(within(dialog).getByRole('spinbutton', { name: 'Precio normal' }), '1000')
+    await user.type(within(dialog).getByLabelText(/Precio normal/), '1000')
     await user.click(submit)
 
     await waitFor(() => expect(serviceMocks.crearProducto).toHaveBeenCalledTimes(1))

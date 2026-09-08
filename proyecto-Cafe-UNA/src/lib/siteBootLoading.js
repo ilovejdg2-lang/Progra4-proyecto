@@ -140,3 +140,14 @@ export function finishSiteBootLoading() {
     });
   });
 }
+
+if (typeof window !== 'undefined') {
+  // Guard de seguridad: garantiza que la pantalla de carga inicial nunca se quede pegada permanentemente
+  setTimeout(() => {
+    hideInitialLoader({ force: true });
+  }, 7000);
+
+  window.addEventListener('error', () => {
+    hideInitialLoader({ force: true });
+  });
+}
