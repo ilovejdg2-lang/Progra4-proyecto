@@ -7,6 +7,7 @@ const CACHE_KEY_MESSAGES = {
   'product-detail': 'Cargando producto...',
   about: 'Cargando sobre nosotros...',
   voluntariado: 'Cargando voluntariado...',
+  visitas: 'Cargando visitas...',
   donaciones: 'Cargando donaciones...',
   checkout: 'Cargando checkout...',
   login: 'Cargando...',
@@ -37,6 +38,7 @@ export function getLoadingMessageForPathname(pathname = normalizePathname()) {
       : msg(CACHE_KEY_MESSAGES.about);
   }
   if (path.startsWith('/voluntariado')) return msg(CACHE_KEY_MESSAGES.voluntariado);
+  if (path.startsWith('/visitas') || path === '/solicitar-visita') return msg(CACHE_KEY_MESSAGES.visitas);
   if (path.startsWith('/donaciones')) return msg('Cargando donaciones...');
   if (path === '/checkout') return msg(CACHE_KEY_MESSAGES.checkout);
   if (path === '/login') return msg(CACHE_KEY_MESSAGES.login);
