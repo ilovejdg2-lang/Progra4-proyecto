@@ -2,12 +2,14 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const crearSolicitudVisitaMock = vi.fn();
+const obtenerDisponibilidadMock = vi.fn();
 
 vi.mock("../../services/sessionService", () => ({
   getActiveSessionUser: () => ({ id: 7, email: "test@ejemplo.com", roles: ["Cliente"] }),
 }));
 vi.mock("../../services/visitasService", () => ({
   crearSolicitudVisita: (...args) => crearSolicitudVisitaMock(...args),
+  obtenerDisponibilidadVisitasPublica: (...args) => obtenerDisponibilidadMock(...args),
 }));
 
 import SolicitarVisita from "./SolicitarVisita";
@@ -15,6 +17,16 @@ import SolicitarVisita from "./SolicitarVisita";
 describe("SolicitarVisita", () => {
   beforeEach(() => {
     crearSolicitudVisitaMock.mockReset();
+    obtenerDisponibilidadMock.mockReset().mockResolvedValue([
+      {
+        id: "12",
+        fecha: "2099-12-31",
+        horaInicio: "09:00:00",
+        horaFin: "10:00:00",
+        habilitada: true,
+        nota: "Llegar 10 minutos antes",
+      },
+    ]);
   });
 
   it("shows validation instead of sending an incomplete group request", async () => {
@@ -37,8 +49,9 @@ describe("SolicitarVisita", () => {
     fireEvent.change(screen.getByLabelText(/provincia o ciudad/i), { target: { value: "Heredia" } });
     fireEvent.change(screen.getByLabelText(/cantidad de visitantes/i), { target: { value: "4" } });
     fireEvent.change(screen.getByLabelText(/tipo de grupo/i), { target: { value: "Universidad" } });
-    fireEvent.change(screen.getByLabelText(/fecha de visita/i), { target: { value: "2099-12-31" } });
-    fireEvent.change(screen.getByLabelText(/hora preferida/i), { target: { value: "09:00" } });
+    fireEvent.change(await screen.findByLabelText(/fecha y horario disponibles/i), {
+      target: { value: "12" },
+    });
     fireEvent.change(screen.getByLabelText(/motivo de la visita/i), { target: { value: "Académica" } });
     fireEvent.click(screen.getByRole("button", { name: /enviar solicitud/i }));
 
@@ -47,10 +60,31 @@ describe("SolicitarVisita", () => {
       expect.objectContaining({
         encargadoNombre: "Ana López",
         cantidadVisitantes: "4",
-        fechaVisita: "2099-12-31",
-        requiereGuia: false,
+        disponibilidadVisitaId: "12",
       }),
     );
-    expect(await screen.findByRole("status")).toHaveTextContent(/solicitud #31/i);
+    expect(await screen.findByText(/solicitud #31/i)).toBeInTheDocument();
+  });
+
+  it("offers only API-provided slots and removes the obsolete guide request", async () => {
+    render(<SolicitarVisita />);
+
+    expect(await screen.findByRole("option", { name: /31 de diciembre de 2099.*09:00.*10:00/i })).toHaveValue("12");
+    fireEvent.change(screen.getByLabelText(/fecha y horario disponibles/i), {
+      target: { value: "12" },
+    });
+    expect(screen.queryByLabelText(/guía/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/vestimenta cómoda/i)).toBeInTheDocument();
+    expect(screen.getByText(/repelente/i)).toBeInTheDocument();
+    expect(screen.getByText(/protección solar/i)).toBeInTheDocument();
+    expect(screen.getByText(/llegar 10 minutos antes/i)).toBeInTheDocument();
+  });
+
+  it("prevents submission when no visit slots are available", async () => {
+    obtenerDisponibilidadMock.mockResolvedValueOnce([]);
+    render(<SolicitarVisita />);
+
+    expect(await screen.findByText(/no hay fechas y horarios habilitados/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /enviar solicitud/i })).toBeDisabled();
   });
 });

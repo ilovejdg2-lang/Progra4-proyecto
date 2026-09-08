@@ -1,10 +1,14 @@
-import { useState } from "react";
-import { CalendarDays, CheckCircle2, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CalendarDays, CheckCircle2, ClipboardList, UserRound, Users } from "lucide-react";
 
 import PageLoading from "../../Components/PageLoading/PageLoading";
 import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
 import { getActiveSessionUser } from "../../services/sessionService";
-import { crearSolicitudVisita } from "../../services/visitasService";
+import {
+  crearSolicitudVisita,
+  obtenerDisponibilidadVisitasPublica,
+} from "../../services/visitasService";
+import "../Voluntariado/SolicitarVoluntariado.css";
 
 const INITIAL_FORM = {
   encargadoNombre: "",
@@ -17,12 +21,10 @@ const INITIAL_FORM = {
   ciudadProvincia: "",
   cantidadVisitantes: "",
   tipoGrupo: "",
-  fechaVisita: "",
-  horaPreferida: "",
+  disponibilidadVisitaId: "",
   motivoVisita: "",
   requiereAccesibilidad: false,
   requiereParqueoBus: false,
-  requiereGuia: false,
   observaciones: "",
 };
 
@@ -34,22 +36,45 @@ const REQUIRED_FIELDS = [
   "ciudadProvincia",
   "cantidadVisitantes",
   "tipoGrupo",
-  "fechaVisita",
-  "horaPreferida",
+  "disponibilidadVisitaId",
   "motivoVisita",
 ];
 
 function Field({ label, children }) {
   return (
-    <label className="grid gap-2 text-sm font-semibold text-slate-700">
+    <label className="campo">
       {label}
       {children}
     </label>
   );
 }
 
-const inputClass =
-  "min-h-11 rounded-xl border border-slate-300 bg-white px-3 text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100";
+function SectionCard({ icon: Icon, title, hint, children }) {
+  return (
+    <section className="section-card">
+      <div className="section-card__header">
+        <Icon aria-hidden="true" className="section-card__icon-inline" size={20} />
+        <div className="section-card__titles">
+          <h4>{title}</h4>
+          {hint ? <span className="section-card__hint">{hint}</span> : null}
+        </div>
+      </div>
+      <div className="section-card__body">{children}</div>
+    </section>
+  );
+}
+
+const dateFormatter = new Intl.DateTimeFormat("es-CR", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+function slotLabel(slot) {
+  const date = dateFormatter.format(new Date(`${slot.fecha}T00:00:00Z`));
+  return `${date} · ${slot.horaInicio.slice(0, 5)} – ${slot.horaFin.slice(0, 5)}`;
+}
 
 export default function SolicitarVisita() {
   const session = getActiveSessionUser();
@@ -60,6 +85,9 @@ export default function SolicitarVisita() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [availability, setAvailability] = useState([]);
+  const [availabilityStatus, setAvailabilityStatus] = useState("loading");
+  const [availabilityError, setAvailabilityError] = useState("");
   const {
     ref: pageRef,
     showLoading,
@@ -67,6 +95,31 @@ export default function SolicitarVisita() {
     inert,
     loadingMessage,
   } = usePaintPublicPage("visitas");
+  const isAuthenticated = Boolean(session?.token || session?.id);
+  const selectedSlot = useMemo(
+    () => availability.find((slot) => slot.id === form.disponibilidadVisitaId) || null,
+    [availability, form.disponibilidadVisitaId],
+  );
+
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+    let active = true;
+    obtenerDisponibilidadVisitasPublica()
+      .then((slots) => {
+        if (!active) return;
+        setAvailability(slots);
+        setAvailabilityStatus("success");
+      })
+      .catch((loadError) => {
+        if (!active) return;
+        setAvailability([]);
+        setAvailabilityError(loadError?.message || "No se pudieron cargar los horarios disponibles.");
+        setAvailabilityStatus("error");
+      });
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated]);
 
   const update = (event) => {
     const { checked, name, type, value } = event.target;
@@ -106,7 +159,7 @@ export default function SolicitarVisita() {
     }
   };
 
-  if (!session?.token && !session?.id) {
+  if (!isAuthenticated) {
     return (
       <>
         {showLoading ? <PageLoading message={loadingMessage} /> : null}
@@ -135,78 +188,132 @@ export default function SolicitarVisita() {
     <>
       {showLoading ? <PageLoading message={loadingMessage} /> : null}
       <main
-        className={`bg-slate-50 px-4 py-10 sm:px-6 lg:px-8 ${showPrepaint ? "invisible" : ""}`}
+        className={`voluntariado-page${showPrepaint ? " voluntariado-page--prepaint" : ""}`}
         inert={inert}
         ref={pageRef}
       >
-      <div className="mx-auto max-w-5xl">
-        <header className="mb-8 rounded-3xl bg-gradient-to-br from-emerald-900 to-emerald-700 p-7 text-white shadow-lg sm:p-10">
-          <div className="flex items-start gap-4">
-            <span className="rounded-2xl bg-white/15 p-3"><CalendarDays aria-hidden="true" /></span>
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-100">Café UNA</p>
-              <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Solicitud de visitas grupales</h1>
-              <p className="mt-3 max-w-2xl text-emerald-50">
-                Coordiná una visita para grupos de dos personas o más. La solicitud quedará pendiente de revisión.
-              </p>
-            </div>
-          </div>
-        </header>
-
-        <form className="grid gap-6" onSubmit={submit} noValidate>
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-slate-950">Información del encargado</h2>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <Field label="Nombre del encargado *"><input className={inputClass} name="encargadoNombre" value={form.encargadoNombre} onChange={update} /></Field>
-              <Field label="Identificación *"><input className={inputClass} name="encargadoIdentificacion" value={form.encargadoIdentificacion} onChange={update} /></Field>
-              <Field label="Correo electrónico *"><input className={inputClass} type="email" name="encargadoEmail" value={form.encargadoEmail} onChange={update} /></Field>
-              <Field label="Teléfono *"><input className={inputClass} name="encargadoTelefono" value={form.encargadoTelefono} onChange={update} /></Field>
-              <Field label="Institución"><input className={inputClass} name="encargadoInstitucion" value={form.encargadoInstitucion} onChange={update} /></Field>
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-slate-950">Grupo y programación</h2>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <Field label="Tipo de visitante *">
-                <select className={inputClass} name="tipoVisitante" value={form.tipoVisitante} onChange={update}>
-                  <option>Nacional</option><option>Internacional</option>
-                </select>
-              </Field>
-              {form.tipoVisitante === "Internacional" ? (
-                <Field label="País de procedencia *"><input className={inputClass} name="paisProcedencia" value={form.paisProcedencia} onChange={update} /></Field>
-              ) : null}
-              <Field label="Provincia o ciudad *"><input className={inputClass} name="ciudadProvincia" value={form.ciudadProvincia} onChange={update} /></Field>
-              <Field label="Cantidad de visitantes *"><input className={inputClass} min="2" type="number" name="cantidadVisitantes" value={form.cantidadVisitantes} onChange={update} /></Field>
-              <Field label="Tipo de grupo *"><input className={inputClass} name="tipoGrupo" value={form.tipoGrupo} onChange={update} placeholder="Universidad, empresa, asociación…" /></Field>
-              <Field label="Fecha de visita *"><input className={inputClass} type="date" name="fechaVisita" value={form.fechaVisita} onChange={update} /></Field>
-              <Field label="Hora preferida *"><input className={inputClass} name="horaPreferida" value={form.horaPreferida} onChange={update} placeholder="Ej. 09:00" /></Field>
-              <Field label="Motivo de la visita *"><input className={inputClass} name="motivoVisita" value={form.motivoVisita} onChange={update} /></Field>
-            </div>
-            <fieldset className="mt-5 grid gap-3 sm:grid-cols-3">
-              <legend className="mb-3 text-sm font-semibold text-slate-700">Necesidades del grupo</legend>
-              {[["requiereAccesibilidad", "Accesibilidad"], ["requiereParqueoBus", "Parqueo para bus"], ["requiereGuia", "Guía"]].map(([name, label]) => (
-                <label className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-3 text-sm font-medium" key={name}>
-                  <input type="checkbox" name={name} checked={form[name]} onChange={update} /> {label}
-                </label>
-              ))}
-            </fieldset>
-            <Field label="Observaciones">
-              <textarea className={`${inputClass} min-h-28 py-3`} name="observaciones" value={form.observaciones} onChange={update} />
-            </Field>
-          </section>
-
-          {error ? <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-800" role="alert">{error}</p> : null}
-          {success ? (
-            <p className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900" role="status">
-              <CheckCircle2 aria-hidden="true" /> Solicitud #{success.id} enviada en estado {success.estado}.
+        <section className="voluntariado-section">
+          <header className="voluntariado-header">
+            <h1>Solicitud de visitas grupales</h1>
+            <p>
+              Completá la información del grupo y elegí uno de los horarios habilitados por la administración.
+              La solicitud quedará pendiente de revisión.
             </p>
-          ) : null}
-          <button className="min-h-12 rounded-xl bg-emerald-700 px-6 py-3 font-bold text-white shadow-sm hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60" disabled={submitting} type="submit">
-            {submitting ? "Enviando…" : "Enviar solicitud"}
-          </button>
-        </form>
-      </div>
+          </header>
+
+          <form className="formulario-card" onSubmit={submit} noValidate>
+            <div className="form-secciones">
+              <SectionCard
+                icon={UserRound}
+                title="Información del encargado"
+                hint="Datos de la persona responsable de coordinar la visita."
+              >
+                <div className="form-grid">
+                  <Field label="Nombre del encargado *"><input name="encargadoNombre" value={form.encargadoNombre} onChange={update} /></Field>
+                  <Field label="Identificación *"><input name="encargadoIdentificacion" value={form.encargadoIdentificacion} onChange={update} /></Field>
+                  <Field label="Correo electrónico *"><input type="email" name="encargadoEmail" value={form.encargadoEmail} onChange={update} /></Field>
+                  <Field label="Teléfono *"><input name="encargadoTelefono" value={form.encargadoTelefono} onChange={update} /></Field>
+                  <Field label="Institución"><input name="encargadoInstitucion" value={form.encargadoInstitucion} onChange={update} /></Field>
+                </div>
+              </SectionCard>
+
+              <SectionCard
+                icon={Users}
+                title="Información del grupo"
+                hint="Las visitas grupales requieren al menos dos personas."
+              >
+                <div className="form-grid">
+                  <Field label="Tipo de visitante *">
+                    <select name="tipoVisitante" value={form.tipoVisitante} onChange={update}>
+                      <option>Nacional</option>
+                      <option>Internacional</option>
+                    </select>
+                  </Field>
+                  {form.tipoVisitante === "Internacional" ? (
+                    <Field label="País de procedencia *"><input name="paisProcedencia" value={form.paisProcedencia} onChange={update} /></Field>
+                  ) : null}
+                  <Field label="Provincia o ciudad *"><input name="ciudadProvincia" value={form.ciudadProvincia} onChange={update} /></Field>
+                  <Field label="Cantidad de visitantes *"><input min="2" type="number" name="cantidadVisitantes" value={form.cantidadVisitantes} onChange={update} /></Field>
+                  <Field label="Tipo de grupo *"><input name="tipoGrupo" value={form.tipoGrupo} onChange={update} placeholder="Universidad, empresa, asociación…" /></Field>
+                  <Field label="Motivo de la visita *"><input name="motivoVisita" value={form.motivoVisita} onChange={update} /></Field>
+                </div>
+              </SectionCard>
+
+              <SectionCard
+                icon={CalendarDays}
+                title="Fecha y horario"
+                hint="Solo podés solicitar horarios publicados por la administración."
+              >
+                <Field label="Fecha y horario disponibles *">
+                  <select
+                    disabled={availabilityStatus !== "success" || availability.length === 0}
+                    name="disponibilidadVisitaId"
+                    value={form.disponibilidadVisitaId}
+                    onChange={update}
+                  >
+                    <option value="">
+                      {availabilityStatus === "loading" ? "Cargando horarios…" : "Seleccioná un horario"}
+                    </option>
+                    {availability.map((slot) => <option key={slot.id} value={slot.id}>{slotLabel(slot)}</option>)}
+                  </select>
+                </Field>
+                {availabilityStatus === "success" && availability.length === 0 ? (
+                  <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                    No hay fechas y horarios habilitados en este momento.
+                  </p>
+                ) : null}
+                {availabilityError ? <p className="mensaje-error" role="alert">{availabilityError}</p> : null}
+                {selectedSlot?.nota ? (
+                  <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
+                    <strong>Indicación del horario:</strong> {selectedSlot.nota}
+                  </p>
+                ) : null}
+              </SectionCard>
+
+              <SectionCard
+                icon={ClipboardList}
+                title="Necesidades y recomendaciones"
+                hint="Todas las visitas serán recibidas o acompañadas por personal del proyecto."
+              >
+                <fieldset className="grid gap-3 sm:grid-cols-2">
+                  <legend className="mb-3 text-sm font-semibold text-slate-700">Necesidades del grupo</legend>
+                  {[["requiereAccesibilidad", "Requerimientos de accesibilidad"], ["requiereParqueoBus", "Parqueo para bus"]].map(([name, label]) => (
+                    <label className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-3 text-sm font-medium" key={name}>
+                      <input type="checkbox" name={name} checked={form[name]} onChange={update} /> {label}
+                    </label>
+                  ))}
+                </fieldset>
+                <aside className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                  <p className="font-semibold text-slate-900">Recomendaciones para la visita</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5">
+                    <li>Usá vestimenta cómoda y apropiada para recorridos al aire libre.</li>
+                    <li>Llevá repelente si visitarán zonas con vegetación.</li>
+                    <li>Considerá protección solar e hidratación.</li>
+                  </ul>
+                </aside>
+                <Field label="Observaciones">
+                  <textarea name="observaciones" value={form.observaciones} onChange={update} />
+                </Field>
+              </SectionCard>
+            </div>
+
+            {error ? <p className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800" role="alert">{error}</p> : null}
+            {success ? (
+              <p className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900" role="status">
+                <CheckCircle2 aria-hidden="true" /> Solicitud #{success.id} enviada en estado {success.estado}.
+              </p>
+            ) : null}
+            <div className="acciones-formulario">
+              <button
+                className="btn-enviar"
+                disabled={submitting || availabilityStatus === "error" || (availabilityStatus === "success" && availability.length === 0)}
+                type="submit"
+              >
+                {submitting ? "Enviando…" : "Enviar solicitud"}
+              </button>
+            </div>
+          </form>
+        </section>
       </main>
     </>
   );
