@@ -11,6 +11,7 @@ import {
   eliminarSolicitudVisita,
   obtenerSolicitudesVisitas,
 } from "../../../services/visitasService";
+import { DisponibilidadVisitas } from "./DisponibilidadVisitas";
 
 const STATES = ["Pendiente", "En revisión", "Aprobada", "Rechazada", "Inactiva"];
 
@@ -150,6 +151,7 @@ export default function AdminVisitas() {
           </p>
         ) : (
           <>
+            <DisponibilidadVisitas />
             <form className="mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-[1fr_220px_auto]" onSubmit={applyFilters}>
               <label className="grid gap-1 text-sm font-semibold text-slate-700">
                 Buscar
