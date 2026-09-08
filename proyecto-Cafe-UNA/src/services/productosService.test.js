@@ -155,8 +155,8 @@ describe("productosService contract", () => {
     const first = await obtenerUbicaciones();
     const second = await obtenerUbicaciones();
     expect(first).toEqual([
-      { code: "BODEGA_CENTRAL", name: "Bodega Central", activo: true },
-      { code: "POS_FUNA_UNA", name: "FUNA-UNA", activo: true },
+      { id: null, code: "BODEGA_CENTRAL", name: "Bodega Central", activo: true },
+      { id: null, code: "POS_FUNA_UNA", name: "FUNA-UNA", activo: true },
     ]);
     expect(second).toBe(first);
     expect(apiRequestMock).toHaveBeenCalledTimes(1);

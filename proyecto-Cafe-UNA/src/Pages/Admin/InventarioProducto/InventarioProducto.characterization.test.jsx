@@ -155,7 +155,7 @@ describe('InventarioProducto characterization', () => {
 
   it('shows central stock editing only to authorized staff and keeps catalog visible on stock failure', async () => {
     const user = userEvent.setup()
-    sessionMocks.getActiveSessionUser.mockReturnValue({ role: 'Admin' })
+    sessionMocks.getActiveSessionUser.mockReturnValue({ rol: 'Admin' })
     hookMocks.catalog = {
       data: products.map(({ stock, ...producto }) => producto),
       status: 'success',
@@ -175,11 +175,11 @@ describe('InventarioProducto characterization', () => {
 
     expect(await screen.findAllByText('Café Premium')).toHaveLength(2)
     expect(screen.getByText(/catálogo está disponible/)).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Stock' })).toHaveLength(4)
+    expect(screen.getAllByRole('button', { name: 'Stock' })).toHaveLength(5)
 
-    await user.click(screen.getAllByRole('button', { name: 'Stock' })[0])
+    await user.click(screen.getAllByRole('button', { name: 'Stock' })[1])
     const dialog = screen.getByRole('dialog', { name: 'Stock de Bodega Central' })
-    await user.type(within(dialog).getByRole('spinbutton', { name: /^Unidades disponibles/ }), '7')
+    await user.type(within(dialog).getByRole('textbox', { name: /^Unidades disponibles/ }), '7')
     await user.click(within(dialog).getByRole('button', { name: 'Guardar stock' }))
 
     await waitFor(() => expect(serviceMocks.actualizarStockCentral).toHaveBeenCalledWith(1, 7))
@@ -205,7 +205,7 @@ describe('InventarioProducto characterization', () => {
 
     await user.type(within(dialog).getByRole('textbox', { name: /^Nombre/ }), 'Café nuevo')
     await user.type(within(dialog).getByRole('textbox', { name: /^Descripción/ }), 'Descripción válida')
-    await user.type(within(dialog).getByRole('spinbutton', { name: 'Precio normal' }), '1000')
+    await user.type(within(dialog).getByRole('textbox', { name: 'Precio normal' }), '1000')
     await user.click(submit)
 
     await waitFor(() => expect(serviceMocks.crearProducto).toHaveBeenCalledTimes(1))
