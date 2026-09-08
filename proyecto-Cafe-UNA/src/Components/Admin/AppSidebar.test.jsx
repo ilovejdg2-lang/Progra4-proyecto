@@ -83,6 +83,10 @@ describe("AppSidebar", () => {
       "href",
       "/admin/voluntariado",
     );
+    expect(screen.getAllByRole("link", { name: /Visitas grupales/i })[0]).toHaveAttribute(
+      "href",
+      "/admin/visitas",
+    );
     expect(screen.getAllByRole("link", { name: /Necesidades de donación/i })[0]).toHaveAttribute(
       "href",
       "/admin/donaciones/necesidades",
