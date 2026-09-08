@@ -27,6 +27,7 @@ const AboutUs = lazy(() => import("./Pages/AboutUs/AboutUs"));
 const Products = lazy(() => import("./Pages/Products/Products"));
 const ProductDetail = lazy(() => import("./Pages/ProductDetail/ProductDetail"));
 const SolicitarVoluntariado = lazy(() => import("./Pages/Voluntariado/SolicitarVoluntariado"));
+const SolicitarVisita = lazy(() => import("./Pages/Visitas/SolicitarVisita"));
 const SolicitarDonacion = lazy(() => import("./Pages/Donaciones/SolicitarDonacion"));
 const NecesidadesDonacion = lazy(() => import("./Pages/Donaciones/NecesidadesDonacion"));
 const DonarMaterial = lazy(() => import("./Pages/Donaciones/DonarMaterial"));
@@ -42,6 +43,7 @@ const AdminActivosFijos = lazy(() => import("./Pages/Admin/ActivosFijos/ActivosF
 const AdminDistribucion = lazy(() => import("./Pages/Admin/Distribucion/Distribucion"));
 const AdminVentasPresenciales = lazy(() => import("./Pages/Admin/VentasPresenciales/VentasPresenciales"));
 const AdminVoluntariado = lazy(() => import("./Pages/Admin/Voluntariado/Voluntariado"));
+const AdminVisitas = lazy(() => import("./Pages/Admin/Visitas/Visitas"));
 const AdminUsuarios = lazy(() => import("./Pages/Admin/Usuarios/Usuarios"));
 const AdminHistorialVentas = lazy(() => import("./Pages/Admin/HistorialVentas/HistorialVentas"));
 const AdminHistorialMovimientos = lazy(() => import("./Pages/Admin/HistorialMovimientos/HistorialMovimientos"));
@@ -336,6 +338,26 @@ const voluntariadoSolicitarRoute = createRoute({
     path: "/voluntariado/solicitar",
     component: SolicitarVoluntariado,
 })
+const visitasSolicitarRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/solicitar-visita",
+    component: SolicitarVisita,
+})
+const visitasSolicitarAltRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/visitas/solicitar",
+    component: SolicitarVisita,
+})
+const visitasDirectRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/visitas",
+    component: SolicitarVisita,
+})
+const adminVisitasRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/visitas",
+    component: AdminVisitas,
+})
 const donacionesSolicitarRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/donaciones/solicitar",
@@ -399,6 +421,7 @@ const routeTree= rootRoute.addChildren([
     adminHistorialVentasRoute,
     adminHistorialMovimientosRoute,
     adminVoluntariadoRoute,
+    adminVisitasRoute,
     adminNecesidadesDonacionRoute,
     adminSolicitudesDonacionRoute,
     adminUsuariosRoute,
@@ -411,6 +434,9 @@ const routeTree= rootRoute.addChildren([
     productDetailRoute,
     checkoutRoute,
     voluntariadoSolicitarRoute,
+    visitasSolicitarRoute,
+    visitasSolicitarAltRoute,
+    visitasDirectRoute,
     donacionesSolicitarRoute,
     donacionesNecesidadesRoute,
     donarMaterialRoute,

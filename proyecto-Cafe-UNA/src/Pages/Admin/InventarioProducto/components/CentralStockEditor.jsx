@@ -61,8 +61,9 @@ export function CentralStockEditor({
     event.preventDefault();
     if (submitGuard.current || isSaving) return;
 
-    const stock = Number(value);
-    if (!Number.isInteger(stock) || stock < 0 || stock > MAX_STOCK) {
+    const trimmed = String(value || "").trim();
+    const stock = Number(trimmed);
+    if (!trimmed || !Number.isInteger(stock) || stock < 0 || stock > MAX_STOCK) {
       setValidationError(`Ingrese un entero entre 0 y ${MAX_STOCK}.`);
       setSubmitError("");
       window.requestAnimationFrame(() => document.querySelector("[name='stockCentral']")?.focus());

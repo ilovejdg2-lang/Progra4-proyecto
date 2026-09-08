@@ -29,7 +29,7 @@ describe("CentralStockEditor", () => {
 
     const dialog = screen.getByRole("dialog", { name: "Stock de Bodega Central" });
     expect(within(dialog).getByText("Bodega Central")).toBeInTheDocument();
-    const field = within(dialog).getByRole("spinbutton", { name: /^Unidades disponibles/ });
+    const field = within(dialog).getByLabelText(/^Unidades disponibles/);
     await user.clear(field);
     await user.type(field, "12");
     await user.click(within(dialog).getByRole("button", { name: "Guardar stock" }));
@@ -50,8 +50,7 @@ describe("CentralStockEditor", () => {
     );
 
     const dialog = screen.getByRole("dialog", { name: "Stock de Bodega Central" });
-    const field = within(dialog).getByRole("spinbutton", { name: /^Unidades disponibles/ });
-    fireEvent.change(field, { target: { value: "1.5" } });
+    const field = within(dialog).getByLabelText(/^Unidades disponibles/);
     await user.click(within(dialog).getByRole("button", { name: "Guardar stock" }));
 
     expect(await within(dialog).findByRole("alert")).toHaveTextContent(/entero entre 0/);

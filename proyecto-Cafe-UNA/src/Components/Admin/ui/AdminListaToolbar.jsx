@@ -45,58 +45,58 @@ export function AdminListaToolbar({
         compacto ? "px-4 py-5 sm:px-6" : "px-4 py-5 sm:px-6"
       }`}
     >
-      <div className="mx-auto flex w-full max-w-6xl min-w-0 flex-col items-stretch gap-4 xl:flex-row xl:items-end xl:justify-center">
+      <div className="mx-auto flex w-full max-w-6xl min-w-0 flex-col items-stretch gap-4">
         {ocultarBusqueda ? null : (
-        <div className="relative w-full min-w-0 xl:max-w-md xl:flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-          <input
-            type="search"
-            value={busqueda}
-            onChange={(event) => onBusquedaChange(event.target.value)}
-            placeholder={tPlaceholder}
-            className={inputCls}
-            aria-label={tBuscar}
-          />
-        </div>
+          <div className="relative w-full min-w-0 max-w-xl">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+            <input
+              type="search"
+              value={busqueda}
+              onChange={(event) => onBusquedaChange(event.target.value)}
+              placeholder={tPlaceholder}
+              className={inputCls}
+              aria-label={tBuscar}
+            />
+          </div>
         )}
 
         {filtros.length > 0 ? (
-          <div className="grid w-full min-w-0 grid-cols-2 gap-3 sm:flex sm:flex-row sm:flex-wrap sm:items-end sm:justify-center xl:w-auto">
+          <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-start xl:w-auto">
             {filtros.map((filtro, indice) => {
               const ocupaDos = filtros.length === 1 || indice === indiceAnchoCompleto;
               return (
-              <div
-                key={filtro.id}
-                className={`relative grid min-w-0 gap-1.5 ${
-                  ocupaDos ? "col-span-2 sm:flex-1" : "col-span-1 sm:flex-1"
-                } ${filtro.footer || ocupaDos ? "sm:max-w-[18rem]" : "sm:max-w-[12.5rem]"}`}
-              >
-                <span className="inline-flex items-center gap-1 text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-neutral-500">
-                  <SlidersHorizontal className="size-3.5 shrink-0" aria-hidden="true" />
-                  <ST>{filtro.label}</ST>
-                </span>
-                {filtro.tipo === "fecha" ? (
-                  <input
-                    type="date"
-                    value={filtro.value}
-                    onChange={(event) => filtro.onChange(event.target.value)}
-                    className={inputFechaCls}
-                  />
-                ) : (
-                  <UiSelect
-                    ariaLabel={filtro.label}
-                    value={filtro.value}
-                    onChange={filtro.onChange}
-                    options={(filtro.opciones || []).map((op) =>
-                      typeof op === "string"
-                        ? op
-                        : { ...op, label: t(op.label) },
-                    )}
-                    footer={filtro.footer}
-                    renderOptionEnd={filtro.renderOptionEnd}
-                  />
-                )}
-              </div>
+                <div
+                  key={filtro.id}
+                  className={`relative flex flex-col min-w-0 gap-1.5 ${
+                    ocupaDos ? "w-full sm:flex-1" : "w-full sm:flex-1"
+                  } ${filtro.footer || ocupaDos ? "sm:min-w-[16rem]" : "sm:min-w-[13.5rem] sm:max-w-[16rem]"}`}
+                >
+                  <span className="inline-flex items-center gap-1 text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-neutral-500">
+                    <SlidersHorizontal className="size-3.5 shrink-0" aria-hidden="true" />
+                    <ST>{filtro.label}</ST>
+                  </span>
+                  {filtro.tipo === "fecha" ? (
+                    <input
+                      type="date"
+                      value={filtro.value}
+                      onChange={(event) => filtro.onChange(event.target.value)}
+                      className={inputFechaCls}
+                    />
+                  ) : (
+                    <UiSelect
+                      ariaLabel={filtro.label}
+                      value={filtro.value}
+                      onChange={filtro.onChange}
+                      options={(filtro.opciones || []).map((op) =>
+                        typeof op === "string"
+                          ? op
+                          : { ...op, label: t(op.label) },
+                      )}
+                      footer={filtro.footer}
+                      renderOptionEnd={filtro.renderOptionEnd}
+                    />
+                  )}
+                </div>
               );
             })}
           </div>

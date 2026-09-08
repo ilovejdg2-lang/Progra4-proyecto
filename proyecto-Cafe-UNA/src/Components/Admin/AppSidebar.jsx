@@ -103,6 +103,7 @@ export function AppSidebar() {
     puedeInventario || puedePuntosVenta || puedeActivosFijos || puedeDistribucion || puedeProductos || puedeVentasPresenciales || puedeVentas;
 
   const puedeVoluntariado = tienePermiso(roles, "ver_solicitudes_voluntariado") || tienePermiso(roles, "administrar_solicitudes_voluntariado");
+  const puedeVisitas = tienePermiso(roles, "administrar_solicitudes_visitantes") || tienePermiso(roles, "ver_solicitudes_visitantes");
   const puedeDonacionesNecesidades =
     tienePermiso(roles, "administrar_solicitudes_donaciones") ||
     tienePermiso(roles, "ver_solicitudes_donacion") ||
@@ -111,7 +112,7 @@ export function AppSidebar() {
     tienePermiso(roles, "ver_solicitudes_donacion") ||
     tienePermiso(roles, "administrar_solicitudes_donaciones");
   const puedeVerFormulariosGrupo =
-    puedeVoluntariado || puedeDonacionesNecesidades || puedeDonacionesSolicitudes;
+    puedeVoluntariado || puedeVisitas || puedeDonacionesNecesidades || puedeDonacionesSolicitudes;
   const puedeUsuarios = tienePermiso(roles, "editar_usuarios") || tienePermiso(roles, "crear_usuarios");
   const puedeAjustes = tienePermiso(roles, "administrar_roles_permisos");
   const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
@@ -149,6 +150,7 @@ export function AppSidebar() {
     pathname.startsWith("/admin/ajustes/");
   const isFormulariosRoute =
     pathname === "/admin/voluntariado" ||
+    pathname === "/admin/visitas" ||
     pathname.startsWith("/admin/donaciones/");
 
   const [generalOpen, setGeneralOpen] = useState(() => {
@@ -532,6 +534,16 @@ export function AppSidebar() {
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                   </>
+                  ) : null}
+                  {puedeVisitas ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/visitas" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <Users />
+                        <span><ST>Visitas grupales</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
                   ) : null}
                   {puedeDonacionesNecesidades ? (
                   <SidebarMenuSubItem>

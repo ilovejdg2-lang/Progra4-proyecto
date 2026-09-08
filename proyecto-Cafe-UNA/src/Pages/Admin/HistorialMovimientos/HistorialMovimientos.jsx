@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, FileSpreadsheet, History } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
@@ -25,14 +24,49 @@ function formatFechaHora(valor) {
   if (!valor) return "—";
   const fecha = new Date(valor);
   if (Number.isNaN(fecha.getTime())) return String(valor);
-  return fecha.toLocaleString("es-CR");
+  return fecha.toLocaleString("es-CR", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-function claseBadgeTipo(tipo) {
-  if (tipo === "entrada") return "bg-emerald-50 text-emerald-800";
-  if (tipo === "transferencia") return "bg-sky-50 text-sky-800";
-  if (tipo === "venta_presencial" || tipo === "venta_web") return "bg-rose-50 text-rose-800";
-  return "bg-slate-100 text-slate-700";
+function renderBadgeTipo(tipo) {
+  if (tipo === "entrada") {
+    return (
+      <span className="inline-flex rounded-full border border-emerald-300 bg-transparent px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+        <ST>{etiquetaTipo(tipo)}</ST>
+      </span>
+    );
+  }
+  if (tipo === "transferencia") {
+    return (
+      <span className="inline-flex rounded-full border border-indigo-300 bg-transparent px-2.5 py-0.5 text-[11px] font-semibold text-indigo-700">
+        <ST>{etiquetaTipo(tipo)}</ST>
+      </span>
+    );
+  }
+  if (tipo === "venta_presencial") {
+    return (
+      <span className="inline-flex rounded-full border border-amber-300 bg-transparent px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+        <ST>{etiquetaTipo(tipo)}</ST>
+      </span>
+    );
+  }
+  if (tipo === "venta_web") {
+    return (
+      <span className="inline-flex rounded-full border border-purple-300 bg-transparent px-2.5 py-0.5 text-[11px] font-semibold text-purple-700">
+        <ST>{etiquetaTipo(tipo)}</ST>
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex rounded-full border border-slate-300 bg-transparent px-2.5 py-0.5 text-[11px] font-semibold text-slate-700">
+      <ST>{etiquetaTipo(tipo)}</ST>
+    </span>
+  );
 }
 
 export default function AdminHistorialMovimientos() {
@@ -127,6 +161,18 @@ export default function AdminHistorialMovimientos() {
     ready,
   );
 
+  const statsConteo = useMemo(() => {
+    let entradas = 0;
+    let transferencias = 0;
+    let ventas = 0;
+    for (const item of items) {
+      if (item.tipo === "entrada") entradas += 1;
+      else if (item.tipo === "transferencia") transferencias += 1;
+      else if (item.tipo === "venta_presencial" || item.tipo === "venta_web") ventas += 1;
+    }
+    return { entradas, transferencias, ventas };
+  }, [items]);
+
   const opcionesTipo = useMemo(
     () => [
       { value: "todos", label: t("Todos los tipos") },
@@ -141,10 +187,12 @@ export default function AdminHistorialMovimientos() {
   const opcionesUbicacion = useMemo(
     () => [
       { value: "todas", label: t("Todas las ubicaciones") },
-      ...ubicaciones.map((ubi) => ({
-        value: String(ubi.id ?? ubi.Id ?? ""),
-        label: t(ubi.name || ubi.nombre || ubi.code || ""),
-      })).filter((op) => op.value),
+      ...ubicaciones
+        .map((ubi) => ({
+          value: String(ubi.id ?? ubi.Id ?? ""),
+          label: t(ubi.name || ubi.nombre || ubi.code || ""),
+        }))
+        .filter((op) => op.value),
     ],
     [ubicaciones, idioma],
   );
@@ -237,18 +285,52 @@ export default function AdminHistorialMovimientos() {
 
   return (
     <AdminLayout>
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-6">
-          <h1 className="inline-flex items-center gap-2 text-[length:var(--text-title)] font-semibold text-slate-900">
-            <History className="size-5" aria-hidden="true" />
-            <ST>Historial de movimientos</ST>
-          </h1>
-          <p className="mt-1 text-[length:var(--text-body)] text-slate-500">
-            <ST>Consulta de entradas, transferencias y ventas. Solo lectura.</ST>
-          </p>
+      <div className="mx-auto max-w-6xl space-y-6">
+        {/* Encabezado principal */}
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-[length:var(--text-title)] font-bold tracking-tight text-slate-900">
+              <ST>Historial de Movimientos</ST>
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              <ST>Trazabilidad inmutable de entradas, transferencias y ventas de stock.</ST>
+            </p>
+          </div>
         </header>
 
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
+        {/* Tarjetas resumen de KPIs */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+            <p className="text-xs font-medium text-slate-500">
+              <ST>Total Registros</ST>
+            </p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">{total}</p>
+          </div>
+
+          <div className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-xs">
+            <p className="text-xs font-medium text-emerald-800">
+              <ST>Entradas en página</ST>
+            </p>
+            <p className="mt-1 text-2xl font-bold text-emerald-950">{statsConteo.entradas}</p>
+          </div>
+
+          <div className="rounded-2xl border border-indigo-200 bg-white p-4 shadow-xs">
+            <p className="text-xs font-medium text-indigo-800">
+              <ST>Transferencias en página</ST>
+            </p>
+            <p className="mt-1 text-2xl font-bold text-indigo-950">{statsConteo.transferencias}</p>
+          </div>
+
+          <div className="rounded-2xl border border-amber-200 bg-white p-4 shadow-xs">
+            <p className="text-xs font-medium text-amber-800">
+              <ST>Ventas en página</ST>
+            </p>
+            <p className="mt-1 text-2xl font-bold text-amber-950">{statsConteo.ventas}</p>
+          </div>
+        </div>
+
+        {/* Panel Principal */}
+        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs">
           <AdminListaToolbar
             busqueda={busqueda}
             onBusquedaChange={(valor) => {
@@ -260,24 +342,22 @@ export default function AdminHistorialMovimientos() {
             visibles={items.length}
             onLimpiar={limpiarFiltros}
             extra={
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <button
                   type="button"
                   disabled={Boolean(exportando)}
                   onClick={() => exportar("csv")}
-                  className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                  className="inline-flex h-[var(--control-height)] items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-50"
                 >
-                  <FileSpreadsheet className="size-4" aria-hidden="true" />
-                  <ST>{exportando === "csv" ? "Generando archivo..." : "Exportar CSV"}</ST>
+                  <ST>{exportando === "csv" ? "Generando CSV..." : "Exportar CSV"}</ST>
                 </button>
                 <button
                   type="button"
                   disabled={Boolean(exportando)}
                   onClick={() => exportar("pdf")}
-                  className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                  className="inline-flex h-[var(--control-height)] items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-50"
                 >
-                  <Download className="size-4" aria-hidden="true" />
-                  <ST>{exportando === "pdf" ? "Generando archivo..." : "Exportar PDF"}</ST>
+                  <ST>{exportando === "pdf" ? "Generando PDF..." : "Exportar PDF"}</ST>
                 </button>
               </div>
             }
@@ -326,59 +406,72 @@ export default function AdminHistorialMovimientos() {
           />
 
           {error ? (
-            <p className="px-6 py-3 text-[length:var(--text-body)] text-rose-700">{error}</p>
+            <div className="mx-6 my-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+              {error}
+            </div>
           ) : null}
 
           {exportando ? (
-            <p className="px-6 py-2 text-[length:var(--text-body)] text-slate-500" role="status">
-              <ST>Generando archivo...</ST>
-            </p>
+            <div className="flex items-center gap-2 px-6 py-3 text-xs font-semibold text-slate-600 bg-slate-50 border-b border-slate-100" role="status">
+              <ST>Generando reporte en formato {exportando.toUpperCase()}...</ST>
+            </div>
           ) : null}
 
           {status === "loading" ? (
-            <div className="px-4 py-14 text-center text-[length:var(--text-body)] text-slate-500">
-              <ST>Cargando historial...</ST>
+            <div className="flex flex-col items-center justify-center px-4 py-20 text-center">
+              <p className="text-sm font-medium text-slate-600">
+                <ST>Cargando historial de movimientos...</ST>
+              </p>
             </div>
           ) : items.length === 0 ? (
             <AdminListaVacia onLimpiar={limpiarFiltros} />
           ) : (
-            <div className="admin-table-shell">
-              <table className="w-full min-w-[960px] text-left text-[length:var(--text-body)]">
+            <div className="admin-table-shell overflow-x-auto">
+              <table className="w-full min-w-[960px] text-left text-xs">
                 <thead>
-                  <tr>
-                    <th><ST>Fecha</ST></th>
-                    <th><ST>Tipo de movimiento</ST></th>
-                    <th><ST>Producto</ST></th>
-                    <th><ST>Cantidad</ST></th>
-                    <th><ST>Origen</ST></th>
-                    <th><ST>Destino</ST></th>
-                    <th><ST>Responsable</ST></th>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="px-3.5 py-2.5"><ST>Fecha y Hora</ST></th>
+                    <th className="px-3.5 py-2.5"><ST>Tipo de movimiento</ST></th>
+                    <th className="px-3.5 py-2.5"><ST>Producto</ST></th>
+                    <th className="px-3.5 py-2.5"><ST>Cantidad</ST></th>
+                    <th className="px-3.5 py-2.5"><ST>Origen</ST></th>
+                    <th className="px-3.5 py-2.5"><ST>Destino</ST></th>
+                    <th className="px-3.5 py-2.5"><ST>Responsable</ST></th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100 bg-white">
                   {items.map((row) => (
-                    <tr key={row.id} className="border-b border-slate-100 last:border-b-0">
-                      <td className="whitespace-nowrap px-6 py-4 text-slate-600">
+                    <tr
+                      key={row.id}
+                      className="transition-colors hover:bg-slate-50/80"
+                    >
+                      <td className="whitespace-nowrap px-3.5 py-2.5 font-mono text-[11px] text-slate-600">
                         {formatFechaHora(row.fecha)}
                       </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex h-[var(--control-height)] items-center rounded-full px-3 font-semibold ${claseBadgeTipo(row.tipo)}`}
-                        >
-                          <ST>{etiquetaTipo(row.tipo)}</ST>
-                        </span>
+                      <td className="px-3.5 py-2.5">
+                        {renderBadgeTipo(row.tipo)}
                       </td>
-                      <td className="px-6 py-4 font-medium text-slate-900">
+                      <td className="px-3.5 py-2.5 font-semibold text-slate-900">
                         {row.productoNombre ? <ST>{row.productoNombre}</ST> : row.productoId}
                       </td>
-                      <td className="px-6 py-4 font-semibold text-slate-900">{row.cantidad}</td>
-                      <td className="px-6 py-4 text-slate-700">
-                        {row.origenNombre ? <ST>{row.origenNombre}</ST> : "—"}
+                      <td className="px-3.5 py-2.5 font-semibold text-slate-900">
+                        {row.cantidad}
                       </td>
-                      <td className="px-6 py-4 text-slate-700">
-                        {row.destinoNombre ? <ST>{row.destinoNombre}</ST> : "—"}
+                      <td className="px-3.5 py-2.5 text-slate-700">
+                        {row.origenNombre ? (
+                          <ST>{row.origenNombre}</ST>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
                       </td>
-                      <td className="px-6 py-4 text-slate-700">
+                      <td className="px-3.5 py-2.5 text-slate-700">
+                        {row.destinoNombre ? (
+                          <ST>{row.destinoNombre}</ST>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-3.5 py-2.5 text-[11px] text-slate-600">
                         {row.responsableNombre || "—"}
                       </td>
                     </tr>
@@ -389,16 +482,18 @@ export default function AdminHistorialMovimientos() {
           )}
 
           {total > 0 ? (
-            <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 sm:px-6">
-              <p className="text-[length:var(--text-body)] text-slate-600">
-                <ST>Página</ST> {page} <ST>de</ST> {totalPages} · {total} <ST>registros</ST>
+            <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <p className="text-xs font-medium text-slate-600">
+                <ST>Mostrando página</ST> <span className="font-bold text-slate-900">{page}</span> <ST>de</ST>{" "}
+                <span className="font-bold text-slate-900">{totalPages}</span> · <ST>Total</ST>:{" "}
+                <span className="font-bold text-slate-900">{total}</span> <ST>registros</ST>
               </p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   disabled={page <= 1}
                   onClick={() => setPage((actual) => Math.max(1, actual - 1))}
-                  className="h-[var(--control-height)] rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
+                  className="h-[var(--control-height)] rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-40"
                 >
                   <ST>Anterior</ST>
                 </button>
@@ -406,7 +501,7 @@ export default function AdminHistorialMovimientos() {
                   type="button"
                   disabled={page >= totalPages}
                   onClick={() => setPage((actual) => actual + 1)}
-                  className="h-[var(--control-height)] rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
+                  className="h-[var(--control-height)] rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-40"
                 >
                   <ST>Siguiente</ST>
                 </button>

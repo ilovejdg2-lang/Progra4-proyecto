@@ -49,6 +49,18 @@ export function buildIniciativasCards(tarjetas = []) {
         ruta = "/donaciones/solicitar";
       }
     }
+    if (clave === "visitas") {
+      const actual = String(ruta).trim();
+      if (!actual || actual === "/visitas" || actual.startsWith("/visitas")) {
+        ruta = "/solicitar-visita";
+      }
+    }
+    if (clave === "voluntariado") {
+      const actual = String(ruta).trim();
+      if (!actual || actual === "/voluntariado") {
+        ruta = "/voluntariado/solicitar";
+      }
+    }
 
     return {
       id: clave || tarjeta.clave,
