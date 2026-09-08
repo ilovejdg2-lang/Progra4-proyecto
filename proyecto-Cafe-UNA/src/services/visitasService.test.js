@@ -4,10 +4,15 @@ const apiRequestMock = vi.fn();
 vi.mock("./apiClient", () => ({ apiRequest: (...args) => apiRequestMock(...args) }));
 
 import {
+  actualizarDisponibilidadVisita,
   actualizarSolicitudVisita,
+  crearDisponibilidadVisita,
   crearSolicitudVisita,
   eliminarSolicitudVisita,
+  normalizarDisponibilidadVisita,
   normalizarVisita,
+  obtenerDisponibilidadVisitasAdmin,
+  obtenerDisponibilidadVisitasPublica,
   obtenerSolicitudesVisitaDeUsuario,
   obtenerSolicitudesVisitas,
 } from "./visitasService";
@@ -54,8 +59,7 @@ describe("visitasService", () => {
         ciudadProvincia: "Heredia",
         cantidadVisitantes: "4",
         tipoGrupo: "Universidad",
-        fechaVisita: "2026-12-01",
-        horaPreferida: "09:00",
+        disponibilidadVisitaId: "12",
         motivoVisita: "Académica",
       }),
     ).resolves.toMatchObject({ id: "21", estado: "Pendiente" });
@@ -67,9 +71,89 @@ describe("visitasService", () => {
         data: expect.objectContaining({
           EncargadoNombre: "Ana",
           CantidadVisitantes: 4,
-          FechaVisita: "2026-12-01",
+          DisponibilidadVisitaId: "12",
         }),
       }),
+    );
+    expect(apiRequestMock.mock.calls[0][1].data).not.toHaveProperty("FechaVisita");
+    expect(apiRequestMock.mock.calls[0][1].data).not.toHaveProperty("HoraPreferida");
+    expect(apiRequestMock.mock.calls[0][1].data).not.toHaveProperty("RequiereGuia");
+  });
+
+  it("normalizes and loads public and administrative visit availability", async () => {
+    expect(
+      normalizarDisponibilidadVisita({
+        Id: 3,
+        Fecha: "2099-05-01",
+        HoraInicio: "08:00:00",
+        HoraFin: "09:00:00",
+        Habilitada: true,
+        Nota: "Llegar 10 minutos antes",
+      }),
+    ).toEqual({
+      id: "3",
+      fecha: "2099-05-01",
+      horaInicio: "08:00:00",
+      horaFin: "09:00:00",
+      habilitada: true,
+      nota: "Llegar 10 minutos antes",
+    });
+    expect(normalizarDisponibilidadVisita({})).toBeNull();
+
+    apiRequestMock
+      .mockResolvedValueOnce([{ id: "3", fecha: "2099-05-01", horaInicio: "08:00:00", horaFin: "09:00:00", habilitada: true }])
+      .mockResolvedValueOnce([{ id: "4", fecha: "2099-05-02", horaInicio: "10:00:00", horaFin: "11:00:00", habilitada: false }]);
+
+    await expect(obtenerDisponibilidadVisitasPublica({ desde: "2099-05-01" })).resolves.toEqual([
+      expect.objectContaining({ id: "3", habilitada: true }),
+    ]);
+    expect(apiRequestMock).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining("/visitas/disponibilidad?desde=2099-05-01"),
+      expect.objectContaining({ skipAuth: true }),
+    );
+
+    await expect(obtenerDisponibilidadVisitasAdmin()).resolves.toEqual([
+      expect.objectContaining({ id: "4", habilitada: false }),
+    ]);
+    expect(apiRequestMock).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining("/visitas/disponibilidad/admin"),
+      expect.any(Object),
+    );
+  });
+
+  it("creates and updates administrative visit availability", async () => {
+    apiRequestMock
+      .mockResolvedValueOnce({ id: "8", fecha: "2099-06-01", horaInicio: "09:00:00", horaFin: "10:00:00", habilitada: true })
+      .mockResolvedValueOnce({ id: "8", fecha: "2099-06-01", horaInicio: "09:00:00", horaFin: "10:00:00", habilitada: false });
+
+    await crearDisponibilidadVisita({
+      fecha: "2099-06-01",
+      horaInicio: "09:00",
+      horaFin: "10:00",
+      nota: "Grupo pequeño",
+    });
+    expect(apiRequestMock).toHaveBeenNthCalledWith(
+      1,
+      expect.stringMatching(/\/visitas\/disponibilidad$/),
+      expect.objectContaining({
+        method: "POST",
+        data: {
+          fecha: "2099-06-01",
+          horaInicio: "09:00",
+          horaFin: "10:00",
+          habilitada: true,
+          nota: "Grupo pequeño",
+        },
+      }),
+    );
+
+    await actualizarDisponibilidadVisita("8", { habilitada: false });
+    expect(apiRequestMock).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining("/visitas/disponibilidad/8"),
+      expect.objectContaining({ method: "PUT", data: { habilitada: false } }),
     );
   });
 

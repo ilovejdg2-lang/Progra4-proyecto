@@ -1,6 +1,7 @@
 import { apiRequest } from "./apiClient";
 
 const BASE_URL = `${import.meta.env.BACKEND_URL}/visitas/solicitudes`;
+const DISPONIBILIDAD_URL = `${import.meta.env.BACKEND_URL}/visitas/disponibilidad`;
 
 function firstDefined(value, aliases) {
   for (const alias of aliases) {
@@ -20,6 +21,8 @@ export function normalizarVisita(raw) {
   return {
     id: String(id),
     userId: firstDefined(raw, ["userId", "UserId"]) ?? null,
+    disponibilidadVisitaId:
+      firstDefined(raw, ["disponibilidadVisitaId", "DisponibilidadVisitaId"]) ?? null,
     fechaSolicitud: stringField(raw, "fechaSolicitud", "FechaSolicitud"),
     estado: stringField(raw, "estado", "Estado", "Pendiente"),
     encargadoNombre: stringField(raw, "encargadoNombre", "EncargadoNombre"),
@@ -62,6 +65,70 @@ export function normalizarVisita(raw) {
   };
 }
 
+export function normalizarDisponibilidadVisita(raw) {
+  const id = firstDefined(raw, ["id", "Id"]);
+  if (id === undefined || id === null) return null;
+
+  const nota = firstDefined(raw, ["nota", "Nota"]);
+  return {
+    id: String(id),
+    fecha: stringField(raw, "fecha", "Fecha"),
+    horaInicio: stringField(raw, "horaInicio", "HoraInicio"),
+    horaFin: stringField(raw, "horaFin", "HoraFin"),
+    habilitada: Boolean(firstDefined(raw, ["habilitada", "Habilitada"])),
+    nota: typeof nota === "string" ? nota.trim() : null,
+  };
+}
+
+function disponibilidadUrl(path = "", filtros = {}) {
+  const params = new URLSearchParams();
+  for (const key of ["desde", "hasta"]) {
+    const value = String(filtros[key] ?? "").trim();
+    if (value) params.set(key, value);
+  }
+  const query = params.toString();
+  return `${DISPONIBILIDAD_URL}${path}${query ? `?${query}` : ""}`;
+}
+
+export async function obtenerDisponibilidadVisitasPublica(filtros = {}) {
+  const data = await apiRequest(disponibilidadUrl("", filtros), {
+    skipAuth: true,
+    errorPrefix: "Error al consultar la disponibilidad de visitas",
+  });
+  return (Array.isArray(data) ? data : []).map(normalizarDisponibilidadVisita).filter(Boolean);
+}
+
+export async function obtenerDisponibilidadVisitasAdmin(filtros = {}) {
+  const data = await apiRequest(disponibilidadUrl("/admin", filtros), {
+    errorPrefix: "Error al consultar la disponibilidad administrativa de visitas",
+  });
+  return (Array.isArray(data) ? data : []).map(normalizarDisponibilidadVisita).filter(Boolean);
+}
+
+export async function crearDisponibilidadVisita(datos) {
+  const raw = await apiRequest(DISPONIBILIDAD_URL, {
+    method: "POST",
+    data: {
+      fecha: datos.fecha,
+      horaInicio: datos.horaInicio,
+      horaFin: datos.horaFin,
+      habilitada: datos.habilitada ?? true,
+      nota: datos.nota?.trim() || null,
+    },
+    errorPrefix: "Error al crear la disponibilidad de visita",
+  });
+  return normalizarDisponibilidadVisita(raw);
+}
+
+export async function actualizarDisponibilidadVisita(id, cambios) {
+  const raw = await apiRequest(`${DISPONIBILIDAD_URL}/${id}`, {
+    method: "PUT",
+    data: cambios,
+    errorPrefix: "Error al actualizar la disponibilidad de visita",
+  });
+  return normalizarDisponibilidadVisita(raw);
+}
+
 export async function crearSolicitudVisita(datos) {
   const payload = {
     EncargadoNombre: datos.encargadoNombre,
@@ -75,8 +142,7 @@ export async function crearSolicitudVisita(datos) {
     CantidadVisitantes: Number(datos.cantidadVisitantes),
     TipoGrupo: datos.tipoGrupo,
     TipoGrupoOtro: datos.tipoGrupoOtro || null,
-    FechaVisita: datos.fechaVisita,
-    HoraPreferida: datos.horaPreferida,
+    DisponibilidadVisitaId: String(datos.disponibilidadVisitaId),
     FechaAlternativa: datos.fechaAlternativa || null,
     DuracionEstimada: datos.duracionEstimada || null,
     AreaVisita: datos.areaVisita || null,
@@ -84,7 +150,6 @@ export async function crearSolicitudVisita(datos) {
     MotivoOtro: datos.motivoOtro || null,
     RequiereAccesibilidad: Boolean(datos.requiereAccesibilidad),
     RequiereParqueoBus: Boolean(datos.requiereParqueoBus),
-    RequiereGuia: Boolean(datos.requiereGuia),
     Observaciones: datos.observaciones || null,
   };
 
