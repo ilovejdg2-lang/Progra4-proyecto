@@ -519,6 +519,7 @@ export function construirPdfFichaDonacion({
   // Sección 2: Detalles de la donación
   dibujarSeccion("2. Detalles de los Artículos / Bienes Donados", [
     ["Categoría:", campos.categoria || "—"],
+    ["Material:", campos.material || "—"],
     ["Cantidad o volumen:", campos.cantidadEstimada || "—"],
     ["Estado de los artículos:", campos.estadoArticulos || "—"],
     ["Valor estimado:", campos.valorEstimado ? `CRC ${campos.valorEstimado}` : "No indicado"],
@@ -539,9 +540,12 @@ export function construirPdfFichaDonacion({
   // Sección 3: Logística y Entrega
   dibujarSeccion("3. Logística de Entrega y Recolección", [
     ["Método preferido:", campos.metodoEntrega || "—"],
+    ["Provincia:", campos.provincia || "—"],
+    ["Cantón:", campos.canton || "—"],
+    ["Distrito:", campos.distrito || "—"],
+    ["Dirección:", (campos.direccion || campos.direccionRecoleccion || "No indicada").slice(0, 65)],
     ["Día coordinado:", formatFechaDisplay(campos.fechaEntrega)],
     ["Hora coordinada:", campos.horaEntrega || "—"],
-    ["Dirección de recolección:", (campos.direccionRecoleccion || "No aplica / No indicada").slice(0, 65)],
   ]);
 
   // Sección 4: Registro y Auditoría

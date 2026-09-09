@@ -308,6 +308,11 @@
   .donacion-page .btn-enviar--compacto {
     width: 100%;
   }
+
+  .donacion-intro,
+  .donacion-faq {
+    padding: 20px 18px;
+  }
 }
 
 .donacion-page .donacion-fecha-fija:disabled {
@@ -315,4 +320,136 @@
   background: var(--fondo-soft);
   color: var(--texto-principal);
   opacity: 1;
+}
+
+.donacion-intro {
+  width: 100%;
+  margin: 0 0 1.5rem;
+  padding: 28px 32px;
+  border: 1px solid var(--borde-input);
+  border-radius: var(--radius-ui);
+  background: #fff;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+}
+
+.donacion-intro__encabezado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: var(--negro-principal);
+}
+
+.donacion-intro__encabezado h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--texto-principal);
+}
+
+.donacion-intro > p {
+  margin: 0 0 1rem;
+  color: var(--texto-secundario);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.donacion-intro__cats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.donacion-intro__cats li {
+  display: grid;
+  gap: 0.25rem;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--fondo-soft);
+  border: 1px solid var(--borde-input);
+  font-size: 0.92rem;
+}
+
+.donacion-intro__cats strong {
+  color: var(--texto-principal);
+}
+
+.donacion-intro__cats span {
+  color: var(--texto-secundario);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.donacion-aviso-recoleccion {
+  margin: 0 0 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border-left: 4px solid #b45309;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.donacion-faq {
+  width: 100%;
+  margin: 1.5rem 0 0;
+  padding: 28px 32px;
+  border: 1px solid var(--borde-input);
+  border-radius: var(--radius-ui);
+  background: #fff;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+}
+
+.donacion-faq h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
+  margin: 0 0 1rem;
+  color: var(--texto-principal);
+}
+
+.donacion-faq details {
+  border: 1px solid var(--borde-input);
+  border-radius: 12px;
+  background: var(--fondo-soft);
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.65rem;
+}
+
+.donacion-faq details:last-child {
+  margin-bottom: 0;
+}
+
+.donacion-faq summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--texto-principal);
+  list-style: none;
+}
+
+.donacion-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.donacion-faq summary::after {
+  content: "+";
+  float: right;
+  font-weight: 500;
+  color: var(--texto-secundario);
+}
+
+.donacion-faq details[open] summary::after {
+  content: "–";
+}
+
+.donacion-faq details p {
+  margin: 0.7rem 0 0.1rem;
+  color: var(--texto-secundario);
+  line-height: 1.5;
+  font-size: 0.92rem;
 }

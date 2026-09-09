@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import {
   Banknote,
   Calendar,
@@ -19,11 +18,16 @@ import {
   X,
 } from "lucide-react";
 
+import {
+  AdminModal,
+  AdminModalBody,
+  AdminModalFooter,
+  AdminModalHeader,
+} from "../../../Components/Admin/ui/AdminModal";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { AdminLayout } from "../layouts/AdminLayout";
-import { useAdminModalLock } from "../../../hooks/useBodyScrollLock";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
@@ -75,6 +79,14 @@ const colorEstado = {
 
 function claseEstado(estado) {
   return colorEstado[estado] ?? "text-slate-700";
+}
+
+function etiquetaModalidadCorta(campos) {
+  if (campos.recoleccionSolicitada || campos.metodoEntregaClave === "recoleccion") {
+    return "Recolección";
+  }
+  if (campos.metodoEntregaClave === "entrega") return "Entrega";
+  return campos.metodoEntrega || "";
 }
 
 function BadgeEstado({ estado }) {
@@ -178,12 +190,13 @@ function AccionesSolicitud({
 }
 
 function ModalDetalle({ solicitud, puedeResolver, onResolver, onDescargarFicha, onCerrar }) {
-  useAdminModalLock(true);
   const campos = camposSolicitudDonacion(solicitud);
   const partes = partirNombreCompleto(campos.donanteNombre);
   const [guardando, setGuardando] = useState(false);
   const [errorAccion, setErrorAccion] = useState("");
   const [fotoVista, setFotoVista] = useState(null);
+  const [confirmacion, setConfirmacion] = useState(null);
+  const [motivoRechazo, setMotivoRechazo] = useState("");
   const urlsFotos = campos.fotos
     .map((foto) => String(foto.url || foto.Url || "").trim())
     .filter(Boolean);
@@ -196,7 +209,7 @@ function ModalDetalle({ solicitud, puedeResolver, onResolver, onDescargarFicha, 
     setGuardando(true);
     setErrorAccion("");
     try {
-      await onResolver(solicitud.id, estado);
+      await onResolver(solicitud.id, estado, estado === "Rechazada" ? motivoRechazo : "");
       onCerrar();
     } catch (accionError) {
       setErrorAccion(
@@ -207,20 +220,14 @@ function ModalDetalle({ solicitud, puedeResolver, onResolver, onDescargarFicha, 
     }
   }
 
-  return createPortal(
+  return (
     <>
-    <div className="admin-modal-root">
-      <div
-        className="admin-modal-backdrop"
-        aria-hidden="true"
-        onClick={onCerrar}
-        onWheel={(event) => event.preventDefault()}
-        onTouchMove={(event) => event.preventDefault()}
-      />
-      <div className="relative z-10 max-h-[92dvh] w-full max-w-xl overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-950"><ST>Ver solicitud</ST></h2>
+      <AdminModal open onClose={onCerrar} maxWidth="max-w-2xl" labelledBy="donacion-detalle-titulo">
+        <AdminModalHeader>
+          <div className="min-w-0">
+            <h2 id="donacion-detalle-titulo" className="text-lg font-semibold text-slate-950">
+              <ST>Ver solicitud</ST>
+            </h2>
             <p className="text-sm text-slate-500">
               <ST>Solicitud</ST> #{solicitud.id} · <ST>Fecha de la solicitud</ST>{" "}
               {formatFecha(campos.fechaSolicitud) || t("sin fecha")}
@@ -234,9 +241,9 @@ function ModalDetalle({ solicitud, puedeResolver, onResolver, onDescargarFicha, 
           >
             <X className="size-5" />
           </button>
-        </div>
+        </AdminModalHeader>
 
-        <div className="max-h-[68vh] overflow-y-auto px-6 py-5">
+        <AdminModalBody>
           <header className="mb-6 flex items-center gap-4 border-b border-slate-100 pb-5">
             <div className="grid size-14 shrink-0 place-items-center rounded-full bg-slate-950 text-base font-bold text-white">
               {getInitials(campos.donanteNombre)}
@@ -277,8 +284,10 @@ function ModalDetalle({ solicitud, puedeResolver, onResolver, onDescargarFicha, 
             </h4>
             <div className="grid gap-4 md:grid-cols-2">
               <DetailField icon={Package} label="Categoría de la donación" value={campos.categoria} traducirValor />
+              <DetailField icon={Package} label="Material o artículo" value={campos.material} traducirValor />
               <DetailField icon={Package} label="Cantidad o volumen estimado" value={campos.cantidadEstimada} />
               <DetailField icon={FileText} label="Estado de los artículos" value={campos.estadoArticulos} traducirValor />
+              <DetailField icon={Banknote} label="Valor estimado de la donación" value={formatValor(campos.valorEstimado)} />
               <DetailField
                 icon={FileText}
                 label="Descripción detallada de los artículos"
@@ -320,10 +329,27 @@ function ModalDetalle({ solicitud, puedeResolver, onResolver, onDescargarFicha, 
 
           <section className="mt-6 space-y-4 border-t border-slate-100 pt-6">
             <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">
-              <ST>Logística de entrega</ST>
+              <ST>Ubicación</ST>
             </h4>
             <div className="grid gap-4 md:grid-cols-2">
-              <DetailField icon={Truck} label="Método de entrega preferido" value={campos.metodoEntrega} traducirValor />
+              <DetailField icon={MapPin} label="Provincia" value={campos.provincia} />
+              <DetailField icon={MapPin} label="Cantón" value={campos.canton} />
+              <DetailField icon={MapPin} label="Distrito" value={campos.distrito} />
+              <DetailField icon={MapPin} label="Dirección" value={campos.direccion} className="md:col-span-2" />
+            </div>
+          </section>
+
+          <section className="mt-6 space-y-4 border-t border-slate-100 pt-6">
+            <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">
+              <ST>Logística</ST>
+            </h4>
+            <div className="grid gap-4 md:grid-cols-2">
+              <DetailField icon={Truck} label="Modalidad" value={campos.metodoEntrega} traducirValor />
+              {campos.recoleccionSolicitada ? (
+                <p className="md:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">
+                  <ST>Recolección solicitada. Debe evaluarse de forma manual; no se aprueba automáticamente.</ST>
+                </p>
+              ) : null}
               <DetailField
                 icon={Calendar}
                 label="Día de entrega o recolección"
@@ -334,13 +360,17 @@ function ModalDetalle({ solicitud, puedeResolver, onResolver, onDescargarFicha, 
                 label="Hora de entrega o recolección"
                 value={campos.horaEntrega}
               />
-              <DetailField
-                icon={MapPin}
-                label="Dirección de recolección"
-                value={campos.direccionRecoleccion}
-                className="md:col-span-2"
-              />
             </div>
+          </section>
+
+          <section className="mt-6 space-y-4 border-t border-slate-100 pt-6">
+            <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">
+              <ST>Estado de la solicitud</ST>
+            </h4>
+            <BadgeEstado estado={campos.estado} />
+            {campos.motivoRechazo ? (
+              <DetailField icon={FileText} label="Motivo de rechazo" value={campos.motivoRechazo} className="md:col-span-2" />
+            ) : null}
           </section>
 
           <section className="mt-6 space-y-4 border-t border-slate-100 pt-6">
@@ -348,51 +378,110 @@ function ModalDetalle({ solicitud, puedeResolver, onResolver, onDescargarFicha, 
               <ST>Declaración y confirmación</ST>
             </h4>
             <div className="grid gap-4 md:grid-cols-2">
-              <DetailField icon={Banknote} label="Valor estimado de la donación" value={formatValor(campos.valorEstimado)} />
               <DetailField icon={Calendar} label="Fecha de la solicitud" value={formatFecha(campos.fechaSolicitud)} />
             </div>
           </section>
 
           {errorAccion ? <p className="mt-4 text-sm text-rose-700">{errorAccion}</p> : null}
-        </div>
+        </AdminModalBody>
 
-        <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => onDescargarFicha(solicitud)}
-              className={`${btnCancelarGris} gap-2 px-3 py-2 text-xs font-semibold`}
-            >
-              <FileDown className="size-3.5" />
-              <ST>Descargar ficha PDF</ST>
-            </button>
-
+        <AdminModalFooter className="justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => onDescargarFicha(solicitud)}
+            className={`${btnCancelarGris} gap-2 px-3 py-2 text-xs font-semibold`}
+          >
+            <FileDown className="size-3.5" />
+            <ST>Descargar ficha PDF</ST>
+          </button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {puedeResolver && campos.estado === "Pendiente" ? (
               <>
-                <button type="button" disabled={guardando} onClick={() => cambiarEstado("Aceptada")} className={btnAprobar}>
+                <button type="button" disabled={guardando} onClick={() => setConfirmacion("Aceptada")} className={btnAprobar}>
                   <ST>Aceptar</ST>
                 </button>
-                <button type="button" disabled={guardando} onClick={() => cambiarEstado("Rechazada")} className={btnRechazar}>
+                <button type="button" disabled={guardando} onClick={() => setConfirmacion("Rechazada")} className={btnRechazar}>
                   <ST>Rechazar</ST>
                 </button>
               </>
             ) : null}
+            <button type="button" onClick={onCerrar} className={btnCancelarGris}>
+              <ST>Cerrar</ST>
+            </button>
           </div>
-          <button type="button" onClick={onCerrar} className={btnCancelarGris}>
-            <ST>Cerrar</ST>
+        </AdminModalFooter>
+      </AdminModal>
+
+      <AdminModal
+        open={Boolean(confirmacion)}
+        elevated
+        onClose={() => {
+          if (guardando) return;
+          setConfirmacion(null);
+          setMotivoRechazo("");
+        }}
+        maxWidth="max-w-md"
+        labelledBy="donacion-confirmar-titulo"
+      >
+        <AdminModalHeader>
+          <h2 id="donacion-confirmar-titulo" className="text-lg font-semibold text-slate-950">
+            <ST>
+              {confirmacion === "Aceptada"
+                ? "Aceptar solicitud de donación"
+                : "Rechazar solicitud de donación"}
+            </ST>
+          </h2>
+        </AdminModalHeader>
+        <AdminModalBody>
+          <p className="text-sm text-slate-600">
+            <ST>
+              {confirmacion === "Aceptada"
+                ? "¿Está seguro de que desea aceptar esta solicitud?"
+                : "¿Está seguro de que desea rechazar esta solicitud?"}
+            </ST>
+          </p>
+          {confirmacion === "Rechazada" ? (
+            <textarea
+              value={motivoRechazo}
+              onChange={(event) => setMotivoRechazo(event.target.value)}
+              className="mt-3 min-h-24 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm"
+              placeholder={t("Motivo u observación (opcional)")}
+              maxLength={1000}
+            />
+          ) : null}
+          {errorAccion ? <p className="mt-3 text-sm text-rose-700">{errorAccion}</p> : null}
+        </AdminModalBody>
+        <AdminModalFooter>
+          <button
+            type="button"
+            disabled={guardando}
+            onClick={() => cambiarEstado(confirmacion)}
+            className={confirmacion === "Aceptada" ? btnAprobar : btnRechazar}
+          >
+            <ST>{guardando ? "Guardando..." : "Confirmar"}</ST>
           </button>
-        </div>
-      </div>
-    </div>
-    <ImageLightbox
-      images={urlsFotos}
-      index={fotoVista}
-      onClose={() => setFotoVista(null)}
-      onIndexChange={setFotoVista}
-      alt="Fotografía de la donación"
-    />
-    </>,
-    document.body,
+          <button
+            type="button"
+            disabled={guardando}
+            onClick={() => {
+              setConfirmacion(null);
+              setMotivoRechazo("");
+            }}
+            className={btnCancelarGris}
+          >
+            <ST>Cancelar</ST>
+          </button>
+        </AdminModalFooter>
+      </AdminModal>
+
+      <ImageLightbox
+        images={urlsFotos}
+        index={fotoVista}
+        onClose={() => setFotoVista(null)}
+        onIndexChange={setFotoVista}
+        alt="Fotografía de la donación"
+      />
+    </>
   );
 }
 
@@ -477,6 +566,15 @@ export default function AdminSolicitudesDonacion() {
     return Array.from(set).sort((a, b) => a.localeCompare(b, "es"));
   }, [items]);
 
+  const materialesDisponibles = useMemo(() => {
+    const set = new Set();
+    items.forEach((item) => {
+      const c = camposSolicitudDonacion(item);
+      if (c.material) set.add(c.material);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "es"));
+  }, [items]);
+
   const filtrosConfig = useMemo(
     () => [
       {
@@ -486,22 +584,42 @@ export default function AdminSolicitudesDonacion() {
         valorTodos: "todas",
       },
       {
+        id: "material",
+        valorInicial: "todos",
+        obtenerValor: (row) => camposSolicitudDonacion(row).material,
+        valorTodos: "todos",
+      },
+      {
         id: "estado",
         valorInicial: "todos",
         obtenerValor: (row) => camposSolicitudDonacion(row).estado || "Pendiente",
         valorTodos: "todos",
       },
       {
-        id: "fecha",
+        id: "modalidad",
+        valorInicial: "todas",
+        obtenerValor: (row) => camposSolicitudDonacion(row).metodoEntregaClave || "",
+        valorTodos: "todas",
+      },
+      {
+        id: "fechaDesde",
         valorInicial: "",
         aplicar: (lista, valor) => {
           if (!valor) return lista;
           return lista.filter((row) => {
-            const c = camposSolicitudDonacion(row);
-            return (
-              (c.fechaSolicitud && c.fechaSolicitud.startsWith(valor)) ||
-              (c.fechaEntrega && c.fechaEntrega.startsWith(valor))
-            );
+            const fecha = camposSolicitudDonacion(row).fechaSolicitud || "";
+            return fecha >= valor;
+          });
+        },
+      },
+      {
+        id: "fechaHasta",
+        valorInicial: "",
+        aplicar: (lista, valor) => {
+          if (!valor) return lista;
+          return lista.filter((row) => {
+            const fecha = camposSolicitudDonacion(row).fechaSolicitud || "";
+            return fecha && fecha <= valor;
           });
         },
       },
@@ -523,6 +641,7 @@ export default function AdminSolicitudesDonacion() {
     buscarEn: (row) => {
       const c = camposSolicitudDonacion(row);
       return [
+        String(row.id || ""),
         c.donanteNombre,
         c.nombre,
         c.primerApellido,
@@ -531,9 +650,10 @@ export default function AdminSolicitudesDonacion() {
         c.telefono,
         c.numeroIdentificacion,
         c.categoria,
+        c.material,
         c.descripcion,
         c.metodoEntrega,
-        c.direccionRecoleccion,
+        c.direccion,
         c.estado,
         c.tipoDonante,
       ];
@@ -560,6 +680,16 @@ export default function AdminSolicitudesDonacion() {
       ],
     },
     {
+      id: "material",
+      label: "Material",
+      value: valoresFiltro.material ?? "todos",
+      onChange: (valor) => setValorFiltro("material", valor),
+      opciones: [
+        { value: "todos", label: "Todos los materiales" },
+        ...materialesDisponibles.map((mat) => ({ value: mat, label: mat })),
+      ],
+    },
+    {
       id: "estado",
       label: "Estado",
       value: valoresFiltro.estado ?? "todos",
@@ -570,16 +700,34 @@ export default function AdminSolicitudesDonacion() {
       ],
     },
     {
-      id: "fecha",
-      label: "Fecha",
+      id: "modalidad",
+      label: "Entrega / Recolección",
+      value: valoresFiltro.modalidad ?? "todas",
+      onChange: (valor) => setValorFiltro("modalidad", valor),
+      opciones: [
+        { value: "todas", label: "Todas" },
+        { value: "entrega", label: "Entrega" },
+        { value: "recoleccion", label: "Recolección" },
+      ],
+    },
+    {
+      id: "fechaDesde",
+      label: "Desde",
       tipo: "fecha",
-      value: valoresFiltro.fecha ?? "",
-      onChange: (valor) => setValorFiltro("fecha", valor),
+      value: valoresFiltro.fechaDesde ?? "",
+      onChange: (valor) => setValorFiltro("fechaDesde", valor),
+    },
+    {
+      id: "fechaHasta",
+      label: "Hasta",
+      tipo: "fecha",
+      value: valoresFiltro.fechaHasta ?? "",
+      onChange: (valor) => setValorFiltro("fechaHasta", valor),
     },
   ];
 
-  async function resolverSolicitud(id, estado) {
-    const actualizada = await actualizarEstadoSolicitudDonacion(id, estado);
+  async function resolverSolicitud(id, estado, motivoRechazo = "") {
+    const actualizada = await actualizarEstadoSolicitudDonacion(id, estado, motivoRechazo);
     setItems((prev) =>
       prev.map((row) => (row.id === actualizada.id ? { ...row, ...actualizada } : row)),
     );
@@ -596,11 +744,20 @@ export default function AdminSolicitudesDonacion() {
       if (valoresFiltro.categoria && valoresFiltro.categoria !== "todas") {
         partesFiltro.push(`Categoría: ${valoresFiltro.categoria}`);
       }
+      if (valoresFiltro.material && valoresFiltro.material !== "todos") {
+        partesFiltro.push(`Material: ${valoresFiltro.material}`);
+      }
       if (valoresFiltro.estado && valoresFiltro.estado !== "todos") {
         partesFiltro.push(`Estado: ${valoresFiltro.estado}`);
       }
-      if (valoresFiltro.fecha) {
-        partesFiltro.push(`Fecha: ${valoresFiltro.fecha}`);
+      if (valoresFiltro.modalidad && valoresFiltro.modalidad !== "todas") {
+        partesFiltro.push(`Modalidad: ${valoresFiltro.modalidad}`);
+      }
+      if (valoresFiltro.fechaDesde) {
+        partesFiltro.push(`Desde: ${valoresFiltro.fechaDesde}`);
+      }
+      if (valoresFiltro.fechaHasta) {
+        partesFiltro.push(`Hasta: ${valoresFiltro.fechaHasta}`);
       }
 
       const ahora = new Date();
@@ -760,13 +917,14 @@ export default function AdminSolicitudesDonacion() {
             <AdminListaToolbar
               busqueda={busqueda}
               onBusquedaChange={setBusqueda}
-              placeholder="Buscar por donante, correo, identificación, categoría o descripción..."
+              placeholder="Buscar por ID, donante, categoría o material..."
               filtros={toolbarFiltros}
               total={total}
               visibles={visibles}
               hayFiltrosActivos={hayFiltrosActivos}
               onLimpiar={limpiarFiltros}
-              compacto
+              filaClassName="mx-auto flex w-full min-w-0 flex-col items-stretch gap-5"
+              filtrosContenedorClassName="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
             />
 
             {solicitudesFiltradas.length === 0 ? (
@@ -774,13 +932,14 @@ export default function AdminSolicitudesDonacion() {
             ) : (
               <>
                 {/* Tabla para Escritorio */}
-                <div className="hidden overflow-hidden md:block">
+                <div className="hidden md:block">
                   <div className="admin-table-shell">
-                    <table className="w-full min-w-[850px] border-collapse text-left text-[length:var(--text-body)]">
+                    <table className="w-full border-collapse text-left text-[length:var(--text-body)]">
                       <thead>
                         <tr>
+                          <th><ST>ID</ST></th>
                           <th><ST>Donante</ST></th>
-                          <th><ST>Tipo de donación</ST></th>
+                          <th><ST>Donación</ST></th>
                           <th><ST>Fecha</ST></th>
                           <th><ST>Estado</ST></th>
                           <th className="text-center"><ST>Acciones</ST></th>
@@ -789,26 +948,39 @@ export default function AdminSolicitudesDonacion() {
                       <tbody className="divide-y divide-slate-100">
                         {solicitudesPagina.map((row) => {
                           const campos = camposSolicitudDonacion(row);
+                          const modalidad = etiquetaModalidadCorta(campos);
                           return (
                             <tr key={row.id} className="transition hover:bg-slate-50/60">
-                              <td className="px-5 py-4">
-                                <div className="font-semibold text-slate-950">
+                              <td className="whitespace-nowrap px-3 py-3 font-semibold text-slate-950">#{row.id}</td>
+                              <td className="max-w-[14rem] px-3 py-3">
+                                <div className="truncate font-semibold text-slate-950">
                                   {campos.donanteNombre || t("Sin nombre")}
                                 </div>
-                                <div className="mt-1 text-[length:var(--text-body)] text-slate-500">
-                                  {campos.correo || campos.telefono || t("Sin contacto")}
+                                <div className="mt-0.5 text-xs text-slate-500">
+                                  <ST>{campos.tipoDonante}</ST>
                                 </div>
                               </td>
-                              <td className="px-5 py-4 text-slate-700">
-                                {campos.categoria ? <ST>{campos.categoria}</ST> : t("No indicado")}
+                              <td className="max-w-[16rem] px-3 py-3">
+                                <div className="truncate font-medium text-slate-800">
+                                  {campos.categoria ? <ST>{campos.categoria}</ST> : t("No indicado")}
+                                </div>
+                                <div className="mt-0.5 truncate text-xs text-slate-500">
+                                  {campos.material ? <ST>{campos.material}</ST> : t("Sin material")}
+                                  {modalidad ? (
+                                    <>
+                                      {" · "}
+                                      <ST>{modalidad}</ST>
+                                    </>
+                                  ) : null}
+                                </div>
                               </td>
-                              <td className="px-5 py-4 text-slate-700">
+                              <td className="whitespace-nowrap px-3 py-3 text-slate-700">
                                 {formatFecha(campos.fechaSolicitud) || t("No indicada")}
                               </td>
-                              <td className="px-5 py-4">
+                              <td className="px-3 py-3">
                                 <BadgeEstado estado={campos.estado} />
                               </td>
-                              <td className="px-5 py-4 text-center">
+                              <td className="px-3 py-3 text-center">
                                 <AccionesSolicitud
                                   solicitud={row}
                                   onVer={() => setViendo(row)}
@@ -843,8 +1015,23 @@ export default function AdminSolicitudesDonacion() {
 
                         <div className="grid gap-1 text-sm text-slate-600">
                           <p>
+                            <span className="font-medium text-slate-800"><ST>ID</ST>:</span> #{row.id}
+                          </p>
+                          <p>
                             <span className="font-medium text-slate-800"><ST>Tipo</ST>:</span>{" "}
+                            <ST>{campos.tipoDonante}</ST>
+                          </p>
+                          <p>
+                            <span className="font-medium text-slate-800"><ST>Categoría</ST>:</span>{" "}
                             {campos.categoria ? <ST>{campos.categoria}</ST> : t("No indicado")}
+                          </p>
+                          <p>
+                            <span className="font-medium text-slate-800"><ST>Material</ST>:</span>{" "}
+                            {campos.material ? <ST>{campos.material}</ST> : t("No indicado")}
+                          </p>
+                          <p>
+                            <span className="font-medium text-slate-800"><ST>Modalidad</ST>:</span>{" "}
+                            {campos.metodoEntrega ? <ST>{campos.metodoEntrega}</ST> : t("No indicado")}
                           </p>
                           <p>
                             <span className="font-medium text-slate-800"><ST>Fecha</ST>:</span>{" "}

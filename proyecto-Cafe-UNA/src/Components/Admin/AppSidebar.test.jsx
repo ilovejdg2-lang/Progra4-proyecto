@@ -95,6 +95,10 @@ describe("AppSidebar", () => {
       "href",
       "/admin/donaciones/solicitudes",
     );
+    expect(screen.getAllByRole("link", { name: /Fechas de recepción/i })[0]).toHaveAttribute(
+      "href",
+      "/admin/donaciones/fechas-recepcion",
+    );
   });
 
   it("does not expose inventory navigation without permission", () => {
