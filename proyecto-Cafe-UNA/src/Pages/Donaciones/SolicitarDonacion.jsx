@@ -11,7 +11,6 @@ import {
   MapPin,
   Package,
   Phone,
-  Send,
   Truck,
   UploadCloud,
   User,
@@ -68,6 +67,43 @@ function SectionCard({ icon: Icon, paso, title, hint, children }) {
       </div>
       <div className="section-card__body">{children}</div>
     </div>
+  );
+}
+
+function FaqItem({ question, children }) {
+  const handleSummaryClick = (event) => {
+    const details = event.currentTarget.parentElement;
+    if (!details || details.tagName !== "DETAILS" || !details.open) return;
+    if (details.classList.contains("donacion-faq__item--cerrando")) {
+      event.preventDefault();
+      return;
+    }
+    event.preventDefault();
+    details.classList.add("donacion-faq__item--cerrando");
+    const panel = details.querySelector(".donacion-faq__cuerpo");
+    let cerrado = false;
+    const finalizar = () => {
+      if (cerrado) return;
+      cerrado = true;
+      details.open = false;
+      details.classList.remove("donacion-faq__item--cerrando");
+      panel?.removeEventListener("transitionend", onEnd);
+    };
+    const onEnd = (evt) => {
+      if (evt.target !== panel) return;
+      finalizar();
+    };
+    panel?.addEventListener("transitionend", onEnd);
+    window.setTimeout(finalizar, 420);
+  };
+
+  return (
+    <details className="donacion-faq__item">
+      <summary onClick={handleSummaryClick}>{question}</summary>
+      <div className="donacion-faq__cuerpo">
+        <div className="donacion-faq__cuerpo-inner">{children}</div>
+      </div>
+    </details>
   );
 }
 
@@ -267,7 +303,6 @@ export default function SolicitarDonacion() {
     "Certifico que los artículos son de mi propiedad y de origen lícito.",
   );
   const tPrivacidad = useTraducir("Acepto la Política de privacidad.");
-  const tCancelar = useTraducir("Cancelar");
   const tEnviar = useTraducir("Enviar solicitud");
   const tEnviando = useTraducir("Enviando...");
   const tLoginBtn = useTraducir("Inicie sesión para enviar");
@@ -1539,20 +1574,12 @@ export default function SolicitarDonacion() {
                 </div>
               ) : null}
 
-              <div className="acciones-formulario acciones-formulario--split">
-                <button
-                  type="button"
-                  className="btn-cancelar"
-                  onClick={() => navigate({ to: "/" })}
-                >
-                  {tCancelar}
-                </button>
+              <div className="acciones-formulario">
                 <button
                   type="submit"
-                  className="btn-enviar btn-enviar--compacto"
+                  className="btn-enviar"
                   disabled={enviando || !usuario}
                 >
-                  <Send size={16} aria-hidden="true" />
                   {enviando ? tEnviando : !usuario ? tLoginBtn : tEnviar}
                 </button>
               </div>
@@ -1562,44 +1589,39 @@ export default function SolicitarDonacion() {
             <h2 id="donacion-faq-titulo">
               <HelpCircle size={18} aria-hidden="true" /> {tFaqTitulo}
             </h2>
-            <details>
-              <summary><ST>¿Qué puedo donar?</ST></summary>
+            <FaqItem question={<ST>¿Qué puedo donar?</ST>}>
               <p>
                 <ST>
                   Únicamente donaciones materiales: bienes, equipos, herramientas e insumos físicos. Revise las categorías activas y los materiales aceptados que aparecen al inicio de esta página.
                 </ST>
               </p>
-            </details>
-            <details>
-              <summary><ST>¿Puedo donar dinero?</ST></summary>
+            </FaqItem>
+            <FaqItem question={<ST>¿Puedo donar dinero?</ST>}>
               <p>
                 <ST>No. Este módulo está destinado únicamente a donaciones materiales.</ST>
               </p>
-            </details>
-            <details>
-              <summary><ST>¿Qué sucede si el artículo que deseo donar no aparece?</ST></summary>
+            </FaqItem>
+            <FaqItem question={<ST>¿Qué sucede si el artículo que deseo donar no aparece?</ST>}>
               <p>
                 <ST>
                   Las categorías mostradas corresponden a las necesidades actuales del proyecto. Si su artículo no figura, puede comunicarse con Café UNA por los medios institucionales publicados en el sitio.
                 </ST>
               </p>
-            </details>
-            <details>
-              <summary><ST>¿Pueden recoger mi donación?</ST></summary>
+            </FaqItem>
+            <FaqItem question={<ST>¿Pueden recoger mi donación?</ST>}>
               <p>
                 <ST>
                   Puede solicitar una recolección, pero está sujeta a evaluación y disponibilidad de personal, vehículo, ubicación y características de los artículos. No se aprueba de forma automática.
                 </ST>
               </p>
-            </details>
-            <details>
-              <summary><ST>¿Cómo sabré si mi donación fue aceptada?</ST></summary>
+            </FaqItem>
+            <FaqItem question={<ST>¿Cómo sabré si mi donación fue aceptada?</ST>}>
               <p>
                 <ST>
                   La solicitud será revisada por el personal de Café UNA y se le notificará el resultado mediante correo electrónico.
                 </ST>
               </p>
-            </details>
+            </FaqItem>
           </section>
             </>
           ) : (

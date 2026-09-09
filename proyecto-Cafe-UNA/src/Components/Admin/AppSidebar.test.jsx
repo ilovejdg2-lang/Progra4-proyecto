@@ -49,7 +49,13 @@ describe("AppSidebar", () => {
     Object.defineProperty(window, "localStorage", {
       configurable: true,
       value: {
-        getItem: vi.fn((key) => (key === "admin-sidebar-formularios-open" ? "true" : null)),
+        getItem: vi.fn((key) =>
+          key === "admin-sidebar-voluntariado-open" ||
+          key === "admin-sidebar-visitas-open" ||
+          key === "admin-sidebar-donaciones-open"
+            ? "true"
+            : null,
+        ),
         setItem: vi.fn(),
         removeItem: vi.fn(),
       },
@@ -78,7 +84,10 @@ describe("AppSidebar", () => {
       "href",
       "/admin/historial-movimientos",
     );
-    expect(screen.getAllByText("Formularios")[0]).toBeInTheDocument();
+    expect(screen.queryByText("Formularios")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Voluntariado")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Visitas grupales")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Donaciones")[0]).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /^Voluntariado$/i })[0]).toHaveAttribute(
       "href",
       "/admin/voluntariado",
