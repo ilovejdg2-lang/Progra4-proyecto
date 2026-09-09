@@ -170,6 +170,7 @@ const Navbar = () => {
     const labelSobreNosotros = useTraducir('Sobre nosotros');
     const labelFormularios = useTraducir('Formularios');
     const labelVoluntariado = useTraducir('Voluntariado');
+    const labelVisitas = useTraducir('Visitas');
     const labelDonaciones = useTraducir('Donaciones');
     const tCartResumen = useTraducir('Resumen del carrito');
     const tCartVacio = useTraducir('Tu carrito está vacío');
@@ -848,6 +849,14 @@ const Navbar = () => {
                                             {labelVoluntariado}
                                         </Link>
                                         <Link
+                                            to="/visitas/solicitar"
+                                            role="menuitem"
+                                            className="navbar__about-item"
+                                            onClick={() => setShowFormsMenu(false)}
+                                        >
+                                            {labelVisitas}
+                                        </Link>
+                                        <Link
                                             to="/donaciones/solicitar"
                                             role="menuitem"
                                             className="navbar__about-item"
@@ -1351,6 +1360,7 @@ const Navbar = () => {
                                     if (isFormsNavLink(enlace)) {
                                         const pathNorm = normalizePathname(pathname);
                                         const voluntariadoActive = pathNorm.startsWith('/voluntariado');
+                                        const visitasActive = pathNorm.startsWith('/visitas');
                                         const donacionesActive = pathNorm.startsWith('/donaciones');
                                         return (
                                             <div
@@ -1383,6 +1393,13 @@ const Navbar = () => {
                                                             onClick={closeMobileMenu}
                                                         >
                                                             {labelVoluntariado}
+                                                        </Link>
+                                                        <Link
+                                                            to="/visitas/solicitar"
+                                                            className={`navbar__mobile-about-item ${visitasActive ? 'is-active' : ''}`}
+                                                            onClick={closeMobileMenu}
+                                                        >
+                                                            {labelVisitas}
                                                         </Link>
                                                         <Link
                                                             to="/donaciones/solicitar"
