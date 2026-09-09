@@ -255,39 +255,6 @@
   flex-shrink: 0;
 }
 
-.donacion-page .acciones-formulario--split {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.donacion-page .btn-cancelar {
-  border: 1px solid var(--borde-input);
-  background: #fff;
-  color: var(--texto-principal);
-  padding: 12px 20px;
-  border-radius: var(--radius-ui);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: inherit;
-}
-
-.donacion-page .btn-cancelar:hover {
-  background: var(--fondo-soft);
-}
-
-.donacion-page .btn-enviar--compacto {
-  width: auto;
-  min-width: 180px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
 .donacion-page .contador-caracteres {
   margin-top: 6px;
   font-size: 12px;
@@ -298,15 +265,6 @@
 @media (max-width: 720px) {
   .donacion-entrega {
     grid-template-columns: 1fr;
-  }
-
-  .donacion-page .acciones-formulario--split {
-    flex-direction: column-reverse;
-  }
-
-  .donacion-page .btn-cancelar,
-  .donacion-page .btn-enviar--compacto {
-    width: 100%;
   }
 
   .donacion-intro,
@@ -430,6 +388,10 @@
   font-weight: 600;
   color: var(--texto-principal);
   list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .donacion-faq summary::-webkit-details-marker {
@@ -438,13 +400,33 @@
 
 .donacion-faq summary::after {
   content: "+";
-  float: right;
+  flex-shrink: 0;
   font-weight: 500;
   color: var(--texto-secundario);
+  transition: transform 0.28s ease;
 }
 
-.donacion-faq details[open] summary::after {
-  content: "–";
+.donacion-faq details[open]:not(.donacion-faq__item--cerrando) summary::after {
+  transform: rotate(45deg);
+}
+
+.donacion-faq__cuerpo {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.32s ease;
+}
+
+.donacion-faq details[open] .donacion-faq__cuerpo {
+  grid-template-rows: 1fr;
+}
+
+.donacion-faq details.donacion-faq__item--cerrando .donacion-faq__cuerpo {
+  grid-template-rows: 0fr;
+}
+
+.donacion-faq__cuerpo-inner {
+  overflow: hidden;
+  min-height: 0;
 }
 
 .donacion-faq details p {
@@ -452,4 +434,20 @@
   color: var(--texto-secundario);
   line-height: 1.5;
   font-size: 0.92rem;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.donacion-faq details[open]:not(.donacion-faq__item--cerrando) p {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .donacion-faq summary::after,
+  .donacion-faq__cuerpo,
+  .donacion-faq details p {
+    transition: none;
+  }
 }

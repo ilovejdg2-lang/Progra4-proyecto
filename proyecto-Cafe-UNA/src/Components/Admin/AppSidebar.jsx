@@ -27,7 +27,6 @@ import {
   CalendarDays,
   Shield,
   HandCoins,
-  ClipboardList,
 } from "lucide-react";
 
 import {
@@ -71,6 +70,9 @@ import { ST } from "../T/ST";
 
 const GENERAL_OPEN_KEY = "admin-sidebar-general-open";
 const INVENTORY_OPEN_KEY = "admin-sidebar-inventory-open";
+const VOLUNTARIADO_OPEN_KEY = "admin-sidebar-voluntariado-open";
+const VISITAS_OPEN_KEY = "admin-sidebar-visitas-open";
+const DONACIONES_OPEN_KEY = "admin-sidebar-donaciones-open";
 const FORMULARIOS_OPEN_KEY = "admin-sidebar-formularios-open";
 const SOBRE_NOSOTROS_OPEN_KEY = "admin-sidebar-sobre-nosotros-open";
 const AJUSTES_OPEN_KEY = "admin-sidebar-ajustes-open";
@@ -111,8 +113,8 @@ export function AppSidebar() {
   const puedeDonacionesSolicitudes =
     tienePermiso(roles, "ver_solicitudes_donacion") ||
     tienePermiso(roles, "administrar_solicitudes_donaciones");
-  const puedeVerFormulariosGrupo =
-    puedeVoluntariado || puedeVisitas || puedeDonacionesNecesidades || puedeDonacionesSolicitudes;
+  const puedeDonaciones =
+    puedeDonacionesNecesidades || puedeDonacionesSolicitudes;
   const puedeUsuarios = tienePermiso(roles, "editar_usuarios") || tienePermiso(roles, "crear_usuarios");
   const puedeAjustes = tienePermiso(roles, "administrar_roles_permisos");
   const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
@@ -148,10 +150,9 @@ export function AppSidebar() {
   const isAjustesRoute =
     pathname === "/admin/ajustes" ||
     pathname.startsWith("/admin/ajustes/");
-  const isFormulariosRoute =
-    pathname === "/admin/voluntariado" ||
-    pathname === "/admin/visitas" ||
-    pathname.startsWith("/admin/donaciones/");
+  const isVoluntariadoRoute = pathname === "/admin/voluntariado";
+  const isVisitasRoute = pathname === "/admin/visitas";
+  const isDonacionesRoute = pathname.startsWith("/admin/donaciones/");
 
   const [generalOpen, setGeneralOpen] = useState(() => {
     const savedValue = localStorage.getItem(GENERAL_OPEN_KEY);
@@ -216,11 +217,25 @@ export function AppSidebar() {
   }, [isAjustesRoute]);
 
   useEffect(() => {
-    if (isFormulariosRoute) {
-      setFormulariosOpen(true);
-      localStorage.setItem(FORMULARIOS_OPEN_KEY, "true");
+    if (isVoluntariadoRoute) {
+      setVoluntariadoOpen(true);
+      localStorage.setItem(VOLUNTARIADO_OPEN_KEY, "true");
     }
-  }, [isFormulariosRoute]);
+  }, [isVoluntariadoRoute]);
+
+  useEffect(() => {
+    if (isVisitasRoute) {
+      setVisitasOpen(true);
+      localStorage.setItem(VISITAS_OPEN_KEY, "true");
+    }
+  }, [isVisitasRoute]);
+
+  useEffect(() => {
+    if (isDonacionesRoute) {
+      setDonacionesOpen(true);
+      localStorage.setItem(DONACIONES_OPEN_KEY, "true");
+    }
+  }, [isDonacionesRoute]);
 
   useEffect(() => {
     let activo = true;
@@ -241,9 +256,17 @@ export function AppSidebar() {
     const savedValue = localStorage.getItem(INVENTORY_OPEN_KEY);
     return savedValue === null ? isInventoryRoute : savedValue === "true";
   });
-  const [formulariosOpen, setFormulariosOpen] = useState(() => {
-    const savedValue = localStorage.getItem(FORMULARIOS_OPEN_KEY);
-    return savedValue === null ? isFormulariosRoute : savedValue === "true";
+  const [voluntariadoOpen, setVoluntariadoOpen] = useState(() => {
+    const savedValue = localStorage.getItem(VOLUNTARIADO_OPEN_KEY);
+    return savedValue === null ? isVoluntariadoRoute : savedValue === "true";
+  });
+  const [visitasOpen, setVisitasOpen] = useState(() => {
+    const savedValue = localStorage.getItem(VISITAS_OPEN_KEY);
+    return savedValue === null ? isVisitasRoute : savedValue === "true";
+  });
+  const [donacionesOpen, setDonacionesOpen] = useState(() => {
+    const savedValue = localStorage.getItem(DONACIONES_OPEN_KEY);
+    return savedValue === null ? isDonacionesRoute : savedValue === "true";
   });
   const [ajustesOpen, setAjustesOpen] = useState(() => {
     const savedValue = localStorage.getItem(AJUSTES_OPEN_KEY);
@@ -265,9 +288,19 @@ export function AppSidebar() {
     localStorage.setItem(INVENTORY_OPEN_KEY, String(open));
   };
 
-  const updateFormulariosOpen = (open) => {
-    setFormulariosOpen(open);
-    localStorage.setItem(FORMULARIOS_OPEN_KEY, String(open));
+  const updateVoluntariadoOpen = (open) => {
+    setVoluntariadoOpen(open);
+    localStorage.setItem(VOLUNTARIADO_OPEN_KEY, String(open));
+  };
+
+  const updateVisitasOpen = (open) => {
+    setVisitasOpen(open);
+    localStorage.setItem(VISITAS_OPEN_KEY, String(open));
+  };
+
+  const updateDonacionesOpen = (open) => {
+    setDonacionesOpen(open);
+    localStorage.setItem(DONACIONES_OPEN_KEY, String(open));
   };
 
   const updateAjustesOpen = (open) => {
@@ -280,6 +313,9 @@ export function AppSidebar() {
   const clearSidebarState = () => {
     localStorage.removeItem(GENERAL_OPEN_KEY);
     localStorage.removeItem(INVENTORY_OPEN_KEY);
+    localStorage.removeItem(VOLUNTARIADO_OPEN_KEY);
+    localStorage.removeItem(VISITAS_OPEN_KEY);
+    localStorage.removeItem(DONACIONES_OPEN_KEY);
     localStorage.removeItem(FORMULARIOS_OPEN_KEY);
     localStorage.removeItem(SOBRE_NOSOTROS_OPEN_KEY);
     localStorage.removeItem(AJUSTES_OPEN_KEY);
@@ -493,25 +529,23 @@ export function AppSidebar() {
         </Collapsible.Root>
         ) : null}
 
-        {puedeVerFormulariosGrupo ? (
+        {puedeVoluntariado ? (
         <Collapsible.Root
-          open={formulariosOpen}
-          onOpenChange={updateFormulariosOpen}
-          className="group/formularios"
+          open={voluntariadoOpen}
+          onOpenChange={updateVoluntariadoOpen}
+          className="group/voluntariado"
         >
           <SidebarGroup>
             <SidebarGroupLabel asChild>
               <Collapsible.Trigger type="button">
-                <ClipboardList />
-                <span><ST>Formularios</ST></span>
-                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/formularios:rotate-180" />
+                <HandHeart />
+                <span><ST>Voluntariado</ST></span>
+                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/voluntariado:rotate-180" />
               </Collapsible.Trigger>
             </SidebarGroupLabel>
             <Collapsible.Content>
               <SidebarGroupContent>
                 <SidebarMenuSub>
-                  {puedeVoluntariado ? (
-                  <>
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/voluntariado" activeProps={linkActivo} onClick={closeMobileSidebar}>
@@ -533,9 +567,30 @@ export function AppSidebar() {
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
-                  </>
-                  ) : null}
-                  {puedeVisitas ? (
+                </SidebarMenuSub>
+              </SidebarGroupContent>
+            </Collapsible.Content>
+          </SidebarGroup>
+        </Collapsible.Root>
+        ) : null}
+
+        {puedeVisitas ? (
+        <Collapsible.Root
+          open={visitasOpen}
+          onOpenChange={updateVisitasOpen}
+          className="group/visitas"
+        >
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <Collapsible.Trigger type="button">
+                <Users />
+                <span><ST>Visitas grupales</ST></span>
+                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/visitas:rotate-180" />
+              </Collapsible.Trigger>
+            </SidebarGroupLabel>
+            <Collapsible.Content>
+              <SidebarGroupContent>
+                <SidebarMenuSub>
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
                       <Link to="/admin/visitas" activeProps={linkActivo} onClick={closeMobileSidebar}>
@@ -544,7 +599,30 @@ export function AppSidebar() {
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
-                  ) : null}
+                </SidebarMenuSub>
+              </SidebarGroupContent>
+            </Collapsible.Content>
+          </SidebarGroup>
+        </Collapsible.Root>
+        ) : null}
+
+        {puedeDonaciones ? (
+        <Collapsible.Root
+          open={donacionesOpen}
+          onOpenChange={updateDonacionesOpen}
+          className="group/donaciones"
+        >
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <Collapsible.Trigger type="button">
+                <HandCoins />
+                <span><ST>Donaciones</ST></span>
+                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/donaciones:rotate-180" />
+              </Collapsible.Trigger>
+            </SidebarGroupLabel>
+            <Collapsible.Content>
+              <SidebarGroupContent>
+                <SidebarMenuSub>
                   {puedeDonacionesNecesidades ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
