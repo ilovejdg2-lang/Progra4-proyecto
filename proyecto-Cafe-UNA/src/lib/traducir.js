@@ -256,7 +256,18 @@ const DICCIONARIO = {
   "Venta web": "Web sale",
   "Exportar CSV": "Export CSV",
   "Exportar PDF": "Export PDF",
+  "Descargar ficha PDF": "Download PDF sheet",
+  "Ficha PDF": "PDF Sheet",
+  "Generando PDF...": "Generating PDF...",
   "Generando archivo...": "Generating file...",
+  "Todas las categorías": "All categories",
+  "Paginación de solicitudes de donación": "Donation requests pagination",
+  "Buscar por donante, correo, identificación, categoría o descripción...":
+    "Search by donor, email, ID, category or description...",
+  "Cargando solicitudes de donación...": "Loading donation requests...",
+  "No se pudo generar el reporte PDF.": "Could not generate PDF report.",
+  "No se pudo descargar la ficha de la donación en PDF.":
+    "Could not download donation sheet PDF.",
   "Administrar voluntariado": "Manage volunteering",
   "Necesidades de donación": "Donation needs",
   "Solicitudes de donación": "Donation requests",
