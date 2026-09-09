@@ -9,6 +9,7 @@ import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
 import { obtenerUbicaciones } from "../../../services/productosService";
 import { obtenerHistorialMovimientos } from "../../../services/movimientosService";
 import {
+  cargarLogoWebpParaPdf,
   construirCsvMovimientos,
   construirPdfMovimientos,
   descargarArchivo,
@@ -29,10 +30,10 @@ function formatFechaHora(valor) {
 }
 
 function claseBadgeTipo(tipo) {
-  if (tipo === "entrada") return "bg-emerald-50 text-emerald-800";
-  if (tipo === "transferencia") return "bg-sky-50 text-sky-800";
-  if (tipo === "venta_presencial" || tipo === "venta_web") return "bg-rose-50 text-rose-800";
-  return "bg-slate-100 text-slate-700";
+  if (tipo === "entrada") return "bg-emerald-50 text-emerald-800 border border-emerald-200";
+  if (tipo === "transferencia") return "bg-sky-50 text-sky-800 border border-sky-200";
+  if (tipo === "venta_presencial" || tipo === "venta_web") return "bg-rose-50 text-rose-800 border border-rose-200";
+  return "bg-slate-100 text-slate-700 border border-slate-200";
 }
 
 export default function AdminHistorialMovimientos() {
@@ -193,11 +194,13 @@ export default function AdminHistorialMovimientos() {
           "text/csv;charset=utf-8",
         );
       } else {
+        const logoData = await cargarLogoWebpParaPdf("/logo.webp");
         const pdf = construirPdfMovimientos({
           filas,
           adminNombre: actor?.name || actor?.username || "",
           fechaGeneracion: formatFechaHora(new Date().toISOString()),
           filtrosTexto: textoFiltrosExport(),
+          logoData,
         });
         descargarArchivo(
           `historial-movimientos-${stamp}.pdf`,
@@ -346,39 +349,41 @@ export default function AdminHistorialMovimientos() {
               <table className="w-full min-w-[960px] text-left text-[length:var(--text-body)]">
                 <thead>
                   <tr>
-                    <th><ST>Fecha</ST></th>
-                    <th><ST>Tipo de movimiento</ST></th>
-                    <th><ST>Producto</ST></th>
-                    <th><ST>Cantidad</ST></th>
-                    <th><ST>Origen</ST></th>
-                    <th><ST>Destino</ST></th>
-                    <th><ST>Responsable</ST></th>
+                    <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Fecha</ST></th>
+                    <th className="px-3.5 py-2.5 text-center text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Tipo de movimiento</ST></th>
+                    <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Producto</ST></th>
+                    <th className="px-3.5 py-2.5 text-right text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Cantidad</ST></th>
+                    <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Origen</ST></th>
+                    <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Destino</ST></th>
+                    <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Responsable</ST></th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((row) => (
-                    <tr key={row.id} className="border-b border-slate-100 last:border-b-0">
-                      <td className="whitespace-nowrap px-6 py-4 text-slate-600">
+                    <tr key={row.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition-colors">
+                      <td className="whitespace-nowrap px-3.5 py-2.5 text-xs sm:text-sm text-slate-600">
                         {formatFechaHora(row.fecha)}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3.5 py-2.5 text-center">
                         <span
-                          className={`inline-flex h-[var(--control-height)] items-center rounded-full px-3 font-semibold ${claseBadgeTipo(row.tipo)}`}
+                          className={`admin-chip-estado inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${claseBadgeTipo(row.tipo)}`}
                         >
                           <ST>{etiquetaTipo(row.tipo)}</ST>
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-medium text-slate-900">
+                      <td className="px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900">
                         {row.productoNombre ? <ST>{row.productoNombre}</ST> : row.productoId}
                       </td>
-                      <td className="px-6 py-4 font-semibold text-slate-900">{row.cantidad}</td>
-                      <td className="px-6 py-4 text-slate-700">
+                      <td className="px-3.5 py-2.5 text-right text-xs sm:text-sm font-semibold tabular-nums text-slate-900">
+                        {row.cantidad}
+                      </td>
+                      <td className="px-3.5 py-2.5 text-xs sm:text-sm text-slate-700">
                         {row.origenNombre ? <ST>{row.origenNombre}</ST> : "—"}
                       </td>
-                      <td className="px-6 py-4 text-slate-700">
+                      <td className="px-3.5 py-2.5 text-xs sm:text-sm text-slate-700">
                         {row.destinoNombre ? <ST>{row.destinoNombre}</ST> : "—"}
                       </td>
-                      <td className="px-6 py-4 text-slate-700">
+                      <td className="px-3.5 py-2.5 text-xs sm:text-sm text-slate-700">
                         {row.responsableNombre || "—"}
                       </td>
                     </tr>
