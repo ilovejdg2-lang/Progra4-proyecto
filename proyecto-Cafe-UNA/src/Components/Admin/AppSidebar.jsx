@@ -565,6 +565,16 @@ export function AppSidebar() {
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                   ) : null}
+                  {puedeDonacionesSolicitudes ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/donaciones/fechas-recepcion" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <CalendarClock />
+                        <span><ST>Fechas de recepción</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
                 </SidebarMenuSub>
               </SidebarGroupContent>
             </Collapsible.Content>

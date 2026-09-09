@@ -22,6 +22,8 @@ export function AdminListaToolbar({
   compacto = false,
   extra = null,
   ocultarBusqueda = false,
+  filtrosContenedorClassName = "",
+  filaClassName = "",
 }) {
   const tPlaceholder = useTraducir(placeholder);
   const tBuscar = useTraducir("Buscar");
@@ -45,7 +47,7 @@ export function AdminListaToolbar({
         compacto ? "px-4 py-5 sm:px-6" : "px-4 py-5 sm:px-6"
       }`}
     >
-      <div className="mx-auto flex w-full max-w-6xl min-w-0 flex-col items-stretch gap-4 xl:flex-row xl:items-end xl:justify-center">
+      <div className={filaClassName || "mx-auto flex w-full max-w-6xl min-w-0 flex-col items-stretch gap-4 xl:flex-row xl:items-end xl:justify-center"}>
         {ocultarBusqueda ? null : (
         <div className="relative w-full min-w-0 xl:max-w-md xl:flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
@@ -61,15 +63,20 @@ export function AdminListaToolbar({
         )}
 
         {filtros.length > 0 ? (
-          <div className="grid w-full min-w-0 grid-cols-2 gap-3 sm:flex sm:flex-row sm:flex-wrap sm:items-end sm:justify-center xl:w-auto">
+          <div className={filtrosContenedorClassName || "grid w-full min-w-0 grid-cols-2 gap-3 sm:flex sm:flex-row sm:flex-wrap sm:items-end sm:justify-center xl:w-auto"}>
             {filtros.map((filtro, indice) => {
               const ocupaDos = filtros.length === 1 || indice === indiceAnchoCompleto;
               return (
               <div
                 key={filtro.id}
                 className={`relative grid min-w-0 gap-1.5 ${
-                  ocupaDos ? "col-span-2 sm:flex-1" : "col-span-1 sm:flex-1"
-                } ${filtro.footer || ocupaDos ? "sm:max-w-[18rem]" : "sm:max-w-[12.5rem]"}`}
+                  filtro.className
+                    || (filtrosContenedorClassName
+                      ? "min-w-0"
+                      : `${ocupaDos ? "col-span-2 sm:flex-1" : "col-span-1 sm:flex-1"} ${
+                          filtro.footer || ocupaDos ? "sm:max-w-[18rem]" : "sm:max-w-[12.5rem]"
+                        }`)
+                }`}
               >
                 <span className="inline-flex items-center gap-1 text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-neutral-500">
                   <SlidersHorizontal className="size-3.5 shrink-0" aria-hidden="true" />
@@ -109,7 +116,7 @@ export function AdminListaToolbar({
         </div>
       ) : null}
 
-      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 text-[length:var(--text-body)] text-slate-500">
+      <div className={`mx-auto flex w-full flex-wrap items-center justify-between gap-3 text-[length:var(--text-body)] text-slate-500 ${filaClassName ? "" : "max-w-6xl"}`}>
         <p>
           {hayFiltrosActivos ? (
             <>

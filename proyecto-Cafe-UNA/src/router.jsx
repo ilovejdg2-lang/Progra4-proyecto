@@ -33,6 +33,7 @@ const NecesidadesDonacion = lazy(() => import("./Pages/Donaciones/NecesidadesDon
 const DonarMaterial = lazy(() => import("./Pages/Donaciones/DonarMaterial"));
 const AdminNecesidadesDonacion = lazy(() => import("./Pages/Admin/Donaciones/Necesidades"));
 const AdminSolicitudesDonacion = lazy(() => import("./Pages/Admin/Donaciones/Solicitudes"));
+const AdminFechasRecepcionDonacion = lazy(() => import("./Pages/Admin/Donaciones/FechasRecepcion"));
 const Login = lazy(() => import("./Pages/Login/Login"));
 const AdminPanel = lazy(() => import("./Pages/Admin/Panel/Panel"));
 const AdminInformacionPaginaPrincipal = lazy(() => import("./Pages/Admin/InformacionPaginaPrincipal/InformacionPaginaPrincipal"));
@@ -378,6 +379,11 @@ const adminSolicitudesDonacionRoute = createRoute({
     path: "/admin/donaciones/solicitudes",
     component: AdminSolicitudesDonacion,
 })
+const adminFechasRecepcionDonacionRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/donaciones/fechas-recepcion",
+    component: AdminFechasRecepcionDonacion,
+})
 const perfilRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/perfil",
@@ -419,6 +425,7 @@ const routeTree= rootRoute.addChildren([
     adminVisitasRoute,
     adminNecesidadesDonacionRoute,
     adminSolicitudesDonacionRoute,
+    adminFechasRecepcionDonacionRoute,
     adminUsuariosRoute,
     adminAuditoriaRoute,
     adminAjustesRoute,

@@ -75,6 +75,15 @@ export default function NecesidadesDonacion() {
               </span>
               <h2 className="necesidad-card__titulo"><ST>{item.titulo}</ST></h2>
               <p className="necesidad-card__texto"><ST>{item.descripcion}</ST></p>
+              {item.materiales?.length ? (
+                <p className="necesidad-card__meta">
+                  <ST>Materiales aceptados</ST>:{" "}
+                  {item.materiales
+                    .filter((mat) => !mat.estado || mat.estado === "ACTIVA")
+                    .map((mat) => mat.nombre)
+                    .join(", ")}
+                </p>
+              ) : null}
               {item.cantidadRequerida ? (
                 <p className="necesidad-card__meta">
                   <ST>Cantidad requerida</ST>: {item.cantidadRequerida}

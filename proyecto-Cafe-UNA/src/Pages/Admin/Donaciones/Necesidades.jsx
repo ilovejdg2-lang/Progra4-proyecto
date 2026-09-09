@@ -16,7 +16,10 @@ import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
 import {
   actualizarNecesidad,
+  actualizarMaterialAceptado,
+  crearMaterialAceptado,
   crearNecesidad,
+  inactivarMaterialAceptado,
   inactivarNecesidad,
   obtenerNecesidadesAdmin,
 } from "../../../services/donacionesService";
@@ -57,6 +60,11 @@ export default function AdminNecesidadesDonacion() {
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [materialNombre, setMaterialNombre] = useState("");
+  const [materialDesc, setMaterialDesc] = useState("");
+  const [editMaterialId, setEditMaterialId] = useState(null);
+  const [materialError, setMaterialError] = useState("");
+  const [savingMaterial, setSavingMaterial] = useState(false);
 
   const load = useCallback(async () => {
     if (!puedeVer) return;
@@ -75,6 +83,10 @@ export default function AdminNecesidadesDonacion() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const categoriaEnEdicion = editando
+    ? items.find((item) => item.id === editando.id) || editando
+    : null;
 
   const filtrosConfig = useMemo(
     () => [
@@ -100,7 +112,11 @@ export default function AdminNecesidadesDonacion() {
   );
 
   const filters = useAdminListaFiltros(items, {
-    buscarEn: (row) => [row.titulo, row.descripcion],
+    buscarEn: (row) => [
+      row.titulo,
+      row.descripcion,
+      ...(row.materiales || []).map((item) => item.nombre),
+    ],
     filtrosConfig,
   });
 
@@ -122,6 +138,10 @@ export default function AdminNecesidadesDonacion() {
     setEditando(null);
     setForm(EMPTY);
     setFormError("");
+    setMaterialNombre("");
+    setMaterialDesc("");
+    setEditMaterialId(null);
+    setMaterialError("");
     setFormOpen(true);
   }
 
@@ -134,6 +154,10 @@ export default function AdminNecesidadesDonacion() {
       cantidadRequerida: row.cantidadRequerida ? String(row.cantidadRequerida) : "",
     });
     setFormError("");
+    setMaterialNombre("");
+    setMaterialDesc("");
+    setEditMaterialId(null);
+    setMaterialError("");
     setFormOpen(true);
   }
 
@@ -152,8 +176,10 @@ export default function AdminNecesidadesDonacion() {
         cantidadRequerida: form.cantidadRequerida ? Number(form.cantidadRequerida) : null,
       };
       if (editando) await actualizarNecesidad(editando.id, payload);
-      else await crearNecesidad(payload);
-      setFormOpen(false);
+      else {
+        const creada = await crearNecesidad(payload);
+        setEditando(creada);
+      }
       await load();
     } catch (saveError) {
       setFormError(saveError instanceof Error ? saveError.message : "No se pudo guardar.");
@@ -170,6 +196,47 @@ export default function AdminNecesidadesDonacion() {
       await load();
     } catch (toggleError) {
       setError(toggleError instanceof Error ? toggleError.message : "No se pudo cambiar el estado.");
+    }
+  }
+
+  async function guardarMaterial() {
+    if (!editando) return;
+    if (!materialNombre.trim()) {
+      setMaterialError("El nombre del material es obligatorio.");
+      return;
+    }
+    setSavingMaterial(true);
+    setMaterialError("");
+    try {
+      if (editMaterialId) {
+        await actualizarMaterialAceptado(editMaterialId, {
+          nombre: materialNombre.trim(),
+          descripcion: materialDesc.trim(),
+        });
+      } else {
+        await crearMaterialAceptado(editando.id, {
+          nombre: materialNombre.trim(),
+          descripcion: materialDesc.trim(),
+        });
+      }
+      setMaterialNombre("");
+      setMaterialDesc("");
+      setEditMaterialId(null);
+      await load();
+    } catch (saveError) {
+      setMaterialError(saveError instanceof Error ? saveError.message : "No se pudo guardar el material.");
+    } finally {
+      setSavingMaterial(false);
+    }
+  }
+
+  async function toggleMaterial(material) {
+    try {
+      if (material.estado === "ACTIVA") await inactivarMaterialAceptado(material.id);
+      else await actualizarMaterialAceptado(material.id, { estado: "ACTIVA" });
+      await load();
+    } catch (toggleError) {
+      setMaterialError(toggleError instanceof Error ? toggleError.message : "No se pudo cambiar el estado.");
     }
   }
 
@@ -190,7 +257,7 @@ export default function AdminNecesidadesDonacion() {
               <ST>Necesidades de donación</ST>
             </h1>
             <p className="mt-1 text-[length:var(--text-body)] text-slate-500">
-              <ST>Publicá y desactivá necesidades del catálogo público.</ST>
+              <ST>Categorías y materiales aceptados para donaciones materiales.</ST>
             </p>
           </div>
           {puedeEditar ? (
@@ -254,6 +321,7 @@ export default function AdminNecesidadesDonacion() {
                   <thead>
                     <tr>
                       <th><ST>Título</ST></th>
+                      <th><ST>Materiales</ST></th>
                       <th><ST>Prioridad</ST></th>
                       <th><ST>Estado</ST></th>
                       <th><ST>Acciones</ST></th>
@@ -263,6 +331,9 @@ export default function AdminNecesidadesDonacion() {
                     {filters.filtrados.map((row) => (
                       <tr key={row.id} className="border-b border-slate-100">
                         <td className="px-6 py-4 text-center font-medium"><ST>{row.titulo}</ST></td>
+                        <td className="px-6 py-4 text-center text-slate-600">
+                          {(row.materiales || []).filter((item) => item.estado === "ACTIVA").length}
+                        </td>
                         <td className="px-6 py-4 text-center">
                           <span className={`inline-block rounded-full px-3 py-0.5 font-semibold ${clasePrioridad(row.prioridad)}`}>
                             <ST>{etiquetaPrioridad(row.prioridad)}</ST>
@@ -360,6 +431,83 @@ export default function AdminNecesidadesDonacion() {
               />
             </label>
             {formError ? <p className="text-rose-700">{formError}</p> : null}
+
+            {categoriaEnEdicion ? (
+              <div className="mt-2 grid gap-3 rounded-2xl border border-slate-200 p-3">
+                <p className="text-[length:var(--text-body)] font-semibold">
+                  <ST>Materiales aceptados</ST>
+                </p>
+                {(categoriaEnEdicion.materiales || []).length === 0 ? (
+                  <p className="text-slate-500"><ST>Aún no hay materiales en esta categoría.</ST></p>
+                ) : (
+                  <ul className="grid gap-2">
+                    {(categoriaEnEdicion.materiales || []).map((material) => (
+                      <li key={material.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2">
+                        <div>
+                          <p className="font-medium">{material.nombre}</p>
+                          <p className={`text-xs ${material.estado === "ACTIVA" ? "text-emerald-700" : "text-rose-700"}`}>
+                            <ST>{material.estado === "ACTIVA" ? "Activo" : "Inactivo"}</ST>
+                          </p>
+                        </div>
+                        {puedeEditar ? (
+                          <div className="flex gap-1">
+                            <button
+                              type="button"
+                              className="rounded-full border border-slate-300 px-2 py-1 text-xs font-semibold"
+                              onClick={() => {
+                                setEditMaterialId(material.id);
+                                setMaterialNombre(material.nombre);
+                                setMaterialDesc(material.descripcion || "");
+                              }}
+                            >
+                              <ST>Editar</ST>
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded-full border border-slate-300 px-2 py-1 text-xs font-semibold"
+                              onClick={() => toggleMaterial(material)}
+                            >
+                              <ST>{material.estado === "ACTIVA" ? "Desactivar" : "Activar"}</ST>
+                            </button>
+                          </div>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {puedeEditar ? (
+                  <div className="grid gap-2">
+                    <input
+                      value={materialNombre}
+                      onChange={(event) => setMaterialNombre(event.target.value)}
+                      placeholder={t("Nombre del material")}
+                      className="h-[var(--control-height)] rounded-full border border-slate-200 px-4"
+                      maxLength={200}
+                    />
+                    <input
+                      value={materialDesc}
+                      onChange={(event) => setMaterialDesc(event.target.value)}
+                      placeholder={t("Descripción (opcional)")}
+                      className="h-[var(--control-height)] rounded-full border border-slate-200 px-4"
+                      maxLength={500}
+                    />
+                    {materialError ? <p className="text-rose-700">{materialError}</p> : null}
+                    <button
+                      type="button"
+                      onClick={guardarMaterial}
+                      disabled={savingMaterial}
+                      className="inline-flex h-9 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white"
+                    >
+                      <ST>{savingMaterial ? "Guardando..." : editMaterialId ? "Actualizar material" : "Agregar material"}</ST>
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-slate-500">
+                <ST>Guarde la categoría para agregar materiales aceptados.</ST>
+              </p>
+            )}
           </div>
         </AdminModalBody>
         <AdminModalFooter>
