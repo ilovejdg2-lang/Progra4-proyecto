@@ -56,13 +56,7 @@ import { asegurarCamposEnEspanol, camposParaVistaAdmin } from "../../../lib/trad
 
 const ESTADOS = ["Pendiente", "En revisi\u00f3n", "Aprobado", "Rechazado"];
 
-const TIPOS_VOLUNTARIADO = [
-  "Apoyo General",
-  "Capacitaciones",
-  "Investigaci\u00f3n Acad\u00e9mica",
-  "Actividades de limpieza y mantenimiento",
-  "Otro",
-];
+import { TIPOS_VOLUNTARIADO } from "../../../lib/voluntariadoCatalogo";
 
 /** Valores frecuentes de horario (se guardan en español; UiSelect los muestra traducidos). */
 const HORARIOS_VOLUNTARIADO = [
