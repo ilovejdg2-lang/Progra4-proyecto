@@ -9,9 +9,22 @@ function firstDefined(value, aliases) {
   return undefined;
 }
 
+export function normalizarMaterialAceptado(raw) {
+  const id = firstDefined(raw, ["id", "Id"]);
+  if (id === undefined || id === null) return null;
+  return {
+    id: Number(id),
+    necesidadId: Number(firstDefined(raw, ["necesidadId", "NecesidadId"]) || 0),
+    nombre: String(firstDefined(raw, ["nombre", "Nombre"]) || "").trim(),
+    descripcion: String(firstDefined(raw, ["descripcion", "Descripcion"]) || "").trim(),
+    estado: String(firstDefined(raw, ["estado", "Estado"]) || "").toUpperCase(),
+  };
+}
+
 export function normalizarNecesidad(raw) {
   const id = firstDefined(raw, ["id", "Id"]);
   if (id === undefined || id === null) return null;
+  const materialesRaw = firstDefined(raw, ["materiales", "Materiales"]);
   return {
     id: Number(id),
     uuid: String(firstDefined(raw, ["uuid", "Uuid"]) || ""),
@@ -20,6 +33,9 @@ export function normalizarNecesidad(raw) {
     prioridad: String(firstDefined(raw, ["prioridad", "Prioridad"]) || "").toUpperCase(),
     cantidadRequerida: firstDefined(raw, ["cantidadRequerida", "CantidadRequerida"]) ?? null,
     estado: String(firstDefined(raw, ["estado", "Estado"]) || "").toUpperCase(),
+    materiales: (Array.isArray(materialesRaw) ? materialesRaw : [])
+      .map(normalizarMaterialAceptado)
+      .filter(Boolean),
   };
 }
 
@@ -36,6 +52,10 @@ export function normalizarSolicitudDonacion(raw) {
     necesidadTitulo: String(
       firstDefined(raw, ["necesidadTitulo", "NecesidadTitulo"]) || "",
     ).trim(),
+    materialNombre: String(
+      firstDefined(raw, ["materialNombre", "MaterialNombre"]) || "",
+    ).trim(),
+    materialId: firstDefined(raw, ["materialId", "MaterialId"]) ?? null,
     usuarioNombre: String(firstDefined(raw, ["usuarioNombre", "UsuarioNombre"]) || "").trim(),
     usuarioCorreo: String(firstDefined(raw, ["usuarioCorreo", "UsuarioCorreo"]) || "").trim(),
     donanteNombre: String(firstDefined(raw, ["donanteNombre", "DonanteNombre"]) || "").trim(),
@@ -77,18 +97,24 @@ export function camposSolicitudDonacion(row) {
   const tipoId = textoDetalle(detalles, "tipoIdentificacion", "TipoIdentificacion");
   const tipoDonante = textoDetalle(detalles, "tipoDonante", "TipoDonante") || "persona";
   const etiquetasMetodo = {
-    entrega: "Lo entregaré personalmente",
-    recoleccion: "Solicito la recolección a domicilio",
+    entrega: "Entrega por parte del donante",
+    recoleccion: "Recolección solicitada",
   };
   const etiquetasId = {
     cedula: "Cédula física",
     juridica: "Cédula jurídica",
     pasaporte: "Pasaporte",
   };
+  const materialNombre =
+    textoDetalle(detalles, "materialNombre", "MaterialNombre") || row?.materialNombre || "";
+  const direccion =
+    textoDetalle(detalles, "direccion", "Direccion") ||
+    textoDetalle(detalles, "direccionRecoleccion", "DireccionRecoleccion");
 
   return {
     donanteNombre: row?.donanteNombre || row?.usuarioNombre || "",
     tipoDonante: tipoDonante === "organizacion" ? "Organización" : "Persona",
+    tipoDonanteClave: tipoDonante === "organizacion" ? "organizacion" : "persona",
     esOrganizacion: tipoDonante === "organizacion",
     nombre: textoDetalle(detalles, "nombre", "Nombre"),
     primerApellido: textoDetalle(detalles, "primerApellido", "PrimerApellido"),
@@ -98,15 +124,23 @@ export function camposSolicitudDonacion(row) {
     correo: textoDetalle(detalles, "correo", "Correo") || row?.usuarioCorreo || "",
     telefono: textoDetalle(detalles, "telefono", "Telefono"),
     categoria: row?.necesidadTitulo || row?.tipo || "",
+    material: materialNombre,
     descripcion: row?.descripcion || "",
     cantidadEstimada: textoDetalle(detalles, "cantidadEstimada", "CantidadEstimada"),
     estadoArticulos: textoDetalle(detalles, "estadoArticulos", "EstadoArticulos"),
     metodoEntrega: etiquetasMetodo[metodo] || metodo,
-    direccionRecoleccion: textoDetalle(detalles, "direccionRecoleccion", "DireccionRecoleccion"),
+    metodoEntregaClave: metodo,
+    recoleccionSolicitada: metodo === "recoleccion",
+    provincia: textoDetalle(detalles, "provincia", "Provincia"),
+    canton: textoDetalle(detalles, "canton", "Canton"),
+    distrito: textoDetalle(detalles, "distrito", "Distrito"),
+    direccion,
+    direccionRecoleccion: textoDetalle(detalles, "direccionRecoleccion", "DireccionRecoleccion") || direccion,
     horaEntrega:
       formatHoraDonacion(textoDetalle(detalles, "horaEntrega", "HoraEntrega")) ||
       horariosRaw.map((item) => formatHoraDonacion(item)).filter(Boolean).join(", "),
     valorEstimado: textoDetalle(detalles, "valorEstimado", "ValorEstimado"),
+    motivoRechazo: textoDetalle(detalles, "motivoRechazo", "MotivoRechazo"),
     fechaSolicitud:
       textoDetalle(detalles, "fechaSolicitud", "FechaSolicitud") ||
       (textoDetalle(detalles, "fechaEntrega", "FechaEntrega")
@@ -173,6 +207,35 @@ export async function inactivarNecesidad(id) {
   );
 }
 
+export async function crearMaterialAceptado(necesidadId, payload) {
+  return normalizarMaterialAceptado(
+    await apiRequest(`${BASE}/necesidades/${necesidadId}/materiales`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      errorPrefix: "Error al crear el material aceptado",
+    }),
+  );
+}
+
+export async function actualizarMaterialAceptado(materialId, payload) {
+  return normalizarMaterialAceptado(
+    await apiRequest(`${BASE}/necesidades/materiales/${materialId}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+      errorPrefix: "Error al actualizar el material aceptado",
+    }),
+  );
+}
+
+export async function inactivarMaterialAceptado(materialId) {
+  return normalizarMaterialAceptado(
+    await apiRequest(`${BASE}/necesidades/materiales/${materialId}/inactivar`, {
+      method: "PATCH",
+      errorPrefix: "Error al inactivar el material aceptado",
+    }),
+  );
+}
+
 export async function enviarSolicitudDonacion(payload) {
   return normalizarSolicitudDonacion(
     await apiRequest(`${BASE}/solicitudes`, {
@@ -197,12 +260,72 @@ export async function obtenerSolicitudesDonacionAdmin() {
   return (Array.isArray(data) ? data : []).map(normalizarSolicitudDonacion).filter(Boolean);
 }
 
-export async function actualizarEstadoSolicitudDonacion(id, estado) {
+export async function actualizarEstadoSolicitudDonacion(id, estado, motivoRechazo = "") {
   return normalizarSolicitudDonacion(
     await apiRequest(`${BASE}/solicitudes/${id}/estado`, {
       method: "PATCH",
-      body: JSON.stringify({ estado }),
+      body: JSON.stringify({
+        estado,
+        ...(motivoRechazo ? { motivoRechazo } : {}),
+      }),
       errorPrefix: "Error al actualizar el estado de la donación",
     }),
   );
+}
+
+const FECHAS_RECEPCION_BASE = `${BASE}/fechas-recepcion`;
+
+export async function obtenerFechasRecepcionDisponibles(desde, hasta) {
+  const params = new URLSearchParams();
+  if (desde) params.set("desde", desde);
+  if (hasta) params.set("hasta", hasta);
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const data = await apiRequest(`${FECHAS_RECEPCION_BASE}/disponibles${qs}`, {
+    skipAuth: true,
+    errorPrefix: "Error al consultar fechas de recepción",
+  });
+  return Array.isArray(data) ? data : [];
+}
+
+export async function obtenerFechasRecepcionAdmin(desde, hasta) {
+  const params = new URLSearchParams();
+  if (desde) params.set("desde", desde);
+  if (hasta) params.set("hasta", hasta);
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const data = await apiRequest(`${FECHAS_RECEPCION_BASE}${qs}`, {
+    errorPrefix: "Error al consultar fechas de recepción",
+  });
+  return Array.isArray(data) ? data : [];
+}
+
+export async function habilitarFechaRecepcionAdmin(fecha, payload = {}) {
+  return apiRequest(FECHAS_RECEPCION_BASE, {
+    method: "POST",
+    body: JSON.stringify({
+      fecha,
+      habilitada: true,
+      horarios: payload.horarios ?? [],
+      observaciones: payload.observaciones ?? "",
+    }),
+    errorPrefix: "Error al habilitar la fecha de recepción",
+  });
+}
+
+export async function actualizarFechaRecepcionAdmin(fecha, habilitada, payload = {}) {
+  return apiRequest(`${FECHAS_RECEPCION_BASE}/${fecha}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      habilitada,
+      horarios: payload.horarios ?? [],
+      observaciones: payload.observaciones ?? "",
+    }),
+    errorPrefix: "Error al actualizar la fecha de recepción",
+  });
+}
+
+export async function eliminarFechaRecepcionAdmin(fecha) {
+  return apiRequest(`${FECHAS_RECEPCION_BASE}/${fecha}`, {
+    method: "DELETE",
+    errorPrefix: "Error al eliminar la fecha de recepción",
+  });
 }

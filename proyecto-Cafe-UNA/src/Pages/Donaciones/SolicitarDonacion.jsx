@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useRouterState } from "@tanstack/react-router";
 import {
+  CalendarDays,
+  CalendarX2,
   Check,
+  Clock,
   FileText,
+  HelpCircle,
   Lock,
+  MapPin,
   Package,
   Phone,
   Send,
@@ -11,6 +16,8 @@ import {
   UploadCloud,
   User,
 } from "lucide-react";
+import { format, isBefore, startOfDay } from "date-fns";
+import { es, enUS } from "date-fns/locale";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
 import { NumericInput } from "../../Components/NumericInput/NumericInput";
 import { HOME_SCROLL_SECTIONS } from "../../lib/homeScrollTarget";
@@ -20,8 +27,11 @@ import { getActiveSessionUser } from "../../services/sessionService";
 import { consultarCedulaDetallada } from "../../services/cedulaService";
 import {
   enviarSolicitudDonacion,
+  obtenerFechasRecepcionDisponibles,
   obtenerNecesidadesPublicas,
 } from "../../services/donacionesService";
+import { Calendar } from "@/components/ui/calendar";
+import { useIdioma } from "../../lib/useIdioma";
 import { queueFocusFormError } from "../../lib/formFocus";
 import { filtrarEnteros } from "../../lib/numericInput";
 import {
@@ -31,6 +41,11 @@ import {
 import { useTraducir } from "../../hooks/useTraducir";
 import { ST } from "../../Components/T/ST";
 import { ImageLightbox } from "../../Components/ImageLightbox/ImageLightbox";
+import {
+  cantonesDeProvincia,
+  distritosDeCanton,
+  PROVINCIAS_CR,
+} from "../../lib/costaRicaDivisiones";
 import { asegurarCamposEnEspanol } from "../../lib/traducir";
 import "../Voluntariado/SolicitarVoluntariado.css";
 import "./SolicitarDonacion.css";
@@ -67,7 +82,6 @@ const MAX_DESCRIPCION = 500;
 const MAX_FOTOS = 5;
 const MAX_FOTO_BYTES = 10 * 1024 * 1024;
 const TIPOS_FOTO = new Set(["image/jpeg", "image/png", "image/webp"]);
-const CATEGORIA_OTRA = "__otra__";
 const DONACION_LOGIN_REDIRECT = "/donaciones/solicitar";
 
 const FORM_INICIAL = {
@@ -79,11 +93,16 @@ const FORM_INICIAL = {
   correo: "",
   telefono: "",
   categoriaId: "",
+  materialId: "",
   categoriaOtra: "",
   descripcion: "",
   cantidadEstimada: "",
   estadoArticulos: "",
   metodoEntrega: "",
+  provincia: "",
+  canton: "",
+  distrito: "",
+  direccion: "",
   direccionRecoleccion: "",
   horaEntrega: "",
   valorEstimado: "",
@@ -114,32 +133,6 @@ function parseIsoLocal(valor) {
   const fecha = new Date(`${valor}T00:00:00`);
   return Number.isNaN(fecha.getTime()) ? null : fecha;
 }
-
-function esFinDeSemana(iso) {
-  const fecha = parseIsoLocal(iso);
-  if (!fecha) return false;
-  const dia = fecha.getDay();
-  return dia === 0 || dia === 6;
-}
-
-function proximoDiaHabilIso(base = new Date()) {
-  const fecha = new Date(base.getFullYear(), base.getMonth(), base.getDate());
-  while (fecha.getDay() === 0 || fecha.getDay() === 6) {
-    fecha.setDate(fecha.getDate() + 1);
-  }
-  return isoLocal(fecha);
-}
-
-function minutosDeHora(valor) {
-  const partes = String(valor || "").split(":");
-  const horas = Number(partes[0]);
-  const minutos = Number(partes[1]);
-  if (!Number.isFinite(horas) || !Number.isFinite(minutos)) return null;
-  return horas * 60 + minutos;
-}
-
-const HORA_MINIMA = 8 * 60;
-const HORA_MAXIMA = 17 * 60;
 
 function esAvisoCedulaInformativo(mensaje) {
   return /cargad[oa]s?\s+autom[aá]ticamente/i.test(mensaje) || /datos cargados/i.test(mensaje);
@@ -224,7 +217,7 @@ export default function SolicitarDonacion() {
 
   const tTitulo = useTraducir("Solicitud de donación");
   const tSub = useTraducir(
-    "Tu apoyo nos ayuda a seguir creando un impacto positivo. Completa el formulario para registrar tu donación.",
+    "Café UNA recibe únicamente donaciones materiales: bienes, equipos, herramientas e insumos físicos.",
   );
   const tDonante = useTraducir("Información del donante");
   const tQuien = useTraducir("¿Quién realizará la donación?");
@@ -245,7 +238,6 @@ export default function SolicitarDonacion() {
   const tDetallesHint = useTraducir("Cuéntanos más sobre los artículos que deseas donar.");
   const tCategoria = useTraducir("Categoría de la donación");
   const tSeleccione = useTraducir("Seleccione una opción");
-  const tOtra = useTraducir("Otra");
   const tDescripcion = useTraducir("Descripción detallada de los artículos");
   const tCantidad = useTraducir("Cantidad o volumen estimado");
   const tPhCantidad = useTraducir("3 cajas, 5 unidades");
@@ -258,15 +250,15 @@ export default function SolicitarDonacion() {
   const tMetodo = useTraducir("Método de entrega preferido");
   const tEntregaTitulo = useTraducir("Lo entregaré personalmente");
   const tEntregaDesc = useTraducir("Llevaré los artículos al centro de acopio.");
-  const tRecoleccionTitulo = useTraducir("Solicito la recolección a domicilio");
-  const tRecoleccionDesc = useTraducir("La organización se encargará de recoger la donación.");
-  const tDireccion = useTraducir("Dirección de recolección");
-  const tDireccionHint = useTraducir("Solo es necesaria si solicitás recolección a domicilio.");
-  const tHorarios = useTraducir("Hora de entrega o recolección");
-  const tHorariosHint = useTraducir("Se recibe de lunes a viernes de 8:00 a.m. a 5:00 p.m.");
-  const tDiaEntrega = useTraducir("Día de entrega o recolección");
+  const tRecoleccionTitulo = useTraducir("Solicito recolección");
+  const tRecoleccionDesc = useTraducir("La organización evaluará si puede recoger la donación.");
+  const tHorarios = useTraducir("Horario de recepción");
+  const tHorariosHint = useTraducir(
+    "Seleccione un día habilitado y uno de los turnos en los que el centro de acopio recibe donaciones.",
+  );
   const tDiaEntregaEntrega = useTraducir("Día de entrega");
-  const tDiaEntregaRecoleccion = useTraducir("Día de recolección");
+  const { idioma } = useIdioma();
+  const localeCalendario = idioma === "en" ? enUS : es;
   const tDeclaracion = useTraducir("Declaración y confirmación");
   const tDeclaracionHint = useTraducir("Revisa la información y acepta los términos para completar tu solicitud.");
   const tValor = useTraducir("Valor estimado de la donación");
@@ -281,7 +273,21 @@ export default function SolicitarDonacion() {
   const tLoginBtn = useTraducir("Inicie sesión para enviar");
   const tLoginMsg = useTraducir("Debe iniciar sesión para enviar su solicitud de donación.");
   const tLoginLink = useTraducir("Iniciar sesión →");
-  const tOpcional = useTraducir("(opcional)");
+  const tMaterial = useTraducir("Material o artículo");
+  const tValorHint = useTraducir("Indique el valor aproximado total de los artículos ofrecidos.");
+  const tUbicacion = useTraducir("Ubicación de la donación");
+  const tUbicacionHint = useTraducir("Indique dónde se encuentran físicamente los artículos.");
+  const tProvincia = useTraducir("Provincia");
+  const tCanton = useTraducir("Cantón");
+  const tDistrito = useTraducir("Distrito");
+  const tSeñas = useTraducir("Dirección o señas adicionales");
+  const tRecoleccionAviso = useTraducir(
+    "La solicitud de recolección está sujeta a disponibilidad de personal, vehículo institucional, ubicación, cantidad y características de los artículos. Seleccionar esta opción no garantiza que la recolección sea aprobada.",
+  );
+  const tIntro = useTraducir(
+    "En Café UNA recibimos donaciones de materiales, equipos, herramientas e insumos que puedan contribuir al desarrollo de las actividades del proyecto. Antes de completar la solicitud, revise las categorías y materiales actualmente requeridos.",
+  );
+  const tFaqTitulo = useTraducir("Preguntas frecuentes");
 
   const [usuario] = useState(() => getActiveSessionUser());
   const [formulario, setFormulario] = useState(() =>
@@ -297,6 +303,8 @@ export default function SolicitarDonacion() {
   const [avisoCedula, setAvisoCedula] = useState(null);
   const [dropActivo, setDropActivo] = useState(false);
   const [fotoVista, setFotoVista] = useState(null);
+  const [fechasRecepcion, setFechasRecepcion] = useState([]);
+  const [cargandoFechasRecepcion, setCargandoFechasRecepcion] = useState(false);
 
   const {
     ref: pageRef,
@@ -312,6 +320,9 @@ export default function SolicitarDonacion() {
   fotosRef.current = fotos;
   const esPersona = formulario.tipoDonante === "persona";
   const pideRecoleccion = formulario.metodoEntrega === "recoleccion";
+  const pideEntrega = formulario.metodoEntrega === "entrega";
+  const cantonesDisponibles = cantonesDeProvincia(formulario.provincia);
+  const distritosDisponibles = distritosDeCanton(formulario.provincia, formulario.canton);
 
   const redirectToLogin = useCallback(() => {
     sessionStorage.setItem("postLoginRedirect", DONACION_LOGIN_REDIRECT);
@@ -344,6 +355,61 @@ export default function SolicitarDonacion() {
       vivo = false;
     };
   }, []);
+
+  useEffect(() => {
+    let vivo = true;
+    setCargandoFechasRecepcion(true);
+    obtenerFechasRecepcionDisponibles()
+      .then((rows) => {
+        if (!vivo) return;
+        setFechasRecepcion(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => {
+        if (!vivo) return;
+        setFechasRecepcion([]);
+      })
+      .finally(() => {
+        if (vivo) setCargandoFechasRecepcion(false);
+      });
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
+  const fechasRecepcionMap = useMemo(() => {
+    const map = new Map();
+    for (const f of fechasRecepcion) {
+      const iso = String(f.Fecha || f.fecha || "").slice(0, 10);
+      if (iso && (f.Habilitada ?? f.habilitada)) map.set(iso, f);
+    }
+    return map;
+  }, [fechasRecepcion]);
+
+  const fechasRecepcionDates = useMemo(() => {
+    const list = [];
+    for (const [iso] of fechasRecepcionMap) {
+      const [y, m, d] = iso.split("-").map(Number);
+      if (y && m && d) list.push(new Date(y, m - 1, d));
+    }
+    return list;
+  }, [fechasRecepcionMap]);
+
+  const fechaEntregaSeleccionada = parseIsoLocal(formulario.fechaEntrega);
+
+  const horariosRecepcionParaFecha = useMemo(() => {
+    const registro = fechasRecepcionMap.get(formulario.fechaEntrega);
+    if (!registro) return [];
+    const h = registro.Horarios ?? registro.horarios;
+    return Array.isArray(h) && h.length > 0 ? h : [];
+  }, [fechasRecepcionMap, formulario.fechaEntrega]);
+
+  const isFechaRecepcionDisabled = useCallback(
+    (date) => {
+      if (isBefore(startOfDay(date), startOfDay(new Date()))) return true;
+      return !fechasRecepcionMap.has(format(date, "yyyy-MM-dd"));
+    },
+    [fechasRecepcionMap],
+  );
 
   useEffect(() => {
     return () => {
@@ -471,6 +537,19 @@ export default function SolicitarDonacion() {
       valor = String(valor).slice(0, 30);
     }
 
+    if (name === "metodoEntrega") {
+      setFormulario((prev) => ({
+        ...prev,
+        metodoEntrega: valor,
+        fechaEntrega: "",
+        horaEntrega: "",
+      }));
+      limpiarError("metodoEntrega");
+      limpiarError("fechaEntrega");
+      limpiarError("horaEntrega");
+      return;
+    }
+
     if (
       name === "nombre" ||
       name === "primerApellido" ||
@@ -479,25 +558,38 @@ export default function SolicitarDonacion() {
       valor = limitarPalabras(String(valor), MAX_PALABRAS_TITULO);
     }
 
-    if (name === "fechaEntrega") {
-      if (valor && esFinDeSemana(valor)) {
-        setFormulario((prev) => ({ ...prev, fechaEntrega: "" }));
-        setErrores((prev) => ({
-          ...prev,
-          fechaEntrega: "Solo se pueden escoger días de lunes a viernes.",
-        }));
-        return;
-      }
+    if (name === "provincia") {
+      setFormulario((prev) => ({
+        ...prev,
+        provincia: valor,
+        canton: "",
+        distrito: "",
+      }));
+      limpiarError("provincia");
+      limpiarError("canton");
+      limpiarError("distrito");
+      return;
+    }
+    if (name === "canton") {
+      setFormulario((prev) => ({
+        ...prev,
+        canton: valor,
+        distrito: "",
+      }));
+      limpiarError("canton");
+      limpiarError("distrito");
+      return;
     }
 
     if (name === "categoriaId") {
       setFormulario((prev) => ({
         ...prev,
         categoriaId: valor,
-        categoriaOtra: valor === CATEGORIA_OTRA ? prev.categoriaOtra : "",
+        materialId: "",
+        categoriaOtra: "",
       }));
       limpiarError("categoriaId");
-      limpiarError("categoriaOtra");
+      limpiarError("materialId");
       return;
     }
 
@@ -585,6 +677,13 @@ export default function SolicitarDonacion() {
     () => necesidades.find((row) => String(row.id) === String(formulario.categoriaId)),
     [necesidades, formulario.categoriaId],
   );
+  const materialesCategoria = useMemo(
+    () =>
+      (categoriaSeleccionada?.materiales || []).filter(
+        (item) => !item.estado || item.estado === "ACTIVA",
+      ),
+    [categoriaSeleccionada],
+  );
 
   const validarFormulario = () => {
     const nuevos = {};
@@ -604,29 +703,35 @@ export default function SolicitarDonacion() {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) nuevos.correo = "Correo electrónico inválido";
     if (!formulario.telefono.trim()) nuevos.telefono = "El teléfono es obligatorio";
     if (!formulario.categoriaId) nuevos.categoriaId = "Seleccione la categoría de la donación";
-    if (formulario.categoriaId === CATEGORIA_OTRA && !formulario.categoriaOtra.trim()) {
-      nuevos.categoriaOtra = "Especifique la categoría";
-    }
+    if (!formulario.materialId) nuevos.materialId = "Seleccione el material o artículo";
     if (!formulario.descripcion.trim()) nuevos.descripcion = "La descripción es obligatoria";
     if (!formulario.cantidadEstimada.trim()) nuevos.cantidadEstimada = "Indique la cantidad o volumen estimado";
     if (!formulario.estadoArticulos) nuevos.estadoArticulos = "Seleccione el estado de los artículos";
+    const valorNum = Number(String(formulario.valorEstimado).replace(/[^\d.]/g, ""));
+    if (!formulario.valorEstimado.trim() || !Number.isFinite(valorNum) || valorNum <= 0) {
+      nuevos.valorEstimado = "Indique un valor estimado mayor a 0";
+    }
     if (fotos.length < 1) nuevos.fotos = "Agregue al menos una fotografía";
+    if (fotos.length > MAX_FOTOS) nuevos.fotos = "Máximo 5 imágenes.";
+    if (!formulario.provincia) nuevos.provincia = "Seleccione la provincia";
+    if (!formulario.canton) nuevos.canton = "Seleccione el cantón";
+    if (!formulario.distrito) nuevos.distrito = "Seleccione el distrito";
+    if (!formulario.direccion.trim()) nuevos.direccion = "Indique la dirección o señas";
     if (!formulario.metodoEntrega) nuevos.metodoEntrega = "Seleccione el método de entrega";
-    if (pideRecoleccion && !formulario.direccionRecoleccion.trim()) {
-      nuevos.direccionRecoleccion = "Indique la dirección de recolección";
-    }
-    if (!formulario.horaEntrega) {
-      nuevos.horaEntrega = "Indique la hora de entrega o recolección";
-    } else {
-      const minutos = minutosDeHora(formulario.horaEntrega);
-      if (minutos == null || minutos < HORA_MINIMA || minutos > HORA_MAXIMA) {
-        nuevos.horaEntrega = "La hora debe estar entre 8:00 a.m. y 5:00 p.m.";
+    if (pideEntrega) {
+      if (!formulario.fechaEntrega) {
+        nuevos.fechaEntrega = "Seleccione un día habilitado para entregar la donación";
+      } else if (!fechasRecepcionMap.has(formulario.fechaEntrega)) {
+        nuevos.fechaEntrega = "Esa fecha no está habilitada para recibir donaciones.";
       }
-    }
-    if (!formulario.fechaEntrega) {
-      nuevos.fechaEntrega = "Seleccione el día de entrega o recolección";
-    } else if (esFinDeSemana(formulario.fechaEntrega)) {
-      nuevos.fechaEntrega = "Solo se pueden escoger días de lunes a viernes.";
+      if (!formulario.horaEntrega) {
+        nuevos.horaEntrega = "Seleccione un horario de recepción";
+      } else if (
+        horariosRecepcionParaFecha.length > 0 &&
+        !horariosRecepcionParaFecha.includes(formulario.horaEntrega)
+      ) {
+        nuevos.horaEntrega = "Seleccione un horario disponible para esa fecha";
+      }
     }
     if (!formulario.declaraOrigen) nuevos.declaraOrigen = "Debe certificar el origen lícito de los artículos";
     if (!formulario.aceptaPrivacidad) nuevos.aceptaPrivacidad = "Debe aceptar la política de privacidad";
@@ -664,13 +769,17 @@ export default function SolicitarDonacion() {
           "correo",
           "telefono",
           "categoriaId",
-          "categoriaOtra",
+          "materialId",
           "descripcion",
           "cantidadEstimada",
           "estadoArticulos",
+          "valorEstimado",
           "fotos",
+          "provincia",
+          "canton",
+          "distrito",
+          "direccion",
           "metodoEntrega",
-          "direccionRecoleccion",
           "horaEntrega",
           "fechaEntrega",
           "declaraOrigen",
@@ -683,19 +792,17 @@ export default function SolicitarDonacion() {
     setEnviando(true);
     setErrorApi(null);
     try {
-      const tipoFinal =
-        formulario.categoriaId === CATEGORIA_OTRA
-          ? formulario.categoriaOtra.trim()
-          : categoriaSeleccionada?.titulo || formulario.categoriaId;
+      const tipoFinal = categoriaSeleccionada?.titulo || "";
+      const materialSel = materialesCategoria.find(
+        (item) => String(item.id) === String(formulario.materialId),
+      );
 
       const payload = {
-        necesidadId:
-          formulario.categoriaId && formulario.categoriaId !== CATEGORIA_OTRA
-            ? Number(formulario.categoriaId)
-            : undefined,
+        necesidadId: Number(formulario.categoriaId),
+        materialId: Number(formulario.materialId),
         tipo: tipoFinal,
         descripcion: formulario.descripcion.trim(),
-        fechaPropuesta: formulario.fechaEntrega,
+        fechaPropuesta: pideEntrega ? formulario.fechaEntrega : hoyIso(),
         detalles: {
           donanteNombre: nombreCompletoDonante(formulario),
           tipoDonante: formulario.tipoDonante,
@@ -710,10 +817,16 @@ export default function SolicitarDonacion() {
             : formulario.identificacion.trim(),
           correo: formulario.correo.trim(),
           telefono: formulario.telefono.trim(),
+          materialId: Number(formulario.materialId),
+          materialNombre: materialSel?.nombre || "",
           cantidadEstimada: formulario.cantidadEstimada.trim(),
           estadoArticulos: formulario.estadoArticulos,
           metodoEntrega: formulario.metodoEntrega,
-          direccionRecoleccion: pideRecoleccion ? formulario.direccionRecoleccion.trim() : "",
+          provincia: formulario.provincia,
+          canton: formulario.canton,
+          distrito: formulario.distrito,
+          direccion: formulario.direccion.trim(),
+          direccionRecoleccion: pideRecoleccion ? formulario.direccion.trim() : "",
           horarios: formulario.horaEntrega ? [formulario.horaEntrega] : [],
           horaEntrega: formulario.horaEntrega,
           fechaEntrega: formulario.fechaEntrega,
@@ -735,6 +848,7 @@ export default function SolicitarDonacion() {
       window.dispatchEvent(new Event("donaciones-updated"));
       resetFormulario();
       setEnviado(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       setErrorApi(err instanceof Error ? err.message : "Ocurrió un error al enviar la solicitud. Intente nuevamente.");
       queueFocusFormError({ root: event.currentTarget });
@@ -759,7 +873,38 @@ export default function SolicitarDonacion() {
           </div>
 
           {!enviado ? (
-            <form
+            <>
+          <div className="donacion-intro">
+            <div className="donacion-intro__encabezado">
+              <Package size={20} aria-hidden="true" />
+              <h2><ST>¿Qué donaciones recibimos?</ST></h2>
+            </div>
+            <p>{tIntro}</p>
+            {necesidades.length ? (
+              <ul className="donacion-intro__cats">
+                {necesidades.map((item) => (
+                  <li key={item.id}>
+                    <strong>{item.titulo}</strong>
+                    {item.materiales?.length ? (
+                      <span>
+                        {(item.materiales || [])
+                          .filter((mat) => !mat.estado || mat.estado === "ACTIVA")
+                          .slice(0, 4)
+                          .map((mat) => mat.nombre)
+                          .join(", ")}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mensaje-info">
+                <ST>Por ahora no hay categorías de donación material activas.</ST>
+              </p>
+            )}
+          </div>
+
+          <form
               onSubmit={handleSubmit}
               className="formulario-card"
               noValidate
@@ -948,23 +1093,28 @@ export default function SolicitarDonacion() {
                           {item.titulo}
                         </option>
                       ))}
-                      <option value={CATEGORIA_OTRA}>{tOtra}</option>
                     </select>
                     {errores.categoriaId ? <span className="mensaje-error"><ST>{errores.categoriaId}</ST></span> : null}
                   </div>
-                  {formulario.categoriaId === CATEGORIA_OTRA ? (
-                    <div className="campo">
-                      <input
-                        type="text"
-                        name="categoriaOtra"
-                        value={formulario.categoriaOtra}
-                        onChange={handleChange}
-                        placeholder={tOtra}
-                        maxLength={120}
-                      />
-                      {errores.categoriaOtra ? <span className="mensaje-error"><ST>{errores.categoriaOtra}</ST></span> : null}
-                    </div>
-                  ) : null}
+                  <div className="campo">
+                    <label>
+                      {tMaterial} <span className="req">*</span>
+                    </label>
+                    <select
+                      name="materialId"
+                      value={formulario.materialId}
+                      onChange={handleChange}
+                      disabled={!formulario.categoriaId}
+                    >
+                      <option value="">{tSeleccione}</option>
+                      {materialesCategoria.map((item) => (
+                        <option key={item.id} value={String(item.id)}>
+                          {item.nombre}
+                        </option>
+                      ))}
+                    </select>
+                    {errores.materialId ? <span className="mensaje-error"><ST>{errores.materialId}</ST></span> : null}
+                  </div>
                   <div className="campo">
                     <label>
                       {tDescripcion} <span className="req">*</span>
@@ -1010,6 +1160,23 @@ export default function SolicitarDonacion() {
                       </select>
                       {errores.estadoArticulos ? <span className="mensaje-error"><ST>{errores.estadoArticulos}</ST></span> : null}
                     </div>
+                  </div>
+                  <div className="campo">
+                    <label>
+                      {tValor} <span className="req">*</span>
+                    </label>
+                    <div className="campo-prefijo">
+                      <span className="campo-prefijo__simbolo">₡</span>
+                      <input
+                        type="text"
+                        name="valorEstimado"
+                        value={formulario.valorEstimado}
+                        onChange={handleChange}
+                        inputMode="decimal"
+                      />
+                    </div>
+                    <span className="mensaje-info">{tValorHint}</span>
+                    {errores.valorEstimado ? <span className="mensaje-error"><ST>{errores.valorEstimado}</ST></span> : null}
                   </div>
                   <div className="campo">
                     <label>
@@ -1080,7 +1247,61 @@ export default function SolicitarDonacion() {
                   </div>
                 </SectionCard>
 
-                <SectionCard paso={3} icon={Truck} title={tLogistica} hint={tLogisticaHint}>
+                <SectionCard paso={3} icon={MapPin} title={tUbicacion} hint={tUbicacionHint}>
+                  <div className="form-grid">
+                    <div className="campo">
+                      <label>
+                        {tProvincia} <span className="req">*</span>
+                      </label>
+                      <select name="provincia" value={formulario.provincia} onChange={handleChange}>
+                        <option value="">{tSeleccione}</option>
+                        {PROVINCIAS_CR.map((provincia) => (
+                          <option key={provincia} value={provincia}>{provincia}</option>
+                        ))}
+                      </select>
+                      {errores.provincia ? <span className="mensaje-error"><ST>{errores.provincia}</ST></span> : null}
+                    </div>
+                    <div className="campo">
+                      <label>
+                        {tCanton} <span className="req">*</span>
+                      </label>
+                      <select name="canton" value={formulario.canton} onChange={handleChange} disabled={!formulario.provincia}>
+                        <option value="">{tSeleccione}</option>
+                        {cantonesDisponibles.map((canton) => (
+                          <option key={canton} value={canton}>{canton}</option>
+                        ))}
+                      </select>
+                      {errores.canton ? <span className="mensaje-error"><ST>{errores.canton}</ST></span> : null}
+                    </div>
+                    <div className="campo">
+                      <label>
+                        {tDistrito} <span className="req">*</span>
+                      </label>
+                      <select name="distrito" value={formulario.distrito} onChange={handleChange} disabled={!formulario.canton}>
+                        <option value="">{tSeleccione}</option>
+                        {distritosDisponibles.map((distrito) => (
+                          <option key={distrito} value={distrito}>{distrito}</option>
+                        ))}
+                      </select>
+                      {errores.distrito ? <span className="mensaje-error"><ST>{errores.distrito}</ST></span> : null}
+                    </div>
+                  </div>
+                  <div className="campo">
+                    <label>
+                      {tSeñas} <span className="req">*</span>
+                    </label>
+                    <textarea
+                      name="direccion"
+                      rows={3}
+                      value={formulario.direccion}
+                      onChange={handleChange}
+                      maxLength={500}
+                    />
+                    {errores.direccion ? <span className="mensaje-error"><ST>{errores.direccion}</ST></span> : null}
+                  </div>
+                </SectionCard>
+
+                <SectionCard paso={4} icon={Truck} title={tLogistica} hint={tLogisticaHint}>
                   <div className="campo">
                     <p className="campo-pregunta">
                       {tMetodo} <span className="req">*</span>
@@ -1115,90 +1336,161 @@ export default function SolicitarDonacion() {
                     </div>
                     {errores.metodoEntrega ? <span className="mensaje-error"><ST>{errores.metodoEntrega}</ST></span> : null}
                   </div>
-                  <div className="campo">
-                    <label>{tDireccion}</label>
-                    <textarea
-                      name="direccionRecoleccion"
-                      rows={3}
-                      value={formulario.direccionRecoleccion}
-                      onChange={handleChange}
-                      disabled={!pideRecoleccion}
-                    />
-                    <span className="mensaje-info">{tDireccionHint}</span>
-                    {errores.direccionRecoleccion ? (
-                      <span className="mensaje-error"><ST>{errores.direccionRecoleccion}</ST></span>
-                    ) : null}
-                  </div>
-                  <div className="form-grid">
-                    <div className="campo">
-                      <label>
-                        {formulario.metodoEntrega === "recoleccion"
-                          ? tDiaEntregaRecoleccion
-                          : formulario.metodoEntrega === "entrega"
-                            ? tDiaEntregaEntrega
-                            : tDiaEntrega}{" "}
-                        <span className="req">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        name="fechaEntrega"
-                        min={proximoDiaHabilIso()}
-                        value={formulario.fechaEntrega}
-                        onChange={handleChange}
-                      />
-                      {errores.fechaEntrega ? (
-                        <span className="mensaje-error"><ST>{errores.fechaEntrega}</ST></span>
-                      ) : null}
-                    </div>
-                    <div className="campo">
-                      <label>
-                        {tHorarios} <span className="req">*</span>
-                      </label>
-                      <input
-                        type="time"
-                        name="horaEntrega"
-                        min="08:00"
-                        max="17:00"
-                        step="60"
-                        value={formulario.horaEntrega}
-                        onChange={handleChange}
-                      />
-                      {errores.horaEntrega ? (
-                        <span className="mensaje-error"><ST>{errores.horaEntrega}</ST></span>
-                      ) : null}
-                    </div>
-                  </div>
-                  <span className="mensaje-info">{tHorariosHint}</span>
+                  {pideRecoleccion ? (
+                    <p className="donacion-aviso-recoleccion">{tRecoleccionAviso}</p>
+                  ) : null}
+                  {pideEntrega ? (
+                    <>
+                      {cargandoFechasRecepcion ? (
+                        <div className="voluntariado-aviso-bloque">
+                          <div className="size-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mb-2" />
+                          <p className="voluntariado-aviso-bloque__texto">
+                            <ST>Consultando fechas de recepción disponibles...</ST>
+                          </p>
+                        </div>
+                      ) : fechasRecepcionDates.length === 0 ? (
+                        <div className="voluntariado-aviso-bloque">
+                          <CalendarX2 className="voluntariado-aviso-bloque__icono size-8 text-amber-500" />
+                          <p className="voluntariado-aviso-bloque__titulo text-amber-900">
+                            <ST>Sin fechas de recepción configuradas</ST>
+                          </p>
+                          <p className="voluntariado-aviso-bloque__texto text-amber-700">
+                            <ST>Por ahora no hay días habilitados para entregar donaciones en el centro de acopio. Puede solicitar recolección o consultar más adelante.</ST>
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="campo full flex flex-col items-center">
+                          <label className="self-start">
+                            {tDiaEntregaEntrega}{" "}
+                            <span className="req">*</span>
+                          </label>
+                          {fechaEntregaSeleccionada ? (
+                            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-900 bg-white px-5 py-2 shadow-xs">
+                              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                <ST>FECHA SELECCIONADA:</ST>
+                              </span>
+                              <span className="text-xs font-bold text-slate-950 capitalize">
+                                {format(fechaEntregaSeleccionada, "EEEE, dd 'de' MMMM 'de' yyyy", {
+                                  locale: localeCalendario,
+                                })}
+                              </span>
+                            </div>
+                          ) : null}
+                          <div className="flex justify-center my-1 w-full">
+                            <Calendar
+                              mode="single"
+                              selected={fechaEntregaSeleccionada || undefined}
+                              onSelect={(date) => {
+                                const iso = date ? format(date, "yyyy-MM-dd") : "";
+                                setFormulario((prev) => ({
+                                  ...prev,
+                                  fechaEntrega: iso,
+                                  horaEntrega: "",
+                                }));
+                                limpiarError("fechaEntrega");
+                                limpiarError("horaEntrega");
+                              }}
+                              disabled={isFechaRecepcionDisabled}
+                              locale={localeCalendario}
+                              modifiers={{ habilitado: fechasRecepcionDates }}
+                              modifiersClassNames={{ habilitado: "rdp-day-habilitado" }}
+                              captionLayout="dropdown"
+                            />
+                          </div>
+                          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-600 mt-4 pt-2">
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex size-5 items-center justify-center rounded-full border-2 border-slate-950 bg-white font-bold text-slate-950 text-[11px]">
+                                15
+                              </span>
+                              <span><ST>Fecha disponible para recibir donaciones</ST></span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex size-5 items-center justify-center text-slate-400 opacity-40 text-[11px]">
+                                15
+                              </span>
+                              <span><ST>Fecha no disponible</ST></span>
+                            </div>
+                          </div>
+                          {errores.fechaEntrega ? (
+                            <span className="mensaje-error text-center block w-full mt-2">
+                              <ST>{errores.fechaEntrega}</ST>
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
+
+                      {!formulario.fechaEntrega ? (
+                        <div className="voluntariado-aviso-bloque mt-4">
+                          <CalendarDays className="voluntariado-aviso-bloque__icono size-8" />
+                          <p className="voluntariado-aviso-bloque__titulo">
+                            <ST>Seleccione una fecha en el calendario</ST>
+                          </p>
+                          <p className="voluntariado-aviso-bloque__texto">
+                            <ST>Al elegir un día habilitado se mostrarán los horarios de recepción de ese día.</ST>
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="campo full mt-4">
+                          <p className="text-xs font-semibold text-slate-700 mb-3">
+                            {tHorarios} <span className="req">*</span>
+                          </p>
+                          <div className="opciones-disponibilidad-grid">
+                            {horariosRecepcionParaFecha.map((horarioStr) => {
+                              const esActivo = formulario.horaEntrega === horarioStr;
+                              return (
+                                <label
+                                  key={horarioStr}
+                                  className={`opcion-disponibilidad-card ${
+                                    esActivo ? "opcion-disponibilidad-card--activa" : ""
+                                  }`}
+                                >
+                                  <input
+                                    type="radio"
+                                    name="horaEntrega"
+                                    value={horarioStr}
+                                    checked={esActivo}
+                                    onChange={() => {
+                                      setFormulario((prev) => ({ ...prev, horaEntrega: horarioStr }));
+                                      limpiarError("horaEntrega");
+                                    }}
+                                  />
+                                  <div className="opcion-disponibilidad__header">
+                                    <span className="opcion-disponibilidad__titulo">
+                                      {horarioStr}
+                                    </span>
+                                    <span className="opcion-disponibilidad__radio-dot" />
+                                  </div>
+                                  <span className="opcion-disponibilidad__horario">
+                                    <Clock size={14} />
+                                    {horarioStr}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          {errores.horaEntrega ? (
+                            <span className="mensaje-error mt-2 block">
+                              <ST>{errores.horaEntrega}</ST>
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
+                      <span className="mensaje-info">{tHorariosHint}</span>
+                    </>
+                  ) : null}
                 </SectionCard>
 
-                <SectionCard paso={4} icon={FileText} title={tDeclaracion} hint={tDeclaracionHint}>
-                  <div className="form-grid">
-                    <div className="campo">
-                      <label>
-                        {tValor} <span className="mensaje-info">{tOpcional}</span>
-                      </label>
-                      <div className="campo-prefijo">
-                        <span className="campo-prefijo__simbolo">₡</span>
-                        <input
-                          type="text"
-                          name="valorEstimado"
-                          value={formulario.valorEstimado}
-                          onChange={handleChange}
-                          inputMode="decimal"
-                        />
-                      </div>
-                    </div>
-                    <div className="campo">
-                      <label>{tFecha}</label>
-                      <input
-                        type="date"
-                        name="fechaSolicitud"
-                        value={formulario.fechaSolicitud}
-                        readOnly
-                        disabled
-                        className="donacion-fecha-fija"
-                      />
-                    </div>
+                <SectionCard paso={5} icon={FileText} title={tDeclaracion} hint={tDeclaracionHint}>
+                  <div className="campo">
+                    <label>{tFecha}</label>
+                    <input
+                      type="date"
+                      name="fechaSolicitud"
+                      value={formulario.fechaSolicitud}
+                      readOnly
+                      disabled
+                      className="donacion-fecha-fija"
+                    />
                   </div>
                   <div className="donacion-checks">
                     <label>
@@ -1265,6 +1557,51 @@ export default function SolicitarDonacion() {
                 </button>
               </div>
             </form>
+
+          <section className="donacion-faq" aria-labelledby="donacion-faq-titulo">
+            <h2 id="donacion-faq-titulo">
+              <HelpCircle size={18} aria-hidden="true" /> {tFaqTitulo}
+            </h2>
+            <details>
+              <summary><ST>¿Qué puedo donar?</ST></summary>
+              <p>
+                <ST>
+                  Únicamente donaciones materiales: bienes, equipos, herramientas e insumos físicos. Revise las categorías activas y los materiales aceptados que aparecen al inicio de esta página.
+                </ST>
+              </p>
+            </details>
+            <details>
+              <summary><ST>¿Puedo donar dinero?</ST></summary>
+              <p>
+                <ST>No. Este módulo está destinado únicamente a donaciones materiales.</ST>
+              </p>
+            </details>
+            <details>
+              <summary><ST>¿Qué sucede si el artículo que deseo donar no aparece?</ST></summary>
+              <p>
+                <ST>
+                  Las categorías mostradas corresponden a las necesidades actuales del proyecto. Si su artículo no figura, puede comunicarse con Café UNA por los medios institucionales publicados en el sitio.
+                </ST>
+              </p>
+            </details>
+            <details>
+              <summary><ST>¿Pueden recoger mi donación?</ST></summary>
+              <p>
+                <ST>
+                  Puede solicitar una recolección, pero está sujeta a evaluación y disponibilidad de personal, vehículo, ubicación y características de los artículos. No se aprueba de forma automática.
+                </ST>
+              </p>
+            </details>
+            <details>
+              <summary><ST>¿Cómo sabré si mi donación fue aceptada?</ST></summary>
+              <p>
+                <ST>
+                  La solicitud será revisada por el personal de Café UNA y se le notificará el resultado mediante correo electrónico.
+                </ST>
+              </p>
+            </details>
+          </section>
+            </>
           ) : (
             <div className="confirmacion">
               <div className="confirmacion__icono">
@@ -1273,7 +1610,7 @@ export default function SolicitarDonacion() {
               <h2><ST>Solicitud enviada correctamente</ST></h2>
               <p>
                 <ST>
-                  Recibimos tu solicitud de donación en estado Pendiente. El equipo de Café UNA la revisará y podés consultarla en tu perfil.
+                  Recibimos tu solicitud de donación en estado Pendiente. El equipo de Café UNA la revisará y te notificará el resultado por correo electrónico.
                 </ST>
               </p>
               <button type="button" className="btn-enviar" onClick={() => setEnviado(false)}>
