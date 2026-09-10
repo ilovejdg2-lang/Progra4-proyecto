@@ -27,6 +27,13 @@ const MODULOS = [
 const TABLA_A_MODULO = {
   usuarios: "usuario",
   solicitudes_voluntariado: "voluntariado",
+  fechas_voluntariado: "voluntariado",
+  solicitudes_visitas_grupales: "voluntariado",
+  disponibilidades_visitas: "voluntariado",
+  donacion_solicitudes: "voluntariado",
+  donacion_necesidades: "voluntariado",
+  donacion_materiales_aceptados: "voluntariado",
+  fechas_recepcion_donaciones: "voluntariado",
   inventario_stock_ubicaciones: "inventario",
   inventario_ubicaciones: "inventario",
   activos_fijos: "inventario",
@@ -40,6 +47,7 @@ const TABLA_A_MODULO = {
   informacion_footer: "informacion_general",
   galeria_institucional: "informacion_general",
   enlaces_sitio: "informacion_general",
+  faq_inicio: "informacion_general",
   compras: "compras",
   compra_items: "compras",
 };
@@ -351,7 +359,7 @@ function AdminAuditoria() {
             <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 px-6 py-12 text-center">
               <ScrollText className="size-10 text-slate-300" />
               <p className="mt-3 text-sm font-medium text-slate-700"><ST>{"No hay registros de auditor\u00eda todav\u00eda."}</ST></p>
-              <p className="mt-1 text-sm text-slate-500"><ST>{"Aqu\u00ed aparecer\u00e1n cambios importantes en usuarios, productos, contenido y voluntariado."}</ST></p>
+              <p className="mt-1 text-sm text-slate-500"><ST>{"Aqu\u00ed aparecer\u00e1n cambios importantes en usuarios, productos, contenido y voluntariado (incluye visitas y donaciones)."}</ST></p>
             </div>
           ) : (
             <>

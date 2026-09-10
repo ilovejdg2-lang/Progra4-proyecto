@@ -273,40 +273,23 @@ export function AppSidebar() {
     return savedValue === null ? isAjustesRoute : savedValue === "true";
   });
 
-  const updateGeneralOpen = (open) => {
-    setGeneralOpen(open);
-    localStorage.setItem(GENERAL_OPEN_KEY, String(open));
+  const deferSet = (setter, key, open) => {
+    queueMicrotask(() => {
+      setter((prev) => {
+        if (prev === open) return prev;
+        if (key) localStorage.setItem(key, String(open));
+        return open;
+      });
+    });
   };
 
-  const updateSobreNosotrosOpen = (open) => {
-    setSobreNosotrosOpen(open);
-    localStorage.setItem(SOBRE_NOSOTROS_OPEN_KEY, String(open));
-  };
-
-  const updateInventoryOpen = (open) => {
-    setInventoryOpen(open);
-    localStorage.setItem(INVENTORY_OPEN_KEY, String(open));
-  };
-
-  const updateVoluntariadoOpen = (open) => {
-    setVoluntariadoOpen(open);
-    localStorage.setItem(VOLUNTARIADO_OPEN_KEY, String(open));
-  };
-
-  const updateVisitasOpen = (open) => {
-    setVisitasOpen(open);
-    localStorage.setItem(VISITAS_OPEN_KEY, String(open));
-  };
-
-  const updateDonacionesOpen = (open) => {
-    setDonacionesOpen(open);
-    localStorage.setItem(DONACIONES_OPEN_KEY, String(open));
-  };
-
-  const updateAjustesOpen = (open) => {
-    setAjustesOpen(open);
-    localStorage.setItem(AJUSTES_OPEN_KEY, String(open));
-  };
+  const updateGeneralOpen = (open) => deferSet(setGeneralOpen, GENERAL_OPEN_KEY, open);
+  const updateSobreNosotrosOpen = (open) => deferSet(setSobreNosotrosOpen, SOBRE_NOSOTROS_OPEN_KEY, open);
+  const updateInventoryOpen = (open) => deferSet(setInventoryOpen, INVENTORY_OPEN_KEY, open);
+  const updateVoluntariadoOpen = (open) => deferSet(setVoluntariadoOpen, VOLUNTARIADO_OPEN_KEY, open);
+  const updateVisitasOpen = (open) => deferSet(setVisitasOpen, VISITAS_OPEN_KEY, open);
+  const updateDonacionesOpen = (open) => deferSet(setDonacionesOpen, DONACIONES_OPEN_KEY, open);
+  const updateAjustesOpen = (open) => deferSet(setAjustesOpen, AJUSTES_OPEN_KEY, open);
 
   const closeMobileSidebar = () => setOpenMobile(false);
 

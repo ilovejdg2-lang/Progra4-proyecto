@@ -360,6 +360,95 @@
   word-break: break-word;
 }
 
+.perfil-cliente-lista {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.perfil-cliente-fila {
+  display: grid;
+  grid-template-columns: minmax(7rem, 9.5rem) 1fr;
+  gap: 0.5rem 0.75rem;
+  font-size: var(--text-body);
+}
+
+.perfil-cliente-fila dt {
+  margin: 0;
+  color: #64748b;
+}
+
+.perfil-cliente-fila dd {
+  margin: 0;
+  color: #0f172a;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.perfil-cliente-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.perfil-cliente-form .registro-label {
+  font-size: var(--text-body);
+  font-weight: 500;
+  color: #555555;
+}
+
+.perfil-cliente-form .registro-radio-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.perfil-cliente-form .registro-radio {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--control-height);
+  border: 1px solid #dddddd;
+  border-radius: var(--ui-btn-radius);
+  background: #ffffff;
+  color: #555555;
+  font-size: var(--text-body);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 0.75rem;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.perfil-cliente-form .registro-radio:hover {
+  border-color: #bbbbbb;
+}
+
+.perfil-cliente-form .registro-radio.is-active {
+  border-color: #1a1a1a;
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+.perfil-cliente-form .registro-radio input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.perfil-cliente-form .registro-radio__text {
+  line-height: 1;
+}
+
+.perfil-cliente-form .registro-radio:focus-within {
+  box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.08);
+}
+
 .perfil-donaciones-list {
   margin: 0;
   padding-left: 1.1rem;

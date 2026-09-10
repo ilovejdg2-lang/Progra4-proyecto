@@ -6,7 +6,6 @@ import {
   Check,
   Clock,
   FileText,
-  HelpCircle,
   Lock,
   MapPin,
   Package,
@@ -18,6 +17,7 @@ import {
 import { format, isBefore, startOfDay } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
+import AvisoSedeFinca from "../../Components/AvisoSedeFinca/AvisoSedeFinca";
 import { NumericInput } from "../../Components/NumericInput/NumericInput";
 import { HOME_SCROLL_SECTIONS } from "../../lib/homeScrollTarget";
 import PageLoading from "../../Components/PageLoading/PageLoading";
@@ -29,7 +29,9 @@ import {
   obtenerFechasRecepcionDisponibles,
   obtenerNecesidadesPublicas,
 } from "../../services/donacionesService";
-import { Calendar } from "@/components/ui/calendar";
+import { obtenerSeccion } from "../../services/informacionService";
+import { sedeDesdeHomeLocation, SEDE_FINCA_NOMBRE } from "../../lib/sedeFinca";
+import { Calendar } from "@/Components/ui/calendar";
 import { useIdioma } from "../../lib/useIdioma";
 import { queueFocusFormError } from "../../lib/formFocus";
 import { filtrarEnteros } from "../../lib/numericInput";
@@ -67,43 +69,6 @@ function SectionCard({ icon: Icon, paso, title, hint, children }) {
       </div>
       <div className="section-card__body">{children}</div>
     </div>
-  );
-}
-
-function FaqItem({ question, children }) {
-  const handleSummaryClick = (event) => {
-    const details = event.currentTarget.parentElement;
-    if (!details || details.tagName !== "DETAILS" || !details.open) return;
-    if (details.classList.contains("donacion-faq__item--cerrando")) {
-      event.preventDefault();
-      return;
-    }
-    event.preventDefault();
-    details.classList.add("donacion-faq__item--cerrando");
-    const panel = details.querySelector(".donacion-faq__cuerpo");
-    let cerrado = false;
-    const finalizar = () => {
-      if (cerrado) return;
-      cerrado = true;
-      details.open = false;
-      details.classList.remove("donacion-faq__item--cerrando");
-      panel?.removeEventListener("transitionend", onEnd);
-    };
-    const onEnd = (evt) => {
-      if (evt.target !== panel) return;
-      finalizar();
-    };
-    panel?.addEventListener("transitionend", onEnd);
-    window.setTimeout(finalizar, 420);
-  };
-
-  return (
-    <details className="donacion-faq__item">
-      <summary onClick={handleSummaryClick}>{question}</summary>
-      <div className="donacion-faq__cuerpo">
-        <div className="donacion-faq__cuerpo-inner">{children}</div>
-      </div>
-    </details>
   );
 }
 
@@ -285,12 +250,14 @@ export default function SolicitarDonacion() {
   const tLogisticaHint = useTraducir("Indica cómo te gustaría realizar la entrega de los artículos.");
   const tMetodo = useTraducir("Método de entrega preferido");
   const tEntregaTitulo = useTraducir("Lo entregaré personalmente");
-  const tEntregaDesc = useTraducir("Llevaré los artículos al centro de acopio.");
+  const tEntregaDesc = useTraducir(
+    `Llevaré los artículos a la ${SEDE_FINCA_NOMBRE}.`,
+  );
   const tRecoleccionTitulo = useTraducir("Solicito recolección");
   const tRecoleccionDesc = useTraducir("La organización evaluará si puede recoger la donación.");
   const tHorarios = useTraducir("Horario de recepción");
   const tHorariosHint = useTraducir(
-    "Seleccione un día habilitado y uno de los turnos en los que el centro de acopio recibe donaciones.",
+    `Seleccione un día habilitado y uno de los turnos en los que la ${SEDE_FINCA_NOMBRE} recibe donaciones.`,
   );
   const tDiaEntregaEntrega = useTraducir("Día de entrega");
   const { idioma } = useIdioma();
@@ -322,7 +289,6 @@ export default function SolicitarDonacion() {
   const tIntro = useTraducir(
     "En Café UNA recibimos donaciones de materiales, equipos, herramientas e insumos que puedan contribuir al desarrollo de las actividades del proyecto. Antes de completar la solicitud, revise las categorías y materiales actualmente requeridos.",
   );
-  const tFaqTitulo = useTraducir("Preguntas frecuentes");
 
   const [usuario] = useState(() => getActiveSessionUser());
   const [formulario, setFormulario] = useState(() =>
@@ -340,6 +306,7 @@ export default function SolicitarDonacion() {
   const [fotoVista, setFotoVista] = useState(null);
   const [fechasRecepcion, setFechasRecepcion] = useState([]);
   const [cargandoFechasRecepcion, setCargandoFechasRecepcion] = useState(false);
+  const [sedeFinca, setSedeFinca] = useState(() => sedeDesdeHomeLocation(null));
 
   const {
     ref: pageRef,
@@ -385,6 +352,22 @@ export default function SolicitarDonacion() {
       .catch(() => {
         if (!vivo) return;
         setNecesidades([]);
+      });
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let vivo = true;
+    obtenerSeccion("homeLocation")
+      .then((section) => {
+        if (!vivo) return;
+        setSedeFinca(sedeDesdeHomeLocation(section));
+      })
+      .catch(() => {
+        if (!vivo) return;
+        setSedeFinca(sedeDesdeHomeLocation(null));
       });
     return () => {
       vivo = false;
@@ -1390,7 +1373,7 @@ export default function SolicitarDonacion() {
                             <ST>Sin fechas de recepción configuradas</ST>
                           </p>
                           <p className="voluntariado-aviso-bloque__texto text-amber-700">
-                            <ST>Por ahora no hay días habilitados para entregar donaciones en el centro de acopio. Puede solicitar recolección o consultar más adelante.</ST>
+                            <ST>Por ahora no hay días habilitados para entregar donaciones en la Finca Experimental Santa Lucía. Puede solicitar recolección o consultar más adelante.</ST>
                           </p>
                         </div>
                       ) : (
@@ -1574,6 +1557,8 @@ export default function SolicitarDonacion() {
                 </div>
               ) : null}
 
+              <AvisoSedeFinca sede={sedeFinca} contexto="donacion" />
+
               <div className="acciones-formulario">
                 <button
                   type="submit"
@@ -1585,44 +1570,6 @@ export default function SolicitarDonacion() {
               </div>
             </form>
 
-          <section className="donacion-faq" aria-labelledby="donacion-faq-titulo">
-            <h2 id="donacion-faq-titulo">
-              <HelpCircle size={18} aria-hidden="true" /> {tFaqTitulo}
-            </h2>
-            <FaqItem question={<ST>¿Qué puedo donar?</ST>}>
-              <p>
-                <ST>
-                  Únicamente donaciones materiales: bienes, equipos, herramientas e insumos físicos. Revise las categorías activas y los materiales aceptados que aparecen al inicio de esta página.
-                </ST>
-              </p>
-            </FaqItem>
-            <FaqItem question={<ST>¿Puedo donar dinero?</ST>}>
-              <p>
-                <ST>No. Este módulo está destinado únicamente a donaciones materiales.</ST>
-              </p>
-            </FaqItem>
-            <FaqItem question={<ST>¿Qué sucede si el artículo que deseo donar no aparece?</ST>}>
-              <p>
-                <ST>
-                  Las categorías mostradas corresponden a las necesidades actuales del proyecto. Si su artículo no figura, puede comunicarse con Café UNA por los medios institucionales publicados en el sitio.
-                </ST>
-              </p>
-            </FaqItem>
-            <FaqItem question={<ST>¿Pueden recoger mi donación?</ST>}>
-              <p>
-                <ST>
-                  Puede solicitar una recolección, pero está sujeta a evaluación y disponibilidad de personal, vehículo, ubicación y características de los artículos. No se aprueba de forma automática.
-                </ST>
-              </p>
-            </FaqItem>
-            <FaqItem question={<ST>¿Cómo sabré si mi donación fue aceptada?</ST>}>
-              <p>
-                <ST>
-                  La solicitud será revisada por el personal de Café UNA y se le notificará el resultado mediante correo electrónico.
-                </ST>
-              </p>
-            </FaqItem>
-          </section>
             </>
           ) : (
             <div className="confirmacion">

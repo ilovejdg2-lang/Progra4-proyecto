@@ -28,8 +28,47 @@ const CAMPOS_TEASER = ['title', 'description', 'linkText'];
 const CAMPOS_FEATURED = ['title', 'description', 'linkText'];
 const CAMPOS_INICIATIVAS = ['eyebrow', 'title', 'description'];
 const CAMPOS_UBICACION = ['eyebrow', 'title', 'description', 'linkText'];
+const CAMPOS_FAQ = ['eyebrow', 'title', 'description'];
+const CAMPOS_FAQ_ITEM = ['pregunta', 'respuesta'];
 const CAMPOS_TARJETAS = ['etiqueta', 'titulo', 'descripcion', 'textoBoton'];
 const CAMPOS_PRODUCTOS = ['nombre', 'descripcion', 'categoria', 'subcategoria'];
+
+function HomeFaqItem({ question, children }) {
+  const handleSummaryClick = (event) => {
+    const details = event.currentTarget.parentElement;
+    if (!details || details.tagName !== "DETAILS" || !details.open) return;
+    if (details.classList.contains("home-faq__item--cerrando")) {
+      event.preventDefault();
+      return;
+    }
+    event.preventDefault();
+    details.classList.add("home-faq__item--cerrando");
+    const panel = details.querySelector(".home-faq__cuerpo");
+    let cerrado = false;
+    const finalizar = () => {
+      if (cerrado) return;
+      cerrado = true;
+      details.open = false;
+      details.classList.remove("home-faq__item--cerrando");
+      panel?.removeEventListener("transitionend", onEnd);
+    };
+    const onEnd = (evt) => {
+      if (evt.target !== panel) return;
+      finalizar();
+    };
+    panel?.addEventListener("transitionend", onEnd);
+    window.setTimeout(finalizar, 420);
+  };
+
+  return (
+    <details className="home-faq__item">
+      <summary onClick={handleSummaryClick}>{question}</summary>
+      <div className="home-faq__cuerpo">
+        <div className="home-faq__cuerpo-inner">{children}</div>
+      </div>
+    </details>
+  );
+}
 
 function getPreloadSource(pageStatus, data) {
   if (pageStatus === 'ready' && data) return data;
@@ -62,6 +101,11 @@ const Home = () => {
     data?.locationSection ?? { eyebrow: '', title: '', description: '', image: '', linkUrl: '', linkText: '' },
     CAMPOS_UBICACION,
   );
+  const faqSection = useTraducirObjeto(
+    data?.faqSection ?? { eyebrow: '', title: '', description: '' },
+    CAMPOS_FAQ,
+  );
+  const faqItems = useTraducirLista(data?.faqItems ?? [], CAMPOS_FAQ_ITEM);
   const locationMapUrl = locationSection.linkUrl?.trim() ?? '';
   const locationMapEmbedUrl = useMemo(
     () => toGoogleMapsEmbedUrl(locationMapUrl),
@@ -69,6 +113,7 @@ const Home = () => {
   );
   const tarjetasInicio = useTraducirLista(data?.tarjetasInicio ?? [], CAMPOS_TARJETAS);
   const products = useTraducirLista(data?.products ?? [], CAMPOS_PRODUCTOS);
+  const mostrarFaq = faqItems.length > 0 || Boolean(faqSection.title || faqSection.description);
 
   const preloadSource = getPreloadSource(pageStatus, data);
   const imageUrls = useMemo(
@@ -338,6 +383,25 @@ const Home = () => {
             ) : null}
           </div>
         </section>
+
+        {mostrarFaq ? (
+          <section id="preguntas-frecuentes" className="home-page__faq reveal-on-scroll" aria-labelledby="home-faq-title">
+            <header className="home-faq__header">
+              {faqSection.eyebrow ? <p className="home-faq__eyebrow">{faqSection.eyebrow}</p> : null}
+              {faqSection.title ? <h2 id="home-faq-title">{faqSection.title}</h2> : null}
+              {faqSection.description ? <p className="home-faq__intro">{faqSection.description}</p> : null}
+            </header>
+            {faqItems.length > 0 ? (
+              <div className="home-faq__lista">
+                {faqItems.map((item) => (
+                  <HomeFaqItem key={item.id ?? item.pregunta} question={item.pregunta}>
+                    <p>{item.respuesta}</p>
+                  </HomeFaqItem>
+                ))}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
       </main>
       ) : null}
       </div>

@@ -26,6 +26,18 @@ function normalizePerfil(data) {
     fotoBannerUrl: data.fotoBannerUrl ?? data.FotoBannerUrl ?? "",
     fotoPerfilPosicion: data.fotoPerfilPosicion ?? data.FotoPerfilPosicion ?? "",
     fotoBannerPosicion: data.fotoBannerPosicion ?? data.FotoBannerPosicion ?? "",
+    tipoCliente: data.tipoCliente ?? data.TipoCliente ?? null,
+    telefono: data.telefono ?? data.Telefono ?? null,
+    apellidos: data.apellidos ?? data.Apellidos ?? null,
+    identificacion: data.identificacion ?? data.Identificacion ?? null,
+    nombreLegal: data.nombreLegal ?? data.NombreLegal ?? null,
+    tipoDocumento: data.tipoDocumento ?? data.TipoDocumento ?? null,
+    razonSocial: data.razonSocial ?? data.RazonSocial ?? null,
+    nombreComercial: data.nombreComercial ?? data.NombreComercial ?? null,
+    representanteLegal: data.representanteLegal ?? data.RepresentanteLegal ?? null,
+    cedulaJuridica: data.cedulaJuridica ?? data.CedulaJuridica ?? null,
+    direccionFiscal: data.direccionFiscal ?? data.DireccionFiscal ?? null,
+    telefonoOficina: data.telefonoOficina ?? data.TelefonoOficina ?? null,
   };
 }
 
@@ -55,7 +67,25 @@ export async function obtenerPerfil() {
   perfilInflight = (async () => {
     try {
       const data = await request(BASE_URL);
-      const normalized = normalizePerfil(data);
+      let normalized = normalizePerfil(data);
+      const esCliente = (normalized?.roles || []).some(
+        (rol) => String(rol).toLowerCase() === "cliente",
+      );
+      if (esCliente && !normalized?.tipoCliente) {
+        try {
+          const sessionUser = getActiveSessionUser();
+          if (sessionUser?.id) {
+            const completo = await obtenerUsuarioPorId(sessionUser.id);
+            normalized = {
+              ...normalized,
+              ...normalizePerfil(completo),
+              roles: normalized.roles,
+            };
+          }
+        } catch {
+          /* keep perfil base */
+        }
+      }
       perfilCache = { expiresAt: Date.now() + CACHE_TTL_MS, data: normalized };
       return normalized;
     } catch (error) {
@@ -83,6 +113,15 @@ export async function obtenerPerfil() {
 export async function actualizarPerfil(payload) {
   clearPerfilCache();
   const data = await request(BASE_URL, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+  return normalizePerfil(data);
+}
+
+export async function actualizarPerfilCliente(payload) {
+  clearPerfilCache();
+  const data = await request(`${BASE_URL}/cliente`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });

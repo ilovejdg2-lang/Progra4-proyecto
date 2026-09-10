@@ -35,6 +35,8 @@ const AdminNecesidadesDonacion = lazy(() => import("./Pages/Admin/Donaciones/Nec
 const AdminSolicitudesDonacion = lazy(() => import("./Pages/Admin/Donaciones/Solicitudes"));
 const AdminFechasRecepcionDonacion = lazy(() => import("./Pages/Admin/Donaciones/FechasRecepcion"));
 const Login = lazy(() => import("./Pages/Login/Login"));
+const Registro = lazy(() => import("./Pages/Registro/Registro"));
+const VerificarCuenta = lazy(() => import("./Pages/Registro/VerificarCuenta"));
 const AdminPanel = lazy(() => import("./Pages/Admin/Panel/Panel"));
 const AdminInformacionPaginaPrincipal = lazy(() => import("./Pages/Admin/InformacionPaginaPrincipal/InformacionPaginaPrincipal"));
 const AdminInformacionSobreNosotros = lazy(() => import("./Pages/Admin/InformacionSobreNosotros/InformacionSobreNosotros"));
@@ -133,9 +135,12 @@ const rootRoute = createRootRoute({
         const isHomeRoute = cacheKey === 'home';
         const isAdminRoute = pathname.startsWith("/admin");
         const isLoginRoute = pathname === "/login";
+        const isRegistroRoute =
+            pathname === "/registro" || pathname === "/verificar-cuenta";
         const isPerfilRoute = pathname === "/perfil" || pathname.startsWith("/perfil/");
         const isCheckoutRoute = pathname === "/checkout";
-        const isChromelessRoute = isLoginRoute || isPerfilRoute || isCheckoutRoute;
+        const isChromelessRoute =
+            isLoginRoute || isRegistroRoute || isPerfilRoute || isCheckoutRoute;
         const loadingKey = isHomeRoute ? 'home' : cacheKey || pathname;
 
         // Durante el render: activar overlay antes del paint (evita blanco).
@@ -228,6 +233,20 @@ const loginRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/login",
     component: Login,
+})
+const registroRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/registro",
+    component: Registro,
+})
+const verificarCuentaRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/verificar-cuenta",
+    validateSearch: (search) => ({
+        correo: typeof search.correo === "string" ? search.correo : undefined,
+        token: typeof search.token === "string" ? search.token : undefined,
+    }),
+    component: VerificarCuenta,
 })
 const adminPanelRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -410,6 +429,8 @@ const routeTree= rootRoute.addChildren([
     AboutUsRoute,
     AboutUsGaleriaRoute,
     loginRoute,
+    registroRoute,
+    verificarCuentaRoute,
     adminPanelRoute,
     adminInformacionPaginaPrincipalRoute,
     adminSobreNosotrosRoute,

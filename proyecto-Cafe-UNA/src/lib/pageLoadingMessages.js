@@ -11,6 +11,7 @@ const CACHE_KEY_MESSAGES = {
   donaciones: 'Cargando donaciones...',
   checkout: 'Cargando checkout...',
   login: 'Cargando...',
+  registro: 'Cargando registro...',
   perfil: 'Cargando perfil...',
 };
 
@@ -42,6 +43,9 @@ export function getLoadingMessageForPathname(pathname = normalizePathname()) {
   if (path.startsWith('/donaciones')) return msg('Cargando donaciones...');
   if (path === '/checkout') return msg(CACHE_KEY_MESSAGES.checkout);
   if (path === '/login') return msg(CACHE_KEY_MESSAGES.login);
+  if (path === '/registro' || path === '/verificar-cuenta') {
+    return msg(CACHE_KEY_MESSAGES.registro);
+  }
   if (path === '/perfil') return msg(CACHE_KEY_MESSAGES.perfil);
   if (path.startsWith('/admin')) return msg('Cargando panel administrativo...');
 

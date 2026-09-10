@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Camera, ChevronRight, Eye, EyeOff, HandCoins, KeyRound, Mail, UserRound, X } from "lucide-react";
+import { Camera, ChevronRight, Eye, EyeOff, HandCoins, IdCard, KeyRound, Mail, UserRound, X } from "lucide-react";
 import {
   actualizarPerfil,
+  actualizarPerfilCliente,
   cambiarPasswordPerfil,
+  clearPerfilCache,
   confirmarCambioCorreo,
   obtenerPerfil,
   solicitarCambioCorreo,
@@ -23,9 +25,69 @@ import {
 import PageLoading from "../PageLoading/PageLoading";
 import { useTraducir } from "../../hooks/useTraducir";
 import { ST } from "../T/ST";
+import { UiSelect } from "../ui/Select";
 import "./PerfilContent.css";
 
 const FEEDBACK_AUTO_HIDE_MS = 4000;
+
+function soloLetras(valor, max = 100) {
+  return String(valor ?? "")
+    .replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+/g, "")
+    .replace(/\s{2,}/g, " ")
+    .slice(0, max);
+}
+
+function soloDigitos(valor, max) {
+  return String(valor ?? "").replace(/\D/g, "").slice(0, max);
+}
+
+function soloTelefono(valor) {
+  const texto = String(valor ?? "");
+  const tieneMas = texto.trimStart().startsWith("+");
+  const digitos = texto.replace(/\D/g, "").slice(0, tieneMas ? 14 : 15);
+  return tieneMas ? `+${digitos}` : digitos;
+}
+
+function formatearCedulaJuridica(valor) {
+  const digitos = String(valor ?? "").replace(/\D/g, "").slice(0, 10);
+  if (digitos.length <= 1) return digitos;
+  if (digitos.length <= 4) return `${digitos.slice(0, 1)}-${digitos.slice(1)}`;
+  return `${digitos.slice(0, 1)}-${digitos.slice(1, 4)}-${digitos.slice(4)}`;
+}
+
+function inferTipoDocumento(identificacion) {
+  const digitos = String(identificacion ?? "").replace(/\D/g, "");
+  if (/^\d{9}$/.test(digitos)) return "cedula";
+  if (/^\d{10,12}$/.test(digitos)) return "dimex";
+  return "pasaporte";
+}
+
+function splitApellidos(apellidos) {
+  const partes = String(apellidos ?? "").trim().split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return { apellido1: "", apellido2: "" };
+  if (partes.length === 1) return { apellido1: partes[0], apellido2: "" };
+  return { apellido1: partes[0], apellido2: partes.slice(1).join(" ") };
+}
+
+function buildClienteFormFromPerfil(perfil) {
+  const apellidos = splitApellidos(perfil?.apellidos);
+  const tipoDocumento = perfil?.tipoDocumento || inferTipoDocumento(perfil?.identificacion) || "cedula";
+  return {
+    esNacional: tipoDocumento === "cedula" ? "si" : "no",
+    tipoDocumento: tipoDocumento === "cedula" ? "cedula" : tipoDocumento,
+    nombreLegal: perfil?.nombreLegal || "",
+    telefono: perfil?.telefono || "",
+    apellido1: apellidos.apellido1,
+    apellido2: apellidos.apellido2,
+    identificacion: perfil?.identificacion || "",
+    razonSocial: perfil?.razonSocial || "",
+    nombreComercial: perfil?.nombreComercial || "",
+    representanteLegal: perfil?.representanteLegal || "",
+    cedulaJuridica: perfil?.cedulaJuridica || "",
+    direccionFiscal: perfil?.direccionFiscal || "",
+    telefonoOficina: perfil?.telefonoOficina || "",
+  };
+}
 
 function claseRolPerfil(rol) {
   const clave = String(rol ?? "").trim().toLowerCase();
@@ -192,6 +254,9 @@ export function PerfilContent({ variant = "standalone" }) {
   const tActualizando = useTraducir("Actualizando...");
   const tActualizarPass = useTraducir("Actualizar contraseña");
   const tVolverInicio = useTraducir("Volver al inicio");
+  const tDatosCliente = useTraducir("Datos de cliente");
+  const tSinFichaCliente = useTraducir("Todavía no tenés ficha de cliente. Se pide al ir a pagar el carrito.");
+  const tGuardarCliente = useTraducir("Guardar datos de cliente");
   const [perfil, setPerfil] = useState(null);
   const [donaciones, setDonaciones] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -221,6 +286,8 @@ export function PerfilContent({ variant = "standalone" }) {
     step: "view",
   });
   const [nombreError, setNombreError] = useState("");
+  const [clienteForm, setClienteForm] = useState(buildClienteFormFromPerfil(null));
+  const [clienteError, setClienteError] = useState("");
   const [passwordErrors, setPasswordErrors] = useState({
     passwordActual: "",
     passwordNueva: "",
@@ -276,9 +343,11 @@ export function PerfilContent({ variant = "standalone" }) {
 
     setCargando(true);
     setError("");
+    clearPerfilCache();
     try {
       const data = await obtenerPerfil();
       setPerfil(data);
+      setClienteForm(buildClienteFormFromPerfil(data));
       setForm({
         nombre: data?.nombre || "",
         correo: data?.correo || "",
@@ -324,6 +393,9 @@ export function PerfilContent({ variant = "standalone" }) {
     ? normalizeImageUrl(form.fotoPerfilUrl, { width: 320 })
     : null;
   const inicialAvatar = inicialDeNombre(form.nombre || sessionUser?.name || sessionUser?.username);
+  const esCliente = Boolean(perfil?.tipoCliente)
+    || (Array.isArray(perfil?.roles)
+      && perfil.roles.some((rol) => String(rol).toLowerCase() === "cliente"));
 
   useEffect(() => {
     setAvatarRoto(false);
@@ -370,6 +442,48 @@ export function PerfilContent({ variant = "standalone" }) {
       setMensaje("Nombre actualizado correctamente.");
     } catch (err) {
       setNombreError(sanitizeUserFacingError(err.message || "No se pudo guardar el nombre."));
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  async function handleGuardarCliente(event) {
+    event.preventDefault();
+    setError("");
+    setMensaje("");
+    setClienteError("");
+    setGuardando(true);
+
+    try {
+      const esEmpresa = perfil?.tipoCliente === "empresa";
+      const payload = esEmpresa
+        ? {
+            tipo: "empresa",
+            telefono: clienteForm.telefono.trim(),
+            razonSocial: clienteForm.razonSocial.trim(),
+            nombreComercial: clienteForm.nombreComercial.trim(),
+            representanteLegal: clienteForm.representanteLegal.trim(),
+            cedulaJuridica: clienteForm.cedulaJuridica.trim(),
+            direccionFiscal: clienteForm.direccionFiscal.trim(),
+            telefonoOficina: clienteForm.telefonoOficina.trim(),
+          }
+        : {
+            tipo: "persona",
+            telefono: clienteForm.telefono.trim(),
+            nombre: clienteForm.nombreLegal.trim(),
+            apellido1: clienteForm.apellido1.trim(),
+            apellido2: clienteForm.apellido2.trim(),
+            identificacion: clienteForm.identificacion.trim(),
+            esNacional: clienteForm.esNacional,
+            tipoDocumento: clienteForm.esNacional === "si" ? "cedula" : clienteForm.tipoDocumento,
+          };
+
+      const actualizado = await actualizarPerfilCliente(payload);
+      setPerfil(actualizado);
+      setClienteForm(buildClienteFormFromPerfil(actualizado));
+      setMensaje("Datos de cliente actualizados.");
+    } catch (err) {
+      setClienteError(sanitizeUserFacingError(err.message || "No se pudieron guardar los datos de cliente."));
     } finally {
       setGuardando(false);
     }
@@ -887,6 +1001,230 @@ export function PerfilContent({ variant = "standalone" }) {
           )}
         </section>
       </div>
+
+      {esCliente ? (
+        <section className="perfil-card perfil-card--wide" style={{ marginTop: "1rem", marginBottom: "1rem" }}>
+          <header className="perfil-card__header">
+            <IdCard size={18} />
+            <h2>{tDatosCliente}</h2>
+          </header>
+          {perfil?.tipoCliente ? (
+            <form className="perfil-cliente-form" onSubmit={handleGuardarCliente}>
+              <p className="perfil-card__current-value">
+                <ST>{perfil.tipoCliente === "empresa" ? "Empresa" : "Persona"}</ST>
+              </p>
+              {perfil.tipoCliente === "empresa" ? (
+                <>
+                  <label className="perfil-field">
+                    <span><ST>Razón social</ST></span>
+                    <input
+                      value={clienteForm.razonSocial}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, razonSocial: e.target.value.slice(0, 120) }))}
+                      maxLength={120}
+                      required
+                    />
+                  </label>
+                  <label className="perfil-field">
+                    <span><ST>Nombre comercial</ST></span>
+                    <input
+                      value={clienteForm.nombreComercial}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, nombreComercial: e.target.value.slice(0, 120) }))}
+                      maxLength={120}
+                      required
+                    />
+                  </label>
+                  <label className="perfil-field">
+                    <span><ST>Cédula jurídica</ST></span>
+                    <input
+                      value={clienteForm.cedulaJuridica}
+                      onChange={(e) => setClienteForm((prev) => ({
+                        ...prev,
+                        cedulaJuridica: formatearCedulaJuridica(e.target.value),
+                      }))}
+                      maxLength={12}
+                      required
+                    />
+                  </label>
+                  <label className="perfil-field">
+                    <span><ST>Representante legal</ST></span>
+                    <input
+                      value={clienteForm.representanteLegal}
+                      onChange={(e) => setClienteForm((prev) => ({
+                        ...prev,
+                        representanteLegal: soloLetras(e.target.value, 100),
+                      }))}
+                      maxLength={100}
+                      required
+                    />
+                  </label>
+                  <label className="perfil-field">
+                    <span><ST>Dirección fiscal</ST></span>
+                    <input
+                      value={clienteForm.direccionFiscal}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, direccionFiscal: e.target.value.slice(0, 200) }))}
+                      maxLength={200}
+                    />
+                  </label>
+                  <label className="perfil-field">
+                    <span><ST>Tel. oficina</ST></span>
+                    <input
+                      value={clienteForm.telefonoOficina}
+                      onChange={(e) => setClienteForm((prev) => ({
+                        ...prev,
+                        telefonoOficina: soloTelefono(e.target.value),
+                      }))}
+                      maxLength={15}
+                      inputMode="tel"
+                    />
+                  </label>
+                  <label className="perfil-field">
+                    <span><ST>Teléfono</ST></span>
+                    <input
+                      value={clienteForm.telefono}
+                      onChange={(e) => setClienteForm((prev) => ({
+                        ...prev,
+                        telefono: soloTelefono(e.target.value),
+                      }))}
+                      maxLength={15}
+                      inputMode="tel"
+                      required
+                    />
+                  </label>
+                </>
+              ) : (
+                <>
+                  <div className="perfil-field">
+                    <span className="registro-label"><ST>¿Es extranjero?</ST></span>
+                    <div className="registro-radio-row" role="radiogroup" aria-label="¿Es extranjero?">
+                      <label className={`registro-radio${clienteForm.esNacional === "no" ? " is-active" : ""}`}>
+                        <input
+                          type="radio"
+                          name="esExtranjeroPerfil"
+                          value="si"
+                          checked={clienteForm.esNacional === "no"}
+                          onChange={() => setClienteForm((prev) => ({
+                            ...prev,
+                            esNacional: "no",
+                            tipoDocumento: prev.tipoDocumento === "cedula" ? "dimex" : prev.tipoDocumento,
+                          }))}
+                        />
+                        <span className="registro-radio__text"><ST>Sí</ST></span>
+                      </label>
+                      <label className={`registro-radio${clienteForm.esNacional === "si" ? " is-active" : ""}`}>
+                        <input
+                          type="radio"
+                          name="esExtranjeroPerfil"
+                          value="no"
+                          checked={clienteForm.esNacional === "si"}
+                          onChange={() => setClienteForm((prev) => ({
+                            ...prev,
+                            esNacional: "si",
+                            tipoDocumento: "cedula",
+                            identificacion: soloDigitos(prev.identificacion, 9),
+                          }))}
+                        />
+                        <span className="registro-radio__text"><ST>No</ST></span>
+                      </label>
+                    </div>
+                  </div>
+                  {clienteForm.esNacional === "no" ? (
+                    <label className="perfil-field">
+                      <span><ST>Tipo de documento</ST></span>
+                      <UiSelect
+                        value={clienteForm.tipoDocumento === "cedula" ? "dimex" : clienteForm.tipoDocumento}
+                        onChange={(valor) => setClienteForm((prev) => ({
+                          ...prev,
+                          tipoDocumento: valor,
+                          identificacion: valor === "pasaporte"
+                            ? String(prev.identificacion).replace(/[^A-Za-z0-9]/g, "").slice(0, 20)
+                            : soloDigitos(prev.identificacion, 12),
+                        }))}
+                        options={[
+                          { value: "dimex", label: "DIMEX" },
+                          { value: "pasaporte", label: "Pasaporte" },
+                        ]}
+                      />
+                    </label>
+                  ) : null}
+                  <label className="perfil-field">
+                    <span><ST>{clienteForm.esNacional === "si" ? "Cédula" : (clienteForm.tipoDocumento === "pasaporte" ? "Pasaporte" : "DIMEX")}</ST></span>
+                    <input
+                      value={clienteForm.identificacion}
+                      onChange={(e) => {
+                        const tipo = clienteForm.esNacional === "si" ? "cedula" : clienteForm.tipoDocumento;
+                        const valor = tipo === "pasaporte"
+                          ? e.target.value.replace(/[^A-Za-z0-9]/g, "").slice(0, 20)
+                          : soloDigitos(e.target.value, tipo === "dimex" ? 12 : 9);
+                        setClienteForm((prev) => ({ ...prev, identificacion: valor }));
+                      }}
+                      maxLength={20}
+                      required
+                    />
+                  </label>
+                  <label className="perfil-field">
+                    <span><ST>Nombre</ST></span>
+                    <input
+                      value={clienteForm.nombreLegal}
+                      onChange={(e) => setClienteForm((prev) => ({
+                        ...prev,
+                        nombreLegal: soloLetras(e.target.value, 50),
+                      }))}
+                      maxLength={50}
+                      required
+                    />
+                  </label>
+                  <label className="perfil-field">
+                    <span><ST>Apellido 1</ST></span>
+                    <input
+                      value={clienteForm.apellido1}
+                      onChange={(e) => setClienteForm((prev) => ({
+                        ...prev,
+                        apellido1: soloLetras(e.target.value, 40),
+                      }))}
+                      maxLength={40}
+                      required
+                    />
+                  </label>
+                  <label className="perfil-field">
+                    <span><ST>Apellido 2</ST></span>
+                    <input
+                      value={clienteForm.apellido2}
+                      onChange={(e) => setClienteForm((prev) => ({
+                        ...prev,
+                        apellido2: soloLetras(e.target.value, 40),
+                      }))}
+                      maxLength={40}
+                      required={clienteForm.esNacional === "si"}
+                    />
+                  </label>
+                  <label className="perfil-field">
+                    <span><ST>Teléfono</ST></span>
+                    <input
+                      value={clienteForm.telefono}
+                      onChange={(e) => setClienteForm((prev) => ({
+                        ...prev,
+                        telefono: soloTelefono(e.target.value),
+                      }))}
+                      maxLength={15}
+                      inputMode="tel"
+                      required
+                    />
+                  </label>
+                </>
+              )}
+              {clienteError ? <p className="perfil-field-error"><ST>{clienteError}</ST></p> : null}
+              <div className="perfil-card__actions">
+                <button type="submit" className="perfil-button" disabled={guardando}>
+                  {guardando ? tGuardando : tGuardarCliente}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <p className="perfil-card__current-value">{tSinFichaCliente}</p>
+          )}
+        </section>
+      ) : null}
+
 
       {mensaje ? <p className="perfil-feedback perfil-feedback--ok">{tMensaje}</p> : null}
       {error && perfil ? <p className="perfil-feedback perfil-feedback--error"><ST>{error}</ST></p> : null}

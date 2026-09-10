@@ -36,10 +36,123 @@ import {
 import { queueFocusFormError } from "../../../lib/formFocus";
 import { ST } from "../../../Components/T/ST";
 import { t } from "../../../lib/t";
+import { UiSelect } from "../../../Components/ui/Select";
 
-function Modal({ titulo, onClose, children }) {
+function soloLetras(valor, max = 100) {
+  return String(valor ?? "")
+    .replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+/g, "")
+    .replace(/\s{2,}/g, " ")
+    .slice(0, max);
+}
+
+function soloDigitos(valor, max) {
+  return String(valor ?? "").replace(/\D/g, "").slice(0, max);
+}
+
+function soloTelefono(valor) {
+  const texto = String(valor ?? "");
+  const tieneMas = texto.trimStart().startsWith("+");
+  const digitos = texto.replace(/\D/g, "").slice(0, tieneMas ? 14 : 15);
+  return tieneMas ? `+${digitos}` : digitos;
+}
+
+function formatearCedulaJuridica(valor) {
+  const digitos = String(valor ?? "").replace(/\D/g, "").slice(0, 10);
+  if (digitos.length <= 1) return digitos;
+  if (digitos.length <= 4) return `${digitos.slice(0, 1)}-${digitos.slice(1)}`;
+  return `${digitos.slice(0, 1)}-${digitos.slice(1, 4)}-${digitos.slice(4)}`;
+}
+
+function esRolSuperAdmin(rol) {
+  const clave = String(rol ?? "").trim().toLowerCase();
+  return clave === "superadmin" || clave === "superadministrador";
+}
+
+function esRolCliente(rol) {
+  return String(rol ?? "").trim().toLowerCase() === "cliente";
+}
+
+const CLIENTE_FORM_VACIO = {
+  tipo: "persona",
+  esNacional: "si",
+  tipoDocumento: "cedula",
+  nombreLegal: "",
+  apellido1: "",
+  apellido2: "",
+  identificacion: "",
+  telefono: "",
+  razonSocial: "",
+  nombreComercial: "",
+  representanteLegal: "",
+  cedulaJuridica: "",
+  direccionFiscal: "",
+  telefonoOficina: "",
+};
+
+function validarFormClienteAdmin(form) {
+  const telefono = String(form.telefono || "").trim();
+  if (!telefono || telefono.replace(/\D/g, "").length < 8) {
+    return "El teléfono del cliente es obligatorio.";
+  }
+  if (form.tipo === "empresa") {
+    if (!String(form.razonSocial || "").trim()) return "La razón social es obligatoria.";
+    if (!String(form.nombreComercial || "").trim()) return "El nombre comercial es obligatorio.";
+    if (!String(form.representanteLegal || "").trim()) return "El representante legal es obligatorio.";
+    if (!/^\d{1}-\d{3}-\d{6}$/.test(String(form.cedulaJuridica || "").trim())) {
+      return "La cédula jurídica debe tener el formato 3-101-123456.";
+    }
+    return "";
+  }
+  if (!String(form.nombreLegal || "").trim()) return "El nombre del cliente es obligatorio.";
+  if (!String(form.apellido1 || "").trim()) return "El apellido 1 es obligatorio.";
+  const tipoDocumento = form.esNacional === "si" ? "cedula" : form.tipoDocumento;
+  if (tipoDocumento === "cedula" && !String(form.apellido2 || "").trim()) {
+    return "El apellido 2 es obligatorio.";
+  }
+  const identificacion = String(form.identificacion || "").trim();
+  if (!identificacion) return "La identificación es obligatoria.";
+  if (tipoDocumento === "cedula" && !/^\d{9}$/.test(identificacion.replace(/\D/g, ""))) {
+    return "La cédula costarricense debe tener 9 dígitos.";
+  }
+  if (tipoDocumento === "dimex") {
+    const digitos = identificacion.replace(/\D/g, "");
+    if (digitos.length < 10 || digitos.length > 12) return "El DIMEX debe tener entre 10 y 12 dígitos.";
+  }
+  if (tipoDocumento === "pasaporte" && !/^[A-Za-z0-9]{5,20}$/.test(identificacion)) {
+    return "El pasaporte no tiene un formato válido.";
+  }
+  return "";
+}
+
+function armarDatosClientePayload(form) {
+  if (form.tipo === "empresa") {
+    return {
+      tipo: "empresa",
+      telefono: form.telefono.trim(),
+      razonSocial: form.razonSocial.trim(),
+      nombreComercial: form.nombreComercial.trim(),
+      representanteLegal: form.representanteLegal.trim(),
+      cedulaJuridica: form.cedulaJuridica.trim(),
+      direccionFiscal: form.direccionFiscal.trim() || undefined,
+      telefonoOficina: form.telefonoOficina.trim() || undefined,
+    };
+  }
+  const tipoDocumento = form.esNacional === "si" ? "cedula" : form.tipoDocumento;
+  return {
+    tipo: "persona",
+    telefono: form.telefono.trim(),
+    nombreLegal: form.nombreLegal.trim(),
+    apellido1: form.apellido1.trim(),
+    apellido2: form.apellido2.trim(),
+    identificacion: form.identificacion.trim(),
+    tipoDocumento,
+    esNacional: form.esNacional,
+  };
+}
+
+function Modal({ titulo, onClose, children, maxWidth = "max-w-xl" }) {
   return (
-    <AdminModal open onClose={onClose} maxWidth="max-w-xl" labelledBy="admin-usuarios-modal-title">
+    <AdminModal open onClose={onClose} maxWidth={maxWidth} labelledBy="admin-usuarios-modal-title">
       <AdminModalHeader>
         <h2 id="admin-usuarios-modal-title" className="text-lg font-semibold text-slate-900">{titulo}</h2>
         <button
@@ -53,6 +166,68 @@ function Modal({ titulo, onClose, children }) {
       </AdminModalHeader>
       <AdminModalBody>{children}</AdminModalBody>
     </AdminModal>
+  );
+}
+
+function filaCliente(label, valor) {
+  const texto = String(valor ?? "").trim();
+  if (!texto) return null;
+  return (
+    <div className="grid grid-cols-[minmax(7rem,9rem)_1fr] gap-x-3 gap-y-0.5 text-sm">
+      <dt className="text-slate-500"><ST>{label}</ST></dt>
+      <dd className="font-medium text-slate-900 break-words">{texto}</dd>
+    </div>
+  );
+}
+
+function InfoClienteLectura({ usuario }) {
+  const tipo = String(usuario?.tipoCliente ?? "").trim().toLowerCase();
+  const esCliente = (usuario?.roles || []).some((r) => String(r).toLowerCase() === "cliente");
+  if (!tipo && !esCliente) return null;
+
+  const esEmpresa = tipo === "empresa";
+  const tituloTipo = esEmpresa ? "Empresa" : tipo === "persona" ? "Persona" : "Cliente";
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-slate-900"><ST>Datos de cliente</ST></h3>
+        <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200">
+          <ST>{tituloTipo}</ST>
+        </span>
+      </div>
+      {!tipo ? (
+        <p className="text-xs text-slate-600">
+          <ST>Tiene el rol Cliente, pero no hay ficha registrada.</ST>
+        </p>
+      ) : (
+        <dl className="space-y-1.5">
+          {esEmpresa ? (
+            <>
+              {filaCliente("Razón social", usuario.razonSocial)}
+              {filaCliente("Nombre comercial", usuario.nombreComercial)}
+              {filaCliente("Cédula jurídica", usuario.cedulaJuridica)}
+              {filaCliente("Representante", usuario.representanteLegal)}
+              {filaCliente("Dirección fiscal", usuario.direccionFiscal)}
+              {filaCliente("Tel. oficina", usuario.telefonoOficina)}
+              {filaCliente("Teléfono", usuario.telefono)}
+            </>
+          ) : (
+            <>
+              {filaCliente("Nombre", usuario.nombreLegal)}
+              {filaCliente("Apellido 1", String(usuario.apellidos || "").trim().split(/\s+/)[0] || "")}
+              {filaCliente("Apellido 2", String(usuario.apellidos || "").trim().split(/\s+/).slice(1).join(" ") || "")}
+              {filaCliente("Tipo documento", usuario.tipoDocumento)}
+              {filaCliente("Identificación", usuario.identificacion)}
+              {filaCliente("Teléfono", usuario.telefono)}
+            </>
+          )}
+        </dl>
+      )}
+      <p className="text-xs text-slate-500 pt-1">
+        <ST>Si quita el rol Cliente, se borra esta información y la persona debe registrarse de nuevo.</ST>
+      </p>
+    </section>
   );
 }
 
@@ -99,6 +274,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
   const actorId = Number(actor?.id) || null;
   const editandoPropioUsuario = Boolean(inicial?.id) && actorId !== null && Number(inicial.id) === actorId;
   const correoOriginal = (inicial?.correo ?? "").trim().toLowerCase();
+  const teniaClienteAlAbrir = (inicial?.roles || []).some((r) => String(r).toLowerCase() === "cliente");
 
   const [pasoCreacion, setPasoCreacion] = useState("datos");
   const [codigoVerificacion, setCodigoVerificacion] = useState("");
@@ -115,6 +291,8 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
     passwordActual: "",
     formulario: "",
   });
+  const [clienteForm, setClienteForm] = useState(CLIENTE_FORM_VACIO);
+  const [asignandoCliente, setAsignandoCliente] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -122,14 +300,18 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
       correo: inicial?.correo ?? "",
       passwordHash: "",
       passwordActual: "",
-      roles: inicial?.roles ?? ["Usuario"],
+      roles: (inicial?.roles ?? ["Usuario"]).filter((rol) => {
+        if (!inicial && String(rol).toLowerCase() === "cliente") return false;
+        return true;
+      }),
     },
     onSubmit: async ({ value }) => {
       const correoActual = value.correo.trim().toLowerCase();
+      const rolesPayload = Array.isArray(value.roles) && value.roles.length > 0 ? value.roles : ["Usuario"];
       const payload = {
         nombre: value.nombre.trim(),
         correo: correoActual,
-        roles: Array.isArray(value.roles) && value.roles.length > 0 ? value.roles : ["Usuario"],
+        roles: rolesPayload,
       };
 
       const nextErrors = {
@@ -138,6 +320,28 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
         passwordActual: "",
         formulario: "",
       };
+
+      if (editandoPropioUsuario) {
+        const teniaSuper = (inicial?.roles || []).some(esRolSuperAdmin);
+        const tieneSuper = rolesPayload.some(esRolSuperAdmin);
+        if (teniaSuper && !tieneSuper) {
+          nextErrors.formulario = "No puede quitarse a sí mismo el rol SuperAdmin.";
+          setFieldErrors(nextErrors);
+          return;
+        }
+      }
+
+      const agregaCliente = rolesPayload.some(esRolCliente) && !teniaClienteAlAbrir;
+      if (agregaCliente) {
+        const errorCliente = validarFormClienteAdmin(clienteForm);
+        if (errorCliente) {
+          nextErrors.formulario = errorCliente;
+          setFieldErrors(nextErrors);
+          setAsignandoCliente(true);
+          return;
+        }
+        payload.datosCliente = armarDatosClientePayload(clienteForm);
+      }
 
       if (!payload.correo) {
         setErrorCorreo("Ingrese el correo.");
@@ -520,30 +724,75 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
               <form.Field name="roles">
                 {(field) => {
                   const selectedRoles = Array.isArray(field.state.value) ? field.state.value : [];
+                  const rolesVisibles = inicial
+                    ? ROLES_DISPONIBLES
+                    : ROLES_DISPONIBLES.filter((rol) => !esRolCliente(rol));
                   const toggleRol = (rol) => {
+                    const yaSeleccionado = selectedRoles.includes(rol);
+                    if (esRolSuperAdmin(rol) && yaSeleccionado && editandoPropioUsuario) {
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        formulario: "No puede quitarse a sí mismo el rol SuperAdmin.",
+                      }));
+                      return;
+                    }
+                    if (esRolCliente(rol) && !yaSeleccionado) {
+                      setAsignandoCliente(true);
+                      setClienteForm(CLIENTE_FORM_VACIO);
+                      field.handleChange([...selectedRoles, rol]);
+                      setFieldErrors((prev) => ({ ...prev, formulario: "" }));
+                      return;
+                    }
+                    if (esRolCliente(rol) && yaSeleccionado) {
+                      setAsignandoCliente(false);
+                      setClienteForm(CLIENTE_FORM_VACIO);
+                    }
                     field.handleChange(
-                      selectedRoles.includes(rol)
+                      yaSeleccionado
                         ? selectedRoles.filter((actual) => actual !== rol)
                         : [...selectedRoles, rol],
                     );
+                    setFieldErrors((prev) => ({ ...prev, formulario: "" }));
                   };
 
                   return (
-                    <div className="flex flex-wrap gap-2">
-                      {ROLES_DISPONIBLES.map((rol) => (
-                        <button
-                          key={rol}
-                          type="button"
-                          onClick={() => toggleRol(rol)}
-                          className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                            selectedRoles.includes(rol)
-                              ? claseRol(rol)
-                              : "border border-slate-200 bg-white text-slate-500 hover:border-slate-300"
-                          }`}
-                        >
-                          <ST>{rol}</ST>
-                        </button>
-                      ))}
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        {rolesVisibles.map((rol) => {
+                          const seleccionado = selectedRoles.includes(rol);
+                          const bloquearSuper =
+                            esRolSuperAdmin(rol) && seleccionado && editandoPropioUsuario;
+                          return (
+                            <button
+                              key={rol}
+                              type="button"
+                              onClick={() => toggleRol(rol)}
+                              title={
+                                bloquearSuper
+                                  ? t("No puede quitarse el rol SuperAdmin.")
+                                  : undefined
+                              }
+                              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                                seleccionado
+                                  ? claseRol(rol)
+                                  : "border border-slate-200 bg-white text-slate-500 hover:border-slate-300"
+                              } ${bloquearSuper ? "cursor-not-allowed opacity-80" : ""}`}
+                            >
+                              <ST>{rol}</ST>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {teniaClienteAlAbrir ? (
+                        <p className="text-xs text-amber-800">
+                          <ST>Al quitar Cliente se borra la ficha y debe volver a registrarse para comprar.</ST>
+                        </p>
+                      ) : null}
+                      {asignandoCliente && selectedRoles.some(esRolCliente) ? (
+                        <p className="text-xs text-slate-600">
+                          <ST>Complete los datos de cliente para poder guardar este rol.</ST>
+                        </p>
+                      ) : null}
                     </div>
                   );
                 }}
@@ -560,6 +809,201 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
               </form.Field>
             )}
           </div>
+          {asignandoCliente && inicial ? (
+            <section className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <h3 className="text-sm font-semibold text-slate-900"><ST>Datos de cliente</ST></h3>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: "persona", label: "Persona" },
+                  { id: "empresa", label: "Empresa" },
+                ].map((op) => (
+                  <button
+                    key={op.id}
+                    type="button"
+                    onClick={() => setClienteForm((prev) => ({ ...prev, tipo: op.id }))}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                      clienteForm.tipo === op.id
+                        ? "bg-slate-900 text-white"
+                        : "border border-slate-200 bg-white text-slate-600"
+                    }`}
+                  >
+                    <ST>{op.label}</ST>
+                  </button>
+                ))}
+              </div>
+              {clienteForm.tipo === "empresa" ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="block text-xs font-medium text-slate-600 sm:col-span-2">
+                    <ST>Razón social</ST>
+                    <input
+                      className={`${inputCls} mt-1`}
+                      value={clienteForm.razonSocial}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, razonSocial: e.target.value.slice(0, 150) }))}
+                      required
+                    />
+                  </label>
+                  <label className="block text-xs font-medium text-slate-600">
+                    <ST>Nombre comercial</ST>
+                    <input
+                      className={`${inputCls} mt-1`}
+                      value={clienteForm.nombreComercial}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, nombreComercial: e.target.value.slice(0, 150) }))}
+                      required
+                    />
+                  </label>
+                  <label className="block text-xs font-medium text-slate-600">
+                    <ST>Cédula jurídica</ST>
+                    <input
+                      className={`${inputCls} mt-1`}
+                      value={clienteForm.cedulaJuridica}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, cedulaJuridica: formatearCedulaJuridica(e.target.value) }))}
+                      placeholder="3-101-123456"
+                      required
+                    />
+                  </label>
+                  <label className="block text-xs font-medium text-slate-600 sm:col-span-2">
+                    <ST>Representante legal</ST>
+                    <input
+                      className={`${inputCls} mt-1`}
+                      value={clienteForm.representanteLegal}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, representanteLegal: soloLetras(e.target.value, 100) }))}
+                      required
+                    />
+                  </label>
+                  <label className="block text-xs font-medium text-slate-600">
+                    <ST>Teléfono</ST>
+                    <input
+                      className={`${inputCls} mt-1`}
+                      value={clienteForm.telefono}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, telefono: soloTelefono(e.target.value) }))}
+                      required
+                    />
+                  </label>
+                  <label className="block text-xs font-medium text-slate-600">
+                    <ST>Tel. oficina</ST>
+                    <input
+                      className={`${inputCls} mt-1`}
+                      value={clienteForm.telefonoOficina}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, telefonoOficina: soloTelefono(e.target.value) }))}
+                    />
+                  </label>
+                  <label className="block text-xs font-medium text-slate-600 sm:col-span-2">
+                    <ST>Dirección fiscal</ST>
+                    <input
+                      className={`${inputCls} mt-1`}
+                      value={clienteForm.direccionFiscal}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, direccionFiscal: e.target.value.slice(0, 200) }))}
+                    />
+                  </label>
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <span className="mb-1 block text-xs font-medium text-slate-600"><ST>¿Es extranjero?</ST></span>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { id: "no", label: "No", esNacional: "si" },
+                        { id: "si", label: "Sí", esNacional: "no" },
+                      ].map((op) => (
+                        <button
+                          key={op.id}
+                          type="button"
+                          onClick={() => setClienteForm((prev) => ({
+                            ...prev,
+                            esNacional: op.esNacional,
+                            tipoDocumento: op.esNacional === "si" ? "cedula" : (prev.tipoDocumento === "cedula" ? "dimex" : prev.tipoDocumento),
+                            identificacion: op.esNacional === "si"
+                              ? soloDigitos(prev.identificacion, 9)
+                              : prev.identificacion,
+                          }))}
+                          className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                            clienteForm.esNacional === op.esNacional
+                              ? "bg-slate-900 text-white"
+                              : "border border-slate-200 bg-white text-slate-600"
+                          }`}
+                        >
+                          <ST>{op.label}</ST>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {clienteForm.esNacional === "no" ? (
+                    <label className="block text-xs font-medium text-slate-600 sm:col-span-2">
+                      <ST>Tipo de documento</ST>
+                      <div className="mt-1">
+                        <UiSelect
+                          value={clienteForm.tipoDocumento === "cedula" ? "dimex" : clienteForm.tipoDocumento}
+                          onChange={(valor) => setClienteForm((prev) => ({
+                            ...prev,
+                            tipoDocumento: valor,
+                            identificacion: valor === "pasaporte"
+                              ? String(prev.identificacion).replace(/[^A-Za-z0-9]/g, "").slice(0, 20)
+                              : soloDigitos(prev.identificacion, 12),
+                          }))}
+                          options={[
+                            { value: "dimex", label: "DIMEX" },
+                            { value: "pasaporte", label: "Pasaporte" },
+                          ]}
+                        />
+                      </div>
+                    </label>
+                  ) : null}
+                  <label className="block text-xs font-medium text-slate-600">
+                    <ST>{clienteForm.esNacional === "si" ? "Cédula" : (clienteForm.tipoDocumento === "pasaporte" ? "Pasaporte" : "DIMEX")}</ST>
+                    <input
+                      className={`${inputCls} mt-1`}
+                      value={clienteForm.identificacion}
+                      onChange={(e) => {
+                        const tipo = clienteForm.esNacional === "si" ? "cedula" : clienteForm.tipoDocumento;
+                        const valor = tipo === "pasaporte"
+                          ? e.target.value.replace(/[^A-Za-z0-9]/g, "").slice(0, 20)
+                          : soloDigitos(e.target.value, tipo === "dimex" ? 12 : 9);
+                        setClienteForm((prev) => ({ ...prev, identificacion: valor }));
+                      }}
+                      required
+                    />
+                  </label>
+                  <label className="block text-xs font-medium text-slate-600">
+                    <ST>Teléfono</ST>
+                    <input
+                      className={`${inputCls} mt-1`}
+                      value={clienteForm.telefono}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, telefono: soloTelefono(e.target.value) }))}
+                      required
+                    />
+                  </label>
+                  <label className="block text-xs font-medium text-slate-600">
+                    <ST>Nombre</ST>
+                    <input
+                      className={`${inputCls} mt-1`}
+                      value={clienteForm.nombreLegal}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, nombreLegal: soloLetras(e.target.value, 50) }))}
+                      required
+                    />
+                  </label>
+                  <label className="block text-xs font-medium text-slate-600">
+                    <ST>Apellido 1</ST>
+                    <input
+                      className={`${inputCls} mt-1`}
+                      value={clienteForm.apellido1}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, apellido1: soloLetras(e.target.value, 40) }))}
+                      required
+                    />
+                  </label>
+                  <label className="block text-xs font-medium text-slate-600">
+                    <ST>Apellido 2</ST>
+                    <input
+                      className={`${inputCls} mt-1`}
+                      value={clienteForm.apellido2}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, apellido2: soloLetras(e.target.value, 40) }))}
+                      required={clienteForm.esNacional === "si"}
+                    />
+                  </label>
+                </div>
+              )}
+            </section>
+          ) : null}
+          {inicial && !asignandoCliente ? <InfoClienteLectura usuario={inicial} /> : null}
         </>
       ) : null}
 
@@ -599,6 +1043,18 @@ function mapUsuario(item) {
     correo: item?.correo ?? item?.Correo ?? "",
     estado: estado === "activo" ? "activo" : "inactivo",
     roles: Array.isArray(item?.roles) ? item.roles : Array.isArray(item?.Roles) ? item.Roles : [],
+    tipoCliente: item?.tipoCliente ?? item?.TipoCliente ?? null,
+    telefono: item?.telefono ?? item?.Telefono ?? null,
+    apellidos: item?.apellidos ?? item?.Apellidos ?? null,
+    identificacion: item?.identificacion ?? item?.Identificacion ?? null,
+    nombreLegal: item?.nombreLegal ?? item?.NombreLegal ?? null,
+    tipoDocumento: item?.tipoDocumento ?? item?.TipoDocumento ?? null,
+    razonSocial: item?.razonSocial ?? item?.RazonSocial ?? null,
+    nombreComercial: item?.nombreComercial ?? item?.NombreComercial ?? null,
+    representanteLegal: item?.representanteLegal ?? item?.RepresentanteLegal ?? null,
+    cedulaJuridica: item?.cedulaJuridica ?? item?.CedulaJuridica ?? null,
+    direccionFiscal: item?.direccionFiscal ?? item?.DireccionFiscal ?? null,
+    telefonoOficina: item?.telefonoOficina ?? item?.TelefonoOficina ?? null,
   };
 }
 
@@ -689,6 +1145,48 @@ const AdminUsuarios = () => {
   const [toggleando, setToggleando] = useState(null); // id en proceso
   const [sorting, setSorting] = useState([]);
   const { showLoading, loadingMessage } = useAdminPageGate('/admin/usuarios', !cargando);
+
+  const filtrosConfig = useMemo(
+    () => [
+      {
+        id: "rol",
+        aplicar: (lista, valor) => {
+          if (!valor || valor === "todos") return lista;
+          const objetivo = String(valor).trim().toLowerCase();
+          return lista.filter((usuario) =>
+            (usuario.roles || []).some(
+              (rol) => String(rol).trim().toLowerCase() === objetivo,
+            ),
+          );
+        },
+      },
+      {
+        id: "estado",
+        aplicar: (lista, valor) => {
+          if (!valor || valor === "todos") return lista;
+          if (valor === "activo" || valor === "Habilitado") {
+            return lista.filter((usuario) => esUsuarioActivo(usuario.estado));
+          }
+          if (valor === "inactivo" || valor === "Deshabilitado") {
+            return lista.filter((usuario) => !esUsuarioActivo(usuario.estado));
+          }
+          return lista.filter((usuario) => usuario.estado === valor);
+        },
+      },
+    ],
+    [],
+  );
+
+  const buscarEn = useCallback(
+    (usuario) => [
+      usuario.nombre,
+      usuario.correo,
+      usuario.estado,
+      ...(Array.isArray(usuario.roles) ? usuario.roles : []),
+    ],
+    [],
+  );
+
   const {
     busqueda,
     setBusqueda,
@@ -700,22 +1198,8 @@ const AdminUsuarios = () => {
     total,
     visibles,
   } = useAdminListaFiltros(usuarios, {
-    buscarEn: (usuario) => [
-      usuario.nombre,
-      usuario.correo,
-      usuario.estado,
-      ...(Array.isArray(usuario.roles) ? usuario.roles : []),
-    ],
-    filtrosConfig: [
-      {
-        id: "rol",
-        aplicar: (lista, valor) =>
-          !valor || valor === "todos"
-            ? lista
-            : lista.filter((usuario) => (usuario.roles || []).includes(valor)),
-      },
-      { id: "estado", obtenerValor: (usuario) => usuario.estado },
-    ],
+    buscarEn,
+    filtrosConfig,
   });
 
   const {
@@ -787,7 +1271,7 @@ const AdminUsuarios = () => {
         delete cambios.passwordActual;
       }
       const actualizado = await actualizarUsuario(usuarioEditar.id, cambios);
-      setUsuarios((prev) => prev.map((u) => (u.id === actualizado.id ? actualizado : u)));
+      setUsuarios((prev) => prev.map((u) => (u.id === actualizado.id ? mapUsuario(actualizado) : u)));
       setUsuarioEditar(null);
     } catch (err) {
       throw err;
@@ -937,8 +1421,8 @@ const AdminUsuarios = () => {
                 onChange: (valor) => setValorFiltro("estado", valor),
                 opciones: [
                   { value: "todos", label: "Todos" },
-                  { value: "Habilitado", label: "Habilitado" },
-                  { value: "Deshabilitado", label: "Deshabilitado" },
+                  { value: "activo", label: "Habilitado" },
+                  { value: "inactivo", label: "Deshabilitado" },
                 ],
               },
             ]}
@@ -1061,7 +1545,11 @@ const AdminUsuarios = () => {
         </Modal>
       ) : null}
       {usuarioEditar ? (
-        <Modal titulo={t("Editar usuario")} onClose={() => setUsuarioEditar(null)}>
+        <Modal
+          titulo={t("Editar usuario")}
+          onClose={() => setUsuarioEditar(null)}
+          maxWidth="max-w-2xl"
+        >
           <FormUsuario
             inicial={usuarioEditar}
             onCreado={handleCrear}

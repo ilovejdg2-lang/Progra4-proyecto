@@ -13,6 +13,7 @@ export function getRouteCacheKey(pathname = normalizePathname()) {
   if (path.startsWith('/donaciones')) return 'donaciones';
   if (path === '/checkout') return 'checkout';
   if (path === '/login') return 'login';
+  if (path === '/registro' || path === '/verificar-cuenta') return 'registro';
   if (path === '/perfil') return 'perfil';
   if (path === '/admin') return 'admin:panel';
   if (path.startsWith('/admin/')) return `admin:${path}`;
