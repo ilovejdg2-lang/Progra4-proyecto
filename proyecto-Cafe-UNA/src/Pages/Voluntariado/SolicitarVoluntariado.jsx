@@ -19,11 +19,14 @@ import {
 import { format, isBefore, startOfDay } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
+import AvisoSedeFinca from "../../Components/AvisoSedeFinca/AvisoSedeFinca";
 import { NumericInput } from "../../Components/NumericInput/NumericInput";
 import { HOME_SCROLL_SECTIONS } from "../../lib/homeScrollTarget";
 import PageLoading from "../../Components/PageLoading/PageLoading";
 import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
+import { sedeDesdeHomeLocation } from "../../lib/sedeFinca";
 import { getActiveSessionUser } from "../../services/sessionService";
+import { obtenerSeccion } from "../../services/informacionService";
 import { crearSolicitud } from "../../services/voluntariadoService";
 import { consultarCedulaDetallada } from "../../services/cedulaService";
 import {
@@ -34,7 +37,7 @@ import {
   HORARIOS_PREDETERMINADOS,
   TIPOS_VOLUNTARIADO,
 } from "../../lib/voluntariadoCatalogo";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/Components/ui/calendar";
 import { queueFocusFormError } from "../../lib/formFocus";
 import { filtrarEnteros } from "../../lib/numericInput";
 import {
@@ -46,15 +49,25 @@ import { useIdioma } from "../../lib/useIdioma";
 import { ST } from "../../Components/T/ST";
 import "./SolicitarVoluntariado.css";
 
-function SectionCard({ icon: Icon, title, hint, children }) {
+function SectionCard({ icon: Icon, paso, title, hint, children }) {
   return (
     <div className="section-card">
       <div className="section-card__header">
-        {Icon && <Icon size={20} className="section-card__icon-inline" />}
-        <div className="section-card__titles">
-          <h4>{title}</h4>
-          {hint && <span className="section-card__hint">{hint}</span>}
-        </div>
+        {paso != null ? (
+          <span className="section-card__paso" aria-hidden="true">
+            {paso}
+          </span>
+        ) : null}
+        <h4>
+          {paso != null ? (
+            <span className="sr-only">
+              <ST>Paso</ST> {paso}.{" "}
+            </span>
+          ) : null}
+          {title}
+        </h4>
+        {Icon ? <Icon size={20} className="section-card__icon-inline" aria-hidden="true" /> : null}
+        {hint ? <span className="section-card__hint">{hint}</span> : null}
       </div>
       <div className="section-card__body">{children}</div>
     </div>
@@ -197,6 +210,7 @@ function SolicitarVoluntariado() {
   const [consultandoCedula, setConsultandoCedula] = useState(false);
   const [avisoCedula, setAvisoCedula] = useState(null);
   const [nombreAutocargado, setNombreAutocargado] = useState(false);
+  const [sedeFinca, setSedeFinca] = useState(() => sedeDesdeHomeLocation(null));
 
   const {
     ref: pageRef,
@@ -210,6 +224,9 @@ function SolicitarVoluntariado() {
   const esTipoOtro = formulario.tipo === "Otro";
   const esNacionalCr = formulario.esNacional === "si";
   const consultaCedulaRef = useRef({ digitos: "", enCurso: false });
+  const pasos = esGrupal
+    ? { personal: 1, contacto: 2, grupo: 3, tipo: 4, fecha: 5, horario: 6 }
+    : { personal: 1, contacto: 2, tipo: 3, fecha: 4, horario: 5 };
 
   // Cargar resumen de disponibilidad de tipos
   useEffect(() => {
@@ -226,6 +243,22 @@ function SolicitarVoluntariado() {
     })();
     return () => {
       cancelado = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let vivo = true;
+    obtenerSeccion("homeLocation")
+      .then((section) => {
+        if (!vivo) return;
+        setSedeFinca(sedeDesdeHomeLocation(section));
+      })
+      .catch(() => {
+        if (!vivo) return;
+        setSedeFinca(sedeDesdeHomeLocation(null));
+      });
+    return () => {
+      vivo = false;
     };
   }, []);
 
@@ -840,6 +873,7 @@ function SolicitarVoluntariado() {
 
               <div className="form-secciones">
                 <SectionCard
+                  paso={pasos.personal}
                   icon={User}
                   title={esGrupal ? tInfoResponsable : tInfoPersonal}
                   hint={esGrupal ? tInfoResponsableHint : tInfoPersonalHint}
@@ -1001,7 +1035,11 @@ function SolicitarVoluntariado() {
                   </div>
                 </SectionCard>
 
-                <SectionCard icon={Mail} title={esGrupal ? tContactoResp : tContacto}>
+                <SectionCard
+                  paso={pasos.contacto}
+                  icon={Mail}
+                  title={esGrupal ? tContactoResp : tContacto}
+                >
                   <div className="form-grid">
                     <div className="campo">
                       <label>
@@ -1037,6 +1075,7 @@ function SolicitarVoluntariado() {
 
                 {esGrupal && (
                   <SectionCard
+                    paso={pasos.grupo}
                     icon={Users}
                     title={tInfoGrupo}
                     hint={tInfoGrupoHint}
@@ -1110,6 +1149,7 @@ function SolicitarVoluntariado() {
                 )}
 
                 <SectionCard
+                  paso={pasos.tipo}
                   icon={Sprout}
                   title={tPaso1}
                   hint={tPaso1Hint}
@@ -1193,6 +1233,7 @@ function SolicitarVoluntariado() {
                 </SectionCard>
 
                 <SectionCard
+                  paso={pasos.fecha}
                   icon={CalendarCheck2}
                   title={tPaso2}
                   hint={tPaso2Hint}
@@ -1279,6 +1320,7 @@ function SolicitarVoluntariado() {
                 </SectionCard>
 
                 <SectionCard
+                  paso={pasos.horario}
                   icon={Clock}
                   title={tPaso3}
                   hint={tPaso3Hint}
@@ -1375,6 +1417,8 @@ function SolicitarVoluntariado() {
                   </div>
                 </div>
               ) : null}
+
+              <AvisoSedeFinca sede={sedeFinca} contexto="voluntariado" />
 
               <div className="acciones-formulario">
                 <button

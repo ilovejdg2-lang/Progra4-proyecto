@@ -136,11 +136,19 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 0.95rem;
+  font-family: var(--sans);
+  font-size: var(--text-body);
+  font-weight: 600;
 }
 
 .navbar__menu a,
-.navbar__menu .router-link {
+.navbar__menu .router-link,
+.navbar__menu button {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-variation-settings: "wght" 600;
+  font-synthesis: none;
   color: #3f352b;
   text-decoration: none;
   transition: color 0.45s ease, text-shadow 0.45s ease;
@@ -170,8 +178,12 @@
   border: 0;
   background: transparent;
   color: #3f352b;
-  font: inherit;
-  font-size: 0.95rem;
+  font-family: var(--sans);
+  font-size: var(--text-body);
+  font-weight: 600;
+  font-variation-settings: "wght" 600;
+  font-synthesis: none;
+  letter-spacing: 0.01em;
   cursor: pointer;
   transition: color 0.45s ease, text-shadow 0.45s ease;
 }
@@ -206,22 +218,32 @@
   transform: translateX(-50%);
 }
 
-.navbar__about-item {
+.navbar__about-item,
+.navbar__about-item[data-status],
+.navbar__about-item[aria-current] {
   display: block;
   min-height: var(--control-height);
   padding: 0 0.9rem;
   border-radius: 10px;
   color: #2a1612 !important;
-  font-size: var(--text-body);
-  font-weight: 600;
+  font-family: var(--sans) !important;
+  font-size: var(--text-body) !important;
+  font-weight: 600 !important;
+  font-variation-settings: "wght" 600 !important;
+  font-synthesis: none;
+  letter-spacing: 0.01em;
   line-height: var(--control-height);
   text-decoration: none !important;
   text-shadow: none !important;
 }
 
-.navbar__about-item:hover {
+.navbar__about-item:hover,
+.navbar__about-item[data-status="active"],
+.navbar__about-item[aria-current="page"] {
   background: #f7f3f0;
   color: #2a1612 !important;
+  font-weight: 600 !important;
+  font-variation-settings: "wght" 600 !important;
 }
 
 .navbar__mobile-about {
@@ -284,15 +306,21 @@
   min-height: var(--control-height);
   padding: 0 0.35rem;
   color: #5c5148;
+  font-family: var(--sans);
   font-size: var(--text-body);
   font-weight: 600;
+  font-variation-settings: "wght" 600;
+  font-synthesis: none;
   text-decoration: none;
 }
 
 .navbar__mobile-about-item:hover,
 .navbar__mobile-about-item:focus-visible,
-.navbar__mobile-about-item.is-active {
+.navbar__mobile-about-item.is-active,
+.navbar__mobile-about-item[data-status="active"] {
   color: #2a1d14;
+  font-weight: 600;
+  font-variation-settings: "wght" 600;
   text-decoration: none;
 }
 
@@ -309,7 +337,8 @@
 .navbar__menu a.is-current,
 .navbar__menu .router-link.is-current {
   color: var(--cafe-800, #2f251d);
-  font-weight: 700;
+  font-weight: 600;
+  font-variation-settings: "wght" 600;
 }
 
 .navbar__menu a.is-current::after,

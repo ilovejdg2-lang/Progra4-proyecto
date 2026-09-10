@@ -17,7 +17,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/Components/ui/calendar";
 import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { useIdioma } from "../../../lib/useIdioma";

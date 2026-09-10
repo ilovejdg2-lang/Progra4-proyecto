@@ -157,6 +157,38 @@ export async function eliminarEnlace(id) {
   return true;
 }
 
+export async function obtenerFaqInicio() {
+  return cache.get("faq-inicio", () =>
+    domainRequest(`${BASE_URL}/faq-inicio`).then((data) => (Array.isArray(data) ? data : [])),
+  );
+}
+
+export async function crearFaqInicio(item) {
+  const result = await domainRequest(`${BASE_URL}/faq-inicio`, {
+    method: "POST",
+    data: item,
+  });
+  clearInfoCache();
+  return result;
+}
+
+export async function actualizarFaqInicio(id, cambios) {
+  const result = await domainRequest(`${BASE_URL}/faq-inicio/${id}`, {
+    method: "PUT",
+    data: cambios,
+  });
+  clearInfoCache();
+  return result;
+}
+
+export async function eliminarFaqInicio(id) {
+  await domainRequest(`${BASE_URL}/faq-inicio/${id}`, {
+    method: "DELETE",
+  });
+  clearInfoCache();
+  return true;
+}
+
 export async function obtenerTarjetasInicio() {
   return cache.get("tarjetas-inicio", () =>
     domainRequest(`${BASE_URL}/tarjetas-inicio`).then((data) => (Array.isArray(data) ? data : [])),

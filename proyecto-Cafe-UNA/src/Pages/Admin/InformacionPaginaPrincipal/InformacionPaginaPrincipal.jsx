@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Coffee, ClipboardList, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Sparkles, Trash2, Users, X } from "lucide-react";
+import { CircleHelp, Coffee, ClipboardList, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Sparkles, Trash2, Users, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalActions, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
@@ -7,6 +7,7 @@ import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui
 import {
   AdminEditorConPreview,
   PreviewEnlaces,
+  PreviewFaqInicioLive,
   PreviewFooterLive,
   PreviewHeroLive,
   PreviewHomeSectionLive,
@@ -24,13 +25,17 @@ import { fetchAdminMainPageData } from "../../../lib/adminMainPageData";
 import { mapHero } from "../../../lib/heroData";
 import {
   actualizarEnlace,
+  actualizarFaqInicio,
   actualizarFooter,
   actualizarNavbar,
   actualizarSeccion,
   actualizarTarjetasInicio,
   crearEnlace,
+  crearFaqInicio,
   eliminarEnlace,
+  eliminarFaqInicio,
   obtenerEnlaces,
+  obtenerFaqInicio,
 } from "../../../services/informacionService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { tienePermiso } from "../../../lib/permisos";
@@ -55,6 +60,7 @@ const SECCION_CAMPOS_TEXTO = ["eyebrow", "title", "description", "linkText"];
 const TARJETA_CAMPOS_TEXTO = ["etiqueta", "titulo", "descripcion", "textoBoton"];
 const FOOTER_CAMPOS_TEXTO = ["fraseMarca", "textoCopyright"];
 const ENLACE_CAMPOS_TEXTO = ["etiqueta"];
+const FAQ_CAMPOS_TEXTO = ["pregunta", "respuesta"];
 
 const heroInicial = {
   eyebrow: "",
@@ -134,6 +140,18 @@ const CONFIG_SECCIONES_INICIO = {
     descriptionLabel: "Descripci\u00f3n",
     linkUrlLabel: "Enlace de Google Maps",
     linkTextLabel: "Texto del bot\u00f3n",
+  },
+  homeFaq: {
+    etiqueta: "Inicio",
+    tituloTarjeta: "Preguntas frecuentes",
+    modalTitle: "Preguntas frecuentes",
+    ayuda: "Título e introducción del apartado de preguntas frecuentes en el inicio.",
+    icon: CircleHelp,
+    showEyebrow: true,
+    showImage: false,
+    eyebrowLabel: "Etiqueta superior",
+    titleLabel: "Título",
+    descriptionLabel: "Texto introductorio",
   },
 };
 
@@ -1138,6 +1156,186 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
   );
 }
 
+function ModalFaqInicio({ items, seccion, onCerrar, onGuardar, guardando, puedeEliminar }) {
+  const [lista, setLista] = useState(() => (Array.isArray(items) ? items : []));
+  const [busqueda, setBusqueda] = useState("");
+  const tTitulo = useTraducir("Preguntas y respuestas");
+  const tGuardando = useTraducir("Guardando...");
+  const tGuardarCambios = useTraducir("Guardar cambios");
+  const { idioma } = useIdioma();
+
+  useEffect(() => {
+    let cancelado = false;
+    const base = Array.isArray(items) ? items : [];
+    setLista(base);
+    (async () => {
+      if (idioma !== "en") {
+        if (!cancelado) setLista(base);
+        return;
+      }
+      const vista = await traducirListaObjetos(base, FAQ_CAMPOS_TEXTO);
+      if (!cancelado) setLista(vista);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [items, idioma]);
+
+  const itemsFiltrados = useMemo(
+    () => filtrarPorBusqueda(lista, busqueda, (item) => [item.pregunta, item.respuesta]),
+    [lista, busqueda],
+  );
+
+  const cambiarItem = (id, campo, valor) => {
+    setLista((actual) => actual.map((item) => (item.id === id ? { ...item, [campo]: valor } : item)));
+  };
+
+  const agregarItem = () => {
+    const siguienteOrden = lista.reduce((max, item) => Math.max(max, Number(item.orden) || 0), 0) + 1;
+    setLista((actual) => [
+      ...actual,
+      {
+        id: `nuevo-${Date.now()}`,
+        pregunta: "",
+        respuesta: "",
+        orden: siguienteOrden,
+      },
+    ]);
+  };
+
+  const eliminarItem = (id) => {
+    setLista((actual) => actual.filter((item) => item.id !== id));
+  };
+
+  const enviar = async (event) => {
+    event.preventDefault();
+    const validos = lista.filter((item) => item.pregunta?.trim() && item.respuesta?.trim());
+    const normalizados = await Promise.all(
+      validos.map((item) => asegurarCamposEnEspanol(item, FAQ_CAMPOS_TEXTO)),
+    );
+    onGuardar(normalizados);
+  };
+
+  return (
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-3xl" labelledBy="admin-faq-inicio-modal-title">
+      <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
+        <AdminModalHeader>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <CircleHelp className="size-6 shrink-0 text-amber-700" strokeWidth={1.75} aria-hidden="true" />
+            <h2 id="admin-faq-inicio-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">
+              {tTitulo}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onCerrar}
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label={t("Cerrar")}
+          >
+            <X className="size-5" />
+          </button>
+        </AdminModalHeader>
+
+        <AdminModalBody cms className="space-y-5">
+          <AdminEditorConPreview
+            preview={<PreviewFaqInicioLive items={lista} seccion={seccion} />}
+            ayuda="Agregá, editá u ordená las preguntas del inicio. El título de la sección se edita en la tarjeta Preguntas frecuentes."
+          >
+            <div className="space-y-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500"><ST>Preguntas actuales</ST></p>
+                <button
+                  type="button"
+                  onClick={agregarItem}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 py-2 text-sm font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 sm:w-auto"
+                >
+                  <Plus className="size-4" />
+                  <ST>Agregar pregunta</ST>
+                </button>
+              </div>
+
+              <AdminListaToolbar
+                compacto
+                busqueda={busqueda}
+                onBusquedaChange={setBusqueda}
+                placeholder="Buscar por pregunta o respuesta..."
+                total={lista.length}
+                visibles={itemsFiltrados.length}
+                hayFiltrosActivos={Boolean(busqueda.trim())}
+                onLimpiar={() => setBusqueda("")}
+              />
+
+              {lista.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+                  <ST>No hay preguntas configuradas. Agregue una para mostrarla en el inicio.</ST>
+                </p>
+              ) : itemsFiltrados.length === 0 ? (
+                <AdminListaVacia onLimpiar={() => setBusqueda("")} />
+              ) : (
+                <div className="space-y-4">
+                  {itemsFiltrados.map((item) => (
+                    <div key={item.id} className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <label className="min-w-0 flex-1 space-y-1">
+                          <span className="text-[length:var(--text-body)] font-medium text-slate-600"><ST>Pregunta</ST></span>
+                          <input
+                            value={item.pregunta ?? ""}
+                            onChange={(e) => cambiarItem(item.id, "pregunta", e.target.value.slice(0, 500))}
+                            maxLength={500}
+                            className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-[length:var(--text-body)] outline-none focus:border-slate-400"
+                            required
+                          />
+                        </label>
+                        {puedeEliminar ? (
+                          <button
+                            type="button"
+                            onClick={() => eliminarItem(item.id)}
+                            className="rounded-full p-2 text-slate-500 transition hover:bg-white hover:text-red-600"
+                            aria-label={t("Eliminar")}
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        ) : null}
+                      </div>
+                      <label className="block space-y-1">
+                        <span className="text-[length:var(--text-body)] font-medium text-slate-600"><ST>Respuesta</ST></span>
+                        <textarea
+                          value={item.respuesta ?? ""}
+                          onChange={(e) => cambiarItem(item.id, "respuesta", e.target.value.slice(0, 4000))}
+                          maxLength={4000}
+                          rows={3}
+                          className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-[length:var(--text-body)] outline-none focus:border-slate-400"
+                          required
+                        />
+                      </label>
+                      <label className="inline-flex items-center gap-2 text-[length:var(--text-body)] text-slate-600">
+                        <ST>Orden</ST>
+                        <NumericInput
+                          value={item.orden ?? 0}
+                          onChange={(event) => cambiarItem(item.id, "orden", Number(event.target.value) || 0)}
+                          className="w-20 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[length:var(--text-body)] outline-none focus:border-slate-400"
+                        />
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </AdminEditorConPreview>
+        </AdminModalBody>
+
+        <AdminModalFooter>
+          <AdminModalActions
+            onCancel={onCerrar}
+            primaryDisabled={guardando}
+            primaryLabel={guardando ? tGuardando : tGuardarCambios}
+          />
+        </AdminModalFooter>
+      </form>
+    </AdminModal>
+  );
+}
+
 function mapSeccionInicio(data) {
   return {
     eyebrow: typeof data?.eyebrow === "string" ? data.eyebrow.trim() : "",
@@ -1199,12 +1397,14 @@ const AdminInformacionPaginaPrincipal = () => {
     homeFeatured: { ...seccionInicioVacia },
     homeIniciativas: { ...seccionInicioVacia },
     homeLocation: { ...seccionInicioVacia },
+    homeFaq: { ...seccionInicioVacia },
   });
   const [navbar, setNavbar] = useState(navbarInicial);
   const [footer, setFooter] = useState(footerInicial);
   const [enlacesNavbar, setEnlacesNavbar] = useState([]);
   const [enlacesFooter, setEnlacesFooter] = useState([]);
   const [tarjetasInicio, setTarjetasInicio] = useState([]);
+  const [faqInicio, setFaqInicio] = useState([]);
   const [guardando, setGuardando] = useState(false);
   const [editando, setEditando] = useState(null);
 
@@ -1221,8 +1421,10 @@ const AdminInformacionPaginaPrincipal = () => {
       homeFeatured: { ...seccionInicioVacia },
       homeIniciativas: { ...seccionInicioVacia },
       homeLocation: { ...seccionInicioVacia },
+      homeFaq: { ...seccionInicioVacia },
     });
     setTarjetasInicio(Array.isArray(data.tarjetasInicio) ? data.tarjetasInicio : []);
+    setFaqInicio(Array.isArray(data.faqInicio) ? data.faqInicio : []);
     if (data.navbar) setNavbar({ ...navbarInicial, ...data.navbar });
     if (data.footer) setFooter({ ...footerInicial, ...data.footer });
     setEnlacesNavbar(Array.isArray(data.enlacesNavbar) ? data.enlacesNavbar : []);
@@ -1400,6 +1602,68 @@ const AdminInformacionPaginaPrincipal = () => {
     }
   };
 
+
+  const guardarFaqInicio = async (items) => {
+    const actual = faqInicio;
+    const actualPorId = new Map(actual.map((item) => [String(item.id), item]));
+    const validos = items.filter((item) => item.pregunta?.trim() && item.respuesta?.trim());
+
+    const removidos = esSuperAdmin
+      ? actual.filter((item) => !validos.some((nuevo) => String(nuevo.id) === String(item.id)))
+      : [];
+    const agregados = validos.filter((item) => {
+      const id = String(item.id ?? "");
+      return id.startsWith("nuevo-") || !actualPorId.has(id);
+    });
+    const editados = validos.filter((item) => {
+      const previo = actualPorId.get(String(item.id));
+      if (!previo) return false;
+      return (
+        (previo.pregunta ?? "") !== (item.pregunta ?? "").trim()
+        || (previo.respuesta ?? "") !== (item.respuesta ?? "").trim()
+        || Number(previo.orden ?? 0) !== Number(item.orden ?? 0)
+      );
+    });
+
+    try {
+      setGuardando(true);
+      await Promise.all(removidos.map((item) => eliminarFaqInicio(item.id)));
+      await Promise.all(
+        agregados.map((item) =>
+          crearFaqInicio({
+            pregunta: item.pregunta.trim(),
+            respuesta: item.respuesta.trim(),
+            orden: Number(item.orden) || undefined,
+          }),
+        ),
+      );
+      await Promise.all(
+        editados.map((item) =>
+          actualizarFaqInicio(item.id, {
+            pregunta: item.pregunta.trim(),
+            respuesta: item.respuesta.trim(),
+            orden: Number(item.orden) || 0,
+          }),
+        ),
+      );
+      const actualizados = await obtenerFaqInicio();
+      setFaqInicio(
+        (Array.isArray(actualizados) ? actualizados : []).map((item) => ({
+          id: item?.id ?? item?.Id ?? null,
+          pregunta: item?.pregunta ?? item?.Pregunta ?? "",
+          respuesta: item?.respuesta ?? item?.Respuesta ?? "",
+          orden: Number(item?.orden ?? item?.Orden ?? 0) || 0,
+        })),
+      );
+      await reload();
+      setEditando(null);
+    } catch (err) {
+      alert(t(err.message || "No se pudo guardar las preguntas frecuentes."));
+    } finally {
+      setGuardando(false);
+    }
+  };
+
   const resumenTarjetasInicio = tarjetasInicio.length
     ? tarjetasInicio.map((tarjeta) => tarjeta.titulo || TARJETAS_INICIO_LABELS[tarjeta.clave] || tarjeta.clave).join(" · ")
     : "Donaciones, visitas y voluntariado (sin textos cargados).";
@@ -1436,6 +1700,7 @@ const AdminInformacionPaginaPrincipal = () => {
       { id: "hero", grupo: "inicio", busqueda: ["Hero section", hero.title, hero.subtitle] },
       ...seccionesInicioItems,
       { id: "tarjetas-inicio", grupo: "inicio", busqueda: ["Mini formularios", "Inicio", resumenTarjetasInicio] },
+      { id: "faq-inicio", grupo: "inicio", busqueda: ["Preguntas frecuentes", "FAQ", "Inicio", faqInicio.map((i) => i.pregunta).join(" ")] },
       { id: "navbar", grupo: "navbar", busqueda: ["Navbar", "Barra de navegaci\u00f3n", resumenNavbar] },
       { id: "footer", grupo: "footer", busqueda: ["Footer", "Pie de p\u00e1gina", resumenFooter] },
       {
@@ -1570,6 +1835,15 @@ const AdminInformacionPaginaPrincipal = () => {
             />
             ) : null}
 
+            {idsVisibles.has("faq-inicio") ? (
+            <AdminSeccionCard
+              etiqueta="Inicio"
+              titulo="Preguntas y respuestas"
+              icono={CircleHelp}
+              onEditar={() => setEditando("faq-inicio")}
+            />
+            ) : null}
+
             {idsVisibles.has("navbar") ? (
             <AdminSeccionCard
               etiqueta="Navbar"
@@ -1633,6 +1907,17 @@ const AdminInformacionPaginaPrincipal = () => {
           onCerrar={() => setEditando(null)}
           onGuardar={guardarTarjetasInicio}
           guardando={guardando}
+        />
+      ) : null}
+
+      {editando === "faq-inicio" ? (
+        <ModalFaqInicio
+          items={faqInicio}
+          seccion={seccionesInicio.homeFaq}
+          onCerrar={() => setEditando(null)}
+          onGuardar={guardarFaqInicio}
+          guardando={guardando}
+          puedeEliminar={esSuperAdmin}
         />
       ) : null}
 

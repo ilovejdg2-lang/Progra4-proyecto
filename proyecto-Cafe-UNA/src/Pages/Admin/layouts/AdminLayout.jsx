@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 
 import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
@@ -12,12 +12,23 @@ import { useTraducir } from "../../../hooks/useTraducir";
 
 function AdminMain({ children }) {
   const { openMobile } = useSidebar();
+  const [esMobile, setEsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const sync = () => setEsMobile(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  const bloquearMain = openMobile && esMobile;
 
   return (
     <main
-      className={`min-h-svh min-w-0 flex-1 overflow-x-clip bg-[#fafafa] ${openMobile ? "max-md:pointer-events-none" : ""}`}
-      inert={openMobile || undefined}
-      aria-hidden={openMobile || undefined}
+      className={`min-h-svh min-w-0 flex-1 overflow-x-clip bg-[#fafafa] ${bloquearMain ? "pointer-events-none" : ""}`}
+      inert={bloquearMain || undefined}
+      aria-hidden={bloquearMain || undefined}
     >
       <div className="sticky top-0 z-[80] flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4">
         <SidebarTrigger />

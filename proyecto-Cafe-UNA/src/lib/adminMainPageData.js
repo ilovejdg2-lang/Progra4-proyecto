@@ -2,6 +2,7 @@ import {
   obtenerInformacion,
   obtenerSeccion,
   obtenerTarjetasInicio,
+  obtenerFaqInicio,
 } from '../services/informacionService';
 import { mapHero } from './heroData';
 import { textoVisible } from './textoVisible';
@@ -32,6 +33,15 @@ function mapTarjetaInicio(item) {
   };
 }
 
+function mapFaqItem(item) {
+  return {
+    id: item?.id ?? item?.Id ?? null,
+    pregunta: textoCampo(item?.pregunta ?? item?.Pregunta),
+    respuesta: textoCampo(item?.respuesta ?? item?.Respuesta),
+    orden: Number(item?.orden ?? item?.Orden ?? 0) || 0,
+  };
+}
+
 function filtrarEnlaces(enlaces, seccion) {
   if (!Array.isArray(enlaces)) return [];
   return enlaces.filter((item) => {
@@ -47,14 +57,18 @@ export async function fetchAdminMainPageData() {
     homeFeatured,
     homeIniciativas,
     homeLocation,
+    homeFaq,
     tarjetas,
+    faqItems,
   ] = await Promise.all([
     obtenerInformacion().catch(() => null),
     obtenerSeccion('homeSpotlight').catch(() => null),
     obtenerSeccion('homeFeatured').catch(() => null),
     obtenerSeccion('homeIniciativas').catch(() => null),
     obtenerSeccion('homeLocation').catch(() => null),
+    obtenerSeccion('homeFaq').catch(() => null),
     obtenerTarjetasInicio().catch(() => []),
+    obtenerFaqInicio().catch(() => []),
   ]);
 
   const hero = bulk?.hero ? mapHero(bulk.hero) : null;
@@ -69,12 +83,14 @@ export async function fetchAdminMainPageData() {
       homeFeatured: mapSeccionInicio(homeFeatured),
       homeIniciativas: mapSeccionInicio(homeIniciativas),
       homeLocation: mapSeccionInicio(homeLocation),
+      homeFaq: mapSeccionInicio(homeFaq),
     },
     navbar,
     footer,
     enlacesNavbar: filtrarEnlaces(enlaces, 'Navbar'),
     enlacesFooter: filtrarEnlaces(enlaces, 'FooterExplorar'),
     tarjetasInicio: Array.isArray(tarjetas) ? tarjetas.map(mapTarjetaInicio) : [],
+    faqInicio: Array.isArray(faqItems) ? faqItems.map(mapFaqItem) : [],
     hasError: !hero && !navbar && !footer,
   };
 }

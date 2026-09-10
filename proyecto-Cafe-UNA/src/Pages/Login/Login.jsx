@@ -239,7 +239,7 @@ const Login = () => {
 
       const authenticatedUser = mapAuthenticatedUser(token);
       saveAuthenticatedUser(authenticatedUser);
-      const redirectTo = sessionStorage.getItem('postLoginRedirect') || '/';
+      let redirectTo = sessionStorage.getItem('postLoginRedirect') || '/';
       sessionStorage.removeItem('postLoginRedirect');
       window.location.href = redirectTo;
     } catch (err) {

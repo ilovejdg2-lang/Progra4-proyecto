@@ -1,4 +1,4 @@
-import { obtenerHero, obtenerNavbar, obtenerSeccion, obtenerTarjetasInicio, obtenerEnlaces } from '../services/informacionService';
+import { obtenerHero, obtenerNavbar, obtenerSeccion, obtenerTarjetasInicio, obtenerEnlaces, obtenerFaqInicio } from '../services/informacionService';
 import { obtenerProductos } from '../services/productosService';
 import { mapHero } from './heroData';
 import { textoVisible } from './textoVisible';
@@ -24,6 +24,17 @@ function trimSectionRaw(section) {
   };
 }
 
+function mapFaqItem(item) {
+  return {
+    id: item?.id ?? item?.Id ?? null,
+    pregunta: pickString(item, 'pregunta', 'Pregunta'),
+    preguntaEn: pickString(item, 'preguntaEn', 'PreguntaEn'),
+    respuesta: pickString(item, 'respuesta', 'Respuesta'),
+    respuestaEn: pickString(item, 'respuestaEn', 'RespuestaEn'),
+    orden: Number(item?.orden ?? item?.Orden ?? 0) || 0,
+  };
+}
+
 /**
  * Datos del inicio en bruto (español + inglés).
  * La UI elige el idioma al mostrar con localizarObjeto / mapHeroLocalizado.
@@ -35,6 +46,8 @@ export async function fetchHomePageData() {
     featured,
     iniciativas,
     location,
+    faq,
+    faqItems,
     tarjetas,
     productList,
     navbarInfo,
@@ -45,6 +58,8 @@ export async function fetchHomePageData() {
     obtenerSeccion('homeFeatured'),
     obtenerSeccion('homeIniciativas'),
     obtenerSeccion('homeLocation'),
+    obtenerSeccion('homeFaq'),
+    obtenerFaqInicio().catch(() => []),
     obtenerTarjetasInicio(),
     obtenerProductos().catch(() => []),
     obtenerNavbar().catch(() => null),
@@ -70,6 +85,8 @@ export async function fetchHomePageData() {
     featuredSection: trimSectionRaw(featured),
     iniciativasSection: trimSectionRaw(iniciativas),
     locationSection: trimSectionRaw(location),
+    faqSection: trimSectionRaw(faq),
+    faqItems: Array.isArray(faqItems) ? faqItems.map(mapFaqItem) : [],
     tarjetasInicio: Array.isArray(tarjetas)
       ? tarjetas.map((item) => ({
           clave: item.clave || item.Clave || '',
