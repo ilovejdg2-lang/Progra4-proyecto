@@ -48,10 +48,60 @@ export function mapAuthenticatedUser(token) {
   };
 }
 
+export function puedeComprar(user) {
+  return tienePermiso(user?.roles, "comprar_productos");
+}
+
+const REGISTRO_CLIENTE_INTENT_KEY = "registroClienteDesdeCheckout";
+
+/** Marca que la persona llegó al registro porque quiere pagar el carrito. */
+export function marcarIntentRegistroCliente() {
+  try {
+    sessionStorage.setItem(REGISTRO_CLIENTE_INTENT_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Solo se permite /registro si viene del checkout o ya empezó verificación. */
+export function puedeAbrirRegistroCliente() {
+  try {
+    if (sessionStorage.getItem(REGISTRO_CLIENTE_INTENT_KEY) === "1") return true;
+    if (sessionStorage.getItem("registroClienteCorreo")) return true;
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+export function limpiarIntentRegistroCliente() {
+  try {
+    sessionStorage.removeItem(REGISTRO_CLIENTE_INTENT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export async function registrarUsuario(payload) {
   return request(`${AUTH_BASE_URL}/register`, {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export async function registrarCliente(payload) {
+  return request(`${AUTH_BASE_URL}/register-cliente`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function completarCliente(payload) {
+  return apiRequest(`${AUTH_BASE_URL}/completar-cliente`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+    errorPrefix: "Error al completar perfil de cliente",
+    timeoutMessage: "Tiempo de espera agotado al completar el perfil.",
   });
 }
 

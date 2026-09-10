@@ -209,35 +209,78 @@
 }
 
 .section-card__header {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  column-gap: 10px;
+  row-gap: 8px;
   margin-bottom: 20px;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--fondo-soft);
 }
 
+.section-card__paso {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--negro-principal);
+  color: #fff;
+  font-size: var(--text-body);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.section-card__header h4 {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--text-subtitle);
+  font-weight: 600;
+  color: var(--texto-principal);
+  letter-spacing: -0.01em;
+}
+
 .section-card__icon-inline {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  margin-left: 0;
   color: var(--negro-principal);
   flex-shrink: 0;
   display: flex;
   align-items: center;
 }
 
-.section-card__titles h4 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--texto-principal);
-  letter-spacing: -0.01em;
-}
-
 .section-card__hint {
   display: block;
-  margin-top: 2px;
-  font-size: 12px;
+  grid-column: 1 / -1;
+  margin-top: 0;
+  margin-left: 36px;
+  font-size: var(--text-body);
   color: var(--texto-secundario);
   font-weight: 400;
+}
+
+.voluntariado-page .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 480px) {
+  .section-card__hint {
+    margin-left: 0;
+  }
 }
 
 .section-card__body {
@@ -409,16 +452,21 @@
 
 .btn-enviar {
   width: 100%;
+  height: var(--control-height);
+  min-height: var(--control-height);
   border: none;
   background: var(--negro-principal);
   color: #ffffff;
-  padding: 14px 24px;
+  padding: 0 24px;
   border-radius: var(--radius-ui);
   cursor: pointer;
-  font-size: 15px;
+  font-size: var(--text-body);
   font-weight: 600;
   transition: background 0.2s ease, transform 0.1s ease;
   font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-enviar:hover:not(:disabled) {
@@ -1102,9 +1150,56 @@
 
 .voluntariado-aviso-bloque__texto {
   font-size: 13px;
-  max-width: 460px;
   line-height: 1.5;
+  max-width: 460px;
   color: var(--texto-secundario);
+}
+
+.aviso-sede-finca {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  margin: 1rem 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-ui, 12px);
+  background: #f8fafc;
+}
+
+.aviso-sede-finca__icono {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: #0f172a;
+}
+
+.aviso-sede-finca__contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.aviso-sede-finca__texto {
+  margin: 0;
+  font-size: var(--text-body);
+  line-height: 1.5;
+  color: #334155;
+}
+
+.aviso-sede-finca__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: #0f172a;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.aviso-sede-finca__link:hover {
+  color: #C41E3A;
 }
 
 .opcion-radio__meta {
@@ -1146,4 +1241,4 @@
 .opcion-radio--sin-fechas {
   opacity: 0.85;
 }
-
+

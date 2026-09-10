@@ -321,6 +321,26 @@ function PreviewHomeSectionLive({ clave, form, tarjetasInicio = [] }) {
         </div>
       </section>
     );
+  } else if (clave === "homeFaq") {
+    section = (
+      <section className="home-page__faq" aria-labelledby="preview-faq-title">
+        <header className="home-faq__header">
+          {form.eyebrow ? <p className="home-faq__eyebrow">{form.eyebrow}</p> : null}
+          {form.title ? <h2 id="preview-faq-title">{form.title}</h2> : null}
+          {form.description ? <p className="home-faq__intro">{form.description}</p> : null}
+        </header>
+        <div className="home-faq__lista">
+          <details className="home-faq__item" open>
+            <summary>Ejemplo de pregunta frecuente</summary>
+            <div className="home-faq__cuerpo">
+              <div className="home-faq__cuerpo-inner">
+                <p>Las preguntas y respuestas reales se editan en la tarjeta de ítems FAQ.</p>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -571,11 +591,48 @@ export function AdminEditorConPreview({ preview, children, ayuda }) {
   );
 }
 
+function PreviewFaqInicioLive({ items = [], seccion = {} }) {
+  return (
+    <PreviewLiveFrame variant="admin-cms-preview--section">
+      <div className="home-shell">
+        <main className="home-page">
+          <section className="home-page__faq">
+            <header className="home-faq__header">
+              {seccion.eyebrow ? <p className="home-faq__eyebrow">{seccion.eyebrow}</p> : null}
+              {seccion.title ? <h2>{seccion.title}</h2> : <h2>Preguntas frecuentes</h2>}
+              {seccion.description ? <p className="home-faq__intro">{seccion.description}</p> : null}
+            </header>
+            <div className="home-faq__lista">
+              {(Array.isArray(items) ? items : []).filter((item) => item.pregunta?.trim()).length === 0 ? (
+                <p className="home-faq__intro">Sin preguntas todavía.</p>
+              ) : (
+                (Array.isArray(items) ? items : [])
+                  .filter((item) => item.pregunta?.trim())
+                  .map((item) => (
+                    <details key={item.id ?? item.pregunta} className="home-faq__item" open>
+                      <summary>{item.pregunta}</summary>
+                      <div className="home-faq__cuerpo">
+                        <div className="home-faq__cuerpo-inner">
+                          <p>{item.respuesta || "Sin respuesta"}</p>
+                        </div>
+                      </div>
+                    </details>
+                  ))
+              )}
+            </div>
+          </section>
+        </main>
+      </div>
+    </PreviewLiveFrame>
+  );
+}
+
 export {
   PreviewShell,
   PreviewHeroLive,
   PreviewHomeSectionLive,
   PreviewTarjetasInicioLive,
+  PreviewFaqInicioLive,
   PreviewTextoInstitucionalLive,
   PreviewGaleriaLive,
   PreviewNavbarLive,

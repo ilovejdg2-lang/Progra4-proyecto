@@ -340,7 +340,7 @@ const DICCIONARIO = {
   "Alertas de stock": "Stock alerts",
   "Cargando alertas...": "Loading alerts...",
   "Todo el inventario está en niveles normales": "All inventory is at normal levels",
-  "Peor stock": "Worst stock",
+  "Stock": "Stock",
   "Mínimo": "Minimum",
   "Verificando acceso...": "Checking access...",
 
@@ -415,6 +415,7 @@ const DICCIONARIO = {
   "Cargando necesidades...": "Loading needs...",
   "Cargando formulario...": "Loading form...",
   "Cargando checkout...": "Loading checkout...",
+  "Cargando registro...": "Loading registration...",
   "Cargando perfil...": "Loading profile...",
   "Cargando panel administrativo...": "Loading admin panel...",
   "Cargando productos...": "Loading products...",
@@ -629,6 +630,14 @@ const DICCIONARIO = {
   "Solo un SuperAdmin puede inactivar o activar usuarios.":
     "Only a SuperAdmin can deactivate or activate users.",
   "No puede inactivarse a sí mismo.": "You cannot deactivate yourself.",
+  "No puede quitarse a sí mismo el rol SuperAdmin.":
+    "You cannot remove your own SuperAdmin role.",
+  "No puede quitarse el rol SuperAdmin.": "You cannot remove the SuperAdmin role.",
+  "Complete los datos de cliente para poder guardar este rol.":
+    "Fill in the client details to save this role.",
+  "El teléfono del cliente es obligatorio.": "The client phone number is required.",
+  "Para asignar el rol Cliente debe completar la información de cliente.":
+    "To assign the Client role you must complete the client information.",
   "Error al cambiar el estado.": "Error changing status.",
   "Error al actualizar la solicitud. Intentá de nuevo.":
     "Error updating the request. Please try again.",

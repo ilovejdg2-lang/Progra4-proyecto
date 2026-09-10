@@ -14,11 +14,14 @@ import {
   Users,
 } from "lucide-react";
 
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/Components/ui/calendar";
 import PageLoading from "../../Components/PageLoading/PageLoading";
+import AvisoSedeFinca from "../../Components/AvisoSedeFinca/AvisoSedeFinca";
 import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
 import { PROVINCIAS_CR, cantonesDeProvincia } from "../../lib/costaRicaDivisiones";
+import { sedeDesdeHomeLocation } from "../../lib/sedeFinca";
 import { consultarCedulaDetallada } from "../../services/cedulaService";
+import { obtenerSeccion } from "../../services/informacionService";
 import { getActiveSessionUser } from "../../services/sessionService";
 import {
   crearSolicitudVisita,
@@ -75,15 +78,23 @@ function Field({ label, children }) {
   );
 }
 
-function SectionCard({ icon: Icon, title, hint, children }) {
+function SectionCard({ icon: Icon, paso, title, hint, children }) {
   return (
     <section className="section-card">
       <div className="section-card__header">
-        {Icon && <Icon aria-hidden="true" className="section-card__icon-inline" size={20} />}
-        <div className="section-card__titles">
-          <h4>{title}</h4>
-          {hint ? <span className="section-card__hint">{hint}</span> : null}
-        </div>
+        {paso != null ? (
+          <span className="section-card__paso" aria-hidden="true">
+            {paso}
+          </span>
+        ) : null}
+        <h4>
+          {paso != null ? (
+            <span className="sr-only">Paso {paso}. </span>
+          ) : null}
+          {title}
+        </h4>
+        {Icon ? <Icon aria-hidden="true" className="section-card__icon-inline" size={20} /> : null}
+        {hint ? <span className="section-card__hint">{hint}</span> : null}
       </div>
       <div className="section-card__body">{children}</div>
     </section>
@@ -117,6 +128,7 @@ export default function SolicitarVisita() {
   const consultaCedulaRef = useRef({ digitos: "", enCurso: false });
   const [consultandoCedula, setConsultandoCedula] = useState(false);
   const [avisoCedula, setAvisoCedula] = useState(null);
+  const [sedeFinca, setSedeFinca] = useState(() => sedeDesdeHomeLocation(null));
 
   const {
     ref: pageRef,
@@ -125,6 +137,22 @@ export default function SolicitarVisita() {
     inert,
     loadingMessage,
   } = usePaintPublicPage("visitas");
+
+  useEffect(() => {
+    let vivo = true;
+    obtenerSeccion("homeLocation")
+      .then((section) => {
+        if (!vivo) return;
+        setSedeFinca(sedeDesdeHomeLocation(section));
+      })
+      .catch(() => {
+        if (!vivo) return;
+        setSedeFinca(sedeDesdeHomeLocation(null));
+      });
+    return () => {
+      vivo = false;
+    };
+  }, []);
 
   // Mapeo de fechas habilitadas para visitas (YYYY-MM-DD -> array de slots)
   const fechasHabilitadasMap = useMemo(() => {
@@ -431,6 +459,7 @@ export default function SolicitarVisita() {
           >
             <div className="form-secciones">
               <SectionCard
+                paso={1}
                 icon={UserRound}
                 title="Información del encargado"
                 hint="Datos de la persona responsable de coordinar la visita."
@@ -504,6 +533,7 @@ export default function SolicitarVisita() {
               </SectionCard>
 
               <SectionCard
+                paso={2}
                 icon={Users}
                 title="Información del grupo"
                 hint="Las visitas grupales requieren al menos dos personas."
@@ -604,6 +634,7 @@ export default function SolicitarVisita() {
 
               {/* Sección de Horarios Homologada a Voluntariado */}
               <SectionCard
+                paso={3}
                 icon={CalendarDays}
                 title="Fecha y horario disponibles *"
                 hint="Seleccioná un día habilitado en el calendario y luego el turno de tu preferencia."
@@ -755,6 +786,7 @@ export default function SolicitarVisita() {
               </SectionCard>
 
               <SectionCard
+                paso={4}
                 icon={ClipboardList}
                 title="Necesidades y recomendaciones"
                 hint="Todas las visitas serán recibidas o acompañadas por personal del proyecto."
@@ -810,6 +842,8 @@ export default function SolicitarVisita() {
                 </div>
               </div>
             ) : null}
+
+            <AvisoSedeFinca sede={sedeFinca} contexto="visita" />
 
             <div className="acciones-formulario">
               <button

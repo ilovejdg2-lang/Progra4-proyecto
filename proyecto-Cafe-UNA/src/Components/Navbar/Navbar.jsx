@@ -17,6 +17,7 @@ import {
 } from '../../services/donacionesService';
 import { cancelPendingSessionRefresh } from '../../services/apiClient';
 import { beginLogout, clearSession, getActiveSessionUser } from '../../services/sessionService';
+import { marcarIntentRegistroCliente, puedeComprar } from '../../services/authService';
 import { rolesDeUsuario, tienePermiso } from '../../lib/permisos';
 import { textoIdioma } from '../../lib/idioma';
 import { useIdioma } from '../../lib/useIdioma';
@@ -78,7 +79,6 @@ const getQuantity = (item) => Number(item.units) || 1;
 const getUnitPriceWithoutIva = (item) => Number(item.precioNormal ?? item.priceWithoutIva ?? item.price ?? 0) || 0;
 const getUnitPriceWithIva = (item) => calcularPrecioConIVA(getUnitPriceWithoutIva(item));
 const getAvailableStock = (item) => Number(item.stock) || 0;
-const canCompletePurchase = (user) => Boolean(user);
 const canSeeAllSolicitudes = (user) => {
     const roles = Array.isArray(user?.roles) ? user.roles : [];
     return roles.some((role) => {
@@ -690,15 +690,15 @@ const Navbar = () => {
     };
 
     const handleCheckoutClick = (event) => {
-        if (canCompletePurchase(user)) {
-            setShowCartDropdown(false);
-            return;
-        }
-
         event.preventDefault();
         setShowCartDropdown(false);
         sessionStorage.setItem('postLoginRedirect', '/checkout');
-        navigate({ to: '/login' });
+        if (puedeComprar(user)) {
+            navigate({ to: '/checkout' });
+            return;
+        }
+        marcarIntentRegistroCliente();
+        navigate({ to: '/registro' });
     };
 
     const handleLogout = () => {
@@ -794,6 +794,7 @@ const Navbar = () => {
                                             to={ABOUT_HISTORIA_PATH}
                                             role="menuitem"
                                             className="navbar__about-item"
+                                            activeProps={{ className: "navbar__about-item" }}
                                             onClick={() => setShowAboutMenu(false)}
                                         >
                                             {labelHistoria}
@@ -802,6 +803,7 @@ const Navbar = () => {
                                             to={ABOUT_GALERIA_PATH}
                                             role="menuitem"
                                             className="navbar__about-item"
+                                            activeProps={{ className: "navbar__about-item" }}
                                             onClick={() => setShowAboutMenu(false)}
                                         >
                                             {labelGaleria}
@@ -815,7 +817,9 @@ const Navbar = () => {
                     if (isFormsNavLink(enlace)) {
                         const pathNorm = normalizePathname(pathname);
                         const formsActive =
-                            pathNorm.startsWith('/voluntariado') || pathNorm.startsWith('/donaciones');
+                            pathNorm.startsWith('/voluntariado')
+                            || pathNorm.startsWith('/visitas')
+                            || pathNorm.startsWith('/donaciones');
                         return (
                             <div
                                 key={enlace.id ?? enlace.ruta ?? 'forms'}
@@ -844,6 +848,7 @@ const Navbar = () => {
                                             to="/voluntariado/solicitar"
                                             role="menuitem"
                                             className="navbar__about-item"
+                                            activeProps={{ className: "navbar__about-item" }}
                                             onClick={() => setShowFormsMenu(false)}
                                         >
                                             {labelVoluntariado}
@@ -852,6 +857,7 @@ const Navbar = () => {
                                             to="/visitas/solicitar"
                                             role="menuitem"
                                             className="navbar__about-item"
+                                            activeProps={{ className: "navbar__about-item" }}
                                             onClick={() => setShowFormsMenu(false)}
                                         >
                                             {labelVisitas}
@@ -860,6 +866,7 @@ const Navbar = () => {
                                             to="/donaciones/solicitar"
                                             role="menuitem"
                                             className="navbar__about-item"
+                                            activeProps={{ className: "navbar__about-item" }}
                                             onClick={() => setShowFormsMenu(false)}
                                         >
                                             {labelDonaciones}
@@ -874,7 +881,7 @@ const Navbar = () => {
                         <SiteNavLink
                             key={enlace.id ?? enlace.ruta}
                             enlace={enlace}
-                            activeProps={{ style: { fontWeight: '700' } }}
+                            activeProps={{ style: { fontWeight: '600' } }}
                         />
                     );
                 })}

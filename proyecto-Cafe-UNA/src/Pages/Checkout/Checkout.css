@@ -215,17 +215,29 @@ body.checkout-route-active {
 .checkout-page__pay {
   border: 0;
   background: #111;
-  color: #fff;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+.checkout-page__pay svg,
+.checkout-page__pay .checkout-page__button-icon,
+.checkout-page__pay .checkout-page__pay-label {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  stroke: currentColor;
 }
 
 .checkout-page__pay:hover:not(:disabled) {
   background: #2a2a2a;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
 }
 
 .checkout-page__pay:disabled {
   cursor: wait;
   background: #111;
-  color: #fff;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
   opacity: 1;
 }
 

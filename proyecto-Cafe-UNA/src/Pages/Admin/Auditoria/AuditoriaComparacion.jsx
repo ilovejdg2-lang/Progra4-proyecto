@@ -35,6 +35,21 @@ const ETIQUETAS_CAMPO = {
   password: "Contraseña",
   contrasena: "Contraseña",
   contraseña: "Contraseña",
+  tipovoluntariado: "Tipo de voluntariado",
+  tipovisita: "Tipo de visita",
+  tipocliente: "Tipo de cliente",
+  tipodonante: "Tipo de donante",
+  tipodocumento: "Tipo de documento",
+  fechavisita: "Fecha de visita",
+  fechapropuesta: "Fecha propuesta",
+  fechasolicitud: "Fecha de solicitud",
+  cantidadvisitantes: "Cantidad de visitantes",
+  encargadonombre: "Nombre del encargado",
+  encargadoemail: "Correo del encargado",
+  motivorechazo: "Motivo de rechazo",
+  observacionesadmin: "Observaciones admin",
+  necesidadid: "Necesidad",
+  razonsocial: "Razón social",
 };
 
 function claveNormalizada(clave) {
@@ -294,14 +309,41 @@ function resumenCambio({ accion, tabla, detalle, anteriores, nuevos, nombre, cam
           ? "categoría"
           : tabla === "solicitudes_voluntariado"
             ? "solicitud de voluntariado"
-            : "registro";
+            : tabla === "fechas_voluntariado"
+              ? "fecha de voluntariado"
+              : tabla === "solicitudes_visitas_grupales"
+                ? "solicitud de visita"
+                : tabla === "disponibilidades_visitas"
+                  ? "fecha de visita"
+                  : tabla === "donacion_solicitudes"
+                    ? "solicitud de donación"
+                    : tabla === "donacion_necesidades"
+                      ? "necesidad de donación"
+                      : tabla === "donacion_materiales_aceptados"
+                        ? "material de donación"
+                        : tabla === "fechas_recepcion_donaciones"
+                          ? "fecha de recepción de donaciones"
+                          : "registro";
+  const articulo =
+    entidad === "categoría"
+    || entidad === "solicitud de voluntariado"
+    || entidad === "fecha de voluntariado"
+    || entidad === "solicitud de visita"
+    || entidad === "fecha de visita"
+    || entidad === "solicitud de donación"
+    || entidad === "necesidad de donación"
+    || entidad === "fecha de recepción de donaciones"
+      ? "la"
+      : entidad === "material de donación"
+        ? "el"
+        : "el";
   const conNombre = nombre ? ` «${nombre}»` : "";
 
   if (accion === "INSERT") {
-    return `Se creó ${entidad === "categoría" ? "la" : "el"} ${entidad}${conNombre}.`;
+    return `Se creó ${articulo} ${entidad}${conNombre}.`;
   }
   if (accion === "DELETE") {
-    return `Se eliminó ${entidad === "categoría" ? "la" : "el"} ${entidad}${conNombre}.`;
+    return `Se eliminó ${articulo} ${entidad}${conNombre}.`;
   }
   if (accion === "AJUSTE_STOCK") {
     const de = anteriores?.Stock ?? anteriores?.stock;
@@ -316,14 +358,14 @@ function resumenCambio({ accion, tabla, detalle, anteriores, nuevos, nombre, cam
     const campo = etiquetaCampo(cambiados[0]).toLowerCase();
     const de = formatearValor(cambiados[0], valorDe(anteriores, cambiados[0]));
     const a = formatearValor(cambiados[0], valorDe(nuevos, cambiados[0]));
-    return `Se actualizó el ${campo} de ${entidad}${conNombre}: «${de}» → «${a}».`;
+    return `Se actualizó el ${campo} de ${articulo} ${entidad}${conNombre}: «${de}» → «${a}».`;
   }
   if (cambiados.length > 1) {
     const lista = cambiados.map((clave) => etiquetaCampo(clave).toLowerCase()).join(", ");
-    return `Se actualizó ${entidad === "categoría" ? "la" : "el"} ${entidad}${conNombre}. Cambiaron: ${lista}.`;
+    return `Se actualizó ${articulo} ${entidad}${conNombre}. Cambiaron: ${lista}.`;
   }
   if (detalle) return detalle;
-  return `Se actualizó ${entidad === "categoría" ? "la" : "el"} ${entidad}${conNombre}.`;
+  return `Se actualizó ${articulo} ${entidad}${conNombre}.`;
 }
 
 function PanelCampos({ titulo, datos, claves, cambiados, vacioTexto }) {

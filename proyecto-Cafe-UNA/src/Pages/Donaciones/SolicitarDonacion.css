@@ -1,66 +1,5 @@
 /* Estilos extra del formulario de donación; reutiliza SolicitarVoluntariado.css */
 
-.donacion-page .section-card__header {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: 10px;
-  row-gap: 8px;
-}
-
-.donacion-page .section-card__paso {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--negro-principal);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.donacion-page .section-card__header h4 {
-  margin: 0;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.donacion-page .section-card__icon-inline {
-  grid-column: 3;
-  grid-row: 1;
-  justify-self: end;
-  margin-left: 0;
-  color: var(--negro-principal);
-}
-
-.donacion-page .section-card__hint {
-  grid-column: 1 / -1;
-  margin-top: 0;
-  margin-left: 36px;
-}
-
-.donacion-page .sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-@media (max-width: 480px) {
-  .donacion-page .section-card__hint {
-    margin-left: 0;
-  }
-}
-
 .donacion-page .section-card .tipo-postulacion {
   margin-bottom: 4px;
 }
@@ -267,8 +206,7 @@
     grid-template-columns: 1fr;
   }
 
-  .donacion-intro,
-  .donacion-faq {
+  .donacion-intro {
     padding: 20px 18px;
   }
 }
@@ -350,104 +288,4 @@
   color: #92400e;
   font-size: 0.9rem;
   line-height: 1.45;
-}
-
-.donacion-faq {
-  width: 100%;
-  margin: 1.5rem 0 0;
-  padding: 28px 32px;
-  border: 1px solid var(--borde-input);
-  border-radius: var(--radius-ui);
-  background: #fff;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
-}
-
-.donacion-faq h2 {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.05rem;
-  margin: 0 0 1rem;
-  color: var(--texto-principal);
-}
-
-.donacion-faq details {
-  border: 1px solid var(--borde-input);
-  border-radius: 12px;
-  background: var(--fondo-soft);
-  padding: 0.85rem 1rem;
-  margin-bottom: 0.65rem;
-}
-
-.donacion-faq details:last-child {
-  margin-bottom: 0;
-}
-
-.donacion-faq summary {
-  cursor: pointer;
-  font-weight: 600;
-  color: var(--texto-principal);
-  list-style: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.donacion-faq summary::-webkit-details-marker {
-  display: none;
-}
-
-.donacion-faq summary::after {
-  content: "+";
-  flex-shrink: 0;
-  font-weight: 500;
-  color: var(--texto-secundario);
-  transition: transform 0.28s ease;
-}
-
-.donacion-faq details[open]:not(.donacion-faq__item--cerrando) summary::after {
-  transform: rotate(45deg);
-}
-
-.donacion-faq__cuerpo {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.32s ease;
-}
-
-.donacion-faq details[open] .donacion-faq__cuerpo {
-  grid-template-rows: 1fr;
-}
-
-.donacion-faq details.donacion-faq__item--cerrando .donacion-faq__cuerpo {
-  grid-template-rows: 0fr;
-}
-
-.donacion-faq__cuerpo-inner {
-  overflow: hidden;
-  min-height: 0;
-}
-
-.donacion-faq details p {
-  margin: 0.7rem 0 0.1rem;
-  color: var(--texto-secundario);
-  line-height: 1.5;
-  font-size: 0.92rem;
-  opacity: 0;
-  transform: translateY(-6px);
-  transition: opacity 0.28s ease, transform 0.28s ease;
-}
-
-.donacion-faq details[open]:not(.donacion-faq__item--cerrando) p {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .donacion-faq summary::after,
-  .donacion-faq__cuerpo,
-  .donacion-faq details p {
-    transition: none;
-  }
 }

@@ -1,8 +1,8 @@
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import { UiSelect } from "../../ui/Select";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { ST } from "../../T/ST";
 import { t } from "../../../lib/t";
+import { UiSelect } from "../../ui/Select";
 
 const inputCls =
   "h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
@@ -63,18 +63,18 @@ export function AdminListaToolbar({
         )}
 
         {filtros.length > 0 ? (
-          <div className={filtrosContenedorClassName || "grid w-full min-w-0 grid-cols-2 gap-3 sm:flex sm:flex-row sm:flex-wrap sm:items-end sm:justify-center xl:w-auto"}>
+          <div className={filtrosContenedorClassName || "grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-3 sm:flex sm:w-auto sm:flex-row sm:flex-wrap sm:items-end sm:justify-center sm:gap-4 xl:w-auto"}>
             {filtros.map((filtro, indice) => {
               const ocupaDos = filtros.length === 1 || indice === indiceAnchoCompleto;
               return (
               <div
                 key={filtro.id}
-                className={`relative grid min-w-0 gap-1.5 ${
+                className={`relative grid min-w-0 gap-1.5 overflow-visible ${
                   filtro.className
                     || (filtrosContenedorClassName
                       ? "min-w-0"
-                      : `${ocupaDos ? "col-span-2 sm:flex-1" : "col-span-1 sm:flex-1"} ${
-                          filtro.footer || ocupaDos ? "sm:max-w-[18rem]" : "sm:max-w-[12.5rem]"
+                      : `${ocupaDos ? "col-span-2" : "col-span-1"} sm:flex-none ${
+                          filtro.footer || ocupaDos ? "sm:w-[18rem]" : "sm:w-[12.5rem]"
                         }`)
                 }`}
               >
@@ -96,7 +96,7 @@ export function AdminListaToolbar({
                     onChange={filtro.onChange}
                     options={(filtro.opciones || []).map((op) =>
                       typeof op === "string"
-                        ? op
+                        ? { value: op, label: t(op) }
                         : { ...op, label: t(op.label) },
                     )}
                     footer={filtro.footer}

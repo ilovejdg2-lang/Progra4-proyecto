@@ -17,7 +17,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/Components/ui/calendar";
 import {
   AdminModal,
   AdminModalActions,

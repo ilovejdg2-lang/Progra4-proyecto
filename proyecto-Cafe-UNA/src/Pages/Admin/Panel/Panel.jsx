@@ -15,14 +15,14 @@ import "./Panel.css";
 
 const CAMPOS_ALERTA = ["nombre"];
 
-function AlertaMeta({ item, tPeor, tMinimo, tAgotado, tBajo }) {
+function AlertaMeta({ item, tStock, tMinimo, tAgotado, tBajo }) {
   const lugares = Array.isArray(item.ubicaciones) && item.ubicaciones.length > 0
     ? item.ubicaciones.map((ubi) => `${ubi.nombre}: ${ubi.stock}`).join(", ")
     : null;
 
   return (
     <p className="admin-panel__alerta-meta">
-      {tPeor}: <strong>{item.stockActual}</strong>
+      {tStock}: <strong>{item.stockActual}</strong>
       {" · "}
       {tMinimo}: <strong>{item.stockMinimo}</strong>
       {item.agotado ? ` · ${tAgotado}` : ` · ${tBajo}`}
@@ -57,7 +57,7 @@ const AdminPanel = () => {
   const tAlertas = useTraducir("Alertas de stock");
   const tCargando = useTraducir("Cargando alertas...");
   const tNormal = useTraducir("Todo el inventario está en niveles normales");
-  const tPeor = useTraducir("Peor stock");
+  const tStock = useTraducir("Stock");
   const tMinimo = useTraducir("Mínimo");
   const tAgotado = useTraducir("Agotado");
   const tBajo = useTraducir("Bajo mínimo");
@@ -213,7 +213,7 @@ const AdminPanel = () => {
                         <p className="admin-panel__alerta-nombre">{item.nombre}</p>
                         <AlertaMeta
                           item={item}
-                          tPeor={tPeor}
+                          tStock={tStock}
                           tMinimo={tMinimo}
                           tAgotado={tAgotado}
                           tBajo={tBajo}
