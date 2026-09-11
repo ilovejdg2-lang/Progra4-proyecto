@@ -111,7 +111,7 @@ export default function HistorialComprasCliente() {
         </Link>
         <header>
           <h1 className="text-2xl font-semibold text-slate-950"><ST>Mis compras</ST></h1>
-          <p className="mt-1 text-sm text-slate-500"><ST>Consultá el estado de tus pedidos: pendiente, aceptado, enviado o rechazado.</ST></p>
+          <p className="mt-1 text-sm text-slate-500"><ST>Consultá el estado de tus pedidos: pendiente, aceptado, entregado o rechazado.</ST></p>
         </header>
 
         <section className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -125,7 +125,7 @@ export default function HistorialComprasCliente() {
               <option value="todos">{tTodos}</option>
               <option value="Pendiente">{t("Pendiente")}</option>
               <option value="Aceptado">{t("Aceptado")}</option>
-              <option value="Enviado">{t("Enviado")}</option>
+              <option value="Entregado">{t("Entregado")}</option>
               <option value="Rechazado">{t("Rechazado")}</option>
             </select>
           </label>
@@ -200,6 +200,9 @@ export default function HistorialComprasCliente() {
             <AdminModalBody>
               <dl className="grid gap-2 text-sm">
                 <div className="flex justify-between border-b border-slate-100 py-2"><dt className="text-slate-500"><ST>Fecha</ST></dt><dd>{formatFecha(detalle.fecha) || tSinFecha}</dd></div>
+                {detalle.ubicacionNombre ? (
+                  <div className="flex justify-between border-b border-slate-100 py-2"><dt className="text-slate-500"><ST>Punto de venta</ST></dt><dd>{detalle.ubicacionNombre}</dd></div>
+                ) : null}
                 <div className="flex justify-between border-b border-slate-100 py-2"><dt className="text-slate-500"><ST>Método</ST></dt><dd>{detalle.metodoPago}</dd></div>
                 <div className="flex justify-between border-b border-slate-100 py-2"><dt className="text-slate-500"><ST>Estado</ST></dt><dd><ST>{detalle.estado}</ST></dd></div>
               </dl>

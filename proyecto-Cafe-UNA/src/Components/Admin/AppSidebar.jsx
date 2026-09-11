@@ -15,6 +15,7 @@ import {
   LogOut,
   Package,
   Receipt,
+  ClipboardCheck,
   ScrollText,
   Settings,
   ShoppingBag,
@@ -146,6 +147,8 @@ export function AppSidebar() {
     pathname === "/admin/distribucion" ||
     pathname === "/admin/ventas-presenciales" ||
     pathname === "/admin/historial-ventas" ||
+    pathname === "/admin/ventas-pendientes" ||
+    (pathname.startsWith("/admin/puntos-venta/") && pathname.includes("/ventas")) ||
     pathname === "/admin/historial-movimientos";
   const isAjustesRoute =
     pathname === "/admin/ajustes" ||
@@ -491,6 +494,16 @@ export function AppSidebar() {
                       <Link to="/admin/ventas-presenciales" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <ShoppingBag />
                         <span><ST>Ventas presenciales</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
+                  {puedeVentas ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/ventas-pendientes" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <ClipboardCheck />
+                        <span><ST>Ventas pendientes</ST></span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>

@@ -1,4 +1,5 @@
-import { MapPin, Pencil, Power, Store } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { History, MapPin, Pencil, Power, Store } from "lucide-react";
 
 import { ST } from "../../../../Components/T/ST";
 
@@ -60,6 +61,18 @@ export function PointOfSaleCards({
                 {selected ? <ST>Ubicación seleccionada</ST> : activo ? <ST>Ver inventario</ST> : <ST>Punto inactivo</ST>}
               </span>
             </button>
+            <Link
+              to="/admin/puntos-venta/$locationCode/ventas"
+              params={{ locationCode: location.code }}
+              className={`mt-3 inline-flex h-7 items-center gap-1 rounded-full border px-2 text-[11px] font-semibold no-underline ${
+                selected
+                  ? "border-white/40 bg-white/10 text-white hover:bg-white/20"
+                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              }`}
+            >
+              <History className="size-3" aria-hidden="true" />
+              <ST>Historial de ventas</ST>
+            </Link>
             {canManage ? (
               <div className={`mt-4 flex flex-wrap gap-1 border-t pt-3 ${selected ? "border-white/15" : "border-slate-100"}`}>
                 <button

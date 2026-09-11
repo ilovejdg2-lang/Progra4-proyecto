@@ -9,6 +9,19 @@ const request = createDomainRequest(
   "Tiempo de espera agotado al consultar voluntariado.",
 );
 
+function listaSolicitudes(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.items)) return data.items;
+  if (data && typeof data === "object") {
+    const keys = Object.keys(data);
+    if (keys.length && keys.every((key) => /^\d+$/.test(key))) {
+      return Object.values(data);
+    }
+  }
+  return [];
+}
+
 export async function obtenerSolicitudes(filtros = {}) {
   const params = new URLSearchParams();
   Object.entries(filtros).forEach(([clave, valor]) => {
@@ -19,19 +32,13 @@ export async function obtenerSolicitudes(filtros = {}) {
   const query = params.toString();
   const url = query ? `${BASE_URL}?${query}` : BASE_URL;
 
-  if (!query) {
-    const cached = cache.get();
-    if (cached) return cached;
-    return cache.setPromise(request(url));
-  }
-
   cache.clear();
-  return request(url);
+  return listaSolicitudes(await request(url));
 }
 
 export async function obtenerSolicitudesDeUsuario(userId) {
   const data = await request(`${BASE_URL}/usuario/${userId}`);
-  return Array.isArray(data) ? data : [];
+  return listaSolicitudes(data);
 }
 
 export async function crearSolicitud(datos) {
@@ -59,8 +66,23 @@ export async function eliminarSolicitud(id) {
 }
 
 export async function descargarDocumentoIntegrantes(id) {
-  return apiRequest(`${BASE_URL}/${id}/documento`, {
+  const data = await apiRequest(`${BASE_URL}/${id}/documento`, {
     responseType: "blob",
   });
+  if (typeof Blob !== "undefined" && data instanceof Blob) {
+    const tipo = String(data.type || "");
+    if (tipo.includes("json") || tipo.includes("text")) {
+      const texto = await data.text();
+      try {
+        const parsed = JSON.parse(texto);
+        throw new Error(parsed?.message || "No se pudo descargar el documento.");
+      } catch (error) {
+        if (error instanceof SyntaxError) {
+          throw new Error("No se pudo descargar el documento.");
+        }
+        throw error;
+      }
+    }
+  }
+  return data;
 }
-

@@ -8,6 +8,7 @@ import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Component
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import {
   cambiarEstadoCompra,
+  obtenerBlobComprobanteCompra,
   obtenerCompraPorId,
   obtenerComprasAdmin,
 } from "../../../services/comprasService";
@@ -35,7 +36,9 @@ function formatFecha(fecha) {
 function normalizarEstadoUi(estadoRaw) {
   const estado = String(estadoRaw || "Pendiente").trim();
   if (estado === "Aprobado" || estado === "Aprobada") return "Aceptado";
-  if (estado === "Recibido" || estado === "Enviada" || estado === "Pagado") return "Enviado";
+  if (estado === "Recibido" || estado === "Enviada" || estado === "Enviado" || estado === "Pagado") {
+    return "Entregado";
+  }
   if (estado === "Rechazada") return "Rechazado";
   return estado;
 }
@@ -46,7 +49,7 @@ function badgeEstado(estadoRaw) {
       return "bg-amber-50 text-amber-800";
     case "Aceptado":
       return "bg-sky-50 text-sky-800";
-    case "Enviado":
+    case "Entregado":
       return "bg-emerald-50 text-emerald-800";
     case "Rechazado":
       return "bg-rose-50 text-rose-800";
@@ -72,7 +75,10 @@ function mapLocalVenta(venta) {
     estado,
     facturaId: null,
     editable: estado === "Pendiente" || estado === "Aceptado" || estado === "Rechazado",
-    ganado: estado === "Enviado" ? total : null,
+    ganado: estado === "Entregado" ? total : null,
+    ubicacionNombre: venta.puntoVenta || null,
+    tieneComprobante: false,
+    cliente: null,
     items: (venta.items || []).map((item) => ({
       nombre: item.nombre,
       cantidad: item.units || 1,
@@ -96,14 +102,122 @@ function BadgeEstadoCompra({ estado }) {
   );
 }
 
-export default function HistorialVentas() {
+function ComprobanteVenta({ compraId, tieneComprobante }) {
+  const [url, setUrl] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!tieneComprobante || !compraId) return undefined;
+    let activo = true;
+    let objectUrl = "";
+    obtenerBlobComprobanteCompra(compraId)
+      .then((blob) => {
+        if (!activo || !blob) return;
+        objectUrl = URL.createObjectURL(blob);
+        setUrl(objectUrl);
+      })
+      .catch((err) => {
+        if (activo) setError(err instanceof Error ? err.message : "No se pudo cargar el comprobante.");
+      });
+    return () => {
+      activo = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [compraId, tieneComprobante]);
+
+  if (!tieneComprobante) return null;
+  return (
+    <div className="mt-4">
+      <p className="text-[length:var(--text-body)] font-semibold text-slate-800"><ST>Comprobante de pago</ST></p>
+      {error ? <p className="mt-1 text-[length:var(--text-body)] text-rose-700"><ST>{error}</ST></p> : null}
+      {url ? (
+        <img src={url} alt={t("Comprobante de pago")} className="mt-2 max-h-72 w-full rounded-2xl border border-slate-200 object-contain bg-slate-50" />
+      ) : !error ? (
+        <p className="mt-1 text-[length:var(--text-body)] text-slate-500"><ST>Cargando comprobante...</ST></p>
+      ) : null}
+    </div>
+  );
+}
+
+function ClienteVenta({ detalle }) {
+  const cliente = detalle?.cliente;
+  if (!cliente && !detalle?.clienteCorreo) {
+    return (
+      <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+        <dt className="text-slate-500"><ST>Cliente</ST></dt>
+        <dd className="font-medium text-slate-900 no-underline">{detalle?.clienteNombre}</dd>
+      </div>
+    );
+  }
+  const nombre = cliente?.tipo === "empresa"
+    ? (cliente.razonSocial || cliente.nombreComercial || detalle.clienteNombre)
+    : [cliente?.nombre, cliente?.apellidos].filter(Boolean).join(" ") || detalle.clienteNombre;
+  return (
+    <>
+      <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+        <dt className="text-slate-500"><ST>Cliente</ST></dt>
+        <dd className="font-medium text-slate-900 no-underline">{nombre}</dd>
+      </div>
+      {cliente?.tipo ? (
+        <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+          <dt className="text-slate-500"><ST>Tipo de cliente</ST></dt>
+          <dd className="font-medium text-slate-900 no-underline">
+            <ST>{cliente.tipo === "empresa" ? "Persona jurídica" : "Persona física"}</ST>
+          </dd>
+        </div>
+      ) : null}
+      {detalle.clienteCorreo || cliente?.correo ? (
+        <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+          <dt className="text-slate-500"><ST>Correo</ST></dt>
+          <dd className="font-medium text-slate-900 no-underline">{cliente?.correo || detalle.clienteCorreo}</dd>
+        </div>
+      ) : null}
+      {cliente?.telefono ? (
+        <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+          <dt className="text-slate-500"><ST>Teléfono</ST></dt>
+          <dd className="font-medium text-slate-900 no-underline">{cliente.telefono}</dd>
+        </div>
+      ) : null}
+      {cliente?.identificacion ? (
+        <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+          <dt className="text-slate-500"><ST>Identificación</ST></dt>
+          <dd className="font-medium text-slate-900 no-underline">{cliente.identificacion}</dd>
+        </div>
+      ) : null}
+      {cliente?.cedulaJuridica ? (
+        <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+          <dt className="text-slate-500"><ST>Cédula jurídica</ST></dt>
+          <dd className="font-medium text-slate-900 no-underline">{cliente.cedulaJuridica}</dd>
+        </div>
+      ) : null}
+      {cliente?.representanteLegal ? (
+        <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+          <dt className="text-slate-500"><ST>Representante legal</ST></dt>
+          <dd className="font-medium text-slate-900 no-underline">{cliente.representanteLegal}</dd>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+export default function HistorialVentas({
+  modo = "historial",
+  locationCode = "",
+  locationName = "",
+} = {}) {
   const user = getActiveSessionUser();
   const roles = rolesDeUsuario(user);
   const esAdmin = roles.includes("SuperAdmin") || roles.includes("Admin");
   const puedeVer = tienePermiso(roles, "ver_ventas") || tienePermiso(roles, "ver_historial_compras_clientes");
   const puedeGestionar =
     tienePermiso(roles, "actualizar_ventas") || tienePermiso(roles, "registrar_ventas");
-  const { showLoading, loadingMessage } = useAdminPageGate("/admin/historial-ventas", true);
+  const esPendientes = modo === "pendientes";
+  const gatePath = esPendientes
+    ? "/admin/ventas-pendientes"
+    : locationCode
+      ? `/admin/puntos-venta/${locationCode}/ventas`
+      : "/admin/historial-ventas";
+  const { showLoading, loadingMessage } = useAdminPageGate(gatePath, true);
   const [detalle, setDetalle] = useState(null);
   const [compras, setCompras] = useState([]);
   const [status, setStatus] = useState("idle");
@@ -115,7 +229,7 @@ export default function HistorialVentas() {
   const [total, setTotal] = useState(0);
   const [filtros, setFiltros] = useState({
     busqueda: "",
-    estado: "todos",
+    estado: esPendientes ? "Pendiente" : "todos",
     desde: "",
     hasta: "",
   });
@@ -129,23 +243,28 @@ export default function HistorialVentas() {
         page,
         pageSize: 10,
         q: filtros.busqueda,
-        estado: filtros.estado,
+        estado: esPendientes ? "Pendiente" : filtros.estado,
         desde: filtros.desde,
         hasta: filtros.hasta,
+        ubicacionCodigo: locationCode || undefined,
       });
       setCompras(result.data);
       setTotal(result.total);
       setTotalPages(result.totalPages);
       setStatus("success");
     } catch (loadError) {
-      const local = obtenerVentas().map(mapLocalVenta);
+      let local = obtenerVentas().map(mapLocalVenta);
+      if (esPendientes) local = local.filter((venta) => venta.estado === "Pendiente");
+      if (locationCode) {
+        local = local.filter((venta) => String(venta.ubicacionCodigo || "") === locationCode);
+      }
       setCompras(local);
       setTotal(local.length);
       setTotalPages(1);
       setStatus("success");
       setError(loadError instanceof Error ? loadError.message : "Usando historial local.");
     }
-  }, [puedeVer, page, filtros]);
+  }, [puedeVer, page, filtros, esPendientes, locationCode]);
 
   useEffect(() => {
     load();
@@ -204,6 +323,7 @@ export default function HistorialVentas() {
   }
 
   const estadoDetalle = normalizarEstadoUi(detalle?.estado);
+  const nombrePunto = locationName || compras.find((compra) => compra.ubicacionNombre)?.ubicacionNombre || locationCode;
   const editableDetalle =
     detalle?.editable ??
     (estadoDetalle === "Pendiente" || estadoDetalle === "Aceptado" || estadoDetalle === "Rechazado");
@@ -217,13 +337,25 @@ export default function HistorialVentas() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
                   <h1 className="text-[length:var(--text-title)] font-semibold text-slate-900">
-                    <ST>{esAdmin ? "Historial de ventas (Todos los vendedores)" : "Historial de ventas personales"}</ST>
+                    <ST>
+                      {esPendientes
+                        ? "Ventas pendientes de confirmar"
+                        : locationCode
+                          ? `Historial de ventas · ${nombrePunto}`
+                          : esAdmin
+                            ? "Historial de ventas (Todos los vendedores)"
+                            : "Historial de ventas personales"}
+                    </ST>
                   </h1>
                   <p className="mt-1 text-[length:var(--text-body)] text-slate-500">
                     <ST>
-                      {esAdmin
-                        ? "Supervisión y control de ventas realizadas por todos los vendedores en puntos físicos y web."
-                        : "Mostrando únicamente las ventas registradas por su usuario."}
+                      {esPendientes
+                        ? "Revisá cada solicitud web, el cliente que la envió y el comprobante de pago antes de aceptar o rechazar."
+                        : locationCode
+                          ? "Ventas asociadas a este punto de venta, incluyendo compras web y presenciales."
+                          : esAdmin
+                            ? "Supervisión y control de ventas realizadas por todos los vendedores en puntos físicos y web."
+                            : "Mostrando únicamente las ventas registradas por su usuario."}
                     </ST>
                   </p>
                 </div>
@@ -260,34 +392,36 @@ export default function HistorialVentas() {
               placeholder="Buscar por cliente o número de compra..."
               total={total}
               visibles={compras.length}
-              hayFiltrosActivos={Boolean(filtros.busqueda || filtros.desde || filtros.hasta || (filtros.estado && filtros.estado !== "todos"))}
+              hayFiltrosActivos={Boolean(filtros.busqueda || filtros.desde || filtros.hasta || (!esPendientes && filtros.estado && filtros.estado !== "todos"))}
               onLimpiar={() => {
                 setPage(1);
-                setFiltros({ busqueda: "", estado: "todos", desde: "", hasta: "" });
+                setFiltros({ busqueda: "", estado: esPendientes ? "Pendiente" : "todos", desde: "", hasta: "" });
               }}
               filtros={[
                 { id: "desde", label: "Desde", tipo: "fecha", value: filtros.desde, onChange: (valor) => { setPage(1); setFiltros((c) => ({ ...c, desde: valor })); } },
                 { id: "hasta", label: "Hasta", tipo: "fecha", value: filtros.hasta, onChange: (valor) => { setPage(1); setFiltros((c) => ({ ...c, hasta: valor })); } },
-                {
-                  id: "estado",
-                  label: "Estado",
-                  value: filtros.estado,
-                  onChange: (valor) => { setPage(1); setFiltros((c) => ({ ...c, estado: valor })); },
-                  opciones: [
-                    { value: "todos", label: "Todos" },
-                    { value: "Pendiente", label: "Pendiente" },
-                    { value: "Aceptado", label: "Aceptado" },
-                    { value: "Enviado", label: "Enviado" },
-                    { value: "Rechazado", label: "Rechazado" },
-                  ],
-                },
+                ...(esPendientes
+                  ? []
+                  : [{
+                      id: "estado",
+                      label: "Estado",
+                      value: filtros.estado,
+                      onChange: (valor) => { setPage(1); setFiltros((c) => ({ ...c, estado: valor })); },
+                      opciones: [
+                        { value: "todos", label: "Todos" },
+                        { value: "Pendiente", label: "Pendiente" },
+                        { value: "Aceptado", label: "Aceptado" },
+                        { value: "Entregado", label: "Entregado" },
+                        { value: "Rechazado", label: "Rechazado" },
+                      ],
+                    }]),
               ]}
             />
 
             {status === "loading" ? (
               <div className="px-4 py-14 text-center text-[length:var(--text-body)] text-slate-500"><ST>Cargando compras...</ST></div>
             ) : compras.length === 0 ? (
-              <AdminListaVacia onLimpiar={() => setFiltros({ busqueda: "", estado: "todos", desde: "", hasta: "" })} />
+              <AdminListaVacia onLimpiar={() => setFiltros({ busqueda: "", estado: esPendientes ? "Pendiente" : "todos", desde: "", hasta: "" })} />
             ) : (
               <div className="admin-table-shell">
                 <table className="w-full min-w-[860px] text-left text-[length:var(--text-body)]">
@@ -297,6 +431,7 @@ export default function HistorialVentas() {
                       <th><ST>Fecha</ST></th>
                       {esAdmin ? <th><ST>Vendedor</ST></th> : null}
                       <th><ST>Cliente</ST></th>
+                      <th><ST>Punto de venta</ST></th>
                       <th><ST>Productos</ST></th>
                       <th><ST>Total</ST></th>
                       <th><ST>Estado</ST></th>
@@ -314,6 +449,7 @@ export default function HistorialVentas() {
                           </td>
                         ) : null}
                         <td className="px-6 py-4 text-slate-700">{compra.clienteNombre}</td>
+                        <td className="px-6 py-4 text-slate-700">{compra.ubicacionNombre || "—"}</td>
                         <td className="px-6 py-4 text-slate-700">{compra.cantidadProductos}</td>
                         <td className="px-6 py-4 text-slate-800">{formatCRC(compra.total)}</td>
                         <td className="px-6 py-4">
@@ -369,10 +505,13 @@ export default function HistorialVentas() {
                     </dd>
                   </div>
                 ) : null}
-                <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
-                  <dt className="text-slate-500"><ST>Cliente</ST></dt>
-                  <dd className="font-medium text-slate-900 no-underline">{detalle.clienteNombre}</dd>
-                </div>
+                <ClienteVenta detalle={detalle} />
+                {detalle.ubicacionNombre ? (
+                  <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
+                    <dt className="text-slate-500"><ST>Punto de venta</ST></dt>
+                    <dd className="font-medium text-slate-900 no-underline">{detalle.ubicacionNombre}</dd>
+                  </div>
+                ) : null}
                 <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
                   <dt className="text-slate-500"><ST>Fecha</ST></dt>
                   <dd className="font-medium text-slate-900 no-underline"><ST>{formatFecha(detalle.fecha)}</ST></dd>
@@ -409,6 +548,8 @@ export default function HistorialVentas() {
                 </p>
               ) : null}
 
+              <ComprobanteVenta compraId={detalle.id} tieneComprobante={detalle.tieneComprobante} />
+
               {!editableDetalle ? (
                 <p className="mt-3 inline-flex items-center gap-2 text-[length:var(--text-body)] text-slate-500">
                   <PackageCheck className="size-4" /> <ST>Pedido cerrado: ya no se puede editar.</ST>
@@ -441,10 +582,10 @@ export default function HistorialVentas() {
                   <button
                     type="button"
                     disabled={Boolean(actionLoading)}
-                    onClick={() => actualizarEstado(detalle, "Enviado")}
+                    onClick={() => actualizarEstado(detalle, "Entregado")}
                     className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full bg-slate-800 px-4 text-[length:var(--text-body)] font-semibold text-white disabled:opacity-50"
                   >
-                    <Truck className="size-4" /> <ST>Enviado</ST>
+                    <Truck className="size-4" /> <ST>Entregado</ST>
                   </button>
                   <button
                     type="button"

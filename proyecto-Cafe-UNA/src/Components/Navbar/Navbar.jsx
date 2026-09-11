@@ -11,6 +11,7 @@ import { normalizeImageUrl } from '../../lib/imageUtils';
 import { useHomeBrandNavigation } from '../../hooks/useHomeBrandNavigation';
 import { readPageCache } from '../../lib/pageDataCache';
 import { obtenerSolicitudes, obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService';
+import { obtenerVentasParaNotificaciones } from '../../services/comprasService';
 import {
     obtenerMisSolicitudesDonacion,
     obtenerSolicitudesDonacionAdmin,
@@ -104,6 +105,19 @@ const canSeeAllDonaciones = (user) => {
         tienePermiso(roles, 'administrar_solicitudes_donaciones')
     );
 };
+const canSeeAdminVentas = (user) => {
+    if (!user) return false;
+    const roles = rolesDeUsuario(user);
+    return (
+        tienePermiso(roles, 'ver_ventas') ||
+        tienePermiso(roles, 'ver_historial_compras_clientes')
+    );
+};
+const canSeeVentasNotificaciones = (user) => {
+    if (!user) return false;
+    const roles = rolesDeUsuario(user);
+    return canSeeAdminVentas(user) || tienePermiso(roles, 'ver_historial_compras_propio');
+};
 const isSolicitudPendiente = (solicitud) =>
     String(solicitud?.estado || '').trim().toLowerCase() === 'pendiente';
 
@@ -172,6 +186,9 @@ const Navbar = () => {
     const labelVoluntariado = useTraducir('Voluntariado');
     const labelVisitas = useTraducir('Visitas');
     const labelDonaciones = useTraducir('Donaciones');
+    const labelVentasNotif = useTraducir('Ventas');
+    const labelVentaAceptar = useTraducir('Pendiente de aceptar');
+    const labelVentaEntregar = useTraducir('Pendiente de entregar');
     const tCartResumen = useTraducir('Resumen del carrito');
     const tCartVacio = useTraducir('Tu carrito está vacío');
     const tCartVacioLead = useTraducir('Todavía no hay cafés por aquí. Explorá el catálogo y agregá el que más te guste.');
@@ -210,6 +227,7 @@ const Navbar = () => {
     const [solicitudes, setSolicitudes] = useState([]);
     const [solicitudesDonacion, setSolicitudesDonacion] = useState([]);
     const [alertasStock, setAlertasStock] = useState([]);
+    const [ventasNotificaciones, setVentasNotificaciones] = useState([]);
     const [notificationsLoading, setNotificationsLoading] = useState(false);
     const [notificationsError, setNotificationsError] = useState('');
     const [enlacesNavbar, setEnlacesNavbar] = useState(() => getCachedNavbarLinks());
@@ -267,6 +285,7 @@ const Navbar = () => {
                 setSolicitudes([]);
                 setSolicitudesDonacion([]);
                 setAlertasStock([]);
+                setVentasNotificaciones([]);
                 setShowNotifications(false);
             }
         };
@@ -284,6 +303,7 @@ const Navbar = () => {
             setSolicitudes([]);
             setSolicitudesDonacion([]);
             setAlertasStock([]);
+            setVentasNotificaciones([]);
             return;
         }
 
@@ -308,13 +328,19 @@ const Navbar = () => {
                 }
             }
 
-            const [data, donaciones] = await Promise.all([
+            const ventasPromise = canSeeVentasNotificaciones(currentUser)
+                ? obtenerVentasParaNotificaciones({ admin: canSeeAdminVentas(currentUser) }).catch(() => [])
+                : Promise.resolve([]);
+
+            const [data, donaciones, ventas] = await Promise.all([
                 solicitudesPromise.catch(() => []),
                 donacionesPromise.catch(() => []),
+                ventasPromise,
             ]);
             setSolicitudes(Array.isArray(data) ? data : []);
             setSolicitudesDonacion(Array.isArray(donaciones) ? donaciones : []);
             setAlertasStock(Array.isArray(alertas) ? alertas : []);
+            setVentasNotificaciones(Array.isArray(ventas) ? ventas : []);
         } catch (err) {
             console.error('No se pudieron cargar las notificaciones.', err);
             setNotificationsError('No se pudieron cargar las notificaciones.');
@@ -332,10 +358,12 @@ const Navbar = () => {
         const syncSolicitudes = () => loadSolicitudesUsuario(user);
         window.addEventListener('voluntariado-updated', syncSolicitudes);
         window.addEventListener('donaciones-updated', syncSolicitudes);
+        window.addEventListener('compras-updated', syncSolicitudes);
         return () => {
             window.clearTimeout(initialLoadId);
             window.removeEventListener('voluntariado-updated', syncSolicitudes);
             window.removeEventListener('donaciones-updated', syncSolicitudes);
+            window.removeEventListener('compras-updated', syncSolicitudes);
         };
     }, [user, loadSolicitudesUsuario]);
 
@@ -547,7 +575,9 @@ const Navbar = () => {
     const donacionesPendientes = solicitudesDonacion.filter(isSolicitudPendiente);
     const donacionesPendientesCount = donacionesPendientes.length;
     const alertasStockCount = alertasStock.length;
-    const notificationsCount = solicitudesPendientesCount + donacionesPendientesCount + alertasStockCount;
+    const ventasNotificacionesCount = ventasNotificaciones.length;
+    const notificationsCount = solicitudesPendientesCount + donacionesPendientesCount + alertasStockCount + ventasNotificacionesCount;
+    const puedeAbrirVentasAdmin = canSeeAdminVentas(user);
     const showStockAlerts = canSeeStockAlerts(user);
 
     const persistCart = (updatedCart) => {
@@ -662,6 +692,18 @@ const Navbar = () => {
         if (user?.role === 'admin' || canSeeAllDonaciones(user)) {
             navigate({ to: '/admin/donaciones/solicitudes' });
         }
+    };
+
+    const handleVentaNotificationOpen = (event, venta) => {
+        event?.stopPropagation?.();
+        setShowNotifications(false);
+        if (puedeAbrirVentasAdmin) {
+            navigate({
+                to: String(venta?.estado) === 'Pendiente' ? '/admin/ventas-pendientes' : '/admin/historial-ventas',
+            });
+            return;
+        }
+        navigate({ to: '/perfil/compras' });
     };
 
     const handleStockAlertOpen = (alerta) => {
@@ -1186,6 +1228,37 @@ const Navbar = () => {
                                                         >
                                                             {notificationContent}
                                                         </article>
+                                                    );
+                                                })}
+                                            </section>
+                                        ) : null}
+
+                                        {ventasNotificacionesCount > 0 ? (
+                                            <section className="notifications-section" aria-label={labelVentasNotif}>
+                                                <p className="notifications-section-label">{labelVentasNotif}</p>
+                                                {ventasNotificaciones.map((venta) => {
+                                                    const pendienteAceptar = String(venta.estado) === 'Pendiente';
+                                                    const detalle = pendienteAceptar ? labelVentaAceptar : labelVentaEntregar;
+                                                    return (
+                                                        <button
+                                                            key={`venta-${venta.id}`}
+                                                            type="button"
+                                                            className="notification-item notification-item--venta"
+                                                            onClick={(event) => handleVentaNotificationOpen(event, venta)}
+                                                            title={detalle}
+                                                        >
+                                                            <span className="notification-item__icon" aria-hidden="true">
+                                                                <ShoppingBag size={16} />
+                                                            </span>
+                                                            <div className="notification-item__main">
+                                                                <strong>
+                                                                    {venta.numero || venta.id}
+                                                                    {venta.clienteNombre ? ` · ${venta.clienteNombre}` : ''}
+                                                                </strong>
+                                                                <span>{detalle}</span>
+                                                                <small>{puedeAbrirVentasAdmin ? labelAbrirAdminNotif : detalle}</small>
+                                                            </div>
+                                                        </button>
                                                     );
                                                 })}
                                             </section>
