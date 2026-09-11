@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Calendar,
   CalendarDays,
@@ -49,6 +50,7 @@ import {
   MAX_PALABRAS_TITULO,
 } from "../../../lib/formLimits";
 import { ST } from "../../../Components/T/ST";
+import { tabDeSearch } from "../../../Components/Admin/adminBreadcrumbItems";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
@@ -810,6 +812,8 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
 }
 
 const AdminVoluntariado = () => {
+  const navigate = useNavigate();
+  const search = useRouterState({ select: (state) => state.location.search });
   const actor = (() => {
     try {
       return getActiveSessionUser();
@@ -978,28 +982,22 @@ const AdminVoluntariado = () => {
     },
   ];
 
-  const [tabActiva, setTabActiva] = useState(() => {
-    try {
-      const p = new URLSearchParams(window.location.search);
-      return p.get("tab") === "fechas" ? "fechas" : "solicitudes";
-    } catch {
-      return "solicitudes";
-    }
-  });
+  const [tabActiva, setTabActiva] = useState(() =>
+    tabDeSearch(search) === "fechas" ? "fechas" : "solicitudes",
+  );
+
+  useEffect(() => {
+    const next = tabDeSearch(search) === "fechas" ? "fechas" : "solicitudes";
+    setTabActiva((prev) => (prev === next ? prev : next));
+  }, [search]);
 
   const cambiarTab = (nuevaTab) => {
     setTabActiva(nuevaTab);
-    try {
-      const url = new URL(window.location);
-      if (nuevaTab === "fechas") {
-        url.searchParams.set("tab", "fechas");
-      } else {
-        url.searchParams.delete("tab");
-      }
-      window.history.replaceState({}, "", url);
-    } catch (e) {
-      console.warn("No se pudo actualizar URL:", e);
-    }
+    navigate({
+      to: "/admin/voluntariado",
+      search: nuevaTab === "fechas" ? { tab: "fechas" } : {},
+      replace: true,
+    });
   };
 
   return (

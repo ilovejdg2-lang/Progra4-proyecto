@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { ArrowLeft, ChevronDown, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Search, ShoppingCart, Store } from 'lucide-react';
 import OptimizedImage from '../../Components/OptimizedImage/OptimizedImage';
 import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { usePublicPageLoadingGate } from '../../hooks/usePublicPageLoadingGate';
@@ -12,6 +12,7 @@ import { calcularPrecioConIVA, obtenerDisponibilidadPuntosVenta, obtenerProducto
 import { clasificarDisponibilidad } from '../../lib/productoDisponibilidad';
 import { useTraducir, useTraducirLista, useTraducirObjeto } from '../../hooks/useTraducir';
 import { ST } from '../../Components/T/ST';
+import { ImageLightbox } from '../../Components/ImageLightbox/ImageLightbox';
 import './ProductDetail.css';
 
 function formatCRC(value) {
@@ -29,6 +30,7 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [fotoActiva, setFotoActiva] = useState(0);
+  const [lightboxAbierto, setLightboxAbierto] = useState(false);
   const [specsAbiertas, setSpecsAbiertas] = useState(true);
   const [puntosVenta, setPuntosVenta] = useState([]);
 
@@ -38,11 +40,12 @@ const ProductDetail = () => {
   const tCantidad = useTraducir('Cantidad');
   const tAgotado = useTraducir('Agotado');
   const tAnadir = useTraducir('Añadir al carrito');
-  const tFicha = useTraducir('Ficha técnica');
+  const tFicha = useTraducir('Información del producto');
   const tCategoria = useTraducir('Categoría');
   const tSubcategoria = useTraducir('Subcategoría');
   const tPrecioSin = useTraducir('Precio (sin IVA)');
-  const tDisponibles = useTraducir('Disponibles');
+  const tInicio = useTraducir('Inicio');
+  const tProductos = useTraducir('Productos');
   const tTambien = useTraducir('También te puede gustar');
   const tVerCat = useTraducir('Ver catálogo');
   const tUnidades = useTraducir('unidades');
@@ -90,6 +93,7 @@ const ProductDetail = () => {
           setProduct(data);
           setQuantity(1);
           setFotoActiva(0);
+          setLightboxAbierto(false);
           setRelacionados(
             (Array.isArray(catalogo) ? catalogo : [])
               .filter((item) => String(item.id) !== String(data.id) && item.estado !== 'Deshabilitado' && imagenPrincipalProducto(item))
@@ -169,8 +173,27 @@ const ProductDetail = () => {
       onRetry={() => window.location.reload()}
     >
       <main className="product-detail-page">
-        <Link to="/productos" className="product-detail-page__back">
-          <ArrowLeft size={18} aria-hidden="true" />{tVolver}</Link>
+        <div className="product-detail-page__top">
+          <Link to="/productos" className="product-detail-page__back">
+            <ArrowLeft size={16} aria-hidden="true" />
+            {tVolver}
+          </Link>
+          {product && display ? (
+            <nav className="product-detail-page__crumb" aria-label="breadcrumb">
+              <Link to="/">{tInicio}</Link>
+              <span aria-hidden="true">/</span>
+              <Link to="/productos">{tProductos}</Link>
+              {display.categoria ? (
+                <>
+                  <span aria-hidden="true">/</span>
+                  <span>{display.categoria}</span>
+                </>
+              ) : null}
+              <span aria-hidden="true">/</span>
+              <strong>{display.nombre}</strong>
+            </nav>
+          ) : null}
+        </div>
 
         {!product && !loading ? (
           <section className="product-detail-page__empty">
@@ -183,7 +206,22 @@ const ProductDetail = () => {
           <>
           <article className="product-detail-page__layout">
             <div className="product-detail-page__gallery">
-              <div className="product-detail-page__media">
+              <div
+                className="product-detail-page__media"
+                role={fotoActual ? 'button' : undefined}
+                tabIndex={fotoActual ? 0 : undefined}
+                onClick={() => {
+                  if (fotoActual) setLightboxAbierto(true);
+                }}
+                onKeyDown={(event) => {
+                  if (!fotoActual) return;
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setLightboxAbierto(true);
+                  }
+                }}
+                aria-label={fotoActual ? `Ampliar imagen de ${display.nombre}` : undefined}
+              >
                 {fotoActual ? (
                   <OptimizedImage
                     src={fotoActual}
@@ -196,8 +234,13 @@ const ProductDetail = () => {
                 ) : (
                   <div className="product-detail-page__media-placeholder" aria-hidden="true" />
                 )}
+                {fotoActual ? (
+                  <span className="product-detail-page__zoom" aria-hidden="true">
+                    <Search size={16} strokeWidth={2.2} />
+                  </span>
+                ) : null}
               </div>
-              {fotos.length > 1 ? (
+              {fotos.length > 0 ? (
                 <div className="product-detail-page__thumbs" role="list">
                   {fotos.map((src, index) => (
                     <button
@@ -216,6 +259,7 @@ const ProductDetail = () => {
 
             <div className="product-detail-page__content">
               <header className="product-detail-page__header">
+                {display.categoria ? <p className="product-detail-page__eyebrow">{display.categoria}</p> : null}
                 <h1>{display.nombre}</h1>
                 {(() => {
                   const etiquetaRaw = etiquetaCategoriaProducto(product);
@@ -256,7 +300,10 @@ const ProductDetail = () => {
                   <ul>
                     {puntosVenta.map((punto) => (
                       <li key={punto.code}>
-                        <span>{punto.name}</span>
+                        <span className="product-detail-page__pos-name">
+                          <Store size={16} aria-hidden="true" />
+                          {punto.name}
+                        </span>
                         <strong>
                           {Number(punto.stock) > 0
                             ? `${punto.stock} ${tUnidades}`
@@ -300,58 +347,49 @@ const ProductDetail = () => {
                   onClick={handleAddToCart}
                   disabled={estaAgotado}
                 >
-                  <ShoppingBag size={18} aria-hidden="true" />
+                  <ShoppingCart size={18} aria-hidden="true" />
                   {estaAgotado ? tAgotado : tAnadir}
                 </button>
                 <button type="button" className="product-detail-page__close-btn" onClick={handleBack}>
+                  <ArrowLeft size={16} aria-hidden="true" />
                   {tVolver}
                 </button>
               </div>
-
-              <div className="product-detail-page__accordion">
-                <button
-                  type="button"
-                  className="product-detail-page__accordion-trigger"
-                  onClick={() => setSpecsAbiertas((open) => !open)}
-                  aria-expanded={specsAbiertas}
-                >
-                  {tFicha}
-                  <ChevronDown size={18} className={specsAbiertas ? 'is-open' : ''} aria-hidden="true" />
-                </button>
-                {specsAbiertas ? (
-                  <dl className="product-detail-page__meta">
-                    <div className="product-detail-page__meta-row">
-                      <dt>{tCategoria}</dt>
-                      <dd>{display.categoria || '—'}</dd>
-                    </div>
-                    {display.subcategoria ? (
-                      <div className="product-detail-page__meta-row">
-                        <dt>{tSubcategoria}</dt>
-                        <dd>{display.subcategoria}</dd>
-                      </div>
-                    ) : null}
-                    <div className="product-detail-page__meta-row">
-                      <dt>{tPresentacion}</dt>
-                      <dd>{product.peso || '—'}</dd>
-                    </div>
-                    <div className="product-detail-page__meta-row">
-                      <dt>{tPrecioSin}</dt>
-                      <dd>{formatCRC(precioNormal)}</dd>
-                    </div>
-                    <div className="product-detail-page__meta-row">
-                      <dt>{tDisponibles}</dt>
-                      <dd>
-                        <span className={`product-detail-page__stock product-detail-page__stock--${disponibilidad.codigo}`}>
-                          <span className="product-detail-page__stock-dot" aria-hidden="true" />
-                          <ST>{disponibilidad.etiqueta}</ST>
-                          {disponibilidad.codigo !== 'agotado' ? ` · ${stockDisponible} ${tUnidades}` : ''}
-                        </span>
-                      </dd>
-                    </div>
-                  </dl>
-                ) : null}
-              </div>
             </div>
+
+            <aside className="product-detail-page__specs">
+              <button
+                type="button"
+                className="product-detail-page__accordion-trigger"
+                onClick={() => setSpecsAbiertas((open) => !open)}
+                aria-expanded={specsAbiertas}
+              >
+                {tFicha}
+                <ChevronDown size={18} className={specsAbiertas ? 'is-open' : ''} aria-hidden="true" />
+              </button>
+              {specsAbiertas ? (
+                <dl className="product-detail-page__meta">
+                  <div className="product-detail-page__meta-row">
+                    <dt>{tCategoria}</dt>
+                    <dd>{display.categoria || '—'}</dd>
+                  </div>
+                  {display.subcategoria ? (
+                    <div className="product-detail-page__meta-row">
+                      <dt>{tSubcategoria}</dt>
+                      <dd>{display.subcategoria}</dd>
+                    </div>
+                  ) : null}
+                  <div className="product-detail-page__meta-row">
+                    <dt>{tPresentacion}</dt>
+                    <dd>{product.peso || '—'}</dd>
+                  </div>
+                  <div className="product-detail-page__meta-row">
+                    <dt>{tPrecioSin}</dt>
+                    <dd>{formatCRC(precioNormal)}</dd>
+                  </div>
+                </dl>
+              ) : null}
+            </aside>
           </article>
 
           {(relacionadosUi || relacionados).length > 0 ? (
@@ -376,6 +414,13 @@ const ProductDetail = () => {
               </div>
             </section>
           ) : null}
+          <ImageLightbox
+            images={fotos}
+            index={lightboxAbierto ? fotoActiva : -1}
+            onClose={() => setLightboxAbierto(false)}
+            onIndexChange={setFotoActiva}
+            alt={display.nombre}
+          />
           </>
         ) : null}
       </main>

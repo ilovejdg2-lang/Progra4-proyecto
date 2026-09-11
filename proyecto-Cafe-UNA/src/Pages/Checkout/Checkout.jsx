@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, Coffee, ShoppingBasket, Store, UploadCloud } from 'lucide-react';
+import { ArrowLeft, Coffee, ShoppingCart, Store, UploadCloud } from 'lucide-react';
 import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { Switch } from '../../Components/ui/Switch';
 import { usePublicPageLoadingGate } from '../../hooks/usePublicPageLoadingGate';
@@ -8,8 +8,10 @@ import { useTraducir, useTraducirLista } from '../../hooks/useTraducir';
 import { ST } from '../../Components/T/ST';
 import { t } from '../../lib/t';
 import { getLoadingMessageForCacheKey } from '../../lib/pageLoadingMessages';
+import { normalizeImageUrl } from '../../lib/imageUtils';
 import './Checkout.css';
 import { calcularPrecioConIVA, obtenerDisponibilidadPuntosVenta } from '../../services/productosService';
+import { obtenerNavbar } from '../../services/informacionService';
 import { registrarCompra } from '../../services/comprasService';
 import { getActiveSessionUser } from '../../services/sessionService';
 import { marcarIntentRegistroCliente, puedeComprar } from '../../services/authService';
@@ -44,6 +46,7 @@ const Checkout = () => {
   const [ubicacionCodigo, setUbicacionCodigo] = useState('');
   const [comprobante, setComprobante] = useState(null);
   const [dropActivo, setDropActivo] = useState(false);
+  const [logoUrl, setLogoUrl] = useState('');
 
   const tGracias = useTraducir('Gracias por tu compra');
   const tPedidoPendiente = useTraducir(
@@ -53,6 +56,11 @@ const Checkout = () => {
   const tVolverInicio = useTraducir('Volver al inicio');
   const tSeguir = useTraducir('Seguir comprando');
   const tResumen = useTraducir('Resumen de tu pedido');
+  const tResumenLead = useTraducir('Revisa los productos, elegí un punto de venta y completá tu compra.');
+  const tProductosPedido = useTraducir('Productos en tu pedido');
+  const tDetallesCompra = useTraducir('Detalles de tu compra');
+  const tSubirComprobante = useTraducir('Subí una imagen del comprobante de tu pago.');
+  const tConfirmCantidades = useTraducir('Confirmá que los productos y cantidades son correctos.');
   const tVolverCatalogo = useTraducir('Volver al catálogo');
   const tVacio = useTraducir('No hay productos en el carrito.');
   const tPago = useTraducir('Pago');
@@ -94,6 +102,19 @@ const Checkout = () => {
         window.clearTimeout(redirectTimeoutRef.current);
         redirectTimeoutRef.current = null;
       }
+    };
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
+    obtenerNavbar()
+      .then((navbar) => {
+        if (!activo) return;
+        setLogoUrl(typeof navbar?.logoUrl === 'string' ? navbar.logoUrl.trim() : '');
+      })
+      .catch(() => {});
+    return () => {
+      activo = false;
     };
   }, []);
 
@@ -363,16 +384,30 @@ const Checkout = () => {
       <div className="checkout-shell">
       <section className="checkout-shell__order">
         <header className="checkout-page__header">
-          <button type="button" className="checkout-page__back" onClick={() => navigate({ to: '/productos' })} aria-label={tVolverCatalogo}>
-            <ArrowLeft size={22} strokeWidth={2.4} aria-hidden="true" />
-          </button>
-          <h1>{tResumen}</h1>
+          <div className="checkout-page__header-copy">
+            <button type="button" className="checkout-page__back" onClick={() => navigate({ to: '/productos' })} aria-label={tVolverCatalogo}>
+              <ArrowLeft size={20} strokeWidth={2.4} aria-hidden="true" />
+            </button>
+            <div>
+              <h1>{tResumen}</h1>
+              <p className="checkout-page__lead">{tResumenLead}</p>
+            </div>
+          </div>
+          {logoUrl ? (
+            <img
+              className="checkout-brand-logo"
+              src={normalizeImageUrl(logoUrl, { width: 240 })}
+              alt="Café UNA"
+            />
+          ) : null}
         </header>
         {paymentError && cartItems.length === 0 ? <p className="checkout-page__error"><ST>{paymentError}</ST></p> : null}
         {cartItems.length === 0 ? (
           <p className="checkout-page__empty">{tVacio}</p>
         ) : (
-            <div className="checkout-page__items">
+            <div className="checkout-page__catalog">
+              <h2 className="checkout-page__section-title">{tProductosPedido}</h2>
+              <div className="checkout-page__items">
               {cartItemsUi.map((item) => (
                 <div className="checkout-item" key={item.id}>
                   <div className="checkout-item__media">
@@ -389,12 +424,16 @@ const Checkout = () => {
                   <div className="checkout-item__price">{formatCRC(getUnitPriceWithIva(item) * getQuantity(item))}</div>
                 </div>
               ))}
+              </div>
             </div>
         )}
 
         {cartItems.length > 0 ? (
           <section className="checkout-pos" aria-labelledby="checkout-pos-title">
-            <h2 id="checkout-pos-title">{tPuntoVenta}</h2>
+            <h2 id="checkout-pos-title">
+              <Store size={18} strokeWidth={2.2} aria-hidden="true" />
+              {tPuntoVenta}
+            </h2>
             <p className="checkout-pos__hint">{tElegiPunto}</p>
             {puntosConDisponibilidad.length === 0 ? (
               <p className="checkout-page__hint"><ST>No hay puntos de venta disponibles en este momento.</ST></p>
@@ -414,25 +453,28 @@ const Checkout = () => {
                         setPaymentError(null);
                       }}
                     >
+                      <span className="checkout-pos__radio" aria-hidden="true" />
                       <span className="checkout-pos__card-icon"><Store size={18} aria-hidden="true" /></span>
-                      <span className="checkout-pos__card-name">{punto.name}</span>
-                      {punto.cubrePedido ? (
-                        <ul className="checkout-pos__stock">
-                          {cartItems.map((item) => {
-                            const disponible = Number(stockPorProducto[String(item.id)]?.[punto.code]) || 0;
-                            return (
-                              <li key={`${punto.code}-${item.id}`}>
-                                {item.nombre || item.name}: {disponible} {tUnidades}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      ) : (
-                        <span className="checkout-pos__card-meta">{tSinStockPos}</span>
-                      )}
-                      {punto.cubrePedido ? (
-                        <span className="checkout-pos__badge">{tDisponible}</span>
-                      ) : null}
+                      <span className="checkout-pos__card-body">
+                        <span className="checkout-pos__card-name">{punto.name}</span>
+                        {punto.cubrePedido ? (
+                          <ul className="checkout-pos__stock">
+                            {cartItems.map((item) => {
+                              const disponible = Number(stockPorProducto[String(item.id)]?.[punto.code]) || 0;
+                              return (
+                                <li key={`${punto.code}-${item.id}`}>
+                                  {item.nombre || item.name}: {disponible} {tUnidades}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        ) : (
+                          <span className="checkout-pos__card-meta">{tSinStockPos}</span>
+                        )}
+                        {punto.cubrePedido ? (
+                          <span className="checkout-pos__badge">{tDisponible}</span>
+                        ) : null}
+                      </span>
                     </button>
                   );
                 })}
@@ -446,6 +488,7 @@ const Checkout = () => {
       <aside className="checkout-shell__pay">
         <p className="checkout-pay__title">{tPago}</p>
         <h2 className="checkout-pay__heading">{tTotalPedido}</h2>
+        <p className="checkout-pay__lead">{tDetallesCompra}</p>
             {paymentError ? <p className="checkout-page__error"><ST>{paymentError}</ST></p> : null}
             <div className="checkout-page__totals">
               <div className="checkout-page__subtotal-row">
@@ -464,6 +507,7 @@ const Checkout = () => {
 
             <div className="checkout-comprobante">
               <p className="checkout-comprobante__label">{tComprobante}</p>
+              <p className="checkout-comprobante__hint">{tSubirComprobante}</p>
               <div
                 className={`checkout-dropzone${dropActivo ? ' is-active' : ''}`}
                 role="button"
@@ -505,18 +549,21 @@ const Checkout = () => {
               ) : null}
             </div>
 
-            <Switch
-              id="checkout-confirm"
-              checked={pedidoRevisado}
-              onCheckedChange={(value) => {
-                setPedidoRevisado(value);
-                if (value) setPaymentError(null);
-              }}
-              label={tYaRevise}
-            />
-            {!pedidoRevisado ? (
-              <p className="checkout-page__hint">{tActivaSwitch}</p>
-            ) : null}
+            <div className="checkout-confirm">
+              <Switch
+                id="checkout-confirm"
+                checked={pedidoRevisado}
+                onCheckedChange={(value) => {
+                  setPedidoRevisado(value);
+                  if (value) setPaymentError(null);
+                }}
+                label={tYaRevise}
+              />
+              <p className="checkout-confirm__hint">{tConfirmCantidades}</p>
+              {!pedidoRevisado ? (
+                <p className="checkout-page__hint">{tActivaSwitch}</p>
+              ) : null}
+            </div>
 
             <div className="checkout-page__actions">
               <button className="checkout-page__pay" type="button" onClick={handlePay} disabled={processingPayment}>
@@ -526,7 +573,7 @@ const Checkout = () => {
                 </span>
               </button>
               <button className="checkout-page__continue" type="button" onClick={handleContinueShopping}>
-                <ShoppingBasket size={18} strokeWidth={2.3} aria-hidden="true" className="checkout-page__button-icon" />
+                <ShoppingCart size={18} strokeWidth={2.3} aria-hidden="true" className="checkout-page__button-icon" />
                 <span>{tSeguir}</span>
               </button>
             </div>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Accessibility,
   Calendar,
@@ -32,6 +33,7 @@ import {
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { AdminModal } from "../../../Components/Admin/ui/AdminModal";
 import { ST } from "../../../Components/T/ST";
+import { tabDeSearch } from "../../../Components/Admin/adminBreadcrumbItems";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
@@ -436,19 +438,21 @@ function ModalEditarVisita({ solicitud, onGuardar, onCerrar }) {
 }
 
 export default function AdminVisitas() {
+  const navigate = useNavigate();
+  const search = useRouterState({ select: (state) => state.location.search });
   const user = getActiveSessionUser();
   const roles = rolesDeUsuario(user);
   const canManage = tienePermiso(roles, "administrar_solicitudes_visitantes");
   const esSuperAdmin = roles.includes("SuperAdmin") || tienePermiso(roles, "inactivar_visitas") || canManage;
 
-  const [tabActiva, setTabActiva] = useState(() => {
-    try {
-      const p = new URLSearchParams(window.location.search);
-      return p.get("tab") === "fechas" ? "fechas" : "solicitudes";
-    } catch {
-      return "solicitudes";
-    }
-  });
+  const [tabActiva, setTabActiva] = useState(() =>
+    tabDeSearch(search) === "fechas" ? "fechas" : "solicitudes",
+  );
+
+  useEffect(() => {
+    const next = tabDeSearch(search) === "fechas" ? "fechas" : "solicitudes";
+    setTabActiva((prev) => (prev === next ? prev : next));
+  }, [search]);
 
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -512,17 +516,11 @@ export default function AdminVisitas() {
 
   const cambiarTab = (nuevaTab) => {
     setTabActiva(nuevaTab);
-    try {
-      const url = new URL(window.location);
-      if (nuevaTab === "fechas") {
-        url.searchParams.set("tab", "fechas");
-      } else {
-        url.searchParams.delete("tab");
-      }
-      window.history.replaceState({}, "", url);
-    } catch (e) {
-      console.warn("No se pudo actualizar URL:", e);
-    }
+    navigate({
+      to: "/admin/visitas",
+      search: nuevaTab === "fechas" ? { tab: "fechas" } : {},
+      replace: true,
+    });
   };
 
   const cargarSolicitudes = useCallback(async () => {
