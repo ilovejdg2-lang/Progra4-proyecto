@@ -363,6 +363,28 @@ export async function obtenerProductoPorId(id) {
   return productos.find((producto) => String(producto.id) === String(id)) ?? null;
 }
 
+export async function obtenerDisponibilidadPuntosVenta(productIds = []) {
+  const ids = (Array.isArray(productIds) ? productIds : [productIds])
+    .map((id) => String(id || "").trim())
+    .filter(Boolean);
+  const search = ids.length ? `?ids=${encodeURIComponent(ids.join(","))}` : "";
+  const data = await request(`${BASE_URL}/disponibilidad-puntos-venta${search}`);
+  const puntosVenta = (Array.isArray(data?.puntosVenta) ? data.puntosVenta : []).map((punto) => ({
+    id: Number(punto.id ?? punto.Id) || null,
+    code: String(punto.code ?? punto.Code ?? punto.codigo ?? punto.Codigo ?? ""),
+    name: String(punto.name ?? punto.Name ?? punto.nombre ?? punto.Nombre ?? ""),
+  })).filter((punto) => punto.code);
+  const porProducto = (Array.isArray(data?.porProducto) ? data.porProducto : []).map((row) => ({
+    productoId: String(row.productoId ?? row.ProductoId ?? ""),
+    puntos: (Array.isArray(row.puntos) ? row.puntos : []).map((punto) => ({
+      code: String(punto.code ?? punto.Code ?? ""),
+      name: String(punto.name ?? punto.Name ?? ""),
+      stock: Number(punto.stock ?? punto.Stock) || 0,
+    })),
+  }));
+  return { puntosVenta, porProducto };
+}
+
 export async function obtenerStockDesglosadoProducto(productId) {
   if (!hasIdentity(productId)) throw new Error("El identificador del producto no es válido.");
   const data = await inventoryRequest(

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Bell, Gift, HandHeart, Package } from "lucide-react";
+import { Bell, Gift, HandHeart, Package, ShoppingBag } from "lucide-react";
 
 import { obtenerAlertasStock } from "../../services/productosService";
 import { obtenerSolicitudes } from "../../services/voluntariadoService";
 import { obtenerSolicitudesDonacionAdmin } from "../../services/donacionesService";
+import { obtenerVentasParaNotificaciones } from "../../services/comprasService";
 import { getActiveSessionUser } from "../../services/sessionService";
 import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
 import { requestAdminStockProduct } from "../../lib/adminStockAlert";
@@ -43,6 +44,15 @@ function puedeVerDonaciones(user) {
   );
 }
 
+function puedeVerVentas(user) {
+  const roles = rolesDeUsuario(user);
+  return (
+    tienePermiso(roles, "ver_ventas") ||
+    tienePermiso(roles, "ver_historial_compras_clientes") ||
+    tienePermiso(roles, "ver_panel_administrativo")
+  );
+}
+
 function esSolicitudPendiente(solicitud) {
   return String(solicitud?.estado || "").trim().toLowerCase() === "pendiente";
 }
@@ -54,7 +64,8 @@ export function AdminStockNotificationsBell() {
   const puedeStock = puedeVerAlertasStock(user);
   const puedeVoluntariado = puedeVerVoluntariado(user);
   const puedeDonaciones = puedeVerDonaciones(user);
-  const enabled = puedeStock || puedeVoluntariado || puedeDonaciones;
+  const puedeVentas = puedeVerVentas(user);
+  const enabled = puedeStock || puedeVoluntariado || puedeDonaciones || puedeVentas;
 
   const labelNotificaciones = useTraducir("Notificaciones");
   const labelStockBajo = useTraducir("STOCK BAJO");
@@ -65,6 +76,9 @@ export function AdminStockNotificationsBell() {
   const labelVacias = useTraducir("No hay notificaciones pendientes.");
   const labelVol = useTraducir("Voluntariado");
   const labelDon = useTraducir("Donaciones");
+  const labelVentas = useTraducir("Ventas");
+  const labelVentaAceptar = useTraducir("Pendiente de aceptar");
+  const labelVentaEntregar = useTraducir("Pendiente de entregar");
   const labelAbrirAdmin = useTraducir("Abrir en administración");
 
   const [open, setOpen] = useState(false);
@@ -73,6 +87,7 @@ export function AdminStockNotificationsBell() {
   const [alertas, setAlertas] = useState([]);
   const [solicitudes, setSolicitudes] = useState([]);
   const [solicitudesDonacion, setSolicitudesDonacion] = useState([]);
+  const [ventas, setVentas] = useState([]);
   const [panelStyle, setPanelStyle] = useState(null);
   const rootRef = useRef(null);
   const buttonRef = useRef(null);
@@ -83,28 +98,32 @@ export function AdminStockNotificationsBell() {
       setAlertas([]);
       setSolicitudes([]);
       setSolicitudesDonacion([]);
+      setVentas([]);
       return;
     }
     setLoading(true);
     setError("");
     try {
-      const [stockData, voluntariadoData, donacionesData] = await Promise.all([
+      const [stockData, voluntariadoData, donacionesData, ventasData] = await Promise.all([
         puedeStock ? obtenerAlertasStock().catch(() => []) : Promise.resolve([]),
         puedeVoluntariado ? obtenerSolicitudes().catch(() => []) : Promise.resolve([]),
         puedeDonaciones ? obtenerSolicitudesDonacionAdmin().catch(() => []) : Promise.resolve([]),
+        puedeVentas ? obtenerVentasParaNotificaciones({ admin: true }).catch(() => []) : Promise.resolve([]),
       ]);
       setAlertas(Array.isArray(stockData) ? stockData : []);
       setSolicitudes(Array.isArray(voluntariadoData) ? voluntariadoData : []);
       setSolicitudesDonacion(Array.isArray(donacionesData) ? donacionesData : []);
+      setVentas(Array.isArray(ventasData) ? ventasData : []);
     } catch (err) {
       setAlertas([]);
       setSolicitudes([]);
       setSolicitudesDonacion([]);
+      setVentas([]);
       setError(err?.message || "No se pudieron cargar las notificaciones.");
     } finally {
       setLoading(false);
     }
-  }, [enabled, puedeStock, puedeVoluntariado, puedeDonaciones]);
+  }, [enabled, puedeStock, puedeVoluntariado, puedeDonaciones, puedeVentas]);
 
   useEffect(() => {
     if (!enabled) return undefined;
@@ -115,10 +134,12 @@ export function AdminStockNotificationsBell() {
     const syncVoluntariado = () => loadNotificaciones();
     window.addEventListener("voluntariado-updated", syncVoluntariado);
     window.addEventListener("donaciones-updated", syncVoluntariado);
+    window.addEventListener("compras-updated", syncVoluntariado);
     return () => {
       window.clearTimeout(id);
       window.removeEventListener("voluntariado-updated", syncVoluntariado);
       window.removeEventListener("donaciones-updated", syncVoluntariado);
+      window.removeEventListener("compras-updated", syncVoluntariado);
     };
   }, [enabled, loadNotificaciones]);
 
@@ -188,7 +209,8 @@ export function AdminStockNotificationsBell() {
   const alertasCount = puedeStock ? alertas.length : 0;
   const voluntariadoCount = puedeVoluntariado ? solicitudesPendientes.length : 0;
   const donacionesCount = puedeDonaciones ? donacionesPendientes.length : 0;
-  const count = alertasCount + voluntariadoCount + donacionesCount;
+  const ventasCount = puedeVentas ? ventas.length : 0;
+  const count = alertasCount + voluntariadoCount + donacionesCount + ventasCount;
 
   const openProducto = (item) => {
     setOpen(false);
@@ -206,6 +228,13 @@ export function AdminStockNotificationsBell() {
   const openDonaciones = () => {
     setOpen(false);
     navigate({ to: "/admin/donaciones/solicitudes" });
+  };
+
+  const openVenta = (venta) => {
+    setOpen(false);
+    navigate({
+      to: String(venta?.estado) === "Pendiente" ? "/admin/ventas-pendientes" : "/admin/historial-ventas",
+    });
   };
 
   const panel =
@@ -322,6 +351,37 @@ export function AdminStockNotificationsBell() {
                         </div>
                       </button>
                     ))}
+                  </section>
+                ) : null}
+
+                {ventasCount > 0 ? (
+                  <section className="notifications-section" aria-label={labelVentas}>
+                    <p className="notifications-section-label">{labelVentas}</p>
+                    {ventas.map((venta) => {
+                      const pendienteAceptar = String(venta.estado) === "Pendiente";
+                      const detalle = pendienteAceptar ? labelVentaAceptar : labelVentaEntregar;
+                      return (
+                        <button
+                          key={`venta-${venta.id}`}
+                          type="button"
+                          className="notification-item notification-item--venta"
+                          onClick={() => openVenta(venta)}
+                          title={labelAbrirAdmin}
+                        >
+                          <span className="notification-item__icon" aria-hidden="true">
+                            <ShoppingBag size={16} />
+                          </span>
+                          <div className="notification-item__main">
+                            <strong>
+                              {venta.numero || venta.id}
+                              {venta.clienteNombre ? ` · ${venta.clienteNombre}` : ""}
+                            </strong>
+                            <span>{detalle}</span>
+                            <small>{labelAbrirAdmin}</small>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </section>
                 ) : null}
               </div>

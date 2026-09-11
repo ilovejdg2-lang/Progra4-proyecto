@@ -52,11 +52,12 @@ describe("comprasService", () => {
         clienteNombre: "Ana",
         items: [{ nombre: "Café", cantidad: 1, precioUnitario: 2000, subtotal: 2000 }],
         total: 2000,
+        ubicacionCodigo: "POS_FUNA_UNA",
       }),
     ).resolves.toMatchObject({ numero: "C-10", total: 2000 });
     expect(apiRequestMock).toHaveBeenCalledWith(
       expect.stringContaining("/compras"),
-      expect.objectContaining({ method: "POST" }),
+      expect.objectContaining({ method: "POST", body: expect.any(FormData) }),
     );
   });
 
