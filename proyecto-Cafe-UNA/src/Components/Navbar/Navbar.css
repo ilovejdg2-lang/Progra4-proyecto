@@ -633,6 +633,15 @@
   color: #9a4b16;
 }
 
+.notification-item--venta {
+  border-left: 3px solid #334155;
+}
+
+.notification-item--venta .notification-item__icon {
+  background: #eef2f6;
+  color: #334155;
+}
+
 .notification-item__stock {
   display: inline-flex;
   align-items: center;

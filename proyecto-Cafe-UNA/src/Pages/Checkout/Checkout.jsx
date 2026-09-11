@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, Coffee, CreditCard, ShoppingBasket } from 'lucide-react';
+import { ArrowLeft, Coffee, ShoppingBasket, Store, UploadCloud } from 'lucide-react';
 import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { Switch } from '../../Components/ui/Switch';
 import { usePublicPageLoadingGate } from '../../hooks/usePublicPageLoadingGate';
@@ -9,12 +9,15 @@ import { ST } from '../../Components/T/ST';
 import { t } from '../../lib/t';
 import { getLoadingMessageForCacheKey } from '../../lib/pageLoadingMessages';
 import './Checkout.css';
-import { calcularPrecioConIVA } from '../../services/productosService';
+import { calcularPrecioConIVA, obtenerDisponibilidadPuntosVenta } from '../../services/productosService';
 import { registrarCompra } from '../../services/comprasService';
 import { getActiveSessionUser } from '../../services/sessionService';
 import { marcarIntentRegistroCliente, puedeComprar } from '../../services/authService';
 import { clearCart, getStoredCart } from '../../lib/cartStorage';
 import { registrarVenta } from '../../lib/ventasStorage';
+
+const TIPOS_COMPROBANTE = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_COMPROBANTE_BYTES = 10 * 1024 * 1024;
 
 const formatCRC = (amount) => {
   const value = Number.isFinite(amount) ? amount : 0;
@@ -30,11 +33,17 @@ const canCompletePurchase = (user) => puedeComprar(user);
 const Checkout = () => {
   const navigate = useNavigate();
   const redirectTimeoutRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [cartItems, setCartItems] = useState(getStoredCart);
   const [paid, setPaid] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
   const [pedidoRevisado, setPedidoRevisado] = useState(true);
+  const [puntosVenta, setPuntosVenta] = useState([]);
+  const [stockPorProducto, setStockPorProducto] = useState({});
+  const [ubicacionCodigo, setUbicacionCodigo] = useState('');
+  const [comprobante, setComprobante] = useState(null);
+  const [dropActivo, setDropActivo] = useState(false);
 
   const tGracias = useTraducir('Gracias por tu compra');
   const tPedidoPendiente = useTraducir(
@@ -56,6 +65,15 @@ const Checkout = () => {
   const tProcesando = useTraducir('Procesando...');
   const tFinalizar = useTraducir('Finalizar pedido');
   const tCantidadNoDisp = useTraducir('Cantidad no disponible');
+  const tPuntoVenta = useTraducir('Punto de venta');
+  const tElegiPunto = useTraducir('Elegí dónde retirar o realizar tu compra. Solo se listan puntos con stock para todos los productos del carrito.');
+  const tDisponible = useTraducir('Disponible');
+  const tUnidades = useTraducir('unidades');
+  const tSinStockPos = useTraducir('Sin stock suficiente para este pedido');
+  const tComprobante = useTraducir('Comprobante de pago');
+  const tComprobanteCta = useTraducir('Arrastrá o seleccioná una imagen del comprobante');
+  const tComprobanteHint = useTraducir('JPG, PNG o WEBP. Máximo 10 MB.');
+  const tQuitarImagen = useTraducir('Quitar imagen');
 
   const showLoading = usePublicPageLoadingGate('checkout', true);
   const loadingMessage = getLoadingMessageForCacheKey('checkout');
@@ -84,6 +102,65 @@ const Checkout = () => {
     window.addEventListener('cart-updated', onCartUpdated);
     return () => window.removeEventListener('cart-updated', onCartUpdated);
   }, []);
+
+  useEffect(() => {
+    let activo = true;
+    const ids = cartItems.map((item) => item.id).filter(Boolean);
+    if (ids.length === 0) {
+      setPuntosVenta([]);
+      setStockPorProducto({});
+      return undefined;
+    }
+    obtenerDisponibilidadPuntosVenta(ids)
+      .then((data) => {
+        if (!activo) return;
+        setPuntosVenta(data.puntosVenta || []);
+        const mapa = {};
+        (data.porProducto || []).forEach((row) => {
+          mapa[String(row.productoId)] = {};
+          (row.puntos || []).forEach((punto) => {
+            mapa[String(row.productoId)][punto.code] = Number(punto.stock) || 0;
+          });
+        });
+        setStockPorProducto(mapa);
+      })
+      .catch(() => {
+        if (!activo) return;
+        setPuntosVenta([]);
+        setStockPorProducto({});
+      });
+    return () => {
+      activo = false;
+    };
+  }, [cartItems]);
+
+  const puntosConDisponibilidad = useMemo(
+    () =>
+      puntosVenta.map((punto) => {
+        const faltantes = [];
+        let cubrePedido = true;
+        cartItems.forEach((item) => {
+          const disponible = Number(stockPorProducto[String(item.id)]?.[punto.code]) || 0;
+          const cantidad = getQuantity(item);
+          if (disponible < cantidad) {
+            cubrePedido = false;
+            faltantes.push({
+              nombre: item.nombre || item.name || 'Producto',
+              disponible,
+              cantidad,
+            });
+          }
+        });
+        return { ...punto, cubrePedido, faltantes };
+      }),
+    [puntosVenta, stockPorProducto, cartItems],
+  );
+
+  useEffect(() => {
+    if (!ubicacionCodigo) return;
+    const actual = puntosConDisponibilidad.find((punto) => punto.code === ubicacionCodigo);
+    if (actual && !actual.cubrePedido) setUbicacionCodigo('');
+  }, [puntosConDisponibilidad, ubicacionCodigo]);
 
   const totalConIva = useMemo(
     () => cartItems.reduce((acc, item) => acc + (getUnitPriceWithIva(item) * getQuantity(item)), 0),
@@ -135,6 +212,30 @@ const Checkout = () => {
     return true;
   };
 
+  const asignarComprobante = (fileList) => {
+    const file = Array.from(fileList || [])[0];
+    if (!file) return;
+    if (!TIPOS_COMPROBANTE.has(file.type)) {
+      setPaymentError('El comprobante debe ser una imagen JPG, PNG o WEBP.');
+      return;
+    }
+    if (file.size > MAX_COMPROBANTE_BYTES) {
+      setPaymentError('El comprobante debe pesar máximo 10 MB.');
+      return;
+    }
+    if (comprobante?.preview) URL.revokeObjectURL(comprobante.preview);
+    setPaymentError(null);
+    setComprobante({
+      file,
+      preview: URL.createObjectURL(file),
+    });
+  };
+
+  const quitarComprobante = () => {
+    if (comprobante?.preview) URL.revokeObjectURL(comprobante.preview);
+    setComprobante(null);
+  };
+
   const handlePay = async () => {
     if (cartItems.length === 0 || processingPayment) {
       return;
@@ -142,6 +243,22 @@ const Checkout = () => {
 
     if (!pedidoRevisado) {
       setPaymentError('Confirmá que ya revisaste tu pedido.');
+      return;
+    }
+
+    if (!ubicacionCodigo) {
+      setPaymentError('Seleccioná el punto de venta.');
+      return;
+    }
+
+    const punto = puntosConDisponibilidad.find((item) => item.code === ubicacionCodigo);
+    if (!punto?.cubrePedido) {
+      setPaymentError('El punto de venta seleccionado no tiene stock suficiente para este pedido.');
+      return;
+    }
+
+    if (!comprobante?.file) {
+      setPaymentError('Adjuntá el comprobante de pago.');
       return;
     }
 
@@ -156,7 +273,6 @@ const Checkout = () => {
       handleValidateCartItems(cartItems);
 
       const usuario = getCurrentUser();
-      // Precios y stock los calcula/aplica el backend en la misma transacción.
       const payload = {
         clienteNombre: usuario?.name || usuario?.username || usuario?.email || "Cliente",
         clienteCorreo: usuario?.email || usuario?.correo || "",
@@ -165,11 +281,13 @@ const Checkout = () => {
           nombre: item.nombre || item.name || "Producto",
           cantidad: getQuantity(item),
         })),
-        metodoPago: "Tarjeta",
+        metodoPago: "Comprobante",
+        ubicacionCodigo,
+        ubicacionId: punto.id,
       };
 
       try {
-        await registrarCompra(payload);
+        await registrarCompra(payload, comprobante.file);
       } catch (error) {
         const status = error?.cause?.response?.status;
         if (status === 401) {
@@ -180,7 +298,6 @@ const Checkout = () => {
           redirectToRegistroCliente();
           return;
         }
-        // Fallback local solo si el API falló por causa distinta a permisos/sesión.
         registrarVenta({
           cliente: payload.clienteNombre,
           correo: payload.clienteCorreo,
@@ -196,10 +313,12 @@ const Checkout = () => {
           total: totalConIva,
           estadoPago: "Pendiente",
           metodo: payload.metodoPago,
+          puntoVenta: punto.name,
         });
       }
 
       clearCart();
+      quitarComprobante();
       window.dispatchEvent(new CustomEvent('order-confirmed', { detail: { total: totalConIva } }));
       setPaid(true);
       redirectTimeoutRef.current = window.setTimeout(() => {
@@ -272,6 +391,55 @@ const Checkout = () => {
               ))}
             </div>
         )}
+
+        {cartItems.length > 0 ? (
+          <section className="checkout-pos" aria-labelledby="checkout-pos-title">
+            <h2 id="checkout-pos-title">{tPuntoVenta}</h2>
+            <p className="checkout-pos__hint">{tElegiPunto}</p>
+            {puntosConDisponibilidad.length === 0 ? (
+              <p className="checkout-page__hint"><ST>No hay puntos de venta disponibles en este momento.</ST></p>
+            ) : (
+              <div className="checkout-pos__grid">
+                {puntosConDisponibilidad.map((punto) => {
+                  const seleccionado = ubicacionCodigo === punto.code;
+                  return (
+                    <button
+                      key={punto.code}
+                      type="button"
+                      className={`checkout-pos__card${seleccionado ? ' is-selected' : ''}${punto.cubrePedido ? '' : ' is-disabled'}`}
+                      disabled={!punto.cubrePedido}
+                      aria-pressed={seleccionado}
+                      onClick={() => {
+                        setUbicacionCodigo(punto.code);
+                        setPaymentError(null);
+                      }}
+                    >
+                      <span className="checkout-pos__card-icon"><Store size={18} aria-hidden="true" /></span>
+                      <span className="checkout-pos__card-name">{punto.name}</span>
+                      {punto.cubrePedido ? (
+                        <ul className="checkout-pos__stock">
+                          {cartItems.map((item) => {
+                            const disponible = Number(stockPorProducto[String(item.id)]?.[punto.code]) || 0;
+                            return (
+                              <li key={`${punto.code}-${item.id}`}>
+                                {item.nombre || item.name}: {disponible} {tUnidades}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : (
+                        <span className="checkout-pos__card-meta">{tSinStockPos}</span>
+                      )}
+                      {punto.cubrePedido ? (
+                        <span className="checkout-pos__badge">{tDisponible}</span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        ) : null}
       </section>
 
       {cartItems.length > 0 ? (
@@ -294,6 +462,49 @@ const Checkout = () => {
               </div>
             </div>
 
+            <div className="checkout-comprobante">
+              <p className="checkout-comprobante__label">{tComprobante}</p>
+              <div
+                className={`checkout-dropzone${dropActivo ? ' is-active' : ''}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') fileInputRef.current?.click();
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setDropActivo(true);
+                }}
+                onDragLeave={() => setDropActivo(false)}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDropActivo(false);
+                  asignarComprobante(event.dataTransfer.files);
+                }}
+              >
+                <UploadCloud size={26} aria-hidden="true" />
+                <p>{tComprobanteCta}</p>
+                <small>{tComprobanteHint}</small>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                onChange={(event) => {
+                  asignarComprobante(event.target.files);
+                  event.target.value = '';
+                }}
+              />
+              {comprobante ? (
+                <div className="checkout-comprobante__preview">
+                  <img src={comprobante.preview} alt="" />
+                  <button type="button" onClick={quitarComprobante}>{tQuitarImagen}</button>
+                </div>
+              ) : null}
+            </div>
+
             <Switch
               id="checkout-confirm"
               checked={pedidoRevisado}
@@ -309,7 +520,7 @@ const Checkout = () => {
 
             <div className="checkout-page__actions">
               <button className="checkout-page__pay" type="button" onClick={handlePay} disabled={processingPayment}>
-                <CreditCard size={18} strokeWidth={2.3} aria-hidden="true" className="checkout-page__button-icon" />
+                <Store size={18} strokeWidth={2.3} aria-hidden="true" className="checkout-page__button-icon" />
                 <span className="checkout-page__pay-label">
                   {processingPayment ? tProcesando : tFinalizar}
                 </span>

@@ -99,13 +99,23 @@ function normalizarEstado(estado) {
 }
 
 function normalizarSolicitud(solicitud) {
+  if (!solicitud || typeof solicitud !== "object") return solicitud;
   return {
     ...solicitud,
-    estado: normalizarEstado(solicitud?.estado),
+    id: solicitud.id ?? solicitud.Id,
+    nombre: solicitud.nombre ?? solicitud.Nombre ?? "",
+    email: solicitud.email ?? solicitud.Email ?? "",
+    telefono: solicitud.telefono ?? solicitud.Telefono ?? "",
+    identificacion: solicitud.identificacion ?? solicitud.Identificacion ?? "",
+    institucion: solicitud.institucion ?? solicitud.Institucion ?? "",
+    tipoVoluntariado: solicitud.tipoVoluntariado ?? solicitud.TipoVoluntariado ?? "",
+    pais: solicitud.pais ?? solicitud.Pais ?? "",
+    fechaSolicitud: solicitud.fechaSolicitud ?? solicitud.FechaSolicitud ?? "",
+    estado: normalizarEstado(solicitud.estado ?? solicitud.Estado),
     observacionesAdmin:
-      solicitud?.observacionesAdmin ?? solicitud?.ObservacionesAdmin ?? "",
+      solicitud.observacionesAdmin ?? solicitud.ObservacionesAdmin ?? "",
     documentoAdjunto:
-      solicitud?.documentoAdjunto ?? solicitud?.DocumentoAdjunto ?? null,
+      solicitud.documentoAdjunto ?? solicitud.DocumentoAdjunto ?? null,
   };
 }
 

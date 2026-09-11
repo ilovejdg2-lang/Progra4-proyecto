@@ -8,7 +8,7 @@ import { addProductToCart, pulseButton } from '../../lib/cartStorage';
 import { getLoadingMessageForCacheKey } from '../../lib/pageLoadingMessages';
 import { etiquetaCategoriaProducto } from '../../lib/categorias';
 import { imagenPrincipalProducto, parsearImagenesProducto } from '../../lib/productoImagenes';
-import { calcularPrecioConIVA, obtenerProductoPorId, obtenerProductos } from '../../services/productosService';
+import { calcularPrecioConIVA, obtenerDisponibilidadPuntosVenta, obtenerProductoPorId, obtenerProductos } from '../../services/productosService';
 import { clasificarDisponibilidad } from '../../lib/productoDisponibilidad';
 import { useTraducir, useTraducirLista, useTraducirObjeto } from '../../hooks/useTraducir';
 import { ST } from '../../Components/T/ST';
@@ -30,6 +30,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [fotoActiva, setFotoActiva] = useState(0);
   const [specsAbiertas, setSpecsAbiertas] = useState(true);
+  const [puntosVenta, setPuntosVenta] = useState([]);
 
   const tVolver = useTraducir('Volver al catálogo');
   const tIva = useTraducir('IVA incluido');
@@ -45,6 +46,7 @@ const ProductDetail = () => {
   const tTambien = useTraducir('También te puede gustar');
   const tVerCat = useTraducir('Ver catálogo');
   const tUnidades = useTraducir('unidades');
+  const tPuntosVenta = useTraducir('Disponible por punto de venta');
 
   const productoUi = useTraducirObjeto(
     product ?? { nombre: '', descripcion: '', categoria: '', subcategoria: '' },
@@ -93,6 +95,15 @@ const ProductDetail = () => {
               .filter((item) => String(item.id) !== String(data.id) && item.estado !== 'Deshabilitado' && imagenPrincipalProducto(item))
               .slice(0, 4),
           );
+          obtenerDisponibilidadPuntosVenta([data.id])
+            .then((disp) => {
+              if (!active) return;
+              const row = (disp.porProducto || []).find((item) => String(item.productoId) === String(data.id));
+              setPuntosVenta(row?.puntos || []);
+            })
+            .catch(() => {
+              if (active) setPuntosVenta([]);
+            });
         }
       } catch {
         if (active) {
@@ -118,8 +129,16 @@ const ProductDetail = () => {
     [product],
   );
   const precioConIVA = useMemo(() => calcularPrecioConIVA(precioNormal), [precioNormal]);
-  const stockDisponible = Number(product?.stock) || 0;
-  const disponibilidad = clasificarDisponibilidad(product || { stock: 0 });
+  const stockPosMax = useMemo(
+    () => puntosVenta.reduce((max, punto) => Math.max(max, Number(punto.stock) || 0), 0),
+    [puntosVenta],
+  );
+  const stockDisponible = stockPosMax > 0 ? stockPosMax : Number(product?.stock) || 0;
+  const disponibilidad = clasificarDisponibilidad(
+    puntosVenta.length > 0
+      ? { ...(product || {}), stock: stockPosMax, stockTotal: stockPosMax }
+      : product || { stock: 0 },
+  );
   const estaAgotado = disponibilidad.codigo === 'agotado';
 
   const changeQuantity = (delta) => {
@@ -228,6 +247,24 @@ const ProductDetail = () => {
                 <div className="product-detail-page__chips">
                   <p className="product-detail-page__chips-label">{tPresentacion}</p>
                   <span className="product-detail-page__chip is-active">{product.peso}</span>
+                </div>
+              ) : null}
+
+              {puntosVenta.length > 0 ? (
+                <div className="product-detail-page__pos">
+                  <p className="product-detail-page__pos-title">{tPuntosVenta}</p>
+                  <ul>
+                    {puntosVenta.map((punto) => (
+                      <li key={punto.code}>
+                        <span>{punto.name}</span>
+                        <strong>
+                          {Number(punto.stock) > 0
+                            ? `${punto.stock} ${tUnidades}`
+                            : tAgotado}
+                        </strong>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ) : null}
 
