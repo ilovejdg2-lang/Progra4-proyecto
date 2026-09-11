@@ -350,6 +350,7 @@ const DICCIONARIO = {
   "IVA incluido": "VAT included",
   "Presentación": "Size",
   "Ficha técnica": "Tech specs",
+  "Información del producto": "Product information",
   "FICHA TÉCNICA": "TECH SPECS",
   "Subcategoría": "Subcategory",
   "Precio (sin IVA)": "Price (excl. VAT)",
@@ -871,6 +872,14 @@ const DICCIONARIO = {
     "You'll be redirected home automatically in a few seconds.",
   "Seguir comprando": "Continue shopping",
   "Resumen de tu pedido": "Your order summary",
+  "Revisa los productos, elegí un punto de venta y completá tu compra.":
+    "Review the products, choose a pickup point and complete your purchase.",
+  "Productos en tu pedido": "Products in your order",
+  "Compra segura": "Secure checkout",
+  "Detalles de tu compra": "Your purchase details",
+  "Subí una imagen del comprobante de tu pago.": "Upload an image of your payment receipt.",
+  "Confirmá que los productos y cantidades son correctos.":
+    "Confirm that the products and quantities are correct.",
   "Pago": "Payment",
   "IVA (13%)": "VAT (13%)",
   "Activá el switch para confirmar el pedido.": "Turn on the switch to confirm your order.",
