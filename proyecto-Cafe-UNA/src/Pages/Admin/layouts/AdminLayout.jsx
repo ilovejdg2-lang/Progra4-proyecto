@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 
 import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
 import { AdminStockNotificationsBell } from "../../../Components/Admin/AdminStockNotificationsBell";
+import { AdminBreadcrumb } from "../../../Components/Admin/AdminBreadcrumb";
 import { AppSidebar } from "../../../Components/Admin/AppSidebar";
 import { SidebarProvider, SidebarTrigger, useSidebar } from "../../../Components/Admin/ui/Sidebar";
 import { LanguageSwitcher } from "../../../Components/LanguageSwitcher/LanguageSwitcher";
@@ -32,6 +33,7 @@ function AdminMain({ children }) {
     >
       <div className="sticky top-0 z-[80] flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4">
         <SidebarTrigger />
+        <AdminBreadcrumb />
         <div className="ml-auto flex items-center gap-2">
           <LanguageSwitcher compact className="lang-switch--on-light" />
           <AdminStockNotificationsBell />
