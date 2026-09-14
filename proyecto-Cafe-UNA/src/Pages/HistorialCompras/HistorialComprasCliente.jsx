@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Eye, X } from "lucide-react";
 
@@ -28,7 +28,7 @@ function formatFecha(fecha) {
 }
 
 export default function HistorialComprasCliente() {
-  const user = getActiveSessionUser();
+  const user = useMemo(() => getActiveSessionUser(), []);
   const roles = rolesDeUsuario(user);
   const puedeVer = tienePermiso(roles, "ver_historial_compras_propio");
   const showLoading = usePublicPageLoadingGate("historial-compras", true);
