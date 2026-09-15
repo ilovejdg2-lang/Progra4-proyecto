@@ -145,6 +145,7 @@ export async function apiRequest(url, options = {}) {
         && sessionUser?.token
         && !skipSessionClear
         && !isLoggingOut()
+        && getStoredUser()?.token === sessionUser.token
       ) {
         clearSession();
         throw new Error("Su sesi\u00f3n expir\u00f3. Inicie sesi\u00f3n de nuevo.", { cause: error });
