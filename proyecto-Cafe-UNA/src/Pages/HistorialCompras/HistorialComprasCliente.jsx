@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Eye, X } from "lucide-react";
 
@@ -11,7 +11,7 @@ import { useTraducir } from "../../hooks/useTraducir";
 import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
 import { t } from "../../lib/t";
 import { obtenerCompraPorId, obtenerMisCompras } from "../../services/comprasService";
-import { getActiveSessionUser } from "../../services/sessionService";
+import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
 
 function formatCRC(value) {
   return new Intl.NumberFormat("es-CR", {
@@ -28,7 +28,7 @@ function formatFecha(fecha) {
 }
 
 export default function HistorialComprasCliente() {
-  const user = useMemo(() => getActiveSessionUser(), []);
+  const [user, setUser] = useState(() => getActiveSessionUser());
   const roles = rolesDeUsuario(user);
   const puedeVer = tienePermiso(roles, "ver_historial_compras_propio");
   const showLoading = usePublicPageLoadingGate("historial-compras", true);
@@ -49,6 +49,16 @@ export default function HistorialComprasCliente() {
     montoMin: "",
     montoMax: "",
   });
+
+  useEffect(() => {
+    const syncUser = () => setUser(getActiveSessionUser());
+    window.addEventListener("storage", syncUser);
+    window.addEventListener(SESSION_UPDATED_EVENT, syncUser);
+    return () => {
+      window.removeEventListener("storage", syncUser);
+      window.removeEventListener(SESSION_UPDATED_EVENT, syncUser);
+    };
+  }, []);
 
   const load = useCallback(async () => {
     if (!user || !puedeVer) return;

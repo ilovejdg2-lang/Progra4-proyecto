@@ -27,7 +27,10 @@ vi.mock("../../services/comprasService", () => ({
   obtenerCompraPorId: (...args) => mocks.obtenerCompraPorId(...args),
   obtenerMisCompras: (...args) => mocks.obtenerMisCompras(...args),
 }));
-vi.mock("../../services/sessionService", () => ({ getActiveSessionUser: (...args) => mocks.getActiveSessionUser(...args) }));
+vi.mock("../../services/sessionService", () => ({
+  SESSION_UPDATED_EVENT: "session-updated",
+  getActiveSessionUser: (...args) => mocks.getActiveSessionUser(...args),
+}));
 
 import HistorialComprasCliente from "./HistorialComprasCliente";
 
@@ -111,5 +114,16 @@ describe("HistorialComprasCliente", () => {
 
     expect(await screen.findByText("C-10")).toBeInTheDocument();
     expect(mocks.obtenerMisCompras).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows the sign-in gate after the active session is invalidated", async () => {
+    render(<HistorialComprasCliente />);
+
+    await screen.findByText("C-10");
+    mocks.getActiveSessionUser.mockReturnValue(null);
+    fireEvent(window, new Event("session-updated"));
+
+    expect(await screen.findByText("Iniciá sesión para ver tu historial de compras.")).toBeInTheDocument();
+    expect(mocks.obtenerMisCompras).toHaveBeenCalledTimes(1);
   });
 });
