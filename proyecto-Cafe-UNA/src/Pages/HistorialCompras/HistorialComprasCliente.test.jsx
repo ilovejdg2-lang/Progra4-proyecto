@@ -156,4 +156,36 @@ describe("HistorialComprasCliente", () => {
 
     expect(mocks.obtenerMisCompras).toHaveBeenCalledTimes(1);
   });
+
+  it("does not reload history for same-account session events", async () => {
+    render(<HistorialComprasCliente />);
+
+    await screen.findByText("C-10");
+    mocks.getActiveSessionUser.mockReturnValue({ id: "cliente-1", token: "refreshed-jwt" });
+    fireEvent(window, new Event("session-updated"));
+    fireEvent(window, new StorageEvent("storage", { key: "user" }));
+    await act(async () => {});
+
+    expect(mocks.obtenerMisCompras).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores a stale history response after the account changes", async () => {
+    let resolveHistoryForAccountA;
+    mocks.obtenerMisCompras
+      .mockImplementationOnce(() => new Promise((resolve) => {
+        resolveHistoryForAccountA = resolve;
+      }))
+      .mockResolvedValueOnce({ data: [{ ...compra, id: "20", numero: "C-20" }], totalPages: 1 });
+    render(<HistorialComprasCliente />);
+
+    await waitFor(() => expect(mocks.obtenerMisCompras).toHaveBeenCalledTimes(1));
+    mocks.getActiveSessionUser.mockReturnValue({ id: "cliente-2", token: "jwt-2" });
+    fireEvent(window, new Event("session-updated"));
+
+    expect(await screen.findByText("C-20")).toBeInTheDocument();
+    await act(async () => resolveHistoryForAccountA({ data: [compra], totalPages: 1 }));
+
+    expect(screen.queryByText("C-10")).not.toBeInTheDocument();
+    expect(screen.getByText("C-20")).toBeInTheDocument();
+  });
 });

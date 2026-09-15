@@ -41,6 +41,7 @@ export default function HistorialComprasCliente() {
   const userRef = useRef(user);
   const historyRequestRef = useRef(0);
   const detailRequestRef = useRef(0);
+  const userId = user?.id ?? null;
   const roles = rolesDeUsuario(user);
   const puedeVer = tienePermiso(roles, "ver_historial_compras_propio");
   const showLoading = usePublicPageLoadingGate("historial-compras", true);
@@ -86,7 +87,7 @@ export default function HistorialComprasCliente() {
   }, []);
 
   const load = useCallback(async () => {
-    if (!user || !puedeVer) return;
+    if (!userId || !puedeVer) return;
     const requestId = ++historyRequestRef.current;
     setStatus("loading");
     setError("");
@@ -106,7 +107,7 @@ export default function HistorialComprasCliente() {
       setStatus("error");
       setError(loadError instanceof Error ? loadError.message : "No se pudo cargar el historial.");
     }
-  }, [user, puedeVer, page, filtros]);
+  }, [userId, puedeVer, page, filtros]);
 
   useEffect(() => {
     load();
