@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Eye, X } from "lucide-react";
 
@@ -27,8 +27,20 @@ function formatFecha(fecha) {
   return valor.toLocaleString("es-CR", { dateStyle: "short", timeStyle: "short" });
 }
 
+const INITIAL_FILTERS = {
+  numero: "",
+  estado: "todos",
+  desde: "",
+  hasta: "",
+  montoMin: "",
+  montoMax: "",
+};
+
 export default function HistorialComprasCliente() {
   const [user, setUser] = useState(() => getActiveSessionUser());
+  const userRef = useRef(user);
+  const historyRequestRef = useRef(0);
+  const detailRequestRef = useRef(0);
   const roles = rolesDeUsuario(user);
   const puedeVer = tienePermiso(roles, "ver_historial_compras_propio");
   const showLoading = usePublicPageLoadingGate("historial-compras", true);
@@ -41,17 +53,30 @@ export default function HistorialComprasCliente() {
   const [detalle, setDetalle] = useState(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [filtros, setFiltros] = useState({
-    numero: "",
-    estado: "todos",
-    desde: "",
-    hasta: "",
-    montoMin: "",
-    montoMax: "",
-  });
+  const [filtros, setFiltros] = useState(INITIAL_FILTERS);
 
   useEffect(() => {
-    const syncUser = () => setUser(getActiveSessionUser());
+    const syncUser = (event) => {
+      if (event.type === "storage" && event.key && event.key !== "user") return;
+
+      const nextUser = getActiveSessionUser();
+      const accountChanged = userRef.current?.id !== nextUser?.id;
+      userRef.current = nextUser;
+
+      if (accountChanged) {
+        historyRequestRef.current += 1;
+        detailRequestRef.current += 1;
+        setCompras([]);
+        setDetalle(null);
+        setError("");
+        setStatus("idle");
+        setPage(1);
+        setTotalPages(1);
+        setFiltros(INITIAL_FILTERS);
+      }
+
+      setUser(nextUser);
+    };
     window.addEventListener("storage", syncUser);
     window.addEventListener(SESSION_UPDATED_EVENT, syncUser);
     return () => {
@@ -62,6 +87,7 @@ export default function HistorialComprasCliente() {
 
   const load = useCallback(async () => {
     if (!user || !puedeVer) return;
+    const requestId = ++historyRequestRef.current;
     setStatus("loading");
     setError("");
     try {
@@ -70,10 +96,12 @@ export default function HistorialComprasCliente() {
         pageSize: 10,
         ...filtros,
       });
+      if (requestId !== historyRequestRef.current) return;
       setCompras(result.data);
       setTotalPages(result.totalPages);
       setStatus("success");
     } catch (loadError) {
+      if (requestId !== historyRequestRef.current) return;
       setCompras([]);
       setStatus("error");
       setError(loadError instanceof Error ? loadError.message : "No se pudo cargar el historial.");
@@ -85,9 +113,13 @@ export default function HistorialComprasCliente() {
   }, [load]);
 
   const abrirDetalle = async (compra) => {
+    const requestId = ++detailRequestRef.current;
     try {
-      setDetalle(await obtenerCompraPorId(compra.id));
+      const nextDetalle = await obtenerCompraPorId(compra.id);
+      if (requestId !== detailRequestRef.current) return;
+      setDetalle(nextDetalle);
     } catch (detailError) {
+      if (requestId !== detailRequestRef.current) return;
       setError(detailError instanceof Error ? detailError.message : "No se pudo abrir el detalle.");
     }
   };

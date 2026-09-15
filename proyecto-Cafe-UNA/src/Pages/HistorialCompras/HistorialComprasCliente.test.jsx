@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -124,6 +124,36 @@ describe("HistorialComprasCliente", () => {
     fireEvent(window, new Event("session-updated"));
 
     expect(await screen.findByText("Iniciá sesión para ver tu historial de compras.")).toBeInTheDocument();
+    expect(mocks.obtenerMisCompras).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores a stale detail response after the account changes", async () => {
+    let resolveDetail;
+    mocks.obtenerCompraPorId.mockImplementation(() => new Promise((resolve) => {
+      resolveDetail = resolve;
+    }));
+    render(<HistorialComprasCliente />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Ver detalle/i }));
+    mocks.obtenerMisCompras.mockResolvedValueOnce({
+      data: [{ ...compra, id: "20", numero: "C-20" }],
+      totalPages: 1,
+    });
+    mocks.getActiveSessionUser.mockReturnValue({ id: "cliente-2", token: "jwt-2" });
+    fireEvent(window, new Event("session-updated"));
+
+    expect(await screen.findByText("C-20")).toBeInTheDocument();
+    await act(async () => resolveDetail({ ...compra, items: [{ nombre: "Compra de cliente A" }] }));
+
+    expect(screen.queryByText("Compra de cliente A")).not.toBeInTheDocument();
+  });
+
+  it("does not reload history for unrelated storage changes", async () => {
+    render(<HistorialComprasCliente />);
+
+    await screen.findByText("C-10");
+    fireEvent(window, new StorageEvent("storage", { key: "cart" }));
+
     expect(mocks.obtenerMisCompras).toHaveBeenCalledTimes(1);
   });
 });
