@@ -77,6 +77,7 @@ const DONACIONES_OPEN_KEY = "admin-sidebar-donaciones-open";
 const FORMULARIOS_OPEN_KEY = "admin-sidebar-formularios-open";
 const SOBRE_NOSOTROS_OPEN_KEY = "admin-sidebar-sobre-nosotros-open";
 const AJUSTES_OPEN_KEY = "admin-sidebar-ajustes-open";
+const DOCUMENTACION_OPEN_KEY = "admin-sidebar-documentacion-open";
 const linkActivo = {
   className: "text-slate-950",
 };
@@ -116,6 +117,14 @@ export function AppSidebar() {
     tienePermiso(roles, "administrar_solicitudes_donaciones");
   const puedeDonaciones =
     puedeDonacionesNecesidades || puedeDonacionesSolicitudes;
+  const puedeDocumentacionDocumentos =
+    tienePermiso(roles, "ver_documentacion_privada") ||
+    tienePermiso(roles, "crear_documentacion") ||
+    tienePermiso(roles, "actualizar_documentacion");
+  const puedeDocumentacionSolicitudes =
+    tienePermiso(roles, "administrar_solicitudes_documentacion");
+  const puedeDocumentacion =
+    puedeDocumentacionDocumentos || puedeDocumentacionSolicitudes;
   const puedeUsuarios = tienePermiso(roles, "editar_usuarios") || tienePermiso(roles, "crear_usuarios");
   const puedeAjustes = tienePermiso(roles, "administrar_roles_permisos");
   const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
@@ -157,6 +166,7 @@ export function AppSidebar() {
   const isVoluntariadoRoute = pathname === "/admin/voluntariado";
   const isVisitasRoute = pathname === "/admin/visitas";
   const isDonacionesRoute = pathname.startsWith("/admin/donaciones/");
+  const isDocumentacionRoute = pathname.startsWith("/admin/documentacion");
 
   const [generalOpen, setGeneralOpen] = useState(() => {
     const savedValue = localStorage.getItem(GENERAL_OPEN_KEY);
@@ -242,6 +252,13 @@ export function AppSidebar() {
   }, [isDonacionesRoute]);
 
   useEffect(() => {
+    if (isDocumentacionRoute) {
+      setDocumentacionOpen(true);
+      localStorage.setItem(DOCUMENTACION_OPEN_KEY, "true");
+    }
+  }, [isDocumentacionRoute]);
+
+  useEffect(() => {
     let activo = true;
 
     obtenerNavbar()
@@ -272,6 +289,10 @@ export function AppSidebar() {
     const savedValue = localStorage.getItem(DONACIONES_OPEN_KEY);
     return savedValue === null ? isDonacionesRoute : savedValue === "true";
   });
+  const [documentacionOpen, setDocumentacionOpen] = useState(() => {
+    const savedValue = localStorage.getItem(DOCUMENTACION_OPEN_KEY);
+    return savedValue === null ? isDocumentacionRoute : savedValue === "true";
+  });
   const [ajustesOpen, setAjustesOpen] = useState(() => {
     const savedValue = localStorage.getItem(AJUSTES_OPEN_KEY);
     return savedValue === null ? isAjustesRoute : savedValue === "true";
@@ -293,6 +314,7 @@ export function AppSidebar() {
   const updateVoluntariadoOpen = (open) => deferSet(setVoluntariadoOpen, VOLUNTARIADO_OPEN_KEY, open);
   const updateVisitasOpen = (open) => deferSet(setVisitasOpen, VISITAS_OPEN_KEY, open);
   const updateDonacionesOpen = (open) => deferSet(setDonacionesOpen, DONACIONES_OPEN_KEY, open);
+  const updateDocumentacionOpen = (open) => deferSet(setDocumentacionOpen, DOCUMENTACION_OPEN_KEY, open);
   const updateAjustesOpen = (open) => deferSet(setAjustesOpen, AJUSTES_OPEN_KEY, open);
 
   const closeMobileSidebar = () => setOpenMobile(false);
@@ -303,6 +325,7 @@ export function AppSidebar() {
     localStorage.removeItem(VOLUNTARIADO_OPEN_KEY);
     localStorage.removeItem(VISITAS_OPEN_KEY);
     localStorage.removeItem(DONACIONES_OPEN_KEY);
+    localStorage.removeItem(DOCUMENTACION_OPEN_KEY);
     localStorage.removeItem(FORMULARIOS_OPEN_KEY);
     localStorage.removeItem(SOBRE_NOSOTROS_OPEN_KEY);
     localStorage.removeItem(AJUSTES_OPEN_KEY);
@@ -646,6 +669,50 @@ export function AppSidebar() {
                       <Link to="/admin/donaciones/fechas-recepcion" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <CalendarClock />
                         <span><ST>Fechas de recepción</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
+                </SidebarMenuSub>
+              </SidebarGroupContent>
+            </Collapsible.Content>
+          </SidebarGroup>
+        </Collapsible.Root>
+        ) : null}
+
+        {puedeDocumentacion ? (
+        <Collapsible.Root
+          open={documentacionOpen}
+          onOpenChange={updateDocumentacionOpen}
+          className="group/documentacion"
+        >
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <Collapsible.Trigger type="button">
+                <BookOpenText />
+                <span><ST>Documentación</ST></span>
+                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/documentacion:rotate-180" />
+              </Collapsible.Trigger>
+            </SidebarGroupLabel>
+            <Collapsible.Content>
+              <SidebarGroupContent>
+                <SidebarMenuSub>
+                  {puedeDocumentacionDocumentos ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/documentacion" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <BookOpenText />
+                        <span><ST>Documentos</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
+                  {puedeDocumentacionSolicitudes ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/documentacion/solicitudes" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <ScrollText />
+                        <span><ST>Solicitudes</ST></span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>

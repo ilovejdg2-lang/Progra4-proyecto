@@ -58,6 +58,7 @@ export async function fetchAdminMainPageData() {
     homeIniciativas,
     homeLocation,
     homeFaq,
+    homeDocumentacion,
     tarjetas,
     faqItems,
   ] = await Promise.all([
@@ -67,6 +68,7 @@ export async function fetchAdminMainPageData() {
     obtenerSeccion('homeIniciativas').catch(() => null),
     obtenerSeccion('homeLocation').catch(() => null),
     obtenerSeccion('homeFaq').catch(() => null),
+    obtenerSeccion('homeDocumentacion').catch(() => null),
     obtenerTarjetasInicio().catch(() => []),
     obtenerFaqInicio().catch(() => []),
   ]);
@@ -84,6 +86,7 @@ export async function fetchAdminMainPageData() {
       homeIniciativas: mapSeccionInicio(homeIniciativas),
       homeLocation: mapSeccionInicio(homeLocation),
       homeFaq: mapSeccionInicio(homeFaq),
+      homeDocumentacion: mapSeccionInicio(homeDocumentacion),
     },
     navbar,
     footer,

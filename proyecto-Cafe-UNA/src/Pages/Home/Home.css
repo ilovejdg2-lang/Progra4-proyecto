@@ -559,6 +559,28 @@
   outline: none;
 }
 
+.mission-spotlight-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.mission-spotlight-card__button--secondary {
+  background: transparent;
+  border: 1px solid #706760;
+  color: #4a413a;
+  cursor: pointer;
+}
+
+.mission-spotlight-card__button--secondary:hover,
+.mission-spotlight-card__button--secondary:focus-visible {
+  background: #1a1410;
+  border-color: #1a1410;
+  color: #fff;
+}
+
 /* =========================
    LOCATION
 ========================= */
@@ -1104,6 +1126,16 @@
     font-size: var(--text-body);
   }
 
+  .mission-spotlight-card__actions {
+    order: 4;
+    justify-self: center;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
   .iniciativas-header {
     margin-bottom: 1.5rem;
   }
@@ -1293,3 +1325,5 @@
     transition: none;
   }
 }
+
+
