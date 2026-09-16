@@ -948,6 +948,8 @@ const DICCIONARIO = {
   "Título": "Title",
   "Subtítulo": "Subtitle",
   "Enlace de Google Maps": "Google Maps link",
+  "Mapa de ubicación": "Location map",
+  "Ver en Google Maps": "View on Google Maps",
   "Enlaces del navbar": "Navbar links",
   "Menú de navegación": "Navigation menu",
   "Sin enlaces en el menú superior.": "No links in the top menu.",

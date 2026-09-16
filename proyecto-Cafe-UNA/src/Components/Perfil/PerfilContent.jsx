@@ -12,6 +12,7 @@ import {
 } from "../../services/perfilService";
 import { obtenerMisSolicitudesDonacion } from "../../services/donacionesService";
 import { applyPerfilToSession, getActiveSessionUser } from "../../services/sessionService";
+import { rutaMisCompras } from "../../Pages/HistorialCompras/HistorialComprasCliente";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { inicialDeNombre } from "../../lib/inicialDeNombre";
 import {
@@ -741,14 +742,15 @@ export function PerfilContent({ variant = "standalone" }) {
         </div>
       </section>
 
-      {variant === "standalone" ? (
+      {Array.isArray(perfil?.roles) &&
+      perfil.roles.some((rol) => String(rol).toLowerCase() === "cliente") ? (
         <section className="perfil-card" style={{ marginBottom: "1rem" }}>
           <header className="perfil-card__header">
             <UserRound size={18} />
             <h2>{tCompras}</h2>
           </header>
           <p className="perfil-card__current-value">{tRevisaPedidos}</p>
-          <Link to="/perfil/compras" className="perfil-link-action">
+          <Link to={rutaMisCompras(getActiveSessionUser())} className="perfil-link-action">
             {tVerHistorial}
             <ChevronRight size={16} />
           </Link>

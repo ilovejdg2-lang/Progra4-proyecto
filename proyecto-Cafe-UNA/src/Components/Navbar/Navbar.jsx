@@ -27,6 +27,7 @@ import { requestAdminStockProduct } from '../../lib/adminStockAlert';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { normalizePathname } from '../../lib/paths';
+import { rutaMisCompras } from '../../Pages/HistorialCompras/HistorialComprasCliente';
 
 import { clearCart as emptyCart, getStoredCart, saveCart } from '../../lib/cartStorage';
 
@@ -703,7 +704,7 @@ const Navbar = () => {
             });
             return;
         }
-        navigate({ to: '/perfil/compras' });
+        navigate({ to: rutaMisCompras(user) });
     };
 
     const handleStockAlertOpen = (alerta) => {
@@ -1293,18 +1294,33 @@ const Navbar = () => {
                             </div>
                           </div>
                           <div className="dropdown__actions">
-                            {user.role !== 'admin' ? (
-                              <Link to="/perfil" className="dropdown__item" role="menuitem" onClick={() => setShowDropdown(false)}>
-                                <User size={16} strokeWidth={2.1} aria-hidden="true" />
-                                {tMiPerfil}
-                              </Link>
-                            ) : null}
-                            {user.role === 'admin' ? (
-                              <Link to="/admin" className="dropdown__item" role="menuitem" onClick={() => setShowDropdown(false)}>
-                                <LayoutDashboard size={16} strokeWidth={2.1} aria-hidden="true" />
-                                {tPanelAdmin}
-                              </Link>
-                            ) : null}
+                            {(() => {
+                              const rolesUser = rolesDeUsuario(user);
+                              const puedePanel = tienePermiso(rolesUser, 'ver_panel_administrativo');
+                              const path = String(pathname || '');
+                              const enAdmin = path.startsWith('/admin');
+                              const enZonaPerfil =
+                                path === '/perfil' ||
+                                path.startsWith('/perfil/') ||
+                                path === '/admin/perfil' ||
+                                path === '/admin/mis-compras';
+                              const perfilTo = puedePanel ? '/admin/perfil' : '/perfil';
+                              // Solo una: en sitio público con panel → Panel; en admin/perfil/compras → Mi perfil.
+                              if (puedePanel && !enAdmin && !enZonaPerfil) {
+                                return (
+                                  <Link to="/admin" className="dropdown__item" role="menuitem" onClick={() => setShowDropdown(false)}>
+                                    <LayoutDashboard size={16} strokeWidth={2.1} aria-hidden="true" />
+                                    {tPanelAdmin}
+                                  </Link>
+                                );
+                              }
+                              return (
+                                <Link to={perfilTo} className="dropdown__item" role="menuitem" onClick={() => setShowDropdown(false)}>
+                                  <User size={16} strokeWidth={2.1} aria-hidden="true" />
+                                  {tMiPerfil}
+                                </Link>
+                              );
+                            })()}
                             <button type="button" className="dropdown__logout" role="menuitem" onClick={handleLogout}>
                               <LogOut size={16} strokeWidth={2.1} aria-hidden="true" />
                               {tCerrarSesion}

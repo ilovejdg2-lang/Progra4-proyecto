@@ -120,6 +120,7 @@ export function AppSidebar() {
   const puedeAjustes = tienePermiso(roles, "administrar_roles_permisos");
   const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
   const puedePerfil = tienePermiso(roles, "ver_perfil_propio");
+  const puedeMisCompras = tienePermiso(roles, "ver_historial_compras_propio");
   const avatarUrl = user?.fotoPerfilUrl?.trim()
     ? normalizeImageUrl(user.fotoPerfilUrl.trim(), { width: 96 })
     : "";
@@ -726,6 +727,16 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             ) : null}
+            {puedeMisCompras ? (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link to="/admin/mis-compras" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                  <ShoppingBag />
+                  <span><ST>Mis compras</ST></span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            ) : null}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
@@ -766,12 +777,22 @@ export function AppSidebar() {
               <div className="truncate font-medium text-slate-700">{displayName}</div>
               {displayEmail ? <div className="truncate">{displayEmail}</div> : null}
             </div>
-            <DropdownMenuItem asChild>
-              <Link to="/admin/perfil" className="cursor-pointer" activeProps={linkActivo}>
-                <UserRound className="size-4" />
-                <span><ST>Mi perfil</ST></span>
-              </Link>
-            </DropdownMenuItem>
+            {puedePerfil ? (
+              <DropdownMenuItem asChild>
+                <Link to="/admin/perfil" className="cursor-pointer" activeProps={linkActivo}>
+                  <UserRound className="size-4" />
+                  <span><ST>Mi perfil</ST></span>
+                </Link>
+              </DropdownMenuItem>
+            ) : null}
+            {puedeMisCompras ? (
+              <DropdownMenuItem asChild>
+                <Link to="/admin/mis-compras" className="cursor-pointer" activeProps={linkActivo}>
+                  <ShoppingBag className="size-4" />
+                  <span><ST>Mis compras</ST></span>
+                </Link>
+              </DropdownMenuItem>
+            ) : null}
             <DropdownMenuItem
               className="cursor-pointer text-red-600 hover:text-red-600 focus:text-red-700 data-[highlighted]:text-red-600"
               onSelect={(event) => {

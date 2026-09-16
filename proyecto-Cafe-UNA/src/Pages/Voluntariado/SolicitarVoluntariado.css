@@ -1155,53 +1155,6 @@
   color: var(--texto-secundario);
 }
 
-.aviso-sede-finca {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  width: 100%;
-  margin: 1rem 0;
-  padding: 0.9rem 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius-ui, 12px);
-  background: #f8fafc;
-}
-
-.aviso-sede-finca__icono {
-  flex-shrink: 0;
-  margin-top: 0.1rem;
-  color: #0f172a;
-}
-
-.aviso-sede-finca__contenido {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  min-width: 0;
-}
-
-.aviso-sede-finca__texto {
-  margin: 0;
-  font-size: var(--text-body);
-  line-height: 1.5;
-  color: #334155;
-}
-
-.aviso-sede-finca__link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: var(--text-body);
-  font-weight: 600;
-  color: #0f172a;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.aviso-sede-finca__link:hover {
-  color: #C41E3A;
-}
-
 .opcion-radio__meta {
   display: flex;
   align-items: center;
