@@ -246,7 +246,7 @@ export function PerfilContent({ variant = "standalone" }) {
   const tCambiarCorreo = useTraducir("Cambiar correo");
   const tNuevoCorreo = useTraducir("Nuevo correo");
   const tCodigoVerif = useTraducir("Código de verificación");
-  const tSeisDigitos = useTraducir("6 dígitos");
+  const tSeisDigitos = useTraducir("5 dígitos");
   const tProcesando = useTraducir("Procesando...");
   const tEnviarCodigo = useTraducir("Enviar código");
   const tConfirmarCorreo = useTraducir("Confirmar correo");
@@ -902,10 +902,16 @@ export function PerfilContent({ variant = "standalone" }) {
                     value={emailForm.token}
                     onChange={(e) => {
                       setEmailErrors((prev) => ({ ...prev, token: "", formulario: "" }));
-                      setEmailForm((prev) => ({ ...prev, token: e.target.value }));
+                      setEmailForm((prev) => ({
+                        ...prev,
+                        token: e.target.value.replace(/\D/g, "").slice(0, 5),
+                      }));
                     }}
                     className={emailErrors.token ? "input-error" : ""}
                     placeholder={tSeisDigitos}
+                    maxLength={5}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
                     required
                     autoFocus
                   />

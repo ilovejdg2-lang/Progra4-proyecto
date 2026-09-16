@@ -909,6 +909,7 @@ const DICCIONARIO = {
   "Cambiar correo": "Change email",
   "Nuevo correo": "New email",
   "Código de verificación": "Verification code",
+  "5 dígitos": "5 digits",
   "6 dígitos": "6 digits",
   "Enviar código": "Send code",
   "Confirmar correo": "Confirm email",

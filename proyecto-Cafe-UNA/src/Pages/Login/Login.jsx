@@ -646,8 +646,17 @@ const Login = () => {
               <input
                 id="registerToken"
                 type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={5}
                 value={registerForm.token}
-                onChange={(e) => setRegisterForm((prev) => ({ ...prev, token: e.target.value }))}
+                onChange={(e) =>
+                  setRegisterForm((prev) => ({
+                    ...prev,
+                    token: e.target.value.replace(/\D/g, '').slice(0, 5),
+                  }))
+                }
+                placeholder="5 dígitos"
                 required
               />
             </div>
@@ -693,8 +702,17 @@ const Login = () => {
                 <input
                   id="recoverToken"
                   type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={5}
                   value={recoverForm.token}
-                  onChange={(e) => setRecoverForm((prev) => ({ ...prev, token: e.target.value }))}
+                  onChange={(e) =>
+                    setRecoverForm((prev) => ({
+                      ...prev,
+                      token: e.target.value.replace(/\D/g, '').slice(0, 5),
+                    }))
+                  }
+                  placeholder="5 dígitos"
                   required
                 />
               </div>

@@ -167,8 +167,11 @@ const VerificarCuenta = () => {
                 <input
                   id="token"
                   value={token}
-                  onChange={(ev) => setToken(ev.target.value.toUpperCase())}
+                  onChange={(ev) => setToken(ev.target.value.replace(/\D/g, '').slice(0, 5))}
                   autoComplete="one-time-code"
+                  inputMode="numeric"
+                  maxLength={5}
+                  placeholder="5 dígitos"
                   required
                 />
               </div>
