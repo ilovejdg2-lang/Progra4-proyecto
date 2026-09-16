@@ -53,6 +53,7 @@ export function getAdminBreadcrumbItems(pathname, search) {
     "/admin/usuarios": [admin, crumb("Administrar usuarios")],
     "/admin/auditoria": [admin, crumb("Auditoría")],
     "/admin/perfil": [admin, crumb("Mi perfil")],
+    "/admin/mis-compras": [admin, crumb("Mi perfil", "/admin/perfil"), crumb("Mis compras")],
     "/admin/ajustes": [admin, ajustes],
     "/admin/ajustes/horarios": [admin, ajustes, crumb("Horarios")],
     "/admin/ajustes/permisos": [admin, ajustes, crumb("Permisos")],

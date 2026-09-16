@@ -16,10 +16,7 @@ import { registrarCompra } from '../../services/comprasService';
 import { getActiveSessionUser } from '../../services/sessionService';
 import { marcarIntentRegistroCliente, puedeComprar } from '../../services/authService';
 import { clearCart, getStoredCart } from '../../lib/cartStorage';
-import { registrarVenta } from '../../lib/ventasStorage';
-
-const TIPOS_COMPROBANTE = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const MAX_COMPROBANTE_BYTES = 10 * 1024 * 1024;
+import { confirmarCompraEnBackend, validarComprobante } from './checkoutValidation';
 
 const formatCRC = (amount) => {
   const value = Number.isFinite(amount) ? amount : 0;
@@ -236,12 +233,9 @@ const Checkout = () => {
   const asignarComprobante = (fileList) => {
     const file = Array.from(fileList || [])[0];
     if (!file) return;
-    if (!TIPOS_COMPROBANTE.has(file.type)) {
-      setPaymentError('El comprobante debe ser una imagen JPG, PNG o WEBP.');
-      return;
-    }
-    if (file.size > MAX_COMPROBANTE_BYTES) {
-      setPaymentError('El comprobante debe pesar máximo 10 MB.');
+    const validationError = validarComprobante(file);
+    if (validationError) {
+      setPaymentError(validationError);
       return;
     }
     if (comprobante?.preview) URL.revokeObjectURL(comprobante.preview);
@@ -308,7 +302,7 @@ const Checkout = () => {
       };
 
       try {
-        await registrarCompra(payload, comprobante.file);
+        await confirmarCompraEnBackend({ registrarCompraFn: registrarCompra, payload, archivo: comprobante.file });
       } catch (error) {
         const status = error?.cause?.response?.status;
         if (status === 401) {
@@ -319,23 +313,7 @@ const Checkout = () => {
           redirectToRegistroCliente();
           return;
         }
-        registrarVenta({
-          cliente: payload.clienteNombre,
-          correo: payload.clienteCorreo,
-          items: cartItems.map((item) => ({
-            id: item.id,
-            nombre: item.nombre || item.name || "Producto",
-            units: getQuantity(item),
-            precioUnitario: getUnitPriceWithIva(item),
-            total: getUnitPriceWithIva(item) * getQuantity(item),
-          })),
-          subtotal: subtotalSinIva,
-          iva: ivaTotal,
-          total: totalConIva,
-          estadoPago: "Pendiente",
-          metodo: payload.metodoPago,
-          puntoVenta: punto.name,
-        });
+        throw error;
       }
 
       clearCart();
