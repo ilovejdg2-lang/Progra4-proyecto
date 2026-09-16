@@ -47,6 +47,7 @@ export async function fetchHomePageData() {
     iniciativas,
     location,
     faq,
+    documentacion,
     faqItems,
     tarjetas,
     productList,
@@ -59,6 +60,7 @@ export async function fetchHomePageData() {
     obtenerSeccion('homeIniciativas'),
     obtenerSeccion('homeLocation'),
     obtenerSeccion('homeFaq'),
+    obtenerSeccion('homeDocumentacion').catch(() => null),
     obtenerFaqInicio().catch(() => []),
     obtenerTarjetasInicio(),
     obtenerProductos().catch(() => []),
@@ -86,6 +88,7 @@ export async function fetchHomePageData() {
     iniciativasSection: trimSectionRaw(iniciativas),
     locationSection: trimSectionRaw(location),
     faqSection: trimSectionRaw(faq),
+    documentacionSection: trimSectionRaw(documentacion),
     faqItems: Array.isArray(faqItems) ? faqItems.map(mapFaqItem) : [],
     tarjetasInicio: Array.isArray(tarjetas)
       ? tarjetas.map((item) => ({

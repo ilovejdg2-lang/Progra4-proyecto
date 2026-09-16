@@ -22,9 +22,11 @@ import { toGoogleMapsEmbedUrl } from '../../lib/googleMaps';
 import { buildIniciativasCards } from '../../lib/iniciativasCards';
 import { useRevealOnScroll } from '../../hooks/useRevealOnScroll';
 import { useTraducirLista, useTraducirObjeto } from '../../hooks/useTraducir';
+import { ST } from '../../Components/T/ST';
 import './Home.css';
 
 const CAMPOS_TEASER = ['title', 'description', 'linkText'];
+const CAMPOS_DOCUMENTACION = ['title', 'description', 'linkText'];
 const CAMPOS_FEATURED = ['title', 'description', 'linkText'];
 const CAMPOS_INICIATIVAS = ['eyebrow', 'title', 'description'];
 const CAMPOS_UBICACION = ['eyebrow', 'title', 'description', 'linkText'];
@@ -104,6 +106,10 @@ const Home = () => {
   const faqSection = useTraducirObjeto(
     data?.faqSection ?? { eyebrow: '', title: '', description: '' },
     CAMPOS_FAQ,
+  );
+  const documentacionSection = useTraducirObjeto(
+    data?.documentacionSection ?? { title: '', description: '', image: '', linkText: '' },
+    CAMPOS_DOCUMENTACION,
   );
   const faqItems = useTraducirLista(data?.faqItems ?? [], CAMPOS_FAQ_ITEM);
   const locationMapUrl = locationSection.linkUrl?.trim() ?? '';
@@ -339,6 +345,53 @@ const Home = () => {
                 ) : null}
               </div>
             ))}
+          </div>
+        </section>
+
+        <section id="repositorio-documentacion" className="home-page__mission-spotlight reveal-on-scroll" aria-labelledby="repositorio-title">
+          <div className="mission-spotlight-shell">
+            <article className="mission-spotlight-card">
+              <div className="mission-spotlight-card__body">
+                <div className="mission-spotlight-card__content">
+                  <h2 id="repositorio-title" className="mission-spotlight-card__title">
+                    {documentacionSection.title || <ST>Documentación del proyecto Café-UNA</ST>}
+                  </h2>
+                  <p className="mission-spotlight-card__description">
+                    {documentacionSection.description || (
+                      <ST>
+                        Espacio destinado a recopilar y poner a disposición documentos, investigaciones y materiales relacionados con el café y el proyecto Café-UNA.
+                      </ST>
+                    )}
+                  </p>
+                  <div className="mission-spotlight-card__actions">
+                    <button type="button" className="mission-spotlight-card__button">
+                      {documentacionSection.linkText || <ST>Conocer documentación</ST>}
+                    </button>
+                    <button
+                      type="button"
+                      className="mission-spotlight-card__button mission-spotlight-card__button--secondary"
+                    >
+                      <ST>Solicitar archivo</ST>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mission-spotlight-card__media">
+                  <img
+                    src={documentacionSection.image || "/documentacion-cafe.jpg"}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "https://i.ibb.co/fVXVj4br/Copia-de-IMG-20260617-WA0129.jpg";
+                    }}
+                    alt="Documentación del proyecto Café-UNA"
+                    width={900}
+                    height={600}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+              </div>
+            </article>
           </div>
         </section>
 

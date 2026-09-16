@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CircleHelp, Coffee, ClipboardList, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Sparkles, Trash2, Users, X } from "lucide-react";
+import { CircleHelp, Coffee, ClipboardList, FileText, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Sparkles, Trash2, Users, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalActions, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
@@ -152,6 +152,20 @@ const CONFIG_SECCIONES_INICIO = {
     eyebrowLabel: "Etiqueta superior",
     titleLabel: "Título",
     descriptionLabel: "Texto introductorio",
+  },
+  homeDocumentacion: {
+    etiqueta: "Inicio",
+    tituloTarjeta: "Documentación del proyecto",
+    modalTitle: "Documentación del proyecto",
+    ayuda: "Texto, imagen y botón del bloque de documentación en el inicio.",
+    icon: FileText,
+    showEyebrow: false,
+    showImage: true,
+    titleLabel: "Título",
+    descriptionLabel: "Descripción",
+    showLinkText: true,
+    showLinkUrl: false,
+    linkTextLabel: "Texto del botón principal",
   },
 };
 
@@ -1398,6 +1412,7 @@ const AdminInformacionPaginaPrincipal = () => {
     homeIniciativas: { ...seccionInicioVacia },
     homeLocation: { ...seccionInicioVacia },
     homeFaq: { ...seccionInicioVacia },
+    homeDocumentacion: { ...seccionInicioVacia },
   });
   const [navbar, setNavbar] = useState(navbarInicial);
   const [footer, setFooter] = useState(footerInicial);
@@ -1422,6 +1437,7 @@ const AdminInformacionPaginaPrincipal = () => {
       homeIniciativas: { ...seccionInicioVacia },
       homeLocation: { ...seccionInicioVacia },
       homeFaq: { ...seccionInicioVacia },
+      homeDocumentacion: { ...seccionInicioVacia },
     });
     setTarjetasInicio(Array.isArray(data.tarjetasInicio) ? data.tarjetasInicio : []);
     setFaqInicio(Array.isArray(data.faqInicio) ? data.faqInicio : []);
