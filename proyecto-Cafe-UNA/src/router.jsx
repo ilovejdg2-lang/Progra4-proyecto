@@ -57,6 +57,7 @@ const AdminAjustes = lazy(() => import("./Pages/Admin/Ajustes/Ajustes"));
 const Checkout = lazy(() => import("./Pages/Checkout/Checkout"));
 const Perfil = lazy(() => import("./Pages/Perfil/Perfil"));
 const HistorialComprasCliente = lazy(() => import("./Pages/HistorialCompras/HistorialComprasCliente"));
+const AdminMisCompras = lazy(() => import("./Pages/Admin/MisCompras/AdminMisCompras"));
 const AdminPerfil = lazy(() => import("./Pages/Admin/Perfil/AdminPerfil"));
 
 function HomeRouteLoading() {
@@ -139,7 +140,8 @@ const rootRoute = createRootRoute({
         const isLoginRoute = pathname === "/login";
         const isRegistroRoute =
             pathname === "/registro" || pathname === "/verificar-cuenta";
-        const isPerfilRoute = pathname === "/perfil" || pathname.startsWith("/perfil/");
+        const isPerfilRoute = pathname === "/perfil";
+        const isPerfilComprasRoute = pathname === "/perfil/compras" || pathname.startsWith("/perfil/compras/");
         const isCheckoutRoute = pathname === "/checkout";
         const isChromelessRoute =
             isLoginRoute || isRegistroRoute || isPerfilRoute || isCheckoutRoute;
@@ -168,9 +170,9 @@ const rootRoute = createRootRoute({
 
         useEffect(() => {
             document.body.classList.toggle("admin-route-active", isAdminRoute);
-            document.body.classList.toggle("perfil-route-active", isPerfilRoute);
+            document.body.classList.toggle("perfil-route-active", isPerfilRoute || isPerfilComprasRoute);
             document.body.classList.toggle("checkout-route-active", isCheckoutRoute);
-            if (isAdminRoute || isPerfilRoute || isCheckoutRoute) {
+            if (isAdminRoute || isPerfilRoute || isPerfilComprasRoute || isCheckoutRoute) {
                 document.body.classList.remove("home-hero-ready");
                 clearHomePageLoading();
             }
@@ -180,7 +182,7 @@ const rootRoute = createRootRoute({
                 document.body.classList.remove("perfil-route-active");
                 document.body.classList.remove("checkout-route-active");
             };
-        }, [isAdminRoute, isPerfilRoute, isCheckoutRoute]);
+        }, [isAdminRoute, isPerfilRoute, isPerfilComprasRoute, isCheckoutRoute]);
 
         if (isAdminRoute || isChromelessRoute) {
             return (
@@ -425,6 +427,11 @@ const historialComprasClienteRoute = createRoute({
     path: "/perfil/compras",
     component: HistorialComprasCliente,
 })
+const adminMisComprasRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/mis-compras",
+    component: AdminMisCompras,
+})
 const adminPerfilRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/perfil",
@@ -478,6 +485,7 @@ const routeTree= rootRoute.addChildren([
     donarMaterialRoute,
     perfilRoute,
     historialComprasClienteRoute,
+    adminMisComprasRoute,
     adminPerfilRoute,
     notFoundCatchAllRoute,
 ])

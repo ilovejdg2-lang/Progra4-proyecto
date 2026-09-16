@@ -108,6 +108,14 @@ describe("AppSidebar", () => {
       "href",
       "/admin/donaciones/fechas-recepcion",
     );
+    expect(screen.getAllByRole("link", { name: /^Mi perfil$/i })[0]).toHaveAttribute(
+      "href",
+      "/admin/perfil",
+    );
+    expect(screen.getAllByRole("link", { name: /^Mis compras$/i })[0]).toHaveAttribute(
+      "href",
+      "/admin/mis-compras",
+    );
   });
 
   it("does not expose inventory navigation without permission", () => {

@@ -3,11 +3,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getActiveSessionUser: vi.fn(),
+  navigate: vi.fn(),
   obtenerCompraPorId: vi.fn(),
   obtenerMisCompras: vi.fn(),
 }));
 
-vi.mock("@tanstack/react-router", () => ({ Link: ({ children }) => <a>{children}</a> }));
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children }) => <a>{children}</a>,
+  useNavigate: () => mocks.navigate,
+}));
 vi.mock("lucide-react", () => ({ ArrowLeft: () => null, Eye: () => null, X: () => null }));
 vi.mock("../../Components/Admin/ui/AdminModal", () => ({
   AdminModal: ({ children }) => <div>{children}</div>,
@@ -32,7 +36,7 @@ vi.mock("../../services/sessionService", () => ({
   getActiveSessionUser: (...args) => mocks.getActiveSessionUser(...args),
 }));
 
-import HistorialComprasCliente from "./HistorialComprasCliente";
+import HistorialComprasCliente, { HistorialComprasContent } from "./HistorialComprasCliente";
 
 const compra = {
   id: "10",
@@ -43,9 +47,11 @@ const compra = {
   estado: "Pendiente",
 };
 
-describe("HistorialComprasCliente", () => {
+describe("HistorialComprasContent", () => {
   beforeEach(() => {
+    sessionStorage.clear();
     mocks.getActiveSessionUser.mockReset();
+    mocks.navigate.mockReset();
     mocks.obtenerCompraPorId.mockReset();
     mocks.obtenerMisCompras.mockReset();
     mocks.getActiveSessionUser.mockImplementation(() => ({ id: "cliente-1", token: "jwt" }));
@@ -53,9 +59,10 @@ describe("HistorialComprasCliente", () => {
   });
 
   it("loads the purchase history once after state updates", async () => {
-    render(<HistorialComprasCliente />);
+    render(<HistorialComprasContent />);
 
     expect(await screen.findByText("C-10")).toBeInTheDocument();
+    expect(screen.getAllByText("Pendiente").length).toBeGreaterThanOrEqual(1);
     await waitFor(() => expect(mocks.obtenerMisCompras).toHaveBeenCalledTimes(1));
     expect(mocks.obtenerMisCompras).toHaveBeenCalledWith(expect.objectContaining({ page: 1, pageSize: 10 }));
   });
@@ -69,7 +76,7 @@ describe("HistorialComprasCliente", () => {
       ubicacionNombre: "FUNDA-UNA",
       items: [{ nombre: "Café de prueba", cantidad: 1, precioUnitario: 5650, subtotal: 5650 }],
     });
-    render(<HistorialComprasCliente />);
+    render(<HistorialComprasContent />);
 
     fireEvent.click(await screen.findByRole("button", { name: /Ver detalle/i }));
 
@@ -79,7 +86,7 @@ describe("HistorialComprasCliente", () => {
   });
 
   it("reloads the history using the selected filters", async () => {
-    render(<HistorialComprasCliente />);
+    render(<HistorialComprasContent />);
 
     await screen.findByText("C-10");
     fireEvent.change(screen.getByRole("textbox", { name: "Número" }), { target: { value: "C-10" } });
@@ -98,7 +105,7 @@ describe("HistorialComprasCliente", () => {
 
   it("shows the empty state when there are no purchases", async () => {
     mocks.obtenerMisCompras.mockResolvedValue({ data: [], totalPages: 1 });
-    render(<HistorialComprasCliente />);
+    render(<HistorialComprasContent />);
 
     expect(await screen.findByText("Todavía no tenés compras registradas.")).toBeInTheDocument();
   });
@@ -107,7 +114,7 @@ describe("HistorialComprasCliente", () => {
     mocks.obtenerMisCompras
       .mockRejectedValueOnce(new Error("No se pudo cargar el historial."))
       .mockResolvedValueOnce({ data: [compra], totalPages: 1 });
-    render(<HistorialComprasCliente />);
+    render(<HistorialComprasContent />);
 
     expect(await screen.findByText("No se pudo cargar el historial.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
@@ -116,14 +123,30 @@ describe("HistorialComprasCliente", () => {
     expect(mocks.obtenerMisCompras).toHaveBeenCalledTimes(2);
   });
 
-  it("shows the sign-in gate after the active session is invalidated", async () => {
-    render(<HistorialComprasCliente />);
+  it("redirects to login when there is no session on mount", async () => {
+    mocks.getActiveSessionUser.mockReturnValue(null);
+    render(<HistorialComprasContent />);
+
+    expect(await screen.findByText("Iniciá sesión para ver tu historial de compras.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(sessionStorage.getItem("postLoginRedirect")).toBe("/perfil/compras");
+      expect(mocks.navigate).toHaveBeenCalledWith({ to: "/login", replace: true });
+    });
+    expect(mocks.obtenerMisCompras).not.toHaveBeenCalled();
+  });
+
+  it("redirects to login when the session is invalidated", async () => {
+    render(<HistorialComprasContent />);
 
     await screen.findByText("C-10");
     mocks.getActiveSessionUser.mockReturnValue(null);
     fireEvent(window, new Event("session-updated"));
 
     expect(await screen.findByText("Iniciá sesión para ver tu historial de compras.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(sessionStorage.getItem("postLoginRedirect")).toBe("/perfil/compras");
+      expect(mocks.navigate).toHaveBeenCalledWith({ to: "/login", replace: true });
+    });
     expect(mocks.obtenerMisCompras).toHaveBeenCalledTimes(1);
   });
 
@@ -132,7 +155,7 @@ describe("HistorialComprasCliente", () => {
     mocks.obtenerCompraPorId.mockImplementation(() => new Promise((resolve) => {
       resolveDetail = resolve;
     }));
-    render(<HistorialComprasCliente />);
+    render(<HistorialComprasContent />);
 
     fireEvent.click(await screen.findByRole("button", { name: /Ver detalle/i }));
     mocks.obtenerMisCompras.mockResolvedValueOnce({
@@ -149,7 +172,7 @@ describe("HistorialComprasCliente", () => {
   });
 
   it("does not reload history for unrelated storage changes", async () => {
-    render(<HistorialComprasCliente />);
+    render(<HistorialComprasContent />);
 
     await screen.findByText("C-10");
     fireEvent(window, new StorageEvent("storage", { key: "cart" }));
@@ -158,7 +181,7 @@ describe("HistorialComprasCliente", () => {
   });
 
   it("does not reload history for same-account session events", async () => {
-    render(<HistorialComprasCliente />);
+    render(<HistorialComprasContent />);
 
     await screen.findByText("C-10");
     mocks.getActiveSessionUser.mockReturnValue({ id: "cliente-1", token: "refreshed-jwt" });
@@ -176,7 +199,7 @@ describe("HistorialComprasCliente", () => {
         resolveHistoryForAccountA = resolve;
       }))
       .mockResolvedValueOnce({ data: [{ ...compra, id: "20", numero: "C-20" }], totalPages: 1 });
-    render(<HistorialComprasCliente />);
+    render(<HistorialComprasContent />);
 
     await waitFor(() => expect(mocks.obtenerMisCompras).toHaveBeenCalledTimes(1));
     mocks.getActiveSessionUser.mockReturnValue({ id: "cliente-2", token: "jwt-2" });
@@ -187,5 +210,22 @@ describe("HistorialComprasCliente", () => {
 
     expect(screen.queryByText("C-10")).not.toBeInTheDocument();
     expect(screen.getByText("C-20")).toBeInTheDocument();
+  });
+});
+
+describe("HistorialComprasCliente", () => {
+  beforeEach(() => {
+    mocks.getActiveSessionUser.mockReset();
+    mocks.navigate.mockReset();
+    mocks.getActiveSessionUser.mockImplementation(() => ({ id: "cliente-1", role: "user", token: "jwt" }));
+  });
+
+  it("redirects admin users to the admin mis-compras route", async () => {
+    mocks.getActiveSessionUser.mockReturnValue({ id: "1", role: "admin", token: "jwt" });
+    render(<HistorialComprasCliente />);
+
+    await waitFor(() => {
+      expect(mocks.navigate).toHaveBeenCalledWith({ to: "/admin/mis-compras", replace: true });
+    });
   });
 });

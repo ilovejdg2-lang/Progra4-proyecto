@@ -625,8 +625,13 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
             <input
               className={inputCls}
               value={codigoVerificacion}
-              onChange={(e) => setCodigoVerificacion(e.target.value)}
-              placeholder={"C\u00f3digo de verificaci\u00f3n"}
+              onChange={(e) =>
+                setCodigoVerificacion(e.target.value.replace(/\D/g, "").slice(0, 5))
+              }
+              placeholder={"C\u00f3digo de verificaci\u00f3n (5 d\u00edgitos)"}
+              maxLength={5}
+              inputMode="numeric"
+              autoComplete="one-time-code"
             />
             <button
               type="button"
@@ -647,8 +652,13 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
           <input
             className={inputCls}
             value={codigoVerificacion}
-            onChange={(e) => setCodigoVerificacion(e.target.value)}
-            placeholder={"6 d\u00edgitos"}
+            onChange={(e) =>
+              setCodigoVerificacion(e.target.value.replace(/\D/g, "").slice(0, 5))
+            }
+            placeholder={"5 d\u00edgitos"}
+            maxLength={5}
+            inputMode="numeric"
+            autoComplete="one-time-code"
             required
           />
         </div>
