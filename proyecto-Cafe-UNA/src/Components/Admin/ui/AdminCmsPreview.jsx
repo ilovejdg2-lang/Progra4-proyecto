@@ -246,6 +246,47 @@ function PreviewHomeSectionLive({ clave, form, tarjetasInicio = [] }) {
         </div>
       </section>
     );
+  } else if (clave === "homeDocumentacion") {
+    const docImageUrl = normalizeImageUrl(form.image, { width: 900 }) || form.image || "/documentacion-cafe.jpg";
+    section = (
+      <section className="home-page__mission-spotlight" aria-labelledby="preview-documentacion-title">
+        <div className="mission-spotlight-shell">
+          <article className="mission-spotlight-card">
+            <div className="mission-spotlight-card__body">
+              <div className="mission-spotlight-card__content">
+                {form.title ? (
+                  <h2 id="preview-documentacion-title" className="mission-spotlight-card__title">
+                    {form.title}
+                  </h2>
+                ) : null}
+                {form.description ? (
+                  <p className="mission-spotlight-card__description">{form.description}</p>
+                ) : null}
+                <div className="mission-spotlight-card__actions">
+                  <button type="button" className="mission-spotlight-card__button">
+                    {form.linkText || "Conocer documentación"}
+                  </button>
+                  <button type="button" className="mission-spotlight-card__button mission-spotlight-card__button--secondary">
+                    Solicitar archivo
+                  </button>
+                </div>
+              </div>
+
+              <div className="mission-spotlight-card__media">
+                <img
+                  src={docImageUrl}
+                  alt=""
+                  width={900}
+                  height={600}
+                  loading="eager"
+                  decoding="async"
+                />
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    );
   } else if (clave === "homeFeatured") {
     section = (
       <section className="home-page__featured featured-cafes-section">
