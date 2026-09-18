@@ -81,5 +81,6 @@ describe("ProductCatalogFormDrawer", () => {
     expect(within(dialog).getByRole("textbox", { name: /^Precio normal/ })).toHaveValue("3390");
     expect(within(dialog).getByRole("textbox", { name: /Foto principal/ })).toHaveValue("https://img.example/1.jpg");
     expect(within(dialog).getByRole("textbox", { name: /Foto extra 2/ })).toHaveValue("https://img.example/2.jpg");
+    expect(within(dialog).getAllByRole("button", { name: /Arrastrá o seleccioná una imagen/ })).toHaveLength(4);
   });
 });

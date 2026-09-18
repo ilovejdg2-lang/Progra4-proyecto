@@ -48,4 +48,23 @@ describe("apiRequest session invalidation", () => {
 
     expect(mocks.clearSession).toHaveBeenCalledTimes(1);
   });
+
+  it("lee el mensaje JSON cuando el error llega como blob", async () => {
+    axios.mockRejectedValue({
+      response: {
+        status: 404,
+        data: new Blob(
+          [JSON.stringify({ message: "No se encontró el archivo del comprobante." })],
+          { type: "application/json" },
+        ),
+      },
+    });
+
+    await expect(
+      apiRequest("/compras/1/comprobante", {
+        skipRefresh: true,
+        errorPrefix: "Error al consultar el comprobante",
+      }),
+    ).rejects.toThrow("No se encontró el archivo del comprobante.");
+  });
 });

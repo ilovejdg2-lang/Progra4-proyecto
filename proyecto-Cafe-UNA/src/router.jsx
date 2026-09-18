@@ -22,6 +22,7 @@ import { getRouteCacheKey, isPageInstantReady } from "./lib/pageSessionState";
 import { clearHomePageLoading, setHomePageLoading } from "./lib/homePageLoading";
 import { beginRouteLoading, endRouteLoading } from "./lib/routeLoadingLock";
 import { getSiteBootMessage } from "./lib/siteBootLoading";
+import { ADMIN_THEME_CHANGED_EVENT, applyAdminDocumentTheme } from "./lib/adminTheme";
 
 const AboutUs = lazy(() => import("./Pages/AboutUs/AboutUs"));
 const Products = lazy(() => import("./Pages/Products/Products"));
@@ -183,6 +184,17 @@ const rootRoute = createRootRoute({
                 document.body.classList.remove("checkout-route-active");
             };
         }, [isAdminRoute, isPerfilRoute, isPerfilComprasRoute, isCheckoutRoute]);
+
+        useLayoutEffect(() => {
+            applyAdminDocumentTheme(isAdminRoute);
+            if (!isAdminRoute) return undefined;
+            const sync = () => applyAdminDocumentTheme(true);
+            window.addEventListener(ADMIN_THEME_CHANGED_EVENT, sync);
+            return () => {
+                window.removeEventListener(ADMIN_THEME_CHANGED_EVENT, sync);
+                applyAdminDocumentTheme(false);
+            };
+        }, [isAdminRoute]);
 
         if (isAdminRoute || isChromelessRoute) {
             return (

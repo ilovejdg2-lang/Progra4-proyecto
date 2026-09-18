@@ -152,9 +152,10 @@ export async function apiRequest(url, options = {}) {
       }
 
       const responseData = error.response.data;
-      const rawMessage = typeof responseData === "string"
-        ? responseData
-        : responseData?.message || `${errorPrefix} (${error.response.status})`;
+      const rawMessage = await messageFromResponseData(
+        responseData,
+        `${errorPrefix} (${error.response.status})`,
+      );
       throw new Error(sanitizeUserFacingError(rawMessage), { cause: error });
     }
 
@@ -163,6 +164,53 @@ export async function apiRequest(url, options = {}) {
       { cause: error },
     );
   }
+}
+
+function messageFromJsonBody(parsed, rawText = "") {
+  const msg = parsed?.message;
+  if (Array.isArray(msg)) return msg.filter(Boolean).join(" ");
+  if (typeof msg === "string" && msg.trim()) return msg;
+  return rawText;
+}
+
+async function messageFromResponseData(responseData, fallback) {
+  if (responseData == null || responseData === "") return fallback;
+
+  if (typeof responseData === "string") {
+    try {
+      return messageFromJsonBody(JSON.parse(responseData), responseData) || fallback;
+    } catch {
+      return responseData;
+    }
+  }
+
+  if (typeof Blob !== "undefined" && responseData instanceof Blob) {
+    try {
+      const texto = await responseData.text();
+      try {
+        return messageFromJsonBody(JSON.parse(texto), texto) || fallback;
+      } catch {
+        return texto.trim() || fallback;
+      }
+    } catch {
+      return fallback;
+    }
+  }
+
+  if (typeof Buffer !== "undefined" && Buffer.isBuffer(responseData)) {
+    const texto = responseData.toString("utf8");
+    try {
+      return messageFromJsonBody(JSON.parse(texto), texto) || fallback;
+    } catch {
+      return texto.trim() || fallback;
+    }
+  }
+
+  if (typeof responseData === "object") {
+    return messageFromJsonBody(responseData) || fallback;
+  }
+
+  return fallback;
 }
 
 function parseBody(body) {

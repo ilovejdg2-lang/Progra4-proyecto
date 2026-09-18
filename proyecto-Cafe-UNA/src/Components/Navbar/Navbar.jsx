@@ -244,12 +244,13 @@ const Navbar = () => {
     const aboutMenuRef = useRef(null);
     const formsMenuRef = useRef(null);
     const cartCloseTimerRef = useRef(null);
+    const navMenuHoverTimerRef = useRef(null);
     const navbarRef = useRef(null);
     const pathname = useRouterState({
         select: (state) => state.location.pathname,
     });
 
-    useBodyScrollLock(isMobileMenuOpen || showCartDropdown);
+    useBodyScrollLock(isMobileMenuOpen);
 
     useEffect(() => {
         let activo = true;
@@ -450,6 +451,9 @@ const Navbar = () => {
         if (cartCloseTimerRef.current) {
             window.clearTimeout(cartCloseTimerRef.current);
         }
+        if (navMenuHoverTimerRef.current) {
+            window.clearTimeout(navMenuHoverTimerRef.current);
+        }
     }, []);
 
     useEffect(() => {
@@ -487,6 +491,39 @@ const Navbar = () => {
             setIsCartClosing(false);
         }, 240);
     }, [showCartDropdown, isCartClosing]);
+
+    useEffect(() => {
+        if (!showCartDropdown) {
+            return undefined;
+        }
+
+        const html = document.documentElement;
+        const body = document.body;
+        const navbar = navbarRef.current;
+        const scrollbarWidth = Math.max(0, window.innerWidth - html.clientWidth);
+        const previousHtmlOverflow = html.style.overflow;
+        const previousBodyOverflow = body.style.overflow;
+        const previousBodyPaddingRight = body.style.paddingRight;
+        const previousNavbarRight = navbar?.style.right ?? "";
+
+        html.style.overflow = "hidden";
+        body.style.overflow = "hidden";
+        if (scrollbarWidth > 0) {
+            body.style.paddingRight = `${scrollbarWidth}px`;
+            if (navbar) {
+                navbar.style.right = `${scrollbarWidth}px`;
+            }
+        }
+
+        return () => {
+            html.style.overflow = previousHtmlOverflow;
+            body.style.overflow = previousBodyOverflow;
+            body.style.paddingRight = previousBodyPaddingRight;
+            if (navbar) {
+                navbar.style.right = previousNavbarRight;
+            }
+        };
+    }, [showCartDropdown]);
 
     useEffect(() => {
         if (!showCartDropdown) {
@@ -639,6 +676,47 @@ const Navbar = () => {
     const closeMobileMenu = () => {
         setIsMobileMenuOpen(false);
     };
+
+    const clearNavMenuHoverTimer = useCallback(() => {
+        if (navMenuHoverTimerRef.current) {
+            window.clearTimeout(navMenuHoverTimerRef.current);
+            navMenuHoverTimerRef.current = null;
+        }
+    }, []);
+
+    const openDesktopNavMenu = useCallback((menu) => {
+        clearNavMenuHoverTimer();
+        if (menu === 'about') {
+            setShowAboutMenu(true);
+            setShowFormsMenu(false);
+        } else {
+            setShowFormsMenu(true);
+            setShowAboutMenu(false);
+        }
+        setShowDropdown(false);
+        setShowCartDropdown(false);
+        setShowNotifications(false);
+    }, [clearNavMenuHoverTimer]);
+
+    const closeDesktopNavMenu = useCallback((menu) => {
+        if (menu === 'about') setShowAboutMenu(false);
+        else setShowFormsMenu(false);
+    }, []);
+
+    const handleDesktopNavMenuEnter = useCallback((menu) => {
+        openDesktopNavMenu(menu);
+    }, [openDesktopNavMenu]);
+
+    const handleDesktopNavMenuLeave = useCallback((menu) => {
+        clearNavMenuHoverTimer();
+        navMenuHoverTimerRef.current = window.setTimeout(() => {
+            closeDesktopNavMenu(menu);
+        }, 140);
+    }, [clearNavMenuHoverTimer, closeDesktopNavMenu]);
+
+    const handleDesktopNavMenuClick = useCallback((menu) => {
+        openDesktopNavMenu(menu);
+    }, [openDesktopNavMenu]);
 
     const onBrandClick = useHomeBrandNavigation();
 
@@ -814,45 +892,50 @@ const Navbar = () => {
                                 key={enlace.id ?? enlace.ruta ?? 'about'}
                                 className={`navbar__about ${aboutActive ? 'is-current' : ''} ${showAboutMenu ? 'is-open' : ''}`}
                                 ref={aboutMenuRef}
+                                onMouseEnter={() => handleDesktopNavMenuEnter('about')}
+                                onMouseLeave={() => handleDesktopNavMenuLeave('about')}
+                                onBlur={(event) => {
+                                    if (!event.currentTarget.contains(event.relatedTarget)) {
+                                        closeDesktopNavMenu('about');
+                                    }
+                                }}
                             >
                                 <button
                                     type="button"
                                     className="navbar__about-trigger"
                                     aria-expanded={showAboutMenu}
                                     aria-haspopup="true"
-                                    onClick={() => {
-                                        setShowAboutMenu((open) => !open);
-                                        setShowFormsMenu(false);
-                                        setShowDropdown(false);
-                                        setShowCartDropdown(false);
-                                        setShowNotifications(false);
-                                    }}
+                                    onClick={() => handleDesktopNavMenuClick('about')}
+                                    onFocus={() => handleDesktopNavMenuEnter('about')}
                                 >
                                     <span>{etiquetaEnlace(enlace, idioma) || labelSobreNosotros}</span>
                                     <ChevronDown size={16} strokeWidth={2.4} aria-hidden="true" />
                                 </button>
-                                {showAboutMenu ? (
-                                    <div className="navbar__about-menu" role="menu" aria-label={labelSobreNosotros}>
-                                        <Link
-                                            to={ABOUT_HISTORIA_PATH}
-                                            role="menuitem"
-                                            className="navbar__about-item"
-                                            activeProps={{ className: "navbar__about-item" }}
-                                            onClick={() => setShowAboutMenu(false)}
-                                        >
-                                            {labelHistoria}
-                                        </Link>
-                                        <Link
-                                            to={ABOUT_GALERIA_PATH}
-                                            role="menuitem"
-                                            className="navbar__about-item"
-                                            activeProps={{ className: "navbar__about-item" }}
-                                            onClick={() => setShowAboutMenu(false)}
-                                        >
-                                            {labelGaleria}
-                                        </Link>
-                                    </div>
-                                ) : null}
+                                <div
+                                    className="navbar__about-menu"
+                                    role="menu"
+                                    aria-label={labelSobreNosotros}
+                                    aria-hidden={!showAboutMenu}
+                                >
+                                    <Link
+                                        to={ABOUT_HISTORIA_PATH}
+                                        role="menuitem"
+                                        className="navbar__about-item"
+                                        activeProps={{ className: "navbar__about-item" }}
+                                        onClick={() => setShowAboutMenu(false)}
+                                    >
+                                        {labelHistoria}
+                                    </Link>
+                                    <Link
+                                        to={ABOUT_GALERIA_PATH}
+                                        role="menuitem"
+                                        className="navbar__about-item"
+                                        activeProps={{ className: "navbar__about-item" }}
+                                        onClick={() => setShowAboutMenu(false)}
+                                    >
+                                        {labelGaleria}
+                                    </Link>
+                                </div>
                             </div>
                         );
                     }
@@ -868,54 +951,59 @@ const Navbar = () => {
                                 key={enlace.id ?? enlace.ruta ?? 'forms'}
                                 className={`navbar__about ${formsActive ? 'is-current' : ''} ${showFormsMenu ? 'is-open' : ''}`}
                                 ref={formsMenuRef}
+                                onMouseEnter={() => handleDesktopNavMenuEnter('forms')}
+                                onMouseLeave={() => handleDesktopNavMenuLeave('forms')}
+                                onBlur={(event) => {
+                                    if (!event.currentTarget.contains(event.relatedTarget)) {
+                                        closeDesktopNavMenu('forms');
+                                    }
+                                }}
                             >
                                 <button
                                     type="button"
                                     className="navbar__about-trigger"
                                     aria-expanded={showFormsMenu}
                                     aria-haspopup="true"
-                                    onClick={() => {
-                                        setShowFormsMenu((open) => !open);
-                                        setShowAboutMenu(false);
-                                        setShowDropdown(false);
-                                        setShowCartDropdown(false);
-                                        setShowNotifications(false);
-                                    }}
+                                    onClick={() => handleDesktopNavMenuClick('forms')}
+                                    onFocus={() => handleDesktopNavMenuEnter('forms')}
                                 >
                                     <span>{labelFormularios}</span>
                                     <ChevronDown size={16} strokeWidth={2.4} aria-hidden="true" />
                                 </button>
-                                {showFormsMenu ? (
-                                    <div className="navbar__about-menu" role="menu" aria-label={labelFormularios}>
-                                        <Link
-                                            to="/voluntariado/solicitar"
-                                            role="menuitem"
-                                            className="navbar__about-item"
-                                            activeProps={{ className: "navbar__about-item" }}
-                                            onClick={() => setShowFormsMenu(false)}
-                                        >
-                                            {labelVoluntariado}
-                                        </Link>
-                                        <Link
-                                            to="/visitas/solicitar"
-                                            role="menuitem"
-                                            className="navbar__about-item"
-                                            activeProps={{ className: "navbar__about-item" }}
-                                            onClick={() => setShowFormsMenu(false)}
-                                        >
-                                            {labelVisitas}
-                                        </Link>
-                                        <Link
-                                            to="/donaciones/solicitar"
-                                            role="menuitem"
-                                            className="navbar__about-item"
-                                            activeProps={{ className: "navbar__about-item" }}
-                                            onClick={() => setShowFormsMenu(false)}
-                                        >
-                                            {labelDonaciones}
-                                        </Link>
-                                    </div>
-                                ) : null}
+                                <div
+                                    className="navbar__about-menu"
+                                    role="menu"
+                                    aria-label={labelFormularios}
+                                    aria-hidden={!showFormsMenu}
+                                >
+                                    <Link
+                                        to="/voluntariado/solicitar"
+                                        role="menuitem"
+                                        className="navbar__about-item"
+                                        activeProps={{ className: "navbar__about-item" }}
+                                        onClick={() => setShowFormsMenu(false)}
+                                    >
+                                        {labelVoluntariado}
+                                    </Link>
+                                    <Link
+                                        to="/visitas/solicitar"
+                                        role="menuitem"
+                                        className="navbar__about-item"
+                                        activeProps={{ className: "navbar__about-item" }}
+                                        onClick={() => setShowFormsMenu(false)}
+                                    >
+                                        {labelVisitas}
+                                    </Link>
+                                    <Link
+                                        to="/donaciones/solicitar"
+                                        role="menuitem"
+                                        className="navbar__about-item"
+                                        activeProps={{ className: "navbar__about-item" }}
+                                        onClick={() => setShowFormsMenu(false)}
+                                    >
+                                        {labelDonaciones}
+                                    </Link>
+                                </div>
                             </div>
                         );
                     }
@@ -1090,8 +1178,11 @@ const Navbar = () => {
                         {notificationsCount > 0 ? (
                             <span className="notifications-badge">{notificationsCount}</span>
                         ) : null}
-                        {showNotifications ? (
-                            <aside className="dropdown dropdown--notifications" aria-label={labelNotificaciones}>
+                        <aside
+                            className={`dropdown dropdown--notifications${showNotifications ? ' is-open' : ''}`}
+                            aria-label={labelNotificaciones}
+                            aria-hidden={!showNotifications}
+                        >
                                 <header className="notifications-header">
                                     <h2>{labelNotificaciones}</h2>
                                     <span>{notificationsCount}</span>
@@ -1267,7 +1358,6 @@ const Navbar = () => {
                                     </div>
                                 )}
                             </aside>
-                        ) : null}
                     </div>
                 ) : null}
 
@@ -1280,8 +1370,13 @@ const Navbar = () => {
                     >
                         <User size={24} strokeWidth={2} aria-hidden="true" />
                     </button>
-                    {showDropdown && user && (
-                        <div className="dropdown dropdown--user" role="menu" aria-label="Menú de usuario">
+                    {user ? (
+                        <div
+                          className={`dropdown dropdown--user${showDropdown ? ' is-open' : ''}`}
+                          role="menu"
+                          aria-label="Menú de usuario"
+                          aria-hidden={!showDropdown}
+                        >
                           <div className="dropdown__user">
                             <span className="dropdown__avatar" aria-hidden="true">
                               <User size={18} strokeWidth={2.1} />
@@ -1327,7 +1422,7 @@ const Navbar = () => {
                             </button>
                           </div>
                         </div>
-                    )}
+                    ) : null}
                 </div>
 
                 <button

@@ -6,8 +6,10 @@ import { AdminStockNotificationsBell } from "../../../Components/Admin/AdminStoc
 import { AdminBreadcrumb } from "../../../Components/Admin/AdminBreadcrumb";
 import { AppSidebar } from "../../../Components/Admin/AppSidebar";
 import { SidebarProvider, SidebarTrigger, useSidebar } from "../../../Components/Admin/ui/Sidebar";
+import { AdminThemeToggle } from "../../../Components/Admin/AdminThemeToggle";
 import { LanguageSwitcher } from "../../../Components/LanguageSwitcher/LanguageSwitcher";
 import { forceUnlockAdminScroll } from "../../../hooks/useBodyScrollLock";
+import { applyAdminDocumentTheme } from "../../../lib/adminTheme";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { useTraducir } from "../../../hooks/useTraducir";
 
@@ -27,15 +29,16 @@ function AdminMain({ children }) {
 
   return (
     <main
-      className={`min-h-svh min-w-0 flex-1 overflow-x-clip bg-[#fafafa] ${bloquearMain ? "pointer-events-none" : ""}`}
+      className={`min-h-svh min-w-0 flex-1 overflow-x-clip bg-[#fafafa] dark:bg-slate-950 ${bloquearMain ? "pointer-events-none" : ""}`}
       inert={bloquearMain || undefined}
       aria-hidden={bloquearMain || undefined}
     >
-      <div className="sticky top-0 z-[80] flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4">
+      <div className="sticky top-0 z-[80] flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950">
         <SidebarTrigger />
         <AdminBreadcrumb />
         <div className="ml-auto flex items-center gap-2">
           <LanguageSwitcher compact className="lang-switch--on-light" />
+          <AdminThemeToggle />
           <AdminStockNotificationsBell />
         </div>
       </div>
@@ -57,6 +60,7 @@ export function AdminLayout({ children }) {
 
   useEffect(() => {
     forceUnlockAdminScroll();
+    applyAdminDocumentTheme(true);
   }, []);
 
   if (!user || user.role !== "admin") {

@@ -242,7 +242,7 @@ export function AdminStockNotificationsBell() {
       ? createPortal(
           <aside
             ref={panelRef}
-            className="dropdown dropdown--notifications dropdown--notifications-portal"
+            className={`dropdown dropdown--notifications dropdown--notifications-portal${open ? " is-open" : ""}`}
             style={panelStyle}
             aria-label={labelNotificaciones}
           >

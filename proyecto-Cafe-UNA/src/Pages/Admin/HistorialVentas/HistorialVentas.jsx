@@ -110,6 +110,8 @@ function ComprobanteVenta({ compraId, tieneComprobante }) {
     if (!tieneComprobante || !compraId) return undefined;
     let activo = true;
     let objectUrl = "";
+    setUrl("");
+    setError("");
     obtenerBlobComprobanteCompra(compraId)
       .then((blob) => {
         if (!activo || !blob) return;

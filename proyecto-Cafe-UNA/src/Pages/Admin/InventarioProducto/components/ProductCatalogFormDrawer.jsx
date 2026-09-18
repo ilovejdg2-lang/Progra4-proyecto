@@ -7,6 +7,8 @@ import {
   AdminModalActions,
   AdminModalBody,
   AdminModalHeader,
+  adminBtnCancel,
+  adminBtnPrimary,
 } from "../../../../Components/Admin/ui/AdminModal";
 import { ST } from "../../../../Components/T/ST";
 import { useTraducir } from "../../../../hooks/useTraducir";
@@ -32,6 +34,7 @@ import { CategoriaCampo } from "../../../../Components/Admin/ui/CategoriaCampo";
 import { NumericInput } from "../../../../Components/NumericInput/NumericInput";
 import { Switch } from "../../../../Components/ui/Switch";
 import { UiSelect } from "../../../../Components/ui/Select";
+import { ProductoImagenCampo } from "./ProductoImagenCampo";
 import {
   productoEstaDeshabilitado,
   productoPuedeDestacarse,
@@ -331,46 +334,75 @@ export function ProductCatalogFormDrawer({
               ) : null}
             </label>
 
-            <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-              <ST>Foto principal (URL)</ST>
-              <input name="imagen" value={form.imagen} onChange={handleChange} className={inputClassName} />
+            <div className="grid gap-4 md:col-span-2">
+              <p className="text-sm font-medium text-slate-700">
+                <ST>Fotos del producto</ST>
+              </p>
+              <p className="text-xs font-normal text-slate-500">
+                <ST>Podés pegar una URL o subir una imagen desde el dispositivo. JPG, PNG o WEBP. Máximo 10 MB.</ST>
+              </p>
+              <ProductoImagenCampo
+                label="Foto principal"
+                name="imagen"
+                value={form.imagen}
+                onChange={handleChange}
+                inputClassName={inputClassName}
+              />
+              <div className="grid gap-4 md:grid-cols-2">
+                <ProductoImagenCampo
+                  label="Foto extra 2"
+                  name="imagen2"
+                  value={form.imagen2}
+                  onChange={handleChange}
+                  inputClassName={inputClassName}
+                />
+                <ProductoImagenCampo
+                  label="Foto extra 3"
+                  name="imagen3"
+                  value={form.imagen3}
+                  onChange={handleChange}
+                  inputClassName={inputClassName}
+                />
+              </div>
+              <ProductoImagenCampo
+                label="Foto extra 4"
+                name="imagen4"
+                value={form.imagen4}
+                onChange={handleChange}
+                inputClassName={inputClassName}
+              />
+            </div>
+            <div className="grid gap-x-4 gap-y-4 md:col-span-2 md:grid-cols-2">
+            <label className="grid grid-rows-[2.75rem_var(--control-height)] gap-2 text-sm font-medium text-slate-700">
+              <span className="flex items-end leading-tight">
+                <ST>Precio normal</ST>
+              </span>
+              <NumericInput decimal name="precioNormal" value={form.precioNormal} onChange={handleChange} className={`${inputClassName} h-full`} required />
             </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
-              <ST>Foto extra 2</ST>
-              <input name="imagen2" value={form.imagen2} onChange={handleChange} className={inputClassName} />
+            <label className="grid grid-rows-[2.75rem_var(--control-height)] gap-2 text-sm font-medium text-slate-700">
+              <span className="flex items-end leading-tight">
+                <ST>Precio con IVA</ST>
+              </span>
+              <NumericInput decimal name="precioConIVA" value={form.precioConIVA} className={`${inputClassName} h-full`} readOnly aria-readonly="true" />
             </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
-              <ST>Foto extra 3</ST>
-              <input name="imagen3" value={form.imagen3} onChange={handleChange} className={inputClassName} />
+            <label className="grid grid-rows-[2.75rem_var(--control-height)] gap-2 text-sm font-medium text-slate-700">
+              <span className="flex items-end leading-tight">
+                <ST>Peso</ST>
+              </span>
+              <input name="peso" value={form.peso} onChange={handleChange} className={`${inputClassName} h-full`} placeholder="500g / 1kg" />
             </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-              <ST>Foto extra 4</ST>
-              <input name="imagen4" value={form.imagen4} onChange={handleChange} className={inputClassName} />
-            </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
-              <ST>Precio normal</ST>
-              <NumericInput decimal name="precioNormal" value={form.precioNormal} onChange={handleChange} className={inputClassName} required />
-            </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
-              <ST>Precio con IVA</ST>
-              <NumericInput decimal name="precioConIVA" value={form.precioConIVA} className={inputClassName} readOnly aria-readonly="true" />
-            </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
-              <ST>Peso</ST>
-              <input name="peso" value={form.peso} onChange={handleChange} className={inputClassName} placeholder="500g / 1kg" />
-            </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
-              <ST>Stock mínimo (alerta por punto de venta)</ST>
+            <label className="grid grid-rows-[2.75rem_var(--control-height)] gap-2 text-sm font-medium text-slate-700">
+              <span className="flex items-end leading-tight">
+                <ST>Stock mínimo (alerta por punto de venta)</ST>
+              </span>
               <NumericInput
                 name="stockMinimo"
                 value={form.stockMinimo}
                 onChange={handleChange}
-                className={inputClassName}
+                className={`${inputClassName} h-full`}
               />
-              <span className="text-[length:var(--text-body)] font-normal text-slate-500">
-                <ST>Se avisa si Bodega Central o cualquier punto de venta con stock (salvo Stand Ferias) queda en ese nivel o menos.</ST>
-              </span>
             </label>
+            </div>
             <div className="grid gap-4 md:col-span-2 md:grid-cols-2">
               <CategoriaCampo
                 tipo={TIPO_CATEGORIA_PRODUCTO}
@@ -443,8 +475,11 @@ export function ProductCatalogFormDrawer({
             </p>
           </div>
           {submitError ? <p className={fieldErrorClassName} role="alert" aria-live="assertive"><ST>{submitError}</ST></p> : null}
-          <div className="flex flex-row flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
+          <div className="flex justify-center border-t border-slate-100 pt-4 sm:justify-end">
             <AdminModalActions
+              className="w-full justify-center sm:w-auto sm:justify-end"
+              primaryClassName={`${adminBtnPrimary.replace("w-full ", "w-auto min-w-[10.5rem] ")}`}
+              cancelClassName={`${adminBtnCancel.replace("w-full ", "w-auto min-w-[10.5rem] ")}`}
               onCancel={onClose}
               primaryLabel={isSaving ? tGuardando : isEditing ? tGuardarCambios : tCrearProducto}
               primaryDisabled={isSaving}
