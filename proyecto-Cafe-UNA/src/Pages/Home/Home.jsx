@@ -1,4 +1,4 @@
-import { ArrowRight, ExternalLink } from 'lucide-react';
+import { ArrowRight, ExternalLink, FileText, Heart, MapPin, Users } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Hero from '../../Components/Hero/Hero';
@@ -35,7 +35,9 @@ const CAMPOS_FAQ_ITEM = ['pregunta', 'respuesta'];
 const CAMPOS_TARJETAS = ['etiqueta', 'titulo', 'descripcion', 'textoBoton'];
 const CAMPOS_PRODUCTOS = ['nombre', 'descripcion', 'categoria', 'subcategoria'];
 
-function HomeFaqItem({ question, children }) {
+const FAQ_ICONOS = [MapPin, Heart, Users, FileText];
+
+function HomeFaqItem({ question, children, icon: Icon }) {
   const handleSummaryClick = (event) => {
     const details = event.currentTarget.parentElement;
     if (!details || details.tagName !== "DETAILS" || !details.open) return;
@@ -64,7 +66,12 @@ function HomeFaqItem({ question, children }) {
 
   return (
     <details className="home-faq__item">
-      <summary onClick={handleSummaryClick}>{question}</summary>
+      <summary onClick={handleSummaryClick}>
+        <span className="home-faq__pregunta">
+          {Icon ? <Icon className="home-faq__icono" size={20} strokeWidth={1.75} aria-hidden="true" /> : null}
+          <span>{question}</span>
+        </span>
+      </summary>
       <div className="home-faq__cuerpo">
         <div className="home-faq__cuerpo-inner">{children}</div>
       </div>
@@ -446,8 +453,12 @@ const Home = () => {
             </header>
             {faqItems.length > 0 ? (
               <div className="home-faq__lista">
-                {faqItems.map((item) => (
-                  <HomeFaqItem key={item.id ?? item.pregunta} question={item.pregunta}>
+                {faqItems.map((item, index) => (
+                  <HomeFaqItem
+                    key={item.id ?? item.pregunta}
+                    question={item.pregunta}
+                    icon={FAQ_ICONOS[index % FAQ_ICONOS.length]}
+                  >
                     <p>{item.respuesta}</p>
                   </HomeFaqItem>
                 ))}

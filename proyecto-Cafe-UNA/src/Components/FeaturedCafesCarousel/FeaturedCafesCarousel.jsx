@@ -21,12 +21,6 @@ function posicionDeCarta(index, activo, total) {
   return "hidden";
 }
 
-function StockLabel({ stock }) {
-  const agotado = useTraducir("Agotado");
-  const disponibles = useTraducir(`${stock} disponibles`);
-  return stock <= 0 ? agotado : disponibles;
-}
-
 function CategoriaLabel({ texto }) {
   return useTraducir(texto);
 }
@@ -54,7 +48,6 @@ export default function FeaturedCafesCarousel({ products = [] }) {
           const imagen = normalizeImageUrl(imagenPrincipalProducto(producto), { width: 800 })
             || imagenPrincipalProducto(producto);
           const precio = calcularPrecioConIVA(producto.precioNormal ?? producto.price ?? 0);
-          const stock = Number(producto.stock) || 0;
 
           const peso = String(producto.peso || "").trim();
           const categoria = String(producto.categoria || "").trim();
@@ -85,9 +78,6 @@ export default function FeaturedCafesCarousel({ products = [] }) {
                 {producto.descripcion ? <p className="featured-cafes__desc">{producto.descripcion}</p> : null}
                 <div className="featured-cafes__meta">
                   <span className="featured-cafes__price">{formatCRC(precio)}</span>
-                  <span className={`featured-cafes__stock${stock <= 0 ? " is-out" : ""}`}>
-                    <StockLabel stock={stock} />
-                  </span>
                 </div>
               </div>
             </>

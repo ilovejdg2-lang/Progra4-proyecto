@@ -1,73 +1,160 @@
-import { useEffect, useState } from "react";
-import { AlertTriangle, Package, ShoppingBag, Receipt, Box, User } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  ClipboardList,
+  FileBarChart,
+  Package,
+  ScrollText,
+  ShoppingBag,
+  Store,
+  Users,
+  Wallet,
+} from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { getActiveSessionUser } from "../../../services/sessionService";
-import { obtenerAlertasStock } from "../../../services/productosService";
+import { obtenerAlertasStock, obtenerProductos } from "../../../services/productosService";
+import { obtenerUsuarios } from "../../../services/usuariosService";
+import { obtenerAuditoria } from "../../../services/auditoriaService";
 import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
-import { requestAdminStockProduct } from "../../../lib/adminStockAlert";
-import { useTraducir, useTraducirLista } from "../../../hooks/useTraducir";
-import { ST } from "../../../Components/T/ST";
+import { imagenPrincipalProducto } from "../../../lib/productoImagenes";
+import { useTraducir } from "../../../hooks/useTraducir";
+import { DashboardHeader } from "./components/DashboardHeader";
+import { DashboardStatCard } from "./components/DashboardStatCard";
+import { MonthlyRevenueChart } from "./components/MonthlyRevenueChart";
+import { UserStatusChart } from "./components/UserStatusChart";
+import { QuickAccess } from "./components/QuickAccess";
+import { StockAlerts } from "./components/StockAlerts";
+import { RecentActivity } from "./components/RecentActivity";
+import { DashboardCalendar } from "./components/DashboardCalendar";
+import {
+  agruparIngresosPorDia,
+  deltaPorcentaje,
+  esUsuarioActivo,
+  formatCRC,
+  inicioFinMes,
+  PUNTOS_INGRESOS,
+  sumarIngresos,
+  ymdLocal,
+} from "./dashboardUtils";
+import { obtenerComprasRango } from "./dashboardData";
 import "./Panel.css";
 
-const CAMPOS_ALERTA = ["nombre"];
-
-function AlertaMeta({ item, tStock, tMinimo, tAgotado, tBajo }) {
-  const lugares = Array.isArray(item.ubicaciones) && item.ubicaciones.length > 0
-    ? item.ubicaciones.map((ubi) => `${ubi.nombre}: ${ubi.stock}`).join(", ")
-    : null;
-
-  return (
-    <p className="admin-panel__alerta-meta">
-      {tStock}: <strong>{item.stockActual}</strong>
-      {" · "}
-      {tMinimo}: <strong>{item.stockMinimo}</strong>
-      {item.agotado ? ` · ${tAgotado}` : ` · ${tBajo}`}
-      {lugares ? (
-        <>
-          {" · "}
-          {lugares}
-        </>
-      ) : null}
-    </p>
-  );
+function mesInputDeFecha(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
 const AdminPanel = () => {
   const user = getActiveSessionUser();
   const roles = rolesDeUsuario(user);
+  const { showLoading, loadingMessage } = useAdminPageGate("/admin", true);
+
   const puedeVerAlertas = tienePermiso(roles, "ver_inventario");
-  const puedeVentasPresenciales =
-    tienePermiso(roles, "registrar_ventas") ||
-    tienePermiso(roles, "ajustar_stock_ubicaciones");
   const puedeVentas =
     tienePermiso(roles, "ver_ventas") ||
     tienePermiso(roles, "ver_historial_compras_clientes");
   const puedeProductos =
-    tienePermiso(roles, "ver_productos") ||
-    tienePermiso(roles, "ver_inventario");
-  const { showLoading, loadingMessage } = useAdminPageGate("/admin", true);
+    tienePermiso(roles, "ver_productos") || tienePermiso(roles, "ver_inventario");
+  const puedeUsuarios =
+    tienePermiso(roles, "editar_usuarios") || tienePermiso(roles, "crear_usuarios");
+  const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
+  const puedePuntosVenta =
+    tienePermiso(roles, "ver_inventario") || tienePermiso(roles, "actualizar_inventario");
+  const puedeAjustes = tienePermiso(roles, "administrar_roles_permisos");
+  const puedeVoluntariado =
+    tienePermiso(roles, "ver_solicitudes_voluntariado") ||
+    tienePermiso(roles, "administrar_solicitudes_voluntariado");
+  const puedeVisitas = tienePermiso(roles, "administrar_solicitudes_visitantes");
+  const puedeDonaciones =
+    tienePermiso(roles, "administrar_solicitudes_donaciones") ||
+    tienePermiso(roles, "ver_solicitudes_donacion");
+  const puedeMovimientos = tienePermiso(roles, "ver_inventario");
 
   const tPanel = useTraducir("Panel Administrativo");
-  const tBienvenido = useTraducir("Bienvenido,");
-  const tGestion = useTraducir("Aquí puedes gestionar la aplicación.");
-  const tAlertas = useTraducir("Alertas de stock");
-  const tCargando = useTraducir("Cargando alertas...");
-  const tNormal = useTraducir("Todo el inventario está en niveles normales");
-  const tStock = useTraducir("Stock");
-  const tMinimo = useTraducir("Mínimo");
-  const tAgotado = useTraducir("Agotado");
-  const tBajo = useTraducir("Bajo mínimo");
   const tReponer = useTraducir("Reponer stock");
+  const nombreUsuario = user?.name || user?.username || user?.nombre || "";
+  const tBienvenido = useTraducir(`¡Bienvenido, ${nombreUsuario}!`);
+
+  const hoy = useMemo(() => new Date(), []);
+  const [mesValor, setMesValor] = useState(() => mesInputDeFecha(new Date()));
+  const [filtroPunto, setFiltroPunto] = useState("general");
+
+  const [compras, setCompras] = useState([]);
+  const [comprasAnterior, setComprasAnterior] = useState([]);
+  const [cargandoVentas, setCargandoVentas] = useState(puedeVentas);
+  const [errorVentas, setErrorVentas] = useState("");
+
+  const [usuarios, setUsuarios] = useState([]);
+  const [cargandoUsuarios, setCargandoUsuarios] = useState(puedeUsuarios);
 
   const [alertas, setAlertas] = useState([]);
   const [cargandoAlertas, setCargandoAlertas] = useState(puedeVerAlertas);
   const [errorAlertas, setErrorAlertas] = useState("");
 
-  const alertasUi = useTraducirLista(alertas, CAMPOS_ALERTA);
+  const [actividad, setActividad] = useState([]);
+  const [cargandoActividad, setCargandoActividad] = useState(puedeAuditoria);
+
+  const year = Number(mesValor.slice(0, 4));
+  const monthIndex = Number(mesValor.slice(5, 7)) - 1;
+  const codigoFiltro = PUNTOS_INGRESOS.find((p) => p.id === filtroPunto)?.codigo ?? null;
+
+  useEffect(() => {
+    if (!puedeVentas || !Number.isFinite(year) || monthIndex < 0) {
+      setCargandoVentas(false);
+      return undefined;
+    }
+    let activo = true;
+    const actual = inicioFinMes(year, monthIndex);
+    const prev = inicioFinMes(monthIndex === 0 ? year - 1 : year, monthIndex === 0 ? 11 : monthIndex - 1);
+    setCargandoVentas(true);
+    Promise.all([
+      obtenerComprasRango({ desde: actual.desde, hasta: actual.hasta }),
+      obtenerComprasRango({ desde: prev.desde, hasta: prev.hasta }),
+    ])
+      .then(([mes, anterior]) => {
+        if (!activo) return;
+        setCompras(mes);
+        setComprasAnterior(anterior);
+        setErrorVentas("");
+      })
+      .catch((err) => {
+        if (!activo) return;
+        setCompras([]);
+        setComprasAnterior([]);
+        setErrorVentas(err?.message || "No se pudieron cargar las ventas.");
+      })
+      .finally(() => {
+        if (activo) setCargandoVentas(false);
+      });
+    return () => {
+      activo = false;
+    };
+  }, [puedeVentas, year, monthIndex]);
+
+  useEffect(() => {
+    if (!puedeUsuarios) {
+      setCargandoUsuarios(false);
+      return undefined;
+    }
+    let activo = true;
+    obtenerUsuarios()
+      .then((data) => {
+        if (!activo) return;
+        setUsuarios(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!activo) return;
+        setUsuarios([]);
+      })
+      .finally(() => {
+        if (activo) setCargandoUsuarios(false);
+      });
+    return () => {
+      activo = false;
+    };
+  }, [puedeUsuarios]);
 
   useEffect(() => {
     if (!puedeVerAlertas) {
@@ -75,11 +162,21 @@ const AdminPanel = () => {
       return undefined;
     }
     let activo = true;
-    setCargandoAlertas(true);
-    obtenerAlertasStock()
-      .then((data) => {
+    Promise.all([
+      obtenerAlertasStock(),
+      puedeProductos ? obtenerProductos().catch(() => []) : Promise.resolve([]),
+    ])
+      .then(([lista, productos]) => {
         if (!activo) return;
-        setAlertas(Array.isArray(data) ? data : []);
+        const porId = new Map(
+          (Array.isArray(productos) ? productos : []).map((p) => [String(p.id), p]),
+        );
+        setAlertas(
+          (Array.isArray(lista) ? lista : []).map((item) => ({
+            ...item,
+            imagen: imagenPrincipalProducto(porId.get(String(item.id)) || {}),
+          })),
+        );
         setErrorAlertas("");
       })
       .catch((err) => {
@@ -93,146 +190,233 @@ const AdminPanel = () => {
     return () => {
       activo = false;
     };
-  }, [puedeVerAlertas]);
+  }, [puedeVerAlertas, puedeProductos]);
+
+  useEffect(() => {
+    if (!puedeAuditoria) {
+      setCargandoActividad(false);
+      return undefined;
+    }
+    let activo = true;
+    obtenerAuditoria({ limit: 8 })
+      .then((data) => {
+        if (!activo) return;
+        const filas = (Array.isArray(data) ? data : []).map((registro, index) => ({
+          id: registro?.id ?? registro?.Id ?? `${registro?.fecha || registro?.Fecha || "a"}-${index}`,
+          accion: registro?.accion ?? registro?.Accion ?? "",
+          tabla: registro?.tabla ?? registro?.Tabla ?? "",
+          detalle: registro?.detalle ?? registro?.Detalle ?? "",
+          fecha: registro?.fecha ?? registro?.Fecha ?? null,
+          usuario:
+            registro?.usuario?.nombre ??
+            registro?.usuario?.Nombre ??
+            registro?.Usuario?.Nombre ??
+            "",
+        }));
+        setActividad(filas);
+      })
+      .catch(() => {
+        if (!activo) return;
+        setActividad([]);
+      })
+      .finally(() => {
+        if (activo) setCargandoActividad(false);
+      });
+    return () => {
+      activo = false;
+    };
+  }, [puedeAuditoria]);
+
+  const { porDia, pico } = useMemo(
+    () => agruparIngresosPorDia(compras, year, monthIndex, codigoFiltro),
+    [compras, year, monthIndex, codigoFiltro],
+  );
+  const hayIngresosMes = porDia.some((d) => d.total > 0);
+
+  const ingresosMes = useMemo(
+    () => sumarIngresos(compras, { codigo: null }),
+    [compras],
+  );
+  const ingresosMesAnterior = useMemo(
+    () => sumarIngresos(comprasAnterior, { codigo: null }),
+    [comprasAnterior],
+  );
+  const hoyYmd = ymdLocal(hoy);
+  const ventasHoy = useMemo(
+    () => sumarIngresos(compras, { desdeYmd: hoyYmd, hastaYmd: hoyYmd }),
+    [compras, hoyYmd],
+  );
+  const ventasAyer = useMemo(() => {
+    const esMismoMes = hoy.getFullYear() === year && hoy.getMonth() === monthIndex;
+    if (!esMismoMes) return { total: 0, transacciones: 0 };
+    const previa = new Date(hoy);
+    previa.setDate(hoy.getDate() - 1);
+    return sumarIngresos(compras, { desdeYmd: ymdLocal(previa), hastaYmd: ymdLocal(previa) });
+  }, [compras, hoy, year, monthIndex]);
+
+  const deltaIngresos = deltaPorcentaje(ingresosMes.total, ingresosMesAnterior.total);
+  const deltaVentasDia = deltaPorcentaje(ventasHoy.total, ventasAyer.total);
+
+  const totalUsuarios = usuarios.length;
+  const usuariosActivos = usuarios.filter(esUsuarioActivo).length;
+  const usuariosInactivos = Math.max(0, totalUsuarios - usuariosActivos);
+
+  const fechaEtiqueta = hoy.toLocaleDateString("es-CR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const picoEtiqueta = pico
+    ? new Date(year, monthIndex, pico.dia).toLocaleDateString("es-CR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "";
+
+  const accesos = [];
+  if (puedeUsuarios) accesos.push({ to: "/admin/usuarios", label: "Usuarios", Icon: Users });
+  if (puedePuntosVenta) accesos.push({ to: "/admin/puntos-venta", label: "Puntos de venta", Icon: Store });
+  if (puedeVerAlertas) accesos.push({ to: "/admin/distribucion", label: "Inventario", Icon: Package });
+  if (puedeProductos) accesos.push({ to: "/admin/producto", label: "Productos", Icon: ShoppingBag });
+  if (puedeVentas) accesos.push({ to: "/admin/historial-ventas", label: "Ventas", Icon: Wallet });
+  if (puedeMovimientos || puedeVentas) {
+    accesos.push({
+      to: puedeMovimientos ? "/admin/historial-movimientos" : "/admin/historial-ventas",
+      label: "Reportes",
+      Icon: FileBarChart,
+    });
+  }
+  if (puedeAuditoria) accesos.push({ to: "/admin/auditoria", label: "Auditoría", Icon: ScrollText });
+  if (puedeVoluntariado) accesos.push({ to: "/admin/voluntariado", label: "Formularios", Icon: ClipboardList });
+  else if (puedeVisitas) accesos.push({ to: "/admin/visitas", label: "Formularios", Icon: ClipboardList });
+  else if (puedeDonaciones) {
+    accesos.push({ to: "/admin/donaciones/solicitudes", label: "Formularios", Icon: ClipboardList });
+  }
+
+  const mesEnCurso = hoy.getFullYear() === year && hoy.getMonth() === monthIndex;
 
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
       <AdminLayout>
-        <div className="admin-panel">
-          <h2>{tPanel}</h2>
-          <p>{tBienvenido} {user?.name}!</p>
-          <p>{tGestion}</p>
+        <div className="admin-dashboard">
+          <DashboardHeader
+            titulo={tPanel}
+            saludo={nombreUsuario ? tBienvenido : null}
+            descripcion="Aquí puedes monitorear la actividad de Café UNA y gestionar la aplicación."
+            fechaEtiqueta={fechaEtiqueta}
+            saludoDia="Que tengas un gran día."
+          />
 
-          {!puedeVerAlertas && (puedeVentasPresenciales || puedeVentas || puedeProductos) ? (
-            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {puedeVentasPresenciales ? (
-                <Link
-                  to="/admin/ventas-presenciales"
-                  className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-400 hover:shadow-md"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-xl bg-black p-3 text-white">
-                      <ShoppingBag className="size-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900"><ST>Ventas Presenciales</ST></h3>
-                      <p className="text-xs text-slate-500"><ST>Registrar compras en punto físico</ST></p>
-                    </div>
-                  </div>
-                  <span className="mt-4 text-xs font-semibold text-slate-950 underline underline-offset-4">
-                    <ST>Ir a ventas &rarr;</ST>
-                  </span>
-                </Link>
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            {puedeUsuarios ? (
+              <DashboardStatCard
+                icon={Users}
+                label="Total de usuarios"
+                value={cargandoUsuarios ? "—" : String(totalUsuarios)}
+                hint="Registrados en el sistema"
+                loading={cargandoUsuarios}
+                accent="wine"
+              />
+            ) : null}
+            {puedeUsuarios ? (
+              <DashboardStatCard
+                icon={Users}
+                label="Usuarios activos"
+                value={cargandoUsuarios ? "—" : String(usuariosActivos)}
+                hint="Con estado activo"
+                loading={cargandoUsuarios}
+                accent="green"
+              />
+            ) : null}
+            {puedeVentas ? (
+              <DashboardStatCard
+                icon={Wallet}
+                label="Ingresos del mes"
+                value={cargandoVentas ? "—" : formatCRC(ingresosMes.total)}
+                hint="Suma de los 3 puntos de venta"
+                delta={deltaIngresos}
+                loading={cargandoVentas}
+                accent="wine"
+              />
+            ) : null}
+            {puedeVentas ? (
+              <DashboardStatCard
+                icon={ShoppingBag}
+                label="Ventas del día"
+                value={cargandoVentas ? "—" : formatCRC(mesEnCurso ? ventasHoy.total : 0)}
+                hint={
+                  mesEnCurso
+                    ? `${ventasHoy.transacciones} transacciones`
+                    : "Cambia al mes actual para ver el día de hoy"
+                }
+                delta={mesEnCurso ? deltaVentasDia : null}
+                loading={cargandoVentas}
+                accent="slate"
+              />
+            ) : null}
+            {puedeVerAlertas ? (
+              <DashboardStatCard
+                icon={AlertTriangle}
+                label="Alertas de stock"
+                value={cargandoAlertas ? "—" : String(alertas.length)}
+                hint="Productos bajo mínimo"
+                loading={cargandoAlertas}
+                accent="amber"
+              />
+            ) : null}
+          </div>
+          {errorVentas ? (
+            <p className="mt-2 text-sm text-rose-600">{errorVentas}</p>
+          ) : null}
+
+          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.9fr)]">
+            {puedeVentas ? (
+              <MonthlyRevenueChart
+                titulo="Ingresos mensuales generales"
+                subtitulo="Suma de los 3 puntos de venta (FUNDA-UNA, Bodega Central y Editorial)."
+                mesValor={mesValor}
+                onMesChange={setMesValor}
+                filtro={filtroPunto}
+                onFiltroChange={setFiltroPunto}
+                series={porDia}
+                pico={pico}
+                picoEtiqueta={picoEtiqueta}
+                loading={cargandoVentas}
+                vacio={!cargandoVentas && !hayIngresosMes}
+              />
+            ) : null}
+            <div className="grid gap-4">
+              {puedeUsuarios ? (
+                <UserStatusChart
+                  total={totalUsuarios}
+                  activos={usuariosActivos}
+                  inactivos={usuariosInactivos}
+                  loading={cargandoUsuarios}
+                  puedeVerTodos={puedeUsuarios}
+                />
               ) : null}
-
-              {puedeVentas ? (
-                <Link
-                  to="/admin/historial-ventas"
-                  className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-400 hover:shadow-md"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-xl bg-black p-3 text-white">
-                      <Receipt className="size-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900"><ST>Historial de Ventas</ST></h3>
-                      <p className="text-xs text-slate-500"><ST>Consultar ventas registradas</ST></p>
-                    </div>
-                  </div>
-                  <span className="mt-4 text-xs font-semibold text-slate-950 underline underline-offset-4">
-                    <ST>Ver historial &rarr;</ST>
-                  </span>
-                </Link>
-              ) : null}
-
-              {puedeProductos ? (
-                <Link
-                  to="/admin/producto"
-                  className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-400 hover:shadow-md"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-xl bg-black p-3 text-white">
-                      <Box className="size-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900"><ST>Catálogo de Productos</ST></h3>
-                      <p className="text-xs text-slate-500"><ST>Ver productos y presentaciones</ST></p>
-                    </div>
-                  </div>
-                  <span className="mt-4 text-xs font-semibold text-slate-950 underline underline-offset-4">
-                    <ST>Ver catálogo &rarr;</ST>
-                  </span>
-                </Link>
-              ) : null}
-
-              <Link
-                to="/admin/perfil"
-                className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-400 hover:shadow-md"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-black p-3 text-white">
-                    <User className="size-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-900"><ST>Mi Perfil</ST></h3>
-                    <p className="text-xs text-slate-500"><ST>Gestionar datos y contraseña</ST></p>
-                  </div>
-                </div>
-                <span className="mt-4 text-xs font-semibold text-slate-950 underline underline-offset-4">
-                  <ST>Editar perfil &rarr;</ST>
-                </span>
-              </Link>
+              <QuickAccess items={accesos} gestionarTo={puedeAjustes ? "/admin/ajustes/permisos" : null} />
             </div>
-          ) : null}
+          </div>
 
-          {puedeVerAlertas ? (
-            <section className="admin-panel__alertas" aria-label={tAlertas}>
-              <div className="admin-panel__alertas-head">
-                <AlertTriangle className="size-5 text-slate-950" aria-hidden="true" />
-                <h3>{tAlertas}</h3>
-              </div>
-
-              {cargandoAlertas ? (
-                <p className="admin-panel__alertas-msg">{tCargando}</p>
-              ) : errorAlertas ? (
-                <p className="admin-panel__alertas-msg admin-panel__alertas-msg--error">
-                  <ST>{errorAlertas}</ST>
-                </p>
-              ) : alertas.length === 0 ? (
-                <p className="admin-panel__alertas-msg">{tNormal}</p>
-              ) : (
-                <ul className="admin-panel__alertas-list">
-                  {(alertasUi || alertas).map((item) => (
-                    <li
-                      key={item.id}
-                      className={`admin-panel__alerta-item ${
-                        item.agotado ? "admin-panel__alerta-item--agotado" : "admin-panel__alerta-item--bajo"
-                      }`}
-                    >
-                      <div>
-                        <p className="admin-panel__alerta-nombre">{item.nombre}</p>
-                        <AlertaMeta
-                          item={item}
-                          tStock={tStock}
-                          tMinimo={tMinimo}
-                          tAgotado={tAgotado}
-                          tBajo={tBajo}
-                        />
-                      </div>
-                      <Link
-                        to="/admin/producto"
-                        className="admin-panel__alerta-btn"
-                        onClick={() => requestAdminStockProduct(item.id, { nombre: item.nombre })}
-                      >
-                        <Package className="size-4" aria-hidden="true" />
-                        {tReponer}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          ) : null}
+          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(16rem,0.7fr)_minmax(16rem,0.7fr)]">
+            {puedeVerAlertas ? (
+              <StockAlerts
+                alertas={alertas}
+                loading={cargandoAlertas}
+                error={errorAlertas}
+                tReponer={tReponer}
+              />
+            ) : null}
+            <RecentActivity
+              registros={actividad}
+              loading={cargandoActividad}
+              puedeVer={puedeAuditoria}
+            />
+            <DashboardCalendar fecha={hoy} />
+          </div>
         </div>
       </AdminLayout>
     </AdminPageGate>

@@ -137,3 +137,42 @@
   background: rgb(226 232 240);
   color: rgb(15 23 42);
 }
+
+html.admin-theme-dark .ui-select__trigger,
+html.admin-theme-dark .ui-select__trigger:hover,
+html.admin-theme-dark .ui-select__trigger[aria-expanded="true"],
+html.admin-theme-dark .ui-select__trigger:focus-visible {
+  border-color: #475569;
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark .ui-select__chevron {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark .ui-select__menu {
+  border-color: #334155;
+  background: #1e293b;
+  color: #f1f5f9;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.45);
+}
+
+html.admin-theme-dark .ui-select__option {
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark .ui-select__option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+}
+
+html.admin-theme-dark .ui-select__option.is-selected {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+}
+
+html.admin-theme-dark .ui-select__footer {
+  border-top-color: #334155;
+  background: #1e293b;
+}

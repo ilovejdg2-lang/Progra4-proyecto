@@ -1,0 +1,183 @@
+html.admin-theme-dark body.admin-route-active,
+html.admin-theme-dark body.admin-route-loading-active {
+  color-scheme: dark;
+  background: #0e1116 !important;
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active #root,
+html.admin-theme-dark body.admin-route-loading-active #root {
+  background: #0e1116;
+}
+
+html.admin-theme-dark .admin-route-loading,
+html.admin-theme-dark body.admin-route-active .page-loading {
+  background:
+    radial-gradient(ellipse at 50% 28%, rgba(148, 163, 184, 0.12) 0%, rgba(14, 17, 22, 0) 55%),
+    #0e1116 !important;
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .bg-white,
+html.admin-theme-dark body.admin-route-active .bg-\[\#fafafa\],
+html.admin-theme-dark body.admin-route-active .bg-\[\#fff\],
+html.admin-theme-dark body.admin-route-active .admin-modal-root [role="dialog"] {
+  background-color: #161b22 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .bg-slate-50,
+html.admin-theme-dark body.admin-route-active .bg-neutral-50 {
+  background-color: #12161c !important;
+}
+
+html.admin-theme-dark body.admin-route-active .border-slate-100,
+html.admin-theme-dark body.admin-route-active .border-slate-200,
+html.admin-theme-dark body.admin-route-active .border-neutral-200,
+html.admin-theme-dark body.admin-route-active .ring-slate-100 {
+  border-color: #2a3340 !important;
+  --tw-ring-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .text-slate-950,
+html.admin-theme-dark body.admin-route-active .text-slate-900,
+html.admin-theme-dark body.admin-route-active .text-neutral-950,
+html.admin-theme-dark body.admin-route-active .text-\[\#2a1612\] {
+  color: #f1f5f9 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .text-slate-800,
+html.admin-theme-dark body.admin-route-active .text-slate-700,
+html.admin-theme-dark body.admin-route-active .text-neutral-800 {
+  color: #e2e8f0 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .text-slate-600,
+html.admin-theme-dark body.admin-route-active .text-slate-500,
+html.admin-theme-dark body.admin-route-active .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .hover\:bg-slate-50:hover,
+html.admin-theme-dark body.admin-route-active .hover\:bg-slate-50\/60:hover,
+html.admin-theme-dark body.admin-route-active .hover\:bg-slate-100:hover,
+html.admin-theme-dark body.admin-route-active .hover\:bg-white:hover {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+html.admin-theme-dark body.admin-route-active .hover\:text-slate-950:hover,
+html.admin-theme-dark body.admin-route-active .hover\:text-slate-900:hover,
+html.admin-theme-dark body.admin-route-active .hover\:text-slate-800:hover,
+html.admin-theme-dark body.admin-route-active .hover\:text-slate-700:hover,
+html.admin-theme-dark body.admin-route-active .hover\:text-slate-600:hover {
+  color: #f8fafc !important;
+}
+
+html.admin-theme-dark body.admin-route-active .text-neutral-500 {
+  color: #94a3b8 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-table-shell thead,
+html.admin-theme-dark body.admin-route-active .admin-table-shell thead th,
+html.admin-theme-dark body.admin-route-active .admin-table-shell--constrained thead th {
+  background: #1a212b !important;
+  color: #94a3b8 !important;
+  border-bottom-color: #2a3340 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-table-shell thead th .admin-th-sort:hover {
+  color: #f1f5f9 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-table-shell tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-panel {
+  background: #161b22;
+  border-color: #2a3340;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+html.admin-theme-dark body.admin-route-active .admin-panel h2,
+html.admin-theme-dark body.admin-route-active .admin-panel__alertas-head h3,
+html.admin-theme-dark body.admin-route-active .admin-panel__alerta-nombre {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-panel p,
+html.admin-theme-dark body.admin-route-active .admin-panel__alertas-msg,
+html.admin-theme-dark body.admin-route-active .admin-panel__alerta-meta {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-panel__alertas,
+html.admin-theme-dark body.admin-route-active .admin-panel__alerta-item {
+  border-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-panel__alerta-item--bajo,
+html.admin-theme-dark body.admin-route-active .admin-panel__alerta-item--agotado {
+  background: #12161c;
+}
+
+html.admin-theme-dark body.admin-route-active .dropdown,
+html.admin-theme-dark body.admin-route-active .dropdown--notifications,
+html.admin-theme-dark body.admin-route-active .dropdown--notifications-portal {
+  background: #161b22;
+  border-color: #2a3340;
+  color: #e2e8f0;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45);
+}
+
+html.admin-theme-dark body.admin-route-active .notifications-header h2,
+html.admin-theme-dark body.admin-route-active .notification-item strong,
+html.admin-theme-dark body.admin-route-active .dropdown__empty {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark .lang-switch--on-light {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+html.admin-theme-dark .lang-switch--on-light .lang-switch__btn {
+  color: #cbd5e1;
+}
+
+html.admin-theme-dark .lang-switch--on-light .lang-switch__btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html.admin-theme-dark .lang-switch--on-light .lang-switch__btn.is-active {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-breadcrumb__list,
+html.admin-theme-dark body.admin-route-active .admin-breadcrumb__link,
+html.admin-theme-dark body.admin-route-active .admin-breadcrumb__text,
+html.admin-theme-dark body.admin-route-active .admin-breadcrumb__sep {
+  color: #8b9bb0;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-breadcrumb__link:hover {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-breadcrumb__current {
+  color: #e7c9a8;
+}
+
+html.admin-theme-dark body.admin-route-active .navbar__icon-button {
+  color: #e2e8f0;
+  filter: none;
+}
+
+html.admin-theme-dark body.admin-route-active .navbar__icon-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html.admin-theme-dark body.admin-route-active input,
+html.admin-theme-dark body.admin-route-active textarea,
+html.admin-theme-dark body.admin-route-active select {
+  color-scheme: dark;
+}

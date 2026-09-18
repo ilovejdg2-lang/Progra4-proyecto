@@ -4,6 +4,7 @@
 @import "@fontsource-variable/geist/wght.css";
 @import "./styles/public.css";
 @import "./styles/siteCanvas.css";
+@import "./styles/adminDark.css";
 
 @custom-variant dark (&:is(.dark *));
 :root {

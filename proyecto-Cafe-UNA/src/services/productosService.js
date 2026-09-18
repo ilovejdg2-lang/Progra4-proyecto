@@ -406,6 +406,20 @@ export async function obtenerStockDesglosadoProducto(productId) {
   };
 }
 
+export async function subirImagenProducto(archivo) {
+  const form = new FormData();
+  form.append("imagen", archivo);
+  const resultado = await request(`${BASE_URL}/imagenes`, {
+    method: "POST",
+    body: form,
+  });
+  const url = String(resultado?.url ?? resultado?.Url ?? "").trim();
+  if (!url) {
+    throw new Error("No se pudo subir la imagen del producto.");
+  }
+  return url;
+}
+
 export async function crearProducto(nuevoProducto) {
   const creado = await request(BASE_URL, {
     method: "POST",
