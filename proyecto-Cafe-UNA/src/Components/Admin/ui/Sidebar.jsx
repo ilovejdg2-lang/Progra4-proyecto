@@ -92,7 +92,7 @@ export function SidebarProvider({ defaultOpen = true, className, children, ...pr
   return (
     <SidebarContext.Provider value={value}>
       <div
-        className={cn("flex min-h-svh w-full bg-white text-slate-950", className)}
+        className={cn("flex min-h-svh w-full bg-white text-slate-950 dark:bg-slate-950 dark:text-slate-50", className)}
         data-sidebar-state={open ? "expanded" : "collapsed"}
         {...props}
       >
@@ -120,7 +120,7 @@ export function Sidebar({
         data-state={state}
         data-collapsible={collapsible}
         className={cn(
-          "admin-sidebar group/sidebar fixed inset-y-0 z-30 hidden flex-col border-slate-200 bg-white text-slate-900 shadow-sm transition-[width,transform] duration-200 md:flex",
+          "admin-sidebar group/sidebar fixed inset-y-0 z-30 hidden flex-col border-slate-200 bg-white text-slate-900 shadow-sm transition-[width,transform] duration-200 md:flex dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100",
           position,
           isIcon && (open ? "w-64" : "w-16"),
           isOffcanvas && "w-64",
@@ -167,7 +167,7 @@ export function Sidebar({
         />
         <aside
           className={cn(
-            "absolute inset-y-0 z-10 flex w-72 max-w-[85vw] flex-col border-slate-200 bg-white text-slate-900 shadow-xl transition-transform duration-300 ease-out",
+            "absolute inset-y-0 z-10 flex w-72 max-w-[85vw] flex-col border-slate-200 bg-white text-slate-900 shadow-xl transition-transform duration-300 ease-out dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100",
             position,
             openMobile
               ? "translate-x-0"
@@ -180,7 +180,7 @@ export function Sidebar({
         >
           <button
             type="button"
-            className="absolute right-3 top-3 z-10 inline-flex size-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            className="absolute right-3 top-3 z-10 inline-flex size-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50"
             onClick={() => setOpenMobile(false)}
           >
             <X className="size-4" />
@@ -202,7 +202,7 @@ export function SidebarTrigger({ className, onClick, ...props }) {
     <button
       type="button"
       className={cn(
-        "inline-flex size-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-100 hover:text-slate-950",
+        "inline-flex size-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-100 hover:text-slate-950 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white",
         className,
       )}
       aria-expanded={open}
@@ -267,7 +267,7 @@ export function SidebarGroupLabel({ asChild = false, className, onClick, ...prop
   return (
     <Comp
       className={cn(
-        "flex h-9 w-full items-center gap-2 px-2 text-sm font-medium text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950 [&_svg]:size-4 [&_svg]:shrink-0 [&_span]:min-w-0 [&_span]:truncate",
+        "flex h-9 w-full items-center gap-2 px-2 text-sm font-medium text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950 dark:text-slate-300 dark:hover:text-white [&_svg]:size-4 [&_svg]:shrink-0 [&_span]:min-w-0 [&_span]:truncate",
         "group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0 group-data-[state=collapsed]/sidebar:[&>span]:hidden group-data-[state=collapsed]/sidebar:[&>svg.ml-auto]:hidden",
         className,
       )}
@@ -305,7 +305,7 @@ export function SidebarMenuButton({ asChild = false, className, ...props }) {
   return (
     <Comp
       className={cn(
-        "flex h-9 w-full items-center gap-2 px-2 text-left text-sm text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0",
+        "flex h-9 w-full items-center gap-2 px-2 text-left text-sm text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none dark:text-slate-300 dark:hover:text-white [&_svg]:size-4 [&_svg]:shrink-0",
         "group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0 group-data-[state=collapsed]/sidebar:[&>span]:hidden group-data-[state=collapsed]/sidebar:[&_span]:hidden",
         className,
       )}
@@ -336,7 +336,7 @@ export function SidebarMenuSubButton({ asChild = false, className, ...props }) {
   return (
     <Comp
       className={cn(
-        "flex h-8 w-full items-center gap-2 px-2 text-left text-sm text-slate-600 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0 [&_span]:min-w-0 [&_span]:truncate",
+        "flex h-8 w-full items-center gap-2 px-2 text-left text-sm text-slate-600 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none dark:text-slate-300 dark:hover:text-white [&_svg]:size-4 [&_svg]:shrink-0 [&_span]:min-w-0 [&_span]:truncate",
         className,
       )}
       {...props}

@@ -342,7 +342,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="bg-white">
+    <Sidebar collapsible="icon" className="bg-white dark:bg-slate-950">
       <SidebarHeader>
         <Link
           to="/"
@@ -405,7 +405,7 @@ export function AppSidebar() {
                     >
                       <Collapsible.Trigger
                         type="button"
-                        className="flex h-8 w-full items-center gap-2 px-2 text-left text-sm text-slate-600 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0"
+                        className="flex h-8 w-full items-center gap-2 px-2 text-left text-sm text-slate-600 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none dark:text-slate-300 dark:hover:text-white [&_svg]:size-4 [&_svg]:shrink-0"
                       >
                         <BookOpenText />
                         <span><ST>Sobre nosotros</ST></span>
@@ -745,7 +745,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <Collapsible.Trigger
                   type="button"
-                  className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none dark:text-slate-300 dark:hover:text-white [&_svg]:size-4 [&_svg]:shrink-0"
                 >
                   <Wrench />
                   <span className="truncate"><ST>Ajustes del sistema</ST></span>
@@ -813,7 +813,7 @@ export function AppSidebar() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex w-full items-center gap-2 px-2 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950 group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0"
+              className="flex w-full items-center gap-2 px-2 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950 dark:text-slate-200 dark:hover:text-white group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0"
             >
               {avatarUrl && !avatarRoto ? (
                 <img

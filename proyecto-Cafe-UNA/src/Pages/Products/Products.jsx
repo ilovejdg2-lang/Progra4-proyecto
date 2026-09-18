@@ -431,12 +431,9 @@ const Products = () => {
                 </p>
               )}
               {productCards.map((card, index) => {
-                const { product, precioConIVA, estaAgotado, disponibilidad } = card;
+                const { product, precioConIVA, estaAgotado } = card;
                 const foto = imagenPrincipalProducto(product);
                 const nombreUi = nombrePorId.get(product.id) || product.nombre;
-                const stockLine = estaAgotado
-                  ? tSinStock
-                  : `${disponibilidad.stock} unidad${disponibilidad.stock === 1 ? '' : 'es'} en bodega`;
 
                 return (
                   <article
@@ -472,9 +469,9 @@ const Products = () => {
                     <div className="products-page__card-body">
                       <h2>{nombreUi}</h2>
                       <p className="products-page__price">CRC {precioConIVA.toLocaleString('es-CR')}</p>
-                      <p className="products-page__stock-line">
-                        {estaAgotado ? stockLine : <Etiqueta texto={stockLine} />}
-                      </p>
+                      {estaAgotado ? (
+                        <p className="products-page__stock-line">{tSinStock}</p>
+                      ) : null}
                     </div>
 
                     <div className="products-page__card-actions">
