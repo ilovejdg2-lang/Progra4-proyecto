@@ -133,6 +133,11 @@ export function AppSidebar() {
     tienePermiso(roles, "administrar_solicitudes_documentacion");
   const puedeDocumentacion =
     puedeDocumentacionDocumentos || puedeDocumentacionSolicitudes;
+  const puedeFacturas =
+    esAdminUsuario ||
+    tienePermiso(roles, "ver_todas_las_facturas") ||
+    tienePermiso(roles, "ver_ventas") ||
+    tienePermiso(roles, "descargar_facturas");
   const puedeUsuarios = tienePermiso(roles, "editar_usuarios") || tienePermiso(roles, "crear_usuarios");
   const puedeAjustes = tienePermiso(roles, "administrar_roles_permisos");
   const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
@@ -729,6 +734,21 @@ export function AppSidebar() {
             </Collapsible.Content>
           </SidebarGroup>
         </Collapsible.Root>
+        ) : null}
+
+        {puedeFacturas ? (
+        <SidebarGroup>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link to="/admin/facturas" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                  <Receipt />
+                  <span><ST>Facturación</ST></span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
         ) : null}
 
         <SidebarGroup>
