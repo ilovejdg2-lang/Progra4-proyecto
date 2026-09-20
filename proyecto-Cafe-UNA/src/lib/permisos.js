@@ -86,11 +86,11 @@ export function aplicarMatrizPermisos(matriz) {
 
 function normalizarRol(rol) {
   const valor = String(rol ?? "").trim().toLowerCase();
-  if (valor === "superadmin") return SA;
-  if (valor === "admin") return AD;
+  if (valor === "superadmin" || valor === "superadministrador") return SA;
+  if (valor === "admin" || valor === "administrador") return AD;
   if (valor === "vendedor") return VE;
   if (valor === "cliente") return CL;
-  if (valor === "usuario") return US;
+  if (valor === "usuario" || valor === "user") return US;
   return String(rol ?? "").trim();
 }
 
@@ -106,12 +106,7 @@ export function rolesDeUsuario(user) {
   if (Array.isArray(user?.Roles) && user.Roles.length > 0) return user.Roles;
   if (typeof user?.rol === "string" && user.rol.trim()) return [user.rol.trim()];
   if (typeof user?.Rol === "string" && user.Rol.trim()) return [user.Rol.trim()];
-  if (
-    typeof user?.role === "string" &&
-    user.role.trim() &&
-    user.role.toLowerCase() !== "admin" &&
-    user.role.toLowerCase() !== "user"
-  ) {
+  if (typeof user?.role === "string" && user.role.trim()) {
     return [user.role.trim()];
   }
   return [];

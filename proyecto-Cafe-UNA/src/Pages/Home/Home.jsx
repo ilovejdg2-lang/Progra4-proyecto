@@ -1,4 +1,5 @@
 import { ArrowRight, ExternalLink, FileText, Heart, MapPin, Users } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Hero from '../../Components/Hero/Hero';
@@ -23,6 +24,7 @@ import { buildIniciativasCards } from '../../lib/iniciativasCards';
 import { useRevealOnScroll } from '../../hooks/useRevealOnScroll';
 import { useTraducirLista, useTraducirObjeto } from '../../hooks/useTraducir';
 import { ST } from '../../Components/T/ST';
+import { SolicitarDocumentoModal } from '../Repositorio/SolicitarDocumentoModal';
 import './Home.css';
 
 const CAMPOS_TEASER = ['title', 'description', 'linkText'];
@@ -89,6 +91,7 @@ function getPreloadSource(pageStatus, data) {
 
 const Home = () => {
   const showLoadingGate = !isPageInstantReady('home');
+  const [modalSolicitudDocumentoAbierto, setModalSolicitudDocumentoAbierto] = useState(false);
 
   const loadHome = useCallback(() => fetchHomePageData(), []);
   const { data, status: pageStatus, error: loadError, reload } = useCachedPageData('home', loadHome);
@@ -371,14 +374,15 @@ const Home = () => {
                     )}
                   </p>
                   <div className="mission-spotlight-card__actions">
-                    <button type="button" className="mission-spotlight-card__button">
-                      {documentacionSection.linkText || <ST>Conocer documentación</ST>}
-                    </button>
+                    <Link to="/repositorio" className="mission-spotlight-card__button">
+                      {documentacionSection.linkText || <ST>Ver documentación</ST>}
+                    </Link>
                     <button
                       type="button"
                       className="mission-spotlight-card__button mission-spotlight-card__button--secondary"
+                      onClick={() => setModalSolicitudDocumentoAbierto(true)}
                     >
-                      <ST>Solicitar archivo</ST>
+                      <ST>Enviar / Proponer archivo</ST>
                     </button>
                   </div>
                 </div>
@@ -469,6 +473,12 @@ const Home = () => {
       </main>
       ) : null}
       </div>
+
+      {modalSolicitudDocumentoAbierto ? (
+        <SolicitarDocumentoModal
+          onClose={() => setModalSolicitudDocumentoAbierto(false)}
+        />
+      ) : null}
     </>
   );
 };
