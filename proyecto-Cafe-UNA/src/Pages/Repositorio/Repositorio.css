@@ -1,0 +1,891 @@
+/* Repositorio.css */
+
+.repositorio-page {
+  background: #fafafa;
+  min-height: 100vh;
+  padding: 24px 0 60px;
+  font-family: inherit;
+  color: var(--texto-principal, #0f172a);
+}
+
+.repositorio-section {
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Métricas en el Header */
+.repositorio-metricas-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 24px;
+  padding: 14px 24px;
+  background: #ffffff;
+  border: 1px solid var(--borde-input, #e2e8f0);
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.repositorio-metrica-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.repositorio-metrica-item__num {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--texto-principal, #0f172a);
+}
+
+.repositorio-metrica-item__lbl {
+  font-size: 0.8125rem;
+  color: var(--texto-secundario, #64748b);
+}
+
+/* Alertas */
+.repositorio-alerta-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  padding: 12px 18px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Grid de Filtros */
+.repositorio-filtros-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .repositorio-filtros-grid {
+    grid-template-columns: 2fr 1.2fr 1.2fr;
+  }
+}
+
+.repositorio-buscador-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.repositorio-buscador-icon {
+  position: absolute;
+  left: 14px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.repositorio-buscador-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 38px 0 40px;
+  border: 1px solid var(--borde-input, #e2e8f0);
+  border-radius: 10px;
+  background: #ffffff;
+  font-size: 0.875rem;
+  color: var(--texto-principal, #0f172a);
+  transition: all 0.15s ease;
+}
+
+.repositorio-buscador-input:focus {
+  outline: none;
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+}
+
+.repositorio-buscador-clear {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.repositorio-buscador-clear:hover {
+  color: #475569;
+}
+
+.repositorio-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.repositorio-select {
+  width: 100%;
+  height: 42px;
+  padding: 0 34px 0 14px;
+  border: 1px solid var(--borde-input, #e2e8f0);
+  border-radius: 10px;
+  background: #ffffff;
+  font-size: 0.875rem;
+  color: var(--texto-principal, #0f172a);
+  appearance: none;
+  cursor: pointer;
+}
+
+.repositorio-select:focus {
+  outline: none;
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+}
+
+.repositorio-select-arrow {
+  position: absolute;
+  right: 12px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+/* Chips de Categorías */
+.repositorio-chips-scroll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--borde-input, #f1f5f9);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.repositorio-chips-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.repositorio-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #ffffff;
+  border: 1px solid var(--borde-input, #e2e8f0);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.repositorio-chip:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.repositorio-chip--activo {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #0f172a !important;
+}
+
+.repositorio-chip__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.repositorio-chip--activo .repositorio-chip__count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Grid de Documentos */
+.repositorio-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 640px) {
+  .repositorio-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .repositorio-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Card de Documento */
+.repositorio-card {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid var(--borde-input, #e2e8f0);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.repositorio-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  border-color: #cbd5e1;
+}
+
+.repositorio-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.repositorio-card__file-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.repositorio-card__file-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.icon--pdf {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.icon--excel {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.icon--word {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.icon--archive {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.icon--default {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.repositorio-card__badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.repositorio-badge--categoria {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.repositorio-badge--publico {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #166534;
+  background: #dcfce7;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.repositorio-badge--privado {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #9a3412;
+  background: #ffedd5;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.repositorio-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.repositorio-card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--texto-principal, #0f172a);
+  margin: 0 0 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.repositorio-card__desc {
+  font-size: 0.8125rem;
+  color: var(--texto-secundario, #64748b);
+  line-height: 1.45;
+  margin: 0 0 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.repositorio-card__meta {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.repositorio-card__meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.repositorio-card__footer {
+  margin-top: 16px;
+}
+
+.btn-descargar-archivo {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 9px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-descargar-archivo:hover {
+  background: #1e293b;
+}
+
+.btn-solicitar-archivo {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+  border-radius: 9px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-solicitar-archivo:hover {
+  background: #ffedd5;
+  border-color: #fb923c;
+}
+
+/* Modal de Solicitud */
+.repositorio-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.repositorio-modal-container {
+  width: 100%;
+  max-width: 620px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.repositorio-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--borde-input, #e2e8f0);
+}
+
+.repositorio-modal-header h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 6px 0 0;
+}
+
+.badge--repositorio-modal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #c2410c;
+  background: #fff7ed;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.repositorio-modal-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.repositorio-modal-close:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.repositorio-modal-form {
+  padding: 20px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.repositorio-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.doc-solicitud-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.doc-solicitud-preview__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #ea580c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.doc-solicitud-preview__info h5 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 4px;
+}
+
+.doc-solicitud-preview__info p {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.info-aviso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.repositorio-modal-success {
+  padding: 48px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.repositorio-modal-success__icon {
+  margin-bottom: 16px;
+}
+
+.repositorio-modal-success h4 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px;
+}
+
+.repositorio-modal-success p {
+  font-size: 0.875rem;
+  color: #64748b;
+  max-width: 440px;
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+/* Estados Vacíos y Error */
+.repositorio-vacio-card {
+  text-align: center;
+  padding: 56px 20px;
+  background: #ffffff;
+  border: 1px dashed var(--borde-input, #cbd5e1);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.repositorio-vacio-card__icon {
+  color: #94a3b8;
+  margin-bottom: 14px;
+}
+
+.repositorio-vacio-card h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 6px;
+}
+
+.repositorio-vacio-card p {
+  font-size: 0.875rem;
+  color: #64748b;
+  max-width: 440px;
+  margin: 0;
+}
+
+.repositorio-error-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  background: #ffffff;
+  border: 1px solid #fecdd3;
+  border-radius: 14px;
+  text-align: center;
+  gap: 12px;
+}
+
+.repositorio-cargando {
+  padding: 60px 0;
+  display: flex;
+  justify-content: center;
+}
+
+/* Botones y utilitarios */
+.btn-accion-icono {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #ffffff;
+  border: 1px solid var(--borde-input, #e2e8f0);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-accion-icono:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.btn-accion-icono--primario {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.btn-accion-icono--primario:hover {
+  background: #1e293b;
+  border-color: #1e293b;
+  color: #ffffff;
+}
+
+/* Reglas de Impresión (REP-P04) */
+@media print {
+  .no-print,
+  .site-nav,
+  .site-footer,
+  .repositorio-buscador-wrap,
+  .repositorio-select-wrap,
+  .repositorio-chips-scroll,
+  .btn-descargar-archivo,
+  .btn-solicitar-archivo,
+  .btn-visualizar-archivo {
+    display: none !important;
+  }
+
+  body, .repositorio-page {
+    background: #ffffff !important;
+    padding: 0 !important;
+  }
+
+  .repositorio-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .repositorio-card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+}
+
+/* Visor de Documentos (Visualizar) */
+.repositorio-viewer-container {
+  width: 100%;
+  max-width: 1020px;
+  height: 88vh;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.repositorio-viewer--fullscreen {
+  max-width: 98vw;
+  height: 96vh;
+  border-radius: 8px;
+}
+
+.repositorio-viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.repositorio-viewer-header__info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.repositorio-viewer-header__texts {
+  min-width: 0;
+}
+
+.repositorio-viewer-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 4px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.repositorio-viewer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-visor-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-visor-action:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.btn-visor-action--primary {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.btn-visor-action--primary:hover {
+  background: #1e293b;
+  color: #ffffff;
+}
+
+.btn-visor-action--icon-only {
+  padding: 7px;
+}
+
+.repositorio-viewer-body {
+  flex: 1;
+  background: #f8fafc;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.repositorio-viewer-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #ffffff;
+}
+
+.repositorio-viewer-image-wrap {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.repositorio-viewer-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.repositorio-viewer-fallback {
+  text-align: center;
+  padding: 40px 24px;
+  max-width: 500px;
+}
+
+.repositorio-viewer-fallback__icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.repositorio-viewer-fallback h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 8px;
+}
+
+.repositorio-viewer-fallback p {
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Acciones en la tarjeta de documento: Botón Visualizar + Descargar */
+.repositorio-card__actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.btn-visualizar-archivo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  background: #f8fafc;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-visualizar-archivo:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
