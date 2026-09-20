@@ -1,5 +1,6 @@
 export const TIPO_CATEGORIA_PRODUCTO = "producto";
 export const TIPO_CATEGORIA_GALERIA = "galeria";
+export const TIPO_CATEGORIA_DOCUMENTO = "documento";
 
 export function nombreCategoria(valor) {
   return String(valor || "").trim();

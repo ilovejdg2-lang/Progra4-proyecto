@@ -60,6 +60,9 @@ const Perfil = lazy(() => import("./Pages/Perfil/Perfil"));
 const HistorialComprasCliente = lazy(() => import("./Pages/HistorialCompras/HistorialComprasCliente"));
 const AdminMisCompras = lazy(() => import("./Pages/Admin/MisCompras/AdminMisCompras"));
 const AdminPerfil = lazy(() => import("./Pages/Admin/Perfil/AdminPerfil"));
+const Repositorio = lazy(() => import("./Pages/Repositorio/Repositorio"));
+const AdminDocumentos = lazy(() => import("./Pages/Admin/Documentacion/Documentos"));
+const AdminSolicitudesDocumentacion = lazy(() => import("./Pages/Admin/Documentacion/SolicitudesDocumentacion"));
 
 function HomeRouteLoading() {
     return <PageLoading message="Cargando inicio..." />;
@@ -449,6 +452,26 @@ const adminPerfilRoute = createRoute({
     path: "/admin/perfil",
     component: AdminPerfil,
 })
+const repositorioRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/repositorio",
+    component: Repositorio,
+})
+const documentosAliasRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/documentos",
+    component: Repositorio,
+})
+const adminDocumentacionRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/documentacion",
+    component: AdminDocumentos,
+})
+const adminDocumentacionSolicitudesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/documentacion/solicitudes",
+    component: AdminSolicitudesDocumentacion,
+})
 const notFoundCatchAllRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/$",
@@ -499,6 +522,10 @@ const routeTree= rootRoute.addChildren([
     historialComprasClienteRoute,
     adminMisComprasRoute,
     adminPerfilRoute,
+    repositorioRoute,
+    documentosAliasRoute,
+    adminDocumentacionRoute,
+    adminDocumentacionSolicitudesRoute,
     notFoundCatchAllRoute,
 ])
 export const router = createRouter({

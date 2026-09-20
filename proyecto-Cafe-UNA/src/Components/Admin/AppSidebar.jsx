@@ -117,11 +117,19 @@ export function AppSidebar() {
     tienePermiso(roles, "administrar_solicitudes_donaciones");
   const puedeDonaciones =
     puedeDonacionesNecesidades || puedeDonacionesSolicitudes;
+  const esAdminUsuario =
+    roles.some((r) =>
+      ["admin", "superadmin", "administrador", "superadministrador"].includes(
+        String(r || "").toLowerCase(),
+      ),
+    ) || String(user?.role || "").toLowerCase() === "admin";
   const puedeDocumentacionDocumentos =
+    esAdminUsuario ||
     tienePermiso(roles, "ver_documentacion_privada") ||
     tienePermiso(roles, "crear_documentacion") ||
     tienePermiso(roles, "actualizar_documentacion");
   const puedeDocumentacionSolicitudes =
+    esAdminUsuario ||
     tienePermiso(roles, "administrar_solicitudes_documentacion");
   const puedeDocumentacion =
     puedeDocumentacionDocumentos || puedeDocumentacionSolicitudes;
@@ -176,7 +184,50 @@ export function AppSidebar() {
     const savedValue = localStorage.getItem(SOBRE_NOSOTROS_OPEN_KEY);
     return savedValue === null ? isSobreNosotrosRoute : savedValue === "true";
   });
+  const [inventoryOpen, setInventoryOpen] = useState(() => {
+    const savedValue = localStorage.getItem(INVENTORY_OPEN_KEY);
+    return savedValue === null ? isInventoryRoute : savedValue === "true";
+  });
+  const [voluntariadoOpen, setVoluntariadoOpen] = useState(() => {
+    const savedValue = localStorage.getItem(VOLUNTARIADO_OPEN_KEY);
+    return savedValue === null ? isVoluntariadoRoute : savedValue === "true";
+  });
+  const [visitasOpen, setVisitasOpen] = useState(() => {
+    const savedValue = localStorage.getItem(VISITAS_OPEN_KEY);
+    return savedValue === null ? isVisitasRoute : savedValue === "true";
+  });
+  const [donacionesOpen, setDonacionesOpen] = useState(() => {
+    const savedValue = localStorage.getItem(DONACIONES_OPEN_KEY);
+    return savedValue === null ? isDonacionesRoute : savedValue === "true";
+  });
+  const [documentacionOpen, setDocumentacionOpen] = useState(() => {
+    const savedValue = localStorage.getItem(DOCUMENTACION_OPEN_KEY);
+    return savedValue === null ? isDocumentacionRoute : savedValue === "true";
+  });
+  const [ajustesOpen, setAjustesOpen] = useState(() => {
+    const savedValue = localStorage.getItem(AJUSTES_OPEN_KEY);
+    return savedValue === null ? isAjustesRoute : savedValue === "true";
+  });
   const [logoUrl, setLogoUrl] = useState("");
+
+  const deferSet = (setter, key, open) => {
+    queueMicrotask(() => {
+      setter((prev) => {
+        if (prev === open) return prev;
+        if (key) localStorage.setItem(key, String(open));
+        return open;
+      });
+    });
+  };
+
+  const updateGeneralOpen = (open) => deferSet(setGeneralOpen, GENERAL_OPEN_KEY, open);
+  const updateSobreNosotrosOpen = (open) => deferSet(setSobreNosotrosOpen, SOBRE_NOSOTROS_OPEN_KEY, open);
+  const updateInventoryOpen = (open) => deferSet(setInventoryOpen, INVENTORY_OPEN_KEY, open);
+  const updateVoluntariadoOpen = (open) => deferSet(setVoluntariadoOpen, VOLUNTARIADO_OPEN_KEY, open);
+  const updateVisitasOpen = (open) => deferSet(setVisitasOpen, VISITAS_OPEN_KEY, open);
+  const updateDonacionesOpen = (open) => deferSet(setDonacionesOpen, DONACIONES_OPEN_KEY, open);
+  const updateDocumentacionOpen = (open) => deferSet(setDocumentacionOpen, DOCUMENTACION_OPEN_KEY, open);
+  const updateAjustesOpen = (open) => deferSet(setAjustesOpen, AJUSTES_OPEN_KEY, open);
 
   useEffect(() => {
     const syncUser = () => setUser(getActiveSessionUser());
@@ -272,50 +323,6 @@ export function AppSidebar() {
       activo = false;
     };
   }, []);
-
-  const [inventoryOpen, setInventoryOpen] = useState(() => {
-    const savedValue = localStorage.getItem(INVENTORY_OPEN_KEY);
-    return savedValue === null ? isInventoryRoute : savedValue === "true";
-  });
-  const [voluntariadoOpen, setVoluntariadoOpen] = useState(() => {
-    const savedValue = localStorage.getItem(VOLUNTARIADO_OPEN_KEY);
-    return savedValue === null ? isVoluntariadoRoute : savedValue === "true";
-  });
-  const [visitasOpen, setVisitasOpen] = useState(() => {
-    const savedValue = localStorage.getItem(VISITAS_OPEN_KEY);
-    return savedValue === null ? isVisitasRoute : savedValue === "true";
-  });
-  const [donacionesOpen, setDonacionesOpen] = useState(() => {
-    const savedValue = localStorage.getItem(DONACIONES_OPEN_KEY);
-    return savedValue === null ? isDonacionesRoute : savedValue === "true";
-  });
-  const [documentacionOpen, setDocumentacionOpen] = useState(() => {
-    const savedValue = localStorage.getItem(DOCUMENTACION_OPEN_KEY);
-    return savedValue === null ? isDocumentacionRoute : savedValue === "true";
-  });
-  const [ajustesOpen, setAjustesOpen] = useState(() => {
-    const savedValue = localStorage.getItem(AJUSTES_OPEN_KEY);
-    return savedValue === null ? isAjustesRoute : savedValue === "true";
-  });
-
-  const deferSet = (setter, key, open) => {
-    queueMicrotask(() => {
-      setter((prev) => {
-        if (prev === open) return prev;
-        if (key) localStorage.setItem(key, String(open));
-        return open;
-      });
-    });
-  };
-
-  const updateGeneralOpen = (open) => deferSet(setGeneralOpen, GENERAL_OPEN_KEY, open);
-  const updateSobreNosotrosOpen = (open) => deferSet(setSobreNosotrosOpen, SOBRE_NOSOTROS_OPEN_KEY, open);
-  const updateInventoryOpen = (open) => deferSet(setInventoryOpen, INVENTORY_OPEN_KEY, open);
-  const updateVoluntariadoOpen = (open) => deferSet(setVoluntariadoOpen, VOLUNTARIADO_OPEN_KEY, open);
-  const updateVisitasOpen = (open) => deferSet(setVisitasOpen, VISITAS_OPEN_KEY, open);
-  const updateDonacionesOpen = (open) => deferSet(setDonacionesOpen, DONACIONES_OPEN_KEY, open);
-  const updateDocumentacionOpen = (open) => deferSet(setDocumentacionOpen, DOCUMENTACION_OPEN_KEY, open);
-  const updateAjustesOpen = (open) => deferSet(setAjustesOpen, AJUSTES_OPEN_KEY, open);
 
   const closeMobileSidebar = () => setOpenMobile(false);
 
