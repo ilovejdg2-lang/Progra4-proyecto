@@ -1,9 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, RefreshCw, ScrollText } from "lucide-react";
+import {
+  Activity,
+  Calendar,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Layers,
+  RefreshCw,
+  RotateCcw,
+  ScrollText,
+  Search,
+  SlidersHorizontal,
+  User,
+  Users,
+  X,
+} from "lucide-react";
 
+import "./Auditoria.css";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
-import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
@@ -22,6 +38,7 @@ const MODULOS = [
   { id: "producto", label: "Producto" },
   { id: "informacion_general", label: "Información general" },
   { id: "compras", label: "Compras" },
+  { id: "facturacion", label: "Facturación" },
 ];
 
 const TABLA_A_MODULO = {
@@ -50,6 +67,8 @@ const TABLA_A_MODULO = {
   faq_inicio: "informacion_general",
   compras: "compras",
   compra_items: "compras",
+  facturas: "facturacion",
+  factura_items: "facturacion",
 };
 
 function moduloDeTabla(tabla) {
@@ -99,15 +118,15 @@ function formatearFecha(fecha) {
 
 function BadgeAccion({ accion }) {
   const estilos = {
-    INSERT: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    UPDATE: "border-blue-200 bg-blue-50 text-blue-700",
-    DELETE: "border-red-200 bg-red-50 text-red-700",
-    AJUSTE_STOCK: "border-amber-200 bg-amber-50 text-amber-800",
+    INSERT: "badge-accion--insert",
+    UPDATE: "badge-accion--update",
+    DELETE: "badge-accion--delete",
+    AJUSTE_STOCK: "badge-accion--ajuste",
   };
 
   return (
     <span
-      className={`inline-flex rounded-full border px-3 py-1 text-[length:var(--text-body)] font-semibold ${
+      className={`badge-accion-pill ${
         estilos[accion] ?? "border-slate-200 bg-slate-50 text-slate-600"
       }`}
     >
@@ -120,19 +139,21 @@ function FilaDetalle({ item, abierta, onToggle }) {
   const tieneCambios = item.datosAnteriores != null || item.datosNuevos != null;
   return (
     <>
-      <tr className="border-b border-slate-100">
-        <td className="whitespace-nowrap px-4 py-3 text-slate-700">{formatearFecha(item.fecha)}</td>
-        <td className="px-4 py-3">
+      <tr className={`border-b border-slate-100 transition-colors ${abierta ? "row-expanded bg-slate-50/70" : "hover:bg-slate-50/50"}`}>
+        <td className="whitespace-nowrap px-4 py-3.5 font-medium text-slate-700">{formatearFecha(item.fecha)}</td>
+        <td className="px-4 py-3.5">
           <BadgeAccion accion={item.accion} />
         </td>
-        <td className="px-4 py-3 text-slate-700"><ST>{etiquetaModulo(item.tabla)}</ST></td>
-        <td className="max-w-md px-4 py-3 text-slate-700">
+        <td className="px-4 py-3.5">
+          <span className="badge-modulo-pill"><ST>{etiquetaModulo(item.tabla)}</ST></span>
+        </td>
+        <td className="max-w-md px-4 py-3.5 text-slate-700">
           <div className="flex items-start gap-2">
             {tieneCambios ? (
               <button
                 type="button"
                 onClick={onToggle}
-                className="mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50"
+                className="mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-100 transition"
                 aria-expanded={abierta}
                 aria-label={abierta ? t("Ocultar cambios") : t("Ver datos anteriores y nuevos")}
               >
@@ -142,15 +163,15 @@ function FilaDetalle({ item, abierta, onToggle }) {
             <span>
               {item.detalle ? <ST>{item.detalle}</ST> : "—"}
               {item.idRegistro ? (
-                <span className="mt-1 block text-xs text-slate-400">Registro #{item.idRegistro}</span>
+                <span className="mt-0.5 block text-xs text-slate-400">Registro #{item.idRegistro}</span>
               ) : null}
             </span>
           </div>
         </td>
-        <td className="px-4 py-3 text-slate-500">{item.usuario || <ST>Sistema</ST>}</td>
+        <td className="px-4 py-3.5 font-medium text-slate-600">{item.usuario || <ST>Sistema</ST>}</td>
       </tr>
       {abierta && tieneCambios ? (
-        <tr className="bg-slate-50">
+        <tr className="bg-slate-50/80">
           <td colSpan={5} className="px-4 py-3">
             <AuditoriaComparacion item={item} />
           </td>
@@ -261,7 +282,14 @@ function AdminAuditoria() {
   const resumen = useMemo(() => {
     const totalReg = registros.length;
     const modulos = new Set(registros.map((item) => moduloDeTabla(item.tabla)).filter(Boolean)).size;
-    return { total: totalReg, modulos };
+    const usuarios = new Set(registros.map((item) => item.usuario).filter(Boolean)).size;
+    const hoy = registros.filter((item) => {
+      if (!item.fecha) return false;
+      const d = new Date(item.fecha);
+      if (Number.isNaN(d.getTime())) return false;
+      return d.toDateString() === new Date().toDateString();
+    }).length;
+    return { total: totalReg, modulos, usuarios, hoy };
   }, [registros]);
 
   const hayFiltrosActivos =
@@ -289,7 +317,7 @@ function AdminAuditoria() {
     try {
       await cargar({ force: true });
     } catch (err) {
-      setError(err?.message || "No se pudo actualizar la auditor\u00eda.");
+      setError(err?.message || "No se pudo actualizar la auditoría.");
     } finally {
       setRefrescando(false);
     }
@@ -307,8 +335,8 @@ function AdminAuditoria() {
     return (
       <AdminLayout>
         <section className="rounded-xl border border-slate-200 bg-white p-6">
-          <h1 className="text-xl font-semibold text-slate-900"><ST>{"Auditor\u00eda"}</ST></h1>
-          <p className="mt-2 text-sm text-slate-600"><ST>{"No tienes permiso para ver esta secci\u00f3n."}</ST></p>
+          <h1 className="text-xl font-semibold text-slate-900"><ST>{"Auditoría"}</ST></h1>
+          <p className="mt-2 text-sm text-slate-600"><ST>{"No tienes permiso para ver esta sección."}</ST></p>
         </section>
       </AdminLayout>
     );
@@ -317,116 +345,274 @@ function AdminAuditoria() {
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
       <AdminLayout>
-        <section className="rounded-xl border border-slate-200 bg-white p-4 md:p-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <section className="auditoria-container rounded-2xl border border-slate-200/80 bg-white p-5 md:p-7 shadow-sm">
+          <div className="auditoria-header">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900"><ST>{"Auditor\u00eda"}</ST></h1>
-              <p className="mt-1 text-sm text-slate-600">
-                <ST>Registro de acciones importantes realizadas por administradores, superadministradores y vendedores.</ST>
+              <h1 className="auditoria-title"><ST>{"Auditoría"}</ST></h1>
+              <p className="auditoria-subtitle">
+                <ST>Registro de acciones y cambios realizados por administradores, superadministradores y vendedores.</ST>
               </p>
             </div>
             <button
               type="button"
               onClick={recargar}
               disabled={refrescando || cargando}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+              className="btn-auditoria-reload"
             >
               <RefreshCw className={`size-4 ${refrescando ? "animate-spin" : ""}`} />
               <ST>Actualizar</ST>
             </button>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500"><ST>Registros</ST></p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{resumen.total}</p>
+          {/* Tarjetas KPI de Resumen */}
+          <div className="auditoria-kpis-grid">
+            <div className="auditoria-kpi-card">
+              <div className="kpi-icon-box kpi-icon--blue">
+                <Activity className="size-5" />
+              </div>
+              <div className="kpi-details">
+                <span className="kpi-label"><ST>Total de Registros</ST></span>
+                <span className="kpi-value">{resumen.total}</span>
+              </div>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500"><ST>{"M\u00f3dulos auditados"}</ST></p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{resumen.modulos}</p>
+
+            <div className="auditoria-kpi-card">
+              <div className="kpi-icon-box kpi-icon--emerald">
+                <Layers className="size-5" />
+              </div>
+              <div className="kpi-details">
+                <span className="kpi-label"><ST>Módulos Auditados</ST></span>
+                <span className="kpi-value">{resumen.modulos}</span>
+              </div>
+            </div>
+
+            <div className="auditoria-kpi-card">
+              <div className="kpi-icon-box kpi-icon--indigo">
+                <Users className="size-5" />
+              </div>
+              <div className="kpi-details">
+                <span className="kpi-label"><ST>Usuarios Activos</ST></span>
+                <span className="kpi-value">{resumen.usuarios}</span>
+              </div>
+            </div>
+
+            <div className="auditoria-kpi-card">
+              <div className="kpi-icon-box kpi-icon--amber">
+                <Clock className="size-5" />
+              </div>
+              <div className="kpi-details">
+                <span className="kpi-label"><ST>Eventos de Hoy</ST></span>
+                <span className="kpi-value">{resumen.hoy}</span>
+              </div>
             </div>
           </div>
 
           {error ? (
-            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
               <ST>{error}</ST>
             </div>
           ) : null}
 
           {cargando ? (
-            <p className="mt-6 text-sm text-slate-500"><ST>{"Cargando auditor\u00eda..."}</ST></p>
+            <div className="py-12 text-center text-sm text-slate-500">
+              <RefreshCw className="mx-auto mb-2 size-6 animate-spin text-slate-400" />
+              <p><ST>{"Cargando auditoría..."}</ST></p>
+            </div>
           ) : registros.length === 0 && !hayFiltrosActivos ? (
-            <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 px-6 py-12 text-center">
-              <ScrollText className="size-10 text-slate-300" />
-              <p className="mt-3 text-sm font-medium text-slate-700"><ST>{"No hay registros de auditor\u00eda todav\u00eda."}</ST></p>
-              <p className="mt-1 text-sm text-slate-500"><ST>{"Aqu\u00ed aparecer\u00e1n cambios importantes en usuarios, productos, contenido y voluntariado (incluye visitas y donaciones)."}</ST></p>
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 px-6 py-14 text-center">
+              <ScrollText className="size-12 text-slate-300" />
+              <p className="mt-3 text-base font-semibold text-slate-700"><ST>{"No hay registros de auditoría todavía."}</ST></p>
+              <p className="mt-1 max-w-md text-sm text-slate-500"><ST>{"Aquí aparecerán cambios importantes en usuarios, productos, compras, facturación y voluntariado."}</ST></p>
             </div>
           ) : (
             <>
-              <AdminListaToolbar
-                busqueda={busqueda}
-                onBusquedaChange={setBusqueda}
-                placeholder={"Buscar por acción, módulo, detalle o usuario..."}
-                total={total}
-                visibles={visibles}
-                hayFiltrosActivos={hayFiltrosActivos}
-                onLimpiar={limpiar}
-                filtros={[
-                  {
-                    id: "usuario",
-                    label: "Usuario",
-                    value: filtrosApi.usuario,
-                    onChange: (valor) => setFiltroApi("usuario", valor),
-                    opciones: [
-                      { value: "todos", label: "Todos" },
-                      ...usuariosDisponibles.map((item) => ({
-                        value: item.id,
-                        label: item.nombre,
-                      })),
-                    ],
-                  },
-                  {
-                    id: "modulo",
-                    label: "Módulo",
-                    value: filtrosApi.modulo,
-                    onChange: (valor) => setFiltroApi("modulo", valor),
-                    opciones: [
-                      { value: "todos", label: "Todos" },
-                      ...MODULOS.map((modulo) => ({
-                        value: modulo.id,
-                        label: modulo.label,
-                      })),
-                    ],
-                  },
-                  {
-                    id: "accion",
-                    label: "Acción",
-                    value: filtrosApi.accion,
-                    onChange: (valor) => setFiltroApi("accion", valor),
-                    opciones: [
-                      { value: "todos", label: "Todas" },
-                      { value: "INSERT", label: "Creación" },
-                      { value: "UPDATE", label: "Actualización" },
-                      { value: "DELETE", label: "Eliminación" },
-                      { value: "AJUSTE_STOCK", label: "Ajuste de stock" },
-                    ],
-                  },
-                  {
-                    id: "desde",
-                    label: "Desde",
-                    tipo: "fecha",
-                    value: filtrosApi.desde,
-                    onChange: (valor) => setFiltroApi("desde", valor),
-                  },
-                  {
-                    id: "hasta",
-                    label: "Hasta",
-                    tipo: "fecha",
-                    value: filtrosApi.hasta,
-                    onChange: (valor) => setFiltroApi("hasta", valor),
-                  },
-                ]}
-              />
+              {/* Panel de Búsqueda y Filtros */}
+              <div className="auditoria-filter-panel">
+                {/* Fila 1: Barra de búsqueda y badge de conteo */}
+                <div className="auditoria-search-row">
+                  <div className="auditoria-search-wrapper">
+                    <Search className="auditoria-search-icon size-4" />
+                    <input
+                      type="text"
+                      value={busqueda}
+                      onChange={(e) => setBusqueda(e.target.value)}
+                      placeholder={t("Buscar por acción, módulo, detalle o usuario...")}
+                      className="auditoria-search-input"
+                    />
+                    {busqueda ? (
+                      <button
+                        type="button"
+                        onClick={() => setBusqueda("")}
+                        className="auditoria-search-clear"
+                        aria-label={t("Limpiar búsqueda")}
+                      >
+                        <X className="size-4" />
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="auditoria-actions-right">
+                    <span className="auditoria-count-badge">
+                      <ST>Mostrando</ST> <strong>{registrosFiltrados.length}</strong> <ST>de</ST> <strong>{registros.length}</strong> <ST>registros</ST>
+                    </span>
+                    {hayFiltrosActivos ? (
+                      <button
+                        type="button"
+                        onClick={limpiar}
+                        className="btn-auditoria-clear"
+                      >
+                        <RotateCcw className="size-3.5" />
+                        <ST>Limpiar filtros</ST>
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Fila 2: Grid uniforme y alineado de 5 filtros */}
+                <div className="auditoria-filters-grid">
+                  <div className="auditoria-filter-item">
+                    <label htmlFor="filtro-auditoria-usuario" className="auditoria-filter-label">
+                      <User className="size-3.5 text-slate-400" />
+                      <ST>Usuario</ST>
+                    </label>
+                    <select
+                      id="filtro-auditoria-usuario"
+                      value={filtrosApi.usuario}
+                      onChange={(e) => setFiltroApi("usuario", e.target.value)}
+                      className="auditoria-filter-control"
+                    >
+                      <option value="todos">{t("Todos")}</option>
+                      {usuariosDisponibles.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="auditoria-filter-item">
+                    <label htmlFor="filtro-auditoria-modulo" className="auditoria-filter-label">
+                      <Layers className="size-3.5 text-slate-400" />
+                      <ST>Módulo</ST>
+                    </label>
+                    <select
+                      id="filtro-auditoria-modulo"
+                      value={filtrosApi.modulo}
+                      onChange={(e) => setFiltroApi("modulo", e.target.value)}
+                      className="auditoria-filter-control"
+                    >
+                      <option value="todos">{t("Todos")}</option>
+                      {MODULOS.map((modulo) => (
+                        <option key={modulo.id} value={modulo.id}>
+                          {modulo.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="auditoria-filter-item">
+                    <label htmlFor="filtro-auditoria-accion" className="auditoria-filter-label">
+                      <SlidersHorizontal className="size-3.5 text-slate-400" />
+                      <ST>Acción</ST>
+                    </label>
+                    <select
+                      id="filtro-auditoria-accion"
+                      value={filtrosApi.accion}
+                      onChange={(e) => setFiltroApi("accion", e.target.value)}
+                      className="auditoria-filter-control"
+                    >
+                      <option value="todos">{t("Todas")}</option>
+                      <option value="INSERT">{t("Creación")}</option>
+                      <option value="UPDATE">{t("Actualización")}</option>
+                      <option value="DELETE">{t("Eliminación")}</option>
+                      <option value="AJUSTE_STOCK">{t("Ajuste de stock")}</option>
+                    </select>
+                  </div>
+
+                  <div className="auditoria-filter-item">
+                    <label htmlFor="filtro-auditoria-desde" className="auditoria-filter-label">
+                      <Calendar className="size-3.5 text-slate-400" />
+                      <ST>Desde</ST>
+                    </label>
+                    <input
+                      type="date"
+                      id="filtro-auditoria-desde"
+                      value={filtrosApi.desde}
+                      onChange={(e) => setFiltroApi("desde", e.target.value)}
+                      className="auditoria-filter-control auditoria-date-input"
+                    />
+                  </div>
+
+                  <div className="auditoria-filter-item">
+                    <label htmlFor="filtro-auditoria-hasta" className="auditoria-filter-label">
+                      <Calendar className="size-3.5 text-slate-400" />
+                      <ST>Hasta</ST>
+                    </label>
+                    <input
+                      type="date"
+                      id="filtro-auditoria-hasta"
+                      value={filtrosApi.hasta}
+                      onChange={(e) => setFiltroApi("hasta", e.target.value)}
+                      className="auditoria-filter-control auditoria-date-input"
+                    />
+                  </div>
+                </div>
+
+                {/* Chips de filtros activos */}
+                {hayFiltrosActivos ? (
+                  <div className="auditoria-active-chips">
+                    <span className="auditoria-chips-title"><ST>Filtros aplicados:</ST></span>
+                    {busqueda ? (
+                      <span className="auditoria-chip">
+                        <ST>Texto:</ST> <strong>"{busqueda}"</strong>
+                        <button type="button" onClick={() => setBusqueda("")} aria-label="Quitar texto">
+                          <X className="size-3" />
+                        </button>
+                      </span>
+                    ) : null}
+                    {filtrosApi.usuario !== "todos" ? (
+                      <span className="auditoria-chip">
+                        <ST>Usuario:</ST> <strong>{usuariosDisponibles.find(u => String(u.id) === String(filtrosApi.usuario))?.nombre || filtrosApi.usuario}</strong>
+                        <button type="button" onClick={() => setFiltroApi("usuario", "todos")} aria-label="Quitar usuario">
+                          <X className="size-3" />
+                        </button>
+                      </span>
+                    ) : null}
+                    {filtrosApi.modulo !== "todos" ? (
+                      <span className="auditoria-chip">
+                        <ST>Módulo:</ST> <strong>{MODULOS.find(m => m.id === filtrosApi.modulo)?.label || filtrosApi.modulo}</strong>
+                        <button type="button" onClick={() => setFiltroApi("modulo", "todos")} aria-label="Quitar módulo">
+                          <X className="size-3" />
+                        </button>
+                      </span>
+                    ) : null}
+                    {filtrosApi.accion !== "todos" ? (
+                      <span className="auditoria-chip">
+                        <ST>Acción:</ST> <strong>{ETIQUETAS_ACCION[filtrosApi.accion] || filtrosApi.accion}</strong>
+                        <button type="button" onClick={() => setFiltroApi("accion", "todos")} aria-label="Quitar acción">
+                          <X className="size-3" />
+                        </button>
+                      </span>
+                    ) : null}
+                    {filtrosApi.desde ? (
+                      <span className="auditoria-chip">
+                        <ST>Desde:</ST> <strong>{filtrosApi.desde}</strong>
+                        <button type="button" onClick={() => setFiltroApi("desde", "")} aria-label="Quitar desde">
+                          <X className="size-3" />
+                        </button>
+                      </span>
+                    ) : null}
+                    {filtrosApi.hasta ? (
+                      <span className="auditoria-chip">
+                        <ST>Hasta:</ST> <strong>{filtrosApi.hasta}</strong>
+                        <button type="button" onClick={() => setFiltroApi("hasta", "")} aria-label="Quitar hasta">
+                          <X className="size-3" />
+                        </button>
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
 
               {registrosFiltrados.length === 0 ? (
                 <div className="mt-4">
@@ -434,28 +620,30 @@ function AdminAuditoria() {
                 </div>
               ) : (
                 <>
-                  <div className="admin-table-shell mt-6 hidden md:block">
-                    <table className="min-w-full divide-y divide-slate-200 text-left text-[length:var(--text-body)]">
-                      <thead>
-                        <tr>
-                          <th><ST>Fecha</ST></th>
-                          <th><ST>{"Acci\u00f3n"}</ST></th>
-                          <th><ST>{"M\u00f3dulo"}</ST></th>
-                          <th><ST>Detalle</ST></th>
-                          <th><ST>Usuario</ST></th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white">
-                        {registrosPagina.map((item) => (
-                          <FilaDetalle
-                            key={item.id ?? `${item.tabla}-${item.idRegistro}-${item.fecha}`}
-                            item={item}
-                            abierta={Boolean(abiertos[item.id])}
-                            onToggle={() => toggleAbierto(item.id)}
-                          />
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="auditoria-table-card mt-6 hidden md:block">
+                    <div className="auditoria-table-wrapper">
+                      <table className="auditoria-table">
+                        <thead>
+                          <tr>
+                            <th><ST>Fecha y Hora</ST></th>
+                            <th><ST>Acción</ST></th>
+                            <th><ST>Módulo</ST></th>
+                            <th><ST>Detalle</ST></th>
+                            <th><ST>Usuario</ST></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {registrosPagina.map((item) => (
+                            <FilaDetalle
+                              key={item.id ?? `${item.tabla}-${item.idRegistro}-${item.fecha}`}
+                              item={item}
+                              abierta={Boolean(abiertos[item.id])}
+                              onToggle={() => toggleAbierto(item.id)}
+                            />
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
 
                   <div className="mt-6 grid gap-3 md:hidden">
@@ -465,28 +653,31 @@ function AdminAuditoria() {
                       return (
                         <article
                           key={item.id ?? `${item.tabla}-${item.idRegistro}-${item.fecha}`}
-                          className="rounded-lg border border-slate-200 bg-slate-50 p-4"
+                          className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <p className="text-xs text-slate-500">{formatearFecha(item.fecha)}</p>
-                              <p className="mt-1 text-sm font-semibold text-slate-900">
-                                {etiquetaModulo(item.tabla)}
-                              </p>
+                              <p className="text-xs font-semibold text-slate-500">{formatearFecha(item.fecha)}</p>
+                              <div className="mt-1.5">
+                                <span className="badge-modulo-pill">
+                                  {etiquetaModulo(item.tabla)}
+                                </span>
+                              </div>
                             </div>
                             <BadgeAccion accion={item.accion} />
                           </div>
-                          <p className="mt-3 text-sm text-slate-700">{item.detalle ? <ST>{item.detalle}</ST> : "—"}</p>
-                          <p className="mt-2 text-xs text-slate-500">
-                            Usuario: {item.usuario || "Sistema"}
-                            {item.idRegistro ? ` · Registro #${item.idRegistro}` : ""}
-                          </p>
+                          <p className="mt-3 text-sm text-slate-800">{item.detalle ? <ST>{item.detalle}</ST> : "—"}</p>
+                          <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5 text-xs text-slate-500">
+                            <span>Usuario: <strong className="text-slate-700">{item.usuario || "Sistema"}</strong></span>
+                            {item.idRegistro ? <span>ID #{item.idRegistro}</span> : null}
+                          </div>
                           {tieneCambios ? (
                             <button
                               type="button"
-                              className="mt-3 text-xs font-semibold text-slate-600 underline"
+                              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800"
                               onClick={() => toggleAbierto(item.id)}
                             >
+                              {abierta ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
                               {abierta ? "Ocultar cambios" : "Ver datos anteriores y nuevos"}
                             </button>
                           ) : null}
@@ -504,7 +695,7 @@ function AdminAuditoria() {
                     totalPages={totalPages}
                     total={registrosFiltrados.length}
                     onChange={setPage}
-                    label={"Paginaci\u00f3n de auditor\u00eda"}
+                    label={"Paginación de auditoría"}
                   />
                 </>
               )}
