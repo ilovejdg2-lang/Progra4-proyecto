@@ -48,18 +48,24 @@ function normalizarEstadoUi(estadoRaw) {
 function badgeEstado(estadoRaw) {
   switch (normalizarEstadoUi(estadoRaw)) {
     case "Pendiente":
-      return "bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200";
+      return "text-amber-800 dark:text-amber-300";
     case "Aceptado":
-      return "bg-sky-50 text-sky-900 dark:bg-sky-950 dark:text-sky-200";
+      return "text-sky-800 dark:text-sky-300";
     case "Entregado":
-      return "bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200";
+      return "text-emerald-800 dark:text-emerald-300";
     case "Rechazado":
-      return "bg-rose-50 text-rose-900 dark:bg-rose-950 dark:text-rose-200";
+      return "text-rose-800 dark:text-rose-300";
     case "Devolucion":
-      return "bg-violet-50 text-violet-900 dark:bg-violet-950 dark:text-violet-200";
+      return "text-violet-800 dark:text-violet-300";
     default:
-      return "bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-slate-100";
+      return "text-slate-700 dark:text-slate-200";
   }
+}
+
+function formatFechaCorta(fecha) {
+  const valor = new Date(fecha);
+  if (Number.isNaN(valor.getTime())) return t("Sin fecha");
+  return valor.toLocaleDateString("es-CR", { dateStyle: "short" });
 }
 
 function mapLocalVenta(venta) {
@@ -97,7 +103,7 @@ function BadgeEstadoCompra({ estado }) {
   const etiqueta = useTraducir(normalizado === "Devolucion" ? "Devolución" : normalizado);
   return (
     <span
-      className={`admin-chip-estado inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeEstado(normalizado)}`}
+      className={`admin-chip-estado text-[length:var(--text-body)] font-semibold ${badgeEstado(normalizado)}`}
       style={{ textDecoration: "none", textDecorationLine: "none" }}
       spellCheck={false}
     >
@@ -431,14 +437,12 @@ export default function HistorialVentas({
               <AdminListaVacia onLimpiar={() => setFiltros({ busqueda: "", estado: esPendientes ? "Pendiente" : "todos", desde: "", hasta: "" })} />
             ) : (
               <div className="admin-table-shell">
-                <table className="w-full min-w-[860px] text-left text-[length:var(--text-body)]">
+                <table className="w-full text-left text-[length:var(--text-body)]">
                   <thead>
                     <tr>
                       <th><ST>Recibo</ST></th>
                       <th><ST>Fecha</ST></th>
-                      {esAdmin ? <th><ST>Vendedor</ST></th> : null}
                       <th><ST>Cliente</ST></th>
-                      <th><ST>Punto de venta</ST></th>
                       <th><ST>Productos</ST></th>
                       <th><ST>Total</ST></th>
                       <th><ST>Estado</ST></th>
@@ -448,21 +452,21 @@ export default function HistorialVentas({
                   <tbody>
                     {compras.map((compra) => (
                       <tr key={compra.id || compra.numero} className="border-b border-slate-100 last:border-b-0">
-                        <td className="px-6 py-4 font-medium text-slate-900">{compra.numero}</td>
-                        <td className="px-6 py-4 text-slate-600"><ST>{formatFecha(compra.fecha)}</ST></td>
-                        {esAdmin ? (
-                          <td className="px-6 py-4 text-slate-700 font-medium">
-                            {compra.vendedorNombre || compra.vendedorCorreo || "—"}
-                          </td>
-                        ) : null}
-                        <td className="px-6 py-4 text-slate-700">{compra.clienteNombre}</td>
-                        <td className="px-6 py-4 text-slate-700">{compra.ubicacionNombre || "—"}</td>
-                        <td className="px-6 py-4 text-slate-700">{compra.cantidadProductos}</td>
-                        <td className="px-6 py-4 text-slate-800">{formatCRC(compra.total)}</td>
-                        <td className="px-6 py-4">
+                        <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-900">
+                          {compra.numero || "—"}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                          <ST>{formatFechaCorta(compra.fecha)}</ST>
+                        </td>
+                        <td className="max-w-[10rem] truncate px-4 py-3 text-slate-700" title={compra.clienteNombre}>
+                          {compra.clienteNombre}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-slate-700">{compra.cantidadProductos}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-slate-800">{formatCRC(compra.total)}</td>
+                        <td className="whitespace-nowrap px-4 py-3">
                           <BadgeEstadoCompra estado={compra.estado} />
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="whitespace-nowrap px-4 py-3">
                           <button
                             type="button"
                             onClick={() => abrirDetalle(compra)}

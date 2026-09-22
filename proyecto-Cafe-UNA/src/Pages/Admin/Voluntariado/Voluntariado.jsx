@@ -1112,7 +1112,7 @@ const AdminVoluntariado = () => {
                   <>
                     <div className="hidden overflow-hidden md:block">
                       <div className="admin-table-shell">
-                        <table className="w-full min-w-[900px] border-collapse text-left text-[length:var(--text-body)]">
+                        <table className="w-full border-collapse text-left text-[length:var(--text-body)]">
                           <thead>
                             <tr>
                               <th><ST>Nombre</ST></th>

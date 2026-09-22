@@ -42,7 +42,7 @@ export function PointOfSaleStockTable({ products, stockByProductId, stockLoading
   return (
     <>
       <div className="admin-table-shell hidden md:block">
-        <table className="w-full min-w-[640px] text-left text-[length:var(--text-body)]">
+        <table className="w-full text-left text-[length:var(--text-body)]">
           <thead>
             <tr>
               <th><ST>Producto</ST></th>

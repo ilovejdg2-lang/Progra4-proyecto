@@ -240,7 +240,7 @@
 .perfil-hero__role {
   border-radius: 999px;
   padding: 0.2rem 0.65rem;
-  font-size: 0.75rem;
+  font-size: var(--text-body);
   font-weight: 600;
   background: #f1f5f9;
   border: none;
