@@ -157,24 +157,18 @@
   position: relative;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+  min-width: 14rem;
 }
 
 .admin-facturas__select-wrapper .filter-icon {
-  position: absolute;
-  left: 0.75rem;
+  flex-shrink: 0;
   color: #94a3b8;
-  pointer-events: none;
 }
 
-.admin-facturas__select {
-  padding: 0.6rem 1.8rem 0.6rem 2.2rem;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  background-color: #ffffff;
-  font-size: 0.88rem;
-  color: #1e293b;
-  outline: none;
-  cursor: pointer;
+.admin-facturas__select-wrapper .ui-select {
+  flex: 1;
+  min-width: 0;
 }
 
 .admin-facturas__reset-btn {
@@ -214,15 +208,23 @@
   background-color: #ffffff;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  overflow-x: auto;
+  overflow-x: visible;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+@media (max-width: 767px) {
+  .admin-facturas__table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 .admin-facturas__table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: auto;
   text-align: left;
-  font-size: 0.88rem;
+  font-size: var(--text-body);
 }
 
 .admin-facturas__table th {
@@ -231,7 +233,7 @@
   font-weight: 600;
   padding: 0.9rem 1rem;
   border-bottom: 1px solid #e2e8f0;
-  white-space: nowrap;
+  font-size: var(--text-body);
 }
 
 .admin-facturas__table td {
@@ -239,6 +241,7 @@
   border-bottom: 1px solid #f1f5f9;
   color: #1e293b;
   vertical-align: middle;
+  font-size: var(--text-body);
 }
 
 .admin-facturas__table tbody tr:hover {
@@ -246,39 +249,31 @@
 }
 
 .factura-consecutivo-badge {
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-weight: 700;
   color: #0d1b3e;
-  background-color: #f1f5f9;
-  padding: 0.2rem 0.55rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  border: 1px solid #e2e8f0;
-}
-
-.factura-orden-text {
-  font-size: 0.85rem;
-  color: #64748b;
-  font-weight: 500;
+  font-size: var(--text-body);
+  white-space: nowrap;
 }
 
 .factura-cliente-cell {
-  display: flex;
-  flex-direction: column;
+  display: block;
+  min-width: 0;
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .factura-cliente-cell strong {
+  font-weight: 600;
   color: #0f172a;
-}
-
-.factura-cliente-cell small {
-  color: #64748b;
-  font-size: 0.78rem;
 }
 
 .factura-fecha-text {
   color: #64748b;
-  font-size: 0.85rem;
+  font-size: var(--text-body);
+  white-space: nowrap;
 }
 
 .total-highlight {
@@ -287,26 +282,25 @@
 }
 
 .factura-status-pill {
-  display: inline-block;
-  padding: 0.2rem 0.65rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  display: inline;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: var(--text-body);
+  font-weight: 700;
   text-transform: capitalize;
 }
 
 .status--emitida {
-  background-color: #ecfdf5;
   color: #059669;
 }
 
 .status--pagada {
-  background-color: #eff6ff;
   color: #2563eb;
 }
 
 .status--anulada {
-  background-color: #fef2f2;
   color: #dc2626;
 }
 
@@ -569,8 +563,7 @@ html.admin-theme-dark body.admin-route-active .facturas-metric-card__icon--emera
   color: #6ee7b7;
 }
 
-html.admin-theme-dark body.admin-route-active .admin-facturas__search-input,
-html.admin-theme-dark body.admin-route-active .admin-facturas__select {
+html.admin-theme-dark body.admin-route-active .admin-facturas__search-input {
   background-color: #12161c;
   border-color: #2a3340;
   color: #f1f5f9;
@@ -618,9 +611,7 @@ html.admin-theme-dark body.admin-route-active .factura-consecutivo-badge {
   border-color: #3a4556;
 }
 
-html.admin-theme-dark body.admin-route-active .factura-orden-text,
-html.admin-theme-dark body.admin-route-active .factura-fecha-text,
-html.admin-theme-dark body.admin-route-active .factura-cliente-cell small {
+html.admin-theme-dark body.admin-route-active .factura-fecha-text {
   color: #94a3b8;
 }
 
@@ -629,18 +620,18 @@ html.admin-theme-dark body.admin-route-active .factura-cliente-cell strong {
 }
 
 html.admin-theme-dark body.admin-route-active .status--emitida {
-  background-color: rgba(5, 150, 105, 0.25);
-  color: #6ee7b7;
+  background: transparent;
+  color: #34d399;
 }
 
 html.admin-theme-dark body.admin-route-active .status--pagada {
-  background-color: rgba(37, 99, 235, 0.25);
-  color: #93c5fd;
+  background: transparent;
+  color: #60a5fa;
 }
 
 html.admin-theme-dark body.admin-route-active .status--anulada {
-  background-color: rgba(220, 38, 38, 0.25);
-  color: #fda4af;
+  background: transparent;
+  color: #fb7185;
 }
 
 html.admin-theme-dark body.admin-route-active .action-btn {

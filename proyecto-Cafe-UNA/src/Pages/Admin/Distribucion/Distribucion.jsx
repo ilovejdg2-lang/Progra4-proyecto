@@ -445,7 +445,7 @@ export default function AdminDistribucion() {
               />
             ) : (
               <div className="admin-table-shell">
-                <table className="w-full min-w-[860px] text-left text-[length:var(--text-body)]">
+                <table className="w-full text-left text-[length:var(--text-body)]">
                   <thead>
                     <tr>
                       <th><ST>Fecha</ST></th>

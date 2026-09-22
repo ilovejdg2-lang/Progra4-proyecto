@@ -52,27 +52,27 @@ const STATES = ["Pendiente", "En revisión", "Aprobada", "Rechazada", "Inactiva"
 function badgeEstado(estadoRaw) {
   switch (String(estadoRaw || "").trim()) {
     case "Pendiente":
-      return "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-800";
+      return "text-amber-700 dark:text-amber-300";
     case "En revisión":
-      return "bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-950 dark:text-sky-200 dark:border-sky-800";
+      return "text-sky-700 dark:text-sky-300";
     case "Aprobada":
     case "Aprobado":
-      return "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-800";
+      return "text-emerald-700 dark:text-emerald-300";
     case "Rechazada":
     case "Rechazado":
-      return "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-200 dark:border-rose-800";
+      return "text-rose-700 dark:text-rose-300";
     case "Inactiva":
     case "Inactivo":
-      return "bg-slate-200 text-slate-800 border-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600";
+      return "text-slate-600 dark:text-slate-300";
     default:
-      return "bg-slate-200 text-slate-800 border-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600";
+      return "text-slate-600 dark:text-slate-300";
   }
 }
 
 function BadgeEstado({ estado }) {
   return (
     <span
-      className={`admin-chip-estado inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${badgeEstado(estado)}`}
+      className={`admin-chip-estado text-[length:var(--text-body)] font-semibold ${badgeEstado(estado)}`}
     >
       <ST>{estado || "Pendiente"}</ST>
     </span>
@@ -728,7 +728,7 @@ export default function AdminVisitas() {
                     {/* Tabla de escritorio */}
                     <div className="hidden overflow-hidden md:block">
                       <div className="admin-table-shell">
-                        <table className="w-full min-w-[780px] border-collapse text-left text-xs sm:text-sm">
+                        <table className="w-full border-collapse text-left text-xs sm:text-sm">
                           <thead>
                             <tr>
                               <th className="px-3.5 py-2 text-left text-xs font-bold uppercase tracking-wider text-slate-500">

@@ -182,16 +182,22 @@ body.admin-route-active #root {
   box-shadow: none !important;
 }
 
-/* Tablas admin: no desbordan el ancho; scroll horizontal si hace falta */
+/* Tablas admin: caben al 100%; scroll horizontal solo en pantallas chicas */
 .admin-table-shell {
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  overflow-x: auto;
+  overflow-x: visible;
   overflow-y: visible;
-  overscroll-behavior-x: contain;
-  -webkit-overflow-scrolling: touch;
   font-size: var(--text-body);
+}
+
+@media (max-width: 767px) {
+  .admin-table-shell {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 .admin-table-shell table {
@@ -275,9 +281,15 @@ body.admin-route-active #root {
 /* Solo catálogo de productos: alto acotado + scroll interno (si se usa) */
 .admin-table-shell--constrained {
   max-height: min(70vh, 640px);
-  overflow-x: auto;
+  overflow-x: visible;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+@media (max-width: 767px) {
+  .admin-table-shell--constrained {
+    overflow-x: auto;
+  }
 }
 
 .admin-table-shell--constrained thead th {
@@ -289,12 +301,19 @@ body.admin-route-active #root {
 
 /* Catálogo de productos: columnas sin solaparse */
 .admin-table-shell--productos {
-  overflow-x: auto;
+  overflow-x: visible;
+}
+
+@media (max-width: 767px) {
+  .admin-table-shell--productos {
+    overflow-x: auto;
+  }
 }
 
 .admin-table-shell--productos table {
-  table-layout: fixed;
-  min-width: 56rem;
+  table-layout: auto;
+  width: 100%;
+  min-width: 0;
 }
 
 .admin-table-shell--productos thead th {

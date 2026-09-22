@@ -317,7 +317,7 @@ export default function AdminNecesidadesDonacion() {
               <AdminListaVacia onLimpiar={filters.limpiar} />
             ) : (
               <div className="admin-table-shell">
-                <table className="w-full min-w-[720px] text-center text-[length:var(--text-body)]">
+                <table className="w-full text-center text-[length:var(--text-body)]">
                   <thead>
                     <tr>
                       <th><ST>Título</ST></th>

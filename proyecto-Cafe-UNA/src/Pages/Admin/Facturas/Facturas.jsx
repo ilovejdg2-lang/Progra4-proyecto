@@ -22,6 +22,8 @@ import {
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import PageLoading from "../../../Components/PageLoading/PageLoading";
+import { ST } from "../../../Components/T/ST";
+import { UiSelect } from "../../../Components/ui/Select";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import {
   descargarFacturaPdf,
@@ -29,7 +31,6 @@ import {
   obtenerUrlFacturaPdf,
 } from "../../../services/facturasService";
 import { getActiveSessionUser } from "../../../services/sessionService";
-import { ST } from "../../../Components/T/ST";
 import "./Facturas.css";
 
 export default function AdminFacturas() {
@@ -169,16 +170,17 @@ export default function AdminFacturas() {
 
           <div className="admin-facturas__select-wrapper">
             <Filter size={16} className="filter-icon" />
-            <select
+            <UiSelect
+              ariaLabel="Estado"
               value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value)}
-              className="admin-facturas__select"
-            >
-              <option value=""><ST>Todos los estados</ST></option>
-              <option value="Emitida"><ST>Emitida</ST></option>
-              <option value="Pagada"><ST>Pagada</ST></option>
-              <option value="Anulada"><ST>Anulada</ST></option>
-            </select>
+              onChange={setFiltroEstado}
+              options={[
+                { value: "", label: "Todos los estados" },
+                { value: "Emitida", label: "Emitida" },
+                { value: "Pagada", label: "Pagada" },
+                { value: "Anulada", label: "Anulada" },
+              ]}
+            />
           </div>
 
           {(filtroBuscar || filtroEstado) && (
@@ -224,14 +226,11 @@ export default function AdminFacturas() {
               <thead>
                 <tr>
                   <th><ST>N° Factura</ST></th>
-                  <th><ST>N° Orden</ST></th>
                   <th><ST>Cliente</ST></th>
                   <th><ST>Fecha</ST></th>
-                  <th className="text-right"><ST>Subtotal</ST></th>
-                  <th className="text-right"><ST>IVA (13%)</ST></th>
                   <th className="text-right"><ST>Total</ST></th>
                   <th><ST>Estado</ST></th>
-                  <th className="text-center" style={{ minWidth: "120px" }}><ST>Acciones</ST></th>
+                  <th className="text-center"><ST>Acciones</ST></th>
                 </tr>
               </thead>
               <tbody>
@@ -243,13 +242,9 @@ export default function AdminFacturas() {
                       </span>
                     </td>
                     <td>
-                      <span className="factura-orden-text">{fac.compraNumero}</span>
-                    </td>
-                    <td>
-                      <div className="factura-cliente-cell">
+                      <span className="factura-cliente-cell">
                         <strong>{fac.clienteNombre}</strong>
-                        {fac.clienteCorreo && <small>{fac.clienteCorreo}</small>}
-                      </div>
+                      </span>
                     </td>
                     <td>
                       <span className="factura-fecha-text">
@@ -259,12 +254,6 @@ export default function AdminFacturas() {
                           day: "2-digit",
                         })}
                       </span>
-                    </td>
-                    <td className="text-right">
-                      ₡ {fac.subtotal.toLocaleString("es-CR", { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="text-right">
-                      ₡ {fac.impuestos.toLocaleString("es-CR", { minimumFractionDigits: 2 })}
                     </td>
                     <td className="text-right font-bold total-highlight">
                       ₡ {fac.total.toLocaleString("es-CR", { minimumFractionDigits: 2 })}

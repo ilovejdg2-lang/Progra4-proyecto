@@ -651,12 +651,12 @@ export default function AdminVentasPresenciales() {
                           </span>
 
                           <span
-                            className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                            className={`text-[length:var(--text-body)] font-semibold ${
                               sinStock
-                                ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200"
+                                ? "text-rose-700 dark:text-rose-300"
                                 : stockDisp <= 3
-                                ? "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200"
-                                : "bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
+                                ? "text-amber-800 dark:text-amber-300"
+                                : "text-emerald-800 dark:text-emerald-300"
                             }`}
                           >
                             {sinStock ? t("Agotado") : `${stockDisp} ${t("disp.")}`}

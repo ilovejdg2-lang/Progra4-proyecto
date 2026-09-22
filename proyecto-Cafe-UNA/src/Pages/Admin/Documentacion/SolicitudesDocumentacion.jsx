@@ -25,6 +25,7 @@ import {
 import { AdminLayout } from "../layouts/AdminLayout";
 import { createPortal } from "react-dom";
 import PageLoading from "../../../Components/PageLoading/PageLoading";
+import { UiSelect } from "../../../Components/ui/Select";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import {
   atenderSolicitudDocumentoAdmin,
@@ -195,16 +196,17 @@ export default function SolicitudesDocumentacion() {
             </div>
 
             {/* Selector de Estado */}
-            <select
-              className="admin-docs-select"
+            <UiSelect
+              ariaLabel="Estado"
               value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value)}
-            >
-              <option value="todos">Todos los estados</option>
-              <option value="Pendiente">Pendientes</option>
-              <option value="Aprobada">Aprobadas</option>
-              <option value="Rechazada">Rechazadas</option>
-            </select>
+              onChange={setFiltroEstado}
+              options={[
+                { value: "todos", label: "Todos los estados" },
+                { value: "Pendiente", label: "Pendientes" },
+                { value: "Aprobada", label: "Aprobadas" },
+                { value: "Rechazada", label: "Rechazadas" },
+              ]}
+            />
           </div>
 
           {cargando ? (
