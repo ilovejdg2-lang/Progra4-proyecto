@@ -522,3 +522,161 @@
   height: 100%;
   border: none;
 }
+
+/* Modo oscuro admin */
+html.admin-theme-dark body.admin-route-active .admin-facturas__title {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-facturas__subtitle {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-facturas__badge-tag {
+  background-color: rgba(37, 99, 235, 0.2);
+  color: #93c5fd;
+}
+
+html.admin-theme-dark body.admin-route-active .facturas-metric-card,
+html.admin-theme-dark body.admin-route-active .admin-facturas__filters-card,
+html.admin-theme-dark body.admin-route-active .admin-facturas__table-container {
+  background-color: #161b22;
+  border-color: #2a3340;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+html.admin-theme-dark body.admin-route-active .facturas-metric-card__label,
+html.admin-theme-dark body.admin-route-active .facturas-metric-card__hint {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .facturas-metric-card__value {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .facturas-metric-card__icon--blue {
+  background-color: rgba(37, 99, 235, 0.2);
+  color: #93c5fd;
+}
+
+html.admin-theme-dark body.admin-route-active .facturas-metric-card__icon--red {
+  background-color: rgba(196, 30, 58, 0.2);
+  color: #fda4af;
+}
+
+html.admin-theme-dark body.admin-route-active .facturas-metric-card__icon--emerald {
+  background-color: rgba(5, 150, 105, 0.2);
+  color: #6ee7b7;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-facturas__search-input,
+html.admin-theme-dark body.admin-route-active .admin-facturas__select {
+  background-color: #12161c;
+  border-color: #2a3340;
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-facturas__search-input:focus {
+  border-color: #64748b;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.15);
+}
+
+html.admin-theme-dark body.admin-route-active .admin-facturas__reset-btn {
+  background-color: #1a212b;
+  border-color: #2a3340;
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-facturas__reset-btn:hover {
+  background-color: #243041;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-facturas__error-banner {
+  background-color: rgba(136, 19, 55, 0.35);
+  border-color: rgba(251, 113, 133, 0.4);
+  color: #fecdd3;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-facturas__table th {
+  background-color: #1a212b;
+  color: #94a3b8;
+  border-bottom-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-facturas__table td {
+  color: #e2e8f0;
+  border-bottom-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-facturas__table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+html.admin-theme-dark body.admin-route-active .factura-consecutivo-badge {
+  color: #e2e8f0;
+  background-color: #243041;
+  border-color: #3a4556;
+}
+
+html.admin-theme-dark body.admin-route-active .factura-orden-text,
+html.admin-theme-dark body.admin-route-active .factura-fecha-text,
+html.admin-theme-dark body.admin-route-active .factura-cliente-cell small {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .factura-cliente-cell strong {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .status--emitida {
+  background-color: rgba(5, 150, 105, 0.25);
+  color: #6ee7b7;
+}
+
+html.admin-theme-dark body.admin-route-active .status--pagada {
+  background-color: rgba(37, 99, 235, 0.25);
+  color: #93c5fd;
+}
+
+html.admin-theme-dark body.admin-route-active .status--anulada {
+  background-color: rgba(220, 38, 38, 0.25);
+  color: #fda4af;
+}
+
+html.admin-theme-dark body.admin-route-active .action-btn {
+  background: #1a212b;
+  border-color: #2a3340;
+  color: #cbd5e1;
+}
+
+html.admin-theme-dark body.admin-route-active .action-btn:hover {
+  background: #243041;
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-facturas__empty {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-facturas__empty h3 {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .factura-modal-content,
+html.admin-theme-dark body.admin-route-active .factura-modal-header {
+  background-color: #161b22;
+  border-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .factura-modal-header__title h3 {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .factura-modal-header__title p {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .btn-modal-close:hover {
+  background-color: #243041;
+  color: #f1f5f9;
+}

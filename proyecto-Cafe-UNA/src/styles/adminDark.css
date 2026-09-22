@@ -1,5 +1,7 @@
 html.admin-theme-dark body.admin-route-active,
-html.admin-theme-dark body.admin-route-loading-active {
+html.admin-theme-dark body.admin-route-loading-active,
+html.admin-theme-dark body.admin-boot-loading,
+html.admin-theme-dark body.app-route-loading:has(.page-loading--admin) {
   color-scheme: dark;
   background: #0e1116 !important;
   color: #e2e8f0;
@@ -11,11 +13,60 @@ html.admin-theme-dark body.admin-route-loading-active #root {
 }
 
 html.admin-theme-dark .admin-route-loading,
-html.admin-theme-dark body.admin-route-active .page-loading {
+html.admin-theme-dark body.admin-route-active .page-loading,
+html.admin-theme-dark body.app-route-loading .page-loading--admin,
+html.admin-theme-dark .page-loading--admin {
   background:
     radial-gradient(ellipse at 50% 28%, rgba(148, 163, 184, 0.12) 0%, rgba(14, 17, 22, 0) 55%),
     #0e1116 !important;
-  color: #e2e8f0;
+  color: #e2e8f0 !important;
+}
+
+html.admin-theme-dark #site-initial-loader.site-initial-loader--admin,
+html.admin-theme-dark body.admin-boot-loading #site-initial-loader,
+html.admin-theme-dark.admin-boot-loading #site-initial-loader,
+html.admin-theme-dark body.admin-route-loading-active #site-initial-loader {
+  background:
+    radial-gradient(ellipse at 50% 28%, rgba(148, 163, 184, 0.12) 0%, rgba(14, 17, 22, 0) 55%),
+    #0e1116 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Con el portal React activo no tapar con el loader HTML claro */
+html.admin-theme-dark body.app-route-loading:has(.page-loading--admin) #site-initial-loader {
+  display: none !important;
+}
+
+html.admin-theme-dark body.admin-boot-loading .site-initial-spinner,
+html.admin-theme-dark body.admin-route-loading-active .site-initial-spinner,
+html.admin-theme-dark #site-initial-loader.site-initial-loader--admin .site-initial-spinner {
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  border-top-color: #e2e8f0 !important;
+}
+
+html.admin-theme-dark body.admin-boot-loading #site-boot-message,
+html.admin-theme-dark body.admin-route-loading-active #site-boot-message,
+html.admin-theme-dark #site-initial-loader.site-initial-loader--admin #site-boot-message,
+html.admin-theme-dark body.admin-boot-loading .site-initial-wordmark,
+html.admin-theme-dark #site-initial-loader.site-initial-loader--admin .site-initial-wordmark {
+  color: #e2e8f0 !important;
+}
+
+html.admin-theme-dark .brand-loader--admin .brand-loader__message,
+html.admin-theme-dark .brand-loader--admin .brand-loader__wordmark,
+html.admin-theme-dark .page-loading--admin .brand-loader__message {
+  color: #e2e8f0 !important;
+}
+
+html.admin-theme-dark .brand-loader--admin .brand-loader__detail,
+html.admin-theme-dark .page-loading--admin .brand-loader__detail {
+  color: #94a3b8 !important;
+}
+
+html.admin-theme-dark .brand-loader--admin .brand-loader__spinner,
+html.admin-theme-dark .page-loading--admin .brand-loader__spinner {
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  border-top-color: #e2e8f0 !important;
 }
 
 html.admin-theme-dark body.admin-route-active .bg-white,
@@ -26,8 +77,92 @@ html.admin-theme-dark body.admin-route-active .admin-modal-root [role="dialog"] 
 }
 
 html.admin-theme-dark body.admin-route-active .bg-slate-50,
-html.admin-theme-dark body.admin-route-active .bg-neutral-50 {
+html.admin-theme-dark body.admin-route-active .bg-neutral-50,
+html.admin-theme-dark body.admin-route-active .bg-slate-50\/90,
+html.admin-theme-dark body.admin-route-active .bg-slate-50\/80,
+html.admin-theme-dark body.admin-route-active .bg-slate-50\/70,
+html.admin-theme-dark body.admin-route-active .bg-slate-50\/60,
+html.admin-theme-dark body.admin-route-active .bg-slate-50\/50 {
   background-color: #12161c !important;
+}
+
+/* Pills/chips claros: el texto slate se aclara en dark; el fondo debe oscurecerse también */
+html.admin-theme-dark body.admin-route-active .bg-slate-100,
+html.admin-theme-dark body.admin-route-active .bg-slate-200,
+html.admin-theme-dark body.admin-route-active .bg-neutral-100 {
+  background-color: #243041 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .bg-amber-50,
+html.admin-theme-dark body.admin-route-active .bg-amber-100,
+html.admin-theme-dark body.admin-route-active .bg-yellow-50,
+html.admin-theme-dark body.admin-route-active .bg-orange-50,
+html.admin-theme-dark body.admin-route-active .bg-orange-100 {
+  background-color: rgba(120, 53, 15, 0.35) !important;
+}
+
+html.admin-theme-dark body.admin-route-active .bg-sky-50,
+html.admin-theme-dark body.admin-route-active .bg-sky-100,
+html.admin-theme-dark body.admin-route-active .bg-blue-50 {
+  background-color: rgba(12, 74, 110, 0.4) !important;
+}
+
+html.admin-theme-dark body.admin-route-active .bg-emerald-50,
+html.admin-theme-dark body.admin-route-active .bg-emerald-100,
+html.admin-theme-dark body.admin-route-active .bg-green-50 {
+  background-color: rgba(6, 78, 59, 0.4) !important;
+}
+
+html.admin-theme-dark body.admin-route-active .bg-rose-50,
+html.admin-theme-dark body.admin-route-active .bg-rose-100,
+html.admin-theme-dark body.admin-route-active .bg-red-50 {
+  background-color: rgba(136, 19, 55, 0.4) !important;
+}
+
+html.admin-theme-dark body.admin-route-active .bg-violet-50,
+html.admin-theme-dark body.admin-route-active .bg-violet-100,
+html.admin-theme-dark body.admin-route-active .bg-purple-50 {
+  background-color: rgba(76, 29, 149, 0.4) !important;
+}
+
+html.admin-theme-dark body.admin-route-active .text-amber-800,
+html.admin-theme-dark body.admin-route-active .text-amber-900,
+html.admin-theme-dark body.admin-route-active .text-yellow-800 {
+  color: #fcd34d !important;
+}
+
+html.admin-theme-dark body.admin-route-active .text-sky-800,
+html.admin-theme-dark body.admin-route-active .text-sky-900,
+html.admin-theme-dark body.admin-route-active .text-blue-800 {
+  color: #7dd3fc !important;
+}
+
+html.admin-theme-dark body.admin-route-active .text-emerald-800,
+html.admin-theme-dark body.admin-route-active .text-emerald-900,
+html.admin-theme-dark body.admin-route-active .text-green-800 {
+  color: #6ee7b7 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .text-rose-800,
+html.admin-theme-dark body.admin-route-active .text-rose-900,
+html.admin-theme-dark body.admin-route-active .text-red-800 {
+  color: #fda4af !important;
+}
+
+html.admin-theme-dark body.admin-route-active .text-violet-800,
+html.admin-theme-dark body.admin-route-active .text-violet-900,
+html.admin-theme-dark body.admin-route-active .text-purple-800 {
+  color: #c4b5fd !important;
+}
+
+html.admin-theme-dark body.admin-route-active .text-orange-800,
+html.admin-theme-dark body.admin-route-active .text-\[\#5c3317\] {
+  color: #fdba74 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-role-chip,
+html.admin-theme-dark body.admin-route-active .admin-chip-estado {
+  border-color: rgba(148, 163, 184, 0.25);
 }
 
 html.admin-theme-dark body.admin-route-active .border-slate-100,
@@ -180,4 +315,131 @@ html.admin-theme-dark body.admin-route-active input,
 html.admin-theme-dark body.admin-route-active textarea,
 html.admin-theme-dark body.admin-route-active select {
   color-scheme: dark;
+}
+
+/* Perfil (Mi cuenta) — cards y acciones con CSS propio, no clases Tailwind */
+html.admin-theme-dark body.admin-route-active .perfil-card,
+html.admin-theme-dark body.admin-route-active .perfil-modal__card {
+  background: #161b22;
+  border-color: #2a3340;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-card__header,
+html.admin-theme-dark body.admin-route-active .perfil-card__header h2,
+html.admin-theme-dark body.admin-route-active .perfil-modal__header h3 {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-card__current-value,
+html.admin-theme-dark body.admin-route-active .perfil-field span,
+html.admin-theme-dark body.admin-route-active .perfil-cliente-fila dt,
+html.admin-theme-dark body.admin-route-active .perfil-cliente-fila dd {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-link-action {
+  background: #1a212b;
+  border-color: #2a3340;
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-link-action:hover {
+  background: #243041;
+  border-color: #3a4556;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-button--ghost {
+  background: #1a212b;
+  color: #e2e8f0;
+  border-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-button--ghost:hover:not(:disabled) {
+  background: #243041;
+  color: #f1f5f9;
+  border-color: #3a4556;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-field input {
+  background: #12161c;
+  border-color: #2a3340;
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-field input:focus,
+html.admin-theme-dark body.admin-route-active .perfil-field input:focus-visible {
+  border-color: #64748b;
+  background: #12161c;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-hero__role {
+  background: #243041;
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-hero__role--superadmin {
+  color: #fbbf24;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-hero__role--admin {
+  color: #4ade80;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-hero__role--vendedor {
+  color: #fdba74;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-hero__role--cliente {
+  color: #fb7185;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-hero__role--usuario {
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-feedback--ok {
+  background: #1a212b;
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-cliente-form .registro-radio {
+  background: #1a212b;
+  border-color: #2a3340;
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-cliente-form .registro-radio.is-active {
+  background: #243041;
+  border-color: #64748b;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-password-field__toggle {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .bg-green-50,
+html.admin-theme-dark body.admin-route-active .bg-green-100 {
+  background-color: rgba(6, 78, 59, 0.4) !important;
+}
+
+html.admin-theme-dark body.admin-route-active .text-green-600,
+html.admin-theme-dark body.admin-route-active .text-green-700,
+html.admin-theme-dark body.admin-route-active .text-green-800 {
+  color: #6ee7b7 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .bg-red-50,
+html.admin-theme-dark body.admin-route-active .bg-red-100 {
+  background-color: rgba(136, 19, 55, 0.45) !important;
+}
+
+html.admin-theme-dark body.admin-route-active .text-red-500,
+html.admin-theme-dark body.admin-route-active .text-red-600,
+html.admin-theme-dark body.admin-route-active .text-red-700 {
+  color: #fda4af !important;
+}
+
+html.admin-theme-dark body.admin-route-active .perfil-back-admin a {
+  color: #cbd5e1;
 }

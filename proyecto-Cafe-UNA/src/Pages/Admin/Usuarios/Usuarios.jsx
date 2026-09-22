@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import {
   flexRender,
@@ -25,6 +25,7 @@ import {
   confirmarCambioCorreoUsuario,
 } from "../../../services/usuariosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
+import { consultarCedulaDetallada } from "../../../services/cedulaService";
 import { tienePermiso } from "../../../lib/permisos";
 import {
   MAX_NOMBRE_USUARIO,
@@ -189,10 +190,10 @@ function InfoClienteLectura({ usuario }) {
   const tituloTipo = esEmpresa ? "Empresa" : tipo === "persona" ? "Persona" : "Cliente";
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+    <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2 dark:border-slate-700 dark:bg-slate-900/50">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-900"><ST>Datos de cliente</ST></h3>
-        <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200">
+        <span className="rounded-full border border-slate-200 bg-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-800 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100">
           <ST>{tituloTipo}</ST>
         </span>
       </div>
@@ -225,20 +226,26 @@ function InfoClienteLectura({ usuario }) {
         </dl>
       )}
       <p className="text-xs text-slate-500 pt-1">
-        <ST>Si quita el rol Cliente, se borra esta información y la persona debe registrarse de nuevo.</ST>
+        {usuario?.tieneComprasOSolicitudes || usuario?.TieneComprasOSolicitudes ? (
+          <ST>
+            No se puede quitar el rol Cliente porque tiene compras o solicitudes de compra vinculadas.
+          </ST>
+        ) : (
+          <ST>Si quita el rol Cliente, se borra esta información y la persona debe registrarse de nuevo.</ST>
+        )}
       </p>
     </section>
   );
 }
 
 const colorRol = {
-  Superadministrador: "bg-slate-100 text-yellow-500",
-  SuperAdmin:         "bg-slate-100 text-yellow-500",
-  Administración:     "bg-slate-100 text-green-600",
-  Admin:              "bg-slate-100 text-green-600",
-  Vendedor:           "bg-slate-100 text-[#5c3317]",
-  Cliente:            "bg-slate-100 text-red-600",
-  Usuario:            "bg-slate-100 text-slate-700",
+  Superadministrador: "admin-role-chip bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200",
+  SuperAdmin:         "admin-role-chip bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200",
+  Administración:     "admin-role-chip bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200",
+  Admin:              "admin-role-chip bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200",
+  Vendedor:           "admin-role-chip bg-orange-100 text-[#5c3317] dark:bg-orange-950 dark:text-orange-200",
+  Cliente:            "admin-role-chip bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200",
+  Usuario:            "admin-role-chip bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-white",
 };
 
 function claseRol(rol) {
@@ -248,7 +255,7 @@ function claseRol(rol) {
   if (clave === "vendedor") return colorRol.Vendedor;
   if (clave === "cliente") return colorRol.Cliente;
   if (clave === "usuario") return colorRol.Usuario;
-  return colorRol[rol] ?? "bg-slate-100 text-slate-700";
+  return colorRol[rol] ?? "admin-role-chip bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-white";
 }
 
 function BadgeRol({ rol }) {
@@ -263,7 +270,7 @@ const btnNegro =
   "w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
 
 const btnCancelarGris =
-  "w-full rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 sm:w-auto";
+  "w-full rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 sm:w-auto";
 
 const ROLES_DISPONIBLES = ["SuperAdmin", "Admin", "Vendedor", "Usuario", "Cliente"];
 
@@ -275,6 +282,10 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
   const editandoPropioUsuario = Boolean(inicial?.id) && actorId !== null && Number(inicial.id) === actorId;
   const correoOriginal = (inicial?.correo ?? "").trim().toLowerCase();
   const teniaClienteAlAbrir = (inicial?.roles || []).some((r) => String(r).toLowerCase() === "cliente");
+  const bloquearQuitarCliente = Boolean(
+    teniaClienteAlAbrir &&
+      (inicial?.tieneComprasOSolicitudes ?? inicial?.TieneComprasOSolicitudes),
+  );
 
   const [pasoCreacion, setPasoCreacion] = useState("datos");
   const [codigoVerificacion, setCodigoVerificacion] = useState("");
@@ -293,6 +304,71 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
   });
   const [clienteForm, setClienteForm] = useState(CLIENTE_FORM_VACIO);
   const [asignandoCliente, setAsignandoCliente] = useState(false);
+  const [consultandoCedula, setConsultandoCedula] = useState(false);
+  const [avisoCedula, setAvisoCedula] = useState("");
+  const consultaCedulaRef = useRef({ digitos: "", enCurso: false });
+
+  const consultarDatosCedula = useCallback(async (digitos, { forzar = false } = {}) => {
+    if (digitos.length !== 9) return;
+    if (consultaCedulaRef.current.enCurso) return;
+    if (!forzar && consultaCedulaRef.current.digitos === digitos) return;
+
+    consultaCedulaRef.current = { digitos, enCurso: true };
+    setConsultandoCedula(true);
+    setAvisoCedula("");
+
+    try {
+      const datos = await consultarCedulaDetallada(digitos);
+      const nombre = datos?.nombre || datos?.Nombre || "";
+      const apellido1 = datos?.primerApellido || datos?.PrimerApellido || "";
+      const apellido2 = datos?.segundoApellido || datos?.SegundoApellido || "";
+
+      if (!nombre && !apellido1) {
+        consultaCedulaRef.current = { digitos: "", enCurso: false };
+        setAvisoCedula("No se encontraron datos para esta cédula. Completá los datos manualmente.");
+        return;
+      }
+
+      consultaCedulaRef.current = { digitos, enCurso: false };
+      setClienteForm((prev) => ({
+        ...prev,
+        identificacion: digitos,
+        nombreLegal: soloLetras(nombre, 50),
+        apellido1: soloLetras(apellido1, 40),
+        apellido2: soloLetras(apellido2, 40),
+      }));
+      setAvisoCedula("Datos cargados automáticamente. Podés editarlos si hace falta.");
+    } catch (error) {
+      consultaCedulaRef.current = { digitos: "", enCurso: false };
+      const mensajeBase = error?.message?.trim() || "No se pudo consultar la cédula.";
+      const yaIndicaManual = /manualmente|completar/i.test(mensajeBase);
+      setAvisoCedula(
+        yaIndicaManual ? mensajeBase : `${mensajeBase} Completá los datos manualmente.`,
+      );
+    } finally {
+      setConsultandoCedula(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!asignandoCliente) return undefined;
+    if (clienteForm.tipo !== "persona" || clienteForm.esNacional !== "si") return undefined;
+    const digitos = soloDigitos(clienteForm.identificacion, 9);
+    if (digitos.length !== 9) return undefined;
+    if (consultaCedulaRef.current.enCurso) return undefined;
+    if (consultaCedulaRef.current.digitos === digitos) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      consultarDatosCedula(digitos);
+    }, 350);
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    asignandoCliente,
+    clienteForm.tipo,
+    clienteForm.esNacional,
+    clienteForm.identificacion,
+    consultarDatosCedula,
+  ]);
 
   const form = useForm({
     defaultValues: {
@@ -329,6 +405,13 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
           setFieldErrors(nextErrors);
           return;
         }
+      }
+
+      if (bloquearQuitarCliente && teniaClienteAlAbrir && !rolesPayload.some(esRolCliente)) {
+        nextErrors.formulario =
+          "No se puede quitar el rol Cliente porque tiene compras o solicitudes de compra vinculadas.";
+        setFieldErrors(nextErrors);
+        return;
       }
 
       const agregaCliente = rolesPayload.some(esRolCliente) && !teniaClienteAlAbrir;
@@ -749,13 +832,25 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                     if (esRolCliente(rol) && !yaSeleccionado) {
                       setAsignandoCliente(true);
                       setClienteForm(CLIENTE_FORM_VACIO);
+                      consultaCedulaRef.current = { digitos: "", enCurso: false };
+                      setAvisoCedula("");
                       field.handleChange([...selectedRoles, rol]);
                       setFieldErrors((prev) => ({ ...prev, formulario: "" }));
                       return;
                     }
                     if (esRolCliente(rol) && yaSeleccionado) {
+                      if (bloquearQuitarCliente) {
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          formulario:
+                            "No se puede quitar el rol Cliente porque tiene compras o solicitudes de compra vinculadas.",
+                        }));
+                        return;
+                      }
                       setAsignandoCliente(false);
                       setClienteForm(CLIENTE_FORM_VACIO);
+                      consultaCedulaRef.current = { digitos: "", enCurso: false };
+                      setAvisoCedula("");
                     }
                     field.handleChange(
                       yaSeleccionado
@@ -772,6 +867,9 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                           const seleccionado = selectedRoles.includes(rol);
                           const bloquearSuper =
                             esRolSuperAdmin(rol) && seleccionado && editandoPropioUsuario;
+                          const bloquearCliente =
+                            esRolCliente(rol) && seleccionado && bloquearQuitarCliente;
+                          const bloqueado = bloquearSuper || bloquearCliente;
                           return (
                             <button
                               key={rol}
@@ -780,20 +878,30 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                               title={
                                 bloquearSuper
                                   ? t("No puede quitarse el rol SuperAdmin.")
-                                  : undefined
+                                  : bloquearCliente
+                                    ? t(
+                                        "No se puede quitar el rol Cliente porque tiene compras o solicitudes de compra vinculadas.",
+                                      )
+                                    : undefined
                               }
                               className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                                 seleccionado
                                   ? claseRol(rol)
-                                  : "border border-slate-200 bg-white text-slate-500 hover:border-slate-300"
-                              } ${bloquearSuper ? "cursor-not-allowed opacity-80" : ""}`}
+                                  : "border border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:border-slate-500"
+                              } ${bloqueado ? "cursor-not-allowed opacity-80" : ""}`}
                             >
                               <ST>{rol}</ST>
                             </button>
                           );
                         })}
                       </div>
-                      {teniaClienteAlAbrir ? (
+                      {bloquearQuitarCliente ? (
+                        <p className="text-xs text-amber-800">
+                          <ST>
+                            No se puede quitar el rol Cliente porque tiene compras o solicitudes de compra vinculadas.
+                          </ST>
+                        </p>
+                      ) : teniaClienteAlAbrir ? (
                         <p className="text-xs text-amber-800">
                           <ST>Al quitar Cliente se borra la ficha y debe volver a registrarse para comprar.</ST>
                         </p>
@@ -830,7 +938,11 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                   <button
                     key={op.id}
                     type="button"
-                    onClick={() => setClienteForm((prev) => ({ ...prev, tipo: op.id }))}
+                    onClick={() => {
+                      consultaCedulaRef.current = { digitos: "", enCurso: false };
+                      setAvisoCedula("");
+                      setClienteForm((prev) => ({ ...prev, tipo: op.id }));
+                    }}
                     className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                       clienteForm.tipo === op.id
                         ? "bg-slate-900 text-white"
@@ -918,14 +1030,23 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                         <button
                           key={op.id}
                           type="button"
-                          onClick={() => setClienteForm((prev) => ({
-                            ...prev,
-                            esNacional: op.esNacional,
-                            tipoDocumento: op.esNacional === "si" ? "cedula" : (prev.tipoDocumento === "cedula" ? "dimex" : prev.tipoDocumento),
-                            identificacion: op.esNacional === "si"
-                              ? soloDigitos(prev.identificacion, 9)
-                              : prev.identificacion,
-                          }))}
+                          onClick={() => {
+                            consultaCedulaRef.current = { digitos: "", enCurso: false };
+                            setAvisoCedula("");
+                            setClienteForm((prev) => ({
+                              ...prev,
+                              esNacional: op.esNacional,
+                              tipoDocumento: op.esNacional === "si"
+                                ? "cedula"
+                                : (prev.tipoDocumento === "cedula" ? "dimex" : prev.tipoDocumento),
+                              identificacion: op.esNacional === "si"
+                                ? soloDigitos(prev.identificacion, 9)
+                                : prev.identificacion,
+                              ...(op.esNacional === "no"
+                                ? { nombreLegal: "", apellido1: "", apellido2: "" }
+                                : {}),
+                            }));
+                          }}
                           className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                             clienteForm.esNacional === op.esNacional
                               ? "bg-slate-900 text-white"
@@ -968,10 +1089,20 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                         const valor = tipo === "pasaporte"
                           ? e.target.value.replace(/[^A-Za-z0-9]/g, "").slice(0, 20)
                           : soloDigitos(e.target.value, tipo === "dimex" ? 12 : 9);
+                        if (tipo === "cedula" && valor !== clienteForm.identificacion) {
+                          consultaCedulaRef.current = { digitos: "", enCurso: false };
+                          setAvisoCedula("");
+                        }
                         setClienteForm((prev) => ({ ...prev, identificacion: valor }));
                       }}
                       required
                     />
+                    {clienteForm.esNacional === "si" && consultandoCedula ? (
+                      <p className="mt-1 text-xs text-slate-500"><ST>Consultando cédula...</ST></p>
+                    ) : null}
+                    {clienteForm.esNacional === "si" && avisoCedula ? (
+                      <p className="mt-1 text-xs text-slate-600"><ST>{avisoCedula}</ST></p>
+                    ) : null}
                   </label>
                   <label className="block text-xs font-medium text-slate-600">
                     <ST>Teléfono</ST>
@@ -1065,6 +1196,9 @@ function mapUsuario(item) {
     cedulaJuridica: item?.cedulaJuridica ?? item?.CedulaJuridica ?? null,
     direccionFiscal: item?.direccionFiscal ?? item?.DireccionFiscal ?? null,
     telefonoOficina: item?.telefonoOficina ?? item?.TelefonoOficina ?? null,
+    tieneComprasOSolicitudes: Boolean(
+      item?.tieneComprasOSolicitudes ?? item?.TieneComprasOSolicitudes,
+    ),
   };
 }
 

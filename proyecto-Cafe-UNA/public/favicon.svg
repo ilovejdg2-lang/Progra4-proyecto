@@ -1,8 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Café UNA">
-  <rect width="64" height="64" rx="14" fill="#4d2b1f"/>
-  <ellipse cx="32" cy="38" rx="16" ry="12" fill="#f7efe8"/>
-  <path d="M18 34c0-8 6-14 14-14s14 6 14 14" fill="none" stroke="#c4956a" stroke-width="3" stroke-linecap="round"/>
-  <path d="M48 30c4 0 7 3 7 7s-3 7-7 7" fill="none" stroke="#f7efe8" stroke-width="3" stroke-linecap="round"/>
-  <path d="M26 18c2-3 4-4 6-4M32 18c2-3 4-4 6-4" fill="none" stroke="#c4956a" stroke-width="2.2" stroke-linecap="round"/>
-  <text x="32" y="56" text-anchor="middle" fill="#f7efe8" font-family="Georgia, serif" font-size="9" font-weight="700">UNA</text>
+  <rect width="64" height="64" rx="14" fill="#0a0a0a"/>
+  <path fill="#BE161E" d="M18 28c0-2 1.5-4 4-5.5 3-1.8 7-2.5 10-2.5s7 .7 10 2.5c2.5 1.5 4 3.5 4 5.5v14c0 6-6 11-14 11s-14-5-14-11V28z"/>
+  <path fill="#FFFFFF" d="M28 18c1.2-3.2 2.8-5.2 4.2-5.8 0 0-.2 2.4.4 4.6.5 1.8 1.4 3.4 1.4 3.4s-2.2-.4-4.2-.4c-.8 0-1.4.1-1.8.2z"/>
+  <path fill="#FFFFFF" d="M36 17.5c1.5-3.4 3.4-5.2 5-5.5 0 0-.4 2.6.2 5 .4 1.6 1.2 3 1.2 3s-2.4-.5-4.6-.6c-.8 0-1.4.1-1.8.1z"/>
+  <path fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" d="M46 30c4.5.5 7.5 3.2 7.5 7s-3 6.5-7.5 7"/>
 </svg>

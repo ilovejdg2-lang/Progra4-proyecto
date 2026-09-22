@@ -59,6 +59,8 @@ const Checkout = lazy(() => import("./Pages/Checkout/Checkout"));
 const Perfil = lazy(() => import("./Pages/Perfil/Perfil"));
 const HistorialComprasCliente = lazy(() => import("./Pages/HistorialCompras/HistorialComprasCliente"));
 const AdminMisCompras = lazy(() => import("./Pages/Admin/MisCompras/AdminMisCompras"));
+const HistorialSolicitudesCliente = lazy(() => import("./Pages/HistorialSolicitudes/HistorialSolicitudesCliente"));
+const AdminMisSolicitudes = lazy(() => import("./Pages/Admin/MisSolicitudes/AdminMisSolicitudes"));
 const AdminPerfil = lazy(() => import("./Pages/Admin/Perfil/AdminPerfil"));
 const Repositorio = lazy(() => import("./Pages/Repositorio/Repositorio"));
 const AdminDocumentos = lazy(() => import("./Pages/Admin/Documentacion/Documentos"));
@@ -147,9 +149,16 @@ const rootRoute = createRootRoute({
             pathname === "/registro" || pathname === "/verificar-cuenta";
         const isPerfilRoute = pathname === "/perfil";
         const isPerfilComprasRoute = pathname === "/perfil/compras" || pathname.startsWith("/perfil/compras/");
+        const isPerfilSolicitudesRoute =
+            pathname === "/perfil/solicitudes" || pathname.startsWith("/perfil/solicitudes/");
         const isCheckoutRoute = pathname === "/checkout";
         const isChromelessRoute =
-            isLoginRoute || isRegistroRoute || isPerfilRoute || isCheckoutRoute;
+            isLoginRoute ||
+            isRegistroRoute ||
+            isPerfilRoute ||
+            isPerfilComprasRoute ||
+            isPerfilSolicitudesRoute ||
+            isCheckoutRoute;
         const loadingKey = isHomeRoute ? 'home' : cacheKey || pathname;
 
         // Durante el render: activar overlay antes del paint (evita blanco).
@@ -175,9 +184,18 @@ const rootRoute = createRootRoute({
 
         useEffect(() => {
             document.body.classList.toggle("admin-route-active", isAdminRoute);
-            document.body.classList.toggle("perfil-route-active", isPerfilRoute || isPerfilComprasRoute);
+            document.body.classList.toggle(
+                "perfil-route-active",
+                isPerfilRoute || isPerfilComprasRoute || isPerfilSolicitudesRoute,
+            );
             document.body.classList.toggle("checkout-route-active", isCheckoutRoute);
-            if (isAdminRoute || isPerfilRoute || isPerfilComprasRoute || isCheckoutRoute) {
+            if (
+                isAdminRoute ||
+                isPerfilRoute ||
+                isPerfilComprasRoute ||
+                isPerfilSolicitudesRoute ||
+                isCheckoutRoute
+            ) {
                 document.body.classList.remove("home-hero-ready");
                 clearHomePageLoading();
             }
@@ -187,7 +205,7 @@ const rootRoute = createRootRoute({
                 document.body.classList.remove("perfil-route-active");
                 document.body.classList.remove("checkout-route-active");
             };
-        }, [isAdminRoute, isPerfilRoute, isPerfilComprasRoute, isCheckoutRoute]);
+        }, [isAdminRoute, isPerfilRoute, isPerfilComprasRoute, isPerfilSolicitudesRoute, isCheckoutRoute]);
 
         useLayoutEffect(() => {
             applyAdminDocumentTheme(isAdminRoute);
@@ -448,6 +466,16 @@ const adminMisComprasRoute = createRoute({
     path: "/admin/mis-compras",
     component: AdminMisCompras,
 })
+const historialSolicitudesClienteRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/perfil/solicitudes",
+    component: HistorialSolicitudesCliente,
+})
+const adminMisSolicitudesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/mis-solicitudes",
+    component: AdminMisSolicitudes,
+})
 const adminPerfilRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/perfil",
@@ -527,6 +555,8 @@ const routeTree= rootRoute.addChildren([
     perfilRoute,
     historialComprasClienteRoute,
     adminMisComprasRoute,
+    historialSolicitudesClienteRoute,
+    adminMisSolicitudesRoute,
     adminPerfilRoute,
     repositorioRoute,
     documentosAliasRoute,

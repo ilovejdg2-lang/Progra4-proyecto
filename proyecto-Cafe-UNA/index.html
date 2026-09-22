@@ -7,8 +7,8 @@
       name="description"
       content="Café UNA — café de la Universidad Nacional, Costa Rica. Catálogo, voluntariado y experiencias en la Finca Experimental Santa Lucía."
     />
-    <link rel="icon" type="image/webp" href="/logo.webp" />
-    <link rel="apple-touch-icon" href="/logo.webp" />
+    <link rel="icon" type="image/png" href="/logoblancoyrojo.png" />
+    <link rel="apple-touch-icon" href="/logoblancoyrojo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Café UNA</title>
     <script>
@@ -17,7 +17,18 @@
         if (path.length > 1 && path.charAt(path.length - 1) === '/') {
           path = path.slice(0, -1);
         }
-        if (path.indexOf('/admin') === 0) {
+        var isAdmin = path.indexOf('/admin') === 0;
+        var adminDark = false;
+        try {
+          adminDark = isAdmin && localStorage.getItem('admin-color-theme') === 'dark';
+        } catch (e) {}
+
+        if (adminDark) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.add('admin-theme-dark');
+        }
+
+        if (isAdmin) {
           document.documentElement.classList.add('admin-boot-loading');
           return;
         }
@@ -43,6 +54,12 @@
       html.admin-boot-loading,
       html.admin-boot-loading body {
         background: #ffffff;
+      }
+
+      html.admin-theme-dark.admin-boot-loading,
+      html.admin-theme-dark.admin-boot-loading body {
+        background: #0e1116 !important;
+        color: #e2e8f0;
       }
 
       html.site-boot-loading #root,
@@ -87,6 +104,30 @@
           radial-gradient(ellipse at 50% 32%, rgba(148, 163, 184, 0.22) 0%, rgba(255, 255, 255, 0) 55%),
           #ffffff;
         color: #1e293b;
+      }
+
+      html.admin-theme-dark.admin-boot-loading #site-initial-loader,
+      html.admin-theme-dark body.admin-boot-loading #site-initial-loader,
+      html.admin-theme-dark body.admin-route-loading-active #site-initial-loader,
+      html.admin-theme-dark #site-initial-loader.site-initial-loader--admin {
+        background:
+          radial-gradient(ellipse at 50% 32%, rgba(148, 163, 184, 0.12) 0%, rgba(14, 17, 22, 0) 55%),
+          #0e1116 !important;
+        color: #e2e8f0 !important;
+      }
+
+      html.admin-theme-dark.admin-boot-loading .site-initial-spinner,
+      html.admin-theme-dark body.admin-boot-loading .site-initial-spinner,
+      html.admin-theme-dark #site-initial-loader.site-initial-loader--admin .site-initial-spinner {
+        border-color: rgba(148, 163, 184, 0.22);
+        border-top-color: #e2e8f0;
+      }
+
+      html.admin-theme-dark.admin-boot-loading #site-boot-message,
+      html.admin-theme-dark.admin-boot-loading .site-initial-wordmark,
+      html.admin-theme-dark body.admin-boot-loading #site-boot-message,
+      html.admin-theme-dark body.admin-boot-loading .site-initial-wordmark {
+        color: #e2e8f0 !important;
       }
 
       .site-initial-mark {
@@ -178,6 +219,14 @@
           document.documentElement.classList.add('admin-boot-loading');
           document.body.classList.add('admin-boot-loading');
           message = 'Cargando panel administrativo...';
+          var loaderEl = document.getElementById('site-initial-loader');
+          if (loaderEl) loaderEl.classList.add('site-initial-loader--admin');
+          try {
+            if (localStorage.getItem('admin-color-theme') === 'dark') {
+              document.documentElement.classList.add('dark');
+              document.documentElement.classList.add('admin-theme-dark');
+            }
+          } catch (e) {}
         } else {
           document.documentElement.classList.add('site-boot-loading');
           document.body.classList.add('site-boot-loading');
@@ -211,33 +260,43 @@
           img.decoding = 'async';
           img.src = trimmed;
           img.onerror = function () {
+            // En dark: si falla el logo de CMS, usar blanco/rojo estático.
+            if (trimmed.indexOf('logoblancoyrojo') === -1) {
+              var preferClaroErr = false;
+              try {
+                preferClaroErr = isAdmin && localStorage.getItem('admin-color-theme') === 'dark';
+              } catch (ignoreErr) {}
+              if (preferClaroErr) {
+                img.onerror = function () {
+                  mark.innerHTML = '<p class="site-initial-wordmark" id="site-boot-wordmark">Café UNA</p>';
+                };
+                img.src = '/logoblancoyrojo.png';
+                return;
+              }
+            }
             mark.innerHTML = '<p class="site-initial-wordmark" id="site-boot-wordmark">Café UNA</p>';
           };
           mark.appendChild(img);
-          try {
-            var prev = {};
-            try {
-              prev = JSON.parse(localStorage.getItem('cafe-una-brand-logos') || '{}') || {};
-            } catch (ignore) {}
-            localStorage.setItem(
-              'cafe-una-brand-logos',
-              JSON.stringify({
-                logoUrl: trimmed,
-                logoClaroUrl: (prev.logoClaroUrl || '').trim(),
-                updatedAt: Date.now(),
-              }),
-            );
-          } catch (e) {}
           return true;
         }
 
         try {
           var raw = localStorage.getItem('cafe-una-brand-logos');
-          if (raw) {
-            var parsed = JSON.parse(raw);
-            paintBootLogo((parsed && (parsed.logoUrl || parsed.logoClaroUrl)) || '');
-          }
-        } catch (e) {}
+          var parsed = raw ? JSON.parse(raw) : {};
+          var preferClaro = false;
+          try {
+            preferClaro = isAdmin && localStorage.getItem('admin-color-theme') === 'dark';
+          } catch (ignoreDark) {}
+          var bootLogo = preferClaro
+            ? String((parsed && parsed.logoClaroUrl) || '').trim() || '/logoblancoyrojo.png'
+            : String((parsed && (parsed.logoUrl || parsed.logoClaroUrl)) || '').trim() || '/logo.webp';
+          paintBootLogo(bootLogo);
+        } catch (e) {
+          try {
+            var preferClaroFb = isAdmin && localStorage.getItem('admin-color-theme') === 'dark';
+            paintBootLogo(preferClaroFb ? '/logoblancoyrojo.png' : '/logo.webp');
+          } catch (ignoreFb) {}
+        }
 
         // Siempre pedir el logo del navbar (Supabase vía API) para el cargando.
         try {
@@ -248,29 +307,30 @@
             if (req.status < 200 || req.status >= 300) return;
             try {
               var data = JSON.parse(req.responseText);
-              var fromApi =
-                (data && (data.logoUrl || data.LogoUrl)) ||
-                (data && (data.logoClaroUrl || data.LogoClaroUrl)) ||
-                '';
-              if (fromApi && typeof fromApi === 'string') {
+              var logoUrlApi = String(data.logoUrl || data.LogoUrl || '').trim();
+              var logoClaroApi = String(data.logoClaroUrl || data.LogoClaroUrl || '').trim();
+              try {
+                var prevApi = {};
                 try {
-                  var prevApi = {};
-                  try {
-                    prevApi = JSON.parse(localStorage.getItem('cafe-una-brand-logos') || '{}') || {};
-                  } catch (ignore2) {}
-                  localStorage.setItem(
-                    'cafe-una-brand-logos',
-                    JSON.stringify({
-                      logoUrl: String(data.logoUrl || data.LogoUrl || prevApi.logoUrl || '').trim(),
-                      logoClaroUrl: String(
-                        data.logoClaroUrl || data.LogoClaroUrl || prevApi.logoClaroUrl || '',
-                      ).trim(),
-                      updatedAt: Date.now(),
-                    }),
-                  );
-                } catch (ignore3) {}
-                paintBootLogo(fromApi);
-              }
+                  prevApi = JSON.parse(localStorage.getItem('cafe-una-brand-logos') || '{}') || {};
+                } catch (ignore2) {}
+                localStorage.setItem(
+                  'cafe-una-brand-logos',
+                  JSON.stringify({
+                    logoUrl: logoUrlApi || String(prevApi.logoUrl || '').trim(),
+                    logoClaroUrl: logoClaroApi || String(prevApi.logoClaroUrl || '').trim(),
+                    updatedAt: Date.now(),
+                  }),
+                );
+              } catch (ignore3) {}
+              var preferClaroApi = false;
+              try {
+                preferClaroApi = isAdmin && localStorage.getItem('admin-color-theme') === 'dark';
+              } catch (ignore4) {}
+              var fromApi = preferClaroApi
+                ? logoClaroApi || '/logoblancoyrojo.png'
+                : logoUrlApi || logoClaroApi || '/logo.webp';
+              if (fromApi) paintBootLogo(fromApi);
             } catch (err) {}
           };
           req.send();
