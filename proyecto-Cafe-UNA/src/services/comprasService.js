@@ -23,7 +23,9 @@ export function normalizarCompra(compra) {
         ? "Entregado"
         : estadoRaw === "Rechazada"
           ? "Rechazado"
-          : estadoRaw;
+          : estadoRaw === "Devolución" || estadoRaw === "Devoluciones" || estadoRaw === "Devuelto"
+            ? "Devolucion"
+            : estadoRaw;
   return {
     id: String(id ?? ""),
     numero: String(numero || id || ""),

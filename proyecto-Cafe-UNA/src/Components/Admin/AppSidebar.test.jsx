@@ -23,7 +23,14 @@ vi.mock("../../hooks/useHomeBrandNavigation", () => ({
   useHomeBrandNavigation: () => vi.fn(),
 }));
 vi.mock("../../services/informacionService", () => ({
-  obtenerNavbar: vi.fn().mockResolvedValue({ logoUrl: "" }),
+  obtenerNavbar: vi.fn().mockResolvedValue({ logoUrl: "", logoClaroUrl: "" }),
+}));
+vi.mock("../../lib/brandLogoCache", () => ({
+  readBrandLogos: () => ({ logoUrl: "", logoClaroUrl: "" }),
+}));
+vi.mock("../../lib/adminTheme", () => ({
+  ADMIN_THEME_CHANGED_EVENT: "admin-theme-changed",
+  isAdminThemeDark: () => false,
 }));
 vi.mock("../../services/perfilService", () => ({
   clearPerfilCache: vi.fn(),

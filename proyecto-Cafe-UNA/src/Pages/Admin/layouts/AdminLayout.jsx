@@ -29,7 +29,7 @@ function AdminMain({ children }) {
 
   return (
     <main
-      className={`min-h-svh min-w-0 flex-1 overflow-x-clip bg-[#fafafa] dark:bg-slate-950 ${bloquearMain ? "pointer-events-none" : ""}`}
+      className={`min-h-svh min-w-0 flex-1 bg-[#fafafa] dark:bg-slate-950 ${bloquearMain ? "pointer-events-none" : ""}`}
       inert={bloquearMain || undefined}
       aria-hidden={bloquearMain || undefined}
     >
@@ -42,7 +42,7 @@ function AdminMain({ children }) {
           <AdminStockNotificationsBell />
         </div>
       </div>
-      <div className="min-w-0 max-w-full p-4 pb-10 md:p-6 md:pb-12">{children}</div>
+      <div className="min-w-0 max-w-full overflow-x-clip p-4 pb-10 md:p-6 md:pb-12">{children}</div>
     </main>
   );
 }

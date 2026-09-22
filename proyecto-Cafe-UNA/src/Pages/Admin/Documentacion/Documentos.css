@@ -622,3 +622,197 @@
   max-width: 380px;
   margin: 0;
 }
+
+/* Modo oscuro admin */
+html.admin-theme-dark body.admin-route-active .badge--admin-docs {
+  background: #243041;
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-docs-title {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-docs-subtitle {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .btn-secundario-admin {
+  background: #1a212b;
+  color: #e2e8f0;
+  border-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .btn-secundario-admin:hover {
+  background: #243041;
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-docs-kpi-card,
+html.admin-theme-dark body.admin-route-active .admin-docs-panel {
+  background: #161b22;
+  border-color: #2a3340;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+html.admin-theme-dark body.admin-route-active .kpi-num,
+html.admin-theme-dark body.admin-route-active .doc-cell-title,
+html.admin-theme-dark body.admin-route-active .doc-downloads-num,
+html.admin-theme-dark body.admin-route-active .admin-docs-empty h4,
+html.admin-theme-dark body.admin-route-active .admin-cat-banner h4 {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .kpi-lbl,
+html.admin-theme-dark body.admin-route-active .doc-cell-sub,
+html.admin-theme-dark body.admin-route-active .doc-size-text,
+html.admin-theme-dark body.admin-route-active .admin-docs-empty,
+html.admin-theme-dark body.admin-route-active .admin-docs-loading,
+html.admin-theme-dark body.admin-route-active .admin-docs-empty p,
+html.admin-theme-dark body.admin-route-active .admin-cat-banner p {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .kpi-icon--blue {
+  background: rgba(37, 99, 235, 0.2);
+  color: #93c5fd;
+}
+
+html.admin-theme-dark body.admin-route-active .kpi-icon--emerald,
+html.admin-theme-dark body.admin-route-active .kpi-icon--green {
+  background: rgba(5, 150, 105, 0.2);
+  color: #6ee7b7;
+}
+
+html.admin-theme-dark body.admin-route-active .kpi-icon--amber {
+  background: rgba(217, 119, 6, 0.2);
+  color: #fcd34d;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-docs-tabs {
+  border-bottom-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-docs-tab {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-docs-tab:hover {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-docs-tab--active {
+  color: #f1f5f9;
+  border-bottom-color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-docs-search input,
+html.admin-theme-dark body.admin-route-active .admin-docs-select {
+  background: #12161c;
+  border-color: #2a3340;
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-docs-search input::placeholder {
+  color: #64748b;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-docs-search input:focus,
+html.admin-theme-dark body.admin-route-active .admin-docs-select:focus {
+  border-color: #64748b;
+}
+
+html.admin-theme-dark body.admin-route-active .btn-limpiar-filtros {
+  background: #243041;
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .btn-limpiar-filtros:hover {
+  background: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-docs-table th {
+  background: #1a212b;
+  color: #94a3b8;
+  border-bottom-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-docs-table td {
+  border-bottom-color: #2a3340;
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-docs-table tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+html.admin-theme-dark body.admin-route-active .fila-inactiva {
+  background: #12161c;
+}
+
+html.admin-theme-dark body.admin-route-active .badge-categoria-cell,
+html.admin-theme-dark body.admin-route-active .badge-estado--inactivo {
+  background: #243041;
+  color: #cbd5e1;
+}
+
+html.admin-theme-dark body.admin-route-active .badge-priv-cell--pub {
+  background: rgba(22, 101, 52, 0.35);
+  color: #86efac;
+}
+
+html.admin-theme-dark body.admin-route-active .badge-priv-cell--priv {
+  background: rgba(154, 52, 18, 0.35);
+  color: #fdba74;
+}
+
+html.admin-theme-dark body.admin-route-active .badge-estado--activo {
+  background: rgba(29, 78, 216, 0.3);
+  color: #93c5fd;
+}
+
+html.admin-theme-dark body.admin-route-active .action-btn {
+  background: #1a212b;
+  border-color: #2a3340;
+  color: #cbd5e1;
+}
+
+html.admin-theme-dark body.admin-route-active .action-btn:hover {
+  background: #243041;
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-cat-banner,
+html.admin-theme-dark body.admin-route-active .doc-privacidad-box,
+html.admin-theme-dark body.admin-route-active .dropzone-doc,
+html.admin-theme-dark body.admin-route-active .archivo-actual-box {
+  background: #1a212b;
+  border-color: #2a3340;
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .dropzone-doc:hover {
+  background: #243041;
+  border-color: #64748b;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-docs-alert--success {
+  background: rgba(6, 78, 59, 0.35);
+  border-color: rgba(52, 211, 153, 0.35);
+  color: #6ee7b7;
+}
+
+html.admin-theme-dark body.admin-route-active .badge-cat-root {
+  background: #243041;
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .repositorio-error-card {
+  background: #161b22;
+  border-color: rgba(251, 113, 133, 0.35);
+  color: #fecdd3;
+}
+
+html.admin-theme-dark body.admin-route-active .repositorio-error-card p {
+  color: #fecdd3;
+}

@@ -16,6 +16,7 @@ import {
   Package,
   Receipt,
   ClipboardCheck,
+  ClipboardList,
   ScrollText,
   Settings,
   ShoppingBag,
@@ -67,7 +68,13 @@ import {
   getStoredUser,
   SESSION_UPDATED_EVENT,
 } from "../../services/sessionService";
+import {
+  ADMIN_THEME_CHANGED_EVENT,
+  isAdminThemeDark,
+} from "../../lib/adminTheme";
+import { readBrandLogos, LOGO_CLARO_FALLBACK, LOGO_OSCURO_FALLBACK, cacheBrandLogos } from "../../lib/brandLogoCache";
 import { ST } from "../T/ST";
+import { textoUi } from "../../lib/textoVisible";
 
 const GENERAL_OPEN_KEY = "admin-sidebar-general-open";
 const INVENTORY_OPEN_KEY = "admin-sidebar-inventory-open";
@@ -78,6 +85,7 @@ const FORMULARIOS_OPEN_KEY = "admin-sidebar-formularios-open";
 const SOBRE_NOSOTROS_OPEN_KEY = "admin-sidebar-sobre-nosotros-open";
 const AJUSTES_OPEN_KEY = "admin-sidebar-ajustes-open";
 const DOCUMENTACION_OPEN_KEY = "admin-sidebar-documentacion-open";
+const MI_CUENTA_OPEN_KEY = "admin-sidebar-mi-cuenta-open";
 const linkActivo = {
   className: "text-slate-950",
 };
@@ -85,7 +93,7 @@ const linkActivo = {
 export function AppSidebar() {
   const [user, setUser] = useState(() => getActiveSessionUser());
   const { setOpenMobile } = useSidebar();
-  const displayName = user?.name || user?.username || "Usuario";
+  const displayName = textoUi(user?.name || user?.username || "Usuario");
   const displayEmail = user?.email || user?.correo || "";
   const roles = rolesDeUsuario(user);
   const puedeCms = tienePermiso(roles, "actualizar_informacion");
@@ -143,6 +151,12 @@ export function AppSidebar() {
   const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
   const puedePerfil = tienePermiso(roles, "ver_perfil_propio");
   const puedeMisCompras = tienePermiso(roles, "ver_historial_compras_propio");
+  const puedeMisSolicitudes =
+    tienePermiso(roles, "ver_solicitudes_propias") ||
+    tienePermiso(roles, "hacer_solicitud_donacion") ||
+    tienePermiso(roles, "ingresar_solicitud_voluntariado") ||
+    tienePermiso(roles, "crear_solicitud_visitante");
+  const puedeMiCuenta = puedePerfil || puedeMisCompras || puedeMisSolicitudes;
   const avatarUrl = user?.fotoPerfilUrl?.trim()
     ? normalizeImageUrl(user.fotoPerfilUrl.trim(), { width: 96 })
     : "";
@@ -180,6 +194,10 @@ export function AppSidebar() {
   const isVisitasRoute = pathname === "/admin/visitas";
   const isDonacionesRoute = pathname.startsWith("/admin/donaciones/");
   const isDocumentacionRoute = pathname.startsWith("/admin/documentacion");
+  const isMiCuentaRoute =
+    pathname === "/admin/perfil" ||
+    pathname === "/admin/mis-compras" ||
+    pathname === "/admin/mis-solicitudes";
 
   const [generalOpen, setGeneralOpen] = useState(() => {
     const savedValue = localStorage.getItem(GENERAL_OPEN_KEY);
@@ -213,7 +231,16 @@ export function AppSidebar() {
     const savedValue = localStorage.getItem(AJUSTES_OPEN_KEY);
     return savedValue === null ? isAjustesRoute : savedValue === "true";
   });
-  const [logoUrl, setLogoUrl] = useState("");
+  const [miCuentaOpen, setMiCuentaOpen] = useState(() => {
+    const savedValue = localStorage.getItem(MI_CUENTA_OPEN_KEY);
+    return savedValue === null ? isMiCuentaRoute : savedValue === "true";
+  });
+  const [logoUrl, setLogoUrl] = useState(() => readBrandLogos().logoUrl);
+  const [logoClaroUrl, setLogoClaroUrl] = useState(() => readBrandLogos().logoClaroUrl);
+  const [temaOscuro, setTemaOscuro] = useState(() => isAdminThemeDark());
+  const logoActivo = temaOscuro
+    ? (logoClaroUrl || LOGO_CLARO_FALLBACK)
+    : (logoUrl || LOGO_OSCURO_FALLBACK || logoClaroUrl);
 
   const deferSet = (setter, key, open) => {
     queueMicrotask(() => {
@@ -233,6 +260,7 @@ export function AppSidebar() {
   const updateDonacionesOpen = (open) => deferSet(setDonacionesOpen, DONACIONES_OPEN_KEY, open);
   const updateDocumentacionOpen = (open) => deferSet(setDocumentacionOpen, DOCUMENTACION_OPEN_KEY, open);
   const updateAjustesOpen = (open) => deferSet(setAjustesOpen, AJUSTES_OPEN_KEY, open);
+  const updateMiCuentaOpen = (open) => deferSet(setMiCuentaOpen, MI_CUENTA_OPEN_KEY, open);
 
   useEffect(() => {
     const syncUser = () => setUser(getActiveSessionUser());
@@ -315,18 +343,37 @@ export function AppSidebar() {
   }, [isDocumentacionRoute]);
 
   useEffect(() => {
+    if (isMiCuentaRoute) {
+      setMiCuentaOpen(true);
+      localStorage.setItem(MI_CUENTA_OPEN_KEY, "true");
+    }
+  }, [isMiCuentaRoute]);
+
+  useEffect(() => {
     let activo = true;
 
     obtenerNavbar()
       .then((navbar) => {
         if (!activo) return;
-        setLogoUrl(typeof navbar?.logoUrl === "string" ? navbar.logoUrl.trim() : "");
+        const nextLogoUrl = typeof navbar?.logoUrl === "string" ? navbar.logoUrl.trim() : "";
+        const nextLogoClaroUrl =
+          typeof navbar?.logoClaroUrl === "string" ? navbar.logoClaroUrl.trim() : "";
+        setLogoUrl(nextLogoUrl);
+        setLogoClaroUrl(nextLogoClaroUrl);
+        cacheBrandLogos({ logoUrl: nextLogoUrl, logoClaroUrl: nextLogoClaroUrl });
       })
       .catch(() => {});
 
     return () => {
       activo = false;
     };
+  }, []);
+
+  useEffect(() => {
+    const syncTema = () => setTemaOscuro(isAdminThemeDark());
+    syncTema();
+    window.addEventListener(ADMIN_THEME_CHANGED_EVENT, syncTema);
+    return () => window.removeEventListener(ADMIN_THEME_CHANGED_EVENT, syncTema);
   }, []);
 
   const closeMobileSidebar = () => setOpenMobile(false);
@@ -338,6 +385,7 @@ export function AppSidebar() {
     localStorage.removeItem(VISITAS_OPEN_KEY);
     localStorage.removeItem(DONACIONES_OPEN_KEY);
     localStorage.removeItem(DOCUMENTACION_OPEN_KEY);
+    localStorage.removeItem(MI_CUENTA_OPEN_KEY);
     localStorage.removeItem(FORMULARIOS_OPEN_KEY);
     localStorage.removeItem(SOBRE_NOSOTROS_OPEN_KEY);
     localStorage.removeItem(AJUSTES_OPEN_KEY);
@@ -366,14 +414,14 @@ export function AppSidebar() {
             onBrandClick(event);
           }}
         >
-          {logoUrl ? (
+          {logoActivo ? (
             <img
-              src={normalizeImageUrl(logoUrl, { width: 320 })}
+              src={normalizeImageUrl(logoActivo, { width: 320 })}
               alt={"Caf\u00e9 UNA"}
               className="h-[52px] w-auto max-w-[10rem] object-contain group-data-[state=collapsed]/sidebar:h-8 group-data-[state=collapsed]/sidebar:max-w-10"
             />
           ) : (
-            <span className="text-[length:var(--text-subtitle)] font-bold text-slate-900 group-data-[state=collapsed]/sidebar:text-[length:var(--text-body)]">
+            <span className="text-[length:var(--text-subtitle)] font-bold text-slate-900 dark:text-slate-100 group-data-[state=collapsed]/sidebar:text-[length:var(--text-body)]">
               {"Caf\u00e9 UNA"}
             </span>
           )}
@@ -811,28 +859,62 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             ) : null}
-            {puedePerfil ? (
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link to="/admin/perfil" activeProps={linkActivo} onClick={closeMobileSidebar}>
-                  <UserRound />
-                  <span><ST>Mi perfil</ST></span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            ) : null}
-            {puedeMisCompras ? (
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link to="/admin/mis-compras" activeProps={linkActivo} onClick={closeMobileSidebar}>
-                  <ShoppingBag />
-                  <span><ST>Mis compras</ST></span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            ) : null}
           </SidebarMenu>
         </SidebarGroup>
+
+        {puedeMiCuenta ? (
+        <Collapsible.Root
+          open={miCuentaOpen}
+          onOpenChange={updateMiCuentaOpen}
+          className="group/mi-cuenta"
+        >
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <Collapsible.Trigger type="button">
+                <UserRound />
+                <span><ST>Mi cuenta</ST></span>
+                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/mi-cuenta:rotate-180" />
+              </Collapsible.Trigger>
+            </SidebarGroupLabel>
+            <Collapsible.Content>
+              <SidebarGroupContent>
+                <SidebarMenuSub>
+                  {puedePerfil ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/perfil" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <UserRound />
+                        <span><ST>Mi perfil</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
+                  {puedeMisCompras ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/mis-compras" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <ShoppingBag />
+                        <span><ST>Mis compras</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
+                  {puedeMisSolicitudes ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/mis-solicitudes" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <ClipboardList />
+                        <span><ST>Mis solicitudes</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
+                </SidebarMenuSub>
+              </SidebarGroupContent>
+            </Collapsible.Content>
+          </SidebarGroup>
+        </Collapsible.Root>
+        ) : null}
       </SidebarContent>
 
       <SidebarFooter>
@@ -867,10 +949,6 @@ export function AppSidebar() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="end" className="z-[100] w-56">
-            <div className="px-2 py-1.5 text-xs text-slate-500">
-              <div className="truncate font-medium text-slate-700">{displayName}</div>
-              {displayEmail ? <div className="truncate">{displayEmail}</div> : null}
-            </div>
             {puedePerfil ? (
               <DropdownMenuItem asChild>
                 <Link to="/admin/perfil" className="cursor-pointer" activeProps={linkActivo}>
@@ -884,6 +962,14 @@ export function AppSidebar() {
                 <Link to="/admin/mis-compras" className="cursor-pointer" activeProps={linkActivo}>
                   <ShoppingBag className="size-4" />
                   <span><ST>Mis compras</ST></span>
+                </Link>
+              </DropdownMenuItem>
+            ) : null}
+            {puedeMisSolicitudes ? (
+              <DropdownMenuItem asChild>
+                <Link to="/admin/mis-solicitudes" className="cursor-pointer" activeProps={linkActivo}>
+                  <ClipboardList className="size-4" />
+                  <span><ST>Mis solicitudes</ST></span>
                 </Link>
               </DropdownMenuItem>
             ) : null}

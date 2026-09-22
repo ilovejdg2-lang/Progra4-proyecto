@@ -41,6 +41,7 @@ const PageLoading = ({
   onRetry,
   retryLabel = 'Reintentar',
   variant = 'default',
+  tone: toneProp,
 }) => {
   // Durante el render: asegurar clase antes del paint (sin quitar el boot HTML).
   if (typeof document !== 'undefined' && variant !== 'hero') {
@@ -62,11 +63,16 @@ const PageLoading = ({
     };
   }, [variant]);
 
-  const tone = variant === 'hero' ? 'hero' : 'site';
+  const esAdmin =
+    typeof window !== 'undefined' &&
+    window.location.pathname.startsWith('/admin');
+  const tone =
+    toneProp ||
+    (variant === 'hero' ? 'hero' : esAdmin ? 'admin' : 'site');
 
   const content = (
     <div
-      className={`page-loading page-loading--${variant} ${isError ? 'page-loading--error' : ''}`}
+      className={`page-loading page-loading--${variant} ${isError ? 'page-loading--error' : ''}${esAdmin ? ' page-loading--admin' : ''}`}
       role="status"
       aria-live="polite"
     >

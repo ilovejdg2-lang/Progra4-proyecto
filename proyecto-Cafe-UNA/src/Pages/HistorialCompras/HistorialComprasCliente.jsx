@@ -3,7 +3,9 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Eye, X } from "lucide-react";
 
 import { AdminModal, AdminModalBody, AdminModalHeader } from "../../Components/Admin/ui/AdminModal";
+import { AdminPaginacion } from "../../Components/Admin/ui/AdminPaginacion";
 import { NumericInput } from "../../Components/NumericInput/NumericInput";
+import { PerfilClienteLayout } from "../../Components/Perfil/PerfilClienteLayout";
 import { PublicPageGate } from "../../Components/PublicPageGate/PublicPageGate";
 import { ST } from "../../Components/T/ST";
 import { usePublicPageLoadingGate } from "../../hooks/usePublicPageLoadingGate";
@@ -11,6 +13,7 @@ import { useTraducir } from "../../hooks/useTraducir";
 import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
 import { t } from "../../lib/t";
 import { obtenerCompraPorId, obtenerMisCompras } from "../../services/comprasService";
+import { obtenerFooter } from "../../services/informacionService";
 import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
 
 export const RUTA_COMPRAS_CLIENTE = "/perfil/compras";
@@ -44,6 +47,8 @@ function colorEstado(estadoRaw) {
       return "text-emerald-800";
     case "Rechazado":
       return "text-rose-800";
+    case "Devolucion":
+      return "text-violet-800";
     default:
       return "text-slate-700";
   }
@@ -52,8 +57,167 @@ function colorEstado(estadoRaw) {
 function EstadoTexto({ estado, className = "" }) {
   return (
     <span className={`text-[var(--text-body)] font-semibold ${colorEstado(estado)} ${className}`.trim()}>
-      <ST>{estado || "Pendiente"}</ST>
+      <ST>{etiquetaEstado(estado)}</ST>
     </span>
+  );
+}
+
+function etiquetaEstado(estadoRaw) {
+  switch (String(estadoRaw || "Pendiente").trim()) {
+    case "Pendiente":
+      return "Procesando";
+    case "Aceptado":
+      return "Enviado";
+    case "Entregado":
+      return "Entregado";
+    case "Rechazado":
+      return "Rechazado";
+    case "Devolucion":
+      return "Devoluciones";
+    default:
+      return estadoRaw || "Procesando";
+  }
+}
+
+const TABS_ESTADO = [
+  { value: "todos", label: "Todos" },
+  { value: "Pendiente", label: "Procesando" },
+  { value: "Aceptado", label: "Enviado" },
+  { value: "Entregado", label: "Entregado" },
+  { value: "Rechazado", label: "Rechazado" },
+  { value: "Devolucion", label: "Devoluciones" },
+];
+
+const PASOS_PEDIDO = [
+  { key: "Pendiente", label: "Procesando" },
+  { key: "Aceptado", label: "Enviado" },
+  { key: "Entregado", label: "Entregado" },
+];
+
+function mensajeRastreo(estadoRaw) {
+  switch (String(estadoRaw || "Pendiente").trim()) {
+    case "Aceptado":
+      return "Tu pedido fue enviado y va en camino.";
+    case "Entregado":
+      return "Tu pedido ya fue entregado.";
+    case "Rechazado":
+      return "Tu pedido fue rechazado.";
+    case "Devolucion":
+      return "Tu pedido tiene una devolución por un problema.";
+    default:
+      return "Tu pedido está en procesamiento.";
+  }
+}
+
+/** Stepper visual solo en el detalle: Procesando → Enviado → Entregado (X si Rechazado/Devolución). */
+function RastreoPedido({ estado, correoContacto = "", telefonoContacto = "" }) {
+  const actual = String(estado || "Pendiente").trim();
+  const rechazado = actual === "Rechazado";
+  const devolucion = actual === "Devolucion";
+  const conProblema = rechazado || devolucion;
+  const indiceActual = Math.max(
+    0,
+    PASOS_PEDIDO.findIndex((p) => p.key === (rechazado ? "Pendiente" : devolucion ? "Entregado" : actual)),
+  );
+  const pasos = rechazado
+    ? [
+        { key: "Pendiente", label: "Procesando" },
+        { key: "Rechazado", label: "Rechazado" },
+      ]
+    : devolucion
+      ? [...PASOS_PEDIDO, { key: "Devolucion", label: "Devoluciones" }]
+      : PASOS_PEDIDO;
+  const correo = String(correoContacto || "").trim();
+  const telefono = String(telefonoContacto || "").trim();
+
+  return (
+    <div
+      className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3"
+      aria-label="Rastreo del pedido"
+    >
+      <p className="mb-3 text-[var(--text-body)] font-semibold text-slate-800">
+        <ST>Rastreo del pedido</ST>
+      </p>
+      <ol className="flex w-full items-start gap-0">
+        {pasos.map((paso, index) => {
+          const esUltimo = index === pasos.length - 1;
+          const esProblema = paso.key === "Rechazado" || paso.key === "Devolucion";
+          const completado = rechazado
+            ? paso.key === "Pendiente"
+            : devolucion
+              ? !esProblema
+              : actual === "Entregado"
+                ? index <= indiceActual
+                : index < indiceActual;
+          const activo = rechazado
+            ? paso.key === "Rechazado" || paso.key === "Pendiente"
+            : devolucion
+              ? true
+              : index <= indiceActual;
+          const esActual = conProblema
+            ? esProblema
+            : index === indiceActual;
+          const colorPaso = esProblema
+            ? "bg-rose-600 border-rose-600 text-white"
+            : activo
+              ? "bg-slate-950 border-slate-950 text-white"
+              : "bg-white border-slate-300 text-slate-400";
+          const colorLinea =
+            conProblema && index === pasos.length - 2
+              ? "bg-rose-300"
+              : conProblema || index < indiceActual
+                ? "bg-slate-950"
+                : "bg-slate-200";
+
+          return (
+            <li key={paso.key} className={`flex min-w-0 ${esUltimo ? "flex-none" : "flex-1"} items-start`}>
+              <div className="flex w-full flex-col items-center text-center">
+                <span
+                  className={`flex size-7 shrink-0 items-center justify-center rounded-full border text-[var(--text-body)] font-bold ${colorPaso} ${esActual ? "ring-2 ring-offset-1 ring-slate-400" : ""}`}
+                  aria-current={esActual ? "step" : undefined}
+                >
+                  {esProblema ? "×" : completado ? "✓" : index + 1}
+                </span>
+                <span
+                  className={`mt-1.5 max-w-[5.5rem] text-[var(--text-body)] leading-tight ${esActual ? `font-semibold ${colorEstado(paso.key)}` : activo ? "font-medium text-slate-700" : "text-slate-400"}`}
+                >
+                  <ST>{paso.label}</ST>
+                </span>
+              </div>
+              {!esUltimo ? (
+                <span
+                  className={`mt-3.5 mx-1 h-0.5 min-w-[1.25rem] flex-1 rounded-full ${colorLinea}`}
+                  aria-hidden="true"
+                />
+              ) : null}
+            </li>
+          );
+        })}
+      </ol>
+      <p className={`mt-3 text-center text-[var(--text-body)] ${colorEstado(actual)}`}>
+        <ST>{mensajeRastreo(actual)}</ST>
+      </p>
+      {correo || telefono ? (
+        <p className="mt-2 text-center text-[var(--text-body)] text-slate-600">
+          <ST>Si es incorrecto, comunicate con</ST>{" "}
+          {correo ? (
+            <a href={`mailto:${correo}`} className="font-semibold text-slate-900 underline-offset-2 hover:underline">
+              {correo}
+            </a>
+          ) : null}
+          {correo && telefono ? <span> · </span> : null}
+          {telefono ? (
+            <a
+              href={`tel:${telefono.replace(/\D/g, "")}`}
+              className="font-semibold text-slate-900 underline-offset-2 hover:underline"
+            >
+              {telefono}
+            </a>
+          ) : null}
+          .
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -88,15 +252,34 @@ export function HistorialComprasContent({ variant = "standalone" }) {
     true,
   );
   const tSinFecha = useTraducir("Sin fecha");
-  const tTodos = useTraducir("Todos");
-
   const [compras, setCompras] = useState([]);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
   const [detalle, setDetalle] = useState(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCompras, setTotalCompras] = useState(0);
   const [filtros, setFiltros] = useState(INITIAL_FILTERS);
+  const [correoContacto, setCorreoContacto] = useState("");
+  const [telefonoContacto, setTelefonoContacto] = useState("");
+
+  useEffect(() => {
+    let cancelado = false;
+    obtenerFooter()
+      .then((footer) => {
+        if (cancelado || !footer) return;
+        setCorreoContacto(String(footer.correo ?? footer.Correo ?? "").trim());
+        setTelefonoContacto(String(footer.telefono ?? footer.Telefono ?? "").trim());
+      })
+      .catch(() => {
+        if (cancelado) return;
+        setCorreoContacto("");
+        setTelefonoContacto("");
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!user && !esAdmin) {
@@ -122,6 +305,7 @@ export function HistorialComprasContent({ variant = "standalone" }) {
         setStatus("idle");
         setPage(1);
         setTotalPages(1);
+        setTotalCompras(0);
         setFiltros(INITIAL_FILTERS);
       }
 
@@ -149,10 +333,12 @@ export function HistorialComprasContent({ variant = "standalone" }) {
       if (requestId !== historyRequestRef.current) return;
       setCompras(result.data);
       setTotalPages(result.totalPages);
+      setTotalCompras(Number(result.total) || 0);
       setStatus("success");
     } catch (loadError) {
       if (requestId !== historyRequestRef.current) return;
       setCompras([]);
+      setTotalCompras(0);
       setStatus("error");
       setError(loadError instanceof Error ? loadError.message : "No se pudo cargar el historial.");
     }
@@ -220,10 +406,37 @@ export function HistorialComprasContent({ variant = "standalone" }) {
           <h1 className="text-[var(--text-title)] font-semibold text-slate-950">
             <ST>Mis compras</ST>
           </h1>
-          <p className="mt-1 text-[var(--text-body)] text-slate-500">
-            <ST>Consultá el estado de tus pedidos: pendiente, aceptado, entregado o rechazado.</ST>
-          </p>
         </header>
+
+        <nav
+          className="flex gap-5 overflow-x-auto border-b border-slate-200"
+          aria-label="Tipo de pedido"
+        >
+          {TABS_ESTADO.map((tab) => {
+            const activo = filtros.estado === tab.value;
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => {
+                  setPage(1);
+                  setFiltros((c) => ({ ...c, estado: tab.value }));
+                }}
+                className={`relative shrink-0 pb-2.5 text-[var(--text-body)] transition-colors ${
+                  activo
+                    ? "font-bold text-slate-950"
+                    : "font-medium text-slate-400 hover:text-slate-600"
+                }`}
+                aria-current={activo ? "page" : undefined}
+              >
+                <ST>{tab.label}</ST>
+                {activo ? (
+                  <span className="absolute inset-x-1 -bottom-px h-0.5 rounded-full bg-slate-950" aria-hidden="true" />
+                ) : null}
+              </button>
+            );
+          })}
+        </nav>
 
         <section className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-3">
           <label className="grid gap-1 text-[var(--text-body)]">
@@ -236,23 +449,6 @@ export function HistorialComprasContent({ variant = "standalone" }) {
                 setFiltros((c) => ({ ...c, numero: e.target.value }));
               }}
             />
-          </label>
-          <label className="grid gap-1 text-[var(--text-body)]">
-            <span className="font-medium text-slate-700"><ST>Estado</ST></span>
-            <select
-              className="min-h-11 rounded-full border border-slate-200 px-3 text-[var(--text-body)]"
-              value={filtros.estado}
-              onChange={(e) => {
-                setPage(1);
-                setFiltros((c) => ({ ...c, estado: e.target.value }));
-              }}
-            >
-              <option value="todos">{tTodos}</option>
-              <option value="Pendiente">{t("Pendiente")}</option>
-              <option value="Aceptado">{t("Aceptado")}</option>
-              <option value="Entregado">{t("Entregado")}</option>
-              <option value="Rechazado">{t("Rechazado")}</option>
-            </select>
           </label>
           <label className="grid gap-1 text-[var(--text-body)]">
             <span className="font-medium text-slate-700"><ST>Desde</ST></span>
@@ -302,7 +498,8 @@ export function HistorialComprasContent({ variant = "standalone" }) {
               }}
             />
           </label>
-          <div className="sm:col-span-2 lg:col-span-3">
+          <div className="grid gap-1 text-[var(--text-body)]">
+            <span className="invisible font-medium" aria-hidden="true"><ST>Restablecer filtros</ST></span>
             <button
               type="button"
               onClick={() => {
@@ -359,7 +556,7 @@ export function HistorialComprasContent({ variant = "standalone" }) {
                     <button
                       type="button"
                       onClick={() => abrirDetalle(compra)}
-                      className="mt-2 inline-flex min-h-11 items-center gap-1 rounded-full border border-slate-950 bg-slate-950 px-3 text-[var(--text-body)] font-semibold text-white"
+                      className="mt-2 inline-flex min-h-[var(--control-height)] items-center gap-1 rounded-full border border-slate-950 bg-slate-950 px-3 text-[var(--text-body)] font-semibold text-white"
                     >
                       <Eye className="size-3.5" /> <ST>Ver detalle</ST>
                     </button>
@@ -371,27 +568,38 @@ export function HistorialComprasContent({ variant = "standalone" }) {
         )}
 
         {totalPages > 1 ? (
-          <div className="flex items-center justify-end gap-2">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-              className="min-h-11 rounded-full border border-slate-300 px-3 text-[var(--text-body)] disabled:opacity-50"
-            >
-              <ST>Anterior</ST>
-            </button>
-            <span className="text-[var(--text-body)] text-slate-600">
-              {page} / {totalPages}
-            </span>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              className="min-h-11 rounded-full border border-slate-300 px-3 text-[var(--text-body)] disabled:opacity-50"
-            >
-              <ST>Siguiente</ST>
-            </button>
-          </div>
+          esAdmin ? (
+            <AdminPaginacion
+              page={page}
+              totalPages={totalPages}
+              total={totalCompras}
+              pageSize={10}
+              onChange={setPage}
+              label="Paginación de mis compras"
+            />
+          ) : (
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+                className="min-h-[var(--control-height)] rounded-full border border-slate-300 px-3 text-[var(--text-body)] disabled:opacity-50"
+              >
+                <ST>Anterior</ST>
+              </button>
+              <span className="text-[var(--text-body)] text-slate-600">
+                {page} / {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+                className="min-h-[var(--control-height)] rounded-full border border-slate-300 px-3 text-[var(--text-body)] disabled:opacity-50"
+              >
+                <ST>Siguiente</ST>
+              </button>
+            </div>
+          )
         ) : null}
 
         {detalle ? (
@@ -432,6 +640,11 @@ export function HistorialComprasContent({ variant = "standalone" }) {
                   </dd>
                 </div>
               </dl>
+              <RastreoPedido
+                estado={detalle.estado}
+                correoContacto={correoContacto}
+                telefonoContacto={telefonoContacto}
+              />
               <ul className="mt-4 space-y-2 text-[var(--text-body)]">
                 {(detalle.items || []).map((item, index) => (
                   <li key={`${item.nombre}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
@@ -488,5 +701,9 @@ export default function HistorialComprasCliente() {
     return null;
   }
 
-  return <HistorialComprasContent variant="standalone" />;
+  return (
+    <PerfilClienteLayout>
+      <HistorialComprasContent variant="standalone" />
+    </PerfilClienteLayout>
+  );
 }

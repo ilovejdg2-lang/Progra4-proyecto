@@ -607,6 +607,47 @@ export function HorariosCalendario({ onMessage, onError }) {
           color: #fff !important;
           border-radius: 9999px;
         }
+        html.admin-theme-dark .calendar-horarios-admin {
+          --rdp-accent-color: #f1f5f9;
+          --rdp-accent-background-color: #243041;
+          --rdp-range_start-date-background-color: #f1f5f9;
+          --rdp-selected-border: 2px solid #f1f5f9;
+          --rdp-today-color: #f1f5f9;
+          color: #e2e8f0;
+        }
+        html.admin-theme-dark .calendar-horarios-admin .rdp-month_caption,
+        html.admin-theme-dark .calendar-horarios-admin .rdp-caption_label {
+          color: #f1f5f9 !important;
+        }
+        html.admin-theme-dark .calendar-horarios-admin .rdp-button_previous,
+        html.admin-theme-dark .calendar-horarios-admin .rdp-button_next,
+        html.admin-theme-dark .calendar-horarios-admin .rdp-chevron {
+          color: #cbd5e1 !important;
+          fill: #cbd5e1 !important;
+        }
+        html.admin-theme-dark .calendar-horarios-admin .rdp-selected .rdp-day_button,
+        html.admin-theme-dark .calendar-horarios-admin [aria-selected="true"] .rdp-day_button,
+        html.admin-theme-dark .calendar-horarios-admin .rdp-day_button[aria-selected="true"] {
+          background-color: #f1f5f9 !important;
+          border-color: #f1f5f9 !important;
+          color: #0f172a !important;
+        }
+        html.admin-theme-dark .calendar-horarios-admin .rdp-today:not([aria-selected="true"]) .rdp-day_button {
+          color: #93c5fd !important;
+        }
+        html.admin-theme-dark .calendar-horarios-admin .rdp-day-cerrado:not([aria-selected="true"]) .rdp-day_button,
+        html.admin-theme-dark .calendar-horarios-admin .rdp-day-cerrado:not(.rdp-selected) {
+          background: #475569 !important;
+          color: #e2e8f0 !important;
+        }
+        html.admin-theme-dark .calendar-horarios-admin .rdp-day-especial:not([aria-selected="true"]) .rdp-day_button,
+        html.admin-theme-dark .calendar-horarios-admin .rdp-day-especial:not(.rdp-selected) {
+          background: #334155 !important;
+          color: #f1f5f9 !important;
+        }
+        html.admin-theme-dark .calendar-horarios-admin .rdp-day_button {
+          color: #e2e8f0 !important;
+        }
       `}</style>
     </section>
   );

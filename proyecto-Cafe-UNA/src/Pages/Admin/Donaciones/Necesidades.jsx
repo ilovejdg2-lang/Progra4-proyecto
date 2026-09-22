@@ -38,9 +38,9 @@ function etiquetaPrioridad(prioridad) {
 }
 
 function clasePrioridad(prioridad) {
-  if (prioridad === "ALTA") return "bg-slate-100 text-red-600";
-  if (prioridad === "MEDIA") return "bg-slate-100 text-yellow-500";
-  return "bg-slate-100 text-green-600";
+  if (prioridad === "ALTA") return "admin-chip-estado bg-slate-200 text-red-600 dark:bg-rose-950 dark:text-rose-200";
+  if (prioridad === "MEDIA") return "admin-chip-estado bg-slate-200 text-yellow-500 dark:bg-amber-950 dark:text-amber-200";
+  return "admin-chip-estado bg-slate-200 text-green-600 dark:bg-emerald-950 dark:text-emerald-200";
 }
 
 export default function AdminNecesidadesDonacion() {

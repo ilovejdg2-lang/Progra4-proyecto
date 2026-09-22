@@ -508,3 +508,162 @@
   color: #d97706;
   border-color: #fde68a;
 }
+
+/* Modo oscuro admin */
+html.admin-theme-dark body.admin-route-active .auditoria-container {
+  background: #161b22 !important;
+  border-color: #2a3340 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+html.admin-theme-dark body.admin-route-active .auditoria-badge-official {
+  background: #243041;
+  border-color: #2a3340;
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .auditoria-title {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .auditoria-subtitle {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .btn-auditoria-reload {
+  background: #1a212b;
+  border-color: #2a3340;
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .btn-auditoria-reload:hover:not(:disabled) {
+  background: #243041;
+  color: #f1f5f9;
+  border-color: #3a4556;
+}
+
+html.admin-theme-dark body.admin-route-active .auditoria-kpi-card,
+html.admin-theme-dark body.admin-route-active .auditoria-filter-panel,
+html.admin-theme-dark body.admin-route-active .auditoria-table-card {
+  background-color: #161b22;
+  border-color: #2a3340;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+html.admin-theme-dark body.admin-route-active .kpi-label,
+html.admin-theme-dark body.admin-route-active .auditoria-filter-label,
+html.admin-theme-dark body.admin-route-active .auditoria-chips-title {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .kpi-value,
+html.admin-theme-dark body.admin-route-active .auditoria-count-badge strong,
+html.admin-theme-dark body.admin-route-active .auditoria-chip strong {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .kpi-icon--blue {
+  background: rgba(37, 99, 235, 0.2);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+html.admin-theme-dark body.admin-route-active .kpi-icon--emerald {
+  background: rgba(5, 150, 105, 0.2);
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.35);
+}
+
+html.admin-theme-dark body.admin-route-active .kpi-icon--indigo {
+  background: rgba(79, 70, 229, 0.2);
+  color: #a5b4fc;
+  border-color: rgba(129, 140, 248, 0.35);
+}
+
+html.admin-theme-dark body.admin-route-active .kpi-icon--amber {
+  background: rgba(217, 119, 6, 0.2);
+  color: #fcd34d;
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+html.admin-theme-dark body.admin-route-active .auditoria-search-input,
+html.admin-theme-dark body.admin-route-active .auditoria-filter-control {
+  background-color: #12161c;
+  border-color: #2a3340;
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .auditoria-search-input:focus,
+html.admin-theme-dark body.admin-route-active .auditoria-filter-control:focus {
+  background-color: #12161c;
+  border-color: #64748b;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.15);
+}
+
+html.admin-theme-dark body.admin-route-active .auditoria-search-input::placeholder {
+  color: #64748b;
+}
+
+html.admin-theme-dark body.admin-route-active .auditoria-count-badge,
+html.admin-theme-dark body.admin-route-active .auditoria-chip {
+  background-color: #243041;
+  border-color: #2a3340;
+  color: #cbd5e1;
+}
+
+html.admin-theme-dark body.admin-route-active .auditoria-filters-grid,
+html.admin-theme-dark body.admin-route-active .auditoria-active-chips {
+  border-top-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .auditoria-table th {
+  background-color: #1a212b;
+  color: #94a3b8;
+  border-bottom-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .auditoria-table td {
+  color: #e2e8f0;
+  border-bottom-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .auditoria-table tbody tr:hover,
+html.admin-theme-dark body.admin-route-active .auditoria-table tbody tr.row-expanded {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+html.admin-theme-dark body.admin-route-active .badge-modulo-pill {
+  background-color: #243041;
+  color: #cbd5e1;
+  border-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .badge-accion--insert {
+  background-color: rgba(5, 150, 105, 0.25);
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.35);
+}
+
+html.admin-theme-dark body.admin-route-active .badge-accion--update {
+  background-color: rgba(37, 99, 235, 0.25);
+  color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.35);
+}
+
+html.admin-theme-dark body.admin-route-active .badge-accion--delete {
+  background-color: rgba(220, 38, 38, 0.25);
+  color: #fda4af;
+  border-color: rgba(251, 113, 133, 0.35);
+}
+
+html.admin-theme-dark body.admin-route-active .badge-accion--ajuste {
+  background-color: rgba(217, 119, 6, 0.25);
+  color: #fcd34d;
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+html.admin-theme-dark body.admin-route-active .btn-auditoria-clear {
+  background-color: rgba(136, 19, 55, 0.35);
+  border-color: rgba(251, 113, 133, 0.4);
+  color: #fecdd3;
+}

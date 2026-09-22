@@ -31,6 +31,9 @@ vi.mock("../../services/comprasService", () => ({
   obtenerCompraPorId: (...args) => mocks.obtenerCompraPorId(...args),
   obtenerMisCompras: (...args) => mocks.obtenerMisCompras(...args),
 }));
+vi.mock("../../services/informacionService", () => ({
+  obtenerFooter: vi.fn().mockResolvedValue({ correo: "contacto@cafeuna.cr", telefono: "2277-0000" }),
+}));
 vi.mock("../../services/sessionService", () => ({
   SESSION_UPDATED_EVENT: "session-updated",
   getActiveSessionUser: (...args) => mocks.getActiveSessionUser(...args),
@@ -62,7 +65,7 @@ describe("HistorialComprasContent", () => {
     render(<HistorialComprasContent />);
 
     expect(await screen.findByText("C-10")).toBeInTheDocument();
-    expect(screen.getAllByText("Pendiente").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Procesando").length).toBeGreaterThanOrEqual(1);
     await waitFor(() => expect(mocks.obtenerMisCompras).toHaveBeenCalledTimes(1));
     expect(mocks.obtenerMisCompras).toHaveBeenCalledWith(expect.objectContaining({ page: 1, pageSize: 10 }));
   });
@@ -82,15 +85,39 @@ describe("HistorialComprasContent", () => {
 
     expect(await screen.findByText("FUNDA-UNA")).toBeInTheDocument();
     expect(screen.getByText("Café de prueba")).toBeInTheDocument();
+    expect(screen.getByText("Rastreo del pedido")).toBeInTheDocument();
+    expect(screen.getByText("Tu pedido está en procesamiento.")).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "contacto@cafeuna.cr" })).toHaveAttribute(
+      "href",
+      "mailto:contacto@cafeuna.cr",
+    );
+    expect(screen.getByText(/Si es incorrecto, comunicate con/i)).toBeInTheDocument();
     expect(mocks.obtenerCompraPorId).toHaveBeenCalledWith("10");
   });
 
-  it("reloads the history using the selected filters", async () => {
+  it("shows rejected tracking with an X in the detail", async () => {
+    mocks.obtenerCompraPorId.mockResolvedValue({
+      ...compra,
+      estado: "Rechazado",
+      metodoPago: "Comprobante",
+      subtotal: 5000,
+      impuestos: 650,
+      items: [],
+    });
+    render(<HistorialComprasContent />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Ver detalle/i }));
+
+    expect(await screen.findByText("Tu pedido fue rechazado.")).toBeInTheDocument();
+    expect(screen.getByText("×")).toBeInTheDocument();
+  });
+
+  it("filters by status tab", async () => {
     render(<HistorialComprasContent />);
 
     await screen.findByText("C-10");
     fireEvent.change(screen.getByRole("textbox", { name: "Número" }), { target: { value: "C-10" } });
-    fireEvent.change(screen.getByRole("combobox", { name: "Estado" }), { target: { value: "Pendiente" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Procesando$/i }));
 
     await waitFor(() => {
       expect(mocks.obtenerMisCompras).toHaveBeenLastCalledWith(expect.objectContaining({

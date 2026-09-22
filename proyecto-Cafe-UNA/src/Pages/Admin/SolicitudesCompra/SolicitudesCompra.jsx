@@ -55,9 +55,9 @@ const fieldClass =
   "min-h-[var(--control-height)] w-full rounded-full border border-slate-200 bg-slate-50 px-3 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white";
 
 function badgeEstado(estado) {
-  if (estado === "aprobada") return "bg-sky-100 text-sky-800";
-  if (estado === "recibida") return "bg-emerald-100 text-emerald-800";
-  return "bg-slate-100 text-slate-700";
+  if (estado === "aprobada") return "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200";
+  if (estado === "recibida") return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200";
+  return "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100";
 }
 
 function formatFecha(valor) {

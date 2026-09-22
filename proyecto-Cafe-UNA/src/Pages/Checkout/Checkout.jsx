@@ -17,6 +17,7 @@ import { getActiveSessionUser } from '../../services/sessionService';
 import { marcarIntentRegistroCliente, puedeComprar } from '../../services/authService';
 import { clearCart, getStoredCart } from '../../lib/cartStorage';
 import { confirmarCompraEnBackend, validarComprobante } from './checkoutValidation';
+import { rutaMisCompras } from '../HistorialCompras/HistorialComprasCliente';
 
 const formatCRC = (amount) => {
   const value = Number.isFinite(amount) ? amount : 0;
@@ -51,6 +52,7 @@ const Checkout = () => {
   );
   const tRedirigido = useTraducir('Serás redirigido a inicio automáticamente en unos segundos.');
   const tVolverInicio = useTraducir('Volver al inicio');
+  const tRastrearPedido = useTraducir('Rastrear pedido');
   const tSeguir = useTraducir('Seguir comprando');
   const tResumen = useTraducir('Resumen de tu pedido');
   const tResumenLead = useTraducir('Revisa los productos, elegí un punto de venta y completá tu compra.');
@@ -347,7 +349,20 @@ const Checkout = () => {
             <span className="checkout-success-card__hint">{tRedirigido}</span>
           </div>
           <div className="checkout-success-card__actions">
-            <button type="button" className="checkout-success-card__primary" onClick={() => navigate({ to: '/' })}>
+            <button
+              type="button"
+              className="checkout-success-card__primary"
+              onClick={() => {
+                if (redirectTimeoutRef.current) {
+                  window.clearTimeout(redirectTimeoutRef.current);
+                  redirectTimeoutRef.current = null;
+                }
+                navigate({ to: rutaMisCompras(getCurrentUser()) });
+              }}
+            >
+              {tRastrearPedido}
+            </button>
+            <button type="button" className="checkout-success-card__secondary" onClick={() => navigate({ to: '/' })}>
               {tVolverInicio}
             </button>
             <button type="button" className="checkout-success-card__secondary" onClick={handleContinueShopping}>

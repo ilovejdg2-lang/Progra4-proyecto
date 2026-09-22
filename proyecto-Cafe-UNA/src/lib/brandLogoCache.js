@@ -1,5 +1,10 @@
 const STORAGE_KEY = "cafe-una-brand-logos";
 
+/** Logo blanco/rojo para fondos oscuros (admin dark, hero, loaders). */
+export const LOGO_CLARO_FALLBACK = "/logoblancoyrojo.png";
+/** Logo para fondos claros. */
+export const LOGO_OSCURO_FALLBACK = "/logo.webp";
+
 function pickLogo(value) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -33,8 +38,9 @@ export function readBrandLogos() {
   }
 }
 
-/** Logo para fondos claros (loaders). */
-export function getLoaderLogoUrl() {
+/** Logo para loaders: oscuro → logo claro (blanco/rojo); claro → logo normal. */
+export function getLoaderLogoUrl({ dark = false } = {}) {
   const { logoUrl, logoClaroUrl } = readBrandLogos();
-  return logoUrl || logoClaroUrl;
+  if (dark) return logoClaroUrl || LOGO_CLARO_FALLBACK || logoUrl;
+  return logoUrl || LOGO_OSCURO_FALLBACK || logoClaroUrl;
 }

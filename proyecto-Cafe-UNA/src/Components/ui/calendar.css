@@ -106,7 +106,7 @@
   cursor: not-allowed !important;
 }
 
-/* Men√∫s desplegables (mes y a√±o) centrados */
+/* Men??s desplegables (mes y a??o) centrados */
 .shadcn-calendar .rdp-dropdowns {
   display: inline-flex !important;
   align-items: center !important;
@@ -151,7 +151,7 @@
   margin: 0 auto !important;
 }
 
-/* Fila de d√≠as de la semana */
+/* Fila de d?≠as de la semana */
 .shadcn-calendar .rdp-weekdays {
   display: table-row !important;
 }
@@ -170,7 +170,7 @@
   border: none !important;
 }
 
-/* Cuerpo de semanas y d√≠as */
+/* Cuerpo de semanas y d?≠as */
 .shadcn-calendar .rdp-weeks {
   display: table-row-group !important;
 }
@@ -190,7 +190,7 @@
   background: transparent !important;
 }
 
-/* Bot√≥n individual del d√≠a */
+/* Bot??n individual del d?≠a */
 .shadcn-calendar .rdp-day_button {
   width: 30px !important;
   height: 30px !important;
@@ -214,18 +214,18 @@
   background-color: #f1f5f9 !important;
 }
 
-/* D√≠a de hoy */
+/* D?≠a de hoy */
 .shadcn-calendar .rdp-today .rdp-day_button {
   font-weight: 700 !important;
 }
 
-/* D√≠as de otros meses */
+/* D?≠as de otros meses */
 .shadcn-calendar .rdp-outside .rdp-day_button {
   color: #94a3b8 !important;
   opacity: 0.45 !important;
 }
 
-/* D√≠as inhabilitados / bloqueados */
+/* D?≠as inhabilitados / bloqueados */
 .shadcn-calendar .rdp-disabled .rdp-day_button,
 .shadcn-calendar .rdp-day_button:disabled {
   color: #cbd5e1 !important;
@@ -235,12 +235,12 @@
   border-color: transparent !important;
 }
 
-/* MODIFICADOR: D√çA HABILITADO (C√≠rculo negro alrededor del n√∫mero del d√≠a) */
+/* MODIFICADOR: D?çA HABILITADO (C?≠rculo negro alrededor del n??mero del d?≠a) */
 .shadcn-calendar .rdp-day-habilitado .rdp-day_button,
 .shadcn-calendar .rdp-day_habilitado .rdp-day_button,
 .shadcn-calendar .rdp-day_button.rdp-day-habilitado,
 .shadcn-calendar .rdp-day_button.rdp-day_habilitado {
-  border: 2px solid #09090b !important; /* C√≠rculo negro definido */
+  border: 2px solid #09090b !important; /* C?≠rculo negro definido */
   border-radius: 9999px !important;
   font-weight: 700 !important;
   color: #09090b !important;
@@ -254,7 +254,7 @@
   border-color: #09090b !important;
 }
 
-/* D√çA SELECCIONADO: C√≠rculo negro relleno con n√∫mero blanco */
+/* D?çA SELECCIONADO: C?≠rculo negro relleno con n??mero blanco */
 .shadcn-calendar .rdp-selected .rdp-day_button,
 .shadcn-calendar .rdp-day_button[aria-selected="true"],
 .shadcn-calendar .rdp-day-habilitado.rdp-selected .rdp-day_button,
@@ -273,8 +273,92 @@
   color: #ffffff !important;
 }
 
-/* Enfoque en d√≠a seleccionado en panel admin si est√° activo */
+/* Enfoque en dÌa seleccionado ? slate como el resto del UI */
 .shadcn-calendar .rdp-focused:not(.rdp-selected) .rdp-day_button {
-  outline: 2px solid #3b82f6 !important;
+  outline: 2px solid #0f172a !important;
   outline-offset: 1px !important;
+}
+
+/* Modo oscuro admin ó calendario de fechas */
+html.admin-theme-dark body.admin-route-active .shadcn-calendar {
+  background-color: #161b22 !important;
+  border-color: #2a3340 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28) !important;
+}
+
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-root {
+  --rdp-accent-color: #f1f5f9;
+  --rdp-accent-background-color: #243041;
+}
+
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-month_caption,
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-dropdown_root {
+  color: #f1f5f9 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-button_previous,
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-button_next {
+  color: #cbd5e1 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-button_previous:hover:not(:disabled),
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-button_next:hover:not(:disabled),
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-dropdown_root:hover {
+  background: #243041 !important;
+  color: #f1f5f9 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-weekday {
+  color: #64748b !important;
+}
+
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-day_button {
+  color: #e2e8f0 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-day_button:hover:not(:disabled) {
+  background-color: #243041 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-outside .rdp-day_button {
+  color: #64748b !important;
+}
+
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-disabled .rdp-day_button,
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-day_button:disabled {
+  color: #475569 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-day-habilitado .rdp-day_button,
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-day_habilitado .rdp-day_button,
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-day_button.rdp-day-habilitado,
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-day_button.rdp-day_habilitado {
+  border-color: #f1f5f9 !important;
+  color: #f1f5f9 !important;
+  background-color: #1a212b !important;
+}
+
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-day-habilitado .rdp-day_button:hover:not(:disabled),
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-day_button.rdp-day-habilitado:hover:not(:disabled) {
+  background-color: #243041 !important;
+  border-color: #f1f5f9 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-selected .rdp-day_button,
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-day_button[aria-selected="true"],
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-day-habilitado.rdp-selected .rdp-day_button,
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-selected .rdp-day-habilitado .rdp-day_button,
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-selected.rdp-day-habilitado .rdp-day_button {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #f1f5f9 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-selected .rdp-day_button:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html.admin-theme-dark body.admin-route-active .shadcn-calendar .rdp-today .rdp-day_button {
+  background-color: rgba(59, 130, 246, 0.25) !important;
 }

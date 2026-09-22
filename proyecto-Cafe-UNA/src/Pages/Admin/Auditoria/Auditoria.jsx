@@ -30,6 +30,7 @@ import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { ST } from "../../../Components/T/ST";
 import { t } from "../../../lib/t";
+import { textoUi } from "../../../lib/textoVisible";
 
 const MODULOS = [
   { id: "usuario", label: "Usuario" },
@@ -98,11 +99,12 @@ function mapRegistro(registro) {
     datosNuevos: registro?.datosNuevos ?? registro?.DatosNuevos ?? null,
     fecha: registro?.fecha ?? registro?.Fecha ?? null,
     idUsuario: registro?.idUsuario ?? registro?.IdUsuario ?? null,
-    usuario:
+    usuario: textoUi(
       registro?.usuario?.nombre ??
-      registro?.usuario?.Nombre ??
-      registro?.Usuario?.Nombre ??
-      "",
+        registro?.usuario?.Nombre ??
+        registro?.Usuario?.Nombre ??
+        "",
+    ),
   };
 }
 
@@ -345,7 +347,7 @@ function AdminAuditoria() {
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
       <AdminLayout>
-        <section className="auditoria-container rounded-2xl border border-slate-200/80 bg-white p-5 md:p-7 shadow-sm">
+        <section className="auditoria-container rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm md:p-7 dark:border-slate-700 dark:bg-slate-900">
           <div className="auditoria-header">
             <div>
               <h1 className="auditoria-title"><ST>{"Auditoría"}</ST></h1>
@@ -644,6 +646,13 @@ function AdminAuditoria() {
                         </tbody>
                       </table>
                     </div>
+                    <AdminPaginacion
+                      page={page}
+                      totalPages={totalPages}
+                      total={registrosFiltrados.length}
+                      onChange={setPage}
+                      label={"Paginación de auditoría"}
+                    />
                   </div>
 
                   <div className="mt-6 grid gap-3 md:hidden">
@@ -689,14 +698,14 @@ function AdminAuditoria() {
                         </article>
                       );
                     })}
+                    <AdminPaginacion
+                      page={page}
+                      totalPages={totalPages}
+                      total={registrosFiltrados.length}
+                      onChange={setPage}
+                      label={"Paginación de auditoría"}
+                    />
                   </div>
-                  <AdminPaginacion
-                    page={page}
-                    totalPages={totalPages}
-                    total={registrosFiltrados.length}
-                    onChange={setPage}
-                    label={"Paginación de auditoría"}
-                  />
                 </>
               )}
             </>

@@ -879,13 +879,13 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold ${
                             hab
-                              ? "bg-green-100 text-green-800"
-                              : "bg-slate-100 text-slate-600"
+                              ? "bg-green-100 text-green-800 dark:bg-emerald-950 dark:text-emerald-200"
+                              : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
                           }`}
                         >
                           <span
                             className={`size-1.5 rounded-full ${
-                              hab ? "bg-green-600" : "bg-slate-400"
+                              hab ? "bg-green-600 dark:bg-emerald-400" : "bg-slate-400 dark:bg-slate-400"
                             }`}
                           />
                           {hab ? <ST>Habilitada</ST> : <ST>Deshabilitada</ST>}

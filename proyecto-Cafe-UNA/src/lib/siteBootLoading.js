@@ -19,14 +19,16 @@ export function isRouteLoadingActive() {
     || document.body.classList.contains('admin-boot-loading');
 }
 
-function readCachedLogoUrl() {
+function readCachedLogoUrl({ dark = false } = {}) {
   try {
     const raw = localStorage.getItem('cafe-una-brand-logos');
-    if (!raw) return '';
-    const parsed = JSON.parse(raw);
-    return String(parsed?.logoUrl || parsed?.logoClaroUrl || '').trim();
+    const parsed = raw ? JSON.parse(raw) : {};
+    const logoUrl = String(parsed?.logoUrl || '').trim();
+    const logoClaroUrl = String(parsed?.logoClaroUrl || '').trim();
+    if (dark) return logoClaroUrl || '/logoblancoyrojo.png';
+    return logoUrl || '/logo.webp';
   } catch {
-    return '';
+    return dark ? '/logoblancoyrojo.png' : '/logo.webp';
   }
 }
 
@@ -71,7 +73,13 @@ export function ensureInitialLoaderVisible(message, { admin = false } = {}) {
   if (label && message) label.textContent = message;
 
   const mark = document.getElementById('site-boot-mark');
-  const logoUrl = readCachedLogoUrl();
+  let preferDark = false;
+  try {
+    preferDark = admin && localStorage.getItem('admin-color-theme') === 'dark';
+  } catch {
+    preferDark = false;
+  }
+  const logoUrl = readCachedLogoUrl({ dark: preferDark });
   if (logoUrl) paintLoaderLogo(mark, logoUrl);
 
   if (admin) {

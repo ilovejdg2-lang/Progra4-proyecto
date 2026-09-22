@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Camera, ChevronRight, Eye, EyeOff, HandCoins, IdCard, KeyRound, Mail, UserRound, X } from "lucide-react";
+import { Camera, ChevronRight, ClipboardList, Eye, EyeOff, IdCard, KeyRound, Mail, ShoppingBag, UserRound, X } from "lucide-react";
 import {
   actualizarPerfil,
   actualizarPerfilCliente,
@@ -10,11 +10,12 @@ import {
   obtenerPerfil,
   solicitarCambioCorreo,
 } from "../../services/perfilService";
-import { obtenerMisSolicitudesDonacion } from "../../services/donacionesService";
 import { applyPerfilToSession, getActiveSessionUser } from "../../services/sessionService";
 import { rutaMisCompras } from "../../Pages/HistorialCompras/HistorialComprasCliente";
+import { rutaMisSolicitudes } from "../../Pages/HistorialSolicitudes/HistorialSolicitudesCliente";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { inicialDeNombre } from "../../lib/inicialDeNombre";
+import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
 import {
   MAX_NOMBRE_USUARIO,
   MAX_PASSWORD,
@@ -233,8 +234,9 @@ export function PerfilContent({ variant = "standalone" }) {
   const tCompras = useTraducir("Compras");
   const tRevisaPedidos = useTraducir("Revisá pedidos, totales y detalle.");
   const tVerHistorial = useTraducir("Ver historial de compras");
-  const tMisDonaciones = useTraducir("Mis donaciones");
-  const tSinDonaciones = useTraducir("Todavía no has enviado solicitudes de donación.");
+  const tMisSolicitudes = useTraducir("Mis solicitudes");
+  const tRevisaSolicitudes = useTraducir("Consultá voluntariado, donaciones y visitas que enviaste.");
+  const tVerSolicitudes = useTraducir("Ver mis solicitudes");
   const tInfoPersonal = useTraducir("Información personal");
   const tSinNombre = useTraducir("Sin nombre");
   const tCambiarNombre = useTraducir("Cambiar nombre");
@@ -259,7 +261,6 @@ export function PerfilContent({ variant = "standalone" }) {
   const tSinFichaCliente = useTraducir("Todavía no tenés ficha de cliente. Se pide al ir a pagar el carrito.");
   const tGuardarCliente = useTraducir("Guardar datos de cliente");
   const [perfil, setPerfil] = useState(null);
-  const [donaciones, setDonaciones] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState("");
@@ -358,11 +359,6 @@ export function PerfilContent({ variant = "standalone" }) {
         fotoBannerPosicion: data?.fotoBannerPosicion || "",
       });
       applyPerfilToSession(data);
-      try {
-        setDonaciones(await obtenerMisSolicitudesDonacion());
-      } catch {
-        setDonaciones([]);
-      }
     } catch (err) {
       setError(sanitizeUserFacingError(err.message || "No se pudo cargar el perfil."));
     } finally {
@@ -741,48 +737,6 @@ export function PerfilContent({ variant = "standalone" }) {
           </div>
         </div>
       </section>
-
-      {Array.isArray(perfil?.roles) &&
-      perfil.roles.some((rol) => String(rol).toLowerCase() === "cliente") ? (
-        <section className="perfil-card" style={{ marginBottom: "1rem" }}>
-          <header className="perfil-card__header">
-            <UserRound size={18} />
-            <h2>{tCompras}</h2>
-          </header>
-          <p className="perfil-card__current-value">{tRevisaPedidos}</p>
-          <Link to={rutaMisCompras(getActiveSessionUser())} className="perfil-link-action">
-            {tVerHistorial}
-            <ChevronRight size={16} />
-          </Link>
-        </section>
-      ) : null}
-
-      {variant === "standalone" ? (
-        <section className="perfil-card" style={{ marginBottom: "1rem" }}>
-          <header className="perfil-card__header">
-            <HandCoins size={18} />
-            <h2>{tMisDonaciones}</h2>
-          </header>
-          {donaciones.length === 0 ? (
-            <p className="perfil-card__current-value">{tSinDonaciones}</p>
-          ) : (
-            <ul className="perfil-donaciones-list">
-              {donaciones.map((row) => (
-                <li key={row.id}>
-                  <strong><ST>{row.necesidadTitulo || row.tipo}</ST></strong>
-                  {" · "}
-                  <ST>{row.estado}</ST>
-                  {row.fechaPropuesta ? ` · ${row.fechaPropuesta}` : ""}
-                </li>
-              ))}
-            </ul>
-          )}
-          <Link to="/donaciones/solicitar" className="perfil-link-action">
-            <ST>Registrar donación</ST>
-            <ChevronRight size={16} />
-          </Link>
-        </section>
-      ) : null}
 
       <div className="perfil-grid">
         <section className="perfil-card">
@@ -1233,6 +1187,45 @@ export function PerfilContent({ variant = "standalone" }) {
         </section>
       ) : null}
 
+      {(() => {
+        const rolesSesion = rolesDeUsuario(getActiveSessionUser());
+        const esClienteCompras = (Array.isArray(perfil?.roles) ? perfil.roles : rolesSesion).some(
+          (rol) => String(rol).toLowerCase() === "cliente",
+        );
+        const puedeMisCompras =
+          esClienteCompras && tienePermiso(rolesSesion, "ver_historial_compras_propio");
+        if (!puedeMisCompras) return null;
+        return (
+          <section className="perfil-card" style={{ marginTop: "1rem", marginBottom: "1rem" }}>
+            <header className="perfil-card__header">
+              <ShoppingBag size={18} />
+              <h2>{tCompras}</h2>
+            </header>
+            <p className="perfil-card__current-value">{tRevisaPedidos}</p>
+            <Link to={rutaMisCompras(getActiveSessionUser())} className="perfil-link-action">
+              {tVerHistorial}
+              <ChevronRight size={16} />
+            </Link>
+          </section>
+        );
+      })()}
+
+      {tienePermiso(rolesDeUsuario(getActiveSessionUser()), "ver_solicitudes_propias") ||
+      tienePermiso(rolesDeUsuario(getActiveSessionUser()), "hacer_solicitud_donacion") ||
+      tienePermiso(rolesDeUsuario(getActiveSessionUser()), "ingresar_solicitud_voluntariado") ||
+      tienePermiso(rolesDeUsuario(getActiveSessionUser()), "crear_solicitud_visitante") ? (
+        <section className="perfil-card" style={{ marginBottom: "1rem" }}>
+          <header className="perfil-card__header">
+            <ClipboardList size={18} />
+            <h2>{tMisSolicitudes}</h2>
+          </header>
+          <p className="perfil-card__current-value">{tRevisaSolicitudes}</p>
+          <Link to={rutaMisSolicitudes(getActiveSessionUser())} className="perfil-link-action">
+            {tVerSolicitudes}
+            <ChevronRight size={16} />
+          </Link>
+        </section>
+      ) : null}
 
       {mensaje ? <p className="perfil-feedback perfil-feedback--ok">{tMensaje}</p> : null}
       {error && perfil ? <p className="perfil-feedback perfil-feedback--error"><ST>{error}</ST></p> : null}
