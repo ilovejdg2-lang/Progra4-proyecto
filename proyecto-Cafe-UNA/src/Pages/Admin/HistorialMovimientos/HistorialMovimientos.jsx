@@ -31,10 +31,18 @@ function formatFechaHora(valor) {
 }
 
 function claseBadgeTipo(tipo) {
-  if (tipo === "entrada") return "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-800";
-  if (tipo === "transferencia") return "bg-sky-50 text-sky-800 border border-sky-200 dark:bg-sky-950 dark:text-sky-200 dark:border-sky-800";
-  if (tipo === "venta_presencial" || tipo === "venta_web") return "bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950 dark:text-rose-200 dark:border-rose-800";
-  return "bg-slate-200 text-slate-800 border border-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600";
+  if (tipo === "entrada") return "text-emerald-800 dark:text-emerald-300";
+  if (tipo === "transferencia") return "text-sky-800 dark:text-sky-300";
+  if (tipo === "venta_presencial" || tipo === "venta_web") return "text-rose-800 dark:text-rose-300";
+  return "text-slate-700 dark:text-slate-200";
+}
+
+function etiquetaTipoCorta(tipo) {
+  if (tipo === "entrada") return "Entrada";
+  if (tipo === "transferencia") return "Transferencia";
+  if (tipo === "venta_presencial") return "Presencial";
+  if (tipo === "venta_web") return "Web";
+  return etiquetaTipo(tipo);
 }
 
 export default function AdminHistorialMovimientos() {
@@ -347,7 +355,7 @@ export default function AdminHistorialMovimientos() {
             <AdminListaVacia onLimpiar={limpiarFiltros} />
           ) : (
             <div className="admin-table-shell">
-              <table className="w-full min-w-[960px] text-left text-[length:var(--text-body)]">
+              <table className="w-full text-left text-[length:var(--text-body)]">
                 <thead>
                   <tr>
                     <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Fecha</ST></th>
@@ -367,9 +375,10 @@ export default function AdminHistorialMovimientos() {
                       </td>
                       <td className="px-3.5 py-2.5 text-center">
                         <span
-                          className={`admin-chip-estado inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${claseBadgeTipo(row.tipo)}`}
+                          className={`admin-chip-estado text-[length:var(--text-body)] font-semibold ${claseBadgeTipo(row.tipo)}`}
+                          title={etiquetaTipo(row.tipo)}
                         >
-                          <ST>{etiquetaTipo(row.tipo)}</ST>
+                          <ST>{etiquetaTipoCorta(row.tipo)}</ST>
                         </span>
                       </td>
                       <td className="px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900">

@@ -37,6 +37,7 @@ import {
 import { AdminLayout } from "../layouts/AdminLayout";
 import { createPortal } from "react-dom";
 import PageLoading from "../../../Components/PageLoading/PageLoading";
+import { UiSelect } from "../../../Components/ui/Select";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import {
   actualizarDocumentoAdmin,
@@ -542,43 +543,44 @@ export default function AdminDocumentos() {
                 ) : null}
               </div>
 
-              <select
-                className="admin-docs-select"
+              <UiSelect
+                ariaLabel="Categoría"
                 value={filtroCategoria}
-                onChange={(e) => setFiltroCategoria(e.target.value)}
-              >
-                <option value="">Todas las categorías</option>
-                {categorias.map((c) => {
-                  const nombre = c.nombre || c.Nombre || "";
-                  const padre = c.padre || c.Padre || "";
-                  const id = c.id || c.Id || nombre;
-                  return (
-                    <option key={id} value={nombre}>
-                      {padre ? `↳ ${nombre}` : nombre}
-                    </option>
-                  );
-                })}
-              </select>
+                onChange={setFiltroCategoria}
+                options={[
+                  { value: "", label: "Todas las categorías" },
+                  ...categorias.map((c) => {
+                    const nombre = c.nombre || c.Nombre || "";
+                    const padre = c.padre || c.Padre || "";
+                    return {
+                      value: nombre,
+                      label: padre ? `↳ ${nombre}` : nombre,
+                    };
+                  }),
+                ]}
+              />
 
-              <select
-                className="admin-docs-select"
+              <UiSelect
+                ariaLabel="Visibilidad"
                 value={filtroPrivacidad}
-                onChange={(e) => setFiltroPrivacidad(e.target.value)}
-              >
-                <option value="">Cualquier visibilidad</option>
-                <option value="false">Solo Públicos</option>
-                <option value="true">Solo Privados</option>
-              </select>
+                onChange={setFiltroPrivacidad}
+                options={[
+                  { value: "", label: "Cualquier visibilidad" },
+                  { value: "false", label: "Solo Públicos" },
+                  { value: "true", label: "Solo Privados" },
+                ]}
+              />
 
-              <select
-                className="admin-docs-select"
+              <UiSelect
+                ariaLabel="Estado"
                 value={filtroActivo}
-                onChange={(e) => setFiltroActivo(e.target.value)}
-              >
-                <option value="">Cualquier estado</option>
-                <option value="true">Activos</option>
-                <option value="false">Inactivos</option>
-              </select>
+                onChange={setFiltroActivo}
+                options={[
+                  { value: "", label: "Cualquier estado" },
+                  { value: "true", label: "Activos" },
+                  { value: "false", label: "Inactivos" },
+                ]}
+              />
 
               {(filtroBuscar || filtroCategoria || filtroPrivacidad || filtroActivo) ? (
                 <button

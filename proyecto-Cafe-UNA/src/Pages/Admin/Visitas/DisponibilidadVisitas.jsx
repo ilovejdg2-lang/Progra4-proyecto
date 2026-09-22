@@ -141,7 +141,7 @@ export function DisponibilidadVisitas() {
           <p className="p-6 text-center text-slate-600">Todavía no hay horarios configurados.</p>
         ) : (
           <div className="admin-table-shell">
-            <table className="w-full min-w-[760px] text-center text-sm">
+            <table className="w-full text-center text-sm">
               <thead><tr><th>Fecha</th><th>Horario</th><th>Indicación</th><th>Estado</th><th>Acciones</th></tr></thead>
               <tbody>
                 {slots.map((slot) => (

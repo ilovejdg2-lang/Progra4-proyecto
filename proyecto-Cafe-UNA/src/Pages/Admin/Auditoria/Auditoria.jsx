@@ -31,6 +31,7 @@ import { getActiveSessionUser } from "../../../services/sessionService";
 import { ST } from "../../../Components/T/ST";
 import { t } from "../../../lib/t";
 import { textoUi } from "../../../lib/textoVisible";
+import { UiSelect } from "../../../Components/ui/Select";
 
 const MODULOS = [
   { id: "usuario", label: "Usuario" },
@@ -129,7 +130,7 @@ function BadgeAccion({ accion }) {
   return (
     <span
       className={`badge-accion-pill ${
-        estilos[accion] ?? "border-slate-200 bg-slate-50 text-slate-600"
+        estilos[accion] ?? "badge-accion--update"
       }`}
     >
       {ETIQUETAS_ACCION[accion] ? <ST>{ETIQUETAS_ACCION[accion]}</ST> : <ST>{accion}</ST>}
@@ -473,62 +474,63 @@ function AdminAuditoria() {
                 {/* Fila 2: Grid uniforme y alineado de 5 filtros */}
                 <div className="auditoria-filters-grid">
                   <div className="auditoria-filter-item">
-                    <label htmlFor="filtro-auditoria-usuario" className="auditoria-filter-label">
+                    <span className="auditoria-filter-label">
                       <User className="size-3.5 text-slate-400" />
                       <ST>Usuario</ST>
-                    </label>
-                    <select
+                    </span>
+                    <UiSelect
                       id="filtro-auditoria-usuario"
-                      value={filtrosApi.usuario}
-                      onChange={(e) => setFiltroApi("usuario", e.target.value)}
-                      className="auditoria-filter-control"
-                    >
-                      <option value="todos">{t("Todos")}</option>
-                      {usuariosDisponibles.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.nombre}
-                        </option>
-                      ))}
-                    </select>
+                      ariaLabel={t("Usuario")}
+                      value={String(filtrosApi.usuario)}
+                      onChange={(valor) => setFiltroApi("usuario", valor)}
+                      options={[
+                        { value: "todos", label: "Todos" },
+                        ...usuariosDisponibles.map((item) => ({
+                          value: String(item.id),
+                          label: item.nombre,
+                        })),
+                      ]}
+                    />
                   </div>
 
                   <div className="auditoria-filter-item">
-                    <label htmlFor="filtro-auditoria-modulo" className="auditoria-filter-label">
+                    <span className="auditoria-filter-label">
                       <Layers className="size-3.5 text-slate-400" />
                       <ST>Módulo</ST>
-                    </label>
-                    <select
+                    </span>
+                    <UiSelect
                       id="filtro-auditoria-modulo"
+                      ariaLabel={t("Módulo")}
                       value={filtrosApi.modulo}
-                      onChange={(e) => setFiltroApi("modulo", e.target.value)}
-                      className="auditoria-filter-control"
-                    >
-                      <option value="todos">{t("Todos")}</option>
-                      {MODULOS.map((modulo) => (
-                        <option key={modulo.id} value={modulo.id}>
-                          {modulo.label}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(valor) => setFiltroApi("modulo", valor)}
+                      options={[
+                        { value: "todos", label: "Todos" },
+                        ...MODULOS.map((modulo) => ({
+                          value: modulo.id,
+                          label: modulo.label,
+                        })),
+                      ]}
+                    />
                   </div>
 
                   <div className="auditoria-filter-item">
-                    <label htmlFor="filtro-auditoria-accion" className="auditoria-filter-label">
+                    <span className="auditoria-filter-label">
                       <SlidersHorizontal className="size-3.5 text-slate-400" />
                       <ST>Acción</ST>
-                    </label>
-                    <select
+                    </span>
+                    <UiSelect
                       id="filtro-auditoria-accion"
+                      ariaLabel={t("Acción")}
                       value={filtrosApi.accion}
-                      onChange={(e) => setFiltroApi("accion", e.target.value)}
-                      className="auditoria-filter-control"
-                    >
-                      <option value="todos">{t("Todas")}</option>
-                      <option value="INSERT">{t("Creación")}</option>
-                      <option value="UPDATE">{t("Actualización")}</option>
-                      <option value="DELETE">{t("Eliminación")}</option>
-                      <option value="AJUSTE_STOCK">{t("Ajuste de stock")}</option>
-                    </select>
+                      onChange={(valor) => setFiltroApi("accion", valor)}
+                      options={[
+                        { value: "todos", label: "Todas" },
+                        { value: "INSERT", label: "Creación" },
+                        { value: "UPDATE", label: "Actualización" },
+                        { value: "DELETE", label: "Eliminación" },
+                        { value: "AJUSTE_STOCK", label: "Ajuste de stock" },
+                      ]}
+                    />
                   </div>
 
                   <div className="auditoria-filter-item">

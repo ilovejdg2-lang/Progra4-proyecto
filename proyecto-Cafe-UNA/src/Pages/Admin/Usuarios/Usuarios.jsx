@@ -239,13 +239,13 @@ function InfoClienteLectura({ usuario }) {
 }
 
 const colorRol = {
-  Superadministrador: "admin-role-chip bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200",
-  SuperAdmin:         "admin-role-chip bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200",
-  Administración:     "admin-role-chip bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200",
-  Admin:              "admin-role-chip bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200",
-  Vendedor:           "admin-role-chip bg-orange-100 text-[#5c3317] dark:bg-orange-950 dark:text-orange-200",
-  Cliente:            "admin-role-chip bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200",
-  Usuario:            "admin-role-chip bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-white",
+  Superadministrador: "admin-role-chip bg-slate-100 text-yellow-500 dark:bg-slate-700 dark:text-yellow-400",
+  SuperAdmin:         "admin-role-chip bg-slate-100 text-yellow-500 dark:bg-slate-700 dark:text-yellow-400",
+  Administración:     "admin-role-chip bg-slate-100 text-green-600 dark:bg-slate-700 dark:text-green-400",
+  Admin:              "admin-role-chip bg-slate-100 text-green-600 dark:bg-slate-700 dark:text-green-400",
+  Vendedor:           "admin-role-chip bg-slate-100 text-[#5c3317] dark:bg-slate-700 dark:text-orange-300",
+  Cliente:            "admin-role-chip bg-slate-100 text-red-600 dark:bg-slate-700 dark:text-red-400",
+  Usuario:            "admin-role-chip bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100",
 };
 
 function claseRol(rol) {
