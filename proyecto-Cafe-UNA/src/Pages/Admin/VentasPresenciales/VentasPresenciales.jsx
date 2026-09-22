@@ -609,14 +609,14 @@ export default function AdminVentasPresenciales() {
                         style={{ borderRadius: "16px" }}
                         className={`group relative flex flex-col p-4 text-left transition-all duration-200 select-none ${
                           enCarrito > 0
-                            ? "border-2 border-amber-500 bg-amber-50/20 shadow-md"
-                            : "border border-slate-200/90 bg-white hover:border-slate-400 hover:shadow-md"
-                        } ${sinStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer active:scale-[0.99]"}`}
+                            ? "border-2 border-amber-500 bg-amber-50/20 shadow-md dark:border-amber-400 dark:bg-amber-950/40"
+                            : "border border-slate-200/90 bg-white hover:border-slate-400 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-500"
+                        } ${sinStock ? "opacity-80 cursor-not-allowed" : "cursor-pointer active:scale-[0.99]"}`}
                       >
                         {/* Contenedor de Imagen o Placeholder cuadrado con puntas redondeadas */}
                         <div
                           style={{ borderRadius: "12px" }}
-                          className="relative mb-3 flex h-36 w-full items-center justify-center overflow-hidden bg-slate-100/90 group-hover:bg-slate-200/70 transition"
+                          className="relative mb-3 flex h-36 w-full items-center justify-center overflow-hidden bg-slate-100/90 transition group-hover:bg-slate-200/70 dark:bg-slate-800 dark:group-hover:bg-slate-700"
                         >
                           {prod.imagen ? (
                             <img
@@ -625,13 +625,13 @@ export default function AdminVentasPresenciales() {
                               className="h-full w-full object-cover object-center transition duration-300 group-hover:scale-105"
                             />
                           ) : (
-                            <Coffee className="size-14 text-slate-300 stroke-1 group-hover:text-slate-500 transition" />
+                            <Coffee className="size-14 stroke-1 text-slate-300 transition group-hover:text-slate-500 dark:text-slate-500 dark:group-hover:text-slate-400" />
                           )}
 
                           {/* SKU badge */}
                           <span
                             style={{ borderRadius: "6px" }}
-                            className="absolute top-2.5 left-2.5 bg-white/95 px-2 py-0.5 text-[11px] font-semibold text-slate-700 tracking-wider shadow-xs"
+                            className="absolute top-2.5 left-2.5 bg-white/95 px-2 py-0.5 text-[11px] font-semibold tracking-wider text-slate-700 shadow-xs dark:bg-slate-950/90 dark:text-slate-100"
                           >
                             {sku}
                           </span>
@@ -639,24 +639,24 @@ export default function AdminVentasPresenciales() {
 
                         {/* Nombre del Producto */}
                         <div className="flex-1">
-                          <h3 className="line-clamp-2 text-sm font-bold text-slate-900 group-hover:text-black transition">
+                          <h3 className="line-clamp-2 text-sm font-bold text-slate-900 transition group-hover:text-black dark:text-slate-100 dark:group-hover:text-white">
                             {prod.nombre}
                           </h3>
                         </div>
 
                         {/* Fila Inferior: Precio y Badge de Stock */}
-                        <div className="mt-3 flex items-center justify-between pt-2 border-t border-slate-100">
-                          <span className="text-base font-bold text-slate-950">
+                        <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 dark:border-slate-800">
+                          <span className="text-base font-bold text-slate-950 dark:text-slate-50">
                             {formatearColones(precio)}
                           </span>
 
                           <span
                             className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                               sinStock
-                                ? "bg-red-50 text-red-600"
+                                ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200"
                                 : stockDisp <= 3
-                                ? "bg-amber-50 text-amber-700"
-                                : "bg-emerald-50 text-emerald-700"
+                                ? "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200"
+                                : "bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
                             }`}
                           >
                             {sinStock ? t("Agotado") : `${stockDisp} ${t("disp.")}`}

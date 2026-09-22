@@ -426,6 +426,9 @@ export default function SolicitarVisita() {
       };
       const created = await crearSolicitudVisita(payload);
       setSuccess(created);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("visitas-updated"));
+      }
     } catch (requestError) {
       setError(requestError?.message || "No se pudo enviar la solicitud de visita.");
     } finally {

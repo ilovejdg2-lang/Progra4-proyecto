@@ -695,6 +695,13 @@ textarea {
   border-radius: var(--ui-radius) !important;
 }
 
+/* Sin azul nativo del SO en controles (Windows highlight, etc.) */
+select,
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #0f172a;
+}
+
 input.rounded-full:not([type="checkbox"]):not([type="radio"]),
 .login-field input:not([type="checkbox"]):not([type="radio"]),
 .perfil-field input:not([type="checkbox"]):not([type="radio"]),

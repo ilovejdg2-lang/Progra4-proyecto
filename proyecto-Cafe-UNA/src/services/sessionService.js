@@ -1,4 +1,5 @@
 import { getTokenExpirationMs } from "../lib/jwt";
+import { textoUi } from "../lib/textoVisible";
 
 const USER_STORAGE_KEY = 'user';
 const SESSION_DURATION_MS = 60 * 60 * 1000;
@@ -88,6 +89,8 @@ export function saveAuthenticatedUser(user) {
   lastTouchAt = Date.now();
   const sessionUser = {
     ...user,
+    ...(user?.name != null ? { name: textoUi(String(user.name)) } : {}),
+    ...(user?.username != null ? { username: textoUi(String(user.username)) } : {}),
     expiresAt: Date.now() + SESSION_DURATION_MS,
   };
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(sessionUser));
@@ -103,8 +106,8 @@ export function applyPerfilToSession(perfil) {
     : (Array.isArray(perfil.Roles) ? perfil.Roles : (perfil.rol ? [perfil.rol] : []));
 
   return updateSessionUser({
-    name: perfil.nombre,
-    username: perfil.nombre,
+    name: textoUi(perfil.nombre ?? ""),
+    username: textoUi(perfil.nombre ?? ""),
     email: perfil.correo,
     correo: perfil.correo,
     ...(roles.length > 0 ? { roles } : {}),

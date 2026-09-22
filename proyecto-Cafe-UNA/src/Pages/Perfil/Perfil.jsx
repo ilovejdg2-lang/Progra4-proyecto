@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { PerfilClienteLayout } from "../../Components/Perfil/PerfilClienteLayout";
 import { PerfilContent } from "../../Components/Perfil/PerfilContent";
 import { getActiveSessionUser } from "../../services/sessionService";
 
@@ -23,7 +24,11 @@ function Perfil() {
     return null;
   }
 
-  return <PerfilContent variant="standalone" />;
+  return (
+    <PerfilClienteLayout>
+      <PerfilContent variant="standalone" />
+    </PerfilClienteLayout>
+  );
 }
 
 export default Perfil;

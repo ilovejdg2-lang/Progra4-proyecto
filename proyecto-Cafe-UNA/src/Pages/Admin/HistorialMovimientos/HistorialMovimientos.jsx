@@ -3,6 +3,7 @@ import { Download, FileSpreadsheet, History } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
@@ -30,10 +31,10 @@ function formatFechaHora(valor) {
 }
 
 function claseBadgeTipo(tipo) {
-  if (tipo === "entrada") return "bg-emerald-50 text-emerald-800 border border-emerald-200";
-  if (tipo === "transferencia") return "bg-sky-50 text-sky-800 border border-sky-200";
-  if (tipo === "venta_presencial" || tipo === "venta_web") return "bg-rose-50 text-rose-800 border border-rose-200";
-  return "bg-slate-100 text-slate-700 border border-slate-200";
+  if (tipo === "entrada") return "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-800";
+  if (tipo === "transferencia") return "bg-sky-50 text-sky-800 border border-sky-200 dark:bg-sky-950 dark:text-sky-200 dark:border-sky-800";
+  if (tipo === "venta_presencial" || tipo === "venta_web") return "bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950 dark:text-rose-200 dark:border-rose-800";
+  return "bg-slate-200 text-slate-800 border border-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600";
 }
 
 export default function AdminHistorialMovimientos() {
@@ -394,29 +395,14 @@ export default function AdminHistorialMovimientos() {
           )}
 
           {total > 0 ? (
-            <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 sm:px-6">
-              <p className="text-[length:var(--text-body)] text-slate-600">
-                <ST>Página</ST> {page} <ST>de</ST> {totalPages} · {total} <ST>registros</ST>
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  disabled={page <= 1}
-                  onClick={() => setPage((actual) => Math.max(1, actual - 1))}
-                  className="h-[var(--control-height)] rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
-                >
-                  <ST>Anterior</ST>
-                </button>
-                <button
-                  type="button"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage((actual) => actual + 1)}
-                  className="h-[var(--control-height)] rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
-                >
-                  <ST>Siguiente</ST>
-                </button>
-              </div>
-            </div>
+            <AdminPaginacion
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={PAGE_SIZE}
+              onChange={setPage}
+              label="Paginación de movimientos"
+            />
           ) : null}
         </div>
       </div>

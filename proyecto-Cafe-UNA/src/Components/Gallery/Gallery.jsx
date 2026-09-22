@@ -24,11 +24,11 @@ function getGalleryItemClassName(index, count) {
       classes.push('gallery__item--fill-mobile');
     }
 
-    // Desktop 4 columnas + featured 2x2: las 2 primeras van al lado del featured;
-    // el resto va de a 4. Si sobra 1, que ocupe toda la fila (sin hueco feo).
-    if (count > 3) {
-      const afterSide = Math.max(0, smallCount - 2);
-      if (afterSide % 4 === 1) {
+    // Desktop 4 columnas + featured 2×2: al lado del destacado caben 4 celdas
+    // (2 filas × 2 columnas). El resto va de a 4; si sobra 1, a lo largo.
+    if (smallCount > 4) {
+      const afterBeside = smallCount - 4;
+      if (afterBeside % 4 === 1) {
         classes.push('gallery__item--fill-desktop');
       }
     }

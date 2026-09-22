@@ -39,6 +39,7 @@ export let PERMISOS_POR_ROL = {
   inactivar_productos: admins,
   ver_historial_compras_clientes: staff,
   ver_historial_compras_propio: [CL],
+  ver_solicitudes_propias: logueados,
   ver_inventario: admins,
   actualizar_inventario: admins,
   agregar_articulo_inventario: admins,

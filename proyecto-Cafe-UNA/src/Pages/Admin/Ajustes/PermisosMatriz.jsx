@@ -160,7 +160,7 @@ export function PermisosMatriz({
           <div className="overflow-x-auto px-2 pb-4 sm:px-4">
             <table className="min-w-full border-collapse text-left text-[length:var(--text-body)]">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/90">
+                <tr className="border-b border-slate-200 bg-slate-50">
                   <th className="sticky left-0 z-10 bg-slate-50 px-3 py-3 font-semibold text-slate-500">
                     <ST>Acción</ST>
                   </th>

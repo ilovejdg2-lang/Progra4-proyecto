@@ -9,6 +9,7 @@ import {
   AdminModalBody,
   AdminModalHeader,
 } from "../../../Components/Admin/ui/AdminModal";
+import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { UiSelect } from "../../../Components/ui/Select";
 import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { AdminLayout } from "../layouts/AdminLayout";
@@ -495,31 +496,17 @@ export default function AdminDistribucion() {
               </div>
             )}
 
-            {historialTotal > 0 && totalPages > 0 ? (
-              <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 sm:px-6">
-                <p className="text-[length:var(--text-body)] text-slate-600">
-                  <ST>Página</ST> {page} <ST>de</ST> {totalPages} · {historialTotal} <ST>registros</ST>
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    disabled={page <= 1}
-                    onClick={() => { const p = page - 1; setPage(p); loadHistorial(p); }}
-                    className="h-[var(--control-height)] rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
-                  >
-                    <ST>Anterior</ST>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={page >= totalPages}
-                    onClick={() => { const p = page + 1; setPage(p); loadHistorial(p); }}
-                    className="h-[var(--control-height)] rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
-                  >
-                    <ST>Siguiente</ST>
-                  </button>
-                </div>
-              </div>
-            ) : null}
+            <AdminPaginacion
+              page={page}
+              totalPages={totalPages}
+              total={historialTotal}
+              pageSize={pageSize}
+              onChange={(p) => {
+                setPage(p);
+                loadHistorial(p);
+              }}
+              label="Paginación de distribución"
+            />
           </section>
         </div>
 

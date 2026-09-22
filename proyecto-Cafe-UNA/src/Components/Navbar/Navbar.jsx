@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import './Navbar.css';
 import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
-import { Bell, BookOpen, ChevronDown, ClipboardList, Coffee, Gift, HandHeart, Info, LayoutDashboard, LogOut, Menu, Minus, Package, Plus, ShoppingBag, ShoppingCart, Trash2, User, X } from 'lucide-react';
+import { Bell, BookOpen, ChevronDown, ClipboardList, Coffee, Gift, HandHeart, Info, LayoutDashboard, LogOut, MapPin, Menu, Minus, Package, Plus, ShoppingBag, ShoppingCart, Trash2, User, X } from 'lucide-react';
 import { LanguageSwitcher } from '../LanguageSwitcher/LanguageSwitcher';
 import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
 import { FacebookIcon, InstagramIcon } from '../Footer/SocialIcons';
@@ -16,6 +16,11 @@ import {
     obtenerMisSolicitudesDonacion,
     obtenerSolicitudesDonacionAdmin,
 } from '../../services/donacionesService';
+import {
+    obtenerSolicitudesVisitaDeUsuario,
+    obtenerSolicitudesVisitas,
+} from '../../services/visitasService';
+import { obtenerMisSolicitudes } from '../../services/solicitudesService';
 import { cancelPendingSessionRefresh } from '../../services/apiClient';
 import { beginLogout, clearSession, getActiveSessionUser } from '../../services/sessionService';
 import { marcarIntentRegistroCliente, puedeComprar } from '../../services/authService';
@@ -28,6 +33,7 @@ import SiteNavLink from '../SiteNavLink/SiteNavLink';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { normalizePathname } from '../../lib/paths';
 import { rutaMisCompras } from '../../Pages/HistorialCompras/HistorialComprasCliente';
+import { rutaMisSolicitudes } from '../../Pages/HistorialSolicitudes/HistorialSolicitudesCliente';
 
 import { clearCart as emptyCart, getStoredCart, saveCart } from '../../lib/cartStorage';
 
@@ -106,6 +112,15 @@ const canSeeAllDonaciones = (user) => {
         tienePermiso(roles, 'administrar_solicitudes_donaciones')
     );
 };
+const canSeeAllVisitas = (user) => {
+    if (!user) return false;
+    if (canSeeAllSolicitudes(user) || user.role === 'admin') return true;
+    const roles = rolesDeUsuario(user);
+    return (
+        tienePermiso(roles, 'administrar_solicitudes_visitantes') ||
+        tienePermiso(roles, 'ver_solicitudes_visitantes')
+    );
+};
 const canSeeAdminVentas = (user) => {
     if (!user) return false;
     const roles = rolesDeUsuario(user);
@@ -118,6 +133,16 @@ const canSeeVentasNotificaciones = (user) => {
     if (!user) return false;
     const roles = rolesDeUsuario(user);
     return canSeeAdminVentas(user) || tienePermiso(roles, 'ver_historial_compras_propio');
+};
+const canSeeSolicitudesPropiasNotif = (user) => {
+    if (!user) return false;
+    const roles = rolesDeUsuario(user);
+    return (
+        tienePermiso(roles, 'ver_solicitudes_propias') ||
+        tienePermiso(roles, 'hacer_solicitud_donacion') ||
+        tienePermiso(roles, 'ingresar_solicitud_voluntariado') ||
+        tienePermiso(roles, 'crear_solicitud_visitante')
+    );
 };
 const isSolicitudPendiente = (solicitud) =>
     String(solicitud?.estado || '').trim().toLowerCase() === 'pendiente';
@@ -188,8 +213,13 @@ const Navbar = () => {
     const labelVisitas = useTraducir('Visitas');
     const labelDonaciones = useTraducir('Donaciones');
     const labelVentasNotif = useTraducir('Ventas');
+    const labelMisComprasNotif = useTraducir('Mis compras');
     const labelVentaAceptar = useTraducir('Pendiente de aceptar');
     const labelVentaEntregar = useTraducir('Pendiente de entregar');
+    const labelCompraPendiente = useTraducir('Tu compra está pendiente');
+    const labelCompraAceptada = useTraducir('Tu compra fue aceptada');
+    const labelVerMisSolicitudes = useTraducir('Ver mis solicitudes');
+    const labelVerMisCompras = useTraducir('Ver mis compras');
     const tCartResumen = useTraducir('Resumen del carrito');
     const tCartVacio = useTraducir('Tu carrito está vacío');
     const tCartVacioLead = useTraducir('Todavía no hay cafés por aquí. Explorá el catálogo y agregá el que más te guste.');
@@ -227,6 +257,7 @@ const Navbar = () => {
     const [cartItems, setCartItems] = useState([]);
     const [solicitudes, setSolicitudes] = useState([]);
     const [solicitudesDonacion, setSolicitudesDonacion] = useState([]);
+    const [solicitudesVisita, setSolicitudesVisita] = useState([]);
     const [alertasStock, setAlertasStock] = useState([]);
     const [ventasNotificaciones, setVentasNotificaciones] = useState([]);
     const [notificationsLoading, setNotificationsLoading] = useState(false);
@@ -286,6 +317,7 @@ const Navbar = () => {
             if (!storedUser) {
                 setSolicitudes([]);
                 setSolicitudesDonacion([]);
+                setSolicitudesVisita([]);
                 setAlertasStock([]);
                 setVentasNotificaciones([]);
                 setShowNotifications(false);
@@ -304,6 +336,7 @@ const Navbar = () => {
         if (!currentUser) {
             setSolicitudes([]);
             setSolicitudesDonacion([]);
+            setSolicitudesVisita([]);
             setAlertasStock([]);
             setVentasNotificaciones([]);
             return;
@@ -313,12 +346,44 @@ const Navbar = () => {
         setNotificationsError('');
         try {
             const userId = currentUser?.id || currentUser?.email || currentUser?.username;
-            const solicitudesPromise = canSeeAllSolicitudes(currentUser)
-                ? obtenerSolicitudes()
-                : obtenerSolicitudesDeUsuario(String(userId));
-            const donacionesPromise = canSeeAllDonaciones(currentUser)
-                ? obtenerSolicitudesDonacionAdmin()
-                : obtenerMisSolicitudesDonacion();
+            const esStaffSolicitudes = canSeeAllSolicitudes(currentUser);
+            const esStaffDonaciones = canSeeAllDonaciones(currentUser);
+            const esStaffVisitas = canSeeAllVisitas(currentUser);
+            const verPropias = canSeeSolicitudesPropiasNotif(currentUser);
+
+            let voluntariado = [];
+            let donaciones = [];
+            let visitas = [];
+
+            if (esStaffSolicitudes || esStaffDonaciones || esStaffVisitas) {
+                const [volData, donData, visData] = await Promise.all([
+                    esStaffSolicitudes
+                        ? obtenerSolicitudes().catch(() => [])
+                        : verPropias
+                          ? obtenerSolicitudesDeUsuario(String(userId)).catch(() => [])
+                          : Promise.resolve([]),
+                    esStaffDonaciones
+                        ? obtenerSolicitudesDonacionAdmin().catch(() => [])
+                        : verPropias
+                          ? obtenerMisSolicitudesDonacion().catch(() => [])
+                          : Promise.resolve([]),
+                    esStaffVisitas
+                        ? obtenerSolicitudesVisitas({ estado: 'Pendiente' }).catch(() => [])
+                        : verPropias
+                          ? obtenerSolicitudesVisitaDeUsuario(String(userId)).catch(() => [])
+                          : Promise.resolve([]),
+                ]);
+                voluntariado = Array.isArray(volData) ? volData : [];
+                donaciones = Array.isArray(donData) ? donData : [];
+                visitas = Array.isArray(visData) ? visData : [];
+            } else if (verPropias) {
+                // Cliente / usuario: unificado por JWT (compras aparte).
+                const propias = await obtenerMisSolicitudes({ estado: 'pendiente' }).catch(() => null);
+                const items = Array.isArray(propias?.data) ? propias.data : [];
+                voluntariado = items.filter((item) => item.tipo === 'voluntariado');
+                donaciones = items.filter((item) => item.tipo === 'donacion');
+                visitas = items.filter((item) => item.tipo === 'visita');
+            }
 
             let alertas = [];
             if (canSeeStockAlerts(currentUser)) {
@@ -330,17 +395,15 @@ const Navbar = () => {
                 }
             }
 
-            const ventasPromise = canSeeVentasNotificaciones(currentUser)
-                ? obtenerVentasParaNotificaciones({ admin: canSeeAdminVentas(currentUser) }).catch(() => [])
-                : Promise.resolve([]);
+            const ventas = canSeeVentasNotificaciones(currentUser)
+                ? await obtenerVentasParaNotificaciones({
+                    admin: canSeeAdminVentas(currentUser),
+                }).catch(() => [])
+                : [];
 
-            const [data, donaciones, ventas] = await Promise.all([
-                solicitudesPromise.catch(() => []),
-                donacionesPromise.catch(() => []),
-                ventasPromise,
-            ]);
-            setSolicitudes(Array.isArray(data) ? data : []);
-            setSolicitudesDonacion(Array.isArray(donaciones) ? donaciones : []);
+            setSolicitudes(voluntariado);
+            setSolicitudesDonacion(donaciones);
+            setSolicitudesVisita(visitas);
             setAlertasStock(Array.isArray(alertas) ? alertas : []);
             setVentasNotificaciones(Array.isArray(ventas) ? ventas : []);
         } catch (err) {
@@ -361,11 +424,13 @@ const Navbar = () => {
         window.addEventListener('voluntariado-updated', syncSolicitudes);
         window.addEventListener('donaciones-updated', syncSolicitudes);
         window.addEventListener('compras-updated', syncSolicitudes);
+        window.addEventListener('visitas-updated', syncSolicitudes);
         return () => {
             window.clearTimeout(initialLoadId);
             window.removeEventListener('voluntariado-updated', syncSolicitudes);
             window.removeEventListener('donaciones-updated', syncSolicitudes);
             window.removeEventListener('compras-updated', syncSolicitudes);
+            window.removeEventListener('visitas-updated', syncSolicitudes);
         };
     }, [user, loadSolicitudesUsuario]);
 
@@ -612,11 +677,22 @@ const Navbar = () => {
     const solicitudesPendientesCount = solicitudesPendientes.length;
     const donacionesPendientes = solicitudesDonacion.filter(isSolicitudPendiente);
     const donacionesPendientesCount = donacionesPendientes.length;
+    const visitasPendientes = solicitudesVisita.filter(isSolicitudPendiente);
+    const visitasPendientesCount = visitasPendientes.length;
     const alertasStockCount = alertasStock.length;
     const ventasNotificacionesCount = ventasNotificaciones.length;
-    const notificationsCount = solicitudesPendientesCount + donacionesPendientesCount + alertasStockCount + ventasNotificacionesCount;
+    const notificationsCount =
+        solicitudesPendientesCount +
+        donacionesPendientesCount +
+        visitasPendientesCount +
+        alertasStockCount +
+        ventasNotificacionesCount;
     const puedeAbrirVentasAdmin = canSeeAdminVentas(user);
+    const puedeAbrirSolicitudesAdmin = canSeeAllSolicitudes(user);
+    const puedeAbrirDonacionesAdmin = canSeeAllDonaciones(user);
+    const puedeAbrirVisitasAdmin = canSeeAllVisitas(user);
     const showStockAlerts = canSeeStockAlerts(user);
+    const labelSeccionCompras = puedeAbrirVentasAdmin ? labelVentasNotif : labelMisComprasNotif;
 
     const persistCart = (updatedCart) => {
         setCartItems(updatedCart);
@@ -760,17 +836,31 @@ const Navbar = () => {
     const handleNotificationOpen = (event) => {
         event?.stopPropagation?.();
         setShowNotifications(false);
-        if (user?.role === 'admin' || canSeeAllSolicitudes(user)) {
+        if (puedeAbrirSolicitudesAdmin) {
             navigate({ to: '/admin/voluntariado' });
+            return;
         }
+        navigate({ to: rutaMisSolicitudes(user) });
     };
 
     const handleDonacionNotificationOpen = (event) => {
         event?.stopPropagation?.();
         setShowNotifications(false);
-        if (user?.role === 'admin' || canSeeAllDonaciones(user)) {
+        if (puedeAbrirDonacionesAdmin) {
             navigate({ to: '/admin/donaciones/solicitudes' });
+            return;
         }
+        navigate({ to: rutaMisSolicitudes(user) });
+    };
+
+    const handleVisitaNotificationOpen = (event) => {
+        event?.stopPropagation?.();
+        setShowNotifications(false);
+        if (puedeAbrirVisitasAdmin) {
+            navigate({ to: '/admin/visitas' });
+            return;
+        }
+        navigate({ to: rutaMisSolicitudes(user) });
     };
 
     const handleVentaNotificationOpen = (event, venta) => {
@@ -1238,43 +1328,38 @@ const Navbar = () => {
                                         ) : null}
 
                                         {solicitudesPendientesCount > 0 ? (
-                                            <section className="notifications-section" aria-label="Voluntariado">
-                                                {showStockAlerts && alertasStockCount > 0 ? (
-                                                    <p className="notifications-section-label">Voluntariado</p>
-                                                ) : null}
+                                            <section className="notifications-section" aria-label={labelVoluntariado}>
+                                                <p className="notifications-section-label">{labelVoluntariado}</p>
                                                 {solicitudesPendientes.map((solicitud) => {
-                                                    const notificationContent = (
-                                                        <>
+                                                    const titulo =
+                                                        solicitud.titulo ||
+                                                        solicitud.tipoVoluntariado ||
+                                                        solicitud.area ||
+                                                        solicitud.tipoEtiqueta ||
+                                                        'Voluntariado';
+                                                    const key = solicitud.id || solicitud.identificador || titulo;
+                                                    return (
+                                                        <button
+                                                            key={`vol-${key}`}
+                                                            type="button"
+                                                            className="notification-item notification-item--voluntariado"
+                                                            onClick={handleNotificationOpen}
+                                                            title={puedeAbrirSolicitudesAdmin ? labelAbrirAdminNotif : labelVerMisSolicitudes}
+                                                        >
                                                             <span className="notification-item__icon" aria-hidden="true">
                                                                 <HandHeart size={16} />
                                                             </span>
                                                             <div className="notification-item__main">
                                                                 <strong>
-                                                                    <NombreCarrito
-                                                                        nombre={solicitud.tipoVoluntariado || solicitud.area || 'Voluntariado'}
-                                                                    />
+                                                                    <NombreCarrito nombre={titulo} />
                                                                 </strong>
-                                                                {user?.role === 'admin' ? (
-                                                                    <small>{labelAbrirAdminNotif}</small>
-                                                                ) : null}
+                                                                <small>
+                                                                    {puedeAbrirSolicitudesAdmin
+                                                                        ? labelAbrirAdminNotif
+                                                                        : labelVerMisSolicitudes}
+                                                                </small>
                                                             </div>
-                                                        </>
-                                                    );
-
-                                                    return user?.role === 'admin' ? (
-                                                        <button
-                                                            key={solicitud.id}
-                                                            type="button"
-                                                            className="notification-item notification-item--voluntariado"
-                                                            onClick={handleNotificationOpen}
-                                                            title={"Abrir administraci\u00f3n de voluntariado"}
-                                                        >
-                                                            {notificationContent}
                                                         </button>
-                                                    ) : (
-                                                        <article key={solicitud.id} className="notification-item notification-item--voluntariado notification-item--readonly">
-                                                            {notificationContent}
-                                                        </article>
                                                     );
                                                 })}
                                             </section>
@@ -1284,53 +1369,87 @@ const Navbar = () => {
                                             <section className="notifications-section" aria-label={labelDonaciones}>
                                                 <p className="notifications-section-label">{labelDonaciones}</p>
                                                 {donacionesPendientes.map((solicitud) => {
-                                                    const puedeAbrir = Boolean(user?.role === 'admin' || canSeeAllDonaciones(user));
-                                                    const notificationContent = (
-                                                        <>
+                                                    const titulo =
+                                                        solicitud.titulo ||
+                                                        solicitud.necesidadTitulo ||
+                                                        solicitud.tipo ||
+                                                        solicitud.tipoEtiqueta ||
+                                                        'Donación';
+                                                    const key = solicitud.id || solicitud.identificador || titulo;
+                                                    return (
+                                                        <button
+                                                            key={`donacion-${key}`}
+                                                            type="button"
+                                                            className="notification-item notification-item--donacion"
+                                                            onClick={handleDonacionNotificationOpen}
+                                                            title={puedeAbrirDonacionesAdmin ? labelAbrirAdminNotif : labelVerMisSolicitudes}
+                                                        >
                                                             <span className="notification-item__icon" aria-hidden="true">
                                                                 <Gift size={16} />
                                                             </span>
                                                             <div className="notification-item__main">
                                                                 <strong>
-                                                                    <NombreCarrito
-                                                                        nombre={solicitud.necesidadTitulo || solicitud.tipo || 'Donación'}
-                                                                    />
+                                                                    <NombreCarrito nombre={titulo} />
                                                                 </strong>
-                                                                {puedeAbrir ? (
-                                                                    <small>{labelAbrirAdminNotif}</small>
-                                                                ) : null}
+                                                                <small>
+                                                                    {puedeAbrirDonacionesAdmin
+                                                                        ? labelAbrirAdminNotif
+                                                                        : labelVerMisSolicitudes}
+                                                                </small>
                                                             </div>
-                                                        </>
-                                                    );
-
-                                                    return puedeAbrir ? (
-                                                        <button
-                                                            key={`donacion-${solicitud.id}`}
-                                                            type="button"
-                                                            className="notification-item notification-item--donacion"
-                                                            onClick={handleDonacionNotificationOpen}
-                                                            title={labelAbrirAdminNotif}
-                                                        >
-                                                            {notificationContent}
                                                         </button>
-                                                    ) : (
-                                                        <article
-                                                            key={`donacion-${solicitud.id}`}
-                                                            className="notification-item notification-item--donacion notification-item--readonly"
+                                                    );
+                                                })}
+                                            </section>
+                                        ) : null}
+
+                                        {visitasPendientesCount > 0 ? (
+                                            <section className="notifications-section" aria-label={labelVisitas}>
+                                                <p className="notifications-section-label">{labelVisitas}</p>
+                                                {visitasPendientes.map((solicitud) => {
+                                                    const titulo =
+                                                        solicitud.titulo ||
+                                                        solicitud.tipoGrupo ||
+                                                        solicitud.tipoVisitante ||
+                                                        solicitud.encargadoNombre ||
+                                                        solicitud.tipoEtiqueta ||
+                                                        'Visita grupal';
+                                                    const key = solicitud.id || solicitud.identificador || titulo;
+                                                    return (
+                                                        <button
+                                                            key={`visita-${key}`}
+                                                            type="button"
+                                                            className="notification-item notification-item--visita"
+                                                            onClick={handleVisitaNotificationOpen}
+                                                            title={puedeAbrirVisitasAdmin ? labelAbrirAdminNotif : labelVerMisSolicitudes}
                                                         >
-                                                            {notificationContent}
-                                                        </article>
+                                                            <span className="notification-item__icon" aria-hidden="true">
+                                                                <MapPin size={16} />
+                                                            </span>
+                                                            <div className="notification-item__main">
+                                                                <strong>
+                                                                    <NombreCarrito nombre={titulo} />
+                                                                </strong>
+                                                                <small>
+                                                                    {puedeAbrirVisitasAdmin
+                                                                        ? labelAbrirAdminNotif
+                                                                        : labelVerMisSolicitudes}
+                                                                </small>
+                                                            </div>
+                                                        </button>
                                                     );
                                                 })}
                                             </section>
                                         ) : null}
 
                                         {ventasNotificacionesCount > 0 ? (
-                                            <section className="notifications-section" aria-label={labelVentasNotif}>
-                                                <p className="notifications-section-label">{labelVentasNotif}</p>
+                                            <section className="notifications-section" aria-label={labelSeccionCompras}>
+                                                <p className="notifications-section-label">{labelSeccionCompras}</p>
                                                 {ventasNotificaciones.map((venta) => {
                                                     const pendienteAceptar = String(venta.estado) === 'Pendiente';
-                                                    const detalle = pendienteAceptar ? labelVentaAceptar : labelVentaEntregar;
+                                                    const detalle = puedeAbrirVentasAdmin
+                                                        ? (pendienteAceptar ? labelVentaAceptar : labelVentaEntregar)
+                                                        : (pendienteAceptar ? labelCompraPendiente : labelCompraAceptada);
                                                     return (
                                                         <button
                                                             key={`venta-${venta.id}`}
@@ -1345,10 +1464,16 @@ const Navbar = () => {
                                                             <div className="notification-item__main">
                                                                 <strong>
                                                                     {venta.numero || venta.id}
-                                                                    {venta.clienteNombre ? ` · ${venta.clienteNombre}` : ''}
+                                                                    {puedeAbrirVentasAdmin && venta.clienteNombre
+                                                                        ? ` · ${venta.clienteNombre}`
+                                                                        : ''}
                                                                 </strong>
                                                                 <span>{detalle}</span>
-                                                                <small>{puedeAbrirVentasAdmin ? labelAbrirAdminNotif : detalle}</small>
+                                                                <small>
+                                                                    {puedeAbrirVentasAdmin
+                                                                        ? labelAbrirAdminNotif
+                                                                        : labelVerMisCompras}
+                                                                </small>
                                                             </div>
                                                         </button>
                                                     );
@@ -1398,7 +1523,8 @@ const Navbar = () => {
                                 path === '/perfil' ||
                                 path.startsWith('/perfil/') ||
                                 path === '/admin/perfil' ||
-                                path === '/admin/mis-compras';
+                                path === '/admin/mis-compras' ||
+                                path === '/admin/mis-solicitudes';
                               const perfilTo = puedePanel ? '/admin/perfil' : '/perfil';
                               // Solo una: en sitio público con panel → Panel; en admin/perfil/compras → Mi perfil.
                               if (puedePanel && !enAdmin && !enZonaPerfil) {

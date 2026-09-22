@@ -512,6 +512,10 @@ const DICCIONARIO = {
   "Ventas": "Sales",
   "Pendiente de aceptar": "Pending acceptance",
   "Pendiente de entregar": "Pending delivery",
+  "Tu compra está pendiente": "Your purchase is pending",
+  "Tu compra fue aceptada": "Your purchase was accepted",
+  "Ver mis solicitudes": "View my requests",
+  "Ver mis compras": "View my purchases",
   "Finalizar pedido": "Place order",
   "Total del pedido": "Order total",
   "Subtotal (sin IVA)": "Subtotal (excl. VAT)",
@@ -669,6 +673,15 @@ const DICCIONARIO = {
   "El teléfono del cliente es obligatorio.": "The client phone number is required.",
   "Para asignar el rol Cliente debe completar la información de cliente.":
     "To assign the Client role you must complete the client information.",
+  "Datos cargados automáticamente. Podés editarlos si hace falta.":
+    "Data loaded automatically. You can edit it if needed.",
+  "Consultando cédula...": "Looking up ID...",
+  "No se encontraron datos para esta cédula. Completá los datos manualmente.":
+    "No data found for this ID. Complete the fields manually.",
+  "Al quitar Cliente se borra la ficha y debe volver a registrarse para comprar.":
+    "Removing Client deletes the profile and they must register again to buy.",
+  "Si quita el rol Cliente, se borra esta información y la persona debe registrarse de nuevo.":
+    "If you remove the Client role, this information is deleted and they must register again.",
   "Error al cambiar el estado.": "Error changing status.",
   "Error al actualizar la solicitud. Intentá de nuevo.":
     "Error updating the request. Please try again.",
@@ -788,6 +801,24 @@ const DICCIONARIO = {
     "Pending: accept or reject. Accepted: ship or return to pending (stock is restored). Shipped can no longer be edited.",
   "Consultá el estado de tus pedidos: pendiente, aceptado, entregado o rechazado.":
     "Check the status of your orders: pending, accepted, delivered or rejected.",
+  "Rastreá tus pedidos: pendiente, aceptado, entregado o rechazado.":
+    "Track your orders: pending, accepted, delivered or rejected.",
+  "Filtrá y abrí el detalle para rastrear tu pedido.":
+    "Filter and open the details to track your order.",
+  "Procesando": "Processing",
+  "Devoluciones": "Returns",
+  "Devolución": "Return",
+  "Rastreo del pedido": "Order tracking",
+  "Rastrear pedido": "Track order",
+  "Tu pedido está en procesamiento.": "Your order is being processed.",
+  "Tu pedido está en revisión.": "Your order is under review.",
+  "Tu pedido fue enviado y va en camino.": "Your order was shipped and is on the way.",
+  "Tu pedido fue aceptado y se prepara para entrega.": "Your order was accepted and is being prepared for delivery.",
+  "Tu pedido ya fue entregado.": "Your order has already been delivered.",
+  "Tu pedido fue rechazado.": "Your order was rejected.",
+  "Tu pedido tiene una devolución por un problema.": "Your order has a return due to a problem.",
+  "Si es incorrecto, comunicate con": "If this is incorrect, contact",
+  "Marcar devolución": "Mark as return",
   "Ver compra": "View order",
   "Punto de venta": "Point of sale",
   "Ventas pendientes de confirmar": "Sales pending confirmation",

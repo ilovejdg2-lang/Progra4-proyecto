@@ -5,6 +5,7 @@ import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
+import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import {
   cambiarEstadoCompra,
@@ -40,21 +41,24 @@ function normalizarEstadoUi(estadoRaw) {
     return "Entregado";
   }
   if (estado === "Rechazada") return "Rechazado";
+  if (estado === "Devolución" || estado === "Devoluciones" || estado === "Devuelto") return "Devolucion";
   return estado;
 }
 
 function badgeEstado(estadoRaw) {
   switch (normalizarEstadoUi(estadoRaw)) {
     case "Pendiente":
-      return "bg-amber-50 text-amber-800";
+      return "bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200";
     case "Aceptado":
-      return "bg-sky-50 text-sky-800";
+      return "bg-sky-50 text-sky-900 dark:bg-sky-950 dark:text-sky-200";
     case "Entregado":
-      return "bg-emerald-50 text-emerald-800";
+      return "bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200";
     case "Rechazado":
-      return "bg-rose-50 text-rose-800";
+      return "bg-rose-50 text-rose-900 dark:bg-rose-950 dark:text-rose-200";
+    case "Devolucion":
+      return "bg-violet-50 text-violet-900 dark:bg-violet-950 dark:text-violet-200";
     default:
-      return "bg-slate-100 text-slate-700";
+      return "bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-slate-100";
   }
 }
 
@@ -90,7 +94,7 @@ function mapLocalVenta(venta) {
 
 function BadgeEstadoCompra({ estado }) {
   const normalizado = normalizarEstadoUi(estado);
-  const etiqueta = useTraducir(normalizado);
+  const etiqueta = useTraducir(normalizado === "Devolucion" ? "Devolución" : normalizado);
   return (
     <span
       className={`admin-chip-estado inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeEstado(normalizado)}`}
@@ -415,6 +419,7 @@ export default function HistorialVentas({
                         { value: "Aceptado", label: "Aceptado" },
                         { value: "Entregado", label: "Entregado" },
                         { value: "Rechazado", label: "Rechazado" },
+                        { value: "Devolucion", label: "Devolución" },
                       ],
                     }]),
               ]}
@@ -474,13 +479,14 @@ export default function HistorialVentas({
               </div>
             )}
 
-            {total > 10 && totalPages > 1 ? (
-              <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-4 py-3">
-                <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="h-[var(--control-height)] rounded-full border border-slate-300 px-3 text-[length:var(--text-body)] disabled:opacity-50"><ST>Anterior</ST></button>
-                <span className="text-[length:var(--text-body)] text-slate-600">{page} / {totalPages}</span>
-                <button type="button" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="h-[var(--control-height)] rounded-full border border-slate-300 px-3 text-[length:var(--text-body)] disabled:opacity-50"><ST>Siguiente</ST></button>
-              </div>
-            ) : null}
+            <AdminPaginacion
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={10}
+              onChange={setPage}
+              label="Paginación de ventas"
+            />
           </section>
         </div>
 
@@ -609,6 +615,19 @@ export default function HistorialVentas({
                     className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 disabled:opacity-50"
                   >
                     <RotateCcw className="size-4" /> <ST>Reabrir como pendiente</ST>
+                  </button>
+                </div>
+              ) : null}
+
+              {puedeGestionar && estadoDetalle === "Entregado" ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={Boolean(actionLoading)}
+                    onClick={() => actualizarEstado(detalle, "Devolucion")}
+                    className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full border border-violet-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-violet-800 disabled:opacity-50"
+                  >
+                    <RotateCcw className="size-4" /> <ST>Marcar devolución</ST>
                   </button>
                 </div>
               ) : null}

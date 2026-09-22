@@ -45,6 +45,11 @@
   aspect-ratio: 21 / 9;
 }
 
+.gallery__item--fill-desktop .gallery__caption {
+  font-size: var(--text-body);
+  padding: 0.85rem 1.1rem;
+}
+
 .gallery__empty {
   margin: 0;
   color: #6b6b6b;

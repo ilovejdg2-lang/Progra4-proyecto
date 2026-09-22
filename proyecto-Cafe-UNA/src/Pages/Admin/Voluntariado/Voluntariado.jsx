@@ -82,7 +82,7 @@ const inputModalCls =
 
 const colorEstado = {
   Pendiente: "text-amber-600",
-  "En revisi\u00f3n": "text-blue-600",
+  "En revisi\u00f3n": "text-sky-800",
   Aprobado: "text-green-600",
   Rechazado: "text-red-600",
 };

@@ -683,6 +683,15 @@
   color: #9a4b16;
 }
 
+.notification-item--visita {
+  border-left: 3px solid #0369a1;
+}
+
+.notification-item--visita .notification-item__icon {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
 .notification-item--venta {
   border-left: 3px solid #334155;
 }
