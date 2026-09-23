@@ -1,11 +1,22 @@
-/* Repositorio.css */
-
 .repositorio-page {
   background: #fafafa;
   min-height: 100vh;
-  padding: 24px 0 60px;
+  padding: 16px 0 60px;
   font-family: inherit;
   color: var(--texto-principal, #0f172a);
+}
+
+.repositorio-back-container {
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.repositorio-back-container .page-back-link {
+  display: inline-flex;
+  margin: 0 0 16px;
+  padding: 0.5rem 0;
 }
 
 .repositorio-section {
@@ -151,48 +162,77 @@
   pointer-events: none;
 }
 
+.section-card__header-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.btn-accion-icono--activo {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #0f172a !important;
+}
+
 /* Chips de Categorías */
 .repositorio-chips-scroll {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-top: 16px;
-  padding-top: 14px;
+  padding: 10px 4px 6px;
   border-top: 1px solid var(--borde-input, #f1f5f9);
   overflow-x: auto;
-  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 .repositorio-chips-scroll::-webkit-scrollbar {
-  display: none;
+  height: 5px;
+}
+
+.repositorio-chips-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.repositorio-chips-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
 }
 
 .repositorio-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
+  gap: 8px;
+  padding: 8px 18px;
   background: #ffffff;
-  border: 1px solid var(--borde-input, #e2e8f0);
+  border: 1px solid #e2e8f0;
   border-radius: 999px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  color: #475569;
+  color: #334155;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .repositorio-chip:hover {
   background: #f8fafc;
   color: #0f172a;
-  border-color: #cbd5e1;
+  border-color: #94a3b8;
+  transform: translateY(-1px);
 }
 
 .repositorio-chip--activo {
   background: #0f172a !important;
   color: #ffffff !important;
   border-color: #0f172a !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15) !important;
 }
 
 .repositorio-chip__count {
@@ -204,11 +244,13 @@
   padding: 0 6px;
   border-radius: 999px;
   font-size: 0.75rem;
-  background: rgba(0, 0, 0, 0.06);
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #475569;
 }
 
 .repositorio-chip--activo .repositorio-chip__count {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.22);
   color: #ffffff;
 }
 
