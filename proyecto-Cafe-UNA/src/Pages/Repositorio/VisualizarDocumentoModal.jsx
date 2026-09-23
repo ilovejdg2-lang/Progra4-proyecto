@@ -51,6 +51,7 @@ function formatearTamano(bytes = 0) {
 export function VisualizarDocumentoModal({ documento, onClose }) {
   const [pantallaCompleta, setPantallaCompleta] = useState(false);
   const [descargando, setDescargando] = useState(false);
+  const [errorCarga, setErrorCarga] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -181,11 +182,43 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
 
         {/* Cuerpo del Visor */}
         <div className="repositorio-viewer-body">
-          {esPdf ? (
+          {errorCarga ? (
+            <div className="repositorio-viewer-fallback">
+              <div className={`repositorio-viewer-fallback__icon ${iconInfo.colorClass}`}>
+                <IconDoc size={56} />
+              </div>
+              <h4>{documento.nombreOriginal || documento.titulo}</h4>
+              <p>
+                <ST>
+                  No se pudo cargar la vista previa interactiva del documento. Puede descargarlo directamente para examinarlo en su equipo.
+                </ST>
+              </p>
+              <div className="flex gap-3 mt-4">
+                <button
+                  type="button"
+                  className="btn-primario-admin"
+                  onClick={handleDescargar}
+                  disabled={descargando}
+                >
+                  <Download size={16} />
+                  <span><ST>Descargar archivo ahora</ST></span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-secundario-admin"
+                  onClick={handleAbrirNuevaPestana}
+                >
+                  <ExternalLink size={16} />
+                  <span><ST>Abrir en nueva pestaña</ST></span>
+                </button>
+              </div>
+            </div>
+          ) : esPdf ? (
             <iframe
               src={urlVisualizar}
               title={documento.titulo}
               className="repositorio-viewer-iframe"
+              onError={() => setErrorCarga(true)}
             />
           ) : esImagen ? (
             <div className="repositorio-viewer-image-wrap">
@@ -193,6 +226,7 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
                 src={urlVisualizar}
                 alt={documento.titulo}
                 className="repositorio-viewer-img"
+                onError={() => setErrorCarga(true)}
               />
             </div>
           ) : (

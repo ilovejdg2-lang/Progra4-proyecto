@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import './Navbar.css';
 import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
-import { Bell, BookOpen, ChevronDown, ClipboardList, Coffee, Gift, HandHeart, Info, LayoutDashboard, LogOut, MapPin, Menu, Minus, Package, Plus, ShoppingBag, ShoppingCart, Trash2, User, X } from 'lucide-react';
+import { Bell, BookOpen, ChevronDown, ClipboardList, Coffee, FolderOpen, Gift, HandHeart, Info, LayoutDashboard, LogOut, MapPin, Menu, Minus, Package, Plus, ShoppingBag, ShoppingCart, Trash2, User, X } from 'lucide-react';
 import { LanguageSwitcher } from '../LanguageSwitcher/LanguageSwitcher';
 import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
 import { FacebookIcon, InstagramIcon } from '../Footer/SocialIcons';
@@ -75,6 +75,20 @@ function isAboutNavLink(enlace) {
         etiqueta.includes('sobre nosotros') ||
         etiqueta.includes('about us') ||
         (etiqueta.includes('nosotros') && !etiqueta.includes('product'))
+    );
+}
+
+function isRepositoryNavLink(enlace) {
+    const ruta = String(enlace?.ruta ?? enlace?.Ruta ?? '').toLowerCase();
+    const etiqueta = String(
+        `${enlace?.etiqueta ?? enlace?.Etiqueta ?? ''} ${enlace?.etiquetaEn ?? enlace?.EtiquetaEn ?? ''}`,
+    ).toLowerCase();
+    return (
+        ruta.includes('repositorio') ||
+        ruta.includes('document') ||
+        etiqueta.includes('repositorio') ||
+        etiqueta.includes('repository') ||
+        etiqueta.includes('documentaci')
     );
 }
 
@@ -179,10 +193,20 @@ function getCachedNavbarLinks() {
 }
 
 function filterNavLinks(enlaces) {
-    return enlaces.filter((enlace) => {
+    const filtered = enlaces.filter((enlace) => {
         const ruta = String(enlace?.ruta ?? enlace?.Ruta ?? '').trim();
         return ruta !== '/' && ruta !== '';
     });
+    if (!filtered.some(isRepositoryNavLink)) {
+        filtered.push({
+            id: 'nav-repositorio-link',
+            etiqueta: 'Repositorio',
+            etiquetaEn: 'Repository',
+            ruta: '/repositorio',
+            orden: 4,
+        });
+    }
+    return filtered;
 }
 
 function resolveMobileNavIcon(ruta) {
@@ -191,6 +215,7 @@ function resolveMobileNavIcon(ruta) {
     if (normalized.includes('product')) return Coffee;
     if (normalized.includes('about') || normalized.includes('sobre')) return BookOpen;
     if (normalized.includes('volunt') || normalized.includes('formulario') || normalized.includes('donacion')) return ClipboardList;
+    if (normalized.includes('repositorio') || normalized.includes('document')) return FolderOpen;
     if (normalized.includes('iniciativa') || normalized.includes('gallery') || normalized.includes('galer')) return Info;
     if (normalized.includes('checkout') || normalized.includes('cart')) return ShoppingCart;
 
@@ -209,6 +234,9 @@ const Navbar = () => {
     const labelRedes = useTraducir('Redes sociales');
     const labelSobreNosotros = useTraducir('Sobre nosotros');
     const labelFormularios = useTraducir('Formularios');
+    const labelRepositorio = useTraducir('Repositorio');
+    const labelVerDocumentacion = useTraducir('Ver documentación');
+    const labelEnviarProponer = useTraducir('Enviar / Proponer archivo');
     const labelVoluntariado = useTraducir('Voluntariado');
     const labelVisitas = useTraducir('Visitas');
     const labelDonaciones = useTraducir('Donaciones');
@@ -250,8 +278,10 @@ const Navbar = () => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [showAboutMenu, setShowAboutMenu] = useState(false);
     const [showFormsMenu, setShowFormsMenu] = useState(false);
+    const [showRepoMenu, setShowRepoMenu] = useState(false);
     const [showMobileAbout, setShowMobileAbout] = useState(true);
     const [showMobileForms, setShowMobileForms] = useState(true);
+    const [showMobileRepo, setShowMobileRepo] = useState(true);
     const [isCartClosing, setIsCartClosing] = useState(false);
     const [user, setUser] = useState(null);
     const [cartItems, setCartItems] = useState([]);
@@ -274,6 +304,7 @@ const Navbar = () => {
     const userMenuRef = useRef(null);
     const aboutMenuRef = useRef(null);
     const formsMenuRef = useRef(null);
+    const repoMenuRef = useRef(null);
     const cartCloseTimerRef = useRef(null);
     const navMenuHoverTimerRef = useRef(null);
     const navbarRef = useRef(null);
@@ -471,10 +502,11 @@ const Navbar = () => {
         setIsMobileMenuOpen(false);
         setShowAboutMenu(false);
         setShowFormsMenu(false);
+        setShowRepoMenu(false);
     }, [pathname]);
 
     useEffect(() => {
-        if (!showAboutMenu && !showFormsMenu) return undefined;
+        if (!showAboutMenu && !showFormsMenu && !showRepoMenu) return undefined;
         const onPointerDown = (event) => {
             if (showAboutMenu && aboutMenuRef.current && !aboutMenuRef.current.contains(event.target)) {
                 setShowAboutMenu(false);
@@ -482,11 +514,15 @@ const Navbar = () => {
             if (showFormsMenu && formsMenuRef.current && !formsMenuRef.current.contains(event.target)) {
                 setShowFormsMenu(false);
             }
+            if (showRepoMenu && repoMenuRef.current && !repoMenuRef.current.contains(event.target)) {
+                setShowRepoMenu(false);
+            }
         };
         const onEscape = (event) => {
             if (event.key === 'Escape') {
                 setShowAboutMenu(false);
                 setShowFormsMenu(false);
+                setShowRepoMenu(false);
             }
         };
         document.addEventListener('mousedown', onPointerDown);
@@ -495,7 +531,7 @@ const Navbar = () => {
             document.removeEventListener('mousedown', onPointerDown);
             document.removeEventListener('keydown', onEscape);
         };
-    }, [showAboutMenu, showFormsMenu]);
+    }, [showAboutMenu, showFormsMenu, showRepoMenu]);
 
     useEffect(() => {
         if (!isMobileMenuOpen) {
@@ -765,9 +801,15 @@ const Navbar = () => {
         if (menu === 'about') {
             setShowAboutMenu(true);
             setShowFormsMenu(false);
-        } else {
+            setShowRepoMenu(false);
+        } else if (menu === 'forms') {
             setShowFormsMenu(true);
             setShowAboutMenu(false);
+            setShowRepoMenu(false);
+        } else if (menu === 'repo') {
+            setShowRepoMenu(true);
+            setShowAboutMenu(false);
+            setShowFormsMenu(false);
         }
         setShowDropdown(false);
         setShowCartDropdown(false);
@@ -776,7 +818,8 @@ const Navbar = () => {
 
     const closeDesktopNavMenu = useCallback((menu) => {
         if (menu === 'about') setShowAboutMenu(false);
-        else setShowFormsMenu(false);
+        else if (menu === 'forms') setShowFormsMenu(false);
+        else if (menu === 'repo') setShowRepoMenu(false);
     }, []);
 
     const handleDesktopNavMenuEnter = useCallback((menu) => {
@@ -1092,6 +1135,65 @@ const Navbar = () => {
                                         onClick={() => setShowFormsMenu(false)}
                                     >
                                         {labelDonaciones}
+                                    </Link>
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    if (isRepositoryNavLink(enlace)) {
+                        const pathNorm = normalizePathname(pathname);
+                        const repoActive =
+                            pathNorm.startsWith('/repositorio')
+                            || pathNorm.startsWith('/documentos');
+                        return (
+                            <div
+                                key={enlace.id ?? enlace.ruta ?? 'repositorio'}
+                                className={`navbar__about ${repoActive ? 'is-current' : ''} ${showRepoMenu ? 'is-open' : ''}`}
+                                ref={repoMenuRef}
+                                onMouseEnter={() => handleDesktopNavMenuEnter('repo')}
+                                onMouseLeave={() => handleDesktopNavMenuLeave('repo')}
+                                onBlur={(event) => {
+                                    if (!event.currentTarget.contains(event.relatedTarget)) {
+                                        closeDesktopNavMenu('repo');
+                                    }
+                                }}
+                            >
+                                <button
+                                    type="button"
+                                    className="navbar__about-trigger"
+                                    aria-expanded={showRepoMenu}
+                                    aria-haspopup="true"
+                                    onClick={() => handleDesktopNavMenuClick('repo')}
+                                    onFocus={() => handleDesktopNavMenuEnter('repo')}
+                                >
+                                    <span>{etiquetaEnlace(enlace, idioma) || labelRepositorio}</span>
+                                    <ChevronDown size={16} strokeWidth={2.4} aria-hidden="true" />
+                                </button>
+                                <div
+                                    className="navbar__about-menu"
+                                    role="menu"
+                                    aria-label={labelRepositorio}
+                                    aria-hidden={!showRepoMenu}
+                                >
+                                    <Link
+                                        to="/repositorio"
+                                        role="menuitem"
+                                        className="navbar__about-item"
+                                        activeProps={{ className: "navbar__about-item" }}
+                                        onClick={() => setShowRepoMenu(false)}
+                                    >
+                                        {labelVerDocumentacion}
+                                    </Link>
+                                    <Link
+                                        to="/repositorio"
+                                        search={{ solicitar: 'true' }}
+                                        role="menuitem"
+                                        className="navbar__about-item"
+                                        activeProps={{ className: "navbar__about-item" }}
+                                        onClick={() => setShowRepoMenu(false)}
+                                    >
+                                        {labelEnviarProponer}
                                     </Link>
                                 </div>
                             </div>
@@ -1724,6 +1826,55 @@ const Navbar = () => {
                                                             onClick={closeMobileMenu}
                                                         >
                                                             {labelDonaciones}
+                                                        </Link>
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        );
+                                    }
+
+                                    if (isRepositoryNavLink(enlace)) {
+                                        const pathNorm = normalizePathname(pathname);
+                                        const repoActive = pathNorm.startsWith('/repositorio') || pathNorm.startsWith('/documentos');
+                                        return (
+                                            <div
+                                                key={`mobile-repo-${enlace.id ?? enlace.ruta}`}
+                                                className={`navbar__mobile-about ${showMobileRepo ? 'is-open' : ''}`}
+                                            >
+                                                <button
+                                                    type="button"
+                                                    className="navbar__mobile-about-trigger"
+                                                    aria-expanded={showMobileRepo}
+                                                    onClick={() => setShowMobileRepo((open) => !open)}
+                                                >
+                                                    <span className="navbar__mobile-about-trigger-main">
+                                                        <span className="navbar__mobile-link-label">
+                                                            {labelRepositorio}
+                                                        </span>
+                                                    </span>
+                                                    <ChevronDown
+                                                        className="navbar__mobile-about-chevron"
+                                                        size={18}
+                                                        strokeWidth={2.4}
+                                                        aria-hidden="true"
+                                                    />
+                                                </button>
+                                                {showMobileRepo ? (
+                                                    <div className="navbar__mobile-about-sub">
+                                                        <Link
+                                                            to="/repositorio"
+                                                            className={`navbar__mobile-about-item ${repoActive ? 'is-active' : ''}`}
+                                                            onClick={closeMobileMenu}
+                                                        >
+                                                            {labelVerDocumentacion}
+                                                        </Link>
+                                                        <Link
+                                                            to="/repositorio"
+                                                            search={{ solicitar: 'true' }}
+                                                            className="navbar__mobile-about-item"
+                                                            onClick={closeMobileMenu}
+                                                        >
+                                                            {labelEnviarProponer}
                                                         </Link>
                                                     </div>
                                                 ) : null}
