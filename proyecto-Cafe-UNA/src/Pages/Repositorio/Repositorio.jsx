@@ -92,6 +92,7 @@ export default function Repositorio() {
   const [terminoBusqueda, setTerminoBusqueda] = useState("");
   const [orden, setOrden] = useState("recientes");
   const [vistaCuadricula, setVistaCuadricula] = useState(true);
+  const [mostrarFiltros, setMostrarFiltros] = useState(true);
 
   // Modal de propuesta/solicitud de archivo
   const [documentoSolicitar, setDocumentoSolicitar] = useState(null);
@@ -99,9 +100,22 @@ export default function Repositorio() {
   const [descargandoId, setDescargandoId] = useState(null);
   const [alertaExito, setAlertaExito] = useState("");
 
+  const routerState = useRouterState({
+    select: (s) => s.location.search,
+  });
+
   const tRepositorio = useTraducir("Repositorio Institucional");
   const tBuscarPlaceholder = useTraducir("Buscar por título, autor, palabras clave...");
   const tTodasCategorias = useTraducir("Todas las categorías");
+
+  const conteoDocsPorCategoria = useMemo(() => {
+    const map = {};
+    documentos.forEach((d) => {
+      const c = String(d.categoria || "").trim().toLowerCase();
+      if (c) map[c] = (map[c] || 0) + 1;
+    });
+    return map;
+  }, [documentos]);
 
   const cargarDatos = useCallback(async () => {
     try {
@@ -130,13 +144,16 @@ export default function Repositorio() {
   }, [cargarDatos]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const searchParams = new URLSearchParams(window.location.search);
-      if (searchParams.get("solicitar") === "true" || window.location.hash === "#solicitar") {
-        setDocumentoSolicitar({});
-      }
+    if (
+      routerState?.solicitar === "true" ||
+      routerState?.solicitar === true ||
+      (typeof window !== "undefined" &&
+        (new URLSearchParams(window.location.search).get("solicitar") === "true" ||
+          window.location.hash === "#solicitar"))
+    ) {
+      setDocumentoSolicitar({});
     }
-  }, []);
+  }, [routerState]);
 
   const handleDescargar = async (doc) => {
     if (doc.esPrivado && !puedeVerPrivadosDirecto) {
@@ -188,7 +205,9 @@ export default function Repositorio() {
 
   return (
     <div className="repositorio-page">
-      <BackToHomeLink />
+      <div className="repositorio-back-container">
+        <BackToHomeLink />
+      </div>
 
       <section className="repositorio-section">
         {/* Cabecera idéntica a Voluntariado / Donaciones */}
@@ -239,9 +258,8 @@ export default function Repositorio() {
 
         {/* Barra de Búsqueda y Filtros con estilo SectionCard */}
         <div className="section-card mb-6">
-          <div className="section-card__header">
-            <h4>
-              <Filter size={18} className="section-card__icon-inline" />
+          <div className="section-card__header flex items-center justify-between">
+            <h4 className="section-card__header-title">
               <ST>Explorador y Filtros de Búsqueda</ST>
             </h4>
             <div className="ml-auto flex items-center gap-2 no-print">
@@ -256,7 +274,16 @@ export default function Repositorio() {
               </button>
               <button
                 type="button"
-                className="btn-accion-icono"
+                className={`btn-accion-icono ${mostrarFiltros ? "btn-accion-icono--activo" : ""}`}
+                title={mostrarFiltros ? "Ocultar filtros" : "Mostrar filtros"}
+                onClick={() => setMostrarFiltros((prev) => !prev)}
+                aria-label="Filtros de búsqueda"
+              >
+                <Filter size={18} />
+              </button>
+              <button
+                type="button"
+                className="btn-accion-icono hidden sm:inline-flex"
                 title="Imprimir catálogo"
                 onClick={handleImprimir}
               >
@@ -266,108 +293,111 @@ export default function Repositorio() {
             </div>
           </div>
 
-          <div className="section-card__body">
-            <div className="repositorio-filtros-grid">
-              {/* Buscador de texto */}
-              <div className="repositorio-buscador-wrap">
-                <Search size={18} className="repositorio-buscador-icon" />
-                <input
-                  type="text"
-                  className="repositorio-buscador-input"
-                  placeholder={tBuscarPlaceholder}
-                  value={terminoBusqueda}
-                  onChange={(e) => setTerminoBusqueda(e.target.value)}
-                />
-                {terminoBusqueda ? (
+          {mostrarFiltros ? (
+            <div className="section-card__body">
+              <div className="repositorio-filtros-grid">
+                {/* Buscador de texto */}
+                <div className="repositorio-buscador-wrap">
+                  <Search size={18} className="repositorio-buscador-icon" />
+                  <input
+                    type="text"
+                    className="repositorio-buscador-input"
+                    placeholder={tBuscarPlaceholder}
+                    value={terminoBusqueda}
+                    onChange={(e) => setTerminoBusqueda(e.target.value)}
+                  />
+                  {terminoBusqueda ? (
+                    <button
+                      type="button"
+                      className="repositorio-buscador-clear"
+                      onClick={() => setTerminoBusqueda("")}
+                      aria-label="Limpiar búsqueda"
+                    >
+                      <X size={16} />
+                    </button>
+                  ) : null}
+                </div>
+
+                {/* Selector de Categoría */}
+                <div className="repositorio-select-wrap">
+                  <select
+                    value={categoriaSeleccionada}
+                    onChange={(e) => setCategoriaSeleccionada(e.target.value)}
+                    className="repositorio-select"
+                  >
+                    <option value="todas">{tTodasCategorias}</option>
+                    {categorias.map((cat) => {
+                      const nombre = cat.nombre || cat.Nombre || "";
+                      const padre = cat.padre || cat.Padre || "";
+                      const id = cat.id || cat.Id || nombre;
+                      return (
+                        <option key={id} value={nombre}>
+                          {padre ? `↳ ${nombre}` : nombre}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <ChevronDown size={16} className="repositorio-select-arrow" />
+                </div>
+
+                {/* Orden */}
+                <div className="repositorio-select-wrap">
+                  <select
+                    value={orden}
+                    onChange={(e) => setOrden(e.target.value)}
+                    className="repositorio-select"
+                  >
+                    <option value="recientes">Más recientes primero</option>
+                    <option value="antiguos">Más antiguos primero</option>
+                    <option value="descargas">Más descargados</option>
+                    <option value="az">Título (A - Z)</option>
+                    <option value="za">Título (Z - A)</option>
+                  </select>
+                  <ChevronDown size={16} className="repositorio-select-arrow" />
+                </div>
+              </div>
+
+              {/* Chips de Categorías Rápidas */}
+              {categorias.length > 0 ? (
+                <div className="repositorio-chips-scroll no-print">
                   <button
                     type="button"
-                    className="repositorio-buscador-clear"
-                    onClick={() => setTerminoBusqueda("")}
-                    aria-label="Limpiar búsqueda"
+                    className={`repositorio-chip ${categoriaSeleccionada === "todas" ? "repositorio-chip--activo" : ""}`}
+                    onClick={() => setCategoriaSeleccionada("todas")}
                   >
-                    <X size={16} />
+                    <Layers size={15} />
+                    <span><ST>Todas</ST></span>
+                    <span className="repositorio-chip__count">{documentos.length}</span>
                   </button>
-                ) : null}
-              </div>
-
-              {/* Selector de Categoría */}
-              <div className="repositorio-select-wrap">
-                <select
-                  value={categoriaSeleccionada}
-                  onChange={(e) => setCategoriaSeleccionada(e.target.value)}
-                  className="repositorio-select"
-                >
-                  <option value="todas">{tTodasCategorias}</option>
-                  {categorias.map((cat) => {
-                    const nombre = cat.nombre || cat.Nombre || "";
-                    const padre = cat.padre || cat.Padre || "";
-                    const id = cat.id || cat.Id || nombre;
-                    return (
-                      <option key={id} value={nombre}>
-                        {padre ? `↳ ${nombre}` : nombre}
-                      </option>
-                    );
-                  })}
-                </select>
-                <ChevronDown size={16} className="repositorio-select-arrow" />
-              </div>
-
-              {/* Orden */}
-              <div className="repositorio-select-wrap">
-                <select
-                  value={orden}
-                  onChange={(e) => setOrden(e.target.value)}
-                  className="repositorio-select"
-                >
-                  <option value="recientes">Más recientes primero</option>
-                  <option value="antiguos">Más antiguos primero</option>
-                  <option value="descargas">Más descargados</option>
-                  <option value="az">Título (A - Z)</option>
-                  <option value="za">Título (Z - A)</option>
-                </select>
-                <ChevronDown size={16} className="repositorio-select-arrow" />
-              </div>
+                  {categorias
+                    .filter((c) => !(c.padre || c.Padre))
+                    .map((cat) => {
+                      const nombre = cat.nombre || cat.Nombre || "";
+                      const count =
+                        cat.usos ?? cat.Usos ?? conteoDocsPorCategoria[nombre.toLowerCase()] ?? 0;
+                      const id = cat.id || cat.Id || nombre;
+                      const activo =
+                        String(categoriaSeleccionada || "").toLowerCase() ===
+                        nombre.toLowerCase();
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          className={`repositorio-chip ${activo ? "repositorio-chip--activo" : ""}`}
+                          onClick={() => setCategoriaSeleccionada(activo ? "todas" : nombre)}
+                        >
+                          <FolderOpen size={15} />
+                          <span>{nombre}</span>
+                          {count > 0 ? (
+                            <span className="repositorio-chip__count">{count}</span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                </div>
+              ) : null}
             </div>
-
-            {/* Chips de Categorías Rápidas */}
-            {categorias.length > 0 ? (
-              <div className="repositorio-chips-scroll no-print">
-                <button
-                  type="button"
-                  className={`repositorio-chip ${categoriaSeleccionada === "todas" ? "repositorio-chip--activo" : ""}`}
-                  onClick={() => setCategoriaSeleccionada("todas")}
-                >
-                  <Layers size={14} />
-                  <span><ST>Todas</ST></span>
-                  <span className="repositorio-chip__count">{documentos.length}</span>
-                </button>
-                {categorias
-                  .filter((c) => !(c.padre || c.Padre))
-                  .map((cat) => {
-                    const nombre = cat.nombre || cat.Nombre || "";
-                    const count = cat.usos ?? cat.Usos ?? 0;
-                    const id = cat.id || cat.Id || nombre;
-                    const activo =
-                      String(categoriaSeleccionada || "").toLowerCase() ===
-                      nombre.toLowerCase();
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        className={`repositorio-chip ${activo ? "repositorio-chip--activo" : ""}`}
-                        onClick={() => setCategoriaSeleccionada(activo ? "todas" : nombre)}
-                      >
-                        <FolderOpen size={14} />
-                        <span>{nombre}</span>
-                        {count > 0 ? (
-                          <span className="repositorio-chip__count">{count}</span>
-                        ) : null}
-                      </button>
-                    );
-                  })}
-              </div>
-            ) : null}
-          </div>
+          ) : null}
         </div>
 
         {/* Estado de carga */}
