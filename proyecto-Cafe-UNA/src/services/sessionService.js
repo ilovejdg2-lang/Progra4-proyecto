@@ -8,13 +8,20 @@ export const SESSION_UPDATED_EVENT = 'session-updated';
 
 let lastTouchAt = 0;
 let loggingOut = false;
+let manualLogout = false;
 
 export function isLoggingOut() {
   return loggingOut;
 }
 
+/** true solo cuando la persona eligió "Cerrar sesión" (no por vencimiento). */
+export function isManualLogout() {
+  return manualLogout;
+}
+
 export function beginLogout() {
   loggingOut = true;
+  manualLogout = true;
 }
 
 function notifySessionChange() {
@@ -86,6 +93,7 @@ export function getActiveSessionUser() {
 
 export function saveAuthenticatedUser(user) {
   loggingOut = false;
+  manualLogout = false;
   lastTouchAt = Date.now();
   const sessionUser = {
     ...user,

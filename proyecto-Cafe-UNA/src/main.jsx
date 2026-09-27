@@ -9,9 +9,12 @@ import { getActiveSessionUser, isLoggingOut, touchSession } from './services/ses
 import { installNativeInvalidFocus } from './lib/formFocus'
 import { obtenerNavbar } from './services/informacionService'
 import { guardarIdioma, obtenerIdioma } from './lib/idioma'
+import { iniciarSincronizacionCarrito } from './lib/cartSync'
 
 // Calienta el logo del navbar para loaders (caché localStorage).
 void obtenerNavbar().catch(() => {})
+
+iniciarSincronizacionCarrito()
 
 // Idioma por defecto: español. Solo se respeta EN si el usuario ya lo eligió.
 void (() => {

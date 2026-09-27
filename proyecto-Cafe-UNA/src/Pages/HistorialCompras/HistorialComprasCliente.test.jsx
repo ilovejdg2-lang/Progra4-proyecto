@@ -24,6 +24,7 @@ vi.mock("../../Components/NumericInput/NumericInput", () => ({
 vi.mock("../../Components/PublicPageGate/PublicPageGate", () => ({ PublicPageGate: ({ children }) => children }));
 vi.mock("../../Components/T/ST", () => ({ ST: ({ children }) => children }));
 vi.mock("../../hooks/usePublicPageLoadingGate", () => ({ usePublicPageLoadingGate: () => false }));
+vi.mock("../../hooks/useSesionProtegida", () => ({ useSesionProtegida: () => {} }));
 vi.mock("../../hooks/useTraducir", () => ({ useTraducir: (text) => text }));
 vi.mock("../../lib/permisos", () => ({ rolesDeUsuario: () => ["Cliente"], tienePermiso: () => true }));
 vi.mock("../../lib/t", () => ({ t: (text) => text }));

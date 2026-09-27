@@ -20,7 +20,9 @@ import {
   cambiarEstadoActivoFijo,
   crearActivoFijo,
   obtenerActivosFijos,
+  ORIGENES_FONDO_ACTIVO,
 } from "../../../services/activosFijosService";
+import { UiSelect } from "../../../Components/ui/Select";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { queueFocusFormError } from "../../../lib/formFocus";
 import { ContadorPalabras } from "../../../Components/Admin/ui/CampoLimitePalabras";
@@ -48,7 +50,10 @@ const EMPTY_FORM = {
   nombreCompleto: "",
   descripcionResponsable: "",
   descripcionProyecto: "",
+  origenFondo: "",
 };
+
+const OPCIONES_ORIGEN = ORIGENES_FONDO_ACTIVO.map((origen) => ({ value: origen, label: origen }));
 
 /** Texto libre de activo (no códigos ni nombre de persona). */
 const CAMPOS_TEXTO_ACTIVO = [
@@ -143,6 +148,11 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
       });
       return;
     }
+    if (!ORIGENES_FONDO_ACTIVO.includes(form.origenFondo)) {
+      setValidationError("Elegí el origen del activo.");
+      document.getElementById("activo-origen-fondo")?.focus();
+      return;
+    }
     const valor = Number(form.valorEnLibro);
     if (!Number.isFinite(valor) || valor < 0) {
       setValidationError("El valor en libro debe ser un número mayor o igual a 0.");
@@ -174,6 +184,7 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
       nombreCompleto: form.nombreCompleto.trim(),
       descripcionResponsable: textoEs.descripcionResponsable,
       descripcionProyecto: textoEs.descripcionProyecto,
+      origenFondo: form.origenFondo,
     });
   };
 
@@ -207,6 +218,19 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
               <input name="nombre" value={form.nombre} onChange={setField("nombre")} className={fieldClass} required />
               <ContadorPalabras value={form.nombre} maxPalabras={MAX_PALABRAS_TITULO} />
             </label>
+            <div className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700 sm:col-span-2">
+              <label htmlFor="activo-origen-fondo"><ST>Origen del activo</ST></label>
+              <UiSelect
+                id="activo-origen-fondo"
+                ariaLabel="Origen del activo"
+                value={form.origenFondo}
+                onChange={(valor) => {
+                  setForm((current) => ({ ...current, origenFondo: valor }));
+                  setValidationError("");
+                }}
+                options={[{ value: "", label: "Elegí el origen" }, ...OPCIONES_ORIGEN]}
+              />
+            </div>
             <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700">
               <ST>Modelo</ST>
               <input name="modelo" value={form.modelo} onChange={setField("modelo")} className={fieldClass} />
@@ -331,6 +355,7 @@ export default function AdminActivosFijos() {
       activo.nombreCompleto,
       activo.descripcionResponsable,
       activo.descripcionProyecto,
+      activo.origenFondo,
     ],
     filtrosConfig: [
       {
@@ -339,6 +364,14 @@ export default function AdminActivosFijos() {
           if (valor === "activos") return lista.filter((item) => item.activo);
           if (valor === "inactivos") return lista.filter((item) => !item.activo);
           return lista;
+        },
+      },
+      {
+        id: "origen",
+        aplicar: (lista, valor) => {
+          if (!valor || valor === "todos") return lista;
+          if (valor === "sin-origen") return lista.filter((item) => !item.origenFondo);
+          return lista.filter((item) => item.origenFondo === valor);
         },
       },
     ],
@@ -492,6 +525,17 @@ export default function AdminActivosFijos() {
                       { value: "inactivos", label: "Inactivos" },
                     ],
                   },
+                  {
+                    id: "origen",
+                    label: "Origen",
+                    value: filters.valoresFiltro.origen || "todos",
+                    onChange: (valor) => filters.setValorFiltro("origen", valor),
+                    opciones: [
+                      { value: "todos", label: "Todos" },
+                      ...OPCIONES_ORIGEN,
+                      { value: "sin-origen", label: "Sin origen" },
+                    ],
+                  },
                 ]}
               />
 
@@ -505,6 +549,7 @@ export default function AdminActivosFijos() {
                       <tr>
                         <th><ST>Código</ST></th>
                         <th><ST>Nombre</ST></th>
+                        <th className="hidden md:table-cell"><ST>Origen</ST></th>
                         <th className="hidden md:table-cell"><ST>Compra</ST></th>
                         <th><ST>Valor</ST></th>
                         <th><ST>Estado</ST></th>
@@ -523,6 +568,9 @@ export default function AdminActivosFijos() {
                             {activo.descripcionProyecto ? (
                               <div className="mt-1 text-slate-500"><ST>{activo.descripcionProyecto}</ST></div>
                             ) : null}
+                          </td>
+                          <td className="hidden px-4 py-3 text-slate-600 md:table-cell">
+                            {activo.origenFondo ? <ST>{activo.origenFondo}</ST> : <span className="text-slate-400">—</span>}
                           </td>
                           <td className="hidden px-4 py-3 text-slate-600 md:table-cell">{formatFecha(activo.fechaCompra)}</td>
                           <td className="px-4 py-3 font-medium text-slate-900">{formatCRC(activo.valorEnLibro)}</td>

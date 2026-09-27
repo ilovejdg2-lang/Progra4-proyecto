@@ -6,7 +6,9 @@ import { useTraducir } from '../../hooks/useTraducir';
 import { sanitizeUserFacingError, MAX_PASSWORD } from '../../lib/formLimits';
 import { queueFocusFormError } from '../../lib/formFocus';
 import { normalizeImageUrl } from '../../lib/imageUtils';
+import { obtenerOpcionesPaises } from '../../lib/paises';
 import { rolesDeUsuario } from '../../lib/permisos';
+import { useIdioma } from '../../lib/useIdioma';
 import {
   completarCliente,
   limpiarIntentRegistroCliente,
@@ -46,8 +48,26 @@ const LIMITE = {
   password: MAX_PASSWORD,
 };
 
-function normalizarCedulaCr(valor) {
-  return String(valor ?? '').replace(/\D/g, '').slice(0, LIMITE.cedula);
+/** Dígitos consultables en el padrón: cédula (9) o DIMEX (11-12). */
+function digitosConsultables(tipoDocumento, valor) {
+  const digitos = String(valor ?? '').replace(/\D/g, '');
+  if (tipoDocumento === 'cedula') return digitos.length === 9 ? digitos : '';
+  if (tipoDocumento === 'dimex') return /^\d{11,12}$/.test(digitos) ? digitos : '';
+  return '';
+}
+
+function validarIdentificacion(tipoDocumento, valor) {
+  const texto = String(valor ?? '').trim();
+  if (tipoDocumento === 'cedula') {
+    if (!texto) return 'La cédula es obligatoria.';
+    return /^\d{9}$/.test(texto.replace(/\D/g, '')) ? '' : 'La cédula de identidad debe tener 9 dígitos.';
+  }
+  if (tipoDocumento === 'dimex') {
+    if (!texto) return 'El DIMEX es obligatorio.';
+    return /^\d{11,12}$/.test(texto.replace(/\D/g, '')) ? '' : 'El DIMEX debe tener 11 o 12 dígitos.';
+  }
+  if (!texto) return 'El pasaporte es obligatorio.';
+  return /^[A-Za-z0-9]{5,20}$/.test(texto) ? '' : 'El pasaporte debe tener entre 5 y 20 letras o números.';
 }
 
 function soloLetras(valor, max) {
@@ -146,8 +166,8 @@ function validarTelefono(valor, obligatorio = true) {
 }
 
 const emptyErrors = () => ({
-  esNacional: '',
   tipoDocumento: '',
+  nacionalidad: '',
   nombre: '',
   apellido1: '',
   apellido2: '',
@@ -183,14 +203,14 @@ const Registro = () => {
   const tNombre = useTraducir('Nombre');
   const tApellido1 = useTraducir('Apellido 1');
   const tApellido2 = useTraducir('Apellido 2');
-  const tCedula = useTraducir('Cédula');
-  const tEsNacional = useTraducir('¿Es nacional de Costa Rica?');
-  const tSi = useTraducir('Sí');
-  const tNo = useTraducir('No');
-  const tTipoDocumento = useTraducir('Tipo de documento');
+  const tCedula = useTraducir('Cédula de identidad');
+  const tTipoDocumento = useTraducir('Tipo de identificación');
   const tDimex = useTraducir('DIMEX');
   const tPasaporte = useTraducir('Pasaporte');
-  const tConsultandoCedula = useTraducir('Consultando cédula...');
+  const tPaisOrigen = useTraducir('País de origen');
+  const tElegiPais = useTraducir('Elegí un país');
+  const tBuscarPais = useTraducir('Buscar país...');
+  const tConsultandoCedula = useTraducir('Consultando identificación...');
   const tDatosCargados = useTraducir('Datos cargados automáticamente. Podés editarlos si hace falta.');
   const tRazonSocial = useTraducir('Razón social');
   const tNombreComercial = useTraducir('Nombre comercial');
@@ -221,9 +241,10 @@ const Registro = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState(emptyErrors);
   const consultaCedulaRef = useRef({ digitos: '', enCurso: false });
+  const { idioma } = useIdioma();
   const [form, setForm] = useState({
-    esNacional: 'si',
     tipoDocumento: 'cedula',
+    nacionalidad: '',
     nombre: '',
     apellido1: '',
     apellido2: '',
@@ -242,12 +263,17 @@ const Registro = () => {
     aceptoPrivacidad: false,
   });
 
-  const esNacionalCr = form.esNacional === 'si';
-  const labelIdentificacion = esNacionalCr
+  const esCedula = form.tipoDocumento === 'cedula';
+  const esPasaporte = form.tipoDocumento === 'pasaporte';
+  const labelIdentificacion = esCedula
     ? tCedula
     : form.tipoDocumento === 'dimex'
       ? tDimex
       : tPasaporte;
+  const opcionesPais = useMemo(
+    () => [{ value: '', label: tElegiPais }, ...obtenerOpcionesPaises(idioma)],
+    [idioma, tElegiPais],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -275,7 +301,7 @@ const Registro = () => {
   }, [sessionUser, navigate]);
 
   const consultarDatosCedula = useCallback(async (digitos, { forzar = false } = {}) => {
-    if (!esNacionalCr || digitos.length !== 9) return;
+    if (!digitosConsultables(form.tipoDocumento, digitos)) return;
     if (consultaCedulaRef.current.enCurso) return;
     if (!forzar && consultaCedulaRef.current.digitos === digitos) return;
 
@@ -290,8 +316,8 @@ const Registro = () => {
       const apellido2 = datos?.segundoApellido || datos?.SegundoApellido || '';
 
       if (!nombre && !apellido1) {
-        consultaCedulaRef.current = { digitos: '', enCurso: false };
-        setAvisoCedula('No se encontraron datos para esta cédula. Completá los datos manualmente.');
+        consultaCedulaRef.current = { digitos, enCurso: false };
+        setAvisoCedula('No se encontraron datos para esta identificación. Completá los datos manualmente.');
         return;
       }
 
@@ -312,8 +338,9 @@ const Registro = () => {
         apellido2: '',
       }));
     } catch (error) {
-      consultaCedulaRef.current = { digitos: '', enCurso: false };
-      const mensajeBase = error?.message?.trim() || 'No se pudo consultar la cédula.';
+      // Sin API o sin datos (típico en DIMEX): se deja llenar el nombre a mano.
+      consultaCedulaRef.current = { digitos, enCurso: false };
+      const mensajeBase = error?.message?.trim() || 'No se pudo consultar la identificación.';
       const yaIndicaManual = /manualmente|completar/i.test(mensajeBase);
       setAvisoCedula(
         yaIndicaManual
@@ -323,27 +350,28 @@ const Registro = () => {
     } finally {
       setConsultandoCedula(false);
     }
-  }, [esNacionalCr, tDatosCargados]);
+  }, [form.tipoDocumento, tDatosCargados]);
 
   useEffect(() => {
-    if (tipo !== 'persona' || !esNacionalCr) return undefined;
-    const digitos = normalizarCedulaCr(form.identificacion);
-    if (digitos.length !== 9) return undefined;
+    if (tipo !== 'persona') return undefined;
+    const digitos = digitosConsultables(form.tipoDocumento, form.identificacion);
+    if (!digitos) return undefined;
     if (consultaCedulaRef.current.enCurso) return undefined;
     if (consultaCedulaRef.current.digitos === digitos) return undefined;
 
+    // DIMEX admite 11 o 12 dígitos: se espera un poco más para no consultar a medio escribir.
+    const espera = form.tipoDocumento === 'dimex' ? 800 : 350;
     const timeoutId = window.setTimeout(() => {
       consultarDatosCedula(digitos);
-    }, 350);
+    }, espera);
     return () => window.clearTimeout(timeoutId);
-  }, [form.identificacion, tipo, esNacionalCr, consultarDatosCedula]);
+  }, [form.identificacion, form.tipoDocumento, tipo, consultarDatosCedula]);
 
-  const setEsNacional = (valor) => {
-    const nacional = valor === 'si';
+  const setTipoDocumento = (valor) => {
     setForm((prev) => ({
       ...prev,
-      esNacional: valor,
-      tipoDocumento: nacional ? 'cedula' : 'dimex',
+      tipoDocumento: valor,
+      nacionalidad: valor === 'pasaporte' ? prev.nacionalidad : '',
       identificacion: '',
       nombre: '',
       apellido1: '',
@@ -352,16 +380,6 @@ const Registro = () => {
     setErrors(emptyErrors());
     setAvisoCedula('');
     consultaCedulaRef.current = { digitos: '', enCurso: false };
-  };
-
-  const setTipoDocumentoExtranjero = (valor) => {
-    setForm((prev) => ({
-      ...prev,
-      tipoDocumento: valor,
-      identificacion: '',
-    }));
-    setErrors((prev) => ({ ...prev, tipoDocumento: '', identificacion: '' }));
-    setAvisoCedula('');
   };
 
   const setField = (key, value) => {
@@ -378,27 +396,12 @@ const Registro = () => {
     const next = emptyErrors();
 
     if (tipo === 'persona') {
-      if (form.esNacional !== 'si' && form.esNacional !== 'no') {
-        next.esNacional = 'Indicá si sos nacional de Costa Rica.';
+      if (!['cedula', 'dimex', 'pasaporte'].includes(form.tipoDocumento)) {
+        next.tipoDocumento = 'Elegí el tipo de identificación.';
       }
-      if (!esNacionalCr && form.tipoDocumento !== 'dimex' && form.tipoDocumento !== 'pasaporte') {
-        next.tipoDocumento = 'Elegí DIMEX o pasaporte.';
-      }
-
-      if (!form.identificacion.trim()) {
-        next.identificacion = `El ${labelIdentificacion.toLowerCase()} es obligatorio.`;
-      } else if (esNacionalCr) {
-        const digitos = normalizarCedulaCr(form.identificacion);
-        if (digitos.length !== 9) {
-          next.identificacion = 'La cédula costarricense debe tener 9 dígitos.';
-        }
-      } else if (form.tipoDocumento === 'dimex') {
-        const digitos = form.identificacion.replace(/\D/g, '');
-        if (digitos.length < 10 || digitos.length > 12) {
-          next.identificacion = 'El DIMEX debe tener entre 10 y 12 dígitos.';
-        }
-      } else if (!/^[A-Za-z0-9]{5,20}$/.test(form.identificacion.trim())) {
-        next.identificacion = 'El pasaporte no tiene un formato válido.';
+      next.identificacion = validarIdentificacion(form.tipoDocumento, form.identificacion);
+      if (esPasaporte && !form.nacionalidad) {
+        next.nacionalidad = 'Elegí el país de origen del pasaporte.';
       }
 
       if (!form.nombre.trim()) next.nombre = 'El nombre es obligatorio.';
@@ -409,7 +412,7 @@ const Registro = () => {
       else if (!NOMBRE_RE.test(form.apellido1.trim())) {
         next.apellido1 = 'El apellido 1 solo puede incluir letras y espacios.';
       }
-      if (esNacionalCr) {
+      if (esCedula) {
         if (!form.apellido2.trim()) next.apellido2 = 'El apellido 2 es obligatorio.';
         else if (!NOMBRE_RE.test(form.apellido2.trim())) {
           next.apellido2 = 'El apellido 2 solo puede incluir letras y espacios.';
@@ -455,14 +458,12 @@ const Registro = () => {
     if (!form.aceptoTerminos || !form.aceptoPrivacidad) return false;
     if (!form.telefono.trim()) return false;
     if (tipo === 'persona') {
-      if (!form.esNacional) return false;
-      if (!esNacionalCr && form.tipoDocumento !== 'dimex' && form.tipoDocumento !== 'pasaporte') {
-        return false;
-      }
+      if (!form.tipoDocumento) return false;
+      if (esPasaporte && !form.nacionalidad) return false;
       if (!form.identificacion.trim() || !form.nombre.trim() || !form.apellido1.trim()) {
         return false;
       }
-      if (esNacionalCr && !form.apellido2.trim()) return false;
+      if (esCedula && !form.apellido2.trim()) return false;
     }
     if (tipo === 'empresa') {
       if (
@@ -480,7 +481,7 @@ const Registro = () => {
       if (validarPasswordCliente(form.password)) return false;
     }
     return !Object.values(errors).some(Boolean);
-  }, [form, tipo, upgradeMode, submitting, consultandoCedula, errors, esNacionalCr]);
+  }, [form, tipo, upgradeMode, submitting, consultandoCedula, errors, esCedula, esPasaporte]);
 
   const buildPayload = () => {
     const payload = {
@@ -490,14 +491,14 @@ const Registro = () => {
       aceptoPrivacidad: form.aceptoPrivacidad,
     };
     if (tipo === 'persona') {
-      payload.esNacional = form.esNacional;
-      payload.tipoDocumento = esNacionalCr ? 'cedula' : form.tipoDocumento;
+      payload.tipoDocumento = form.tipoDocumento;
       payload.nombre = form.nombre.trim();
       payload.apellido1 = form.apellido1.trim();
       if (form.apellido2.trim()) payload.apellido2 = form.apellido2.trim();
-      payload.identificacion = esNacionalCr || form.tipoDocumento === 'dimex'
-        ? form.identificacion.replace(/\D/g, '')
-        : form.identificacion.trim().toUpperCase();
+      payload.identificacion = esPasaporte
+        ? form.identificacion.trim().toUpperCase()
+        : form.identificacion.replace(/\D/g, '');
+      if (esPasaporte) payload.nacionalidad = form.nacionalidad;
     } else {
       payload.razonSocial = form.razonSocial.trim();
       payload.nombreComercial = form.nombreComercial.trim();
@@ -680,68 +681,38 @@ const Registro = () => {
         <form className="login-form" onSubmit={handleSubmit} noValidate>
           {tipo === 'persona' ? (
             <>
-              <div className="login-field">
-                <span className="registro-label"><ST>{tEsNacional}</ST></span>
-                <div className="registro-radio-row" role="radiogroup" aria-label={tEsNacional}>
-                  <label className={`registro-radio${form.esNacional === 'si' ? ' is-active' : ''}`}>
-                    <input
-                      type="radio"
-                      name="esNacional"
-                      value="si"
-                      checked={form.esNacional === 'si'}
-                      onChange={() => setEsNacional('si')}
-                    />
-                    <span className="registro-radio__text"><ST>{tSi}</ST></span>
-                  </label>
-                  <label className={`registro-radio${form.esNacional === 'no' ? ' is-active' : ''}`}>
-                    <input
-                      type="radio"
-                      name="esNacional"
-                      value="no"
-                      checked={form.esNacional === 'no'}
-                      onChange={() => setEsNacional('no')}
-                    />
-                    <span className="registro-radio__text"><ST>{tNo}</ST></span>
-                  </label>
+              <div className="registro-grid">
+                <div className="login-field">
+                  <label htmlFor="tipoDocumento"><ST>{tTipoDocumento}</ST></label>
+                  <UiSelect
+                    id="tipoDocumento"
+                    ariaLabel={tTipoDocumento}
+                    className={`registro-ui-select${errors.tipoDocumento ? ' is-error' : ''}`}
+                    value={form.tipoDocumento}
+                    onChange={setTipoDocumento}
+                    options={[
+                      { value: 'cedula', label: tCedula },
+                      { value: 'dimex', label: tDimex },
+                      { value: 'pasaporte', label: tPasaporte },
+                    ]}
+                  />
+                  {errors.tipoDocumento ? (
+                    <p className="login-field-error"><ST>{errors.tipoDocumento}</ST></p>
+                  ) : null}
                 </div>
-                {errors.esNacional ? (
-                  <p className="login-field-error"><ST>{errors.esNacional}</ST></p>
-                ) : null}
-              </div>
-
-              <div className={`registro-grid${!esNacionalCr ? '' : ' registro-grid--full'}`}>
-                {!esNacionalCr ? (
-                  <div className="login-field">
-                    <label htmlFor="tipoDocumento"><ST>{tTipoDocumento}</ST></label>
-                    <UiSelect
-                      id="tipoDocumento"
-                      ariaLabel={tTipoDocumento}
-                      className={`registro-ui-select${errors.tipoDocumento ? ' is-error' : ''}`}
-                      value={form.tipoDocumento}
-                      onChange={setTipoDocumentoExtranjero}
-                      options={[
-                        { value: 'dimex', label: tDimex },
-                        { value: 'pasaporte', label: tPasaporte },
-                      ]}
-                    />
-                    {errors.tipoDocumento ? (
-                      <p className="login-field-error"><ST>{errors.tipoDocumento}</ST></p>
-                    ) : null}
-                  </div>
-                ) : null}
 
                 {field('identificacion', labelIdentificacion, {
-                  input: esNacionalCr || form.tipoDocumento === 'dimex'
+                  input: !esPasaporte
                     ? {
                         inputMode: 'numeric',
                         autoComplete: 'off',
-                        maxLength: esNacionalCr ? LIMITE.cedula : LIMITE.dimex,
-                        placeholder: esNacionalCr ? '9 dígitos' : '10 a 12 dígitos',
+                        maxLength: esCedula ? LIMITE.cedula : LIMITE.dimex,
+                        placeholder: esCedula ? '9 dígitos' : '11 o 12 dígitos',
                         onChange: (ev) => setField(
                           'identificacion',
                           soloDigitos(
                             ev.target.value,
-                            esNacionalCr ? LIMITE.cedula : LIMITE.dimex,
+                            esCedula ? LIMITE.cedula : LIMITE.dimex,
                           ),
                         ),
                       }
@@ -760,10 +731,30 @@ const Registro = () => {
                 })}
               </div>
 
-              {esNacionalCr && consultandoCedula ? (
+              {esPasaporte ? (
+                <div className="login-field">
+                  <label htmlFor="nacionalidad"><ST>{tPaisOrigen}</ST></label>
+                  <UiSelect
+                    id="nacionalidad"
+                    ariaLabel={tPaisOrigen}
+                    className={`registro-ui-select${errors.nacionalidad ? ' is-error' : ''}`}
+                    value={form.nacionalidad}
+                    onChange={(valor) => setField('nacionalidad', valor)}
+                    options={opcionesPais}
+                    buscable
+                    placeholderBusqueda={tBuscarPais}
+                    traducirOpciones={false}
+                  />
+                  {errors.nacionalidad ? (
+                    <p className="login-field-error"><ST>{errors.nacionalidad}</ST></p>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {!esPasaporte && consultandoCedula ? (
                 <p className="registro-cedula-aviso"><ST>{tConsultandoCedula}</ST></p>
               ) : null}
-              {esNacionalCr && avisoCedula ? (
+              {!esPasaporte && avisoCedula ? (
                 <p className="registro-cedula-aviso"><ST>{avisoCedula}</ST></p>
               ) : null}
 
@@ -771,7 +762,7 @@ const Registro = () => {
               <div className="registro-grid">
                 {campoLetras('apellido1', tApellido1, LIMITE.apellido, { autoComplete: 'family-name' })}
                 {campoLetras('apellido2', tApellido2, LIMITE.apellido, {
-                  optional: !esNacionalCr,
+                  optional: !esCedula,
                   autoComplete: 'additional-name',
                 })}
               </div>

@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarTrigger, useSidebar } from "../Admin/ui/Sidebar
 import { LanguageSwitcher } from "../LanguageSwitcher/LanguageSwitcher";
 import { ST } from "../T/ST";
 import { forceUnlockAdminScroll } from "../../hooks/useBodyScrollLock";
+import { useSesionProtegida } from "../../hooks/useSesionProtegida";
 
 function ClienteMain({ children }) {
   const { openMobile } = useSidebar();
@@ -41,6 +42,8 @@ function ClienteMain({ children }) {
 }
 
 export function PerfilClienteLayout({ children }) {
+  useSesionProtegida();
+
   useEffect(() => {
     forceUnlockAdminScroll();
   }, []);

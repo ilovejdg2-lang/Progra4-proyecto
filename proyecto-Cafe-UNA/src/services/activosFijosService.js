@@ -2,6 +2,9 @@ import { apiRequest } from "./apiClient";
 
 const BASE_URL = `${import.meta.env.BACKEND_URL}/activos-fijos`;
 
+/** Valores permitidos por el backend (columna OrigenFondo). */
+export const ORIGENES_FONDO_ACTIVO = ["UNA", "FUNDAUNA", "Donación", "Compra Directa"];
+
 function firstDefined(value, aliases) {
   for (const alias of aliases) {
     if (value?.[alias] !== undefined) return value[alias];
@@ -40,6 +43,7 @@ export function normalizarActivoFijo(activo) {
     descripcionProyecto: String(
       firstDefined(activo, ["descripcionProyecto", "DescripcionProyecto"]) || "",
     ).trim(),
+    origenFondo: String(firstDefined(activo, ["origenFondo", "OrigenFondo"]) || "").trim(),
     activo: toBoolean(firstDefined(activo, ["activo", "Activo"]) ?? true),
   };
 }
