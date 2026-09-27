@@ -19,6 +19,15 @@ import PageLoading from "../../Components/PageLoading/PageLoading";
 import AvisoSedeFinca from "../../Components/AvisoSedeFinca/AvisoSedeFinca";
 import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
 import { PROVINCIAS_CR, cantonesDeProvincia } from "../../lib/costaRicaDivisiones";
+import {
+  digitosConsultables,
+  esperaConsultaIdentificacion,
+  limpiarIdentificacion,
+  placeholderIdentificacion,
+  TIPOS_IDENTIFICACION,
+  validarIdentificacion,
+} from "../../lib/identificacionPersona";
+import { obtenerOpcionesPaises } from "../../lib/paises";
 import { sedeDesdeHomeLocation } from "../../lib/sedeFinca";
 import { consultarCedulaDetallada } from "../../services/cedulaService";
 import { obtenerSeccion } from "../../services/informacionService";
@@ -32,6 +41,8 @@ import "../Voluntariado/SolicitarVoluntariado.css";
 const VISITA_LOGIN_REDIRECT = "/visitas/solicitar";
 
 const INITIAL_FORM = {
+  encargadoTipoIdentificacion: "cedula",
+  encargadoNacionalidad: "",
   encargadoIdentificacion: "",
   encargadoNombre: "",
   encargadoPrimerApellido: "",
@@ -51,15 +62,6 @@ const INITIAL_FORM = {
   requiereParqueoBus: false,
   observaciones: "",
 };
-
-function normalizarCedulaCr(valor) {
-  return String(valor ?? "").replace(/\D/g, "");
-}
-
-function esCedulaFisica(valor) {
-  const digitos = normalizarCedulaCr(valor);
-  return digitos.length === 9 && digitos === String(valor ?? "").replace(/[\s-]/g, "");
-}
 
 function partesNombreCedula(datos) {
   return {
@@ -129,6 +131,9 @@ export default function SolicitarVisita() {
   const [consultandoCedula, setConsultandoCedula] = useState(false);
   const [avisoCedula, setAvisoCedula] = useState(null);
   const [sedeFinca, setSedeFinca] = useState(() => sedeDesdeHomeLocation(null));
+  const tipoDocumento = form.encargadoTipoIdentificacion;
+  const esPasaporte = tipoDocumento === "pasaporte";
+  const opcionesPais = useMemo(() => obtenerOpcionesPaises("es"), []);
 
   const {
     ref: pageRef,
@@ -258,7 +263,7 @@ export default function SolicitarVisita() {
   };
 
   const consultarDatosCedula = useCallback(async (digitos, { forzar = false } = {}) => {
-    if (digitos.length !== 9) return;
+    if (!digitosConsultables(tipoDocumento, digitos)) return;
     if (consultaCedulaRef.current.enCurso) return;
     if (!forzar && consultaCedulaRef.current.digitos === digitos) return;
 
@@ -271,7 +276,7 @@ export default function SolicitarVisita() {
       const partes = partesNombreCedula(datos);
       if (!partes.nombre && !partes.primerApellido) {
         consultaCedulaRef.current = { digitos: "", enCurso: false };
-        setAvisoCedula("No se encontraron datos para esta cédula. Complete los datos manualmente.");
+        setAvisoCedula("No se encontraron datos para esta identificación. Complete los datos manualmente.");
         return;
       }
       consultaCedulaRef.current = { digitos, enCurso: false };
@@ -284,7 +289,7 @@ export default function SolicitarVisita() {
       setAvisoCedula("Datos cargados automáticamente. Puede editarlos si es necesario.");
     } catch (cedulaError) {
       consultaCedulaRef.current = { digitos: "", enCurso: false };
-      const mensajeBase = cedulaError?.message?.trim() || "No se pudo consultar la cédula.";
+      const mensajeBase = cedulaError?.message?.trim() || "No se pudo consultar la identificación.";
       const yaIndicaManual = /manualmente|completar el nombre/i.test(mensajeBase);
       const esConexion =
         cedulaError?.cause?.code === "ERR_NETWORK" || /conectar con el servidor/i.test(mensajeBase);
@@ -298,27 +303,25 @@ export default function SolicitarVisita() {
     } finally {
       setConsultandoCedula(false);
     }
-  }, []);
+  }, [tipoDocumento]);
 
   useEffect(() => {
-    const digitos = normalizarCedulaCr(form.encargadoIdentificacion);
-    if (!esCedulaFisica(form.encargadoIdentificacion) || digitos.length !== 9) return;
+    const digitos = digitosConsultables(tipoDocumento, form.encargadoIdentificacion);
+    if (!digitos) return;
     if (consultaCedulaRef.current.enCurso) return;
     if (consultaCedulaRef.current.digitos === digitos) return;
 
     const timeoutId = window.setTimeout(() => {
       consultarDatosCedula(digitos);
-    }, 350);
+    }, esperaConsultaIdentificacion(tipoDocumento));
 
     return () => window.clearTimeout(timeoutId);
-  }, [form.encargadoIdentificacion, consultarDatosCedula]);
+  }, [form.encargadoIdentificacion, tipoDocumento, consultarDatosCedula]);
 
   const handleIdentificacionBlur = () => {
-    const digitos = normalizarCedulaCr(form.encargadoIdentificacion);
-    if (esCedulaFisica(form.encargadoIdentificacion) && digitos.length === 9) {
-      if (consultaCedulaRef.current.digitos !== digitos) {
-        consultarDatosCedula(digitos, { forzar: true });
-      }
+    const digitos = digitosConsultables(tipoDocumento, form.encargadoIdentificacion);
+    if (digitos && consultaCedulaRef.current.digitos !== digitos) {
+      consultarDatosCedula(digitos, { forzar: true });
     }
   };
 
@@ -327,8 +330,19 @@ export default function SolicitarVisita() {
     setForm((current) => {
       const next = {
         ...current,
-        [name]: type === "checkbox" ? checked : value,
+        [name]: type === "checkbox"
+          ? checked
+          : name === "encargadoIdentificacion"
+            ? limpiarIdentificacion(current.encargadoTipoIdentificacion, value)
+            : value,
       };
+      if (name === "encargadoTipoIdentificacion") {
+        next.encargadoIdentificacion = "";
+        next.encargadoNacionalidad = value === "pasaporte" ? current.encargadoNacionalidad : "";
+        next.encargadoNombre = "";
+        next.encargadoPrimerApellido = "";
+        next.encargadoSegundoApellido = "";
+      }
       if (name === "provincia" && current.tipoVisitante === "Nacional") {
         next.canton = "";
       }
@@ -340,7 +354,7 @@ export default function SolicitarVisita() {
       return next;
     });
 
-    if (name === "encargadoIdentificacion") {
+    if (name === "encargadoIdentificacion" || name === "encargadoTipoIdentificacion") {
       consultaCedulaRef.current = { digitos: "", enCurso: false };
       setAvisoCedula(null);
     }
@@ -364,6 +378,16 @@ export default function SolicitarVisita() {
       !form.encargadoTelefono.trim()
     ) {
       setError("Completá los campos obligatorios antes de enviar la solicitud.");
+      return;
+    }
+
+    const errorIdentificacion = validarIdentificacion(tipoDocumento, form.encargadoIdentificacion);
+    if (errorIdentificacion) {
+      setError(errorIdentificacion);
+      return;
+    }
+    if (esPasaporte && !form.encargadoNacionalidad) {
+      setError("Elegí el país de origen del pasaporte.");
       return;
     }
 
@@ -468,16 +492,43 @@ export default function SolicitarVisita() {
                 hint="Datos de la persona responsable de coordinar la visita."
               >
                 <div className="form-grid">
+                  <Field label="Tipo de identificación *">
+                    <select
+                      name="encargadoTipoIdentificacion"
+                      value={tipoDocumento}
+                      onChange={update}
+                    >
+                      {TIPOS_IDENTIFICACION.map((tipo) => (
+                        <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                      ))}
+                    </select>
+                  </Field>
+                  {esPasaporte ? (
+                    <Field label="País de origen *">
+                      <select
+                        name="encargadoNacionalidad"
+                        value={form.encargadoNacionalidad}
+                        onChange={update}
+                      >
+                        <option value="">Elegí el país</option>
+                        {opcionesPais.map((pais) => (
+                          <option key={pais.value} value={pais.value}>{pais.label}</option>
+                        ))}
+                      </select>
+                    </Field>
+                  ) : null}
                   <Field label="Identificación *">
                     <input
                       name="encargadoIdentificacion"
                       value={form.encargadoIdentificacion}
                       onChange={update}
                       onBlur={handleIdentificacionBlur}
-                      placeholder="Ej: 1-1111-1111"
+                      inputMode={esPasaporte ? "text" : "numeric"}
+                      autoComplete="off"
+                      placeholder={placeholderIdentificacion(tipoDocumento)}
                     />
                     {consultandoCedula ? (
-                      <span className="text-xs text-slate-500 mt-1 block">Consultando cédula…</span>
+                      <span className="text-xs text-slate-500 mt-1 block">Consultando identificación…</span>
                     ) : null}
                     {avisoCedula ? (
                       <span

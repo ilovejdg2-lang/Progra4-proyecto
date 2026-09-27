@@ -9,6 +9,7 @@ import { SidebarProvider, SidebarTrigger, useSidebar } from "../../../Components
 import { AdminThemeToggle } from "../../../Components/Admin/AdminThemeToggle";
 import { LanguageSwitcher } from "../../../Components/LanguageSwitcher/LanguageSwitcher";
 import { forceUnlockAdminScroll } from "../../../hooks/useBodyScrollLock";
+import { useSesionProtegida } from "../../../hooks/useSesionProtegida";
 import { applyAdminDocumentTheme } from "../../../lib/adminTheme";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { useTraducir } from "../../../hooks/useTraducir";
@@ -52,8 +53,10 @@ export function AdminLayout({ children }) {
   const user = getActiveSessionUser();
   const tVerificando = useTraducir("Verificando acceso...");
 
+  useSesionProtegida();
+
   useEffect(() => {
-    if (!user || user.role !== "admin") {
+    if (user && user.role !== "admin") {
       navigate({ to: "/" });
     }
   }, [navigate, user]);

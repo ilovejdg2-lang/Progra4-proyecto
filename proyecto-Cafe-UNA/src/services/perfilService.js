@@ -32,6 +32,7 @@ function normalizePerfil(data) {
     identificacion: data.identificacion ?? data.Identificacion ?? null,
     nombreLegal: data.nombreLegal ?? data.NombreLegal ?? null,
     tipoDocumento: data.tipoDocumento ?? data.TipoDocumento ?? null,
+    nacionalidad: data.nacionalidad ?? data.Nacionalidad ?? null,
     razonSocial: data.razonSocial ?? data.RazonSocial ?? null,
     nombreComercial: data.nombreComercial ?? data.NombreComercial ?? null,
     representanteLegal: data.representanteLegal ?? data.RepresentanteLegal ?? null,

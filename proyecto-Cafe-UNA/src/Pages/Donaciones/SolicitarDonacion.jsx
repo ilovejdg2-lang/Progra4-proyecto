@@ -48,6 +48,15 @@ import {
   PROVINCIAS_CR,
 } from "../../lib/costaRicaDivisiones";
 import { asegurarCamposEnEspanol } from "../../lib/traducir";
+import { obtenerOpcionesPaises } from "../../lib/paises";
+import {
+  digitosConsultables,
+  esperaConsultaIdentificacion,
+  LIMITE_IDENTIFICACION,
+  limpiarIdentificacion,
+  placeholderIdentificacion,
+  validarIdentificacion,
+} from "../../lib/identificacionPersona";
 import "../Voluntariado/SolicitarVoluntariado.css";
 import "./SolicitarDonacion.css";
 
@@ -90,6 +99,8 @@ const FORM_INICIAL = {
   nombre: "",
   primerApellido: "",
   segundoApellido: "",
+  tipoDocumento: "cedula",
+  nacionalidad: "",
   identificacion: "",
   correo: "",
   telefono: "",
@@ -113,10 +124,6 @@ const FORM_INICIAL = {
   aceptaPrivacidad: false,
 };
 
-function normalizarCedulaCr(valor) {
-  return String(valor ?? "").replace(/\D/g, "");
-}
-
 function isoLocal(date) {
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
   const y = date.getFullYear();
@@ -137,11 +144,6 @@ function parseIsoLocal(valor) {
 
 function esAvisoCedulaInformativo(mensaje) {
   return /cargad[oa]s?\s+autom[aá]ticamente/i.test(mensaje) || /datos cargados/i.test(mensaje);
-}
-
-function esCedulaFisica(valor) {
-  const digitos = normalizarCedulaCr(valor);
-  return digitos.length === 9 && digitos === String(valor ?? "").replace(/[\s-]/g, "");
 }
 
 function partesNombreCedula(datos) {
@@ -233,6 +235,12 @@ export default function SolicitarDonacion() {
   const tPh2 = useTraducir("2° Apellido");
   const tIdentificacion = useTraducir("Identificación");
   const tPhId = useTraducir("Cédula, jurídica o pasaporte");
+  const tTipoDocumento = useTraducir("Tipo de identificación");
+  const tCedula = useTraducir("Cédula");
+  const tDimex = useTraducir("DIMEX");
+  const tPasaporte = useTraducir("Pasaporte");
+  const tPaisOrigen = useTraducir("País de origen");
+  const tElegiPais = useTraducir("Elegí el país");
   const tCorreo = useTraducir("Correo electrónico");
   const tTelefono = useTraducir("Teléfono");
   const tDetalles = useTraducir("Detalles de la donación");
@@ -321,6 +329,10 @@ export default function SolicitarDonacion() {
   const fotosRef = useRef([]);
   fotosRef.current = fotos;
   const esPersona = formulario.tipoDonante === "persona";
+  const tipoDocumento = formulario.tipoDocumento;
+  const esPasaporte = esPersona && tipoDocumento === "pasaporte";
+  const etiquetaDocumento = tipoDocumento === "dimex" ? tDimex : tipoDocumento === "pasaporte" ? tPasaporte : tCedula;
+  const opcionesPais = useMemo(() => obtenerOpcionesPaises(idioma), [idioma]);
   const pideRecoleccion = formulario.metodoEntrega === "recoleccion";
   const pideEntrega = formulario.metodoEntrega === "entrega";
   const cantonesDisponibles = cantonesDeProvincia(formulario.provincia);
@@ -446,7 +458,7 @@ export default function SolicitarDonacion() {
   };
 
   const consultarDatosCedula = useCallback(async (digitos, { forzar = false } = {}) => {
-    if (!esPersona || digitos.length !== 9) return;
+    if (!esPersona || !digitosConsultables(tipoDocumento, digitos)) return;
     if (consultaCedulaRef.current.enCurso) return;
     if (!forzar && consultaCedulaRef.current.digitos === digitos) return;
 
@@ -465,7 +477,7 @@ export default function SolicitarDonacion() {
           primerApellido: "",
           segundoApellido: "",
         }));
-        setAvisoCedula("No se encontraron datos para esta cédula. Complete los datos manualmente.");
+        setAvisoCedula("No se encontraron datos para esta identificación. Complete los datos manualmente.");
         return;
       }
       consultaCedulaRef.current = { digitos, enCurso: false };
@@ -492,7 +504,7 @@ export default function SolicitarDonacion() {
         primerApellido: "",
         segundoApellido: "",
       }));
-      const mensajeBase = error?.message?.trim() || "No se pudo consultar la cédula.";
+      const mensajeBase = error?.message?.trim() || "No se pudo consultar la identificación.";
       const yaIndicaManual = /manualmente|completar el nombre/i.test(mensajeBase);
       const esConexion = error?.cause?.code === "ERR_NETWORK" || /conectar con el servidor/i.test(mensajeBase);
       setAvisoCedula(
@@ -505,19 +517,19 @@ export default function SolicitarDonacion() {
     } finally {
       setConsultandoCedula(false);
     }
-  }, [esPersona]);
+  }, [esPersona, tipoDocumento]);
 
   useEffect(() => {
     if (!esPersona) return;
-    const digitos = normalizarCedulaCr(formulario.identificacion);
-    if (!esCedulaFisica(formulario.identificacion) || digitos.length !== 9) return;
+    const digitos = digitosConsultables(tipoDocumento, formulario.identificacion);
+    if (!digitos) return;
     if (consultaCedulaRef.current.enCurso) return;
     if (consultaCedulaRef.current.digitos === digitos) return;
     const timeoutId = window.setTimeout(() => {
       consultarDatosCedula(digitos);
-    }, 350);
+    }, esperaConsultaIdentificacion(tipoDocumento));
     return () => window.clearTimeout(timeoutId);
-  }, [formulario.identificacion, esPersona, consultarDatosCedula]);
+  }, [formulario.identificacion, esPersona, tipoDocumento, consultarDatosCedula]);
 
   const handleChange = (event) => {
     const name = event.target.name;
@@ -535,10 +547,8 @@ export default function SolicitarDonacion() {
 
     if (name === "identificacion") {
       if (esPersona) {
-        const crudo = String(valor);
-        const soloDigitos = crudo.replace(/[\s-]/g, "");
-        if (/^\d*$/.test(soloDigitos)) {
-          valor = soloDigitos.slice(0, 9);
+        valor = limpiarIdentificacion(tipoDocumento, valor);
+        if (!esPasaporte) {
           consultaCedulaRef.current = { digitos: "", enCurso: false };
           setFormulario((prev) => ({
             ...prev,
@@ -551,8 +561,9 @@ export default function SolicitarDonacion() {
           limpiarError(name);
           return;
         }
+      } else {
+        valor = String(valor).slice(0, 30);
       }
-      valor = String(valor).slice(0, 30);
     }
 
     if (name === "metodoEntrega") {
@@ -624,25 +635,38 @@ export default function SolicitarDonacion() {
       nombre: "",
       primerApellido: "",
       segundoApellido: "",
-      identificacion:
-        tipoDonante === "persona"
-          ? normalizarCedulaCr(prev.identificacion).slice(0, 9)
-          : prev.identificacion,
+      tipoDocumento: "cedula",
+      nacionalidad: "",
+      identificacion: "",
     }));
     limpiarError("nombre");
     limpiarError("primerApellido");
     limpiarError("identificacion");
+    limpiarError("nacionalidad");
+  };
+
+  const handleTipoDocumento = (event) => {
+    const valor = event.target.value;
+    consultaCedulaRef.current = { digitos: "", enCurso: false };
+    setAvisoCedula(null);
+    setFormulario((prev) => ({
+      ...prev,
+      tipoDocumento: valor,
+      nacionalidad: valor === "pasaporte" ? prev.nacionalidad : "",
+      identificacion: "",
+      nombre: "",
+      primerApellido: "",
+      segundoApellido: "",
+    }));
+    limpiarError("identificacion");
+    limpiarError("nacionalidad");
   };
 
   const handleIdentificacionBlur = async () => {
-    if (!esPersona) return;
-    const digitos = normalizarCedulaCr(formulario.identificacion);
-    if (esCedulaFisica(formulario.identificacion) && digitos !== formulario.identificacion) {
-      setFormulario((prev) => ({ ...prev, identificacion: digitos }));
-    }
-    if (!esCedulaFisica(formulario.identificacion)) return;
-    if (digitos.length !== 9) {
-      if (digitos.length > 0) setAvisoCedula("La cédula costarricense debe tener 9 dígitos.");
+    if (!esPersona || esPasaporte || !formulario.identificacion) return;
+    const digitos = digitosConsultables(tipoDocumento, formulario.identificacion);
+    if (!digitos) {
+      setAvisoCedula(validarIdentificacion(tipoDocumento, formulario.identificacion));
       return;
     }
     await consultarDatosCedula(digitos, { forzar: true });
@@ -712,8 +736,13 @@ export default function SolicitarDonacion() {
     } else if (!formulario.nombre.trim()) {
       nuevos.nombre = "La razón social es obligatoria";
     }
-    const identificacion = formulario.identificacion.trim();
-    if (!identificacion) {
+    if (esPersona) {
+      const errorIdentificacion = validarIdentificacion(tipoDocumento, formulario.identificacion);
+      if (errorIdentificacion) nuevos.identificacion = errorIdentificacion;
+      if (esPasaporte && !formulario.nacionalidad) {
+        nuevos.nacionalidad = "Elegí el país de origen del pasaporte.";
+      }
+    } else if (!formulario.identificacion.trim()) {
       nuevos.identificacion = "La identificación es obligatoria";
     }
     const correo = formulario.correo.trim();
@@ -784,6 +813,7 @@ export default function SolicitarDonacion() {
           "nombre",
           "primerApellido",
           "identificacion",
+          "nacionalidad",
           "correo",
           "telefono",
           "categoriaId",
@@ -827,12 +857,9 @@ export default function SolicitarDonacion() {
           nombre: formulario.nombre.trim(),
           primerApellido: esPersona ? formulario.primerApellido.trim() : "",
           segundoApellido: esPersona ? formulario.segundoApellido.trim() : "",
-          tipoIdentificacion: esPersona
-            ? (esCedulaFisica(formulario.identificacion) ? "cedula" : "pasaporte")
-            : "juridica",
-          numeroIdentificacion: esCedulaFisica(formulario.identificacion)
-            ? normalizarCedulaCr(formulario.identificacion)
-            : formulario.identificacion.trim(),
+          tipoIdentificacion: esPersona ? tipoDocumento : "juridica",
+          numeroIdentificacion: formulario.identificacion.trim(),
+          nacionalidad: esPasaporte ? formulario.nacionalidad : "",
           correo: formulario.correo.trim(),
           telefono: formulario.telefono.trim(),
           materialId: Number(formulario.materialId),
@@ -961,20 +988,70 @@ export default function SolicitarDonacion() {
 
                   {esPersona ? (
                     <>
+                      <div className="form-grid">
+                        <div className="campo">
+                          <label htmlFor="donacion-tipo-documento">
+                            {tTipoDocumento} <span className="req">*</span>
+                          </label>
+                          <select
+                            id="donacion-tipo-documento"
+                            name="tipoDocumento"
+                            value={tipoDocumento}
+                            onChange={handleTipoDocumento}
+                          >
+                            <option value="cedula">{tCedula}</option>
+                            <option value="dimex">{tDimex}</option>
+                            <option value="pasaporte">{tPasaporte}</option>
+                          </select>
+                        </div>
+                        {esPasaporte ? (
+                          <div className="campo">
+                            <label htmlFor="donacion-nacionalidad">
+                              {tPaisOrigen} <span className="req">*</span>
+                            </label>
+                            <select
+                              id="donacion-nacionalidad"
+                              name="nacionalidad"
+                              value={formulario.nacionalidad}
+                              onChange={handleChange}
+                            >
+                              <option value="">{tElegiPais}</option>
+                              {opcionesPais.map((pais) => (
+                                <option key={pais.value} value={pais.value}>{pais.label}</option>
+                              ))}
+                            </select>
+                            {errores.nacionalidad ? (
+                              <span className="mensaje-error"><ST>{errores.nacionalidad}</ST></span>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </div>
                       <div className="form-grid--4cols">
                         <div className="campo">
                           <label>
-                            {tIdentificacion} <span className="req">*</span>
+                            {etiquetaDocumento} <span className="req">*</span>
                           </label>
-                          <NumericInput
-                            name="identificacion"
-                            placeholder={tPhId}
-                            value={formulario.identificacion}
-                            onChange={handleChange}
-                            onBlur={handleIdentificacionBlur}
-                            maxLength={9}
-                            autoComplete="off"
-                          />
+                          {esPasaporte ? (
+                            <input
+                              type="text"
+                              name="identificacion"
+                              placeholder={placeholderIdentificacion(tipoDocumento)}
+                              value={formulario.identificacion}
+                              onChange={handleChange}
+                              maxLength={LIMITE_IDENTIFICACION.pasaporte}
+                              autoComplete="off"
+                            />
+                          ) : (
+                            <NumericInput
+                              name="identificacion"
+                              placeholder={placeholderIdentificacion(tipoDocumento)}
+                              value={formulario.identificacion}
+                              onChange={handleChange}
+                              onBlur={handleIdentificacionBlur}
+                              maxLength={LIMITE_IDENTIFICACION[tipoDocumento]}
+                              autoComplete="off"
+                            />
+                          )}
                           {errores.identificacion ? (
                             <span className="mensaje-error"><ST>{errores.identificacion}</ST></span>
                           ) : null}
@@ -1022,7 +1099,7 @@ export default function SolicitarDonacion() {
                         </div>
                       </div>
                       {consultandoCedula ? (
-                        <span className="mensaje-info">Consultando datos de la cédula...</span>
+                        <span className="mensaje-info">Consultando datos de la identificación...</span>
                       ) : null}
                       {!consultandoCedula && avisoCedula ? (
                         <span className={esAvisoCedulaInformativo(avisoCedula) ? "mensaje-info" : "mensaje-error"}>

@@ -74,6 +74,7 @@ describe("SolicitarVisita", () => {
     render(<SolicitarVisita />);
 
     fireEvent.change(screen.getByLabelText(/^identificación/i), { target: { value: "1-1111-1111" } });
+    await waitFor(() => expect(consultarCedulaMock).toHaveBeenCalledWith("111111111"));
     fireEvent.change(screen.getByLabelText(/^nombre \*/i), { target: { value: "Ana" } });
     fireEvent.change(screen.getByLabelText(/^primer apellido/i), { target: { value: "López" } });
     fireEvent.change(screen.getByLabelText(/^segundo apellido/i), { target: { value: "Mora" } });
@@ -99,7 +100,8 @@ describe("SolicitarVisita", () => {
     expect(crearSolicitudVisitaMock).toHaveBeenCalledWith(
       expect.objectContaining({
         encargadoNombre: "Ana López Mora",
-        encargadoIdentificacion: "1-1111-1111",
+        encargadoIdentificacion: "111111111",
+        encargadoTipoIdentificacion: "cedula",
         encargadoEmail: "ana@ejemplo.com",
         encargadoTelefono: "8888-7777",
         ciudadProvincia: "Heredia, Barva",
@@ -177,6 +179,22 @@ describe("SolicitarVisita", () => {
     expect(screen.getByText(/datos cargados automáticamente/i)).toBeInTheDocument();
   });
 
+  it("autocompletes names for a DIMEX after choosing that type", async () => {
+    consultarCedulaMock.mockResolvedValueOnce({
+      nombre: "MARIA",
+      primerApellido: "GOMEZ",
+      segundoApellido: "",
+    });
+
+    render(<SolicitarVisita />);
+
+    fireEvent.change(screen.getByLabelText(/tipo de identificación/i), { target: { value: "dimex" } });
+    fireEvent.change(screen.getByLabelText(/^identificación/i), { target: { value: "155812345678" } });
+
+    await waitFor(() => expect(consultarCedulaMock).toHaveBeenCalledWith("155812345678"));
+    await waitFor(() => expect(screen.getByLabelText(/^nombre \*/i)).toHaveValue("MARIA"));
+  });
+
   it("handles international visitor mode with free text fields", async () => {
     crearSolicitudVisitaMock.mockResolvedValueOnce({ id: "99", estado: "Pendiente" });
     render(<SolicitarVisita />);
@@ -189,7 +207,9 @@ describe("SolicitarVisita", () => {
     expect(screen.getByLabelText(/provincia o estado \*/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/ciudad \*/i)).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(/^identificación/i), { target: { value: "PASSPORT-123" } });
+    fireEvent.change(screen.getByLabelText(/tipo de identificación/i), { target: { value: "pasaporte" } });
+    fireEvent.change(screen.getByLabelText(/país de origen/i), { target: { value: "US" } });
+    fireEvent.change(screen.getByLabelText(/^identificación/i), { target: { value: "passport-123" } });
     fireEvent.change(screen.getByLabelText(/^nombre \*/i), { target: { value: "John" } });
     fireEvent.change(screen.getByLabelText(/^primer apellido/i), { target: { value: "Doe" } });
     fireEvent.change(screen.getByLabelText(/^correo electrónico/i), { target: { value: "john@example.com" } });
@@ -211,7 +231,9 @@ describe("SolicitarVisita", () => {
     expect(crearSolicitudVisitaMock).toHaveBeenCalledWith(
       expect.objectContaining({
         encargadoNombre: "John Doe",
-        encargadoIdentificacion: "PASSPORT-123",
+        encargadoIdentificacion: "PASSPORT123",
+        encargadoTipoIdentificacion: "pasaporte",
+        encargadoNacionalidad: "US",
         tipoVisitante: "Internacional",
         paisProcedencia: "Estados Unidos",
         ciudadProvincia: "California, San Francisco",

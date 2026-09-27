@@ -8,6 +8,17 @@ function TextoOpcion({ texto }) {
   return useTraducir(texto || "");
 }
 
+function EtiquetaOpcion({ texto, traducir }) {
+  return traducir ? <TextoOpcion texto={texto} /> : texto || "";
+}
+
+function claveBusqueda(texto) {
+  return String(texto ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 function normalizarOpciones(options) {
   return (Array.isArray(options) ? options : []).map((opcion) => {
     if (opcion != null && typeof opcion === "object") {
@@ -31,16 +42,30 @@ export function UiSelect({
   className = "",
   footer = null,
   renderOptionEnd,
+  buscable = false,
+  placeholderBusqueda = "Buscar...",
+  traducirOpciones = true,
 }) {
   const [open, setOpen] = useState(false);
   const [menuStyle, setMenuStyle] = useState(null);
+  const [busqueda, setBusqueda] = useState("");
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
+  const searchRef = useRef(null);
   const generatedId = useId();
   const triggerId = id || generatedId;
+  const tPlaceholderBusqueda = useTraducir(placeholderBusqueda);
   const opciones = normalizarOpciones(options);
   const actual = opciones.find((opcion) => opcion.value === value) ?? opciones[0];
+  const filtro = buscable ? claveBusqueda(busqueda.trim()) : "";
+  const opcionesVisibles = filtro
+    ? opciones.filter((opcion) => claveBusqueda(opcion.label).includes(filtro))
+    : opciones;
+
+  useEffect(() => {
+    if (open && buscable) searchRef.current?.focus();
+  }, [open, buscable]);
 
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) {
@@ -117,10 +142,13 @@ export function UiSelect({
         aria-expanded={open}
         aria-haspopup="listbox"
         className="ui-select__trigger"
-        onClick={() => setOpen((actualOpen) => !actualOpen)}
+        onClick={() => {
+          setBusqueda("");
+          setOpen((actualOpen) => !actualOpen);
+        }}
       >
         <span className="ui-select__value">
-          {actual?.label ? <TextoOpcion texto={actual.label} /> : null}
+          {actual?.label ? <EtiquetaOpcion texto={actual.label} traducir={traducirOpciones} /> : null}
         </span>
         <ChevronDown className="ui-select__chevron" size={16} aria-hidden="true" />
       </button>
@@ -131,8 +159,27 @@ export function UiSelect({
               className={`ui-select__menu ui-select__menu--portal${className ? ` ${className}` : ""}`}
               style={menuStyle}
             >
+              {buscable ? (
+                <div className="ui-select__search">
+                  <input
+                    ref={searchRef}
+                    type="search"
+                    value={busqueda}
+                    onChange={(event) => setBusqueda(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && opcionesVisibles.length > 0) {
+                        event.preventDefault();
+                        elegir(opcionesVisibles[0]);
+                      }
+                    }}
+                    placeholder={tPlaceholderBusqueda}
+                    aria-label={tPlaceholderBusqueda}
+                    className="ui-select__search-input"
+                  />
+                </div>
+              ) : null}
               <ul className="ui-select__options" role="listbox" aria-labelledby={triggerId}>
-                {opciones.map((opcion) => (
+                {opcionesVisibles.map((opcion) => (
                   <li key={String(opcion.value)} className="ui-select__option-row">
                     <span
                       role="option"
@@ -151,11 +198,14 @@ export function UiSelect({
                         }
                       }}
                     >
-                      <TextoOpcion texto={opcion.label} />
+                      <EtiquetaOpcion texto={opcion.label} traducir={traducirOpciones} />
                     </span>
                     {renderOptionEnd?.(opcion)}
                   </li>
                 ))}
+                {buscable && opcionesVisibles.length === 0 ? (
+                  <li className="ui-select__empty"><TextoOpcion texto="Sin resultados" /></li>
+                ) : null}
               </ul>
               {footer ? <div className="ui-select__footer">{footer}</div> : null}
             </div>,
