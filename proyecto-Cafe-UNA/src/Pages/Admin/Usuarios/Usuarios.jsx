@@ -27,6 +27,8 @@ import {
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { consultarCedulaDetallada } from "../../../services/cedulaService";
 import { tienePermiso } from "../../../lib/permisos";
+import { nombrePais, obtenerOpcionesPaises } from "../../../lib/paises";
+import { useIdioma } from "../../../lib/useIdioma";
 import {
   MAX_NOMBRE_USUARIO,
   MAX_PASSWORD,
@@ -75,8 +77,8 @@ function esRolCliente(rol) {
 
 const CLIENTE_FORM_VACIO = {
   tipo: "persona",
-  esNacional: "si",
   tipoDocumento: "cedula",
+  nacionalidad: "",
   nombreLegal: "",
   apellido1: "",
   apellido2: "",
@@ -106,22 +108,38 @@ function validarFormClienteAdmin(form) {
   }
   if (!String(form.nombreLegal || "").trim()) return "El nombre del cliente es obligatorio.";
   if (!String(form.apellido1 || "").trim()) return "El apellido 1 es obligatorio.";
-  const tipoDocumento = form.esNacional === "si" ? "cedula" : form.tipoDocumento;
+  const { tipoDocumento } = form;
   if (tipoDocumento === "cedula" && !String(form.apellido2 || "").trim()) {
     return "El apellido 2 es obligatorio.";
   }
   const identificacion = String(form.identificacion || "").trim();
   if (!identificacion) return "La identificación es obligatoria.";
   if (tipoDocumento === "cedula" && !/^\d{9}$/.test(identificacion.replace(/\D/g, ""))) {
-    return "La cédula costarricense debe tener 9 dígitos.";
+    return "La cédula de identidad debe tener 9 dígitos.";
   }
-  if (tipoDocumento === "dimex") {
-    const digitos = identificacion.replace(/\D/g, "");
-    if (digitos.length < 10 || digitos.length > 12) return "El DIMEX debe tener entre 10 y 12 dígitos.";
+  if (tipoDocumento === "dimex" && !/^\d{11,12}$/.test(identificacion.replace(/\D/g, ""))) {
+    return "El DIMEX debe tener 11 o 12 dígitos.";
   }
-  if (tipoDocumento === "pasaporte" && !/^[A-Za-z0-9]{5,20}$/.test(identificacion)) {
-    return "El pasaporte no tiene un formato válido.";
+  if (tipoDocumento === "pasaporte") {
+    if (!/^[A-Za-z0-9]{5,20}$/.test(identificacion)) {
+      return "El pasaporte debe tener entre 5 y 20 letras o números.";
+    }
+    if (!form.nacionalidad) return "Elegí el país de origen del pasaporte.";
   }
+  return "";
+}
+
+function limpiarIdentificacionCliente(tipoDocumento, valor) {
+  if (tipoDocumento === "pasaporte") {
+    return String(valor ?? "").replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 20);
+  }
+  return soloDigitos(valor, tipoDocumento === "dimex" ? 12 : 9);
+}
+
+function digitosConsultablesCliente(tipoDocumento, valor) {
+  const digitos = String(valor ?? "").replace(/\D/g, "");
+  if (tipoDocumento === "cedula") return digitos.length === 9 ? digitos : "";
+  if (tipoDocumento === "dimex") return /^\d{11,12}$/.test(digitos) ? digitos : "";
   return "";
 }
 
@@ -138,7 +156,6 @@ function armarDatosClientePayload(form) {
       telefonoOficina: form.telefonoOficina.trim() || undefined,
     };
   }
-  const tipoDocumento = form.esNacional === "si" ? "cedula" : form.tipoDocumento;
   return {
     tipo: "persona",
     telefono: form.telefono.trim(),
@@ -146,8 +163,8 @@ function armarDatosClientePayload(form) {
     apellido1: form.apellido1.trim(),
     apellido2: form.apellido2.trim(),
     identificacion: form.identificacion.trim(),
-    tipoDocumento,
-    esNacional: form.esNacional,
+    tipoDocumento: form.tipoDocumento,
+    ...(form.tipoDocumento === "pasaporte" ? { nacionalidad: form.nacionalidad } : {}),
   };
 }
 
@@ -220,6 +237,7 @@ function InfoClienteLectura({ usuario }) {
               {filaCliente("Apellido 2", String(usuario.apellidos || "").trim().split(/\s+/).slice(1).join(" ") || "")}
               {filaCliente("Tipo documento", usuario.tipoDocumento)}
               {filaCliente("Identificación", usuario.identificacion)}
+              {usuario.nacionalidad ? filaCliente("País de origen", nombrePais(usuario.nacionalidad)) : null}
               {filaCliente("Teléfono", usuario.telefono)}
             </>
           )}
@@ -307,9 +325,14 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
   const [consultandoCedula, setConsultandoCedula] = useState(false);
   const [avisoCedula, setAvisoCedula] = useState("");
   const consultaCedulaRef = useRef({ digitos: "", enCurso: false });
+  const { idioma } = useIdioma();
+  const opcionesPais = useMemo(
+    () => [{ value: "", label: t("Elegí un país") }, ...obtenerOpcionesPaises(idioma)],
+    [idioma],
+  );
 
   const consultarDatosCedula = useCallback(async (digitos, { forzar = false } = {}) => {
-    if (digitos.length !== 9) return;
+    if (!/^(\d{9}|\d{11,12})$/.test(digitos)) return;
     if (consultaCedulaRef.current.enCurso) return;
     if (!forzar && consultaCedulaRef.current.digitos === digitos) return;
 
@@ -324,8 +347,8 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
       const apellido2 = datos?.segundoApellido || datos?.SegundoApellido || "";
 
       if (!nombre && !apellido1) {
-        consultaCedulaRef.current = { digitos: "", enCurso: false };
-        setAvisoCedula("No se encontraron datos para esta cédula. Completá los datos manualmente.");
+        consultaCedulaRef.current = { digitos, enCurso: false };
+        setAvisoCedula("No se encontraron datos para esta identificación. Completá los datos manualmente.");
         return;
       }
 
@@ -339,8 +362,8 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
       }));
       setAvisoCedula("Datos cargados automáticamente. Podés editarlos si hace falta.");
     } catch (error) {
-      consultaCedulaRef.current = { digitos: "", enCurso: false };
-      const mensajeBase = error?.message?.trim() || "No se pudo consultar la cédula.";
+      consultaCedulaRef.current = { digitos, enCurso: false };
+      const mensajeBase = error?.message?.trim() || "No se pudo consultar la identificación.";
       const yaIndicaManual = /manualmente|completar/i.test(mensajeBase);
       setAvisoCedula(
         yaIndicaManual ? mensajeBase : `${mensajeBase} Completá los datos manualmente.`,
@@ -352,20 +375,21 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 
   useEffect(() => {
     if (!asignandoCliente) return undefined;
-    if (clienteForm.tipo !== "persona" || clienteForm.esNacional !== "si") return undefined;
-    const digitos = soloDigitos(clienteForm.identificacion, 9);
-    if (digitos.length !== 9) return undefined;
+    if (clienteForm.tipo !== "persona") return undefined;
+    const digitos = digitosConsultablesCliente(clienteForm.tipoDocumento, clienteForm.identificacion);
+    if (!digitos) return undefined;
     if (consultaCedulaRef.current.enCurso) return undefined;
     if (consultaCedulaRef.current.digitos === digitos) return undefined;
 
+    const espera = clienteForm.tipoDocumento === "dimex" ? 800 : 350;
     const timeoutId = window.setTimeout(() => {
       consultarDatosCedula(digitos);
-    }, 350);
+    }, espera);
     return () => window.clearTimeout(timeoutId);
   }, [
     asignandoCliente,
     clienteForm.tipo,
-    clienteForm.esNacional,
+    clienteForm.tipoDocumento,
     clienteForm.identificacion,
     consultarDatosCedula,
   ]);
@@ -1020,76 +1044,42 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                 </div>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="sm:col-span-2">
-                    <span className="mb-1 block text-xs font-medium text-slate-600"><ST>¿Es extranjero?</ST></span>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { id: "no", label: "No", esNacional: "si" },
-                        { id: "si", label: "Sí", esNacional: "no" },
-                      ].map((op) => (
-                        <button
-                          key={op.id}
-                          type="button"
-                          onClick={() => {
-                            consultaCedulaRef.current = { digitos: "", enCurso: false };
-                            setAvisoCedula("");
-                            setClienteForm((prev) => ({
-                              ...prev,
-                              esNacional: op.esNacional,
-                              tipoDocumento: op.esNacional === "si"
-                                ? "cedula"
-                                : (prev.tipoDocumento === "cedula" ? "dimex" : prev.tipoDocumento),
-                              identificacion: op.esNacional === "si"
-                                ? soloDigitos(prev.identificacion, 9)
-                                : prev.identificacion,
-                              ...(op.esNacional === "no"
-                                ? { nombreLegal: "", apellido1: "", apellido2: "" }
-                                : {}),
-                            }));
-                          }}
-                          className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                            clienteForm.esNacional === op.esNacional
-                              ? "bg-slate-900 text-white"
-                              : "border border-slate-200 bg-white text-slate-600"
-                          }`}
-                        >
-                          <ST>{op.label}</ST>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  {clienteForm.esNacional === "no" ? (
-                    <label className="block text-xs font-medium text-slate-600 sm:col-span-2">
-                      <ST>Tipo de documento</ST>
-                      <div className="mt-1">
-                        <UiSelect
-                          value={clienteForm.tipoDocumento === "cedula" ? "dimex" : clienteForm.tipoDocumento}
-                          onChange={(valor) => setClienteForm((prev) => ({
+                  <label className="block text-xs font-medium text-slate-600 sm:col-span-2">
+                    <ST>Tipo de identificación</ST>
+                    <div className="mt-1">
+                      <UiSelect
+                        ariaLabel="Tipo de identificación"
+                        value={clienteForm.tipoDocumento}
+                        onChange={(valor) => {
+                          consultaCedulaRef.current = { digitos: "", enCurso: false };
+                          setAvisoCedula("");
+                          setClienteForm((prev) => ({
                             ...prev,
                             tipoDocumento: valor,
-                            identificacion: valor === "pasaporte"
-                              ? String(prev.identificacion).replace(/[^A-Za-z0-9]/g, "").slice(0, 20)
-                              : soloDigitos(prev.identificacion, 12),
-                          }))}
-                          options={[
-                            { value: "dimex", label: "DIMEX" },
-                            { value: "pasaporte", label: "Pasaporte" },
-                          ]}
-                        />
-                      </div>
-                    </label>
-                  ) : null}
+                            nacionalidad: valor === "pasaporte" ? prev.nacionalidad : "",
+                            identificacion: limpiarIdentificacionCliente(valor, prev.identificacion),
+                          }));
+                        }}
+                        options={[
+                          { value: "cedula", label: "Cédula de identidad" },
+                          { value: "dimex", label: "DIMEX" },
+                          { value: "pasaporte", label: "Pasaporte" },
+                        ]}
+                      />
+                    </div>
+                  </label>
                   <label className="block text-xs font-medium text-slate-600">
-                    <ST>{clienteForm.esNacional === "si" ? "Cédula" : (clienteForm.tipoDocumento === "pasaporte" ? "Pasaporte" : "DIMEX")}</ST>
+                    <ST>
+                      {clienteForm.tipoDocumento === "cedula"
+                        ? "Cédula de identidad"
+                        : clienteForm.tipoDocumento === "pasaporte" ? "Pasaporte" : "DIMEX"}
+                    </ST>
                     <input
                       className={`${inputCls} mt-1`}
                       value={clienteForm.identificacion}
                       onChange={(e) => {
-                        const tipo = clienteForm.esNacional === "si" ? "cedula" : clienteForm.tipoDocumento;
-                        const valor = tipo === "pasaporte"
-                          ? e.target.value.replace(/[^A-Za-z0-9]/g, "").slice(0, 20)
-                          : soloDigitos(e.target.value, tipo === "dimex" ? 12 : 9);
-                        if (tipo === "cedula" && valor !== clienteForm.identificacion) {
+                        const valor = limpiarIdentificacionCliente(clienteForm.tipoDocumento, e.target.value);
+                        if (valor !== clienteForm.identificacion) {
                           consultaCedulaRef.current = { digitos: "", enCurso: false };
                           setAvisoCedula("");
                         }
@@ -1097,13 +1087,29 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                       }}
                       required
                     />
-                    {clienteForm.esNacional === "si" && consultandoCedula ? (
-                      <p className="mt-1 text-xs text-slate-500"><ST>Consultando cédula...</ST></p>
+                    {clienteForm.tipoDocumento !== "pasaporte" && consultandoCedula ? (
+                      <p className="mt-1 text-xs text-slate-500"><ST>Consultando identificación...</ST></p>
                     ) : null}
-                    {clienteForm.esNacional === "si" && avisoCedula ? (
+                    {clienteForm.tipoDocumento !== "pasaporte" && avisoCedula ? (
                       <p className="mt-1 text-xs text-slate-600"><ST>{avisoCedula}</ST></p>
                     ) : null}
                   </label>
+                  {clienteForm.tipoDocumento === "pasaporte" ? (
+                    <label className="block text-xs font-medium text-slate-600">
+                      <ST>País de origen</ST>
+                      <div className="mt-1">
+                        <UiSelect
+                          ariaLabel="País de origen"
+                          value={clienteForm.nacionalidad}
+                          onChange={(valor) => setClienteForm((prev) => ({ ...prev, nacionalidad: valor }))}
+                          options={opcionesPais}
+                          buscable
+                          placeholderBusqueda="Buscar país..."
+                          traducirOpciones={false}
+                        />
+                      </div>
+                    </label>
+                  ) : null}
                   <label className="block text-xs font-medium text-slate-600">
                     <ST>Teléfono</ST>
                     <input
@@ -1137,7 +1143,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                       className={`${inputCls} mt-1`}
                       value={clienteForm.apellido2}
                       onChange={(e) => setClienteForm((prev) => ({ ...prev, apellido2: soloLetras(e.target.value, 40) }))}
-                      required={clienteForm.esNacional === "si"}
+                      required={clienteForm.tipoDocumento === "cedula"}
                     />
                   </label>
                 </div>
@@ -1190,6 +1196,7 @@ function mapUsuario(item) {
     identificacion: item?.identificacion ?? item?.Identificacion ?? null,
     nombreLegal: item?.nombreLegal ?? item?.NombreLegal ?? null,
     tipoDocumento: item?.tipoDocumento ?? item?.TipoDocumento ?? null,
+    nacionalidad: item?.nacionalidad ?? item?.Nacionalidad ?? null,
     razonSocial: item?.razonSocial ?? item?.RazonSocial ?? null,
     nombreComercial: item?.nombreComercial ?? item?.NombreComercial ?? null,
     representanteLegal: item?.representanteLegal ?? item?.RepresentanteLegal ?? null,

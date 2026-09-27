@@ -60,6 +60,7 @@ import { obtenerNavbar } from "../../services/informacionService";
 import { clearPerfilCache, obtenerPerfil } from "../../services/perfilService";
 import { tienePermiso, rolesDeUsuario } from "../../lib/permisos";
 import { cancelPendingSessionRefresh } from "../../services/apiClient";
+import { soltarCarritoAlCerrarSesion } from "../../lib/cartSync";
 import {
   applyPerfilToSession,
   beginLogout,
@@ -391,9 +392,10 @@ export function AppSidebar() {
     localStorage.removeItem(AJUSTES_OPEN_KEY);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     beginLogout();
     cancelPendingSessionRefresh();
+    await soltarCarritoAlCerrarSesion();
     clearSidebarState();
     clearPerfilCache();
     setUser(null);

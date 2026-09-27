@@ -29,6 +29,7 @@ import { obtenerNavbar } from "../../services/informacionService";
 import { clearPerfilCache, obtenerPerfil } from "../../services/perfilService";
 import { tienePermiso, rolesDeUsuario } from "../../lib/permisos";
 import { cancelPendingSessionRefresh } from "../../services/apiClient";
+import { soltarCarritoAlCerrarSesion } from "../../lib/cartSync";
 import {
   applyPerfilToSession,
   beginLogout,
@@ -132,9 +133,10 @@ export function ClienteSidebar() {
 
   const closeMobileSidebar = () => setOpenMobile(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     beginLogout();
     cancelPendingSessionRefresh();
+    await soltarCarritoAlCerrarSesion();
     clearPerfilCache();
     setUser(null);
     clearSession();

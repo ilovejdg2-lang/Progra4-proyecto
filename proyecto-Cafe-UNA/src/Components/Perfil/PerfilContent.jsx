@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Camera, ChevronRight, ClipboardList, Eye, EyeOff, IdCard, KeyRound, Mail, ShoppingBag, UserRound, X } from "lucide-react";
 import {
@@ -15,7 +15,9 @@ import { rutaMisCompras } from "../../Pages/HistorialCompras/HistorialComprasCli
 import { rutaMisSolicitudes } from "../../Pages/HistorialSolicitudes/HistorialSolicitudesCliente";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { inicialDeNombre } from "../../lib/inicialDeNombre";
+import { obtenerOpcionesPaises } from "../../lib/paises";
 import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
+import { useIdioma } from "../../lib/useIdioma";
 import {
   MAX_NOMBRE_USUARIO,
   MAX_PASSWORD,
@@ -58,10 +60,31 @@ function formatearCedulaJuridica(valor) {
 }
 
 function inferTipoDocumento(identificacion) {
-  const digitos = String(identificacion ?? "").replace(/\D/g, "");
-  if (/^\d{9}$/.test(digitos)) return "cedula";
-  if (/^\d{10,12}$/.test(digitos)) return "dimex";
+  const texto = String(identificacion ?? "").trim();
+  if (/^\d{9}$/.test(texto)) return "cedula";
+  if (/^\d{11,12}$/.test(texto)) return "dimex";
   return "pasaporte";
+}
+
+function validarIdentificacionCliente(tipoDocumento, valor, nacionalidad) {
+  const texto = String(valor ?? "").trim();
+  if (tipoDocumento === "cedula") {
+    return /^\d{9}$/.test(texto) ? "" : "La cédula de identidad debe tener 9 dígitos.";
+  }
+  if (tipoDocumento === "dimex") {
+    return /^\d{11,12}$/.test(texto) ? "" : "El DIMEX debe tener 11 o 12 dígitos.";
+  }
+  if (!/^[A-Za-z0-9]{5,20}$/.test(texto)) {
+    return "El pasaporte debe tener entre 5 y 20 letras o números.";
+  }
+  return nacionalidad ? "" : "Elegí el país de origen del pasaporte.";
+}
+
+function limpiarIdentificacion(tipoDocumento, valor) {
+  if (tipoDocumento === "pasaporte") {
+    return String(valor ?? "").replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 20);
+  }
+  return soloDigitos(valor, tipoDocumento === "dimex" ? 12 : 9);
 }
 
 function splitApellidos(apellidos) {
@@ -75,8 +98,8 @@ function buildClienteFormFromPerfil(perfil) {
   const apellidos = splitApellidos(perfil?.apellidos);
   const tipoDocumento = perfil?.tipoDocumento || inferTipoDocumento(perfil?.identificacion) || "cedula";
   return {
-    esNacional: tipoDocumento === "cedula" ? "si" : "no",
-    tipoDocumento: tipoDocumento === "cedula" ? "cedula" : tipoDocumento,
+    tipoDocumento,
+    nacionalidad: perfil?.nacionalidad || "",
     nombreLegal: perfil?.nombreLegal || "",
     telefono: perfil?.telefono || "",
     apellido1: apellidos.apellido1,
@@ -290,6 +313,13 @@ export function PerfilContent({ variant = "standalone" }) {
   const [nombreError, setNombreError] = useState("");
   const [clienteForm, setClienteForm] = useState(buildClienteFormFromPerfil(null));
   const [clienteError, setClienteError] = useState("");
+  const { idioma } = useIdioma();
+  const tElegiPais = useTraducir("Elegí un país");
+  const tBuscarPais = useTraducir("Buscar país...");
+  const opcionesPais = useMemo(
+    () => [{ value: "", label: tElegiPais }, ...obtenerOpcionesPaises(idioma)],
+    [idioma, tElegiPais],
+  );
   const [passwordErrors, setPasswordErrors] = useState({
     passwordActual: "",
     passwordNueva: "",
@@ -449,10 +479,23 @@ export function PerfilContent({ variant = "standalone" }) {
     setError("");
     setMensaje("");
     setClienteError("");
+
+    const esEmpresa = perfil?.tipoCliente === "empresa";
+    if (!esEmpresa) {
+      const errorIdentificacion = validarIdentificacionCliente(
+        clienteForm.tipoDocumento,
+        clienteForm.identificacion,
+        clienteForm.nacionalidad,
+      );
+      if (errorIdentificacion) {
+        setClienteError(errorIdentificacion);
+        return;
+      }
+    }
+
     setGuardando(true);
 
     try {
-      const esEmpresa = perfil?.tipoCliente === "empresa";
       const payload = esEmpresa
         ? {
             tipo: "empresa",
@@ -471,8 +514,10 @@ export function PerfilContent({ variant = "standalone" }) {
             apellido1: clienteForm.apellido1.trim(),
             apellido2: clienteForm.apellido2.trim(),
             identificacion: clienteForm.identificacion.trim(),
-            esNacional: clienteForm.esNacional,
-            tipoDocumento: clienteForm.esNacional === "si" ? "cedula" : clienteForm.tipoDocumento,
+            tipoDocumento: clienteForm.tipoDocumento,
+            ...(clienteForm.tipoDocumento === "pasaporte"
+              ? { nacionalidad: clienteForm.nacionalidad }
+              : {}),
           };
 
       const actualizado = await actualizarPerfilCliente(payload);
@@ -1055,74 +1100,62 @@ export function PerfilContent({ variant = "standalone" }) {
                 </>
               ) : (
                 <>
-                  <div className="perfil-field">
-                    <span className="registro-label"><ST>¿Es extranjero?</ST></span>
-                    <div className="registro-radio-row" role="radiogroup" aria-label="¿Es extranjero?">
-                      <label className={`registro-radio${clienteForm.esNacional === "no" ? " is-active" : ""}`}>
-                        <input
-                          type="radio"
-                          name="esExtranjeroPerfil"
-                          value="si"
-                          checked={clienteForm.esNacional === "no"}
-                          onChange={() => setClienteForm((prev) => ({
-                            ...prev,
-                            esNacional: "no",
-                            tipoDocumento: prev.tipoDocumento === "cedula" ? "dimex" : prev.tipoDocumento,
-                          }))}
-                        />
-                        <span className="registro-radio__text"><ST>Sí</ST></span>
-                      </label>
-                      <label className={`registro-radio${clienteForm.esNacional === "si" ? " is-active" : ""}`}>
-                        <input
-                          type="radio"
-                          name="esExtranjeroPerfil"
-                          value="no"
-                          checked={clienteForm.esNacional === "si"}
-                          onChange={() => setClienteForm((prev) => ({
-                            ...prev,
-                            esNacional: "si",
-                            tipoDocumento: "cedula",
-                            identificacion: soloDigitos(prev.identificacion, 9),
-                          }))}
-                        />
-                        <span className="registro-radio__text"><ST>No</ST></span>
-                      </label>
-                    </div>
-                  </div>
-                  {clienteForm.esNacional === "no" ? (
-                    <label className="perfil-field">
-                      <span><ST>Tipo de documento</ST></span>
-                      <UiSelect
-                        value={clienteForm.tipoDocumento === "cedula" ? "dimex" : clienteForm.tipoDocumento}
-                        onChange={(valor) => setClienteForm((prev) => ({
-                          ...prev,
-                          tipoDocumento: valor,
-                          identificacion: valor === "pasaporte"
-                            ? String(prev.identificacion).replace(/[^A-Za-z0-9]/g, "").slice(0, 20)
-                            : soloDigitos(prev.identificacion, 12),
-                        }))}
-                        options={[
-                          { value: "dimex", label: "DIMEX" },
-                          { value: "pasaporte", label: "Pasaporte" },
-                        ]}
-                      />
-                    </label>
-                  ) : null}
                   <label className="perfil-field">
-                    <span><ST>{clienteForm.esNacional === "si" ? "Cédula" : (clienteForm.tipoDocumento === "pasaporte" ? "Pasaporte" : "DIMEX")}</ST></span>
+                    <span><ST>Tipo de identificación</ST></span>
+                    <UiSelect
+                      ariaLabel="Tipo de identificación"
+                      value={clienteForm.tipoDocumento}
+                      onChange={(valor) => setClienteForm((prev) => ({
+                        ...prev,
+                        tipoDocumento: valor,
+                        nacionalidad: valor === "pasaporte" ? prev.nacionalidad : "",
+                        identificacion: limpiarIdentificacion(valor, prev.identificacion),
+                      }))}
+                      options={[
+                        { value: "cedula", label: "Cédula de identidad" },
+                        { value: "dimex", label: "DIMEX" },
+                        { value: "pasaporte", label: "Pasaporte" },
+                      ]}
+                    />
+                  </label>
+                  <label className="perfil-field">
+                    <span>
+                      <ST>
+                        {clienteForm.tipoDocumento === "cedula"
+                          ? "Cédula de identidad"
+                          : clienteForm.tipoDocumento === "pasaporte" ? "Pasaporte" : "DIMEX"}
+                      </ST>
+                    </span>
                     <input
                       value={clienteForm.identificacion}
                       onChange={(e) => {
-                        const tipo = clienteForm.esNacional === "si" ? "cedula" : clienteForm.tipoDocumento;
-                        const valor = tipo === "pasaporte"
-                          ? e.target.value.replace(/[^A-Za-z0-9]/g, "").slice(0, 20)
-                          : soloDigitos(e.target.value, tipo === "dimex" ? 12 : 9);
+                        const valor = limpiarIdentificacion(clienteForm.tipoDocumento, e.target.value);
                         setClienteForm((prev) => ({ ...prev, identificacion: valor }));
                       }}
+                      inputMode={clienteForm.tipoDocumento === "pasaporte" ? "text" : "numeric"}
+                      placeholder={
+                        clienteForm.tipoDocumento === "cedula"
+                          ? "9 dígitos"
+                          : clienteForm.tipoDocumento === "dimex" ? "11 o 12 dígitos" : ""
+                      }
                       maxLength={20}
                       required
                     />
                   </label>
+                  {clienteForm.tipoDocumento === "pasaporte" ? (
+                    <label className="perfil-field">
+                      <span><ST>País de origen</ST></span>
+                      <UiSelect
+                        ariaLabel="País de origen"
+                        value={clienteForm.nacionalidad}
+                        onChange={(valor) => setClienteForm((prev) => ({ ...prev, nacionalidad: valor }))}
+                        options={opcionesPais}
+                        buscable
+                        placeholderBusqueda={tBuscarPais}
+                        traducirOpciones={false}
+                      />
+                    </label>
+                  ) : null}
                   <label className="perfil-field">
                     <span><ST>Nombre</ST></span>
                     <input
@@ -1156,7 +1189,7 @@ export function PerfilContent({ variant = "standalone" }) {
                         apellido2: soloLetras(e.target.value, 40),
                       }))}
                       maxLength={40}
-                      required={clienteForm.esNacional === "si"}
+                      required={clienteForm.tipoDocumento === "cedula"}
                     />
                   </label>
                   <label className="perfil-field">

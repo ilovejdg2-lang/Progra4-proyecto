@@ -46,6 +46,15 @@ import {
 } from "../../lib/formLimits";
 import { useTraducir } from "../../hooks/useTraducir";
 import { useIdioma } from "../../lib/useIdioma";
+import { obtenerOpcionesPaises } from "../../lib/paises";
+import {
+  digitosConsultables,
+  esperaConsultaIdentificacion,
+  LIMITE_IDENTIFICACION,
+  limpiarIdentificacion,
+  placeholderIdentificacion,
+  validarIdentificacion,
+} from "../../lib/identificacionPersona";
 import { ST } from "../../Components/T/ST";
 import "./SolicitarVoluntariado.css";
 
@@ -79,22 +88,19 @@ const FORM_INICIAL = {
   cantidadParticipantes: "",
   tipo: "",
   tipoOtro: "",
-  esNacional: "",
+  tipoDocumento: "cedula",
+  nacionalidad: "",
   nombre: "",
   primerApellido: "",
   segundoApellido: "",
   identificacion: "",
   institucion: "",
-  pais: "",
+  pais: "Costa Rica",
   correo: "",
   telefono: "",
   fechaVoluntariado: "",
   disponibilidad: "",
 };
-
-function normalizarCedulaCr(valor) {
-  return String(valor ?? "").replace(/\D/g, "");
-}
 
 function obtenerUsuarioActual() {
   return getActiveSessionUser();
@@ -152,15 +158,15 @@ function SolicitarVoluntariado() {
   const tInfoResponsable = useTraducir("Información del responsable del grupo");
   const tInfoResponsableHint = useTraducir("Datos personales y de contacto de la persona a cargo de la coordinación del grupo");
 
-  const tNacional = useTraducir("¿Es costarricense?");
-  const tSi = useTraducir("Sí");
-  const tNo = useTraducir("No");
+  const tTipoDocumento = useTraducir("Tipo de identificación");
   const tCedula = useTraducir("Cédula");
-  const tIdentificacion = useTraducir("Identificación");
+  const tDimex = useTraducir("DIMEX");
+  const tPasaporte = useTraducir("Pasaporte");
+  const tPaisOrigen = useTraducir("País de origen");
+  const tElegiPais = useTraducir("Elegí el país");
   const tNombre = useTraducir("Nombre");
   const tPrimerApellido = useTraducir("Primer apellido");
   const tSegundoApellido = useTraducir("Segundo apellido");
-  const tPasaporte = useTraducir("Pasaporte / ID");
   const tPhNombre = useTraducir("Nombre");
   const tPh1 = useTraducir("1° Apellido");
   const tPh2 = useTraducir("2° Apellido");
@@ -222,7 +228,10 @@ function SolicitarVoluntariado() {
 
   const esGrupal = formulario.modalidad === "grupal";
   const esTipoOtro = formulario.tipo === "Otro";
-  const esNacionalCr = formulario.esNacional === "si";
+  const tipoDocumento = formulario.tipoDocumento;
+  const esPasaporte = tipoDocumento === "pasaporte";
+  const etiquetaDocumento = tipoDocumento === "dimex" ? tDimex : esPasaporte ? tPasaporte : tCedula;
+  const opcionesPais = useMemo(() => obtenerOpcionesPaises(idioma), [idioma]);
   const consultaCedulaRef = useRef({ digitos: "", enCurso: false });
   const pasos = esGrupal
     ? { personal: 1, contacto: 2, grupo: 3, tipo: 4, fecha: 5, horario: 6 }
@@ -343,7 +352,7 @@ function SolicitarVoluntariado() {
   };
 
   const consultarDatosCedula = useCallback(async (digitos, { forzar = false } = {}) => {
-    if (!esNacionalCr || digitos.length !== 9) return;
+    if (!digitosConsultables(tipoDocumento, digitos)) return;
     if (consultaCedulaRef.current.enCurso) return;
     if (!forzar && consultaCedulaRef.current.digitos === digitos) return;
 
@@ -366,7 +375,7 @@ function SolicitarVoluntariado() {
           primerApellido: "",
           segundoApellido: "",
         }));
-        setAvisoCedula("No se encontraron datos para esta cédula. Complete los datos manualmente.");
+        setAvisoCedula("No se encontraron datos para esta identificación. Complete los datos manualmente.");
         return;
       }
 
@@ -378,7 +387,6 @@ function SolicitarVoluntariado() {
         nombre,
         primerApellido,
         segundoApellido,
-        pais: "Costa Rica",
       }));
       setAvisoCedula("Datos cargados automáticamente. Puede editarlos si es necesario.");
       setErrores((prev) => {
@@ -398,7 +406,7 @@ function SolicitarVoluntariado() {
         primerApellido: "",
         segundoApellido: "",
       }));
-      const mensajeBase = error?.message?.trim() || "No se pudo consultar la cédula.";
+      const mensajeBase = error?.message?.trim() || "No se pudo consultar la identificación.";
       const yaIndicaManual = /manualmente|completar el nombre/i.test(mensajeBase);
       const esConexion = error?.cause?.code === "ERR_NETWORK" || /conectar con el servidor/i.test(mensajeBase);
       setAvisoCedula(
@@ -411,22 +419,20 @@ function SolicitarVoluntariado() {
     } finally {
       setConsultandoCedula(false);
     }
-  }, [esNacionalCr]);
+  }, [tipoDocumento]);
 
   useEffect(() => {
-    if (!esNacionalCr) return;
-
-    const digitos = normalizarCedulaCr(formulario.identificacion);
-    if (digitos.length !== 9) return;
+    const digitos = digitosConsultables(tipoDocumento, formulario.identificacion);
+    if (!digitos) return;
     if (consultaCedulaRef.current.enCurso) return;
     if (consultaCedulaRef.current.digitos === digitos) return;
 
     const timeoutId = window.setTimeout(() => {
       consultarDatosCedula(digitos);
-    }, 350);
+    }, esperaConsultaIdentificacion(tipoDocumento));
 
     return () => window.clearTimeout(timeoutId);
-  }, [formulario.identificacion, esNacionalCr, consultarDatosCedula]);
+  }, [formulario.identificacion, tipoDocumento, consultarDatosCedula]);
 
   // Selección del tipo de voluntariado (Paso 1)
   const handleTipoVoluntariado = async (tipo) => {
@@ -514,8 +520,8 @@ function SolicitarVoluntariado() {
     }
 
     if (name === "identificacion") {
-      if (formulario.esNacional === "si") {
-        valor = valor.replace(/\D/g, "").slice(0, 9);
+      valor = limpiarIdentificacion(tipoDocumento, valor);
+      if (!esPasaporte) {
         consultaCedulaRef.current = { digitos: "", enCurso: false };
         setNombreAutocargado(false);
         setFormulario((prev) => ({
@@ -529,8 +535,6 @@ function SolicitarVoluntariado() {
         limpiarError(name);
         return;
       }
-
-      valor = valor.replace(/\s+/g, " ").trimStart();
     }
 
     if (
@@ -552,48 +556,33 @@ function SolicitarVoluntariado() {
     limpiarError(e.target.name);
   };
 
-  const handleEsNacional = (valor) => {
+  const handleTipoDocumento = (event) => {
+    const valor = event.target.value;
+    consultaCedulaRef.current = { digitos: "", enCurso: false };
     setFormulario((prev) => ({
       ...prev,
-      esNacional: valor,
+      tipoDocumento: valor,
+      nacionalidad: valor === "pasaporte" ? prev.nacionalidad : "",
+      identificacion: "",
       nombre: "",
       primerApellido: "",
       segundoApellido: "",
-      identificacion: valor === "si" ? normalizarCedulaCr(prev.identificacion) : prev.identificacion,
-      pais: valor === "si" ? "Costa Rica" : prev.pais === "Costa Rica" ? "" : prev.pais,
+      pais: valor === "pasaporte" ? (prev.pais === "Costa Rica" ? "" : prev.pais) : "Costa Rica",
     }));
     setAvisoCedula(null);
     setNombreAutocargado(false);
-    limpiarError("esNacional");
     limpiarError("identificacion");
-
-    if (valor === "si") {
-      const digitos = normalizarCedulaCr(formulario.identificacion);
-      if (digitos.length === 9) {
-        consultarDatosCedula(digitos);
-      }
-    }
+    limpiarError("nacionalidad");
+    limpiarError("pais");
   };
 
   const handleIdentificacionBlur = async () => {
-    const digitos = normalizarCedulaCr(formulario.identificacion);
-
-    if (esNacionalCr && digitos !== formulario.identificacion) {
-      setFormulario((prev) => ({
-        ...prev,
-        identificacion: digitos,
-      }));
-    }
-
-    if (!esNacionalCr) return;
-
-    if (digitos.length !== 9) {
-      if (digitos.length > 0) {
-        setAvisoCedula("La cédula costarricense debe tener 9 dígitos.");
-      }
+    if (esPasaporte || !formulario.identificacion) return;
+    const digitos = digitosConsultables(tipoDocumento, formulario.identificacion);
+    if (!digitos) {
+      setAvisoCedula(validarIdentificacion(tipoDocumento, formulario.identificacion));
       return;
     }
-
     await consultarDatosCedula(digitos, { forzar: true });
   };
 
@@ -618,10 +607,6 @@ function SolicitarVoluntariado() {
   const validarFormulario = () => {
     const nuevosErrores = {};
 
-    if (!formulario.esNacional) {
-      nuevosErrores.esNacional = "Indique su nacionalidad";
-    }
-
     const nombre = formulario.nombre?.trim();
     if (!nombre) nuevosErrores.nombre = "El nombre es obligatorio";
     else if (nombre.length < 2) nuevosErrores.nombre = "Mínimo 2 caracteres";
@@ -629,14 +614,10 @@ function SolicitarVoluntariado() {
     const primerApellido = formulario.primerApellido?.trim();
     if (!primerApellido) nuevosErrores.primerApellido = "El primer apellido es obligatorio";
 
-    const identificacion = formulario.identificacion?.trim();
-    if (!identificacion) {
-      nuevosErrores.identificacion = "La identificación es obligatoria";
-    } else if (esNacionalCr) {
-      const digitos = normalizarCedulaCr(identificacion);
-      if (digitos.length !== 9) {
-        nuevosErrores.identificacion = "La cédula costarricense debe tener 9 dígitos";
-      }
+    const errorIdentificacion = validarIdentificacion(tipoDocumento, formulario.identificacion);
+    if (errorIdentificacion) nuevosErrores.identificacion = errorIdentificacion;
+    if (esPasaporte && !formulario.nacionalidad) {
+      nuevosErrores.nacionalidad = "Elegí el país de origen del pasaporte.";
     }
 
     if (!formulario.institucion?.trim()) {
@@ -726,8 +707,8 @@ function SolicitarVoluntariado() {
         root: e.currentTarget,
         fieldMap: VOLUNTARIADO_FIELD_MAP,
         fieldOrder: [
-          "esNacional",
           "identificacion",
+          "nacionalidad",
           "nombre",
           "primerApellido",
           "institucion",
@@ -745,8 +726,8 @@ function SolicitarVoluntariado() {
       return;
     }
 
-    if (esNacionalCr && !formulario.nombre?.trim()) {
-      setAvisoCedula("Ingrese su nombre o verifique la cédula.");
+    if (!esPasaporte && !formulario.nombre?.trim()) {
+      setAvisoCedula("Ingrese su nombre o verifique la identificación.");
       queueFocusFormError({
         errors: { nombre: true, identificacion: true },
         root: e.currentTarget,
@@ -764,12 +745,9 @@ function SolicitarVoluntariado() {
     formData.append("email", formulario.correo.trim());
     formData.append("telefono", formulario.telefono.trim());
     formData.append("tipoVoluntariado", tipoFinal);
-    formData.append(
-      "identificacion",
-      esNacionalCr
-        ? normalizarCedulaCr(formulario.identificacion)
-        : formulario.identificacion.trim()
-    );
+    formData.append("identificacion", formulario.identificacion.trim());
+    formData.append("tipoIdentificacion", tipoDocumento);
+    if (esPasaporte) formData.append("nacionalidad", formulario.nacionalidad);
     formData.append("institucion", formulario.institucion.trim());
     formData.append("pais", formulario.pais.trim());
     formData.append("modalidad", formulario.modalidad);
@@ -878,64 +856,70 @@ function SolicitarVoluntariado() {
                   title={esGrupal ? tInfoResponsable : tInfoPersonal}
                   hint={esGrupal ? tInfoResponsableHint : tInfoPersonalHint}
                 >
-                  <div className="campo full">
-                    <p className="campo-pregunta">
-                      {tNacional}<span className="req">*</span>
-                    </p>
-                    <div className="tipo-opciones">
-                      <label className="radio-card">
-                        <input
-                          type="radio"
-                          name="esNacional"
-                          value="si"
-                          checked={formulario.esNacional === "si"}
-                          onChange={() => handleEsNacional("si")}
-                        />
-                        <span>{tSi}</span>
+                  <div className="form-grid">
+                    <div className="campo">
+                      <label htmlFor="voluntariado-tipo-documento">
+                        {tTipoDocumento}<span className="req">*</span>
                       </label>
-                      <label className="radio-card">
-                        <input
-                          type="radio"
-                          name="esNacional"
-                          value="no"
-                          checked={formulario.esNacional === "no"}
-                          onChange={() => handleEsNacional("no")}
-                        />
-                        <span>{tNo}</span>
-                      </label>
+                      <select
+                        id="voluntariado-tipo-documento"
+                        name="tipoDocumento"
+                        value={tipoDocumento}
+                        onChange={handleTipoDocumento}
+                      >
+                        <option value="cedula">{tCedula}</option>
+                        <option value="dimex">{tDimex}</option>
+                        <option value="pasaporte">{tPasaporte}</option>
+                      </select>
                     </div>
-                    {errores.esNacional && (
-                      <span className="mensaje-error"><ST>{errores.esNacional}</ST></span>
-                    )}
+
+                    {esPasaporte ? (
+                      <div className="campo">
+                        <label htmlFor="voluntariado-nacionalidad">
+                          {tPaisOrigen}<span className="req">*</span>
+                        </label>
+                        <select
+                          id="voluntariado-nacionalidad"
+                          name="nacionalidad"
+                          value={formulario.nacionalidad}
+                          onChange={handleChange}
+                        >
+                          <option value="">{tElegiPais}</option>
+                          {opcionesPais.map((pais) => (
+                            <option key={pais.value} value={pais.value}>{pais.label}</option>
+                          ))}
+                        </select>
+                        {errores.nacionalidad && (
+                          <span className="mensaje-error"><ST>{errores.nacionalidad}</ST></span>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="form-grid--4cols">
                     <div className="campo">
                       <label>
-                        {esNacionalCr ? tCedula : tIdentificacion}{" "}
-                        <span className="req">*</span>
+                        {etiquetaDocumento} <span className="req">*</span>
                       </label>
-                      {esNacionalCr ? (
-                        <NumericInput
-                          name="identificacion"
-                          placeholder="9 dígitos"
-                          value={formulario.identificacion}
-                          onChange={handleChange}
-                          onBlur={handleIdentificacionBlur}
-                          maxLength={9}
-                          autoComplete="off"
-                          disabled={!formulario.esNacional}
-                        />
-                      ) : (
+                      {esPasaporte ? (
                         <input
                           type="text"
                           name="identificacion"
-                          placeholder={tPasaporte}
+                          placeholder={placeholderIdentificacion(tipoDocumento)}
                           value={formulario.identificacion}
                           onChange={handleChange}
-                          maxLength={30}
+                          maxLength={LIMITE_IDENTIFICACION.pasaporte}
                           autoComplete="off"
-                          disabled={!formulario.esNacional}
+                        />
+                      ) : (
+                        <NumericInput
+                          name="identificacion"
+                          placeholder={placeholderIdentificacion(tipoDocumento)}
+                          value={formulario.identificacion}
+                          onChange={handleChange}
+                          onBlur={handleIdentificacionBlur}
+                          maxLength={LIMITE_IDENTIFICACION[tipoDocumento]}
+                          autoComplete="off"
                         />
                       )}
                     </div>
@@ -951,7 +935,6 @@ function SolicitarVoluntariado() {
                         value={formulario.nombre}
                         onChange={handleChange}
                         maxLength={80}
-                        disabled={!formulario.esNacional}
                       />
                     </div>
 
@@ -966,7 +949,6 @@ function SolicitarVoluntariado() {
                         value={formulario.primerApellido}
                         onChange={handleChange}
                         maxLength={80}
-                        disabled={!formulario.esNacional}
                       />
                     </div>
 
@@ -979,13 +961,12 @@ function SolicitarVoluntariado() {
                         value={formulario.segundoApellido}
                         onChange={handleChange}
                         maxLength={80}
-                        disabled={!formulario.esNacional}
                       />
                     </div>
                   </div>
 
                   {consultandoCedula && (
-                    <span className="mensaje-info">Consultando datos de la cédula...</span>
+                    <span className="mensaje-info">Consultando datos de la identificación...</span>
                   )}
                   {!consultandoCedula && avisoCedula && (
                     <span className={esAvisoCedulaInformativo(avisoCedula) ? "mensaje-info" : "mensaje-error"}>
@@ -1010,7 +991,6 @@ function SolicitarVoluntariado() {
                         value={formulario.institucion}
                         onChange={handleChange}
                         maxLength={120}
-                        disabled={!formulario.esNacional}
                       />
                       {errores.institucion && (
                         <span className="mensaje-error"><ST>{errores.institucion}</ST></span>
@@ -1027,8 +1007,7 @@ function SolicitarVoluntariado() {
                         placeholder={tPhPais}
                         value={formulario.pais}
                         onChange={handleChange}
-                        readOnly={esNacionalCr}
-                        disabled={!formulario.esNacional}
+                        readOnly={!esPasaporte}
                       />
                       {errores.pais && <span className="mensaje-error"><ST>{errores.pais}</ST></span>}
                     </div>
