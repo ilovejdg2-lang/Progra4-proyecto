@@ -22,20 +22,439 @@ function normalizarLista(data) {
 }
 
 /**
- * Consulta pública de documentos con filtros y orden
+ * Calcula facetas temáticas, accesos rápidos y estadísticas a partir del catálogo
+ */
+export function calcularFacetasYEstadisticas(documentos = [], esAdmin = false) {
+  const categoriasMap = new Map();
+  const subcategoriasMap = new Map();
+  const aniosMap = new Map();
+  const autoresMap = new Map();
+  const idiomasMap = new Map();
+  const visibilidadesMap = new Map();
+  const etiquetasMap = new Map();
+  const tiposArchivoMap = {
+    pdf: 0,
+    word: 0,
+    excel: 0,
+    imagen: 0,
+    comprimido: 0,
+    otro: 0,
+  };
+
+  let totalDescargas = 0;
+  let totalVistas = 0;
+  let minAnio = 2026;
+  let maxAnio = 2026;
+
+  let novedadesCount = 0;
+  let popularesCount = 0;
+  let destacadosCount = 0;
+
+  const ahora = Date.now();
+  const sesentaDiasMs = 60 * 24 * 60 * 60 * 1000;
+
+  documentos.forEach((doc) => {
+    totalDescargas += Number(doc.descargasCount || doc.DescargasCount || 0);
+    totalVistas += Number(doc.vistasCount || doc.VistasCount || 0);
+
+    // Categoría
+    const cat = (doc.categoria || doc.Categoria || "General").trim();
+    if (cat) {
+      categoriasMap.set(cat, (categoriasMap.get(cat) || 0) + 1);
+    }
+
+    // Subcategoría
+    const sub = (doc.subcategoria || doc.Subcategoria || "").trim();
+    if (sub) {
+      const prev = subcategoriasMap.get(sub);
+      subcategoriasMap.set(sub, {
+        categoria: cat,
+        count: (prev?.count || 0) + 1,
+      });
+    }
+
+    // Año
+    const anio =
+      Number(doc.anio || doc.Anio) ||
+      (doc.fechaPublicacion || doc.createdAt || doc.CreatedAt
+        ? new Date(doc.fechaPublicacion || doc.createdAt || doc.CreatedAt).getFullYear()
+        : 2026);
+    if (anio) {
+      aniosMap.set(anio, (aniosMap.get(anio) || 0) + 1);
+      if (anio < minAnio) minAnio = anio;
+      if (anio > maxAnio) maxAnio = anio;
+    }
+
+    // Autor
+    const autor = (doc.autor || doc.Autor || "").trim();
+    if (autor) {
+      autoresMap.set(autor, (autoresMap.get(autor) || 0) + 1);
+    }
+
+    // Idioma
+    const idioma = (doc.idioma || doc.Idioma || "es").trim().toLowerCase();
+    idiomasMap.set(idioma, (idiomasMap.get(idioma) || 0) + 1);
+
+    // Visibilidad
+    const esPriv = Boolean(doc.esPrivado || doc.EsPrivado);
+    const vis = doc.visibilidad || doc.Visibilidad || (esPriv ? "Privado" : "Publico");
+    if (esAdmin) {
+      visibilidadesMap.set(vis, (visibilidadesMap.get(vis) || 0) + 1);
+    }
+
+    // Etiquetas
+    const rawTags = doc.etiquetas || doc.Etiquetas;
+    const tagList = Array.isArray(rawTags)
+      ? rawTags
+      : typeof rawTags === "string"
+      ? rawTags.split(",").map((t) => t.trim()).filter(Boolean)
+      : [];
+    tagList.forEach((tag) => {
+      etiquetasMap.set(tag, (etiquetasMap.get(tag) || 0) + 1);
+    });
+
+    // Tipo Archivo
+    const nombre = (doc.nombreOriginal || doc.NombreOriginal || doc.nombreArchivo || doc.NombreArchivo || "").toLowerCase();
+    const mime = (doc.mimeType || doc.MimeType || "").toLowerCase();
+    if (nombre.endsWith(".pdf") || mime.includes("pdf")) tiposArchivoMap.pdf++;
+    else if (nombre.endsWith(".doc") || nombre.endsWith(".docx") || mime.includes("word")) tiposArchivoMap.word++;
+    else if (nombre.endsWith(".xls") || nombre.endsWith(".xlsx") || nombre.endsWith(".csv") || mime.includes("excel") || mime.includes("sheet")) tiposArchivoMap.excel++;
+    else if (nombre.endsWith(".jpg") || nombre.endsWith(".jpeg") || nombre.endsWith(".png") || nombre.endsWith(".webp") || mime.startsWith("image/")) tiposArchivoMap.imagen++;
+    else if (nombre.endsWith(".zip") || nombre.endsWith(".rar") || nombre.endsWith(".7z") || mime.includes("zip") || mime.includes("compressed")) tiposArchivoMap.comprimido++;
+    else tiposArchivoMap.otro++;
+
+    // Accesos Rápidos
+    const fecha = doc.fechaPublicacion || doc.createdAt || doc.CreatedAt;
+    if (!fecha || (ahora - new Date(fecha).getTime() <= sesentaDiasMs)) {
+      novedadesCount++;
+    }
+    const dCount = Number(doc.descargasCount || doc.DescargasCount || 0);
+    const vCount = Number(doc.vistasCount || doc.VistasCount || 0);
+    if (dCount > 0) popularesCount++;
+    if (dCount > 0 || vCount > 0) destacadosCount++;
+  });
+
+  return {
+    facetas: {
+      categorias: Array.from(categoriasMap.entries())
+        .map(([nombre, count]) => ({ nombre, count }))
+        .sort((a, b) => b.count - a.count),
+      subcategorias: Array.from(subcategoriasMap.entries())
+        .map(([nombre, val]) => ({ nombre, categoria: val.categoria, count: val.count }))
+        .sort((a, b) => b.count - a.count),
+      anios: Array.from(aniosMap.entries())
+        .map(([anio, count]) => ({ anio, count }))
+        .sort((a, b) => b.anio - a.anio),
+      minAnio,
+      maxAnio,
+      tiposArchivo: [
+        { tipo: "pdf", label: "PDF", count: tiposArchivoMap.pdf },
+        { tipo: "word", label: "Word (DOC/DOCX)", count: tiposArchivoMap.word },
+        { tipo: "excel", label: "Excel (XLSX/CSV)", count: tiposArchivoMap.excel },
+        { tipo: "imagen", label: "Imágenes", count: tiposArchivoMap.imagen },
+        { tipo: "comprimido", label: "Comprimidos", count: tiposArchivoMap.comprimido },
+        { tipo: "otro", label: "Otros", count: tiposArchivoMap.otro },
+      ],
+      idiomas: Array.from(idiomasMap.entries()).map(([idioma, count]) => ({
+        idioma,
+        label: idioma === "es" ? "Español" : idioma === "en" ? "English" : idioma.toUpperCase(),
+        count,
+      })),
+      visibilidades: esAdmin
+        ? Array.from(visibilidadesMap.entries()).map(([visibilidad, count]) => ({ visibilidad, count }))
+        : [],
+      autores: Array.from(autoresMap.entries())
+        .map(([autor, count]) => ({ autor, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 15),
+      etiquetas: Array.from(etiquetasMap.entries())
+        .map(([etiqueta, count]) => ({ etiqueta, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 20),
+      accesosRapidos: {
+        todos: documentos.length,
+        novedades: novedadesCount || documentos.length,
+        populares: popularesCount,
+        destacados: destacadosCount,
+      },
+    },
+    estadisticas: {
+      totalDocumentos: documentos.length,
+      totalCategorias: categoriasMap.size,
+      totalDescargas,
+      totalVistas,
+    },
+  };
+}
+
+/**
+ * Consulta pública y facetada de documentos con filtros, orden y paginación
  */
 export async function obtenerDocumentosPublicos(filtros = {}) {
   const params = new URLSearchParams();
   Object.entries(filtros).forEach(([clave, valor]) => {
-    const normalizado = String(valor ?? "").trim();
-    if (normalizado) params.set(clave, normalizado);
+    if (valor !== undefined && valor !== null && String(valor).trim() !== "") {
+      params.set(clave, String(valor).trim());
+    }
   });
+
+  const user = getActiveSessionUser();
+  const headers = user?.token ? { Authorization: `Bearer ${user.token}` } : {};
 
   const query = params.toString();
   const url = query ? `${BASE_URL}/publicos?${query}` : `${BASE_URL}/publicos`;
 
-  const data = await request(url);
-  return normalizarLista(data);
+  const data = await request(url, { headers });
+
+  const esAdmin = Array.isArray(user?.roles)
+    ? user.roles.some((r) => ["admin", "superadmin"].includes(String(r).toLowerCase()))
+    : ["admin", "superadmin"].includes(String(user?.role || user?.rol || "").toLowerCase());
+
+  // Si el backend retornó estructura completa con items y facetas, enriquecer y retornar
+  if (
+    data &&
+    typeof data === "object" &&
+    Array.isArray(data.items) &&
+    data.facetas &&
+    Array.isArray(data.facetas.categorias) &&
+    data.facetas.categorias.length > 0
+  ) {
+    const rawAccesos = data.facetas.accesosRapidos;
+    const accesosRapidos = {
+      todos: rawAccesos?.todos ?? (data.total || data.items.length),
+      novedades: rawAccesos?.novedades ?? data.items.length,
+      populares:
+        rawAccesos?.populares ??
+        data.items.filter((d) => (d.descargasCount || d.DescargasCount || 0) > 0)
+          .length,
+      destacados:
+        rawAccesos?.destacados ??
+        data.items.filter(
+          (d) =>
+            (d.descargasCount || d.DescargasCount || 0) > 0 ||
+            (d.vistasCount || d.VistasCount || 0) > 0,
+        ).length,
+    };
+
+    return {
+      ...data,
+      items: data.items,
+      facetas: {
+        ...data.facetas,
+        accesosRapidos,
+      },
+    };
+  }
+
+  // Fallback transparente: cálculo inteligente de facetas y filtrado cliente
+  const todosDocs = normalizarLista(data).map((d) => ({
+    ...d,
+    id: d.id ?? d.Id,
+    titulo: d.titulo ?? d.Titulo,
+    descripcion: d.descripcion ?? d.Descripcion ?? "",
+    categoria: d.categoria ?? d.Categoria ?? "General",
+    subcategoria: d.subcategoria ?? d.Subcategoria ?? "",
+    nombreOriginal: d.nombreOriginal ?? d.NombreOriginal ?? d.nombreArchivo ?? d.NombreArchivo ?? "",
+    mimeType: d.mimeType ?? d.MimeType ?? "application/pdf",
+    tamanoBytes: Number(d.tamanoBytes ?? d.TamanoBytes ?? 0),
+    esPrivado: Boolean(d.esPrivado ?? d.EsPrivado),
+    visibilidad: d.visibilidad ?? d.Visibilidad ?? (d.esPrivado || d.EsPrivado ? "Privado" : "Publico"),
+    autor: d.autor ?? d.Autor ?? "Proyecto Café-UNA",
+    version: d.version ?? d.Version ?? "1.0",
+    palabrasClave: d.palabrasClave ?? d.PalabrasClave ?? "",
+    descargasCount: Number(d.descargasCount ?? d.DescargasCount ?? 0),
+    vistasCount: Number(d.vistasCount ?? d.VistasCount ?? 0),
+    fechaPublicacion: d.fechaPublicacion ?? d.createdAt ?? d.CreatedAt,
+    paginas: d.paginas ?? d.Paginas,
+    etiquetas: Array.isArray(d.etiquetas ?? d.Etiquetas)
+      ? d.etiquetas ?? d.Etiquetas
+      : typeof (d.etiquetas ?? d.Etiquetas) === "string"
+      ? (d.etiquetas ?? d.Etiquetas).split(",").map((t) => t.trim()).filter(Boolean)
+      : [],
+    idioma: d.idioma ?? d.Idioma ?? "es",
+    anio:
+      Number(d.anio ?? d.Anio) ||
+      (d.fechaPublicacion || d.createdAt || d.CreatedAt
+        ? new Date(d.fechaPublicacion || d.createdAt || d.CreatedAt).getFullYear()
+        : 2026),
+  }));
+
+  const { facetas, estadisticas } = calcularFacetasYEstadisticas(todosDocs, esAdmin);
+
+  // Filtrado local seguro
+  let filtrados = todosDocs.slice();
+
+  // Regla estricta: roles no admin jamás ven privados
+  if (!esAdmin) {
+    filtrados = filtrados.filter((d) => !d.esPrivado && d.visibilidad !== "Privado");
+  }
+
+  // Categoría
+  if (filtros.categoria && filtros.categoria !== "todas") {
+    const catFiltro = filtros.categoria.toLowerCase();
+    filtrados = filtrados.filter(
+      (d) => (d.categoria || "").toLowerCase() === catFiltro,
+    );
+  }
+
+  // Subcategoría
+  if (filtros.subcategoria) {
+    const subFiltro = filtros.subcategoria.toLowerCase();
+    filtrados = filtrados.filter(
+      (d) => (d.subcategoria || "").toLowerCase() === subFiltro,
+    );
+  }
+
+  // Búsqueda textual
+  if (filtros.buscar && filtros.buscar.trim()) {
+    const term = filtros.buscar.trim().toLowerCase();
+    filtrados = filtrados.filter((d) => {
+      const titulo = (d.titulo || "").toLowerCase();
+      const desc = (d.descripcion || "").toLowerCase();
+      const autor = (d.autor || "").toLowerCase();
+      const tags = (d.etiquetas || []).join(" ").toLowerCase();
+      const claves = (d.palabrasClave || "").toLowerCase();
+      return (
+        titulo.includes(term) ||
+        desc.includes(term) ||
+        autor.includes(term) ||
+        tags.includes(term) ||
+        claves.includes(term)
+      );
+    });
+  }
+
+  // Accesos rápidos
+  if (filtros.accesoRapido && filtros.accesoRapido !== "todos") {
+    if (filtros.accesoRapido === "populares") {
+      filtrados = filtrados.filter((d) => d.descargasCount > 0);
+      filtrados.sort((a, b) => b.descargasCount - a.descargasCount);
+    } else if (filtros.accesoRapido === "destacados") {
+      filtrados = filtrados.filter(
+        (d) => d.descargasCount > 0 || d.vistasCount > 0,
+      );
+      filtrados.sort(
+        (a, b) => b.descargasCount + b.vistasCount - (a.descargasCount + a.vistasCount),
+      );
+    } else if (filtros.accesoRapido === "novedades") {
+      filtrados.sort(
+        (a, b) =>
+          new Date(b.fechaPublicacion || 0) - new Date(a.fechaPublicacion || 0),
+      );
+    }
+  }
+
+  // Tipo de archivo
+  if (filtros.tipoArchivo && filtros.tipoArchivo !== "todos") {
+    const t = filtros.tipoArchivo.toLowerCase();
+    filtrados = filtrados.filter((d) => {
+      const nombre = (d.nombreOriginal || "").toLowerCase();
+      const mime = (d.mimeType || "").toLowerCase();
+      if (t === "pdf") return nombre.endsWith(".pdf") || mime.includes("pdf");
+      if (t === "word") return nombre.endsWith(".doc") || nombre.endsWith(".docx") || mime.includes("word");
+      if (t === "excel") return nombre.endsWith(".xls") || nombre.endsWith(".xlsx") || nombre.endsWith(".csv") || mime.includes("excel") || mime.includes("sheet");
+      if (t === "imagen") return nombre.endsWith(".jpg") || nombre.endsWith(".jpeg") || nombre.endsWith(".png") || nombre.endsWith(".webp") || mime.startsWith("image/");
+      if (t === "comprimido") return nombre.endsWith(".zip") || nombre.endsWith(".rar") || nombre.endsWith(".7z") || mime.includes("zip");
+      return true;
+    });
+  }
+
+  // Años
+  if (filtros.anioDesde) {
+    const desde = Number(filtros.anioDesde);
+    filtrados = filtrados.filter((d) => d.anio >= desde);
+  }
+  if (filtros.anioHasta) {
+    const hasta = Number(filtros.anioHasta);
+    filtrados = filtrados.filter((d) => d.anio <= hasta);
+  }
+
+  // Autor
+  if (filtros.autor) {
+    const autFiltro = filtros.autor.toLowerCase();
+    filtrados = filtrados.filter((d) => (d.autor || "").toLowerCase() === autFiltro);
+  }
+
+  // Idioma
+  if (filtros.idioma && filtros.idioma !== "todos") {
+    const idioFiltro = filtros.idioma.toLowerCase();
+    filtrados = filtrados.filter((d) => (d.idioma || "es").toLowerCase() === idioFiltro);
+  }
+
+  // Visibilidad
+  if (esAdmin && filtros.visibilidad && filtros.visibilidad !== "todas") {
+    const visFiltro = filtros.visibilidad.toLowerCase();
+    filtrados = filtrados.filter((d) => (d.visibilidad || "").toLowerCase() === visFiltro);
+  }
+
+  // Etiquetas
+  if (filtros.etiquetas) {
+    const tagsBuscados = filtros.etiquetas
+      .split(",")
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
+    if (tagsBuscados.length > 0) {
+      filtrados = filtrados.filter((d) =>
+        (d.etiquetas || []).some((t) => tagsBuscados.includes(t.toLowerCase())),
+      );
+    }
+  }
+
+  // Orden
+  if (filtros.orden) {
+    if (filtros.orden === "antiguos") {
+      filtrados.sort(
+        (a, b) =>
+          new Date(a.fechaPublicacion || 0) - new Date(b.fechaPublicacion || 0),
+      );
+    } else if (filtros.orden === "populares") {
+      filtrados.sort((a, b) => b.descargasCount - a.descargasCount);
+    } else if (filtros.orden === "titulo_asc") {
+      filtrados.sort((a, b) => (a.titulo || "").localeCompare(b.titulo || ""));
+    } else if (filtros.orden === "titulo_desc") {
+      filtrados.sort((a, b) => (b.titulo || "").localeCompare(a.titulo || ""));
+    } else {
+      filtrados.sort(
+        (a, b) =>
+          new Date(b.fechaPublicacion || 0) - new Date(a.fechaPublicacion || 0),
+      );
+    }
+  }
+
+  const limite = parseInt(filtros.limite || "12", 10) || 12;
+  const pagina = parseInt(filtros.pagina || "1", 10) || 1;
+  const total = filtrados.length;
+  const totalPaginas = Math.ceil(total / limite) || 1;
+  const start = (pagina - 1) * limite;
+  const paginados = filtrados.slice(start, start + limite);
+
+  return {
+    items: paginados,
+    total,
+    pagina,
+    limite,
+    totalPaginas,
+    facetas,
+    estadisticas,
+  };
+}
+
+/**
+ * Ficha de documento con metadatos completos y documentos relacionados
+ */
+export async function obtenerDocumentoDetalle(id) {
+  const user = getActiveSessionUser();
+  const headers = user?.token ? { Authorization: `Bearer ${user.token}` } : {};
+  return request(`${BASE_URL}/${id}/detalle`, { headers });
+}
+
+/**
+ * Registra una vista de documento e incrementa el contador
+ */
+export async function registrarVistaDocumento(id) {
+  const user = getActiveSessionUser();
+  const headers = user?.token ? { Authorization: `Bearer ${user.token}` } : {};
+  return request(`${BASE_URL}/${id}/vista`, { method: "POST", headers });
 }
 
 export function normalizarCategoriaDoc(item) {

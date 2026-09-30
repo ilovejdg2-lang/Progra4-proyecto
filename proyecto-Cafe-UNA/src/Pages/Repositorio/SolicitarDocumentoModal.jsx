@@ -2,16 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   AlertCircle,
-  Building2,
-  Check,
   CheckCircle2,
-  FileLock2,
-  FileText,
-  FolderOpen,
-  Mail,
   Send,
   UploadCloud,
-  User,
   X,
 } from "lucide-react";
 import {
@@ -19,7 +12,6 @@ import {
   solicitarAccesoDocumento,
 } from "../../services/documentosService";
 import { getActiveSessionUser } from "../../services/sessionService";
-import { useTraducir } from "../../hooks/useTraducir";
 import { ST } from "../../Components/T/ST";
 import "../Voluntariado/SolicitarVoluntariado.css";
 import "./Repositorio.css";
