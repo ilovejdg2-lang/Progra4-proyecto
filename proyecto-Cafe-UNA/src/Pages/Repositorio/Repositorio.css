@@ -1,833 +1,2013 @@
-.repositorio-page {
-  background: #fafafa;
+/* ==========================================================================
+   BIBLIOTECA DIGITAL / REPOSITORIO INSTITUCIONAL - CAFÉ-UNA
+   Diseño Alineado con el Estilo Administrativo del Sistema
+   ========================================================================== */
+
+/* Variables locales y diseño del módulo */
+:root {
+  --biblio-primary: #0f172a;
+  --biblio-primary-hover: #1e293b;
+  --biblio-accent: #2563eb;
+  --biblio-bg: #f8fafc;
+  --biblio-card-bg: #ffffff;
+  --biblio-border: #e2e8f0;
+  --biblio-border-subtle: #f1f5f9;
+  --biblio-border-input: #cbd5e1;
+  --biblio-text-primary: #0f172a;
+  --biblio-text-secondary: #475569;
+  --biblio-text-muted: #64748b;
+  --biblio-sidebar-width: 270px;
+  --biblio-radius-sm: 6px;
+  --biblio-radius-md: 10px;
+  --biblio-radius-lg: 12px;
+  --biblio-radius-full: 9999px;
+  --biblio-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --biblio-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
+  --biblio-shadow-hover: 0 6px 18px rgba(15, 23, 42, 0.08);
+  --biblio-transition: all 0.15s ease;
+}
+
+.biblio-page {
+  width: 100%;
   min-height: 100vh;
-  padding: 16px 0 60px;
+  background-color: var(--biblio-bg);
+  color: var(--biblio-text-primary);
   font-family: inherit;
-  color: var(--texto-principal, #0f172a);
+  padding-top: 0.5rem;
+  padding-bottom: 3.5rem;
 }
 
-.repositorio-back-container {
-  width: 100%;
-  max-width: 1160px;
+.biblio-back-container {
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0.5rem 1.5rem 0.25rem;
 }
 
-.repositorio-back-container .page-back-link {
+/* ==========================================================================
+   ENCABEZADO Y ESTADÍSTICAS (ESTILO ADMINISTRATIVO)
+   ========================================================================== */
+.biblio-header-section {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0.25rem 1.5rem 1.25rem;
+}
+
+.biblio-header-content {
+  background: #ffffff;
+  border: 1px solid var(--biblio-border);
+  border-radius: var(--biblio-radius-lg);
+  padding: 1.75rem 2rem;
+  box-shadow: var(--biblio-shadow-sm);
+}
+
+.biblio-header-top {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.badge--admin-docs {
   display: inline-flex;
-  margin: 0 0 16px;
-  padding: 0.5rem 0;
-}
-
-.repositorio-section {
-  width: 100%;
-  max-width: 1160px;
-  margin: 0 auto;
-  padding: 0 24px;
-}
-
-/* Métricas en el Header */
-.repositorio-metricas-strip {
-  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 28px;
-  margin-top: 24px;
-  padding: 14px 24px;
-  background: #ffffff;
-  border: 1px solid var(--borde-input, #e2e8f0);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0f172a;
+  background: #f1f5f9;
+  padding: 4px 10px;
   border-radius: 999px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 0.5rem;
 }
 
-.repositorio-metrica-item {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-
-.repositorio-metrica-item__num {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--texto-principal, #0f172a);
-}
-
-.repositorio-metrica-item__lbl {
-  font-size: 0.8125rem;
-  color: var(--texto-secundario, #64748b);
-}
-
-/* Alertas */
-.repositorio-alerta-banner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #065f46;
-  padding: 12px 18px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-/* Grid de Filtros */
-.repositorio-filtros-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-}
-
-@media (min-width: 768px) {
-  .repositorio-filtros-grid {
-    grid-template-columns: 2fr 1.2fr 1.2fr;
-  }
-}
-
-.repositorio-buscador-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.repositorio-buscador-icon {
-  position: absolute;
-  left: 14px;
-  color: #94a3b8;
-  pointer-events: none;
-}
-
-.repositorio-buscador-input {
-  width: 100%;
-  height: 42px;
-  padding: 0 38px 0 40px;
-  border: 1px solid var(--borde-input, #e2e8f0);
-  border-radius: 10px;
-  background: #ffffff;
-  font-size: 0.875rem;
-  color: var(--texto-principal, #0f172a);
-  transition: all 0.15s ease;
-}
-
-.repositorio-buscador-input:focus {
-  outline: none;
-  border-color: #0f172a;
-  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
-}
-
-.repositorio-buscador-clear {
-  position: absolute;
-  right: 12px;
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 4px;
-}
-
-.repositorio-buscador-clear:hover {
-  color: #475569;
-}
-
-.repositorio-select-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.repositorio-select {
-  width: 100%;
-  height: 42px;
-  padding: 0 34px 0 14px;
-  border: 1px solid var(--borde-input, #e2e8f0);
-  border-radius: 10px;
-  background: #ffffff;
-  font-size: 0.875rem;
-  color: var(--texto-principal, #0f172a);
-  appearance: none;
-  cursor: pointer;
-}
-
-.repositorio-select:focus {
-  outline: none;
-  border-color: #0f172a;
-  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
-}
-
-.repositorio-select-arrow {
-  position: absolute;
-  right: 12px;
-  color: #94a3b8;
-  pointer-events: none;
-}
-
-.section-card__header-title {
-  margin: 0;
-  font-size: 1.05rem;
+.admin-docs-title {
+  font-size: 1.65rem;
   font-weight: 700;
   color: #0f172a;
+  margin: 0 0 4px;
   letter-spacing: -0.01em;
 }
 
-.btn-accion-icono--activo {
-  background: #0f172a !important;
-  color: #ffffff !important;
-  border-color: #0f172a !important;
+.admin-docs-subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
 }
 
-/* Chips de Categorías */
-.repositorio-chips-scroll {
+/* KPI Grid idéntico a Documentos.css */
+.admin-docs-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+@media (min-width: 1024px) {
+  .admin-docs-kpi-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.admin-docs-kpi-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 16px;
-  padding: 10px 4px 6px;
-  border-top: 1px solid var(--borde-input, #f1f5f9);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #ffffff;
+  border: 1px solid var(--biblio-border);
+  border-radius: var(--biblio-radius-lg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-docs-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.kpi-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kpi-icon--blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.kpi-icon--emerald {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.kpi-icon--amber {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.kpi-icon--purple {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-num {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.kpi-lbl {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ==========================================================================
+   LAYOUT PRINCIPAL: SIDEBAR + CONTENIDO
+   ========================================================================== */
+.biblio-layout-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  gap: 1.75rem;
+  align-items: flex-start;
+  position: relative;
+}
+
+/* ==========================================================================
+   SIDEBAR (ESTILO ADMINISTRATIVO AppSidebar)
+   ========================================================================== */
+.biblio-sidebar {
+  width: var(--biblio-sidebar-width);
+  flex-shrink: 0;
+  background: var(--biblio-card-bg);
+  border: 1px solid var(--biblio-border);
+  border-radius: var(--biblio-radius-lg);
+  box-shadow: var(--biblio-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: calc(var(--navbar-height, 70px) + 0.85rem);
+  max-height: calc(100vh - var(--navbar-height, 70px) - 1.5rem);
+  z-index: 10;
+  transition: width 0.2s ease;
+  overflow: hidden;
+}
+
+.biblio-sidebar--collapsed {
+  width: 58px;
+}
+
+.biblio-sidebar--collapsed .biblio-sidebar__scroll,
+.biblio-sidebar--collapsed .biblio-sidebar__footer,
+.biblio-sidebar--collapsed .biblio-sidebar__brand-title,
+.biblio-sidebar--collapsed .biblio-sidebar__active-badge {
+  display: none !important;
+}
+
+.biblio-sidebar--collapsed .biblio-sidebar__header {
+  justify-content: center;
+  padding: 0.85rem 0.5rem;
+}
+
+.biblio-sidebar__header {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--biblio-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+}
+
+.biblio-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.biblio-sidebar__brand-icon {
+  color: #0f172a;
+}
+
+.biblio-sidebar__brand-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.biblio-sidebar__active-badge {
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.biblio-sidebar__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.biblio-sidebar__collapse-btn,
+.biblio-sidebar__close-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: var(--biblio-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--biblio-transition);
+}
+
+.biblio-sidebar__collapse-btn:hover,
+.biblio-sidebar__close-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Scroll interno del sidebar con scrollbar fina */
+.biblio-sidebar__scroll {
+  padding: 0.85rem 1rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
 }
 
-.repositorio-chips-scroll::-webkit-scrollbar {
-  height: 5px;
+.biblio-sidebar__scroll::-webkit-scrollbar {
+  width: 5px;
 }
 
-.repositorio-chips-scroll::-webkit-scrollbar-track {
+.biblio-sidebar__scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.repositorio-chips-scroll::-webkit-scrollbar-thumb {
+.biblio-sidebar__scroll::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 999px;
 }
 
-.repositorio-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 18px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #334155;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+.biblio-sidebar__scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
-.repositorio-chip:hover {
+/* Buscador interno del sidebar */
+.biblio-sidebar__search-box {
+  width: 100%;
+}
+
+.biblio-sidebar__search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.biblio-sidebar__search-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.biblio-sidebar__search-input {
+  width: 100%;
+  padding: 0.5rem 1.85rem 0.5rem 2.25rem;
+  font-size: 0.825rem;
+  border: 1px solid var(--biblio-border);
+  border-radius: var(--biblio-radius-sm);
   background: #f8fafc;
-  color: #0f172a;
-  border-color: #94a3b8;
-  transform: translateY(-1px);
+  color: var(--biblio-text-primary);
+  outline: none;
+  transition: var(--biblio-transition);
 }
 
-.repositorio-chip--activo {
-  background: #0f172a !important;
-  color: #ffffff !important;
-  border-color: #0f172a !important;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15) !important;
-}
-
-.repositorio-chip__count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: #f1f5f9;
-  color: #475569;
-}
-
-.repositorio-chip--activo .repositorio-chip__count {
-  background: rgba(255, 255, 255, 0.22);
-  color: #ffffff;
-}
-
-/* Grid de Documentos */
-.repositorio-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-}
-
-@media (min-width: 640px) {
-  .repositorio-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .repositorio-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* Card de Documento */
-.repositorio-card {
-  display: flex;
-  flex-direction: column;
+.biblio-sidebar__search-input:focus {
   background: #ffffff;
-  border: 1px solid var(--borde-input, #e2e8f0);
-  border-radius: 14px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.05);
 }
 
-.repositorio-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-  border-color: #cbd5e1;
-}
-
-.repositorio-card__top {
+.biblio-sidebar__search-clear {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.2rem;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.repositorio-card__file-icon {
-  display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 10px;
-  flex-shrink: 0;
 }
 
-.repositorio-card__file-badge {
-  font-size: 0.625rem;
+.biblio-sidebar__search-clear:hover {
+  color: #0f172a;
+}
+
+/* Secciones y etiquetas de grupo */
+.biblio-sidebar__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.biblio-sidebar__section-label {
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 2px;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin: 0 0 0.35rem 0.25rem;
 }
 
-.icon--pdf {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.icon--excel {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.icon--word {
-  background: #dbeafe;
-  color: #2563eb;
-}
-
-.icon--archive {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.icon--default {
-  background: #f1f5f9;
-  color: #475569;
-}
-
-.repositorio-card__badges {
+/* Accesos Rápidos - Estilo Menú Administrativo */
+.biblio-quick-links,
+.biblio-user-lib-links {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
+  gap: 0.2rem;
 }
 
-.repositorio-badge--categoria {
-  font-size: 0.75rem;
-  font-weight: 600;
+.biblio-quick-link,
+.biblio-user-lib-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--biblio-radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
   color: #475569;
+  font-size: 0.84rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: var(--biblio-transition);
+  width: 100%;
+}
+
+.biblio-quick-link:hover,
+.biblio-user-lib-link:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+/* Estado activo limpio sin bloques negros */
+.biblio-quick-link--active {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+  border: 1px solid var(--biblio-border) !important;
+}
+
+.biblio-quick-link__text,
+.biblio-user-lib-link__text {
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.biblio-quick-link__count {
+  font-size: 0.725rem;
   background: #f1f5f9;
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-
-.repositorio-badge--publico {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.6875rem;
+  color: #64748b;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--biblio-radius-full);
   font-weight: 600;
-  color: #166534;
-  background: #dcfce7;
-  padding: 2px 7px;
-  border-radius: 999px;
+  border: 1px solid var(--biblio-border);
 }
 
-.repositorio-badge--privado {
-  display: inline-flex;
+.biblio-quick-link--active .biblio-quick-link__count {
+  background: #e2e8f0;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   ÁRBOL DE CATEGORÍAS (ESTILO SUBMENÚ ADMINISTRATIVO)
+   ========================================================================== */
+.biblio-cat-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.biblio-cat-tree__list,
+.biblio-cat-tree__sublist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.biblio-cat-tree__sublist {
+  padding-left: 0.65rem;
+  margin-top: 0.15rem;
+  border-left: 2px solid var(--biblio-border);
+  margin-left: 1.25rem;
+}
+
+.biblio-cat-tree__item {
+  display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: #9a3412;
-  background: #ffedd5;
-  padding: 2px 7px;
-  border-radius: 999px;
+  gap: 0.45rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--biblio-radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: var(--biblio-transition);
 }
 
-.repositorio-card__body {
+.biblio-cat-tree__item:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.biblio-cat-tree__item--activo {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+  border: 1px solid var(--biblio-border) !important;
+}
+
+.biblio-cat-tree__toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.biblio-cat-tree__toggle:hover {
+  color: #0f172a;
+}
+
+.biblio-cat-tree__spacer {
+  width: 15px;
+}
+
+.biblio-cat-tree__icon-wrap {
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.biblio-cat-tree__name {
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.35;
+  word-break: normal;
+}
+
+.biblio-cat-tree__badge {
+  font-size: 0.725rem;
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--biblio-radius-full);
+  font-weight: 600;
+  border: 1px solid var(--biblio-border);
+}
+
+.biblio-cat-tree__item--activo .biblio-cat-tree__badge,
+.biblio-cat-tree__subitem--activo .biblio-cat-tree__badge {
+  background: #e2e8f0;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.biblio-cat-tree__subitem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--biblio-radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: var(--biblio-transition);
+}
+
+.biblio-cat-tree__subitem:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.biblio-cat-tree__subitem--activo {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+  border: 1px solid var(--biblio-border) !important;
+}
+
+.biblio-cat-tree__subname {
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.biblio-cat-tree__bullet {
+  color: #cbd5e1;
+}
+
+/* ==========================================================================
+   ACORDEÓN DE FILTROS AVANZADOS (FilterSection)
+   ========================================================================== */
+.biblio-filter-sec {
+  border: 1px solid var(--biblio-border);
+  border-radius: var(--biblio-radius-sm);
+  background: #ffffff;
+  overflow: hidden;
+  transition: var(--biblio-transition);
+}
+
+.biblio-filter-sec__header {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.biblio-filter-sec__header:hover {
+  background: #f8fafc;
+}
+
+.biblio-filter-sec__title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.biblio-filter-sec__title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.biblio-filter-sec__badge {
+  font-size: 0.7rem;
+  background: #e2e8f0;
+  color: #0f172a;
+  padding: 0.05rem 0.35rem;
+  border-radius: var(--biblio-radius-full);
+  font-weight: 700;
+}
+
+.biblio-filter-sec__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.biblio-filter-sec__clear-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.biblio-filter-sec__clear-btn:hover {
+  color: #ef4444;
+}
+
+.biblio-filter-sec__arrow {
+  color: #94a3b8;
+  transition: transform 0.2s ease;
+}
+
+.biblio-filter-sec--open .biblio-filter-sec__arrow {
+  transform: rotate(180deg);
+}
+
+.biblio-filter-sec__content {
+  padding: 0.65rem 0.75rem;
+  border-top: 1px solid var(--biblio-border-subtle);
+  background: #ffffff;
+}
+
+/* Opciones de filtros en lista */
+.biblio-filter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.biblio-filter-list--compact {
+  max-height: 180px;
+  overflow-y: auto;
+  margin-top: 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.biblio-filter-option {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #475569;
+  cursor: pointer;
+  transition: var(--biblio-transition);
+}
+
+.biblio-filter-option:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.biblio-filter-option--checked {
+  background: #f1f5f9;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.biblio-filter-option__text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.biblio-filter-option__count {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+/* Iconos de formato */
+.icon--pdf { color: #ef4444; }
+.icon--word { color: #2563eb; }
+.icon--excel { color: #10b981; }
+.icon--image { color: #8b5cf6; }
+.icon--archive { color: #f59e0b; }
+.icon--default { color: #64748b; }
+
+/* Filtro de año */
+.biblio-filter-year {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.biblio-filter-year__inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.biblio-filter-year__field {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 0.15rem;
 }
 
-.repositorio-card__title {
-  font-size: 1rem;
+.biblio-filter-year__lbl {
+  font-size: 0.68rem;
+  color: #64748b;
+  text-transform: uppercase;
   font-weight: 600;
+}
+
+.biblio-filter-year__input {
+  width: 100%;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--biblio-border-input);
+  border-radius: var(--biblio-radius-sm);
+  outline: none;
+}
+
+.biblio-filter-year__input:focus {
+  border-color: #0f172a;
+}
+
+.biblio-filter-year__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.biblio-year-chip {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.72rem;
+  border-radius: 4px;
+  background: #f8fafc;
+  border: 1px solid var(--biblio-border);
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.biblio-year-chip:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.biblio-year-chip--active {
+  background: #f1f5f9;
+  border-color: #0f172a;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* Buscador de autor */
+.biblio-filter-author__input {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--biblio-border-input);
+  border-radius: var(--biblio-radius-sm);
+  outline: none;
+}
+
+.biblio-filter-author__input:focus {
+  border-color: #0f172a;
+}
+
+/* Chips de etiquetas */
+.biblio-tag-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.biblio-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #f8fafc;
+  border: 1px solid var(--biblio-border);
+  color: #475569;
+  font-size: 0.73rem;
+  font-weight: 500;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--biblio-transition);
+}
+
+.biblio-tag-chip:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.biblio-tag-chip--active {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #0f172a;
+  font-weight: 600;
+}
+
+/* Pie del Sidebar */
+.biblio-sidebar__footer {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--biblio-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.biblio-sidebar__propose-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-radius: 8px; /* matching admin .btn-primario-admin */
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 0.825rem;
+  font-weight: 600;
+  border: 1px solid #0f172a;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.biblio-sidebar__propose-btn:hover {
+  background: #1e293b;
+}
+
+.biblio-sidebar__clear-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.45rem;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.biblio-sidebar__clear-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Barra inferior móvil */
+.biblio-sidebar__mobile-actions {
+  display: none;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--biblio-border);
+  background: #ffffff;
+  gap: 0.5rem;
+}
+
+.biblio-sidebar__mobile-clear-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid var(--biblio-border-input);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.biblio-sidebar__mobile-apply-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #ffffff;
+  border: 1px solid #0f172a;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   ÁREA DE CONTENIDO PRINCIPAL
+   ========================================================================== */
+.biblio-main-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Toolbar de resultados */
+.biblio-toolbar {
+  background: #ffffff;
+  border: 1px solid var(--biblio-border);
+  border-radius: var(--biblio-radius-md);
+  padding: 0.65rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.biblio-toolbar__left,
+.biblio-toolbar__right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.biblio-toolbar__filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid var(--biblio-border-input);
+  padding: 0.4rem 0.75rem;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.biblio-toolbar__count {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.biblio-toolbar__count-num {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.biblio-toolbar__sort {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.biblio-toolbar__select {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--biblio-border-input);
+  border-radius: 7px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+}
+
+.biblio-toolbar__view-toggle {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid var(--biblio-border);
+  border-radius: 7px;
+  padding: 2px;
+}
+
+.biblio-toolbar__view-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.biblio-toolbar__view-btn--active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.biblio-toolbar__print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  background: #ffffff;
+  border: 1px solid var(--biblio-border-input);
+  border-radius: 7px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.biblio-toolbar__print-btn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+/* Chips de filtros activos */
+.biblio-active-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.biblio-active-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #f1f5f9;
+  border: 1px solid var(--biblio-border);
+  color: #334155;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+
+.biblio-active-chip__remove {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.biblio-active-chip__remove:hover {
+  color: #ef4444;
+}
+
+.biblio-active-chips__clear-all {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+}
+
+.biblio-active-chips__clear-all:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   RESULTADOS: CUADRÍCULA Y LISTA (CARDS ESTILO ADMINISTRATIVO)
+   ========================================================================== */
+.biblio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(295px, 1fr));
+  gap: 1.25rem;
+}
+
+.biblio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.biblio-card {
+  background: #ffffff;
+  border: 1px solid var(--biblio-border);
+  border-radius: var(--biblio-radius-lg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  outline: none;
+}
+
+.biblio-card:hover,
+.biblio-card:focus-visible {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+/* Área superior de miniatura */
+.biblio-card__thumb-area {
+  height: 105px;
+  background: #f8fafc;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.biblio-card__thumb-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+}
+
+.biblio-card__type-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.biblio-card__badges {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.biblio-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 5px;
+  padding: 0.15rem 0.45rem;
+}
+
+.biblio-badge--cat {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid var(--biblio-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.biblio-badge--year {
+  background: #ffffff;
+  color: #64748b;
+  border: 1px solid var(--biblio-border);
+}
+
+.biblio-badge--private {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.biblio-card__fav-btn {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid var(--biblio-border);
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.biblio-card__fav-btn:hover {
+  color: #ef4444;
+  border-color: #fecaca;
+}
+
+.biblio-card__fav-btn--active {
+  color: #ef4444;
+}
+
+/* Cuerpo de la tarjeta */
+.biblio-card__body {
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.biblio-card__meta-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-bottom: 0.35rem;
+}
+
+.biblio-card__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.biblio-card__meta-sep {
+  opacity: 0.4;
+}
+
+.biblio-card__title {
+  font-size: 0.96rem;
+  font-weight: 700;
   line-height: 1.35;
-  color: var(--texto-principal, #0f172a);
-  margin: 0 0 8px;
+  color: #0f172a;
+  margin: 0 0 0.35rem 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.repositorio-card__desc {
-  font-size: 0.8125rem;
-  color: var(--texto-secundario, #64748b);
+.biblio-card__author {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 0.45rem;
+}
+
+.biblio-card__desc {
+  font-size: 0.8rem;
+  color: #475569;
   line-height: 1.45;
-  margin: 0 0 14px;
+  margin: 0 0 0.75rem 0;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.repositorio-card__meta {
-  margin-top: auto;
+.biblio-card__tags {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #f1f5f9;
-  font-size: 0.75rem;
-  color: #64748b;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  margin-top: auto;
 }
 
-.repositorio-card__meta-item {
+.biblio-card__tag {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 0.7rem;
+  color: #475569;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--biblio-transition);
+}
+
+.biblio-card__tag:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Métricas y detalles del documento */
+.biblio-card__metrics-bar {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.5rem;
+  font-size: 0.73rem;
+  color: #64748b;
+  margin-top: auto;
+  padding-top: 0.65rem;
+  border-top: 1px solid #f1f5f9;
 }
 
-.repositorio-card__footer {
-  margin-top: 16px;
+.biblio-card__stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.73rem;
+  color: #64748b;
+  font-weight: 600;
 }
 
-.btn-descargar-archivo {
+/* Fila de acciones destacadas: Visibles a primera vista */
+.biblio-card__actions-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
   width: 100%;
+}
+
+.biblio-card__btn-view {
+  flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: #0f172a;
-  color: #ffffff;
-  border: none;
-  border-radius: 9px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  gap: 0.4rem;
+  padding: 0.55rem 0.75rem;
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
   cursor: pointer;
-  transition: background 0.15s ease;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-.btn-descargar-archivo:hover {
+.biblio-card__btn-view:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.biblio-card__btn-download {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.75rem;
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #0f172a;
+  color: #ffffff;
+  border: 1px solid #0f172a;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.biblio-card__btn-download:hover {
   background: #1e293b;
 }
 
-.btn-solicitar-archivo {
-  width: 100%;
+.biblio-card__btn-download:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.biblio-card__btn-share {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: #fff7ed;
-  color: #c2410c;
-  border: 1px solid #fed7aa;
-  border-radius: 9px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.biblio-card__btn-share:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.biblio-card__btn-share--copied {
+  background: #ecfdf5 !important;
+  color: #059669 !important;
+  border-color: #a7f3d0 !important;
+}
+
+.biblio-toolbar__sidebar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid var(--biblio-border-input);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.btn-solicitar-archivo:hover {
-  background: #ffedd5;
-  border-color: #fb923c;
-}
-
-/* Modal de Solicitud */
-.repositorio-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  overflow-y: auto;
-}
-
-.repositorio-modal-container {
-  width: 100%;
-  max-width: 620px;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.repositorio-modal-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--borde-input, #e2e8f0);
-}
-
-.repositorio-modal-header h3 {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 6px 0 0;
-}
-
-.badge--repositorio-modal {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #c2410c;
-  background: #fff7ed;
-  padding: 3px 10px;
-  border-radius: 999px;
-}
-
-.repositorio-modal-close {
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 8px;
-}
-
-.repositorio-modal-close:hover {
-  color: #0f172a;
-  background: #f1f5f9;
-}
-
-.repositorio-modal-form {
-  padding: 20px 24px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.repositorio-modal-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 10px;
-  padding-top: 16px;
-  border-top: 1px solid #f1f5f9;
-}
-
-.doc-solicitud-preview {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+.biblio-toolbar__sidebar-btn:hover {
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px 14px;
+  color: #0f172a;
+  border-color: #94a3b8;
 }
 
-.doc-solicitud-preview__icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  background: #fff7ed;
-  color: #ea580c;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Estilo para vista en lista */
+.biblio-card--list {
+  flex-direction: row;
+}
+
+.biblio-card--list .biblio-card__thumb-area {
+  width: 150px;
+  height: auto;
+  border-bottom: none;
+  border-right: 1px solid #f1f5f9;
   flex-shrink: 0;
 }
 
-.doc-solicitud-preview__info h5 {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0 0 4px;
+.biblio-card--list .biblio-card__body {
+  padding: 1rem 1.25rem;
 }
 
-.doc-solicitud-preview__info p {
-  font-size: 0.75rem;
-  color: #64748b;
-  margin: 0;
-}
-
-.info-aviso {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.75rem;
-  color: #64748b;
-}
-
-.repositorio-modal-success {
-  padding: 48px 24px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.repositorio-modal-success__icon {
-  margin-bottom: 16px;
-}
-
-.repositorio-modal-success h4 {
-  font-size: 1.25rem;
+/* Resaltado de búsqueda */
+.biblio-highlight {
+  background: #fef08a;
+  color: #713f12;
+  padding: 0 0.2rem;
+  border-radius: 2px;
   font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 8px;
 }
 
-.repositorio-modal-success p {
-  font-size: 0.875rem;
-  color: #64748b;
-  max-width: 440px;
-  line-height: 1.5;
-  margin: 0 0 20px;
-}
-
-/* Estados Vacíos y Error */
-.repositorio-vacio-card {
-  text-align: center;
-  padding: 56px 20px;
-  background: #ffffff;
-  border: 1px dashed var(--borde-input, #cbd5e1);
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.repositorio-vacio-card__icon {
-  color: #94a3b8;
-  margin-bottom: 14px;
-}
-
-.repositorio-vacio-card h3 {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0 0 6px;
-}
-
-.repositorio-vacio-card p {
-  font-size: 0.875rem;
-  color: #64748b;
-  max-width: 440px;
-  margin: 0;
-}
-
-.repositorio-error-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 40px;
-  background: #ffffff;
-  border: 1px solid #fecdd3;
-  border-radius: 14px;
-  text-align: center;
-  gap: 12px;
-}
-
-.repositorio-cargando {
-  padding: 60px 0;
-  display: flex;
-  justify-content: center;
-}
-
-/* Botones y utilitarios */
-.btn-accion-icono {
+/* Botones genéricos de apoyo */
+.biblio-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: #ffffff;
-  border: 1px solid var(--borde-input, #e2e8f0);
-  border-radius: 8px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #475569;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--biblio-transition);
+  border: 1px solid transparent;
+  outline: none;
 }
 
-.btn-accion-icono:hover {
+.biblio-btn--sm {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+}
+
+.biblio-btn--icon {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #64748b;
+  border: 1px solid var(--biblio-border-input);
+}
+
+.biblio-btn--icon:hover {
   background: #f8fafc;
   color: #0f172a;
 }
 
-.btn-accion-icono--primario {
-  background: #0f172a;
-  border-color: #0f172a;
-  color: #ffffff;
+/* ==========================================================================
+   PAGINACIÓN
+   ========================================================================== */
+.biblio-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem 0;
 }
 
-.btn-accion-icono--primario:hover {
-  background: #1e293b;
-  border-color: #1e293b;
-  color: #ffffff;
+.biblio-pagination__pages {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
-/* Reglas de Impresión (REP-P04) */
+.biblio-pagination__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--biblio-border);
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.825rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.biblio-pagination__btn:hover:not(:disabled) {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.biblio-pagination__btn--active {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #0f172a !important;
+  font-weight: 700;
+}
+
+.biblio-pagination__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.biblio-pagination__ellipsis {
+  padding: 0 0.25rem;
+  color: #94a3b8;
+  font-size: 0.825rem;
+}
+
+/* Estados vacíos y error */
+.biblio-empty,
+.biblio-error-banner {
+  background: #ffffff;
+  border: 1px solid var(--biblio-border);
+  border-radius: var(--biblio-radius-lg);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.biblio-error-banner {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+  padding: 1rem 1.25rem;
+  flex-direction: row;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.biblio-empty__icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.biblio-empty__title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.biblio-empty__desc {
+  font-size: 0.85rem;
+  color: #64748b;
+  max-width: 420px;
+  margin: 0;
+}
+
+/* ==========================================================================
+   RESPONSIVE Y OVERLAY MÓVIL
+   ========================================================================== */
+.biblio-sidebar-overlay {
+  display: none;
+}
+
+/* Dispositivos Móviles (< 768px) */
+@media (max-width: 767px) {
+  .biblio-page {
+    padding-top: 0.5rem;
+  }
+
+  .biblio-header-section {
+    padding: 0.25rem 0.75rem 0.75rem;
+  }
+
+  .biblio-header-content {
+    padding: 1.15rem 1rem;
+  }
+
+  .admin-docs-title {
+    font-size: 1.3rem;
+  }
+
+  .admin-docs-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .admin-docs-kpi-card {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .kpi-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .kpi-num {
+    font-size: 1.15rem;
+  }
+
+  .kpi-lbl {
+    font-size: 0.68rem;
+  }
+
+  .biblio-layout-container {
+    padding: 0 0.75rem;
+    gap: 1rem;
+  }
+
+  /* Grid en 1 columna limpia y ancha en móvil para máxima claridad */
+  .biblio-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+
+  .biblio-card--list {
+    flex-direction: column !important;
+  }
+
+  .biblio-card--list .biblio-card__thumb-area {
+    width: 100% !important;
+    height: 105px !important;
+    border-right: none !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+  }
+
+  .biblio-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .biblio-toolbar__left {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .biblio-toolbar__right {
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .biblio-card__actions-row {
+    gap: 0.4rem;
+  }
+
+  .biblio-card__btn-view,
+  .biblio-card__btn-download {
+    min-height: 42px; /* Botones más cómodos para interacción táctil */
+    font-size: 0.825rem;
+  }
+
+  .biblio-card__btn-share {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+/* Tablets y Pantallas Medianas (768px a 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .biblio-layout-container {
+    padding: 0 1.25rem;
+  }
+
+  .biblio-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .biblio-card--list {
+    flex-direction: column;
+  }
+
+  .biblio-card--list .biblio-card__thumb-area {
+    width: 100%;
+    height: 105px;
+    border-right: none;
+    border-bottom: 1px solid #f1f5f9;
+  }
+}
+
+/* Reglas comunes para vista móvil / drawer (< 1024px) */
+@media (max-width: 1023px) {
+  .biblio-layout-container {
+    flex-direction: column;
+  }
+
+  .biblio-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 320px;
+    max-width: 88vw;
+    height: 100vh;
+    max-height: 100vh;
+    background: #ffffff;
+    border-radius: 0;
+    z-index: 9999;
+    transform: translateX(-100%);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .biblio-sidebar--mobile-open {
+    transform: translateX(0);
+  }
+
+  .biblio-sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 9998;
+    cursor: pointer;
+  }
+
+  .biblio-sidebar__mobile-footer {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--biblio-border);
+    background: #ffffff;
+  }
+
+  .biblio-btn-apply {
+    width: 100%;
+    padding: 0.65rem 1rem;
+    background: #0f172a;
+    color: #ffffff;
+    border: none;
+    border-radius: var(--biblio-radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: background 0.15s ease;
+  }
+
+  .biblio-btn-apply:hover {
+    background: #1e293b;
+  }
+
+  .biblio-sidebar__mobile-actions {
+    display: flex;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   IMPRESIÓN
+   ========================================================================== */
 @media print {
   .no-print,
-  .site-nav,
-  .site-footer,
-  .repositorio-buscador-wrap,
-  .repositorio-select-wrap,
-  .repositorio-chips-scroll,
-  .btn-descargar-archivo,
-  .btn-solicitar-archivo,
-  .btn-visualizar-archivo {
+  .biblio-sidebar,
+  .biblio-toolbar,
+  .biblio-pagination,
+  .biblio-card__actions,
+  .biblio-card__fav-btn {
     display: none !important;
   }
 
-  body, .repositorio-page {
-    background: #ffffff !important;
-    padding: 0 !important;
+  .biblio-layout-container {
+    padding: 0;
+    display: block;
   }
 
-  .repositorio-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 12px !important;
+  .biblio-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
   }
 
-  .repositorio-card {
-    box-shadow: none !important;
-    border: 1px solid #ccc !important;
+  .biblio-card {
     break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #cbd5e1;
   }
 }
 
-/* Visor de Documentos (Visualizar) */
+/* ==========================================================================
+   MODALES DEL REPOSITORIO: VISUALIZADOR Y SOLICITUD DE ARCHIVO
+   ========================================================================== */
+.repositorio-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+  animation: biblioFadeIn 0.15s ease-out;
+}
+
+@keyframes biblioFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Visor de Documentos Interactivo */
 .repositorio-viewer-container {
-  width: 100%;
-  max-width: 1020px;
-  height: 88vh;
   background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  border-radius: var(--biblio-radius-lg);
+  width: 100%;
+  max-width: 1060px;
+  height: 90vh;
+  max-height: 880px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--biblio-border);
   overflow: hidden;
-  transition: all 0.2s ease;
+  animation: biblioScaleUp 0.15s ease-out;
+}
+
+@keyframes biblioScaleUp {
+  from {
+    transform: scale(0.97);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .repositorio-viewer--fullscreen {
-  max-width: 98vw;
-  height: 96vh;
-  border-radius: 8px;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  border-radius: 0 !important;
+  border: none !important;
 }
 
 .repositorio-viewer-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 14px 20px;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--biblio-border);
   background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  gap: 1rem;
   flex-shrink: 0;
 }
 
 .repositorio-viewer-header__info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.85rem;
   min-width: 0;
+  flex: 1;
 }
 
 .repositorio-viewer-header__texts {
   min-width: 0;
+  flex: 1;
 }
 
 .repositorio-viewer-title {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #0f172a;
-  margin: 4px 0 0;
+  margin: 3px 0 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
 .repositorio-viewer-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   flex-shrink: 0;
 }
 
 .btn-visor-action {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 0.8125rem;
-  font-weight: 500;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  background: #f8fafc;
   color: #334155;
+  border: 1px solid var(--biblio-border-input);
+  border-radius: 8px;
+  font-size: 0.825rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--biblio-transition);
 }
 
 .btn-visor-action:hover {
-  background: #e2e8f0;
+  background: #f1f5f9;
   color: #0f172a;
+  border-color: #94a3b8;
 }
 
 .btn-visor-action--primary {
   background: #0f172a;
-  border-color: #0f172a;
   color: #ffffff;
+  border-color: #0f172a;
 }
 
 .btn-visor-action--primary:hover {
@@ -836,17 +2016,36 @@
 }
 
 .btn-visor-action--icon-only {
-  padding: 7px;
+  padding: 0.45rem;
+}
+
+.repositorio-modal-close {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--biblio-transition);
+}
+
+.repositorio-modal-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .repositorio-viewer-body {
   flex: 1;
+  min-height: 0;
   background: #f8fafc;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
   position: relative;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .repositorio-viewer-iframe {
@@ -863,7 +2062,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 1.5rem;
 }
 
 .repositorio-viewer-img {
@@ -871,63 +2070,103 @@
   max-height: 100%;
   object-fit: contain;
   border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 
 .repositorio-viewer-fallback {
+  margin: auto;
+  padding: 2.5rem;
   text-align: center;
-  padding: 40px 24px;
-  max-width: 500px;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .repositorio-viewer-fallback__icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 16px;
-  border-radius: 16px;
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 1rem;
 }
 
 .repositorio-viewer-fallback h4 {
-  font-size: 1.125rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: #0f172a;
-  margin: 0 0 8px;
+  margin: 0 0 0.5rem;
 }
 
 .repositorio-viewer-fallback p {
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   color: #64748b;
   line-height: 1.5;
-  margin: 0;
+  margin: 0 0 1rem;
 }
 
-/* Acciones en la tarjeta de documento: Botón Visualizar + Descargar */
-.repositorio-card__actions-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+/* Modal Contenedor Genérico (Solicitar / Proponer) */
+.repositorio-modal-container {
+  background: #ffffff;
+  border-radius: var(--biblio-radius-lg);
+  width: 100%;
+  max-width: 620px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--biblio-border);
+  overflow: hidden;
+  animation: biblioScaleUp 0.15s ease-out;
 }
 
-.btn-visualizar-archivo {
+.repositorio-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--biblio-border);
+  gap: 1rem;
+}
+
+.badge--repositorio-modal {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 9px 12px;
-  background: #f8fafc;
-  color: #0f172a;
-  border: 1px solid #cbd5e1;
-  border-radius: 9px;
-  font-size: 0.8125rem;
+  gap: 0.35rem;
+  font-size: 0.725rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  color: #0f172a;
+  background: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 999px;
+  margin-bottom: 0.35rem;
 }
 
-.btn-visualizar-archivo:hover {
-  background: #e2e8f0;
-  border-color: #94a3b8;
+.repositorio-modal-header h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.repositorio-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.repositorio-modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--biblio-border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  background: #f8fafc;
 }
