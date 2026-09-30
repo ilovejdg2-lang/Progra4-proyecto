@@ -1,175 +1,371 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  Archive,
-  BookOpen,
-  Calendar,
-  CheckCircle2,
-  ChevronDown,
   Download,
   Eye,
-  FileArchive,
-  FileCode,
-  FileLock2,
-  FileSpreadsheet,
   FileText,
-  Filter,
   FolderOpen,
-  HardDrive,
   Info,
-  Layers,
-  Lock,
-  Printer,
-  RotateCcw,
-  Search,
-  Share2,
   Sparkles,
-  Unlock,
-  User,
-  X,
 } from "lucide-react";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
 import PageLoading from "../../Components/PageLoading/PageLoading";
 import {
   descargarArchivo,
-  obtenerCategoriasDocumentos,
   obtenerDocumentosPublicos,
-  obtenerUrlDescargaDocumento,
+  registrarVistaDocumento,
 } from "../../services/documentosService";
 import { getActiveSessionUser } from "../../services/sessionService";
 import { SolicitarDocumentoModal } from "./SolicitarDocumentoModal";
 import { VisualizarDocumentoModal } from "./VisualizarDocumentoModal";
 import { usePublicPageLoadingGate } from "../../hooks/usePublicPageLoadingGate";
-import { useTraducir } from "../../hooks/useTraducir";
 import { ST } from "../../Components/T/ST";
+
+// Componentes del nuevo layout de biblioteca digital
+import { Sidebar } from "./components/Sidebar";
+import { ResultsToolbar } from "./components/ResultsToolbar";
+import { ActiveFilterChips } from "./components/ActiveFilterChips";
+import { DocumentGrid } from "./components/DocumentGrid";
+import { DocumentList } from "./components/DocumentList";
+import { Pagination } from "./components/Pagination";
+
 import "../Voluntariado/SolicitarVoluntariado.css";
 import "./Repositorio.css";
 
-function resolverIconoArchivo(nombre = "", mimeType = "") {
-  const ext = (nombre.split(".").pop() || "").toLowerCase();
-  const mime = (mimeType || "").toLowerCase();
-
-  if (ext === "pdf" || mime.includes("pdf")) {
-    return { icon: FileText, colorClass: "icon--pdf", label: "PDF" };
-  }
-  if (["xls", "xlsx", "csv"].includes(ext) || mime.includes("sheet") || mime.includes("excel")) {
-    return { icon: FileSpreadsheet, colorClass: "icon--excel", label: "Excel" };
-  }
-  if (["doc", "docx"].includes(ext) || mime.includes("word") || mime.includes("officedocument")) {
-    return { icon: FileText, colorClass: "icon--word", label: "Word" };
-  }
-  if (["zip", "rar", "7z", "tar", "gz"].includes(ext) || mime.includes("zip") || mime.includes("compressed")) {
-    return { icon: FileArchive, colorClass: "icon--archive", label: "Comprimido" };
-  }
-  return { icon: FileCode, colorClass: "icon--default", label: ext.toUpperCase() || "Archivo" };
-}
-
-function formatearTamano(bytes = 0) {
-  const b = Number(bytes);
-  if (!b || isNaN(b)) return "0 KB";
-  if (b < 1024) return `${b} B`;
-  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
-  return `${(b / (1024 * 1024)).toFixed(1)} MB`;
+// Helper para leer query params actuales de la URL
+function parseUrlFilters() {
+  if (typeof window === "undefined") return {};
+  const params = new URLSearchParams(window.location.search);
+  return {
+    buscar: params.get("buscar") || "",
+    categoria: params.get("categoria") || "todas",
+    subcategoria: params.get("subcategoria") || "",
+    anioDesde: params.get("anioDesde") || "",
+    anioHasta: params.get("anioHasta") || "",
+    autor: params.get("autor") || "",
+    tipoArchivo: params.get("tipoArchivo") || "todos",
+    idioma: params.get("idioma") || "todos",
+    visibilidad: params.get("visibilidad") || "todas",
+    etiquetas: params.get("etiquetas") || "",
+    accesoRapido: params.get("accesoRapido") || "todos",
+    orden: params.get("orden") || "recientes",
+    vista: params.get("vista") || "grid",
+    miBiblioteca: params.get("miBiblioteca") || "",
+    pagina: parseInt(params.get("pagina") || "1", 10) || 1,
+  };
 }
 
 export default function Repositorio() {
   const user = getActiveSessionUser();
-  const puedeVerPrivadosDirecto = useMemo(() => {
+
+  // Regla estricta: Solo roles superAdmin o administrativos ven documentos privados
+  const esAdmin = useMemo(() => {
     if (!user) return false;
-    const roles = Array.isArray(user.roles) ? user.roles : [user.role];
+    const roles = Array.isArray(user.roles) ? user.roles : [user.role || user.rol];
     return roles.some((r) =>
-      ["admin", "superadmin", "vendedor"].includes(String(r || "").toLowerCase()),
+      ["admin", "superadmin"].includes(String(r || "").toLowerCase()),
     );
   }, [user]);
 
+  // Estado sincronizado con URL
+  const [filtros, setFiltros] = useState(parseUrlFilters);
+
+  // Datos del catálogo
   const [documentos, setDocumentos] = useState([]);
-  const [categorias, setCategorias] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
-
-  // Filtros
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("todas");
-  const [terminoBusqueda, setTerminoBusqueda] = useState("");
-  const [orden, setOrden] = useState("recientes");
-  const [vistaCuadricula, setVistaCuadricula] = useState(true);
-  const [mostrarFiltros, setMostrarFiltros] = useState(true);
-
-  // Modal de propuesta/solicitud de archivo
-  const [documentoSolicitar, setDocumentoSolicitar] = useState(null);
-  const [documentoVisualizar, setDocumentoVisualizar] = useState(null);
-  const [descargandoId, setDescargandoId] = useState(null);
-  const [alertaExito, setAlertaExito] = useState("");
-
-  const routerState = useRouterState({
-    select: (s) => s.location.search,
+  const [facetas, setFacetas] = useState({
+    categorias: [],
+    subcategorias: [],
+    anios: [],
+    tiposArchivo: [],
+    idiomas: [],
+    visibilidades: [],
+    autores: [],
+    etiquetas: [],
+    accesosRapidos: { todos: 0, novedades: 0, populares: 0, destacados: 0 },
+  });
+  const [estadisticas, setEstadisticas] = useState({
+    totalDocumentos: 0,
+    totalCategorias: 0,
+    totalDescargas: 0,
+    totalVistas: 0,
   });
 
-  const tRepositorio = useTraducir("Repositorio Institucional");
-  const tBuscarPlaceholder = useTraducir("Buscar por título, autor, palabras clave...");
-  const tTodasCategorias = useTraducir("Todas las categorías");
+  const [totalResultados, setTotalResultados] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(1);
+  const [cargando, setCargando] = useState(true);
+  const [inicialCargado, setInicialCargado] = useState(false);
+  const [error, setError] = useState("");
 
-  const conteoDocsPorCategoria = useMemo(() => {
-    const map = {};
-    documentos.forEach((d) => {
-      const c = String(d.categoria || "").trim().toLowerCase();
-      if (c) map[c] = (map[c] || 0) + 1;
-    });
-    return map;
-  }, [documentos]);
+  // Estado del layout
+  const [vistaCuadricula, setVistaCuadricula] = useState(() => filtros.vista !== "list");
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [sidebarColapsado, setSidebarColapsado] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("biblio_sidebar_collapsed") === "true";
+    }
+    return false;
+  });
 
-  const cargarDatos = useCallback(async () => {
+  // Modales
+  const [documentoSolicitar, setDocumentoSolicitar] = useState(null);
+  const [documentoVisualizar, setDocumentoVisualizar] = useState(null);
+
+  // Persistencia de favoritos, leer más tarde e historial
+  const [favoritosIds, setFavoritosIds] = useState(() => {
+    if (typeof window === "undefined") return new Set();
     try {
-      setCargando(true);
-      setError("");
-      const [docsData, catsData] = await Promise.all([
-        obtenerDocumentosPublicos({
-          categoria: categoriaSeleccionada === "todas" ? "" : categoriaSeleccionada,
-          buscar: terminoBusqueda,
-          orden,
-        }),
-        obtenerCategoriasDocumentos().catch(() => []),
-      ]);
-      setDocumentos(docsData);
-      setCategorias(catsData);
-    } catch (err) {
-      console.error("Error al cargar repositorio:", err);
-      setError("No se pudieron cargar los documentos del repositorio. Intente más tarde.");
-    } finally {
-      setCargando(false);
+      const s = localStorage.getItem("biblio_favoritos_ids");
+      return s ? new Set(JSON.parse(s)) : new Set();
+    } catch {
+      return new Set();
     }
-  }, [categoriaSeleccionada, terminoBusqueda, orden]);
+  });
 
-  useEffect(() => {
-    cargarDatos();
-  }, [cargarDatos]);
-
-  useEffect(() => {
-    if (
-      routerState?.solicitar === "true" ||
-      routerState?.solicitar === true ||
-      (typeof window !== "undefined" &&
-        (new URLSearchParams(window.location.search).get("solicitar") === "true" ||
-          window.location.hash === "#solicitar"))
-    ) {
-      setDocumentoSolicitar({});
+  const [leerTardeIds, setLeerTardeIds] = useState(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const s = localStorage.getItem("biblio_leertarde_ids");
+      return s ? new Set(JSON.parse(s)) : new Set();
+    } catch {
+      return new Set();
     }
-  }, [routerState]);
+  });
 
+  const handleToggleLeerTarde = useCallback((doc) => {
+    setLeerTardeIds((prev) => {
+      const next = new Set(prev);
+      const idStr = String(doc.id);
+      if (next.has(idStr)) next.delete(idStr);
+      else next.add(idStr);
+      try {
+        localStorage.setItem("biblio_leertarde_ids", JSON.stringify([...next]));
+      } catch (err) {
+        console.warn("No se pudo guardar en leer más tarde:", err);
+      }
+      return next;
+    });
+  }, []);
+
+  const [historialIds, setHistorialIds] = useState(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const s = localStorage.getItem("biblio_historial_ids");
+      return s ? new Set(JSON.parse(s)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  // Actualizar URL cuando cambian los filtros (history replaceState sin recargar página ni alterar posición de scroll)
+  const sincronizarUrl = useCallback((nuevosFiltros) => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams();
+    Object.entries(nuevosFiltros).forEach(([clave, valor]) => {
+      const v = String(valor ?? "").trim();
+      if (
+        v &&
+        !(clave === "categoria" && v === "todas") &&
+        !(clave === "tipoArchivo" && v === "todos") &&
+        !(clave === "idioma" && v === "todos") &&
+        !(clave === "visibilidad" && v === "todas") &&
+        !(clave === "accesoRapido" && v === "todos") &&
+        !(clave === "miBiblioteca" && v === "") &&
+        !(clave === "orden" && v === "recientes") &&
+        !(clave === "vista" && v === "grid") &&
+        !(clave === "pagina" && v === "1")
+      ) {
+        params.set(clave, v);
+      }
+    });
+
+    const queryString = params.toString();
+    const nuevaUrl = queryString
+      ? `${window.location.pathname}?${queryString}`
+      : window.location.pathname;
+
+    window.history.replaceState(nuevosFiltros, "", nuevaUrl);
+  }, []);
+
+  // Escuchar cambios de historial (atrás / adelante)
+  useEffect(() => {
+    const handlePopState = () => {
+      const parsed = parseUrlFilters();
+      setFiltros(parsed);
+      setVistaCuadricula(parsed.vista !== "list");
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  // Consultar catálogo en backend con cancelación de peticiones obsoletas
+  useEffect(() => {
+    let cancelada = false;
+    const cargarCatalogo = async () => {
+      try {
+        setCargando(true);
+        setError("");
+
+        const payload = await obtenerDocumentosPublicos({
+          categoria: filtros.categoria === "todas" ? "" : filtros.categoria,
+          subcategoria: filtros.subcategoria,
+          buscar: filtros.buscar,
+          orden: filtros.orden,
+          anioDesde: filtros.anioDesde,
+          anioHasta: filtros.anioHasta,
+          autor: filtros.autor,
+          tipoArchivo: filtros.tipoArchivo,
+          idioma: filtros.idioma,
+          visibilidad: filtros.visibilidad,
+          etiquetas: filtros.etiquetas,
+          accesoRapido: filtros.accesoRapido,
+          pagina: filtros.pagina,
+          limite: 12,
+        });
+
+        if (cancelada) return;
+
+        setDocumentos(payload.items || []);
+        setTotalResultados(payload.total || 0);
+        setTotalPaginas(payload.totalPaginas || 1);
+        if (payload.facetas) setFacetas(payload.facetas);
+        if (payload.estadisticas) setEstadisticas(payload.estadisticas);
+      } catch (err) {
+        if (!cancelada) {
+          console.error("Error al cargar biblioteca digital:", err);
+          setError("No se pudieron cargar los documentos. Intente más tarde.");
+        }
+      } finally {
+        if (!cancelada) {
+          setCargando(false);
+          setInicialCargado(true);
+        }
+      }
+    };
+
+    cargarCatalogo();
+    return () => {
+      cancelada = true;
+    };
+  }, [
+    filtros.categoria,
+    filtros.subcategoria,
+    filtros.buscar,
+    filtros.orden,
+    filtros.anioDesde,
+    filtros.anioHasta,
+    filtros.autor,
+    filtros.tipoArchivo,
+    filtros.idioma,
+    filtros.visibilidad,
+    filtros.etiquetas,
+    filtros.accesoRapido,
+    filtros.pagina,
+  ]);
+
+  // Manejador genérico para cambiar un filtro
+  const handleCambiarFiltro = useCallback(
+    (clave, valor) => {
+      setFiltros((prev) => {
+        const next = { ...prev, [clave]: valor, pagina: 1 };
+        sincronizarUrl(next);
+        return next;
+      });
+    },
+    [sincronizarUrl],
+  );
+
+  // Manejador de búsqueda
+  const handleBuscar = useCallback(
+    (termino) => {
+      handleCambiarFiltro("buscar", termino);
+    },
+    [handleCambiarFiltro],
+  );
+
+  // Manejador de cambio de página
+  const handleCambiarPagina = useCallback(
+    (nuevaPagina) => {
+      setFiltros((prev) => {
+        const next = { ...prev, pagina: nuevaPagina };
+        sincronizarUrl(next);
+        return next;
+      });
+      // Desplazamiento suave solo si el usuario se encuentra debajo de la barra de herramientas
+      const toolbar = document.querySelector(".biblio-toolbar");
+      if (toolbar) {
+        const rect = toolbar.getBoundingClientRect();
+        if (rect.top < 0) {
+          toolbar.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    },
+    [sincronizarUrl],
+  );
+
+  // Alternar vista cuadrícula / lista
+  const handleToggleVista = useCallback(
+    (cuadricula) => {
+      setVistaCuadricula(cuadricula);
+      setFiltros((prev) => {
+        const next = { ...prev, vista: cuadricula ? "grid" : "list" };
+        sincronizarUrl(next);
+        return next;
+      });
+    },
+    [sincronizarUrl],
+  );
+
+  // Limpiar todos los filtros
+  const handleLimpiarTodos = useCallback(() => {
+    const limpios = {
+      buscar: "",
+      categoria: "todas",
+      subcategoria: "",
+      anioDesde: "",
+      anioHasta: "",
+      autor: "",
+      tipoArchivo: "todos",
+      idioma: "todos",
+      visibilidad: "todas",
+      etiquetas: "",
+      accesoRapido: "todos",
+      orden: "recientes",
+      vista: vistaCuadricula ? "grid" : "list",
+      pagina: 1,
+    };
+    setFiltros(limpios);
+    sincronizarUrl(limpios);
+  }, [sincronizarUrl, vistaCuadricula]);
+
+  // Alternar colapso de sidebar en escritorio
+  const handleToggleColapso = () => {
+    setSidebarColapsado((prev) => {
+      const nuevo = !prev;
+      localStorage.setItem("biblio_sidebar_collapsed", String(nuevo));
+      return nuevo;
+    });
+  };
+
+  // Descarga de archivo
   const handleDescargar = async (doc) => {
-    if (doc.esPrivado && !puedeVerPrivadosDirecto) {
+    if (doc.esPrivado && !esAdmin) {
       setDocumentoSolicitar(doc);
       return;
     }
 
     try {
-      setDescargandoId(doc.id);
       await descargarArchivo(doc.id, doc.nombreOriginal || `${doc.titulo}.pdf`);
-      // Actualizar contador localmente
+      // Incrementar descargas localmente
       setDocumentos((prev) =>
         prev.map((item) =>
-          item.id === doc.id ? { ...item, descargasCount: (item.descargasCount || 0) + 1 } : item,
+          item.id === doc.id
+            ? { ...item, descargasCount: (item.descargasCount || 0) + 1 }
+            : item,
         ),
       );
+      setEstadisticas((prev) => ({
+        ...prev,
+        totalDescargas: (prev.totalDescargas || 0) + 1,
+      }));
     } catch (err) {
       console.error("Error al descargar:", err);
       if (doc.esPrivado) {
@@ -177,412 +373,324 @@ export default function Repositorio() {
       } else {
         alert(err?.message || "Ocurrió un error al descargar el archivo.");
       }
-    } finally {
-      setDescargandoId(null);
     }
   };
 
-  const handleImprimir = () => {
-    window.print();
+  // Visualizar documento y registrar vista
+  const handleVisualizar = (doc) => {
+    setDocumentoVisualizar(doc);
+    // Registrar vista en backend e historial local
+    void registrarVistaDocumento(doc.id).catch(() => {});
+    setHistorialIds((prev) => {
+      const next = new Set(prev);
+      next.add(String(doc.id));
+      try {
+        localStorage.setItem("biblio_historial_ids", JSON.stringify([...next]));
+      } catch (err) {
+        console.warn("No se pudo guardar historial:", err);
+      }
+      return next;
+    });
+    setDocumentos((prev) =>
+      prev.map((item) =>
+        item.id === doc.id
+          ? { ...item, vistasCount: (item.vistasCount || 0) + 1 }
+          : item,
+      ),
+    );
   };
 
-  const limpiarFiltros = () => {
-    setCategoriaSeleccionada("todas");
-    setTerminoBusqueda("");
-    setOrden("recientes");
-  };
+  // Abrir automáticamente el visor si viene docId en la URL
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const docId = params.get("docId");
+    if (docId && documentos.length > 0) {
+      const encontrado = documentos.find((d) => String(d.id) === String(docId));
+      if (encontrado) {
+        const timer = setTimeout(() => {
+          setDocumentoVisualizar((prev) => (prev?.id === encontrado.id ? prev : encontrado));
+        }, 50);
+        return () => clearTimeout(timer);
+      }
+    }
+    return undefined;
+  }, [documentos]);
 
-  // Métricas rápidas
-  const totalDescargas = useMemo(
-    () => documentos.reduce((acc, d) => acc + (Number(d.descargasCount) || 0), 0),
-    [documentos],
-  );
+  // Documentos filtrados según Mi Biblioteca si está activo
+  const documentosMostrados = useMemo(() => {
+    if (!filtros.miBiblioteca) return documentos;
+    if (filtros.miBiblioteca === "favoritos") {
+      return documentos.filter((d) => favoritosIds.has(String(d.id)));
+    }
+    if (filtros.miBiblioteca === "leer_mas_tarde") {
+      return documentos.filter((d) => leerTardeIds.has(String(d.id)));
+    }
+    if (filtros.miBiblioteca === "historial") {
+      return documentos.filter((d) => historialIds.has(String(d.id)));
+    }
+    return documentos;
+  }, [documentos, filtros.miBiblioteca, favoritosIds, leerTardeIds, historialIds]);
 
-  const showLoadingGate = usePublicPageLoadingGate("repositorio", !cargando);
+  const totalCalculado = filtros.miBiblioteca
+    ? documentosMostrados.length
+    : totalResultados;
+
+  // Gate de carga pública: solo para la carga inicial de la página
+  const showLoadingGate = usePublicPageLoadingGate("repositorio", inicialCargado);
   if (showLoadingGate) {
-    return <PageLoading message="Cargando repositorio..." />;
+    return <PageLoading message="Cargando biblioteca digital..." />;
   }
 
   return (
-    <div className="repositorio-page">
-      <div className="repositorio-back-container">
+    <div className="biblio-page">
+      {/* Botón Volver al inicio */}
+      <div className="biblio-back-container no-print">
         <BackToHomeLink />
       </div>
 
-      <section className="repositorio-section">
-        {/* Cabecera idéntica a Voluntariado / Donaciones */}
-        <header className="voluntariado-header">
-          <span className="badge--voluntariado">
-            <BookOpen size={14} className="mr-1.5" />
-            <ST>Repositorio Institucional</ST>
-          </span>
-          <h1>
-            <ST>Documentación y Recursos del Proyecto</ST>
-          </h1>
-          <p className="voluntariado-header__lead">
-            <ST>
-              Consulte y descargue investigaciones agronómicas, manuales de buenas prácticas, reportes de impacto y material técnico generado por el equipo del proyecto Café-UNA.
-            </ST>
-          </p>
-
-          {/* Métricas clave */}
-          <div className="repositorio-metricas-strip">
-            <div className="repositorio-metrica-item">
-              <span className="repositorio-metrica-item__num">{documentos.length}</span>
-              <span className="repositorio-metrica-item__lbl"><ST>Documentos</ST></span>
-            </div>
-            <div className="repositorio-metrica-item">
-              <span className="repositorio-metrica-item__num">{categorias.length || 4}</span>
-              <span className="repositorio-metrica-item__lbl"><ST>Categorías temáticas</ST></span>
-            </div>
-            <div className="repositorio-metrica-item">
-              <span className="repositorio-metrica-item__num">{totalDescargas}</span>
-              <span className="repositorio-metrica-item__lbl"><ST>Descargas totales</ST></span>
-            </div>
-          </div>
-        </header>
-
-        {alertaExito ? (
-          <div className="repositorio-alerta-banner">
-            <CheckCircle2 size={20} className="text-emerald-500" />
-            <span>{alertaExito}</span>
-            <button
-              type="button"
-              className="ml-auto text-slate-400 hover:text-slate-600"
-              onClick={() => setAlertaExito("")}
-            >
-              <X size={16} />
-            </button>
-          </div>
-        ) : null}
-
-        {/* Barra de Búsqueda y Filtros con estilo SectionCard */}
-        <div className="section-card mb-6">
-          <div className="section-card__header flex items-center justify-between">
-            <h4 className="section-card__header-title">
-              <ST>Explorador y Filtros de Búsqueda</ST>
-            </h4>
-            <div className="ml-auto flex items-center gap-2 no-print">
-              <button
-                type="button"
-                className="btn-accion-icono btn-accion-icono--primario"
-                title="Enviar archivo o proponer documentación institucional"
-                onClick={() => setDocumentoSolicitar({})}
-              >
-                <FileLock2 size={16} />
-                <span><ST>Enviar / Proponer archivo</ST></span>
-              </button>
-              <button
-                type="button"
-                className={`btn-accion-icono ${mostrarFiltros ? "btn-accion-icono--activo" : ""}`}
-                title={mostrarFiltros ? "Ocultar filtros" : "Mostrar filtros"}
-                onClick={() => setMostrarFiltros((prev) => !prev)}
-                aria-label="Filtros de búsqueda"
-              >
-                <Filter size={18} />
-              </button>
-              <button
-                type="button"
-                className="btn-accion-icono hidden sm:inline-flex"
-                title="Imprimir catálogo"
-                onClick={handleImprimir}
-              >
-                <Printer size={16} />
-                <span className="hidden sm:inline"><ST>Imprimir</ST></span>
-              </button>
-            </div>
-          </div>
-
-          {mostrarFiltros ? (
-            <div className="section-card__body">
-              <div className="repositorio-filtros-grid">
-                {/* Buscador de texto */}
-                <div className="repositorio-buscador-wrap">
-                  <Search size={18} className="repositorio-buscador-icon" />
-                  <input
-                    type="text"
-                    className="repositorio-buscador-input"
-                    placeholder={tBuscarPlaceholder}
-                    value={terminoBusqueda}
-                    onChange={(e) => setTerminoBusqueda(e.target.value)}
-                  />
-                  {terminoBusqueda ? (
-                    <button
-                      type="button"
-                      className="repositorio-buscador-clear"
-                      onClick={() => setTerminoBusqueda("")}
-                      aria-label="Limpiar búsqueda"
-                    >
-                      <X size={16} />
-                    </button>
-                  ) : null}
-                </div>
-
-                {/* Selector de Categoría */}
-                <div className="repositorio-select-wrap">
-                  <select
-                    value={categoriaSeleccionada}
-                    onChange={(e) => setCategoriaSeleccionada(e.target.value)}
-                    className="repositorio-select"
-                  >
-                    <option value="todas">{tTodasCategorias}</option>
-                    {categorias.map((cat) => {
-                      const nombre = cat.nombre || cat.Nombre || "";
-                      const padre = cat.padre || cat.Padre || "";
-                      const id = cat.id || cat.Id || nombre;
-                      return (
-                        <option key={id} value={nombre}>
-                          {padre ? `↳ ${nombre}` : nombre}
-                        </option>
-                      );
-                    })}
-                  </select>
-                  <ChevronDown size={16} className="repositorio-select-arrow" />
-                </div>
-
-                {/* Orden */}
-                <div className="repositorio-select-wrap">
-                  <select
-                    value={orden}
-                    onChange={(e) => setOrden(e.target.value)}
-                    className="repositorio-select"
-                  >
-                    <option value="recientes">Más recientes primero</option>
-                    <option value="antiguos">Más antiguos primero</option>
-                    <option value="descargas">Más descargados</option>
-                    <option value="az">Título (A - Z)</option>
-                    <option value="za">Título (Z - A)</option>
-                  </select>
-                  <ChevronDown size={16} className="repositorio-select-arrow" />
-                </div>
+      {/* Encabezado y Estadísticas Calculadas (Estilo Institucional / Administrativo) */}
+      <section className="biblio-header-section" aria-labelledby="biblio-title">
+        <div className="biblio-header-content">
+          <div className="biblio-header-top">
+            <div>
+              <div className="badge--admin-docs">
+                <Sparkles size={13} className="text-amber-500 mr-1" />
+                <span>
+                  <ST>Repositorio Institucional & Biblioteca Digital</ST>
+                </span>
               </div>
-
-              {/* Chips de Categorías Rápidas */}
-              {categorias.length > 0 ? (
-                <div className="repositorio-chips-scroll no-print">
-                  <button
-                    type="button"
-                    className={`repositorio-chip ${categoriaSeleccionada === "todas" ? "repositorio-chip--activo" : ""}`}
-                    onClick={() => setCategoriaSeleccionada("todas")}
-                  >
-                    <Layers size={15} />
-                    <span><ST>Todas</ST></span>
-                    <span className="repositorio-chip__count">{documentos.length}</span>
-                  </button>
-                  {categorias
-                    .filter((c) => !(c.padre || c.Padre))
-                    .map((cat) => {
-                      const nombre = cat.nombre || cat.Nombre || "";
-                      const count =
-                        cat.usos ?? cat.Usos ?? conteoDocsPorCategoria[nombre.toLowerCase()] ?? 0;
-                      const id = cat.id || cat.Id || nombre;
-                      const activo =
-                        String(categoriaSeleccionada || "").toLowerCase() ===
-                        nombre.toLowerCase();
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          className={`repositorio-chip ${activo ? "repositorio-chip--activo" : ""}`}
-                          onClick={() => setCategoriaSeleccionada(activo ? "todas" : nombre)}
-                        >
-                          <FolderOpen size={15} />
-                          <span>{nombre}</span>
-                          {count > 0 ? (
-                            <span className="repositorio-chip__count">{count}</span>
-                          ) : null}
-                        </button>
-                      );
-                    })}
-                </div>
-              ) : null}
+              <h1 id="biblio-title" className="admin-docs-title">
+                <ST>Biblioteca Digital Café-UNA</ST>
+              </h1>
+              <p className="admin-docs-subtitle">
+                <ST>
+                  Consulta, descarga e investiga informes oficiales, manuales de producción, guías
+                  técnicas y normativas del Proyecto Café-UNA.
+                </ST>
+              </p>
             </div>
-          ) : null}
+          </div>
+
+          {/* Franja de estadísticas / KPIs calculadas desde la base de datos */}
+          <div className="admin-docs-kpi-grid biblio-kpi-grid" role="region" aria-label="Estadísticas de la biblioteca">
+            <div className="admin-docs-kpi-card">
+              <span className="kpi-icon kpi-icon--blue">
+                <FileText size={20} />
+              </span>
+              <div className="kpi-info">
+                <span className="kpi-num">{estadisticas.totalDocumentos || 0}</span>
+                <span className="kpi-lbl">
+                  <ST>Documentos</ST>
+                </span>
+              </div>
+            </div>
+
+            <div className="admin-docs-kpi-card">
+              <span className="kpi-icon kpi-icon--emerald">
+                <FolderOpen size={20} />
+              </span>
+              <div className="kpi-info">
+                <span className="kpi-num">{estadisticas.totalCategorias || 4}</span>
+                <span className="kpi-lbl">
+                  <ST>Categorías temáticas</ST>
+                </span>
+              </div>
+            </div>
+
+            <div className="admin-docs-kpi-card">
+              <span className="kpi-icon kpi-icon--amber">
+                <Download size={20} />
+              </span>
+              <div className="kpi-info">
+                <span className="kpi-num">{estadisticas.totalDescargas || 0}</span>
+                <span className="kpi-lbl">
+                  <ST>Descargas totales</ST>
+                </span>
+              </div>
+            </div>
+
+            <div className="admin-docs-kpi-card">
+              <span className="kpi-icon kpi-icon--purple">
+                <Eye size={20} />
+              </span>
+              <div className="kpi-info">
+                <span className="kpi-num">{estadisticas.totalVistas || 0}</span>
+                <span className="kpi-lbl">
+                  <ST>Visualizaciones</ST>
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-
-        {/* Estado de carga */}
-        {cargando ? (
-          <div className="repositorio-cargando">
-            <PageLoading message="Cargando repositorio..." />
-          </div>
-        ) : error ? (
-          <div className="repositorio-error-card">
-            <Info size={24} className="text-rose-500" />
-            <p>{error}</p>
-            <button type="button" className="btn-primario" onClick={cargarDatos}>
-              <ST>Reintentar</ST>
-            </button>
-          </div>
-        ) : documentos.length === 0 ? (
-          /* Estado vacío */
-          <div className="repositorio-vacio-card">
-            <div className="repositorio-vacio-card__icon">
-              <FolderOpen size={48} />
-            </div>
-            <h3><ST>No se encontraron documentos</ST></h3>
-            <p>
-              <ST>
-                No hay resultados para los filtros seleccionados o el término de búsqueda ingresado.
-              </ST>
-            </p>
-            <div className="flex items-center gap-3 mt-4">
-              <button type="button" className="btn-secundario" onClick={limpiarFiltros}>
-                <RotateCcw size={16} />
-                <ST>Restablecer filtros</ST>
-              </button>
-              <button
-                type="button"
-                className="btn-primario"
-                onClick={() => setDocumentoSolicitar({})}
-              >
-                <FileLock2 size={16} />
-                <ST>Solicitar archivo</ST>
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* Cuadrícula de Documentos (REP-P03-T1) */
-          <div className="repositorio-grid">
-            {documentos.map((doc) => {
-              const fileTypeInfo = resolverIconoArchivo(doc.nombreOriginal, doc.mimeType);
-              const FileIcon = fileTypeInfo.icon;
-              const estaDescargando = descargandoId === doc.id;
-              const esPrivadoRestringido = doc.esPrivado && !puedeVerPrivadosDirecto;
-
-              return (
-                <article key={doc.id} className="repositorio-card">
-                  <div className="repositorio-card__top">
-                    {/* Icono de tipo */}
-                    <div className={`repositorio-card__file-icon ${fileTypeInfo.colorClass}`}>
-                      <FileIcon size={24} />
-                      <span className="repositorio-card__file-badge">{fileTypeInfo.label}</span>
-                    </div>
-
-                    {/* Insignias de privacidad y categoría */}
-                    <div className="repositorio-card__badges">
-                      <span className="repositorio-badge--categoria">
-                        {doc.categoria || "General"}
-                        {doc.subcategoria ? ` / ${doc.subcategoria}` : ""}
-                      </span>
-                      {doc.esPrivado ? (
-                        <span
-                          className="repositorio-badge--privado"
-                          title="Acceso restringido: requiere autorización institucional"
-                        >
-                          <Lock size={12} />
-                          <ST>Privado</ST>
-                        </span>
-                      ) : (
-                        <span className="repositorio-badge--publico" title="Documento público">
-                          <Unlock size={12} />
-                          <ST>Público</ST>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="repositorio-card__body">
-                    <h3 className="repositorio-card__title" title={doc.titulo}>
-                      {doc.titulo}
-                    </h3>
-                    {doc.descripcion ? (
-                      <p className="repositorio-card__desc">{doc.descripcion}</p>
-                    ) : null}
-
-                    {/* Metadatos */}
-                    <div className="repositorio-card__meta">
-                      {doc.autor ? (
-                        <div className="repositorio-card__meta-item">
-                          <User size={13} />
-                          <span>{doc.autor}</span>
-                        </div>
-                      ) : null}
-                      <div className="repositorio-card__meta-item">
-                        <HardDrive size={13} />
-                        <span>{formatearTamano(doc.tamanoBytes)}</span>
-                      </div>
-                      <div className="repositorio-card__meta-item">
-                        <Download size={13} />
-                        <span>
-                          {doc.descargasCount || 0} <ST>descargas</ST>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Acciones: Visualizar + Descargar / Solicitar */}
-                  <div className="repositorio-card__footer no-print">
-                    <div className="repositorio-card__actions-grid">
-                      <button
-                        type="button"
-                        className="btn-visualizar-archivo"
-                        title="Ver y previsualizar documento en línea"
-                        onClick={() => setDocumentoVisualizar(doc)}
-                      >
-                        <Eye size={15} />
-                        <span><ST>Visualizar</ST></span>
-                      </button>
-
-                      {esPrivadoRestringido ? (
-                        <button
-                          type="button"
-                          className="btn-solicitar-archivo"
-                          onClick={() => setDocumentoSolicitar(doc)}
-                          title="Documento privado: solicitar acceso formal"
-                        >
-                          <FileLock2 size={15} />
-                          <span><ST>Solicitar</ST></span>
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn-descargar-archivo"
-                          disabled={estaDescargando}
-                          onClick={() => handleDescargar(doc)}
-                          title="Descargar archivo en su dispositivo"
-                        >
-                          {estaDescargando ? (
-                            <>
-                              <span className="spinner-sm" aria-hidden="true" />
-                              <span><ST>Bajando...</ST></span>
-                            </>
-                          ) : (
-                            <>
-                              <Download size={15} />
-                              <span><ST>Descargar</ST></span>
-                            </>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
       </section>
 
-      {/* Modal para previsualizar documento interactivo */}
-      {documentoVisualizar ? (
+      {/* Contenedor Principal: Layout de Dos Columnas (Sidebar + Contenido) */}
+      <div className="biblio-layout-container">
+        {/* Sidebar de navegación y filtros */}
+        <Sidebar
+          filtros={filtros}
+          facetas={facetas}
+          estadisticas={estadisticas}
+          usuario={user}
+          esAdmin={esAdmin}
+          totalResultados={totalCalculado}
+          favoritosCount={favoritosIds.size}
+          leerTardeCount={leerTardeIds.size}
+          historialCount={historialIds.size}
+          onBuscar={handleBuscar}
+          onCambiarFiltro={handleCambiarFiltro}
+          onLimpiarFiltros={handleLimpiarTodos}
+          onAbrirSolicitarModal={() => setDocumentoSolicitar({})}
+          mobileOpen={mobileDrawerOpen}
+          onCloseMobile={() => setMobileDrawerOpen(false)}
+          sidebarColapsado={sidebarColapsado}
+          onToggleColapso={handleToggleColapso}
+        />
+
+        {/* Área de Contenido Principal */}
+        <main
+          className={`biblio-main-content ${
+            sidebarColapsado ? "biblio-main-content--expanded" : ""
+          }`}
+          role="main"
+          aria-hidden={mobileDrawerOpen}
+          style={mobileDrawerOpen ? { pointerEvents: "none", userSelect: "none" } : undefined}
+        >
+          {/* Barra superior de herramientas y orden */}
+          <ResultsToolbar
+            totalResultados={totalCalculado}
+            paginaActual={filtros.pagina}
+            limitePorPagina={12}
+            orden={filtros.orden}
+            onCambiarOrden={(ord) => handleCambiarFiltro("orden", ord)}
+            vistaCuadricula={vistaCuadricula}
+            onToggleVista={handleToggleVista}
+            onAbrirFiltrosMobile={() => setMobileDrawerOpen(true)}
+            sidebarColapsado={sidebarColapsado}
+            onToggleColapso={handleToggleColapso}
+            filtrosActivosCount={
+              (filtros.buscar ? 1 : 0) +
+              (filtros.categoria !== "todas" ? 1 : 0) +
+              (filtros.subcategoria ? 1 : 0) +
+              (filtros.anioDesde || filtros.anioHasta ? 1 : 0) +
+              (filtros.tipoArchivo !== "todos" ? 1 : 0) +
+              (filtros.autor ? 1 : 0) +
+              (filtros.idioma !== "todos" ? 1 : 0) +
+              (filtros.visibilidad !== "todas" ? 1 : 0) +
+              (filtros.accesoRapido !== "todos" ? 1 : 0) +
+              (filtros.miBiblioteca ? 1 : 0)
+            }
+          />
+
+          {/* Chips de filtros activos removibles */}
+          <ActiveFilterChips
+            filtros={filtros}
+            onEliminarFiltro={handleCambiarFiltro}
+            onLimpiarTodos={handleLimpiarTodos}
+          />
+
+          {/* Mensaje de error si falla */}
+          {error && (
+            <div className="biblio-error-banner" role="alert">
+              <Info size={18} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Resultados: Cuadrícula o Lista */}
+          {vistaCuadricula ? (
+            <DocumentGrid
+              documentos={documentosMostrados}
+              cargando={cargando}
+              terminoBusqueda={filtros.buscar}
+              esAdmin={esAdmin}
+              usuario={user}
+              favoritosIds={favoritosIds}
+              onVisualizar={handleVisualizar}
+              onDescargar={handleDescargar}
+              onVerDetalle={(doc) => setDocumentoVisualizar(doc)}
+              onToggleFavorito={(doc) => {
+                setFavoritosIds((prev) => {
+                  const next = new Set(prev);
+                  const idStr = String(doc.id);
+                  if (next.has(idStr)) next.delete(idStr);
+                  else next.add(idStr);
+                  try {
+                    localStorage.setItem("biblio_favoritos_ids", JSON.stringify([...next]));
+                  } catch (err) {
+                    console.warn("No se pudo guardar favorito:", err);
+                  }
+                  return next;
+                });
+              }}
+              onToggleLeerTarde={handleToggleLeerTarde}
+              onFiltrarEtiqueta={(tag) => handleCambiarFiltro("etiquetas", tag)}
+              onLimpiarFiltros={handleLimpiarTodos}
+            />
+          ) : (
+            <DocumentList
+              documentos={documentosMostrados}
+              cargando={cargando}
+              terminoBusqueda={filtros.buscar}
+              esAdmin={esAdmin}
+              usuario={user}
+              favoritosIds={favoritosIds}
+              onVisualizar={handleVisualizar}
+              onDescargar={handleDescargar}
+              onVerDetalle={(doc) => setDocumentoVisualizar(doc)}
+              onToggleFavorito={(doc) => {
+                setFavoritosIds((prev) => {
+                  const next = new Set(prev);
+                  const idStr = String(doc.id);
+                  if (next.has(idStr)) next.delete(idStr);
+                  else next.add(idStr);
+                  try {
+                    localStorage.setItem("biblio_favoritos_ids", JSON.stringify([...next]));
+                  } catch (err) {
+                    console.warn("No se pudo guardar favorito:", err);
+                  }
+                  return next;
+                });
+              }}
+              onToggleLeerTarde={handleToggleLeerTarde}
+              onFiltrarEtiqueta={(tag) => handleCambiarFiltro("etiquetas", tag)}
+              onLimpiarFiltros={handleLimpiarTodos}
+            />
+          )}
+
+          {/* Paginación */}
+          <Pagination
+            paginaActual={filtros.pagina}
+            totalPaginas={totalPaginas}
+            onCambiarPagina={handleCambiarPagina}
+          />
+        </main>
+      </div>
+
+      {/* Modal de Solicitud / Propuesta de Documento */}
+      {documentoSolicitar && (
+        <SolicitarDocumentoModal
+          documento={documentoSolicitar?.id ? documentoSolicitar : null}
+          onClose={() => setDocumentoSolicitar(null)}
+          onExito={() => {
+            setDocumentoSolicitar(null);
+            alert("Su solicitud o propuesta de archivo fue enviada con éxito.");
+          }}
+        />
+      )}
+
+      {/* Modal de Visualización en línea */}
+      {documentoVisualizar && (
         <VisualizarDocumentoModal
           documento={documentoVisualizar}
           onClose={() => setDocumentoVisualizar(null)}
-        />
-      ) : null}
-
-      {/* Modal para enviar propuesta o solicitar documento privado */}
-      {documentoSolicitar ? (
-        <SolicitarDocumentoModal
-          documento={documentoSolicitar}
-          onClose={() => setDocumentoSolicitar(null)}
-          onSuccess={() => {
-            setAlertaExito(
-              "Su archivo o solicitud fue enviada con éxito. Será revisada por el equipo administrativo.",
-            );
+          onSolicitarAcceso={(doc) => {
+            setDocumentoVisualizar(null);
+            setDocumentoSolicitar(doc);
           }}
         />
-      ) : null}
+      )}
     </div>
   );
 }

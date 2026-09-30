@@ -3,7 +3,6 @@ import { createPortal } from "react-dom";
 import {
   Download,
   ExternalLink,
-  Eye,
   FileArchive,
   FileCode,
   FileSpreadsheet,
