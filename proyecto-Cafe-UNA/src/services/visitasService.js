@@ -65,16 +65,61 @@ export function normalizarVisita(raw) {
   };
 }
 
+export function formatearHora12(horaStr) {
+  if (!horaStr) return "";
+  const [hStr, mStr] = String(horaStr).slice(0, 5).split(":");
+  let h = parseInt(hStr, 10);
+  if (isNaN(h)) return horaStr;
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12;
+  if (h === 0) h = 12;
+  const m = mStr ? mStr.padStart(2, "0") : "00";
+  return `${h}:${m} ${ampm}`;
+}
+
 export function normalizarDisponibilidadVisita(raw) {
   const id = firstDefined(raw, ["id", "Id"]);
   if (id === undefined || id === null) return null;
 
+  const horaInicio = stringField(raw, "horaInicio", "HoraInicio");
+  const horaFin = stringField(raw, "horaFin", "HoraFin");
+  const horaInicioFormato =
+    stringField(raw, "horaInicioFormato", "HoraInicioFormato") ||
+    formatearHora12(horaInicio);
+  const horaFinFormato =
+    stringField(raw, "horaFinFormato", "HoraFinFormato") ||
+    formatearHora12(horaFin);
+  const franja =
+    stringField(raw, "franja", "Franja") ||
+    `${horaInicioFormato} - ${horaFinFormato}`;
+
+  const capacidadMaxima = Number(
+    firstDefined(raw, ["capacidadMaxima", "CapacidadMaxima"]) ?? 30,
+  );
+  const cupoOcupado = Number(
+    firstDefined(raw, ["cupoOcupado", "CupoOcupado"]) ?? 0,
+  );
+  const cupoRestante = Number(
+    firstDefined(raw, ["cupoRestante", "CupoRestante"]) ??
+      Math.max(0, capacidadMaxima - cupoOcupado),
+  );
+  const agotada = Boolean(
+    firstDefined(raw, ["agotada", "Agotada"]) ?? (cupoRestante <= 0),
+  );
   const nota = firstDefined(raw, ["nota", "Nota"]);
+
   return {
     id: String(id),
     fecha: stringField(raw, "fecha", "Fecha"),
-    horaInicio: stringField(raw, "horaInicio", "HoraInicio"),
-    horaFin: stringField(raw, "horaFin", "HoraFin"),
+    horaInicio,
+    horaFin,
+    horaInicioFormato,
+    horaFinFormato,
+    franja,
+    capacidadMaxima,
+    cupoOcupado,
+    cupoRestante,
+    agotada,
     habilitada: Boolean(firstDefined(raw, ["habilitada", "Habilitada"])),
     nota: typeof nota === "string" ? nota.trim() : null,
   };
@@ -96,6 +141,22 @@ export async function obtenerDisponibilidadVisitasPublica(filtros = {}) {
     errorPrefix: "Error al consultar la disponibilidad de visitas",
   });
   return (Array.isArray(data) ? data : []).map(normalizarDisponibilidadVisita).filter(Boolean);
+}
+
+export async function obtenerFranjasHorariasPorFecha(fecha) {
+  if (!fecha) return [];
+  const data = await apiRequest(
+    `${DISPONIBILIDAD_URL}/franjas?fecha=${encodeURIComponent(fecha)}`,
+    {
+      skipAuth: true,
+      errorPrefix: "Error al consultar los bloques horarios de visitas",
+    },
+  );
+  return (Array.isArray(data) ? data : []).map(normalizarDisponibilidadVisita).filter(Boolean);
+}
+
+export function obtenerUrlInstructivoPdf() {
+  return `${BASE_URL}/instructivo-pdf`;
 }
 
 export async function obtenerDisponibilidadVisitasAdmin(filtros = {}) {
