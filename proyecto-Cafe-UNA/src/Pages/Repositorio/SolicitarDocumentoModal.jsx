@@ -13,6 +13,7 @@ import {
 } from "../../services/documentosService";
 import { getActiveSessionUser } from "../../services/sessionService";
 import { ST } from "../../Components/T/ST";
+import { SelectFiltro } from "../../Components/ui/SelectFiltro";
 import "../Voluntariado/SolicitarVoluntariado.css";
 import "./Repositorio.css";
 
@@ -225,7 +226,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                   <label htmlFor="sol-doc-categoria">
                     <ST>Categoría sugerida</ST>
                   </label>
-                  <select
+                  <SelectFiltro
                     id="sol-doc-categoria"
                     value={categoria}
                     onChange={(e) => setCategoria(e.target.value)}
@@ -241,7 +242,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                           </option>
                         );
                       })}
-                  </select>
+                  </SelectFiltro>
                 </div>
 
                 <div className="campo-grupo">

@@ -41,6 +41,7 @@ import {
 } from "../../lib/formLimits";
 import { useTraducir } from "../../hooks/useTraducir";
 import { ST } from "../../Components/T/ST";
+import { SelectFiltro } from "../../Components/ui/SelectFiltro";
 import { ImageLightbox } from "../../Components/ImageLightbox/ImageLightbox";
 import {
   cantonesDeProvincia,
@@ -993,7 +994,7 @@ export default function SolicitarDonacion() {
                           <label htmlFor="donacion-tipo-documento">
                             {tTipoDocumento} <span className="req">*</span>
                           </label>
-                          <select
+                          <SelectFiltro
                             id="donacion-tipo-documento"
                             name="tipoDocumento"
                             value={tipoDocumento}
@@ -1002,14 +1003,14 @@ export default function SolicitarDonacion() {
                             <option value="cedula">{tCedula}</option>
                             <option value="dimex">{tDimex}</option>
                             <option value="pasaporte">{tPasaporte}</option>
-                          </select>
+                          </SelectFiltro>
                         </div>
                         {esPasaporte ? (
                           <div className="campo">
                             <label htmlFor="donacion-nacionalidad">
                               {tPaisOrigen} <span className="req">*</span>
                             </label>
-                            <select
+                            <SelectFiltro
                               id="donacion-nacionalidad"
                               name="nacionalidad"
                               value={formulario.nacionalidad}
@@ -1019,7 +1020,7 @@ export default function SolicitarDonacion() {
                               {opcionesPais.map((pais) => (
                                 <option key={pais.value} value={pais.value}>{pais.label}</option>
                               ))}
-                            </select>
+                            </SelectFiltro>
                             {errores.nacionalidad ? (
                               <span className="mensaje-error"><ST>{errores.nacionalidad}</ST></span>
                             ) : null}
@@ -1181,21 +1182,21 @@ export default function SolicitarDonacion() {
                     <label>
                       {tCategoria} <span className="req">*</span>
                     </label>
-                    <select name="categoriaId" value={formulario.categoriaId} onChange={handleChange}>
+                    <SelectFiltro name="categoriaId" value={formulario.categoriaId} onChange={handleChange}>
                       <option value="">{tSeleccione}</option>
                       {necesidades.map((item) => (
                         <option key={item.id} value={String(item.id)}>
                           {item.titulo}
                         </option>
                       ))}
-                    </select>
+                    </SelectFiltro>
                     {errores.categoriaId ? <span className="mensaje-error"><ST>{errores.categoriaId}</ST></span> : null}
                   </div>
                   <div className="campo">
                     <label>
                       {tMaterial} <span className="req">*</span>
                     </label>
-                    <select
+                    <SelectFiltro
                       name="materialId"
                       value={formulario.materialId}
                       onChange={handleChange}
@@ -1207,7 +1208,7 @@ export default function SolicitarDonacion() {
                           {item.nombre}
                         </option>
                       ))}
-                    </select>
+                    </SelectFiltro>
                     {errores.materialId ? <span className="mensaje-error"><ST>{errores.materialId}</ST></span> : null}
                   </div>
                   <div className="campo">
@@ -1245,14 +1246,14 @@ export default function SolicitarDonacion() {
                       <label>
                         {tEstado} <span className="req">*</span>
                       </label>
-                      <select name="estadoArticulos" value={formulario.estadoArticulos} onChange={handleChange}>
+                      <SelectFiltro name="estadoArticulos" value={formulario.estadoArticulos} onChange={handleChange}>
                         <option value="">{tSeleccione}</option>
                         {ESTADOS_ARTICULOS.map((estado) => (
                           <option key={estado} value={estado}>
                             {estado}
                           </option>
                         ))}
-                      </select>
+                      </SelectFiltro>
                       {errores.estadoArticulos ? <span className="mensaje-error"><ST>{errores.estadoArticulos}</ST></span> : null}
                     </div>
                   </div>
@@ -1348,36 +1349,36 @@ export default function SolicitarDonacion() {
                       <label>
                         {tProvincia} <span className="req">*</span>
                       </label>
-                      <select name="provincia" value={formulario.provincia} onChange={handleChange}>
+                      <SelectFiltro name="provincia" value={formulario.provincia} onChange={handleChange}>
                         <option value="">{tSeleccione}</option>
                         {PROVINCIAS_CR.map((provincia) => (
                           <option key={provincia} value={provincia}>{provincia}</option>
                         ))}
-                      </select>
+                      </SelectFiltro>
                       {errores.provincia ? <span className="mensaje-error"><ST>{errores.provincia}</ST></span> : null}
                     </div>
                     <div className="campo">
                       <label>
                         {tCanton} <span className="req">*</span>
                       </label>
-                      <select name="canton" value={formulario.canton} onChange={handleChange} disabled={!formulario.provincia}>
+                      <SelectFiltro name="canton" value={formulario.canton} onChange={handleChange} disabled={!formulario.provincia}>
                         <option value="">{tSeleccione}</option>
                         {cantonesDisponibles.map((canton) => (
                           <option key={canton} value={canton}>{canton}</option>
                         ))}
-                      </select>
+                      </SelectFiltro>
                       {errores.canton ? <span className="mensaje-error"><ST>{errores.canton}</ST></span> : null}
                     </div>
                     <div className="campo">
                       <label>
                         {tDistrito} <span className="req">*</span>
                       </label>
-                      <select name="distrito" value={formulario.distrito} onChange={handleChange} disabled={!formulario.canton}>
+                      <SelectFiltro name="distrito" value={formulario.distrito} onChange={handleChange} disabled={!formulario.canton}>
                         <option value="">{tSeleccione}</option>
                         {distritosDisponibles.map((distrito) => (
                           <option key={distrito} value={distrito}>{distrito}</option>
                         ))}
-                      </select>
+                      </SelectFiltro>
                       {errores.distrito ? <span className="mensaje-error"><ST>{errores.distrito}</ST></span> : null}
                     </div>
                   </div>

@@ -6,6 +6,8 @@ const CACHE_KEY_MESSAGES = {
   products: 'Cargando productos...',
   'product-detail': 'Cargando producto...',
   about: 'Cargando sobre nosotros...',
+  historia: 'Cargando historia...',
+  equipo: 'Cargando equipo...',
   voluntariado: 'Cargando voluntariado...',
   visitas: 'Cargando visitas...',
   donaciones: 'Cargando donaciones...',
@@ -33,6 +35,8 @@ export function getLoadingMessageForPathname(pathname = normalizePathname()) {
   if (path === '/') return msg(CACHE_KEY_MESSAGES.home);
   if (path === '/productos') return msg(CACHE_KEY_MESSAGES.products);
   if (path.startsWith('/productos/')) return msg(CACHE_KEY_MESSAGES['product-detail']);
+  if (path === '/equipo') return msg(CACHE_KEY_MESSAGES.equipo);
+  if (path.toLowerCase() === '/aboutus/historia') return msg(CACHE_KEY_MESSAGES.historia);
   if (path === '/AboutUs' || path.startsWith('/AboutUs/')) {
     return path.toLowerCase().includes('/galeria')
       ? msg('Cargando galería...')

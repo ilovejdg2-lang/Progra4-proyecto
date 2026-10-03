@@ -25,6 +25,8 @@ import { getSiteBootMessage } from "./lib/siteBootLoading";
 import { ADMIN_THEME_CHANGED_EVENT, applyAdminDocumentTheme } from "./lib/adminTheme";
 
 const AboutUs = lazy(() => import("./Pages/AboutUs/AboutUs"));
+const Equipo = lazy(() => import("./Pages/AboutUs/Equipo"));
+const HistoriaCafe = lazy(() => import("./Pages/HistoriaCafe/HistoriaCafe"));
 const Products = lazy(() => import("./Pages/Products/Products"));
 const ProductDetail = lazy(() => import("./Pages/ProductDetail/ProductDetail"));
 const SolicitarVoluntariado = lazy(() => import("./Pages/Voluntariado/SolicitarVoluntariado"));
@@ -41,6 +43,8 @@ const VerificarCuenta = lazy(() => import("./Pages/Registro/VerificarCuenta"));
 const AdminPanel = lazy(() => import("./Pages/Admin/Panel/Panel"));
 const AdminInformacionPaginaPrincipal = lazy(() => import("./Pages/Admin/InformacionPaginaPrincipal/InformacionPaginaPrincipal"));
 const AdminInformacionSobreNosotros = lazy(() => import("./Pages/Admin/InformacionSobreNosotros/InformacionSobreNosotros"));
+const AdminEquipo = lazy(() => import("./Pages/Admin/Equipo/AdminEquipo"));
+const AdminHistoriaCompleta = lazy(() => import("./Pages/Admin/HistoriaCompleta/AdminHistoriaCompleta"));
 const AdminInventarioProducto = lazy(() => import("./Pages/Admin/InventarioProducto/InventarioProducto"));
 const AdminPuntosVenta = lazy(() => import("./Pages/Admin/PuntosVenta/PuntosVenta"));
 const AdminActivosFijos = lazy(() => import("./Pages/Admin/ActivosFijos/ActivosFijos"));
@@ -267,6 +271,16 @@ const AboutUsGaleriaRoute = createRoute({
     path: "/AboutUs/galeria",
     component: AboutUs,
 })
+const EquipoRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/equipo",
+    component: Equipo,
+})
+const AboutUsHistoriaRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/AboutUs/historia",
+    component: HistoriaCafe,
+})
 const loginRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/login",
@@ -305,6 +319,16 @@ const adminGaleriaRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/galeria",
     component: AdminInformacionSobreNosotros,
+})
+const adminEquipoRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/equipo",
+    component: AdminEquipo,
+})
+const adminHistoriaCompletaRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/historia-completa",
+    component: AdminHistoriaCompleta,
 })
 const adminProductoRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -516,6 +540,8 @@ const routeTree= rootRoute.addChildren([
     home,
     AboutUsRoute,
     AboutUsGaleriaRoute,
+    EquipoRoute,
+    AboutUsHistoriaRoute,
     loginRoute,
     registroRoute,
     verificarCuentaRoute,
@@ -523,6 +549,8 @@ const routeTree= rootRoute.addChildren([
     adminInformacionPaginaPrincipalRoute,
     adminSobreNosotrosRoute,
     adminGaleriaRoute,
+    adminEquipoRoute,
+    adminHistoriaCompletaRoute,
     adminProductoRoute,
     adminPuntosVentaRoute,
     adminActivosFijosRoute,

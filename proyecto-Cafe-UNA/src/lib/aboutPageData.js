@@ -25,6 +25,20 @@ function normalizarGaleria(items) {
   }));
 }
 
+export function normalizarEquipo(items) {
+  return (Array.isArray(items) ? items : [])
+    .map((item) => ({
+      id: item.id ?? item.Id,
+      nombre: pickText(item, 'nombre', 'Nombre'),
+      cargo: pickText(item, 'cargo', 'Cargo'),
+      correo: pickText(item, 'correo', 'Correo'),
+      telefono: pickText(item, 'telefono', 'Telefono'),
+      foto: pickText(item, 'foto', 'Foto'),
+      orden: Number(item.orden ?? item.Orden) || 0,
+    }))
+    .filter((item) => item.nombre);
+}
+
 export async function fetchAboutPageData() {
   const info = await obtenerInformacionSobreNosotros();
 
@@ -46,5 +60,6 @@ export async function fetchAboutPageData() {
       image: getImage(info.vision),
     },
     galleryData: normalizarGaleria(info.gallery),
+    equipo: normalizarEquipo(info.equipo),
   };
 }

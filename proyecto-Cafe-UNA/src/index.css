@@ -791,7 +791,8 @@ button.dropdown__logout,
   border-radius: 6px !important;
 }
 
-.admin-modal-backdrop {
+:root .admin-modal-root.admin-modal-root,
+:root .admin-modal-backdrop.admin-modal-backdrop {
   border-radius: 0 !important;
 }
 

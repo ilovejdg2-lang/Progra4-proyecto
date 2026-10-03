@@ -176,8 +176,14 @@ export function AppSidebar() {
   const isGeneralRoute =
     pathname === "/admin/informacion-pagina-principal" ||
     pathname === "/admin/sobre-nosotros" ||
-    pathname === "/admin/galeria";
-  const isSobreNosotrosRoute = pathname === "/admin/sobre-nosotros" || pathname === "/admin/galeria";
+    pathname === "/admin/galeria" ||
+    pathname === "/admin/equipo" ||
+    pathname === "/admin/historia-completa";
+  const isSobreNosotrosRoute =
+    pathname === "/admin/sobre-nosotros" ||
+    pathname === "/admin/historia-completa" ||
+    pathname === "/admin/galeria" ||
+    pathname === "/admin/equipo";
   const isInventoryRoute =
     pathname === "/admin/producto" ||
     pathname === "/admin/puntos-venta" ||
@@ -485,12 +491,32 @@ export function AppSidebar() {
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                           ) : null}
+                          {puedeCms ? (
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild>
+                              <Link to="/admin/historia-completa" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                                <ScrollText />
+                                <span><ST>Historia completa</ST></span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          ) : null}
                           {puedeGaleria ? (
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
                               <Link to="/admin/galeria" activeProps={linkActivo} onClick={closeMobileSidebar}>
                                 <Image />
                                 <span><ST>Galería</ST></span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          ) : null}
+                          {puedeCms ? (
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild>
+                              <Link to="/admin/equipo" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                                <Users />
+                                <span><ST>Equipo</ST></span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>

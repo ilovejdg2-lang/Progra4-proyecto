@@ -11,7 +11,7 @@ import {
   solicitarCambioCorreo,
 } from "../../services/perfilService";
 import { applyPerfilToSession, getActiveSessionUser } from "../../services/sessionService";
-import { rutaMisCompras } from "../../Pages/HistorialCompras/HistorialComprasCliente";
+import { rutaMisCompras } from "../../Pages/HistorialCompras/rutasCompras";
 import { rutaMisSolicitudes } from "../../Pages/HistorialSolicitudes/HistorialSolicitudesCliente";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { inicialDeNombre } from "../../lib/inicialDeNombre";

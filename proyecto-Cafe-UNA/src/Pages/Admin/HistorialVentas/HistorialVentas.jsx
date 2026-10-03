@@ -6,10 +6,10 @@ import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { AdminModal, AdminModalBody, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
+import { ComprobantePago } from "../../../Components/ComprobantePago/ComprobantePago";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import {
   cambiarEstadoCompra,
-  obtenerBlobComprobanteCompra,
   obtenerCompraPorId,
   obtenerComprasAdmin,
 } from "../../../services/comprasService";
@@ -109,45 +109,6 @@ function BadgeEstadoCompra({ estado }) {
     >
       {etiqueta}
     </span>
-  );
-}
-
-function ComprobanteVenta({ compraId, tieneComprobante }) {
-  const [url, setUrl] = useState("");
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (!tieneComprobante || !compraId) return undefined;
-    let activo = true;
-    let objectUrl = "";
-    setUrl("");
-    setError("");
-    obtenerBlobComprobanteCompra(compraId)
-      .then((blob) => {
-        if (!activo || !blob) return;
-        objectUrl = URL.createObjectURL(blob);
-        setUrl(objectUrl);
-      })
-      .catch((err) => {
-        if (activo) setError(err instanceof Error ? err.message : "No se pudo cargar el comprobante.");
-      });
-    return () => {
-      activo = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [compraId, tieneComprobante]);
-
-  if (!tieneComprobante) return null;
-  return (
-    <div className="mt-4">
-      <p className="text-[length:var(--text-body)] font-semibold text-slate-800"><ST>Comprobante de pago</ST></p>
-      {error ? <p className="mt-1 text-[length:var(--text-body)] text-rose-700"><ST>{error}</ST></p> : null}
-      {url ? (
-        <img src={url} alt={t("Comprobante de pago")} className="mt-2 max-h-72 w-full rounded-2xl border border-slate-200 object-contain bg-slate-50" />
-      ) : !error ? (
-        <p className="mt-1 text-[length:var(--text-body)] text-slate-500"><ST>Cargando comprobante...</ST></p>
-      ) : null}
-    </div>
   );
 }
 
@@ -279,6 +240,7 @@ export default function HistorialVentas({
   }, [puedeVer, page, filtros, esPendientes, locationCode]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga de datos al cambiar filtros
     load();
   }, [load]);
 
@@ -560,7 +522,7 @@ export default function HistorialVentas({
                 </p>
               ) : null}
 
-              <ComprobanteVenta compraId={detalle.id} tieneComprobante={detalle.tieneComprobante} />
+              <ComprobantePago compraId={detalle.id} tieneComprobante={detalle.tieneComprobante} />
 
               {!editableDetalle ? (
                 <p className="mt-3 inline-flex items-center gap-2 text-[length:var(--text-body)] text-slate-500">

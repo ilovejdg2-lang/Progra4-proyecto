@@ -26,6 +26,7 @@ import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
 import { obtenerAuditoria } from "../../../services/auditoriaService";
 import { AuditoriaComparacion } from "./AuditoriaComparacion";
+import { detalleLegible } from "./auditoriaTexto";
 import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { ST } from "../../../Components/T/ST";
@@ -164,7 +165,7 @@ function FilaDetalle({ item, abierta, onToggle }) {
               </button>
             ) : null}
             <span>
-              {item.detalle ? <ST>{item.detalle}</ST> : "—"}
+              <ST>{detalleLegible(item)}</ST>
               {item.idRegistro ? (
                 <span className="mt-0.5 block text-xs text-slate-400">Registro #{item.idRegistro}</span>
               ) : null}
@@ -210,8 +211,6 @@ function AdminAuditoria() {
     filtrados: registrosFiltrados,
     limpiar: limpiarBusqueda,
     hayFiltrosActivos: hayBusqueda,
-    total,
-    visibles,
   } = useAdminListaFiltros(registros, {
     buscarEn: (item) => [
       item.accion,
@@ -220,6 +219,7 @@ function AdminAuditoria() {
       moduloDeTabla(item.tabla),
       etiquetaModulo(item.tabla),
       item.detalle,
+      detalleLegible(item),
       item.usuario,
       item.idRegistro,
       formatearFecha(item.fecha),
@@ -258,6 +258,7 @@ function AdminAuditoria() {
 
   useEffect(() => {
     if (!puedeVer) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- carga de datos al montar
       setCargando(false);
       return undefined;
     }
@@ -677,7 +678,7 @@ function AdminAuditoria() {
                             </div>
                             <BadgeAccion accion={item.accion} />
                           </div>
-                          <p className="mt-3 text-sm text-slate-800">{item.detalle ? <ST>{item.detalle}</ST> : "—"}</p>
+                          <p className="mt-3 text-sm text-slate-800"><ST>{detalleLegible(item)}</ST></p>
                           <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5 text-xs text-slate-500">
                             <span>Usuario: <strong className="text-slate-700">{item.usuario || "Sistema"}</strong></span>
                             {item.idRegistro ? <span>ID #{item.idRegistro}</span> : null}

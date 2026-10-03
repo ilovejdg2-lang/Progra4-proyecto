@@ -41,7 +41,6 @@ import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
 import { asegurarCamposEnEspanol, camposParaVistaAdmin } from "../../../lib/traducir";
 import { useIdioma } from "../../../lib/useIdioma";
-
 const TEXTO_CAMPOS = ["eyebrow", "title", "description"];
 const FOTO_CAMPOS = ["title", "categoria"];
 const FOTO_CAMPOS_VISTA_EN = ["title"];

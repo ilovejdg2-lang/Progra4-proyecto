@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 import { Calendar } from "@/Components/ui/calendar";
+import { SelectFiltro } from "../../Components/ui/SelectFiltro";
 import PageLoading from "../../Components/PageLoading/PageLoading";
 import AvisoSedeFinca from "../../Components/AvisoSedeFinca/AvisoSedeFinca";
 import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
@@ -588,7 +589,7 @@ export default function SolicitarVisita() {
               >
                 <div className="form-grid">
                   <Field label="Tipo de identificación *">
-                    <select
+                    <SelectFiltro
                       name="encargadoTipoIdentificacion"
                       value={tipoDocumento}
                       onChange={update}
@@ -596,11 +597,11 @@ export default function SolicitarVisita() {
                       {TIPOS_IDENTIFICACION.map((tipo) => (
                         <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
                       ))}
-                    </select>
+                    </SelectFiltro>
                   </Field>
                   {esPasaporte ? (
                     <Field label="País de origen *">
-                      <select
+                      <SelectFiltro
                         name="encargadoNacionalidad"
                         value={form.encargadoNacionalidad}
                         onChange={update}
@@ -609,7 +610,7 @@ export default function SolicitarVisita() {
                         {opcionesPais.map((pais) => (
                           <option key={pais.value} value={pais.value}>{pais.label}</option>
                         ))}
-                      </select>
+                      </SelectFiltro>
                     </Field>
                   ) : null}
                   <Field label="Identificación *">
@@ -689,10 +690,10 @@ export default function SolicitarVisita() {
               >
                 <div className="form-grid">
                   <Field label="Tipo de visitante *">
-                    <select name="tipoVisitante" value={form.tipoVisitante} onChange={update}>
+                    <SelectFiltro name="tipoVisitante" value={form.tipoVisitante} onChange={update}>
                       <option value="Nacional">Nacional</option>
                       <option value="Internacional">Internacional</option>
-                    </select>
+                    </SelectFiltro>
                   </Field>
 
                   {form.tipoVisitante === "Internacional" ? (
@@ -725,17 +726,17 @@ export default function SolicitarVisita() {
                   ) : (
                     <>
                       <Field label="Provincia *">
-                        <select name="provincia" value={form.provincia} onChange={update}>
+                        <SelectFiltro name="provincia" value={form.provincia} onChange={update}>
                           <option value="">Seleccioná una provincia</option>
                           {PROVINCIAS_CR.map((prov) => (
                             <option key={prov} value={prov}>
                               {prov}
                             </option>
                           ))}
-                        </select>
+                        </SelectFiltro>
                       </Field>
                       <Field label="Cantón *">
-                        <select
+                        <SelectFiltro
                           name="canton"
                           value={form.canton}
                           onChange={update}
@@ -749,7 +750,7 @@ export default function SolicitarVisita() {
                               {can}
                             </option>
                           ))}
-                        </select>
+                        </SelectFiltro>
                       </Field>
                     </>
                   )}

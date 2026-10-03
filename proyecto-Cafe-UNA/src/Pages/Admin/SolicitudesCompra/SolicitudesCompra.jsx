@@ -39,6 +39,7 @@ import { ContadorPalabras } from "../../../Components/Admin/ui/CampoLimitePalabr
 import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { conLimitePalabras, MAX_PALABRAS_NOTAS } from "../../../lib/formLimits";
 import { ST } from "../../../Components/T/ST";
+import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
 import { asegurarCamposEnEspanol } from "../../../lib/traducir";
@@ -204,9 +205,8 @@ function SolicitudFormModal({
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700">
             <ST>Proveedor</ST>
-            <select
+            <SelectFiltro
               name="proveedorId"
-              className={fieldClass}
               value={proveedorId}
               onChange={(e) => setProveedorId(e.target.value)}
               required
@@ -215,7 +215,7 @@ function SolicitudFormModal({
               {proveedores.map((p) => (
                 <option key={p.id} value={p.id}>{t(p.nombre)}</option>
               ))}
-            </select>
+            </SelectFiltro>
           </label>
 
           <div className="flex flex-wrap gap-2">
@@ -253,9 +253,8 @@ function SolicitudFormModal({
             </div>
             {filas.map((fila, index) => (
               <div key={`fila-${index}`} className="grid gap-2 sm:grid-cols-[1fr_8rem_auto]">
-                <select
+                <SelectFiltro
                   name={index === 0 ? "productoId" : undefined}
-                  className={fieldClass}
                   value={fila.productoId}
                   onChange={(e) => setFila(index, "productoId", e.target.value)}
                 >
@@ -263,7 +262,7 @@ function SolicitudFormModal({
                   {productos.map((p) => (
                     <option key={p.id} value={p.id}>{t(p.nombre)}</option>
                   ))}
-                </select>
+                </SelectFiltro>
                 <NumericInput
                   name={index === 0 ? "cantidad" : undefined}
                   className={fieldClass}
