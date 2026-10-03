@@ -189,6 +189,63 @@ export async function eliminarFaqInicio(id) {
   return true;
 }
 
+export async function obtenerEquipo() {
+  return cache.get("equipo", () =>
+    domainRequest(`${BASE_URL}/equipo`).then((data) => (Array.isArray(data) ? data : [])),
+  );
+}
+
+export async function crearMiembroEquipo(miembro) {
+  const result = await domainRequest(`${BASE_URL}/equipo`, {
+    method: "POST",
+    data: miembro,
+  });
+  clearInfoCache();
+  return result;
+}
+
+export async function actualizarMiembroEquipo(id, cambios) {
+  const result = await domainRequest(`${BASE_URL}/equipo/${id}`, {
+    method: "PUT",
+    data: cambios,
+  });
+  clearInfoCache();
+  return result;
+}
+
+export async function eliminarMiembroEquipo(id) {
+  await domainRequest(`${BASE_URL}/equipo/${id}`, {
+    method: "DELETE",
+  });
+  clearInfoCache();
+  return true;
+}
+
+export async function subirImagenInformacion(archivo) {
+  const form = new FormData();
+  form.append("imagen", archivo);
+  const resultado = await domainRequest(`${BASE_URL}/imagenes`, {
+    method: "POST",
+    body: form,
+  });
+  const url = String(resultado?.url ?? resultado?.Url ?? "").trim();
+  if (!url) throw new Error("No se pudo subir la imagen.");
+  return url;
+}
+
+export async function obtenerHistoriaCompleta() {
+  return cache.get("historia-completa", () => domainRequest(`${BASE_URL}/historia-completa`));
+}
+
+export async function actualizarHistoriaCompleta(contenido) {
+  const result = await domainRequest(`${BASE_URL}/historia-completa`, {
+    method: "PUT",
+    data: contenido,
+  });
+  clearInfoCache();
+  return result;
+}
+
 export async function obtenerTarjetasInicio() {
   return cache.get("tarjetas-inicio", () =>
     domainRequest(`${BASE_URL}/tarjetas-inicio`).then((data) => (Array.isArray(data) ? data : [])),
@@ -213,6 +270,7 @@ export async function obtenerInformacionSobreNosotros() {
       mission: bulk?.mission ?? {},
       vision: bulk?.vision ?? {},
       gallery: Array.isArray(bulk?.gallery) ? bulk.gallery : [],
+      equipo: Array.isArray(bulk?.equipo) ? bulk.equipo : [],
     };
   });
 }

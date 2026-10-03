@@ -26,6 +26,9 @@ vi.mock("../../services/informacionService", () => ({
   obtenerNavbar: vi.fn().mockResolvedValue({ logoUrl: "", logoClaroUrl: "" }),
 }));
 vi.mock("../../lib/brandLogoCache", () => ({
+  LOGO_CLARO_FALLBACK: "/logoblancoyrojo.png",
+  LOGO_OSCURO_FALLBACK: "/logo.webp",
+  cacheBrandLogos: vi.fn(),
   readBrandLogos: () => ({ logoUrl: "", logoClaroUrl: "" }),
 }));
 vi.mock("../../lib/adminTheme", () => ({
@@ -59,7 +62,8 @@ describe("AppSidebar", () => {
         getItem: vi.fn((key) =>
           key === "admin-sidebar-voluntariado-open" ||
           key === "admin-sidebar-visitas-open" ||
-          key === "admin-sidebar-donaciones-open"
+          key === "admin-sidebar-donaciones-open" ||
+          key === "admin-sidebar-mi-cuenta-open"
             ? "true"
             : null,
         ),

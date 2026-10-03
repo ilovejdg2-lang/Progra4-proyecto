@@ -38,6 +38,7 @@ import { AdminLayout } from "../layouts/AdminLayout";
 import { createPortal } from "react-dom";
 import PageLoading from "../../../Components/PageLoading/PageLoading";
 import { UiSelect } from "../../../Components/ui/Select";
+import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import {
   actualizarDocumentoAdmin,
@@ -1013,7 +1014,7 @@ export default function AdminDocumentos() {
                     <label htmlFor="doc-form-cat">
                       <ST>Categoría principal</ST> <span className="campo-requerido">*</span>
                     </label>
-                    <select
+                    <SelectFiltro
                       id="doc-form-cat"
                       required
                       value={formDoc.categoria}
@@ -1037,14 +1038,14 @@ export default function AdminDocumentos() {
                             </option>
                           );
                         })}
-                    </select>
+                    </SelectFiltro>
                   </div>
 
                   <div className="campo-grupo">
                     <label htmlFor="doc-form-subcat">
                       <ST>Subcategoría (opcional)</ST>
                     </label>
-                    <select
+                    <SelectFiltro
                       id="doc-form-subcat"
                       value={formDoc.subcategoria}
                       disabled={!subcategoriasDisponibles.length}
@@ -1060,7 +1061,7 @@ export default function AdminDocumentos() {
                           </option>
                         );
                       })}
-                    </select>
+                    </SelectFiltro>
                   </div>
 
                   <div className="campo-grupo columna-completa">
@@ -1234,7 +1235,7 @@ export default function AdminDocumentos() {
                 <label htmlFor="cat-padre">
                   <ST>Categoría Padre (dejar vacío para raíz)</ST>
                 </label>
-                <select
+                <SelectFiltro
                   id="cat-padre"
                   value={catPadre}
                   onChange={(e) => setCatPadre(e.target.value)}
@@ -1251,7 +1252,7 @@ export default function AdminDocumentos() {
                         </option>
                       );
                     })}
-                </select>
+                </SelectFiltro>
               </div>
 
               {errorCat ? (

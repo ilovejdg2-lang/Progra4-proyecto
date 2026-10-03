@@ -4,6 +4,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { PointOfSaleCards } from "./PointOfSaleCards";
 
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, className }) => <a className={className}>{children}</a>,
+}));
+
 const locations = [
   { code: "POS_FUNA_UNA", name: "FUNA-UNA", activo: true },
   { code: "POS_EDITORIAL", name: "Editorial", activo: false },

@@ -326,6 +326,10 @@ button.product-detail-page__thumb,
   color: #1c1614;
 }
 
+.product-detail-page__horario-dia {
+  text-transform: capitalize;
+}
+
 .product-detail-page__pos strong {
   font-weight: 800;
   white-space: nowrap;

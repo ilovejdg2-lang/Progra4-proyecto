@@ -26,7 +26,7 @@ function seccionDesdePath(pathname) {
 const TITULOS = {
   horarios: {
     title: "Horarios",
-    lead: "Fechas y horas para recibir grupos de visitas o voluntariado.",
+    lead: "Días y horas en que se puede llegar a comprar productos.",
   },
   permisos: {
     title: "Permisos",

@@ -3,8 +3,7 @@ import { format, startOfDay, getDay } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
-import { CalendarClock, SlidersHorizontal, X } from "lucide-react";
-import { UiSelect } from "../../../Components/ui/Select";
+import { CalendarClock } from "lucide-react";
 import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { useIdioma } from "../../../lib/useIdioma";
@@ -25,11 +24,7 @@ const btnPrimario =
 const btnSecundario =
   "inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50";
 
-const TIPOS_FILTRO = [
-  { value: "todos", label: "Todos" },
-  { value: "visitas", label: "Visitas" },
-  { value: "voluntariado", label: "Voluntariado" },
-];
+const TIPO_HORARIO = "compras";
 
 function isoDate(d) {
   return format(d, "yyyy-MM-dd");
@@ -67,13 +62,8 @@ function esFinDeSemanaDate(d) {
   return day === 0 || day === 6;
 }
 
-function tiposAGuardar(filtroTipo) {
-  if (filtroTipo === "todos") return ["visitas", "voluntariado"];
-  return [filtroTipo];
-}
-
 /**
- * Calendario grande: lun–vie 8–5 por defecto.
+ * Días en que se puede llegar a comprar productos: lun–vie 8–5 por defecto.
  * SuperAdmin marca excepciones (cerrado / horario especial).
  * Sábados y domingos no aparecen.
  */
@@ -81,7 +71,6 @@ export function HorariosCalendario({ onMessage, onError }) {
   const { idioma } = useIdioma();
   const localeFecha = idioma === "en" ? enUS : es;
   const hoy = useMemo(() => startOfDay(new Date()), []);
-  const [filtroTipo, setFiltroTipo] = useState("todos");
   const [reglas, setReglas] = useState({
     horaApertura: "08:00",
     horaCierre: "17:00",
@@ -103,8 +92,6 @@ export function HorariosCalendario({ onMessage, onError }) {
   const tElegirDia = useTraducir("Elegí un día hábil en el calendario");
   const tCerrado = useTraducir("Cerrado / no disponible");
   const tMensajeReglas = useTraducir(reglas.mensaje || "");
-
-  const tiposFiltroUi = TIPOS_FILTRO.map((op) => ({ ...op, label: t(op.label) }));
 
   /** Una entrada por fecha (si hay varias por tipo, prioriza cerrado > especial). */
   const excepcionPorFecha = useMemo(() => {
@@ -146,8 +133,7 @@ export function HorariosCalendario({ onMessage, onError }) {
   const cargar = async () => {
     setCargando(true);
     try {
-      const tipoApi = filtroTipo === "todos" ? undefined : filtroTipo;
-      const data = await listarDisponibilidad(tipoApi);
+      const data = await listarDisponibilidad(TIPO_HORARIO);
       setReglas(data.reglas || reglas);
       setExcepciones(data.excepciones || []);
     } catch (err) {
@@ -160,7 +146,7 @@ export function HorariosCalendario({ onMessage, onError }) {
   useEffect(() => {
     void cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtroTipo]);
+  }, []);
 
   useEffect(() => {
     if (!fechaSel) return;
@@ -215,40 +201,23 @@ export function HorariosCalendario({ onMessage, onError }) {
       return;
     }
 
-    const tipos = tiposAGuardar(filtroTipo);
     setGuardando(true);
     onError?.("");
     setErrorHoras("");
     try {
       if (modo === "normal") {
-        for (const tipoGuarda of tipos) {
-          await eliminarExcepcionPorFecha(tipoGuarda, fecha);
-        }
-        onMessage?.(
-          t(
-            filtroTipo === "todos"
-              ? "Día restaurado al horario normal (visitas y voluntariado)."
-              : "Día restaurado al horario normal (8:00 a. m. – 5:00 p. m.).",
-          ),
-        );
+        await eliminarExcepcionPorFecha(TIPO_HORARIO, fecha);
+        onMessage?.(t("Día restaurado al horario normal de compras (8:00 a. m. – 5:00 p. m.)."));
       } else if (modo === "cerrado") {
-        for (const tipoGuarda of tipos) {
-          await guardarExcepcionHorario({
-            tipo: tipoGuarda,
-            fecha,
-            disponible: false,
-            horaInicio: "",
-            horaFin: "",
-            nota: "",
-          });
-        }
-        onMessage?.(
-          t(
-            filtroTipo === "todos"
-              ? "Día marcado como no disponible para visitas y voluntariado."
-              : "Día marcado como no disponible.",
-          ),
-        );
+        await guardarExcepcionHorario({
+          tipo: TIPO_HORARIO,
+          fecha,
+          disponible: false,
+          horaInicio: "",
+          horaFin: "",
+          nota: "",
+        });
+        onMessage?.(t("Día marcado como no disponible para comprar."));
       } else {
         const desde = normalizarHoraUi(horaInicio);
         const hasta = normalizarHoraUi(horaFin);
@@ -275,16 +244,14 @@ export function HorariosCalendario({ onMessage, onError }) {
           setGuardando(false);
           return;
         }
-        for (const tipoGuarda of tipos) {
-          await guardarExcepcionHorario({
-            tipo: tipoGuarda,
-            fecha,
-            disponible: true,
-            horaInicio: desde,
-            horaFin: hasta,
-            nota: "",
-          });
-        }
+        await guardarExcepcionHorario({
+          tipo: TIPO_HORARIO,
+          fecha,
+          disponible: true,
+          horaInicio: desde,
+          horaFin: hasta,
+          nota: "",
+        });
         onMessage?.(t(`Horario especial guardado: ${desde} – ${hasta}.`));
       }
       await cargar();
@@ -336,40 +303,8 @@ export function HorariosCalendario({ onMessage, onError }) {
         <div className="flex items-center gap-2">
           <CalendarClock className="size-5 text-slate-700" />
           <h2 className="text-[length:var(--text-subtitle)] font-bold text-slate-950">
-            <ST>Calendario de disponibilidad</ST>
+            <ST>Días para comprar productos</ST>
           </h2>
-        </div>
-
-        <div className="flex min-w-0 flex-wrap items-center gap-3">
-          <span className="inline-flex shrink-0 items-center gap-2 text-[length:var(--text-subtitle)] font-semibold text-slate-700">
-            <SlidersHorizontal className="size-5" aria-hidden />
-            <ST>Tipo</ST>
-          </span>
-          <div className="w-full min-w-[14rem] sm:w-[20rem]">
-            <UiSelect
-              ariaLabel={t("Tipo de disponibilidad")}
-              value={filtroTipo}
-              onChange={(v) => {
-                setFiltroTipo(v);
-                setFechaSel(null);
-              }}
-              options={tiposFiltroUi}
-              className="horarios-filtro-tipo"
-            />
-          </div>
-          {filtroTipo !== "todos" ? (
-            <button
-              type="button"
-              onClick={() => {
-                setFiltroTipo("todos");
-                setFechaSel(null);
-              }}
-              className="inline-flex min-h-[var(--control-height)] items-center gap-1 rounded-full border border-slate-200 bg-white px-3 text-[length:var(--text-body)] font-semibold text-slate-600 hover:bg-slate-50"
-            >
-              <X className="size-3.5" aria-hidden />
-              <ST>Limpiar</ST>
-            </button>
-          ) : null}
         </div>
       </div>
 
@@ -548,14 +483,6 @@ export function HorariosCalendario({ onMessage, onError }) {
       </div>
 
       <style>{`
-        .horarios-filtro-tipo .ui-select__trigger {
-          font-weight: 600;
-          padding-left: 1.1rem;
-          padding-right: 1.1rem;
-        }
-        .horarios-filtro-tipo .ui-select__value {
-          font-size: var(--text-body);
-        }
         .calendar-horarios-admin {
           --rdp-accent-color: #0f172a;
           --rdp-accent-background-color: #e2e8f0;

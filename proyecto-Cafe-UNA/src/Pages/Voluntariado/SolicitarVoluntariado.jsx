@@ -56,6 +56,7 @@ import {
   validarIdentificacion,
 } from "../../lib/identificacionPersona";
 import { ST } from "../../Components/T/ST";
+import { SelectFiltro } from "../../Components/ui/SelectFiltro";
 import "./SolicitarVoluntariado.css";
 
 function SectionCard({ icon: Icon, paso, title, hint, children }) {
@@ -861,7 +862,7 @@ function SolicitarVoluntariado() {
                       <label htmlFor="voluntariado-tipo-documento">
                         {tTipoDocumento}<span className="req">*</span>
                       </label>
-                      <select
+                      <SelectFiltro
                         id="voluntariado-tipo-documento"
                         name="tipoDocumento"
                         value={tipoDocumento}
@@ -870,7 +871,7 @@ function SolicitarVoluntariado() {
                         <option value="cedula">{tCedula}</option>
                         <option value="dimex">{tDimex}</option>
                         <option value="pasaporte">{tPasaporte}</option>
-                      </select>
+                      </SelectFiltro>
                     </div>
 
                     {esPasaporte ? (
@@ -878,7 +879,7 @@ function SolicitarVoluntariado() {
                         <label htmlFor="voluntariado-nacionalidad">
                           {tPaisOrigen}<span className="req">*</span>
                         </label>
-                        <select
+                        <SelectFiltro
                           id="voluntariado-nacionalidad"
                           name="nacionalidad"
                           value={formulario.nacionalidad}
@@ -888,7 +889,7 @@ function SolicitarVoluntariado() {
                           {opcionesPais.map((pais) => (
                             <option key={pais.value} value={pais.value}>{pais.label}</option>
                           ))}
-                        </select>
+                        </SelectFiltro>
                         {errores.nacionalidad && (
                           <span className="mensaje-error"><ST>{errores.nacionalidad}</ST></span>
                         )}

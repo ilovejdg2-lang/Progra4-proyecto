@@ -54,6 +54,11 @@ vi.mock("../../services/cedulaService", () => ({
 
 import SolicitarVisita from "./SolicitarVisita";
 
+function elegirOpcion(etiqueta, opcion) {
+  fireEvent.click(screen.getByLabelText(etiqueta));
+  fireEvent.pointerDown(screen.getByRole("option", { name: opcion }));
+}
+
 describe("SolicitarVisita", () => {
   beforeEach(() => {
     mockSessionUser = { id: 7, email: "test@ejemplo.com", roles: ["Cliente"] };
@@ -99,8 +104,8 @@ describe("SolicitarVisita", () => {
     fireEvent.change(screen.getByLabelText(/^teléfono/i), { target: { value: "8888-7777" } });
 
     // Nacional geographic selectors
-    fireEvent.change(screen.getByLabelText(/^provincia \*/i), { target: { value: "Heredia" } });
-    fireEvent.change(screen.getByLabelText(/^cantón \*/i), { target: { value: "Barva" } });
+    elegirOpcion(/^provincia \*/i, "Heredia");
+    elegirOpcion(/^cantón \*/i, "Barva");
 
     fireEvent.change(screen.getByLabelText(/cantidad de visitantes/i), { target: { value: "4" } });
     fireEvent.change(screen.getByLabelText(/tipo de grupo/i), { target: { value: "Universidad" } });
@@ -205,7 +210,7 @@ describe("SolicitarVisita", () => {
 
     render(<SolicitarVisita />);
 
-    fireEvent.change(screen.getByLabelText(/tipo de identificación/i), { target: { value: "dimex" } });
+    elegirOpcion(/tipo de identificación/i, "DIMEX");
     fireEvent.change(screen.getByLabelText(/^identificación/i), { target: { value: "155812345678" } });
 
     await waitFor(() => expect(consultarCedulaMock).toHaveBeenCalledWith("155812345678"));
@@ -216,16 +221,14 @@ describe("SolicitarVisita", () => {
     crearSolicitudVisitaMock.mockResolvedValueOnce({ id: "99", estado: "Pendiente" });
     render(<SolicitarVisita />);
 
-    fireEvent.change(screen.getByLabelText(/tipo de visitante/i), {
-      target: { value: "Internacional" },
-    });
+    elegirOpcion(/tipo de visitante/i, "Internacional");
 
     expect(screen.getByLabelText(/país de procedencia \*/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/provincia o estado \*/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/ciudad \*/i)).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(/tipo de identificación/i), { target: { value: "pasaporte" } });
-    fireEvent.change(screen.getByLabelText(/país de origen/i), { target: { value: "US" } });
+    elegirOpcion(/tipo de identificación/i, "Pasaporte");
+    elegirOpcion(/país de origen/i, /^estados unidos$/i);
     fireEvent.change(screen.getByLabelText(/^identificación/i), { target: { value: "passport-123" } });
     fireEvent.change(screen.getByLabelText(/^nombre \*/i), { target: { value: "John" } });
     fireEvent.change(screen.getByLabelText(/^primer apellido/i), { target: { value: "Doe" } });

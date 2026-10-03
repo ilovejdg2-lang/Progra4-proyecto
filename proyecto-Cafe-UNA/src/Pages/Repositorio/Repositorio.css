@@ -1018,16 +1018,8 @@
   color: #64748b;
 }
 
-.biblio-toolbar__select {
-  padding: 0.35rem 0.6rem;
-  font-size: 0.8rem;
-  border: 1px solid var(--biblio-border-input);
-  border-radius: 7px;
-  background: #ffffff;
-  color: #0f172a;
-  font-weight: 500;
-  outline: none;
-  cursor: pointer;
+.ui-select.biblio-toolbar__select {
+  width: 13rem;
 }
 
 .biblio-toolbar__view-toggle {

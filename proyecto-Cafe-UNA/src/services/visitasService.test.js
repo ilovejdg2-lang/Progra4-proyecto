@@ -95,8 +95,15 @@ describe("visitasService", () => {
       fecha: "2099-05-01",
       horaInicio: "08:00:00",
       horaFin: "09:00:00",
+      horaInicioFormato: "8:00 AM",
+      horaFinFormato: "9:00 AM",
+      franja: "8:00 AM - 9:00 AM",
       habilitada: true,
       nota: "Llegar 10 minutos antes",
+      capacidadMaxima: 30,
+      cupoOcupado: 0,
+      cupoRestante: 30,
+      agotada: false,
     });
     expect(normalizarDisponibilidadVisita({})).toBeNull();
 

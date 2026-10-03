@@ -4,6 +4,7 @@ import { ArrowLeft, Eye, X } from "lucide-react";
 
 import { AdminModal, AdminModalBody, AdminModalHeader } from "../../Components/Admin/ui/AdminModal";
 import { AdminPaginacion } from "../../Components/Admin/ui/AdminPaginacion";
+import { ComprobantePago } from "../../Components/ComprobantePago/ComprobantePago";
 import { NumericInput } from "../../Components/NumericInput/NumericInput";
 import { PerfilClienteLayout } from "../../Components/Perfil/PerfilClienteLayout";
 import { PublicPageGate } from "../../Components/PublicPageGate/PublicPageGate";
@@ -16,12 +17,7 @@ import { obtenerCompraPorId, obtenerMisCompras } from "../../services/comprasSer
 import { obtenerFooter } from "../../services/informacionService";
 import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
 
-export const RUTA_COMPRAS_CLIENTE = "/perfil/compras";
-export const RUTA_COMPRAS_ADMIN = "/admin/mis-compras";
-
-export function rutaMisCompras(user) {
-  return user?.role === "admin" ? RUTA_COMPRAS_ADMIN : RUTA_COMPRAS_CLIENTE;
-}
+import { RUTA_COMPRAS_ADMIN, RUTA_COMPRAS_CLIENTE } from "./rutasCompras";
 
 function formatCRC(value) {
   return new Intl.NumberFormat("es-CR", {
@@ -132,7 +128,7 @@ function RastreoPedido({ estado, correoContacto = "", telefonoContacto = "" }) {
 
   return (
     <div
-      className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3"
+      className="mt-4 border-y border-slate-100 py-3"
       aria-label="Rastreo del pedido"
     >
       <p className="mb-3 text-[var(--text-body)] font-semibold text-slate-800">
@@ -345,6 +341,7 @@ export function HistorialComprasContent({ variant = "standalone" }) {
   }, [userId, puedeVer, page, filtros]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga de datos al cambiar filtros
     load();
   }, [load]);
 
@@ -645,9 +642,9 @@ export function HistorialComprasContent({ variant = "standalone" }) {
                 correoContacto={correoContacto}
                 telefonoContacto={telefonoContacto}
               />
-              <ul className="mt-4 space-y-2 text-[var(--text-body)]">
+              <ul className="mt-4 text-[var(--text-body)]">
                 {(detalle.items || []).map((item, index) => (
-                  <li key={`${item.nombre}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+                  <li key={`${item.nombre}-${index}`} className="border-b border-slate-100 py-2">
                     <div className="flex justify-between gap-3">
                       <span className="font-medium">{item.nombre}</span>
                       <span className="font-semibold">{formatCRC(item.subtotal)}</span>
@@ -672,6 +669,7 @@ export function HistorialComprasContent({ variant = "standalone" }) {
                   <dd>{formatCRC(detalle.total)}</dd>
                 </div>
               </dl>
+              <ComprobantePago compraId={detalle.id} tieneComprobante={detalle.tieneComprobante} />
             </AdminModalBody>
           </AdminModal>
         ) : null}

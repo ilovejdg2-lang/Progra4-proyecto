@@ -19,6 +19,7 @@ vi.mock("../../Components/Admin/ui/AdminModal", () => ({
   AdminModalHeader: ({ children }) => <div>{children}</div>,
 }));
 vi.mock("../../Components/NumericInput/NumericInput", () => ({
+  // eslint-disable-next-line no-unused-vars -- se descarta para no pasarlo al <input>
   NumericInput: ({ decimal: _decimal, ...props }) => <input {...props} />,
 }));
 vi.mock("../../Components/PublicPageGate/PublicPageGate", () => ({ PublicPageGate: ({ children }) => children }));

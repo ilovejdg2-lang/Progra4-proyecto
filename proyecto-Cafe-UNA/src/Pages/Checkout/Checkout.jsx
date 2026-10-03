@@ -17,7 +17,7 @@ import { getActiveSessionUser } from '../../services/sessionService';
 import { marcarIntentRegistroCliente, puedeComprar } from '../../services/authService';
 import { clearCart, getStoredCart } from '../../lib/cartStorage';
 import { confirmarCompraEnBackend, validarComprobante } from './checkoutValidation';
-import { rutaMisCompras } from '../HistorialCompras/HistorialComprasCliente';
+import { rutaMisCompras } from '../HistorialCompras/rutasCompras';
 
 const formatCRC = (amount) => {
   const value = Number.isFinite(amount) ? amount : 0;
