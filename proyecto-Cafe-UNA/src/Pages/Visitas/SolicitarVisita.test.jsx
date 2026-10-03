@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const crearSolicitudVisitaMock = vi.fn();
 const obtenerDisponibilidadMock = vi.fn();
+const obtenerFranjasMock = vi.fn();
 const consultarCedulaMock = vi.fn();
 const navigateMock = vi.fn();
 
@@ -33,6 +34,18 @@ vi.mock("../../services/sessionService", () => ({
 vi.mock("../../services/visitasService", () => ({
   crearSolicitudVisita: (...args) => crearSolicitudVisitaMock(...args),
   obtenerDisponibilidadVisitasPublica: (...args) => obtenerDisponibilidadMock(...args),
+  obtenerFranjasHorariasPorFecha: (...args) => obtenerFranjasMock(...args),
+  obtenerUrlInstructivoPdf: () => "/visitas/solicitudes/instructivo-pdf",
+  formatearHora12: (hora) => {
+    if (!hora) return "--:--";
+    const [hhStr, mmStr] = String(hora).split(":");
+    let h = parseInt(hhStr, 10);
+    const m = mmStr || "00";
+    if (isNaN(h)) return hora;
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+    return `${h}:${m} ${ampm}`;
+  },
 }));
 
 vi.mock("../../services/cedulaService", () => ({
@@ -53,8 +66,12 @@ describe("SolicitarVisita", () => {
         horaFin: "10:00:00",
         habilitada: true,
         nota: "Llegar 10 minutos antes",
+        capacidadMaxima: 30,
+        cupoRestante: 26,
+        agotada: false,
       },
     ]);
+    obtenerFranjasMock.mockReset().mockResolvedValue([]);
     consultarCedulaMock.mockReset();
     navigateMock.mockReset();
     sessionStorage.clear();
@@ -239,5 +256,66 @@ describe("SolicitarVisita", () => {
         ciudadProvincia: "California, San Francisco",
       }),
     );
+  });
+
+  it("renders recommendations card, opens modal, and provides PDF download button", async () => {
+    render(<SolicitarVisita />);
+
+    expect(screen.getByText(/recomendaciones para la visita/i)).toBeInTheDocument();
+    expect(screen.getByText(/calzado cerrado obligatorio/i)).toBeInTheDocument();
+    expect(screen.getByText(/hidratación continua/i)).toBeInTheDocument();
+    expect(screen.getByText(/vestimenta y protección/i)).toBeInTheDocument();
+    expect(screen.getByText(/zonas de parqueo/i)).toBeInTheDocument();
+
+    const pdfLink = screen.getByRole("link", { name: /descargar instructivo en pdf/i });
+    expect(pdfLink).toHaveAttribute("href", "/visitas/solicitudes/instructivo-pdf");
+
+    const modalButton = screen.getByRole("button", { name: /ver recomendaciones detalladas/i });
+    fireEvent.click(modalButton);
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText(/instructivo de recomendaciones y seguridad/i)).toBeInTheDocument();
+
+    const closeButton = screen.getByRole("button", { name: /entendido, cerrar/i });
+    fireEvent.click(closeButton);
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  it("displays remaining capacity per slot and disables exhausted slots", async () => {
+    obtenerDisponibilidadMock.mockResolvedValueOnce([
+      {
+        id: "slot-disponible",
+        fecha: "2099-12-31",
+        horaInicio: "09:00:00",
+        horaFin: "10:00:00",
+        habilitada: true,
+        capacidadMaxima: 30,
+        cupoRestante: 12,
+        agotada: false,
+      },
+      {
+        id: "slot-agotado",
+        fecha: "2099-12-31",
+        horaInicio: "10:30:00",
+        horaFin: "11:30:00",
+        habilitada: true,
+        capacidadMaxima: 30,
+        cupoRestante: 0,
+        agotada: true,
+      },
+    ]);
+
+    render(<SolicitarVisita />);
+
+    const disponibleRadio = await screen.findByRole("radio", { name: /09:00/i });
+    expect(disponibleRadio).not.toBeDisabled();
+    expect(screen.getByText(/12 cupos disponibles/i)).toBeInTheDocument();
+
+    const agotadoRadio = screen.getByRole("radio", { name: /10:30/i });
+    expect(agotadoRadio).toBeDisabled();
+    expect(screen.getByText(/cupo agotado/i)).toBeInTheDocument();
   });
 });

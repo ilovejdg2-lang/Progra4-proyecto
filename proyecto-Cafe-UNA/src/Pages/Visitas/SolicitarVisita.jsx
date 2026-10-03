@@ -3,15 +3,25 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { format, isBefore, startOfDay } from "date-fns";
 import { es } from "date-fns/locale";
 import {
+  AlertTriangle,
+  Bug,
   CalendarCheck2,
   CalendarDays,
   CalendarX2,
+  Car,
   CheckCircle2,
   ClipboardList,
   Clock,
+  Download,
+  Droplets,
+  FileDown,
+  Footprints,
+  Info,
   Lock,
+  ShieldCheck,
   UserRound,
   Users,
+  X,
 } from "lucide-react";
 
 import { Calendar } from "@/Components/ui/calendar";
@@ -34,7 +44,10 @@ import { obtenerSeccion } from "../../services/informacionService";
 import { getActiveSessionUser } from "../../services/sessionService";
 import {
   crearSolicitudVisita,
+  formatearHora12,
   obtenerDisponibilidadVisitasPublica,
+  obtenerFranjasHorariasPorFecha,
+  obtenerUrlInstructivoPdf,
 } from "../../services/visitasService";
 import "../Voluntariado/SolicitarVoluntariado.css";
 
@@ -193,15 +206,81 @@ export default function SolicitarVisita() {
     [fechasHabilitadasMap],
   );
 
+  const [modalRecomendacionesAbierto, setModalRecomendacionesAbierto] = useState(false);
+  const [franjasFecha, setFranjasFecha] = useState([]);
+  const [cargandoFranjas, setCargandoFranjas] = useState(false);
+
+  const urlInstructivoPdf = useMemo(() => {
+    try {
+      if (typeof obtenerUrlInstructivoPdf === "function") {
+        return obtenerUrlInstructivoPdf();
+      }
+    } catch {
+      // fallback
+    }
+    return "/visitas/solicitudes/instructivo-pdf";
+  }, []);
+
+  // Consulta dinámica de franjas y aforo en tiempo real al seleccionar fecha
+  useEffect(() => {
+    if (!fechaSeleccionada) {
+      setFranjasFecha([]);
+      return;
+    }
+    const iso = format(fechaSeleccionada, "yyyy-MM-dd");
+    let active = true;
+    setCargandoFranjas(true);
+
+    if (typeof obtenerFranjasHorariasPorFecha === "function") {
+      obtenerFranjasHorariasPorFecha(iso)
+        .then((data) => {
+          if (!active) return;
+          setFranjasFecha(Array.isArray(data) ? data : []);
+        })
+        .catch(() => {
+          if (!active) return;
+          setFranjasFecha([]);
+        })
+        .finally(() => {
+          if (!active) return;
+          setCargandoFranjas(false);
+        });
+    } else {
+      setCargandoFranjas(false);
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [fechaSeleccionada]);
+
   const slotsParaFechaSeleccionada = useMemo(() => {
     if (!fechaSeleccionada) return [];
     const iso = format(fechaSeleccionada, "yyyy-MM-dd");
     return fechasHabilitadasMap.get(iso) || [];
   }, [fechaSeleccionada, fechasHabilitadasMap]);
 
+  const slotsActuales = useMemo(() => {
+    if (franjasFecha && franjasFecha.length > 0) return franjasFecha;
+    return slotsParaFechaSeleccionada;
+  }, [franjasFecha, slotsParaFechaSeleccionada]);
+
   const selectedSlot = useMemo(
-    () => availability.find((slot) => slot.id === form.disponibilidadVisitaId) || null,
-    [availability, form.disponibilidadVisitaId],
+    () =>
+      slotsActuales.find((slot) => slot.id === form.disponibilidadVisitaId) ||
+      availability.find((slot) => slot.id === form.disponibilidadVisitaId) ||
+      null,
+    [slotsActuales, availability, form.disponibilidadVisitaId],
+  );
+
+  const cantidadNum = Number(form.cantidadVisitantes) || 0;
+  const cupoRestanteSeleccionado =
+    selectedSlot?.cupoRestante ?? selectedSlot?.capacidadMaxima ?? 30;
+  const cupoExcedido = Boolean(
+    selectedSlot &&
+      selectedSlot.cupoRestante !== undefined &&
+      cantidadNum > 0 &&
+      cantidadNum > cupoRestanteSeleccionado,
   );
 
   const redirectToLogin = useCallback(() => {
@@ -418,6 +497,22 @@ export default function SolicitarVisita() {
       !form.motivoVisita.trim()
     ) {
       setError("Completá los campos obligatorios antes de enviar la solicitud.");
+      return;
+    }
+
+    if (selectedSlot && selectedSlot.agotada) {
+      setError("La franja horaria seleccionada se encuentra agotada. Por favor seleccioná otro horario.");
+      return;
+    }
+
+    if (
+      selectedSlot &&
+      selectedSlot.cupoRestante !== undefined &&
+      cantidadNum > cupoRestanteSeleccionado
+    ) {
+      setError(
+        `La cantidad de visitantes (${cantidadNum}) supera el cupo disponible (${cupoRestanteSeleccionado} personas) para este horario.`,
+      );
       return;
     }
 
@@ -767,10 +862,17 @@ export default function SolicitarVisita() {
                             Seleccioná una fecha en el calendario
                           </p>
                           <p className="voluntariado-aviso-bloque__texto text-slate-600">
-                            Al seleccionar un día habilitado, se cargarán los turnos u horarios disponibles para esa fecha.
+                            Al seleccionar un día habilitado, se consultarán y cargarán los turnos u horarios disponibles para esa fecha.
                           </p>
                         </div>
-                      ) : slotsParaFechaSeleccionada.length === 0 ? (
+                      ) : cargandoFranjas ? (
+                        <div className="voluntariado-aviso-bloque">
+                          <div className="size-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mb-2" />
+                          <p className="voluntariado-aviso-bloque__texto">
+                            Consultando bloques horarios y aforo disponible…
+                          </p>
+                        </div>
+                      ) : slotsActuales.length === 0 ? (
                         <div className="voluntariado-aviso-bloque">
                           <CalendarX2 className="voluntariado-aviso-bloque__icono size-8 text-amber-500" />
                           <p className="voluntariado-aviso-bloque__titulo text-amber-900">
@@ -790,23 +892,38 @@ export default function SolicitarVisita() {
                           </p>
 
                           <div className="opciones-disponibilidad-grid">
-                            {slotsParaFechaSeleccionada.map((slot) => {
+                            {slotsActuales.map((slot) => {
                               const esActivo = form.disponibilidadVisitaId === slot.id;
-                              const franja = `${slot.horaInicio.slice(0, 5)} – ${slot.horaFin.slice(0, 5)}`;
+                              const inicio12 =
+                                slot.horaInicioFormato ||
+                                (slot.horaInicio ? formatearHora12(slot.horaInicio) : "");
+                              const fin12 =
+                                slot.horaFinFormato ||
+                                (slot.horaFin ? formatearHora12(slot.horaFin) : "");
+                              const franja =
+                                slot.franja ||
+                                (inicio12 && fin12 ? `${inicio12} - ${fin12}` : "") ||
+                                `${slot.horaInicio?.slice(0, 5)} – ${slot.horaFin?.slice(0, 5)}`;
+                              const capacidadMaxima = slot.capacidadMaxima ?? 30;
+                              const cupoRestante = slot.cupoRestante ?? capacidadMaxima;
+                              const estaAgotada = Boolean(slot.agotada || cupoRestante <= 0);
+
                               return (
                                 <label
                                   key={slot.id}
                                   className={`opcion-disponibilidad-card ${
                                     esActivo ? "opcion-disponibilidad-card--activa" : ""
-                                  }`}
+                                  } ${estaAgotada ? "opcion-disponibilidad-card--agotada" : ""}`}
                                 >
                                   <input
                                     type="radio"
                                     name="disponibilidadVisitaId"
                                     value={slot.id}
                                     checked={esActivo}
-                                    aria-label={`Horario ${franja}`}
+                                    disabled={estaAgotada}
+                                    aria-label={`Horario ${slot.horaInicio?.slice(0, 5) || ""} ${franja}`}
                                     onChange={() => {
+                                      if (estaAgotada) return;
                                       setForm((prev) => ({
                                         ...prev,
                                         disponibilidadVisitaId: slot.id,
@@ -814,7 +931,7 @@ export default function SolicitarVisita() {
                                     }}
                                   />
                                   <div className="opcion-disponibilidad__header">
-                                    <span className="opcion-disponibilidad__titulo">
+                                    <span className="opcion-disponibilidad__titulo font-bold text-slate-950">
                                       {franja}
                                     </span>
                                     <span className="opcion-disponibilidad__radio-dot" />
@@ -823,6 +940,24 @@ export default function SolicitarVisita() {
                                     <Clock size={14} />
                                     {franja}
                                   </span>
+
+                                  {/* Badge de aforo y cupo restante */}
+                                  <div>
+                                    {estaAgotada ? (
+                                      <span className="opcion-disponibilidad__cupo-badge opcion-disponibilidad__cupo-badge--agotado">
+                                        Cupo agotado (0 cupos disponibles)
+                                      </span>
+                                    ) : cupoRestante <= 5 ? (
+                                      <span className="opcion-disponibilidad__cupo-badge opcion-disponibilidad__cupo-badge--bajo">
+                                        ¡Últimos {cupoRestante} cupos! (de {capacidadMaxima})
+                                      </span>
+                                    ) : (
+                                      <span className="opcion-disponibilidad__cupo-badge opcion-disponibilidad__cupo-badge--disponible">
+                                        {cupoRestante} cupos disponibles (de {capacidadMaxima})
+                                      </span>
+                                    )}
+                                  </div>
+
                                   {slot.nota ? (
                                     <span className="text-xs text-slate-500 mt-1 block">
                                       {slot.nota}
@@ -832,6 +967,15 @@ export default function SolicitarVisita() {
                               );
                             })}
                           </div>
+
+                          {cupoExcedido ? (
+                            <div className="mt-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900" role="alert">
+                              <AlertTriangle size={16} className="text-amber-600 shrink-0" />
+                              <span>
+                                Atención: La cantidad solicitada ({cantidadNum} personas) supera el cupo restante ({cupoRestanteSeleccionado} personas) de este horario.
+                              </span>
+                            </div>
+                          ) : null}
                         </div>
                       )}
                     </div>
@@ -856,14 +1000,199 @@ export default function SolicitarVisita() {
                     </label>
                   ))}
                 </fieldset>
-                <aside className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                  <p className="font-semibold text-slate-900">Recomendaciones para la visita</p>
-                  <ul className="mt-2 list-disc space-y-1 pl-5">
-                    <li>Usá vestimenta cómoda y apropiada para recorridos al aire libre.</li>
-                    <li>Llevá repelente si visitarán zonas con vegetación.</li>
-                    <li>Considerá protección solar e hidratación.</li>
-                  </ul>
-                </aside>
+
+                {/* Tarjeta de recomendaciones generales */}
+                <div className="tarjeta-recomendaciones my-2">
+                  <div className="tarjeta-recomendaciones__header">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="text-emerald-700" size={22} />
+                        <p className="font-bold text-slate-900 text-sm sm:text-base">
+                          Recomendaciones para la visita
+                        </p>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        Lineamientos obligatorios y sugerencias para un recorrido seguro en la finca experimental.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="tarjeta-recomendaciones__grid">
+                    <div className="recomendacion-item">
+                      <div className="recomendacion-item__icon-wrapper">
+                        <Footprints size={20} className="text-emerald-700" />
+                      </div>
+                      <div>
+                        <p className="recomendacion-item__titulo">Calzado cerrado obligatorio</p>
+                        <p className="recomendacion-item__desc">
+                          Uso indispensable de calzado cerrado o botas con suela antideslizante para caminar por senderos agrícolas.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="recomendacion-item">
+                      <div className="recomendacion-item__icon-wrapper">
+                        <Droplets size={20} className="text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="recomendacion-item__titulo">Hidratación continua</p>
+                        <p className="recomendacion-item__desc">
+                          Llevá botella o termo reutilizable con agua potable para el recorrido.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="recomendacion-item">
+                      <div className="recomendacion-item__icon-wrapper">
+                        <Bug size={20} className="text-amber-700" />
+                      </div>
+                      <div>
+                        <p className="recomendacion-item__titulo">Vestimenta y protección</p>
+                        <p className="recomendacion-item__desc">
+                          Usá vestimenta cómoda, repelente y protección solar para actividades en campo abierto.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="recomendacion-item">
+                      <div className="recomendacion-item__icon-wrapper">
+                        <Car size={20} className="text-slate-800" />
+                      </div>
+                      <div>
+                        <p className="recomendacion-item__titulo">Zonas de parqueo</p>
+                        <p className="recomendacion-item__desc">
+                          Estacionamiento vigilado para vehículos particulares y espacio reservado para buses o microbuses.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="tarjeta-recomendaciones__footer">
+                    <a
+                      href={urlInstructivoPdf}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-descargar-instructivo"
+                      download="instructivo_recomendaciones_visitas_cafe_una.pdf"
+                    >
+                      <Download size={16} aria-hidden="true" />
+                      Descargar instructivo en PDF
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => setModalRecomendacionesAbierto(true)}
+                      className="btn-modal-instructivo"
+                    >
+                      <Info size={16} aria-hidden="true" />
+                      Ver recomendaciones detalladas
+                    </button>
+                  </div>
+                </div>
+
+                {/* Modal interactivo con recomendaciones completas */}
+                {modalRecomendacionesAbierto && (
+                  <div
+                    className="modal-overlay-recomendaciones"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="modal-recomendaciones-titulo"
+                    onClick={() => setModalRecomendacionesAbierto(false)}
+                  >
+                    <div
+                      className="modal-content-recomendaciones"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="text-emerald-700" size={24} />
+                          <h3 id="modal-recomendaciones-titulo" className="text-lg font-bold text-slate-900">
+                            Instructivo de Recomendaciones y Seguridad
+                          </h3>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setModalRecomendacionesAbierto(false)}
+                          className="rounded-full p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                          aria-label="Cerrar ventana"
+                        >
+                          <X size={20} />
+                        </button>
+                      </div>
+
+                      <div className="space-y-4 text-sm text-slate-700">
+                        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-950">
+                          <p className="font-semibold text-xs uppercase tracking-wider text-emerald-800 mb-1">
+                            Finca Experimental Santa Lucía - Café UNA
+                          </p>
+                          <p className="text-xs">
+                            Para que tu experiencia sea memorable y segura, te solicitamos cumplir con las siguientes directrices durante la visita:
+                          </p>
+                        </div>
+
+                        <div>
+                          <h4 className="font-bold text-slate-900 flex items-center gap-2">
+                            <Footprints size={16} className="text-emerald-700" />
+                            1. Calzado cerrado obligatorio
+                          </h4>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                            Es indispensable utilizar tenis deportivas, botas de senderismo o botas con buen agarre. Por normativas de prevención, no se admiten sandalias ni calzado abierto en los senderos.
+                          </p>
+                        </div>
+
+                        <div>
+                          <h4 className="font-bold text-slate-900 flex items-center gap-2">
+                            <Droplets size={16} className="text-blue-600" />
+                            2. Hidratación y vestimenta cómoda
+                          </h4>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                            Usá vestimenta cómoda y apropiada para recorridos al aire libre bajo el sol. Sugerimos pantalón largo ligero. La finca dispone de tomas de agua potable para rellenar botellas reutilizables.
+                          </p>
+                        </div>
+
+                        <div>
+                          <h4 className="font-bold text-slate-900 flex items-center gap-2">
+                            <Bug size={16} className="text-amber-700" />
+                            3. Repelente contra insectos y protección solar
+                          </h4>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                            Llevá repelente si visitarán zonas con vegetación densa o cafetales. Considerá protección solar, sombrero o gorra y gafas oscuras durante las horas de mayor radiación.
+                          </p>
+                        </div>
+
+                        <div>
+                          <h4 className="font-bold text-slate-900 flex items-center gap-2">
+                            <Car size={16} className="text-slate-800" />
+                            4. Zonas de parqueo y acceso
+                          </h4>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                            Disponemos de estacionamiento gratuito vigilado para automóviles y área reservada para el desembarque y parqueo de autobuses o microbuses.
+                          </p>
+                        </div>
+
+                        <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                          <a
+                            href={urlInstructivoPdf}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-descargar-instructivo text-xs py-2 px-4"
+                            download="instructivo_recomendaciones_visitas_cafe_una.pdf"
+                          >
+                            <Download size={14} /> Descargar PDF
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => setModalRecomendacionesAbierto(false)}
+                            className="btn-modal-instructivo text-xs py-2 px-4"
+                          >
+                            Entendido, cerrar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <Field label="Observaciones">
                   <textarea name="observaciones" value={form.observaciones} onChange={update} />
                 </Field>
