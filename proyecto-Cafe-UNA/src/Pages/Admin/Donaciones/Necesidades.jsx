@@ -26,6 +26,7 @@ import {
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { ST } from "../../../Components/T/ST";
+import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
 
@@ -412,15 +413,14 @@ export default function AdminNecesidadesDonacion() {
             </label>
             <label className="grid gap-1 text-[length:var(--text-body)] font-semibold">
               <ST>Prioridad</ST>
-              <select
+              <SelectFiltro
                 value={form.prioridad}
                 onChange={(event) => setForm((c) => ({ ...c, prioridad: event.target.value }))}
-                className="h-[var(--control-height)] rounded-full border border-slate-200 px-4"
               >
                 {opcionesPrioridad.map((op) => (
                   <option key={op.value} value={op.value}>{op.label}</option>
                 ))}
-              </select>
+              </SelectFiltro>
             </label>
             <label className="grid gap-1 text-[length:var(--text-body)] font-semibold">
               <ST>Cantidad requerida (opcional)</ST>

@@ -210,3 +210,20 @@ html.admin-theme-dark .ui-select__footer {
   border-top-color: #334155;
   background: #1e293b;
 }
+
+.select-filtro {
+  position: relative;
+  width: 100%;
+}
+
+.select-filtro > input.select-filtro__requerido {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}

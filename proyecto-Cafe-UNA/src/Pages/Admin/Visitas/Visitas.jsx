@@ -33,6 +33,7 @@ import {
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { AdminModal } from "../../../Components/Admin/ui/AdminModal";
 import { ST } from "../../../Components/T/ST";
+import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
 import { tabDeSearch } from "../../../Components/Admin/adminBreadcrumbItems";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
@@ -384,17 +385,16 @@ function ModalEditarVisita({ solicitud, onGuardar, onCerrar }) {
             </label>
             <label className="grid gap-1 text-xs font-semibold text-slate-700">
               <ST>Estado</ST>
-              <select
+              <SelectFiltro
                 value={form.estado}
                 onChange={(e) => setForm((c) => ({ ...c, estado: e.target.value }))}
-                className="rounded-2xl border border-slate-300 p-2.5 text-xs sm:text-sm focus:border-slate-950 focus:outline-hidden"
               >
                 {STATES.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>
                 ))}
-              </select>
+              </SelectFiltro>
             </label>
           </div>
           <label className="grid gap-1 text-xs font-semibold text-slate-700">

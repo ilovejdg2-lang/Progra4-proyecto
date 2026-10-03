@@ -6,7 +6,8 @@ import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { useCachedPublicPage } from '../../hooks/useCachedPublicPage';
 import { useRevealOnScroll } from '../../hooks/useRevealOnScroll';
 import { fetchAboutPageData } from '../../lib/aboutPageData';
-import { useRouterState } from '@tanstack/react-router';
+import { Link, useRouterState } from '@tanstack/react-router';
+import { ArrowRight } from 'lucide-react';
 import { useTraducir } from '../../hooks/useTraducir';
 import './AboutUs.css';
 
@@ -28,6 +29,7 @@ const AboutUs = () => {
   const tGaleriaCarga = useTraducir('Cargando galería...');
   const tGaleria = useTraducir('Galería');
   const tHistoria = useTraducir('Historia');
+  const tLeerHistoria = useTraducir('Leer la historia completa del proyecto de café');
   const tSinFotos = useTraducir('Todavía no hay fotos en la galería.');
   const mensajeCarga = esGaleria ? tGaleriaCarga : loadingMessage;
 
@@ -86,6 +88,10 @@ const AboutUs = () => {
                     image={data?.historiaImage}
                   />
                 ) : null}
+                <Link to="/AboutUs/historia" className="about-page__historia-link">
+                  {tLeerHistoria}
+                  <ArrowRight size={18} strokeWidth={2.4} aria-hidden="true" />
+                </Link>
                 {hasMission ? (
                   <AboutNarrativeBlock
                     className="reveal-on-scroll"

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import './Navbar.css';
 import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
-import { Bell, BookOpen, ChevronDown, ClipboardList, Coffee, Gift, HandHeart, Info, LayoutDashboard, LogOut, MapPin, Menu, Minus, Package, Plus, ShoppingBag, ShoppingCart, Trash2, User, X } from 'lucide-react';
+import { Bell, BookOpen, ChevronDown, ClipboardList, Coffee, Gift, HandHeart, Info, LayoutDashboard, LogOut, MapPin, Menu, Minus, Package, Plus, ShoppingBag, ShoppingCart, Trash2, User, Users, X } from 'lucide-react';
 import { LanguageSwitcher } from '../LanguageSwitcher/LanguageSwitcher';
 import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
 import { FacebookIcon, InstagramIcon } from '../Footer/SocialIcons';
@@ -32,7 +32,7 @@ import { requestAdminStockProduct } from '../../lib/adminStockAlert';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { normalizePathname } from '../../lib/paths';
-import { rutaMisCompras } from '../../Pages/HistorialCompras/HistorialComprasCliente';
+import { rutaMisCompras } from '../../Pages/HistorialCompras/rutasCompras';
 import { rutaMisSolicitudes } from '../../Pages/HistorialSolicitudes/HistorialSolicitudesCliente';
 
 import { clearCart as emptyCart, getStoredCart, saveCart } from '../../lib/cartStorage';
@@ -44,6 +44,7 @@ function NombreCarrito({ nombre }) {
 
 const ABOUT_HISTORIA_PATH = '/AboutUs';
 const ABOUT_GALERIA_PATH = '/AboutUs/galeria';
+const EQUIPO_PATH = '/equipo';
 
 function etiquetaEnlace(enlace, idioma) {
     const es = enlace?.etiqueta ?? enlace?.Etiqueta ?? '';
@@ -179,17 +180,31 @@ function getCachedNavbarLinks() {
     return [];
 }
 
+const ENLACE_EQUIPO = { id: 'equipo', etiqueta: 'Equipo', ruta: EQUIPO_PATH };
+
+const esEnlaceEquipo = (enlace) =>
+    normalizePathname(String(enlace?.ruta ?? enlace?.Ruta ?? '')) === EQUIPO_PATH;
+
+/** Equipo va dentro del submenú de Sobre nosotros; solo queda suelto si no hay ese enlace. */
+function conEnlaceEquipo(enlaces) {
+    if (!enlaces.length) return enlaces;
+    if (enlaces.some(isAboutNavLink)) return enlaces.filter((enlace) => !esEnlaceEquipo(enlace));
+    if (enlaces.some(esEnlaceEquipo)) return enlaces;
+    return [...enlaces, ENLACE_EQUIPO];
+}
+
 function filterNavLinks(enlaces) {
-    return enlaces.filter((enlace) => {
+    return conEnlaceEquipo(enlaces.filter((enlace) => {
         const ruta = String(enlace?.ruta ?? enlace?.Ruta ?? '').trim();
         return ruta !== '/' && ruta !== '';
-    });
+    }));
 }
 
 function resolveMobileNavIcon(ruta) {
     const normalized = String(ruta || '').trim().toLowerCase();
 
     if (normalized.includes('product')) return Coffee;
+    if (normalized.includes('equipo')) return Users;
     if (normalized.includes('about') || normalized.includes('sobre')) return BookOpen;
     if (normalized.includes('volunt') || normalized.includes('formulario') || normalized.includes('donacion')) return ClipboardList;
     if (normalized.includes('iniciativa') || normalized.includes('gallery') || normalized.includes('galer')) return Info;
@@ -202,6 +217,7 @@ const Navbar = () => {
     const { idioma } = useIdioma();
     const labelHistoria = useTraducir('Historia');
     const labelGaleria = useTraducir('Galería');
+    const labelEquipo = useTraducir('Equipo');
     const labelNotificaciones = useTraducir('Notificaciones');
     const labelStockBajo = useTraducir('STOCK BAJO');
     const labelReponer = useTraducir('Reponer stock');
@@ -978,6 +994,7 @@ const Navbar = () => {
                         const aboutActive =
                             pathNorm === normalizePathname(ABOUT_HISTORIA_PATH) ||
                             pathNorm === normalizePathname(ABOUT_GALERIA_PATH) ||
+                            pathNorm === EQUIPO_PATH ||
                             pathNorm.startsWith('/aboutus');
                         return (
                             <div
@@ -1013,6 +1030,7 @@ const Navbar = () => {
                                         to={ABOUT_HISTORIA_PATH}
                                         role="menuitem"
                                         className="navbar__about-item"
+                                        activeOptions={{ exact: true }}
                                         activeProps={{ className: "navbar__about-item" }}
                                         onClick={() => setShowAboutMenu(false)}
                                     >
@@ -1026,6 +1044,15 @@ const Navbar = () => {
                                         onClick={() => setShowAboutMenu(false)}
                                     >
                                         {labelGaleria}
+                                    </Link>
+                                    <Link
+                                        to={EQUIPO_PATH}
+                                        role="menuitem"
+                                        className="navbar__about-item"
+                                        activeProps={{ className: "navbar__about-item" }}
+                                        onClick={() => setShowAboutMenu(false)}
+                                    >
+                                        {labelEquipo}
                                     </Link>
                                 </div>
                             </div>
@@ -1636,6 +1663,7 @@ const Navbar = () => {
                                         const pathNorm = normalizePathname(pathname);
                                         const historiaActive = pathNorm === normalizePathname(ABOUT_HISTORIA_PATH);
                                         const galeriaActive = pathNorm === normalizePathname(ABOUT_GALERIA_PATH);
+                                        const equipoActive = pathNorm === EQUIPO_PATH;
                                         return (
                                             <div
                                                 key={`mobile-about-${enlace.id ?? enlace.ruta}`}
@@ -1676,6 +1704,13 @@ const Navbar = () => {
                                                             onClick={closeMobileMenu}
                                                         >
                                                             {labelGaleria}
+                                                        </Link>
+                                                        <Link
+                                                            to={EQUIPO_PATH}
+                                                            className={`navbar__mobile-about-item ${equipoActive ? 'is-active' : ''}`}
+                                                            onClick={closeMobileMenu}
+                                                        >
+                                                            {labelEquipo}
                                                         </Link>
                                                     </div>
                                                 ) : null}

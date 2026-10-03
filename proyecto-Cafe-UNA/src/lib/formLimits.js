@@ -60,18 +60,22 @@ export function limitarPalabras(texto, maxPalabras) {
   const tokens = raw.match(/\S+|\s+/g) || [];
   let palabras = 0;
   let out = "";
+  let recortado = false;
 
   for (const token of tokens) {
     if (/^\s+$/.test(token)) {
       if (out.length > 0) out += token;
       continue;
     }
-    if (palabras >= maxPalabras) break;
+    if (palabras >= maxPalabras) {
+      recortado = true;
+      break;
+    }
     out += token;
     palabras += 1;
   }
 
-  return out.replace(/\s+$/u, "");
+  return recortado ? out.replace(/\s+$/u, "") : raw;
 }
 
 export function etiquetaContadorPalabras(texto, maxPalabras) {

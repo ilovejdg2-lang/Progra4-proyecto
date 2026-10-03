@@ -7,6 +7,7 @@ import {
   Printer,
 } from "lucide-react";
 import { ST } from "../../../Components/T/ST";
+import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
 
 export function ResultsToolbar({
   totalResultados = 0,
@@ -83,7 +84,7 @@ export function ResultsToolbar({
               <ST>Ordenar por:</ST>
             </span>
           </label>
-          <select
+          <SelectFiltro
             id="biblio-sort-select"
             className="biblio-toolbar__select"
             value={orden}
@@ -97,7 +98,7 @@ export function ResultsToolbar({
             <option value="anio_desc">Año (más reciente)</option>
             <option value="anio_asc">Año (más antiguo)</option>
             <option value="antiguos">Más antiguos</option>
-          </select>
+          </SelectFiltro>
         </div>
 
         {/* Alternador de vista cuadrícula / lista */}

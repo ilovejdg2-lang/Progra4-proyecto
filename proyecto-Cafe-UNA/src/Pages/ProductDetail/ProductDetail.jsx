@@ -13,6 +13,7 @@ import { clasificarDisponibilidad } from '../../lib/productoDisponibilidad';
 import { useTraducir, useTraducirLista, useTraducirObjeto } from '../../hooks/useTraducir';
 import { ST } from '../../Components/T/ST';
 import { ImageLightbox } from '../../Components/ImageLightbox/ImageLightbox';
+import { HorarioCompra } from './HorarioCompra';
 import './ProductDetail.css';
 
 function formatCRC(value) {
@@ -314,6 +315,8 @@ const ProductDetail = () => {
                   </ul>
                 </div>
               ) : null}
+
+              <HorarioCompra />
 
               <div className="product-detail-page__quantity-row">
                 <span className="product-detail-page__quantity-label">{tCantidad}</span>

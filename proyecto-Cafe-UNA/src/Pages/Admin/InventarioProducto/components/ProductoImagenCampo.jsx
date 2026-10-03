@@ -17,6 +17,7 @@ export function ProductoImagenCampo({
   value,
   onChange,
   inputClassName,
+  subir = subirImagenProducto,
 }) {
   const fileRef = useRef(null);
   const [dropActivo, setDropActivo] = useState(false);
@@ -44,7 +45,7 @@ export function ProductoImagenCampo({
     setError("");
     setSubiendo(true);
     try {
-      const url = await subirImagenProducto(file);
+      const url = await subir(file);
       onChange({ target: { name, value: url } });
     } catch (err) {
       setError(err?.message || "No se pudo subir la imagen.");

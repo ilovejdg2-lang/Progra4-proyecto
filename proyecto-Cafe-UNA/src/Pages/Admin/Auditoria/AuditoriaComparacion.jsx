@@ -1,200 +1,19 @@
 import { ST } from "../../../Components/T/ST";
-
-const ETIQUETAS_CAMPO = {
-  id: "ID",
-  nombre: "Nombre",
-  titulo: "Título",
-  peso: "Peso",
-  stock: "Stock",
-  estado: "Estado",
-  imagen: "Imagen",
-  categoria: "Categoría",
-  subcategoria: "Subcategoría",
-  disponible: "Disponible",
-  alertastock: "Alerta de stock",
-  descripcion: "Descripción",
-  precionormal: "Precio (sin IVA)",
-  precio: "Precio",
-  esdestacado: "Destacado",
-  motivo: "Motivo",
-  correo: "Correo",
-  email: "Correo",
-  telefono: "Teléfono",
-  rol: "Rol",
-  roles: "Roles",
-  clave: "Clave",
-  codigo: "Código",
-  cantidad: "Cantidad",
-  total: "Total",
-  subtotal: "Subtotal",
-  ubicacion: "Ubicación",
-  idubicacion: "Ubicación",
-  idproducto: "Producto",
-  idusuario: "Usuario",
-  passwordhash: "Contraseña",
-  password: "Contraseña",
-  contrasena: "Contraseña",
-  contraseña: "Contraseña",
-  tipovoluntariado: "Tipo de voluntariado",
-  tipovisita: "Tipo de visita",
-  tipocliente: "Tipo de cliente",
-  tipodonante: "Tipo de donante",
-  tipodocumento: "Tipo de documento",
-  fechavisita: "Fecha de visita",
-  fechapropuesta: "Fecha propuesta",
-  fechasolicitud: "Fecha de solicitud",
-  cantidadvisitantes: "Cantidad de visitantes",
-  encargadonombre: "Nombre del encargado",
-  encargadoemail: "Correo del encargado",
-  motivorechazo: "Motivo de rechazo",
-  observacionesadmin: "Observaciones admin",
-  necesidadid: "Necesidad",
-  razonsocial: "Razón social",
-};
-
-function claveNormalizada(clave) {
-  return String(clave || "")
-    .replace(/[_-]/g, "")
-    .toLowerCase();
-}
-
-function esCampoSecreto(clave) {
-  const normal = claveNormalizada(clave);
-  return (
-    normal.includes("password") ||
-    normal.includes("contrasena") ||
-    normal.includes("contraseña") ||
-    normal === "hash" ||
-    normal === "salt" ||
-    normal.includes("token") ||
-    normal.includes("secret")
-  );
-}
-
-const CAMPOS_TECNICOS = new Set([
-  "createdat",
-  "updatedat",
-  "deletedat",
-  "fechacreacion",
-  "fechaactualizacion",
-]);
-
-function parseDatos(valor) {
-  if (valor == null || valor === "") return null;
-  if (typeof valor === "string") {
-    const texto = valor.trim();
-    if (!texto || texto === "—") return null;
-    try {
-      const parsed = JSON.parse(texto);
-      if (parsed && typeof parsed === "object") return parsed;
-      return { valor: parsed };
-    } catch {
-      return { detalle: texto };
-    }
-  }
-  if (typeof valor === "object") return valor;
-  return { valor };
-}
-
-function etiquetaCampo(clave) {
-  const normal = claveNormalizada(clave);
-  if (ETIQUETAS_CAMPO[normal]) return ETIQUETAS_CAMPO[normal];
-  const limpio = String(clave || "")
-    .replace(/_/g, " ")
-    .replace(/([a-z])([A-Z])/g, "$1 $2");
-  return limpio.charAt(0).toUpperCase() + limpio.slice(1);
-}
-
-function esUrl(valor) {
-  return typeof valor === "string" && /^https?:\/\//i.test(valor.trim());
-}
-
-function esCorreo(valor) {
-  return typeof valor === "string" && /@/.test(valor) && /\./.test(valor);
-}
-
-function valoresIguales(a, b) {
-  if (Object.is(a, b)) return true;
-  if (a == null && b == null) return true;
-  if (typeof a === "object" || typeof b === "object") {
-    try {
-      return JSON.stringify(a) === JSON.stringify(b);
-    } catch {
-      return String(a) === String(b);
-    }
-  }
-  return String(a) === String(b);
-}
-
-/** Nunca muestra texto plano; bcrypt se muestra truncado como hash. */
-function formatearSecreto(valor) {
-  if (valor == null || valor === "") return "Sin dato";
-  const texto = String(valor).trim();
-  if (!texto || texto === "[hash]" || texto === "[redacted]") return "[hash]";
-  if (texto.startsWith("$2")) {
-    return `${texto.slice(0, 12)}…`;
-  }
-  return "[hash]";
-}
-
-function redactarTextoLibre(texto) {
-  return String(texto ?? "").replace(
-    /("?(?:PasswordHash|password|contrase[nñ]a|token|secret)"?\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s,;}+]+)/gi,
-    '$1"[hash]"',
-  );
-}
-
-function formatearValor(clave, valor) {
-  if (esCampoSecreto(clave)) return formatearSecreto(valor);
-  if (valor == null || valor === "") return "Sin dato";
-  if (typeof valor === "boolean") return valor ? "Sí" : "No";
-  const normal = claveNormalizada(clave);
-  if (typeof valor === "number" && Number.isFinite(valor)) {
-    if (normal.includes("precio") || normal.includes("total") || normal.includes("subtotal")) {
-      return `CRC ${valor.toLocaleString("es-CR")}`;
-    }
-    return String(valor);
-  }
-  if (typeof valor === "string") {
-    if (esUrl(valor)) {
-      if (normal.includes("imagen") || normal.includes("foto") || normal.includes("logo")) {
-        return "Imagen adjunta";
-      }
-      return "Enlace adjunto";
-    }
-    if (normal === "detalle" || /password|contrasen|hash/i.test(valor)) {
-      return redactarTextoLibre(valor);
-    }
-    return valor;
-  }
-  if (Array.isArray(valor)) {
-    if (valor.length === 0) return "Ninguno";
-    return valor
-      .map((item) => {
-        if (item && typeof item === "object") {
-          return item.nombre ?? item.Nombre ?? item.etiqueta ?? JSON.stringify(item);
-        }
-        return String(item);
-      })
-      .join(", ");
-  }
-  if (typeof valor === "object") {
-    return (
-      valor.nombre ??
-      valor.Nombre ??
-      valor.titulo ??
-      valor.Titulo ??
-      valor.codigo ??
-      valor.Codigo ??
-      Object.entries(valor)
-        .filter(([k]) => !esCampoSecreto(k))
-        .slice(0, 4)
-        .map(([k, v]) => `${etiquetaCampo(k)}: ${v == null ? "Sin dato" : String(v)}`)
-        .join(" · ")
-    );
-  }
-  return String(valor);
-}
+import {
+  camposCambiados,
+  claseMarcaCambio,
+  claveNormalizada,
+  esCampoSecreto,
+  esCorreo,
+  esUrl,
+  etiquetaCampo,
+  extraerNombre,
+  formatearValor,
+  describirRegistro,
+  parseDatos,
+  unirClaves,
+  valorDe,
+} from "./auditoriaTexto";
 
 function ValorVisible({ clave, valor }) {
   const texto = formatearValor(clave, valor);
@@ -211,164 +30,7 @@ function ValorVisible({ clave, valor }) {
   return <ST>{texto}</ST>;
 }
 
-function extraerNombre(datos) {
-  if (!datos || typeof datos !== "object" || Array.isArray(datos)) return "";
-  const candidatos = [
-    "nombre",
-    "Nombre",
-    "titulo",
-    "Titulo",
-    "producto",
-    "Producto",
-    "correo",
-    "Correo",
-    "email",
-    "Email",
-    "clave",
-    "Clave",
-    "codigo",
-    "Codigo",
-  ];
-  for (const clave of candidatos) {
-    const valor = datos[clave];
-    if (typeof valor === "string" && valor.trim()) return valor.trim();
-  }
-  return "";
-}
-
-function clavesVisibles(datos) {
-  if (!datos || typeof datos !== "object" || Array.isArray(datos)) return [];
-  return Object.keys(datos).filter((clave) => {
-    const normal = claveNormalizada(clave);
-    if (esCampoSecreto(clave) && (normal.includes("password") || normal.includes("contrasen"))) {
-      return true;
-    }
-    if (esCampoSecreto(clave)) return false;
-    return !CAMPOS_TECNICOS.has(normal);
-  });
-}
-
-function valorDe(datos, clave) {
-  if (!datos || typeof datos !== "object") return undefined;
-  if (Object.prototype.hasOwnProperty.call(datos, clave)) return datos[clave];
-  const normal = claveNormalizada(clave);
-  const encontrada = Object.keys(datos).find((item) => claveNormalizada(item) === normal);
-  return encontrada != null ? datos[encontrada] : undefined;
-}
-
-function unirClaves(anteriores, nuevos) {
-  const ordenPreferido = [
-    "nombre",
-    "titulo",
-    "categoria",
-    "subcategoria",
-    "peso",
-    "stock",
-    "precio",
-    "precionormal",
-    "estado",
-    "disponible",
-    "descripcion",
-    "motivo",
-    "passwordhash",
-  ];
-  const porNormal = new Map();
-  for (const clave of [...clavesVisibles(anteriores), ...clavesVisibles(nuevos)]) {
-    const normal = claveNormalizada(clave);
-    if (!porNormal.has(normal)) porNormal.set(normal, clave);
-  }
-  const lista = [...porNormal.values()];
-  lista.sort((a, b) => {
-    const na = claveNormalizada(a);
-    const nb = claveNormalizada(b);
-    const ia = ordenPreferido.indexOf(na);
-    const ib = ordenPreferido.indexOf(nb);
-    if (ia !== -1 || ib !== -1) {
-      if (ia === -1) return 1;
-      if (ib === -1) return -1;
-      return ia - ib;
-    }
-    if (na === "id") return 1;
-    if (nb === "id") return -1;
-    return etiquetaCampo(a).localeCompare(etiquetaCampo(b), "es");
-  });
-  return lista;
-}
-
-function camposCambiados(anteriores, nuevos, claves) {
-  return claves.filter((clave) => !valoresIguales(valorDe(anteriores, clave), valorDe(nuevos, clave)));
-}
-
-function resumenCambio({ accion, tabla, detalle, anteriores, nuevos, nombre, cambiados }) {
-  const entidad =
-    tabla === "productos"
-      ? "producto"
-      : tabla === "usuarios"
-        ? "usuario"
-        : tabla === "categorias"
-          ? "categoría"
-          : tabla === "solicitudes_voluntariado"
-            ? "solicitud de voluntariado"
-            : tabla === "fechas_voluntariado"
-              ? "fecha de voluntariado"
-              : tabla === "solicitudes_visitas_grupales"
-                ? "solicitud de visita"
-                : tabla === "disponibilidades_visitas"
-                  ? "fecha de visita"
-                  : tabla === "donacion_solicitudes"
-                    ? "solicitud de donación"
-                    : tabla === "donacion_necesidades"
-                      ? "necesidad de donación"
-                      : tabla === "donacion_materiales_aceptados"
-                        ? "material de donación"
-                        : tabla === "fechas_recepcion_donaciones"
-                          ? "fecha de recepción de donaciones"
-                          : "registro";
-  const articulo =
-    entidad === "categoría"
-    || entidad === "solicitud de voluntariado"
-    || entidad === "fecha de voluntariado"
-    || entidad === "solicitud de visita"
-    || entidad === "fecha de visita"
-    || entidad === "solicitud de donación"
-    || entidad === "necesidad de donación"
-    || entidad === "fecha de recepción de donaciones"
-      ? "la"
-      : entidad === "material de donación"
-        ? "el"
-        : "el";
-  const conNombre = nombre ? ` «${nombre}»` : "";
-
-  if (accion === "INSERT") {
-    return `Se creó ${articulo} ${entidad}${conNombre}.`;
-  }
-  if (accion === "DELETE") {
-    return `Se eliminó ${articulo} ${entidad}${conNombre}.`;
-  }
-  if (accion === "AJUSTE_STOCK") {
-    const de = anteriores?.Stock ?? anteriores?.stock;
-    const a = nuevos?.Stock ?? nuevos?.stock;
-    const motivo = nuevos?.Motivo ?? nuevos?.motivo;
-    if (de != null && a != null) {
-      return `El stock pasó de ${de} a ${a}${motivo ? `. Motivo: ${motivo}` : "."}`;
-    }
-  }
-
-  if (cambiados.length === 1) {
-    const campo = etiquetaCampo(cambiados[0]).toLowerCase();
-    const de = formatearValor(cambiados[0], valorDe(anteriores, cambiados[0]));
-    const a = formatearValor(cambiados[0], valorDe(nuevos, cambiados[0]));
-    return `Se actualizó el ${campo} de ${articulo} ${entidad}${conNombre}: «${de}» → «${a}».`;
-  }
-  if (cambiados.length > 1) {
-    const lista = cambiados.map((clave) => etiquetaCampo(clave).toLowerCase()).join(", ");
-    return `Se actualizó ${articulo} ${entidad}${conNombre}. Cambiaron: ${lista}.`;
-  }
-  if (detalle) return detalle;
-  return `Se actualizó ${articulo} ${entidad}${conNombre}.`;
-}
-
-function PanelCampos({ titulo, datos, claves, cambiados, vacioTexto }) {
+function PanelCampos({ titulo, datos, claves, cambiados, vacioTexto, marcarCambios = false }) {
   const hayDatos = datos && typeof datos === "object" && claves.length > 0;
   return (
     <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-3">
@@ -395,7 +57,13 @@ function PanelCampos({ titulo, datos, claves, cambiados, vacioTexto }) {
                   ) : null}
                 </dt>
                 <dd className="mt-0.5 break-words text-[length:var(--text-body)] font-medium text-slate-800">
-                  <ValorVisible clave={clave} valor={valorDe(datos, clave)} />
+                  {cambio && marcarCambios ? (
+                    <mark className={claseMarcaCambio}>
+                      <ValorVisible clave={clave} valor={valorDe(datos, clave)} />
+                    </mark>
+                  ) : (
+                    <ValorVisible clave={clave} valor={valorDe(datos, clave)} />
+                  )}
                 </dd>
               </div>
             );
@@ -414,15 +82,7 @@ export function AuditoriaComparacion({ item }) {
   const claves = unirClaves(anteriores, nuevos);
   const cambiados = camposCambiados(anteriores, nuevos, claves);
   const nombre = extraerNombre(nuevos) || extraerNombre(anteriores);
-  const resumen = resumenCambio({
-    accion: item?.accion,
-    tabla: item?.tabla,
-    detalle: item?.detalle,
-    anteriores,
-    nuevos,
-    nombre,
-    cambiados,
-  });
+  const resumen = describirRegistro(item);
 
   return (
     <div className="grid gap-3">
@@ -461,6 +121,7 @@ export function AuditoriaComparacion({ item }) {
           datos={nuevos}
           claves={claves}
           cambiados={cambiados}
+          marcarCambios
           vacioTexto="No quedaron datos nuevos. Este registro se eliminó en esta acción."
         />
       </div>

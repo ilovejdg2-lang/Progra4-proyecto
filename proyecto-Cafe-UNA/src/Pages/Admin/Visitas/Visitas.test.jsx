@@ -26,6 +26,11 @@ vi.mock("../../../services/visitasService", () => ({
   crearDisponibilidadVisita: (...args) => crearDisponibilidadMock(...args),
   actualizarDisponibilidadVisita: (...args) => actualizarDisponibilidadMock(...args),
 }));
+const routerState = vi.hoisted(() => ({ location: { search: {} } }));
+vi.mock("@tanstack/react-router", () => ({
+  useNavigate: () => vi.fn(),
+  useRouterState: ({ select }) => select(routerState),
+}));
 vi.mock("../layouts/AdminLayout", () => ({
   AdminLayout: ({ children }) => <div>{children}</div>,
 }));
