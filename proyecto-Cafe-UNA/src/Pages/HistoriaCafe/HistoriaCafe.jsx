@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Maximize2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, Maximize2 } from "lucide-react";
 
 import { PublicPageGate } from "../../Components/PublicPageGate/PublicPageGate";
 import { ST } from "../../Components/T/ST";
@@ -39,6 +39,76 @@ function useCapituloActivo(ids) {
     return () => observer.disconnect();
   }, [ids]);
   return activo;
+}
+
+function IndiceMovil({ capitulos, activo }) {
+  const [abierto, setAbierto] = useState(false);
+  const raizRef = useRef(null);
+  const tIndice = useTraducir("Capítulos");
+  const indiceActivo = Math.max(0, capitulos.findIndex((c) => c.id === activo));
+  const actual = capitulos[indiceActivo];
+  const tPosicion = useTraducir(`Capítulo ${indiceActivo + 1} de ${capitulos.length}`);
+
+  useEffect(() => {
+    if (!abierto) return undefined;
+    const cerrar = (event) => {
+      if (!raizRef.current?.contains(event.target)) setAbierto(false);
+    };
+    const onKey = (event) => {
+      if (event.key === "Escape") setAbierto(false);
+    };
+    document.addEventListener("pointerdown", cerrar);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", cerrar);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [abierto]);
+
+  if (!actual) return null;
+
+  return (
+    <div ref={raizRef} className={`historia-indice-movil${abierto ? " is-abierto" : ""}`}>
+      <button
+        type="button"
+        className="historia-indice-movil__boton"
+        aria-expanded={abierto}
+        aria-controls="historia-indice-movil-lista"
+        onClick={() => setAbierto((v) => !v)}
+      >
+        <span className="historia-indice-movil__numero">{String(indiceActivo + 1).padStart(2, "0")}</span>
+        <span className="historia-indice-movil__texto">
+          <span className="historia-indice-movil__posicion">{tPosicion}</span>
+          <span className="historia-indice-movil__titulo">
+            <ST>{actual.titulo}</ST>
+          </span>
+        </span>
+        <ChevronDown className="historia-indice-movil__chevron" size={18} aria-hidden="true" />
+        <span className="historia-indice-movil__progreso" aria-hidden="true">
+          <span style={{ width: `${((indiceActivo + 1) / capitulos.length) * 100}%` }} />
+        </span>
+      </button>
+      {abierto ? (
+        <nav id="historia-indice-movil-lista" className="historia-indice-movil__lista" aria-label={tIndice}>
+          <ol>
+            {capitulos.map((capitulo, i) => (
+              <li key={capitulo.id}>
+                <a
+                  href={`#${capitulo.id}`}
+                  className={activo === capitulo.id ? "is-activo" : undefined}
+                  aria-current={activo === capitulo.id ? "true" : undefined}
+                  onClick={() => setAbierto(false)}
+                >
+                  <span>{String(i + 1).padStart(2, "0")}</span>
+                  <ST>{capitulo.titulo}</ST>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      ) : null}
+    </div>
+  );
 }
 
 function GraficoCompost({ pie, compost }) {
@@ -226,6 +296,7 @@ export function HistoriaContenido({ historia }) {
         </nav>
 
         <article className="historia-articulo">
+          <IndiceMovil capitulos={capitulos} activo={activo} />
           {capitulos.map((capitulo, i) => (
             <section key={capitulo.id} id={capitulo.id} className="historia-capitulo">
               <p className="historia-capitulo__numero">{String(i + 1).padStart(2, "0")}</p>

@@ -251,6 +251,136 @@
   max-width: 44rem;
 }
 
+/* Índice fijo en móvil */
+.historia-indice-movil {
+  position: sticky;
+  top: calc(var(--navbar-height) + 0.5rem);
+  z-index: 20;
+  display: none;
+  margin-bottom: 1.5rem;
+}
+
+.historia-indice-movil__boton {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+  min-height: var(--control-height);
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--historia-borde);
+  border-radius: var(--ui-radius);
+  background: rgb(255 255 255 / 0.96);
+  box-shadow: 0 8px 24px rgb(42 22 18 / 0.1);
+  color: var(--historia-tinta);
+  font-size: var(--text-body);
+  text-align: left;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+.historia-indice-movil__numero {
+  color: var(--historia-acento);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.historia-indice-movil__texto {
+  display: grid;
+  min-width: 0;
+}
+
+.historia-indice-movil__posicion {
+  color: var(--historia-gris);
+  font-size: var(--text-body);
+  line-height: 1.2;
+}
+
+.historia-indice-movil__titulo {
+  overflow: hidden;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historia-indice-movil__chevron {
+  color: var(--historia-gris);
+  transition: transform 0.2s ease;
+}
+
+.historia-indice-movil.is-abierto .historia-indice-movil__chevron {
+  transform: rotate(180deg);
+}
+
+.historia-indice-movil__progreso {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--historia-borde);
+}
+
+.historia-indice-movil__progreso span {
+  display: block;
+  height: 100%;
+  background: var(--historia-acento);
+  transition: width 0.3s ease;
+}
+
+.historia-indice-movil__lista {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  left: 0;
+  max-height: min(60vh, 24rem);
+  overflow-y: auto;
+  border: 1px solid var(--historia-borde);
+  border-radius: var(--ui-radius);
+  background: #fff;
+  box-shadow: 0 12px 32px rgb(42 22 18 / 0.16);
+}
+
+.historia-indice-movil__lista ol {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+}
+
+.historia-indice-movil__lista a {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: 0.25rem;
+  align-items: center;
+  min-height: var(--control-height);
+  padding: 0.5rem 0.75rem;
+  border-radius: calc(var(--ui-radius) - 4px);
+  color: var(--historia-gris);
+  font-size: var(--text-body);
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.historia-indice-movil__lista a span:first-child {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.historia-indice-movil__lista a:hover,
+.historia-indice-movil__lista a.is-activo {
+  background: var(--historia-crema);
+  color: var(--historia-tinta);
+}
+
+.historia-indice-movil__lista a.is-activo {
+  font-weight: 700;
+}
+
 .historia-capitulo {
   scroll-margin-top: calc(var(--navbar-height) + 1.5rem);
   padding-bottom: clamp(2.5rem, 6vw, 4rem);
@@ -474,31 +604,69 @@
   }
 
   .historia-cuerpo {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .historia-indice {
-    position: static;
+    display: none;
   }
 
-  .historia-indice ol {
-    display: flex;
-    gap: 0.5rem;
-    overflow-x: auto;
-    padding-bottom: 0.25rem;
+  .historia-indice-movil {
+    display: block;
   }
 
-  .historia-indice a {
-    grid-template-columns: auto auto;
-    white-space: nowrap;
-    border: 1px solid var(--historia-borde);
-    border-radius: 999px;
-    background: #fff;
+  .historia-capitulo {
+    scroll-margin-top: calc(var(--navbar-height) + var(--control-height) + 2.5rem);
   }
 
-  .historia-indice a:hover,
-  .historia-indice a.is-activo {
-    border-color: var(--historia-acento);
+  .historia-articulo {
+    max-width: none;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .historia-capitulo h2,
+  .historia-capitulo__p {
+    overflow-wrap: anywhere;
+  }
+
+  .historia-cita {
+    margin: 1.75rem 0;
+    padding: 1.1rem 1.15rem;
+  }
+
+  .historia-figura,
+  .historia-compost {
+    margin: 1.75rem 0;
+  }
+
+  .historia-compost {
+    padding: 1rem;
+  }
+
+  .historia-compost li {
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    row-gap: 0.25rem;
+  }
+
+  .historia-compost__kg {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  .historia-figura__zoom-icono {
+    right: 0.5rem;
+    bottom: 0.5rem;
+    padding: 0.35rem 0.65rem;
+  }
+
+  .historia-cierre__principal,
+  .historia-cierre__secundario {
+    justify-content: center;
+    width: 100%;
+    padding: 0.6rem 1.25rem;
+    text-align: center;
   }
 }
 
