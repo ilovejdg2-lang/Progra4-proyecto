@@ -3,7 +3,9 @@ import { createPortal } from "react-dom";
 import {
   AlertCircle,
   CheckCircle2,
+  FileText,
   Send,
+  Trash2,
   UploadCloud,
   X,
 } from "lucide-react";
@@ -12,6 +14,7 @@ import {
   solicitarAccesoDocumento,
 } from "../../services/documentosService";
 import { getActiveSessionUser } from "../../services/sessionService";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { ST } from "../../Components/T/ST";
 import { SelectFiltro } from "../../Components/ui/SelectFiltro";
 import "../Voluntariado/SolicitarVoluntariado.css";
@@ -39,21 +42,21 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
   const [correo, setCorreo] = useState(user?.email || user?.correo || "");
   const [institucion, setInstitucion] = useState("");
   const [archivo, setArchivo] = useState(null);
+  const [arrastrando, setArrastrando] = useState(false);
 
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
   const [completado, setCompletado] = useState(false);
+
+  useBodyScrollLock(true);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && onClose) onClose();
     };
     document.addEventListener("keydown", handleKeyDown);
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = originalOverflow;
     };
   }, [onClose]);
 
@@ -63,15 +66,46 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
       .catch(() => setCategorias([]));
   }, []);
 
+  const procesarArchivo = (file) => {
+    if (!file) return;
+    if (file.size > 30 * 1024 * 1024) {
+      setError("El archivo supera el tamaño máximo permitido (30 MB).");
+      return;
+    }
+    setArchivo(file);
+    setError("");
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 30 * 1024 * 1024) {
-        setError("El archivo supera el tamaño máximo permitido (30 MB).");
-        return;
-      }
-      setArchivo(file);
-      setError("");
+    procesarArchivo(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setArrastrando(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setArrastrando(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setArrastrando(false);
+    const file = e.dataTransfer.files?.[0];
+    procesarArchivo(file);
+  };
+
+  const handleRemoverArchivo = (e) => {
+    e.stopPropagation();
+    setArchivo(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -108,7 +142,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
       fd.append("nombre", nombre.trim());
       fd.append("correo", correo.trim().toLowerCase());
       fd.append("institucion", institucion.trim() || autor.trim());
-      fd.append("motivo", descripcion.trim() || `Propuesta de documento: ${tituloFinal}`);
+      fd.append("motivo", descripcion.trim() || `Envío de documento: ${tituloFinal}`);
       fd.append("categoria", categoria.trim() || (documento?.categoria || "Investigaciones"));
 
       if (archivo) {
@@ -119,7 +153,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
       setCompletado(true);
       if (onSuccess) onSuccess();
     } catch (err) {
-      console.error("Error al enviar documento/solicitud:", err);
+      console.error("Error al enviar documento:", err);
       setError(
         err?.message || "Ocurrió un error al enviar el archivo. Intente nuevamente.",
       );
@@ -156,14 +190,14 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
               <ST>
                 {esDocumentoEspecifico
                   ? "Solicitar Acceso al Documento"
-                  : "Enviar y Proponer Archivo para Publicación"}
+                  : "Enviar documento para publicación"}
               </ST>
             </h3>
             <p className="text-xs text-slate-500 mt-1">
               <ST>
                 {esDocumentoEspecifico
                   ? "Complete sus datos para solicitar autorización de descarga a este documento."
-                  : "Envíe su investigación, guía o informe. El equipo administrativo revisará su archivo para publicarlo en la página principal y el repositorio."}
+                  : "Envíe su investigación, guía o informe. El equipo administrativo revisará su archivo para publicarlo en la biblioteca y el repositorio."}
               </ST>
             </p>
           </div>
@@ -187,12 +221,12 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
             </h4>
             <p className="text-sm text-slate-600 max-w-md mx-auto mb-6">
               <ST>
-                Su archivo y datos han sido registrados correctamente. El equipo de administración revisará la propuesta para aprobarla y hacerla visible en el catálogo principal de documentación.
+                Su archivo y datos han sido registrados correctamente. El equipo de administración revisará el documento para aprobarlo y hacerlo visible en el catálogo principal de documentación.
               </ST>
             </p>
             <button
               type="button"
-              className="btn-primario-admin mx-auto"
+              className="repositorio-btn-primary mx-auto"
               onClick={onClose}
             >
               <ST>Entendido</ST>
@@ -200,183 +234,208 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="repositorio-modal-form">
-            {/* Paso 1: Información del Documento */}
-            <div className="section-card">
-              <div className="section-card__header">
-                <span className="section-card__paso" aria-hidden="true">1</span>
-                <h4><ST>Detalles del Documento</ST></h4>
-              </div>
-              <div className="section-card__body grid-dos-columnas">
-                <div className="campo-grupo columna-completa">
-                  <label htmlFor="sol-doc-titulo">
-                    <ST>Título o tema del documento</ST> <span className="campo-requerido">*</span>
-                  </label>
-                  <input
-                    id="sol-doc-titulo"
-                    type="text"
-                    required
-                    disabled={esDocumentoEspecifico}
-                    placeholder="Ej. Estudio de Microcuencas y Rendimiento Cafetalero 2026"
-                    value={titulo}
-                    onChange={(e) => setTitulo(e.target.value)}
-                  />
+            <div className="repositorio-modal-body">
+              {/* Paso 1: Información del Documento */}
+              <div className="section-card">
+                <div className="section-card__header">
+                  <span className="section-card__paso" aria-hidden="true">1</span>
+                  <h4><ST>Detalles del Documento</ST></h4>
                 </div>
+                <div className="section-card__body grid-dos-columnas">
+                  <div className="campo-grupo columna-completa">
+                    <label htmlFor="sol-doc-titulo">
+                      <ST>Título o tema del documento</ST> <span className="campo-requerido">*</span>
+                    </label>
+                    <input
+                      id="sol-doc-titulo"
+                      type="text"
+                      required
+                      disabled={esDocumentoEspecifico}
+                      placeholder="Ej. Estudio de Microcuencas y Rendimiento Cafetalero 2026"
+                      value={titulo}
+                      onChange={(e) => setTitulo(e.target.value)}
+                    />
+                  </div>
 
-                <div className="campo-grupo">
-                  <label htmlFor="sol-doc-categoria">
-                    <ST>Categoría sugerida</ST>
-                  </label>
-                  <SelectFiltro
-                    id="sol-doc-categoria"
-                    value={categoria}
-                    onChange={(e) => setCategoria(e.target.value)}
+                  <div className="campo-grupo">
+                    <label htmlFor="sol-doc-categoria">
+                      <ST>Categoría sugerida</ST>
+                    </label>
+                    <SelectFiltro
+                      id="sol-doc-categoria"
+                      value={categoria}
+                      onChange={(e) => setCategoria(e.target.value)}
+                    >
+                      <option value="">Seleccione una categoría</option>
+                      {categorias
+                        .filter((c) => !(c.padre || c.Padre))
+                        .map((c) => {
+                          const catNombre = c.nombre || c.Nombre || "";
+                          return (
+                            <option key={c.id || c.Id || catNombre} value={catNombre}>
+                              {catNombre}
+                            </option>
+                          );
+                        })}
+                    </SelectFiltro>
+                  </div>
+
+                  <div className="campo-grupo">
+                    <label htmlFor="sol-doc-autor">
+                      <ST>Autor / Institución de origen</ST>
+                    </label>
+                    <input
+                      id="sol-doc-autor"
+                      type="text"
+                      placeholder="Ej. Universidad Nacional / Investigador"
+                      value={autor}
+                      onChange={(e) => setAutor(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="campo-grupo columna-completa">
+                    <label htmlFor="sol-doc-desc">
+                      <ST>Descripción o justificación del documento</ST>
+                    </label>
+                    <textarea
+                      id="sol-doc-desc"
+                      rows={3}
+                      placeholder="Resuma brevemente los contenidos o motivos para incluir este material en el repositorio..."
+                      value={descripcion}
+                      onChange={(e) => setDescripcion(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Paso 2: Archivo Digital Adjunto con Drag & Drop */}
+              <div className="section-card">
+                <div className="section-card__header">
+                  <span className="section-card__paso" aria-hidden="true">2</span>
+                  <h4><ST>Archivo Digital a Enviar</ST></h4>
+                </div>
+                <div className="section-card__body">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.jpg,.png"
+                    onChange={handleFileChange}
+                  />
+
+                  <div
+                    className={`dropzone-doc ${arrastrando ? "dropzone-doc--dragging" : ""} ${archivo ? "dropzone-doc--has-file" : ""}`}
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        fileInputRef.current?.click();
+                      }
+                    }}
                   >
-                    <option value="">Seleccione una categoría</option>
-                    {categorias
-                      .filter((c) => !(c.padre || c.Padre))
-                      .map((c) => {
-                        const nombre = c.nombre || c.Nombre || "";
-                        return (
-                          <option key={c.id || c.Id || nombre} value={nombre}>
-                            {nombre}
-                          </option>
-                        );
-                      })}
-                  </SelectFiltro>
-                </div>
-
-                <div className="campo-grupo">
-                  <label htmlFor="sol-doc-autor">
-                    <ST>Autor / Institución de origen</ST>
-                  </label>
-                  <input
-                    id="sol-doc-autor"
-                    type="text"
-                    placeholder="Ej. Universidad Nacional / Investigador"
-                    value={autor}
-                    onChange={(e) => setAutor(e.target.value)}
-                  />
-                </div>
-
-                <div className="campo-grupo columna-completa">
-                  <label htmlFor="sol-doc-desc">
-                    <ST>Descripción o Justificación del aporte</ST>
-                  </label>
-                  <textarea
-                    id="sol-doc-desc"
-                    rows={3}
-                    placeholder="Resuma brevemente los contenidos o motivos para incluir este material en el repositorio..."
-                    value={descripcion}
-                    onChange={(e) => setDescripcion(e.target.value)}
-                  />
+                    {archivo ? (
+                      <div className="dropzone-doc__file-info">
+                        <div className="dropzone-doc__file-icon">
+                          <FileText size={28} className="text-amber-700" />
+                        </div>
+                        <div className="dropzone-doc__file-text">
+                          <span className="dropzone-doc__file-name">{archivo.name}</span>
+                          <span className="dropzone-doc__file-size">
+                            {formatearTamano(archivo.size)} • Listo para enviar
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="dropzone-doc__file-remove"
+                          title="Quitar archivo"
+                          onClick={handleRemoverArchivo}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="dropzone-doc__placeholder">
+                        <UploadCloud size={38} className="dropzone-doc__icon" />
+                        <span className="dropzone-doc__title">
+                          <ST>Haga clic o arrastre aquí el archivo a enviar</ST>
+                        </span>
+                        <span className="dropzone-doc__sub">
+                          <ST>Formatos: PDF, Word, Excel, ZIP, Imágenes (hasta 30 MB)</ST>
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {/* Paso 3: Contacto del Remitente */}
+              <div className="section-card">
+                <div className="section-card__header">
+                  <span className="section-card__paso" aria-hidden="true">3</span>
+                  <h4><ST>Datos de Contacto del Remitente</ST></h4>
+                </div>
+                <div className="section-card__body grid-dos-columnas">
+                  <div className="campo-grupo">
+                    <label htmlFor="sol-remitente-nombre">
+                      <ST>Nombre completo</ST> <span className="campo-requerido">*</span>
+                    </label>
+                    <input
+                      id="sol-remitente-nombre"
+                      type="text"
+                      required
+                      placeholder="Ej. Carlos Rodríguez"
+                      value={nombre}
+                      onChange={(e) => setNombre(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="campo-grupo">
+                    <label htmlFor="sol-remitente-correo">
+                      <ST>Correo electrónico</ST> <span className="campo-requerido">*</span>
+                    </label>
+                    <input
+                      id="sol-remitente-correo"
+                      type="email"
+                      required
+                      placeholder="carlos@ejemplo.com"
+                      value={correo}
+                      onChange={(e) => setCorreo(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="campo-grupo columna-completa">
+                    <label htmlFor="sol-remitente-inst">
+                      <ST>Organización o Afiliación (opcional)</ST>
+                    </label>
+                    <input
+                      id="sol-remitente-inst"
+                      type="text"
+                      placeholder="Ej. Cooperativa de Caficultores / Estudiante UNA"
+                      value={institucion}
+                      onChange={(e) => setInstitucion(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {error ? (
+                <div className="aviso-error-banner">
+                  <AlertCircle size={16} />
+                  <span>{error}</span>
+                </div>
+              ) : null}
             </div>
 
-            {/* Paso 2: Archivo Digital Adjunto */}
-            <div className="section-card">
-              <div className="section-card__header">
-                <span className="section-card__paso" aria-hidden="true">2</span>
-                <h4><ST>Archivo Digital a Enviar</ST></h4>
-              </div>
-              <div className="section-card__body">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.jpg,.png"
-                  onChange={handleFileChange}
-                />
-
-                <div
-                  className="dropzone-doc cursor-pointer"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <UploadCloud size={36} className="text-slate-400 mb-2" />
-                  {archivo ? (
-                    <div>
-                      <span className="block font-semibold text-sm text-slate-900">
-                        {archivo.name}
-                      </span>
-                      <span className="block text-xs text-emerald-600 mt-0.5">
-                        {formatearTamano(archivo.size)} • Listo para subir y enviar
-                      </span>
-                    </div>
-                  ) : (
-                    <div>
-                      <span className="block font-semibold text-sm text-slate-800">
-                        Haga clic aquí para seleccionar el archivo a proponer
-                      </span>
-                      <span className="block text-xs text-slate-400 mt-1">
-                        Formatos recomendados: PDF, Word, Excel, ZIP, Imágenes (hasta 30 MB)
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Paso 3: Contacto del Remitente */}
-            <div className="section-card">
-              <div className="section-card__header">
-                <span className="section-card__paso" aria-hidden="true">3</span>
-                <h4><ST>Datos de Contacto del Remitente</ST></h4>
-              </div>
-              <div className="section-card__body grid-dos-columnas">
-                <div className="campo-grupo">
-                  <label htmlFor="sol-remitente-nombre">
-                    <ST>Nombre completo</ST> <span className="campo-requerido">*</span>
-                  </label>
-                  <input
-                    id="sol-remitente-nombre"
-                    type="text"
-                    required
-                    placeholder="Ej. Carlos Rodríguez"
-                    value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
-                  />
-                </div>
-
-                <div className="campo-grupo">
-                  <label htmlFor="sol-remitente-correo">
-                    <ST>Correo electrónico</ST> <span className="campo-requerido">*</span>
-                  </label>
-                  <input
-                    id="sol-remitente-correo"
-                    type="email"
-                    required
-                    placeholder="carlos@ejemplo.com"
-                    value={correo}
-                    onChange={(e) => setCorreo(e.target.value)}
-                  />
-                </div>
-
-                <div className="campo-grupo columna-completa">
-                  <label htmlFor="sol-remitente-inst">
-                    <ST>Organización o Afiliación (opcional)</ST>
-                  </label>
-                  <input
-                    id="sol-remitente-inst"
-                    type="text"
-                    placeholder="Ej. Cooperativa de Caficultores / Estudiante UNA"
-                    value={institucion}
-                    onChange={(e) => setInstitucion(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {error ? (
-              <div className="aviso-error-banner">
-                <AlertCircle size={16} />
-                <span>{error}</span>
-              </div>
-            ) : null}
-
-            <div className="repositorio-modal-actions">
+            {/* Acciones fijas en el footer */}
+            <div className="repositorio-modal-footer">
               <button
                 type="button"
-                className="btn-secundario-admin"
+                className="repositorio-btn-secondary"
                 onClick={onClose}
                 disabled={enviando}
               >
@@ -384,18 +443,18 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
               </button>
               <button
                 type="submit"
-                className="btn-primario-admin"
+                className="repositorio-btn-primary"
                 disabled={enviando}
               >
                 {enviando ? (
                   <>
                     <span className="spinner-sm" aria-hidden="true" />
-                    <ST>Enviando archivo...</ST>
+                    <ST>Enviando...</ST>
                   </>
                 ) : (
                   <>
                     <Send size={16} />
-                    <ST>Enviar archivo para revisión</ST>
+                    <ST>Enviar</ST>
                   </>
                 )}
               </button>

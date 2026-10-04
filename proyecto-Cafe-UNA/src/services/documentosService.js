@@ -21,10 +21,74 @@ function normalizarLista(data) {
   return [];
 }
 
+function capitalizarTexto(str = "") {
+  const limpio = String(str || "").trim();
+  if (!limpio) return "";
+  if (limpio === limpio.toUpperCase() && limpio.length > 2) {
+    return limpio.charAt(0).toUpperCase() + limpio.slice(1).toLowerCase();
+  }
+  return limpio.charAt(0).toUpperCase() + limpio.slice(1);
+}
+
+function claveNormalizada(str = "") {
+  return String(str || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+let catalogoPublicoCache = null;
+let categoriasPublicasCache = null;
+let catalogoCacheTimestamp = 0;
+const CATALOGO_CACHE_TTL_MS = 60 * 1000;
+
+export function invalidarCacheDocumentos() {
+  catalogoPublicoCache = null;
+  categoriasPublicasCache = null;
+  catalogoCacheTimestamp = 0;
+  cache.clear();
+}
+
+export function normalizarDoc(d) {
+  if (!d) return null;
+  return {
+    ...d,
+    id: d.id ?? d.Id,
+    titulo: d.titulo ?? d.Titulo,
+    descripcion: d.descripcion ?? d.Descripcion ?? "",
+    categoria: d.categoria ?? d.Categoria ?? "General",
+    subcategoria: d.subcategoria ?? d.Subcategoria ?? "",
+    nombreOriginal: d.nombreOriginal ?? d.NombreOriginal ?? d.nombreArchivo ?? d.NombreArchivo ?? "",
+    mimeType: d.mimeType ?? d.MimeType ?? "application/pdf",
+    tamanoBytes: Number(d.tamanoBytes ?? d.TamanoBytes ?? 0),
+    esPrivado: Boolean(d.esPrivado ?? d.EsPrivado),
+    visibilidad: d.visibilidad ?? d.Visibilidad ?? (d.esPrivado || d.EsPrivado ? "Privado" : "Publico"),
+    autor: d.autor ?? d.Autor ?? "Proyecto Café-UNA",
+    version: d.version ?? d.Version ?? "1.0",
+    palabrasClave: d.palabrasClave ?? d.PalabrasClave ?? "",
+    descargasCount: Number(d.descargasCount ?? d.DescargasCount ?? 0),
+    vistasCount: Number(d.vistasCount ?? d.VistasCount ?? 0),
+    fechaPublicacion: d.fechaPublicacion ?? d.createdAt ?? d.CreatedAt,
+    paginas: d.paginas ?? d.Paginas,
+    etiquetas: Array.isArray(d.etiquetas ?? d.Etiquetas)
+      ? d.etiquetas ?? d.Etiquetas
+      : typeof (d.etiquetas ?? d.Etiquetas) === "string"
+      ? (d.etiquetas ?? d.Etiquetas).split(",").map((t) => t.trim()).filter(Boolean)
+      : [],
+    idioma: d.idioma ?? d.Idioma ?? "es",
+    anio:
+      Number(d.anio ?? d.Anio) ||
+      (d.fechaPublicacion || d.createdAt || d.CreatedAt
+        ? new Date(d.fechaPublicacion || d.createdAt || d.CreatedAt).getFullYear()
+        : 2026),
+  };
+}
+
 /**
  * Calcula facetas temáticas, accesos rápidos y estadísticas a partir del catálogo
  */
-export function calcularFacetasYEstadisticas(documentos = [], esAdmin = false) {
+export function calcularFacetasYEstadisticas(documentos = [], esAdmin = false, catalogoCategorias = []) {
   const categoriasMap = new Map();
   const subcategoriasMap = new Map();
   const aniosMap = new Map();
@@ -38,8 +102,19 @@ export function calcularFacetasYEstadisticas(documentos = [], esAdmin = false) {
     excel: 0,
     imagen: 0,
     comprimido: 0,
-    otro: 0,
   };
+
+  // Pre-poblar todas las categorías del catálogo para que nunca desaparezcan de la barra lateral
+  (catalogoCategorias || []).forEach((cat) => {
+    const rawNombre = (cat.nombre || cat.Nombre || "").trim();
+    if (rawNombre) {
+      const key = claveNormalizada(rawNombre);
+      categoriasMap.set(key, {
+        nombre: rawNombre,
+        count: 0,
+      });
+    }
+  });
 
   let totalDescargas = 0;
   let totalVistas = 0;
@@ -57,20 +132,34 @@ export function calcularFacetasYEstadisticas(documentos = [], esAdmin = false) {
     totalDescargas += Number(doc.descargasCount || doc.DescargasCount || 0);
     totalVistas += Number(doc.vistasCount || doc.VistasCount || 0);
 
-    // Categoría
-    const cat = (doc.categoria || doc.Categoria || "General").trim();
-    if (cat) {
-      categoriasMap.set(cat, (categoriasMap.get(cat) || 0) + 1);
+    // Categoría: normalización y deduplicación inteligente
+    const rawCat = (doc.categoria || doc.Categoria || "General").trim();
+    if (rawCat) {
+      const key = claveNormalizada(rawCat);
+      const existente = categoriasMap.get(key);
+      if (existente) {
+        existente.count += 1;
+      } else {
+        const nombreLimpio = capitalizarTexto(rawCat);
+        categoriasMap.set(key, { nombre: nombreLimpio, count: 1 });
+      }
     }
 
-    // Subcategoría
-    const sub = (doc.subcategoria || doc.Subcategoria || "").trim();
-    if (sub) {
-      const prev = subcategoriasMap.get(sub);
-      subcategoriasMap.set(sub, {
-        categoria: cat,
-        count: (prev?.count || 0) + 1,
-      });
+    // Subcategoría: normalización y deduplicación
+    const rawSub = (doc.subcategoria || doc.Subcategoria || "").trim();
+    if (rawSub) {
+      const key = claveNormalizada(rawSub);
+      const nombreLimpio = capitalizarTexto(rawSub);
+      const existente = subcategoriasMap.get(key);
+      if (existente) {
+        existente.count += 1;
+      } else {
+        subcategoriasMap.set(key, {
+          nombre: nombreLimpio,
+          categoria: capitalizarTexto(rawCat),
+          count: 1,
+        });
+      }
     }
 
     // Año
@@ -85,17 +174,23 @@ export function calcularFacetasYEstadisticas(documentos = [], esAdmin = false) {
       if (anio > maxAnio) maxAnio = anio;
     }
 
-    // Autor
-    const autor = (doc.autor || doc.Autor || "").trim();
-    if (autor) {
-      autoresMap.set(autor, (autoresMap.get(autor) || 0) + 1);
+    // Autor: normalización y deduplicación
+    const rawAutor = (doc.autor || doc.Autor || "").trim();
+    if (rawAutor) {
+      const key = claveNormalizada(rawAutor);
+      const existente = autoresMap.get(key);
+      if (existente) {
+        existente.count += 1;
+      } else {
+        autoresMap.set(key, { autor: rawAutor, count: 1 });
+      }
     }
 
     // Idioma
     const idioma = (doc.idioma || doc.Idioma || "es").trim().toLowerCase();
     idiomasMap.set(idioma, (idiomasMap.get(idioma) || 0) + 1);
 
-    // Visibilidad
+    // Visibilidad (solo si es admin)
     const esPriv = Boolean(doc.esPrivado || doc.EsPrivado);
     const vis = doc.visibilidad || doc.Visibilidad || (esPriv ? "Privado" : "Publico");
     if (esAdmin) {
@@ -110,7 +205,16 @@ export function calcularFacetasYEstadisticas(documentos = [], esAdmin = false) {
       ? rawTags.split(",").map((t) => t.trim()).filter(Boolean)
       : [];
     tagList.forEach((tag) => {
-      etiquetasMap.set(tag, (etiquetasMap.get(tag) || 0) + 1);
+      const tagLimpia = tag.trim();
+      if (tagLimpia) {
+        const key = claveNormalizada(tagLimpia);
+        const existente = etiquetasMap.get(key);
+        if (existente) {
+          existente.count += 1;
+        } else {
+          etiquetasMap.set(key, { etiqueta: tagLimpia, count: 1 });
+        }
+      }
     });
 
     // Tipo Archivo
@@ -121,7 +225,6 @@ export function calcularFacetasYEstadisticas(documentos = [], esAdmin = false) {
     else if (nombre.endsWith(".xls") || nombre.endsWith(".xlsx") || nombre.endsWith(".csv") || mime.includes("excel") || mime.includes("sheet")) tiposArchivoMap.excel++;
     else if (nombre.endsWith(".jpg") || nombre.endsWith(".jpeg") || nombre.endsWith(".png") || nombre.endsWith(".webp") || mime.startsWith("image/")) tiposArchivoMap.imagen++;
     else if (nombre.endsWith(".zip") || nombre.endsWith(".rar") || nombre.endsWith(".7z") || mime.includes("zip") || mime.includes("compressed")) tiposArchivoMap.comprimido++;
-    else tiposArchivoMap.otro++;
 
     // Accesos Rápidos
     const fecha = doc.fechaPublicacion || doc.createdAt || doc.CreatedAt;
@@ -136,11 +239,9 @@ export function calcularFacetasYEstadisticas(documentos = [], esAdmin = false) {
 
   return {
     facetas: {
-      categorias: Array.from(categoriasMap.entries())
-        .map(([nombre, count]) => ({ nombre, count }))
+      categorias: Array.from(categoriasMap.values())
         .sort((a, b) => b.count - a.count),
-      subcategorias: Array.from(subcategoriasMap.entries())
-        .map(([nombre, val]) => ({ nombre, categoria: val.categoria, count: val.count }))
+      subcategorias: Array.from(subcategoriasMap.values())
         .sort((a, b) => b.count - a.count),
       anios: Array.from(aniosMap.entries())
         .map(([anio, count]) => ({ anio, count }))
@@ -153,7 +254,6 @@ export function calcularFacetasYEstadisticas(documentos = [], esAdmin = false) {
         { tipo: "excel", label: "Excel (XLSX/CSV)", count: tiposArchivoMap.excel },
         { tipo: "imagen", label: "Imágenes", count: tiposArchivoMap.imagen },
         { tipo: "comprimido", label: "Comprimidos", count: tiposArchivoMap.comprimido },
-        { tipo: "otro", label: "Otros", count: tiposArchivoMap.otro },
       ],
       idiomas: Array.from(idiomasMap.entries()).map(([idioma, count]) => ({
         idioma,
@@ -163,12 +263,10 @@ export function calcularFacetasYEstadisticas(documentos = [], esAdmin = false) {
       visibilidades: esAdmin
         ? Array.from(visibilidadesMap.entries()).map(([visibilidad, count]) => ({ visibilidad, count }))
         : [],
-      autores: Array.from(autoresMap.entries())
-        .map(([autor, count]) => ({ autor, count }))
+      autores: Array.from(autoresMap.values())
         .sort((a, b) => b.count - a.count)
         .slice(0, 15),
-      etiquetas: Array.from(etiquetasMap.entries())
-        .map(([etiqueta, count]) => ({ etiqueta, count }))
+      etiquetas: Array.from(etiquetasMap.values())
         .sort((a, b) => b.count - a.count)
         .slice(0, 20),
       accesosRapidos: {
@@ -247,39 +345,67 @@ export async function obtenerDocumentosPublicos(filtros = {}) {
   }
 
   // Fallback transparente: cálculo inteligente de facetas y filtrado cliente
-  const todosDocs = normalizarLista(data).map((d) => ({
-    ...d,
-    id: d.id ?? d.Id,
-    titulo: d.titulo ?? d.Titulo,
-    descripcion: d.descripcion ?? d.Descripcion ?? "",
-    categoria: d.categoria ?? d.Categoria ?? "General",
-    subcategoria: d.subcategoria ?? d.Subcategoria ?? "",
-    nombreOriginal: d.nombreOriginal ?? d.NombreOriginal ?? d.nombreArchivo ?? d.NombreArchivo ?? "",
-    mimeType: d.mimeType ?? d.MimeType ?? "application/pdf",
-    tamanoBytes: Number(d.tamanoBytes ?? d.TamanoBytes ?? 0),
-    esPrivado: Boolean(d.esPrivado ?? d.EsPrivado),
-    visibilidad: d.visibilidad ?? d.Visibilidad ?? (d.esPrivado || d.EsPrivado ? "Privado" : "Publico"),
-    autor: d.autor ?? d.Autor ?? "Proyecto Café-UNA",
-    version: d.version ?? d.Version ?? "1.0",
-    palabrasClave: d.palabrasClave ?? d.PalabrasClave ?? "",
-    descargasCount: Number(d.descargasCount ?? d.DescargasCount ?? 0),
-    vistasCount: Number(d.vistasCount ?? d.VistasCount ?? 0),
-    fechaPublicacion: d.fechaPublicacion ?? d.createdAt ?? d.CreatedAt,
-    paginas: d.paginas ?? d.Paginas,
-    etiquetas: Array.isArray(d.etiquetas ?? d.Etiquetas)
-      ? d.etiquetas ?? d.Etiquetas
-      : typeof (d.etiquetas ?? d.Etiquetas) === "string"
-      ? (d.etiquetas ?? d.Etiquetas).split(",").map((t) => t.trim()).filter(Boolean)
-      : [],
-    idioma: d.idioma ?? d.Idioma ?? "es",
-    anio:
-      Number(d.anio ?? d.Anio) ||
-      (d.fechaPublicacion || d.createdAt || d.CreatedAt
-        ? new Date(d.fechaPublicacion || d.createdAt || d.CreatedAt).getFullYear()
-        : 2026),
-  }));
+  const todosDocs = normalizarLista(data).map(normalizarDoc);
 
-  const { facetas, estadisticas } = calcularFacetasYEstadisticas(todosDocs, esAdmin);
+  // Asegurar que el catálogo completo de categorías y documentos esté disponible para facetas globales
+  const ahora = Date.now();
+  const tieneFiltros = Boolean(
+    (filtros.categoria && filtros.categoria !== "todas") ||
+      filtros.subcategoria ||
+      (filtros.buscar && filtros.buscar.trim()) ||
+      (filtros.accesoRapido && filtros.accesoRapido !== "todos") ||
+      (filtros.tipoArchivo && filtros.tipoArchivo !== "todos") ||
+      filtros.anioDesde ||
+      filtros.anioHasta ||
+      filtros.autor ||
+      (filtros.idioma && filtros.idioma !== "todos") ||
+      filtros.etiquetas,
+  );
+
+  if (!tieneFiltros && todosDocs.length > 0) {
+    catalogoPublicoCache = todosDocs;
+    catalogoCacheTimestamp = ahora;
+  }
+
+  if (
+    !categoriasPublicasCache ||
+    !catalogoPublicoCache ||
+    ahora - catalogoCacheTimestamp > CATALOGO_CACHE_TTL_MS
+  ) {
+    try {
+      const [rawGlobalDocs, rawCats] = await Promise.all([
+        !catalogoPublicoCache || ahora - catalogoCacheTimestamp > CATALOGO_CACHE_TTL_MS
+          ? request(`${BASE_URL}/publicos`, { headers }).catch(() => null)
+          : null,
+        !categoriasPublicasCache
+          ? request(`${BASE_URL}/categorias`).catch(() => null)
+          : null,
+      ]);
+
+      if (rawGlobalDocs) {
+        catalogoPublicoCache = normalizarLista(rawGlobalDocs).map(normalizarDoc);
+        catalogoCacheTimestamp = ahora;
+      }
+      if (rawCats) {
+        categoriasPublicasCache = normalizarLista(rawCats)
+          .map(normalizarCategoriaDoc)
+          .filter((c) => c && c.nombre);
+      }
+    } catch (err) {
+      console.warn("No se pudo precargar catálogo para facetas completas:", err);
+    }
+  }
+
+  const docsParaFacetas =
+    catalogoPublicoCache && catalogoPublicoCache.length >= todosDocs.length
+      ? catalogoPublicoCache
+      : todosDocs;
+
+  const { facetas, estadisticas } = calcularFacetasYEstadisticas(
+    docsParaFacetas,
+    esAdmin,
+    categoriasPublicasCache || [],
+  );
 
   // Filtrado local seguro
   let filtrados = todosDocs.slice();
@@ -291,17 +417,17 @@ export async function obtenerDocumentosPublicos(filtros = {}) {
 
   // Categoría
   if (filtros.categoria && filtros.categoria !== "todas") {
-    const catFiltro = filtros.categoria.toLowerCase();
+    const catFiltro = claveNormalizada(filtros.categoria);
     filtrados = filtrados.filter(
-      (d) => (d.categoria || "").toLowerCase() === catFiltro,
+      (d) => claveNormalizada(d.categoria || "") === catFiltro,
     );
   }
 
   // Subcategoría
   if (filtros.subcategoria) {
-    const subFiltro = filtros.subcategoria.toLowerCase();
+    const subFiltro = claveNormalizada(filtros.subcategoria);
     filtrados = filtrados.filter(
-      (d) => (d.subcategoria || "").toLowerCase() === subFiltro,
+      (d) => claveNormalizada(d.subcategoria || "") === subFiltro,
     );
   }
 
@@ -491,6 +617,7 @@ export async function obtenerCategoriasDocumentos() {
  * Solicitud de acceso o envío de propuesta de documento por usuarios
  */
 export async function solicitarAccesoDocumento(datos) {
+  invalidarCacheDocumentos();
   if (typeof FormData !== "undefined" && datos instanceof FormData) {
     return apiRequest(`${BASE_URL}/solicitar`, {
       method: "POST",

@@ -1,6 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Folder, FolderOpen, Layers } from "lucide-react";
 import { ST } from "../../../Components/T/ST";
+
+function claveNormalizada(str = "") {
+  return String(str || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
 
 export function CategoryTree({
   categorias = [],
@@ -12,30 +20,44 @@ export function CategoryTree({
   totalDocumentos = 0,
 }) {
   const [expandidas, setExpandidas] = useState(() => {
-    // Si hay una categoría activa, inicializarla expandida
     const map = {};
     if (categoriaActiva && categoriaActiva !== "todas") {
-      map[categoriaActiva.toLowerCase()] = true;
+      map[claveNormalizada(categoriaActiva)] = true;
     }
     return map;
   });
 
+  // Auto-expandir categoría cuando pasa a ser activa
+  useEffect(() => {
+    if (categoriaActiva && categoriaActiva !== "todas") {
+      setExpandidas((prev) => ({
+        ...prev,
+        [claveNormalizada(categoriaActiva)]: true,
+      }));
+    }
+  }, [categoriaActiva]);
+
   const toggleExpand = (catNombre, e) => {
     e.stopPropagation();
-    const key = catNombre.toLowerCase();
+    const key = claveNormalizada(catNombre);
     setExpandidas((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // Agrupar subcategorías por categoría padre
+  // Agrupar subcategorías por categoría padre con clave normalizada
   const subcategoriasPorPadre = useMemo(() => {
     const map = new Map();
     (subcategorias || []).forEach((sub) => {
-      const padreKey = (sub.categoria || "").trim().toLowerCase();
-      if (!map.has(padreKey)) map.set(padreKey, []);
-      map.get(padreKey).push(sub);
+      const padreKey = claveNormalizada(sub.categoria || "");
+      if (padreKey) {
+        if (!map.has(padreKey)) map.set(padreKey, []);
+        map.get(padreKey).push(sub);
+      }
     });
     return map;
   }, [subcategorias]);
+
+  const normCatActiva = claveNormalizada(categoriaActiva);
+  const normSubActiva = claveNormalizada(subcategoriaActiva);
 
   return (
     <nav className="biblio-cat-tree" aria-label="Navegación por categorías">
@@ -43,9 +65,12 @@ export function CategoryTree({
       <button
         type="button"
         className={`biblio-cat-tree__item ${
-          categoriaActiva === "todas" ? "biblio-cat-tree__item--activo" : ""
+          normCatActiva === "todas" || !categoriaActiva ? "biblio-cat-tree__item--activo" : ""
         }`}
-        onClick={() => onSelectCategoria("todas")}
+        onClick={(e) => {
+          e.preventDefault();
+          onSelectCategoria("todas");
+        }}
       >
         <span className="biblio-cat-tree__icon-wrap">
           <Layers size={16} />
@@ -60,12 +85,13 @@ export function CategoryTree({
       <ul className="biblio-cat-tree__list">
         {categorias.map((cat) => {
           const catNombre = cat.nombre || cat.Nombre || "";
-          const catKey = catNombre.toLowerCase();
+          if (!catNombre) return null;
+          const catKey = claveNormalizada(catNombre);
           const subs = subcategoriasPorPadre.get(catKey) || [];
           const tieneSubs = subs.length > 0;
           const estaExpandida = Boolean(expandidas[catKey]);
-          const esActiva =
-            categoriaActiva.toLowerCase() === catKey && !subcategoriaActiva;
+          const esActiva = normCatActiva === catKey && !normSubActiva;
+          const docCount = Number(cat.count ?? cat.usos ?? cat.Usos ?? 0);
 
           return (
             <li key={catKey} className="biblio-cat-tree__node">
@@ -73,7 +99,10 @@ export function CategoryTree({
                 className={`biblio-cat-tree__item ${
                   esActiva ? "biblio-cat-tree__item--activo" : ""
                 }`}
-                onClick={() => onSelectCategoria(catNombre)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onSelectCategoria(catNombre);
+                }}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -109,7 +138,7 @@ export function CategoryTree({
                   <ST>{catNombre}</ST>
                 </span>
 
-                <span className="biblio-cat-tree__badge">{cat.count || 0}</span>
+                <span className="biblio-cat-tree__badge">{docCount}</span>
               </div>
 
               {/* Subcategorías desplegables */}
@@ -117,23 +146,28 @@ export function CategoryTree({
                 <ul className="biblio-cat-tree__sublist">
                   {subs.map((sub) => {
                     const subNombre = sub.nombre || "";
-                    const subActiva =
-                      subcategoriaActiva.toLowerCase() === subNombre.toLowerCase();
+                    if (!subNombre) return null;
+                    const subKey = claveNormalizada(subNombre);
+                    const subActiva = normSubActiva === subKey && normCatActiva === catKey;
+                    const subDocCount = Number(sub.count ?? sub.usos ?? sub.Usos ?? 0);
 
                     return (
-                      <li key={subNombre}>
+                      <li key={subKey}>
                         <button
                           type="button"
                           className={`biblio-cat-tree__subitem ${
                             subActiva ? "biblio-cat-tree__subitem--activo" : ""
                           }`}
-                          onClick={() => onSelectSubcategoria(catNombre, subNombre)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onSelectSubcategoria(catNombre, subNombre);
+                          }}
                         >
                           <span className="biblio-cat-tree__bullet">•</span>
                           <span className="biblio-cat-tree__subname" title={subNombre}>
                             <ST>{subNombre}</ST>
                           </span>
-                          <span className="biblio-cat-tree__badge">{sub.count || 0}</span>
+                          <span className="biblio-cat-tree__badge">{subDocCount}</span>
                         </button>
                       </li>
                     );

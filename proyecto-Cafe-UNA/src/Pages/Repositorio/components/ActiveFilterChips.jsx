@@ -107,15 +107,6 @@ export function ActiveFilterChips({
     });
   }
 
-  // Visibilidad
-  if (filtros.visibilidad && filtros.visibilidad !== "todas") {
-    chips.push({
-      id: "visibilidad",
-      label: `Visibilidad: ${filtros.visibilidad}`,
-      onRemove: () => onEliminarFiltro("visibilidad", "todas"),
-    });
-  }
-
   // Etiquetas individuales
   if (filtros.etiquetas) {
     const tags = filtros.etiquetas.split(",").map((t) => t.trim()).filter(Boolean);
