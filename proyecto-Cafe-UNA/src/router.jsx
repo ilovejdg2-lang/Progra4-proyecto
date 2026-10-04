@@ -69,6 +69,7 @@ const AdminPerfil = lazy(() => import("./Pages/Admin/Perfil/AdminPerfil"));
 const Repositorio = lazy(() => import("./Pages/Repositorio/Repositorio"));
 const AdminDocumentos = lazy(() => import("./Pages/Admin/Documentacion/Documentos"));
 const AdminSolicitudesDocumentacion = lazy(() => import("./Pages/Admin/Documentacion/SolicitudesDocumentacion"));
+const AdminDocumentacionAdministrativa = lazy(() => import("./Pages/Admin/Documentacion/DocumentacionAdministrativa"));
 const AdminFacturas = lazy(() => import("./Pages/Admin/Facturas/Facturas"));
 
 function HomeRouteLoading() {
@@ -525,6 +526,11 @@ const adminDocumentacionSolicitudesRoute = createRoute({
     path: "/admin/documentacion/solicitudes",
     component: AdminSolicitudesDocumentacion,
 })
+const adminDocumentacionAdministrativaRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/documentacion/administrativa",
+    component: AdminDocumentacionAdministrativa,
+})
 const adminFacturasRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/facturas",
@@ -590,6 +596,7 @@ const routeTree= rootRoute.addChildren([
     documentosAliasRoute,
     adminDocumentacionRoute,
     adminDocumentacionSolicitudesRoute,
+    adminDocumentacionAdministrativaRoute,
     adminFacturasRoute,
     notFoundCatchAllRoute,
 ])
