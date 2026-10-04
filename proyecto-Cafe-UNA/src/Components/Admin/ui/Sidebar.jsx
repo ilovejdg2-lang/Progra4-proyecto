@@ -119,8 +119,9 @@ export function Sidebar({
       <aside
         data-state={state}
         data-collapsible={collapsible}
+        style={{ borderRadius: 0, ...props.style }}
         className={cn(
-          "admin-sidebar group/sidebar fixed inset-y-0 z-30 hidden flex-col border-slate-200 bg-white text-slate-900 shadow-sm transition-[width,transform] duration-200 md:flex dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100",
+          "admin-sidebar group/sidebar fixed inset-y-0 z-30 hidden flex-col border-slate-200 bg-white text-slate-900 shadow-sm transition-[width,transform] duration-200 md:flex dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 !rounded-none",
           position,
           isIcon && (open ? "w-64" : "w-16"),
           isOffcanvas && "w-64",
@@ -166,8 +167,9 @@ export function Sidebar({
           onPointerDown={(event) => event.stopPropagation()}
         />
         <aside
+          style={{ borderRadius: 0 }}
           className={cn(
-            "absolute inset-y-0 z-10 flex w-72 max-w-[85vw] flex-col border-slate-200 bg-white text-slate-900 shadow-xl transition-transform duration-300 ease-out dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100",
+            "absolute inset-y-0 z-10 flex w-72 max-w-[85vw] flex-col border-slate-200 bg-white text-slate-900 shadow-xl transition-transform duration-300 ease-out dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 !rounded-none",
             position,
             openMobile
               ? "translate-x-0"

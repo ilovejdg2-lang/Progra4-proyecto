@@ -28,6 +28,7 @@ import {
   CalendarClock,
   CalendarDays,
   Shield,
+  ShieldCheck,
   HandCoins,
 } from "lucide-react";
 
@@ -140,8 +141,11 @@ export function AppSidebar() {
   const puedeDocumentacionSolicitudes =
     esAdminUsuario ||
     tienePermiso(roles, "administrar_solicitudes_documentacion");
+  const puedeDocumentacionAdministrativa = esAdminUsuario;
   const puedeDocumentacion =
-    puedeDocumentacionDocumentos || puedeDocumentacionSolicitudes;
+    puedeDocumentacionDocumentos ||
+    puedeDocumentacionSolicitudes ||
+    puedeDocumentacionAdministrativa;
   const puedeFacturas =
     esAdminUsuario ||
     tienePermiso(roles, "ver_todas_las_facturas") ||
@@ -410,7 +414,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="bg-white dark:bg-slate-950">
+    <Sidebar collapsible="icon" className="bg-white dark:bg-slate-950 !rounded-none">
       <SidebarHeader>
         <Link
           to="/"
@@ -801,6 +805,16 @@ export function AppSidebar() {
                       <Link to="/admin/documentacion/solicitudes" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <ScrollText />
                         <span><ST>Solicitudes</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
+                  {puedeDocumentacionAdministrativa ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/documentacion/administrativa" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <ShieldCheck />
+                        <span><ST>Documentación Administrativa</ST></span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
