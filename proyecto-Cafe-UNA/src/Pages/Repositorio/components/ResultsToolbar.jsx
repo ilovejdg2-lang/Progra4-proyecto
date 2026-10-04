@@ -4,7 +4,6 @@ import {
   Grid,
   List,
   PanelLeft,
-  Printer,
 } from "lucide-react";
 import { ST } from "../../../Components/T/ST";
 import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
@@ -128,20 +127,6 @@ export function ResultsToolbar({
             <List size={16} />
           </button>
         </div>
-
-        {/* Imprimir */}
-        <button
-          type="button"
-          className="biblio-toolbar__print-btn"
-          onClick={() => window.print()}
-          title="Imprimir catálogo visible"
-          aria-label="Imprimir catálogo"
-        >
-          <Printer size={15} />
-          <span className="desktop-only">
-            <ST>Imprimir</ST>
-          </span>
-        </button>
       </div>
     </div>
   );

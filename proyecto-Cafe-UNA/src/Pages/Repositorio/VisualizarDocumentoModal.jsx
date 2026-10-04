@@ -10,13 +10,13 @@ import {
   Lock,
   Maximize2,
   Minimize2,
-  Unlock,
   X,
 } from "lucide-react";
 import {
   descargarArchivo,
   obtenerUrlVisualizarDocumento,
 } from "../../services/documentosService";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { ST } from "../../Components/T/ST";
 import "./Repositorio.css";
 
@@ -52,16 +52,15 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
   const [descargando, setDescargando] = useState(false);
   const [errorCarga, setErrorCarga] = useState(false);
 
+  useBodyScrollLock(Boolean(documento));
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && onClose) onClose();
     };
     document.addEventListener("keydown", handleKeyDown);
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = originalOverflow;
     };
   }, [onClose]);
 
@@ -116,19 +115,14 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
                   {documento.categoria || "General"}
                   {documento.subcategoria ? ` / ${documento.subcategoria}` : ""}
                 </span>
-                {documento.esPrivado ? (
+                {documento.esPrivado && (
                   <span className="badge-priv-cell badge-priv-cell--priv">
                     <Lock size={12} />
                     <span>Privado</span>
                   </span>
-                ) : (
-                  <span className="badge-priv-cell badge-priv-cell--pub">
-                    <Unlock size={12} />
-                    <span>Público</span>
-                  </span>
                 )}
                 <span className="text-xs text-slate-400">
-                  {formatearTamano(documento.tamanoBytes)} • v{documento.version || "1.0"}
+                  v{documento.version || "1.0"}
                 </span>
               </div>
               <h3 className="repositorio-viewer-title" title={documento.titulo}>
@@ -195,7 +189,7 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
               <div className="flex gap-3 mt-4">
                 <button
                   type="button"
-                  className="btn-primario-admin"
+                  className="repositorio-btn-primary"
                   onClick={handleDescargar}
                   disabled={descargando}
                 >
@@ -204,7 +198,7 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
                 </button>
                 <button
                   type="button"
-                  className="btn-secundario-admin"
+                  className="repositorio-btn-secondary"
                   onClick={handleAbrirNuevaPestana}
                 >
                   <ExternalLink size={16} />
@@ -242,7 +236,7 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
               <div className="flex gap-3 mt-4">
                 <button
                   type="button"
-                  className="btn-primario-admin"
+                  className="repositorio-btn-primary"
                   onClick={handleDescargar}
                   disabled={descargando}
                 >
@@ -251,7 +245,7 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
                 </button>
                 <button
                   type="button"
-                  className="btn-secundario-admin"
+                  className="repositorio-btn-secondary"
                   onClick={handleAbrirNuevaPestana}
                 >
                   <ExternalLink size={16} />

@@ -463,6 +463,10 @@ const Navbar = () => {
             scrollY = lockedY || scrollY;
         }
         setIsScrolled(scrollY > 10);
+        if (scrollY > 10) {
+            setShowAboutMenu(false);
+            setShowFormsMenu(false);
+        }
     }, []);
 
     useEffect(() => {
@@ -808,8 +812,16 @@ const Navbar = () => {
     }, [clearNavMenuHoverTimer, closeDesktopNavMenu]);
 
     const handleDesktopNavMenuClick = useCallback((menu) => {
-        openDesktopNavMenu(menu);
-    }, [openDesktopNavMenu]);
+        clearNavMenuHoverTimer();
+        if (menu === 'about') {
+            setShowAboutMenu((prev) => !prev);
+            setShowFormsMenu(false);
+        }
+        if (menu === 'forms') {
+            setShowFormsMenu((prev) => !prev);
+            setShowAboutMenu(false);
+        }
+    }, [clearNavMenuHoverTimer]);
 
     const onBrandClick = useHomeBrandNavigation();
 

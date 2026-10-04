@@ -13,23 +13,29 @@ export function FilterSection({
 
   return (
     <div className={`biblio-filter-sec ${abierto ? "biblio-filter-sec--open" : ""}`}>
-      <button
-        type="button"
-        className="biblio-filter-sec__header"
-        onClick={() => setAbierto(!abierto)}
-        aria-expanded={abierto}
-      >
-        <span className="biblio-filter-sec__title-wrap">
-          <span className="biblio-filter-sec__title">
-            <ST>{titulo}</ST>
+      <div className="biblio-filter-sec__header">
+        <button
+          type="button"
+          className="biblio-filter-sec__toggle"
+          onClick={() => setAbierto(!abierto)}
+          aria-expanded={abierto}
+        >
+          <span className="biblio-filter-sec__title-group">
+            <span className="biblio-filter-sec__title">
+              <ST>{titulo}</ST>
+            </span>
+            {badge !== null && badge > 0 && (
+              <span className="biblio-filter-sec__badge">{badge}</span>
+            )}
           </span>
-          {badge !== null && badge > 0 && (
-            <span className="biblio-filter-sec__badge">{badge}</span>
-          )}
-        </span>
 
-        <span className="biblio-filter-sec__controls">
-          {onClear && (
+          <span className="biblio-filter-sec__arrow">
+            <ChevronDown size={16} />
+          </span>
+        </button>
+
+        {onClear && (
+          <div className="biblio-filter-sec__actions">
             <button
               type="button"
               className="biblio-filter-sec__clear-btn"
@@ -42,12 +48,9 @@ export function FilterSection({
             >
               <RotateCcw size={12} />
             </button>
-          )}
-          <span className="biblio-filter-sec__arrow">
-            <ChevronDown size={16} />
-          </span>
-        </span>
-      </button>
+          </div>
+        )}
+      </div>
 
       {abierto && <div className="biblio-filter-sec__content">{children}</div>}
     </div>

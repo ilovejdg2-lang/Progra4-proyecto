@@ -216,7 +216,7 @@
   top: calc(100% + 0.45rem);
   left: 50%;
   z-index: 40;
-  display: grid;
+  display: none;
   min-width: 10.5rem;
   padding: 0.45rem;
   border: 1px solid #e5e7eb;
@@ -240,6 +240,7 @@
 }
 
 .navbar__about.is-open .navbar__about-menu {
+  display: grid;
   opacity: 1;
   visibility: visible;
   pointer-events: auto;

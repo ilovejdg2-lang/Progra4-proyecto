@@ -44,7 +44,6 @@ function parseUrlFilters() {
     autor: params.get("autor") || "",
     tipoArchivo: params.get("tipoArchivo") || "todos",
     idioma: params.get("idioma") || "todos",
-    visibilidad: params.get("visibilidad") || "todas",
     etiquetas: params.get("etiquetas") || "",
     accesoRapido: params.get("accesoRapido") || "todos",
     orden: params.get("orden") || "recientes",
@@ -77,7 +76,6 @@ export default function Repositorio() {
     anios: [],
     tiposArchivo: [],
     idiomas: [],
-    visibilidades: [],
     autores: [],
     etiquetas: [],
     accesosRapidos: { todos: 0, novedades: 0, populares: 0, destacados: 0 },
@@ -166,7 +164,6 @@ export default function Repositorio() {
         !(clave === "categoria" && v === "todas") &&
         !(clave === "tipoArchivo" && v === "todos") &&
         !(clave === "idioma" && v === "todos") &&
-        !(clave === "visibilidad" && v === "todas") &&
         !(clave === "accesoRapido" && v === "todos") &&
         !(clave === "miBiblioteca" && v === "") &&
         !(clave === "orden" && v === "recientes") &&
@@ -214,7 +211,6 @@ export default function Repositorio() {
           autor: filtros.autor,
           tipoArchivo: filtros.tipoArchivo,
           idioma: filtros.idioma,
-          visibilidad: filtros.visibilidad,
           etiquetas: filtros.etiquetas,
           accesoRapido: filtros.accesoRapido,
           pagina: filtros.pagina,
@@ -255,7 +251,6 @@ export default function Repositorio() {
     filtros.autor,
     filtros.tipoArchivo,
     filtros.idioma,
-    filtros.visibilidad,
     filtros.etiquetas,
     filtros.accesoRapido,
     filtros.pagina,
@@ -266,6 +261,18 @@ export default function Repositorio() {
     (clave, valor) => {
       setFiltros((prev) => {
         const next = { ...prev, [clave]: valor, pagina: 1 };
+        sincronizarUrl(next);
+        return next;
+      });
+    },
+    [sincronizarUrl],
+  );
+
+  // Manejador para cambiar múltiples filtros atómicamente (ej. categoría y subcategoría a la vez)
+  const handleCambiarFiltros = useCallback(
+    (cambios) => {
+      setFiltros((prev) => {
+        const next = { ...prev, ...cambios, pagina: 1 };
         sincronizarUrl(next);
         return next;
       });
@@ -540,6 +547,7 @@ export default function Repositorio() {
           historialCount={historialIds.size}
           onBuscar={handleBuscar}
           onCambiarFiltro={handleCambiarFiltro}
+          onCambiarFiltros={handleCambiarFiltros}
           onLimpiarFiltros={handleLimpiarTodos}
           onAbrirSolicitarModal={() => setDocumentoSolicitar({})}
           mobileOpen={mobileDrawerOpen}
@@ -577,7 +585,7 @@ export default function Repositorio() {
               (filtros.tipoArchivo !== "todos" ? 1 : 0) +
               (filtros.autor ? 1 : 0) +
               (filtros.idioma !== "todos" ? 1 : 0) +
-              (filtros.visibilidad !== "todas" ? 1 : 0) +
+              (esAdmin && filtros.visibilidad !== "todas" ? 1 : 0) +
               (filtros.accesoRapido !== "todos" ? 1 : 0) +
               (filtros.miBiblioteca ? 1 : 0)
             }

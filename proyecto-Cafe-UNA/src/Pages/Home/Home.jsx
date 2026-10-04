@@ -382,7 +382,7 @@ const Home = () => {
                       className="mission-spotlight-card__button mission-spotlight-card__button--secondary"
                       onClick={() => setModalSolicitudDocumentoAbierto(true)}
                     >
-                      <ST>Enviar / Proponer archivo</ST>
+                      <ST>Enviar</ST>
                     </button>
                   </div>
                 </div>
