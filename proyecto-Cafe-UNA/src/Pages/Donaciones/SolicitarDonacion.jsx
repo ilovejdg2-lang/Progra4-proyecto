@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams, useRouterState } from "@tanstack/react-router";
+import { useNavigate, useParams, useRouterState } from "@tanstack/react-router";
 import {
   CalendarDays,
   CalendarX2,
   Check,
   Clock,
   FileText,
-  Lock,
   MapPin,
   Package,
   Phone,
@@ -282,8 +281,7 @@ export default function SolicitarDonacion() {
   const tEnviar = useTraducir("Enviar solicitud");
   const tEnviando = useTraducir("Enviando...");
   const tLoginBtn = useTraducir("Inicie sesión para enviar");
-  const tLoginMsg = useTraducir("Debe iniciar sesión para enviar su solicitud de donación.");
-  const tLoginLink = useTraducir("Iniciar sesión →");
+
   const tMaterial = useTraducir("Material o artículo");
   const tValorHint = useTraducir("Indique el valor aproximado total de los artículos ofrecidos.");
   const tUbicacion = useTraducir("Ubicación de la donación");
@@ -1619,21 +1617,6 @@ export default function SolicitarDonacion() {
 
               {errorApi ? <p className="form-error" role="alert" data-form-error><ST>{errorApi}</ST></p> : null}
 
-              {!usuario ? (
-                <div className="auth-banner">
-                  <Lock size={20} strokeWidth={2} className="auth-banner__icon" />
-                  <div className="auth-banner__content">
-                    <p className="auth-banner__text">{tLoginMsg}</p>
-                    <Link
-                      to="/login"
-                      className="auth-banner__link"
-                      onClick={() => sessionStorage.setItem("postLoginRedirect", DONACION_LOGIN_REDIRECT)}
-                    >
-                      {tLoginLink}
-                    </Link>
-                  </div>
-                </div>
-              ) : null}
 
               <AvisoSedeFinca sede={sedeFinca} contexto="donacion" />
 

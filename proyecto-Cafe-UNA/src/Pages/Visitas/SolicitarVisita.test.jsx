@@ -168,7 +168,6 @@ describe("SolicitarVisita", () => {
     render(<SolicitarVisita />);
 
     // Form is fully visible even when not logged in
-    expect(screen.getByText(/debe iniciar sesión para enviar su solicitud de visita/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /enviar solicitud/i })).toBeInTheDocument();
 
     // User attempts to focus on an input field

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import {
   AlertCircle,
   CalendarCheck2,
@@ -8,7 +8,6 @@ import {
   Check,
   Clock,
   FileText,
-  Lock,
   Mail,
   Sprout,
   Trash2,
@@ -189,8 +188,7 @@ function SolicitarVoluntariado() {
   const tPaso3 = useTraducir("3. Horario disponible");
   const tPaso3Hint = useTraducir("Seleccione el horario o turno configurado para la fecha elegida");
 
-  const tLoginMsg = useTraducir("Debe iniciar sesión para enviar su solicitud de voluntariado.");
-  const tLoginLink = useTraducir("Iniciar sesión →");
+
   const tEnviar = useTraducir("Enviar Solicitud");
   const tEnviando = useTraducir("Enviando...");
   const tLoginBtn = useTraducir("Inicie sesión para enviar");
@@ -1378,25 +1376,6 @@ function SolicitarVoluntariado() {
 
               {errorApi && <p className="form-error" role="alert" data-form-error><ST>{errorApi}</ST></p>}
 
-              {!usuario ? (
-                <div className="auth-banner">
-                  <Lock size={20} strokeWidth={2} className="auth-banner__icon" />
-                  <div className="auth-banner__content">
-                    <p className="auth-banner__text">
-                      {tLoginMsg}
-                    </p>
-                    <Link
-                      to="/login"
-                      className="auth-banner__link"
-                      onClick={() =>
-                        sessionStorage.setItem("postLoginRedirect", VOLUNTARIADO_LOGIN_REDIRECT)
-                      }
-                    >
-                      {tLoginLink}
-                    </Link>
-                  </div>
-                </div>
-              ) : null}
 
               <AvisoSedeFinca sede={sedeFinca} contexto="voluntariado" />
 

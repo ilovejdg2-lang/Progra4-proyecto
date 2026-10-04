@@ -182,19 +182,10 @@ function unirNombreCompleto({ nombre, primerApellido, segundoApellido }) {
     .join(" ");
 }
 
-function partirPeriodo(dias = "") {
-  const m = String(dias || "").match(
-    /(\d{4}-\d{2}-\d{2})\s*[-–—]\s*(\d{4}-\d{2}-\d{2})/,
-  );
-  if (m) return { fechaInicio: m[1], fechaFin: m[2] };
-  return { fechaInicio: "", fechaFin: "" };
-}
-
-function unirPeriodo(fechaInicio, fechaFin) {
-  const a = String(fechaInicio || "").trim();
-  const b = String(fechaFin || "").trim();
-  if (a && b) return `${a} - ${b}`;
-  return a || b || "";
+function extraerFecha(dias = "") {
+  if (!dias) return "";
+  const m = String(dias).match(/\d{4}-\d{2}-\d{2}/);
+  return m ? m[0] : String(dias).trim();
 }
 
 const getInitials = (name = "") => {
@@ -468,28 +459,15 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
               ) : null}
               <DetailField icon={GraduationCap} label="Tipo de voluntariado" value={solicitud.tipoVoluntariado} traducirValor />
               <DetailField icon={Calendar} label="Fecha de solicitud" value={solicitud.fechaSolicitud} />
-              {(() => {
-                const periodo = partirPeriodo(solicitud.dias);
-                if (periodo.fechaInicio && periodo.fechaFin && periodo.fechaInicio !== periodo.fechaFin) {
-                  return (
-                    <>
-                      <DetailField icon={Calendar} label="Fecha de inicio" value={periodo.fechaInicio} />
-                      <DetailField icon={Calendar} label="Fecha de finalización" value={periodo.fechaFin} />
-                    </>
-                  );
-                }
-                return (
-                  <DetailField
-                    icon={Calendar}
-                    label="Fecha de voluntariado"
-                    value={solicitud.dias || "No indicada"}
-                  />
-                );
-              })()}
+              <DetailField
+                icon={Calendar}
+                label="Fecha de voluntariado"
+                value={solicitud.dias || "No indicada"}
+              />
               <DetailField
                 icon={Clock}
-                label="Disponibilidad"
-                value={solicitud.horario}
+                label="Horario asignado"
+                value={solicitud.horario || "No indicado"}
                 className="md:col-span-2"
                 traducirValor
               />
@@ -546,7 +524,6 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
   useAdminModalLock(true);
   const { idioma } = useIdioma();
   const partesNombre = partirNombreCompleto(solicitud.nombre);
-  const periodo = partirPeriodo(solicitud.dias);
   const formBase = () => ({
     estado: normalizarEstado(solicitud.estado),
     nombre: partesNombre.nombre,
@@ -559,8 +536,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
     institucion: solicitud.institucion || "",
     pais: solicitud.pais || "",
     horario: solicitud.horario || "",
-    fechaInicio: periodo.fechaInicio,
-    fechaFin: periodo.fechaFin,
+    fecha: extraerFecha(solicitud.dias),
     modalidad: solicitud.modalidad || "individual",
     cantidadParticipantes: solicitud.cantidadParticipantes || 1,
     observacionesAdmin: solicitud.observacionesAdmin || "",
@@ -615,7 +591,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
         institucion: textoEs.institucion,
         pais: textoEs.pais,
         horario: form.horario,
-        dias: unirPeriodo(form.fechaInicio, form.fechaFin),
+        dias: form.fecha,
         modalidad: form.modalidad,
         cantidadParticipantes: form.cantidadParticipantes,
         observacionesAdmin: textoEs.observacionesAdmin,
@@ -749,22 +725,12 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
               />
             </div>
 
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
-              <ST>Fecha de inicio</ST>
+            <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
+              <ST>Fecha de voluntariado</ST>
               <input
                 type="date"
-                name="fechaInicio"
-                value={form.fechaInicio}
-                onChange={handleChange}
-                className={inputModalCls}
-              />
-            </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
-              <ST>Fecha de finalización</ST>
-              <input
-                type="date"
-                name="fechaFin"
-                value={form.fechaFin}
+                name="fecha"
+                value={form.fecha || ""}
                 onChange={handleChange}
                 className={inputModalCls}
               />
@@ -1117,7 +1083,7 @@ const AdminVoluntariado = () => {
                             <tr>
                               <th><ST>Nombre</ST></th>
                               <th><ST>Tipo de voluntariado</ST></th>
-                              <th><ST>Fecha</ST></th>
+                              <th><ST>Fecha y horario</ST></th>
                               <th><ST>Estado</ST></th>
                               <th><ST>Acciones</ST></th>
                             </tr>
@@ -1130,7 +1096,15 @@ const AdminVoluntariado = () => {
                                   <div className="mt-1 text-[length:var(--text-body)] text-slate-500">{solicitud.email || t("Sin correo")}</div>
                                 </td>
                                 <td className="px-5 py-4 text-slate-700">{solicitud.tipoVoluntariado ? <ST>{solicitud.tipoVoluntariado}</ST> : t("No indicado")}</td>
-                                <td className="px-5 py-4 text-slate-700">{solicitud.fechaSolicitud || t("No indicada")}</td>
+                                <td className="px-5 py-4 text-slate-700">
+                                  <div className="font-semibold text-slate-900">{solicitud.dias || solicitud.fechaSolicitud || t("No indicada")}</div>
+                                  {solicitud.horario && (
+                                    <div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+                                      <Clock className="size-3 text-slate-400" />
+                                      <span>{solicitud.horario}</span>
+                                    </div>
+                                  )}
+                                </td>
                                 <td className="px-5 py-4">
                                   <BadgeEstado estado={solicitud.estado} />
                                 </td>
@@ -1164,7 +1138,11 @@ const AdminVoluntariado = () => {
 
                           <div className="grid gap-1 text-sm text-slate-600">
                             <p><span className="font-medium text-slate-800"><ST>Tipo</ST>:</span> {solicitud.tipoVoluntariado ? <ST>{solicitud.tipoVoluntariado}</ST> : t("No indicado")}</p>
-                            <p><span className="font-medium text-slate-800"><ST>Fecha</ST>:</span> {solicitud.fechaSolicitud || t("No indicada")}</p>
+                            <p>
+                              <span className="font-medium text-slate-800"><ST>Fecha y horario</ST>:</span>{" "}
+                              {solicitud.dias || solicitud.fechaSolicitud || t("No indicada")}
+                              {solicitud.horario ? ` • ${solicitud.horario}` : ""}
+                            </p>
                           </div>
 
                           <AccionesSolicitud
