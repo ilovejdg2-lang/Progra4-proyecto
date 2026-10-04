@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { format, isBefore, startOfDay } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -17,7 +17,6 @@ import {
   FileDown,
   Footprints,
   Info,
-  Lock,
   ShieldCheck,
   UserRound,
   Users,
@@ -950,11 +949,11 @@ export default function SolicitarVisita() {
                                       </span>
                                     ) : cupoRestante <= 5 ? (
                                       <span className="opcion-disponibilidad__cupo-badge opcion-disponibilidad__cupo-badge--bajo">
-                                        ¡Últimos {cupoRestante} cupos! (de {capacidadMaxima})
+                                        {`¡Últimos ${cupoRestante} cupos! (de ${capacidadMaxima})`}
                                       </span>
                                     ) : (
                                       <span className="opcion-disponibilidad__cupo-badge opcion-disponibilidad__cupo-badge--disponible">
-                                        {cupoRestante} cupos disponibles (de {capacidadMaxima})
+                                        {`${cupoRestante} cupos disponibles (de ${capacidadMaxima})`}
                                       </span>
                                     )}
                                   </div>
@@ -1211,21 +1210,6 @@ export default function SolicitarVisita() {
               </p>
             ) : null}
 
-            {!isAuthenticated ? (
-              <div className="auth-banner mb-6">
-                <Lock size={20} strokeWidth={2} className="auth-banner__icon" />
-                <div className="auth-banner__content">
-                  <p className="auth-banner__text">Debe iniciar sesión para enviar su solicitud de visita.</p>
-                  <Link
-                    to="/login"
-                    className="auth-banner__link"
-                    onClick={() => sessionStorage.setItem("postLoginRedirect", VISITA_LOGIN_REDIRECT)}
-                  >
-                    Iniciar sesión →
-                  </Link>
-                </div>
-              </div>
-            ) : null}
 
             <AvisoSedeFinca sede={sedeFinca} contexto="visita" />
 
