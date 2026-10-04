@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpen,
   Check,
@@ -14,7 +14,6 @@ import {
   Heart,
   History,
   Layers,
-  Lock,
   PanelLeftClose,
   PanelLeftOpen,
   RotateCcw,
@@ -54,6 +53,7 @@ export function Sidebar({
   // Callbacks para cambiar filtros
   onBuscar,
   onCambiarFiltro,
+  onCambiarFiltros,
   onLimpiarFiltros,
   onAbrirSolicitarModal,
 
@@ -116,6 +116,26 @@ export function Sidebar({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mobileOpen, onCloseMobile]);
 
+  // Preservar la posición de scroll del sidebar entre cambios de filtros sin interferir en el scroll manual
+  const scrollContainerRef = useRef(null);
+  const scrollPosRef = useRef(0);
+
+  const handleScroll = (e) => {
+    scrollPosRef.current = e.currentTarget.scrollTop;
+  };
+
+  const filtrosHash = useMemo(
+    () =>
+      `${filtros.categoria || ""}-${filtros.subcategoria || ""}-${filtros.accesoRapido || ""}-${filtros.tipoArchivo || ""}-${filtros.buscar || ""}`,
+    [filtros.categoria, filtros.subcategoria, filtros.accesoRapido, filtros.tipoArchivo, filtros.buscar],
+  );
+
+  useLayoutEffect(() => {
+    if (scrollContainerRef.current && scrollPosRef.current > 0) {
+      scrollContainerRef.current.scrollTop = scrollPosRef.current;
+    }
+  }, [filtrosHash]);
+
   // Conteo de filtros activos para badges
   const activeFiltersCount = useMemo(() => {
     let count = 0;
@@ -126,7 +146,6 @@ export function Sidebar({
     if (filtros.autor) count++;
     if (filtros.tipoArchivo && filtros.tipoArchivo !== "todos") count++;
     if (filtros.idioma && filtros.idioma !== "todos") count++;
-    if (filtros.visibilidad && filtros.visibilidad !== "todas") count++;
     if (filtros.etiquetas) count += filtros.etiquetas.split(",").filter(Boolean).length;
     if (filtros.accesoRapido && filtros.accesoRapido !== "todos") count++;
     return count;
@@ -190,7 +209,11 @@ export function Sidebar({
         </div>
 
         {/* Contenido con scroll interno */}
-        <div className="biblio-sidebar__scroll">
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="biblio-sidebar__scroll"
+        >
           {/* 1. Buscador con debounce y sugerencias */}
           <div className="biblio-sidebar__search-box">
             <label htmlFor={searchInputId} className="sr-only">
@@ -322,13 +345,21 @@ export function Sidebar({
               categoriaActiva={filtros.categoria || "todas"}
               subcategoriaActiva={filtros.subcategoria || ""}
               onSelectCategoria={(cat) => {
-                onCambiarFiltro("categoria", cat);
-                onCambiarFiltro("subcategoria", "");
+                if (onCambiarFiltros) {
+                  onCambiarFiltros({ categoria: cat, subcategoria: "" });
+                } else {
+                  onCambiarFiltro("categoria", cat);
+                  onCambiarFiltro("subcategoria", "");
+                }
                 if (mobileOpen) onCloseMobile?.();
               }}
               onSelectSubcategoria={(cat, sub) => {
-                onCambiarFiltro("categoria", cat);
-                onCambiarFiltro("subcategoria", sub);
+                if (onCambiarFiltros) {
+                  onCambiarFiltros({ categoria: cat, subcategoria: sub });
+                } else {
+                  onCambiarFiltro("categoria", cat);
+                  onCambiarFiltro("subcategoria", sub);
+                }
                 if (mobileOpen) onCloseMobile?.();
               }}
               totalDocumentos={estadisticas.totalDocumentos || 0}
@@ -628,68 +659,6 @@ export function Sidebar({
               </div>
             </FilterSection>
 
-            {/* Visibilidad (Solo superadmin / administrativos) */}
-            {esAdmin && (
-              <FilterSection
-                titulo="Visibilidad"
-                badge={filtros.visibilidad && filtros.visibilidad !== "todas" ? 1 : null}
-                onClear={
-                  filtros.visibilidad && filtros.visibilidad !== "todas"
-                    ? () => onCambiarFiltro("visibilidad", "todas")
-                    : null
-                }
-                initialOpen={false}
-              >
-                <div className="biblio-filter-list">
-                  <label
-                    className={`biblio-filter-option ${
-                      filtros.visibilidad === "Publico" ? "biblio-filter-option--checked" : ""
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="filtroVisibilidad"
-                      checked={filtros.visibilidad === "Publico"}
-                      onChange={() =>
-                        onCambiarFiltro(
-                          "visibilidad",
-                          filtros.visibilidad === "Publico" ? "todas" : "Publico",
-                        )
-                      }
-                      className="sr-only"
-                    />
-                    <Globe size={14} className="text-emerald-500" />
-                    <span className="biblio-filter-option__text">
-                      <ST>Público</ST>
-                    </span>
-                  </label>
-
-                  <label
-                    className={`biblio-filter-option ${
-                      filtros.visibilidad === "Privado" ? "biblio-filter-option--checked" : ""
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="filtroVisibilidad"
-                      checked={filtros.visibilidad === "Privado"}
-                      onChange={() =>
-                        onCambiarFiltro(
-                          "visibilidad",
-                          filtros.visibilidad === "Privado" ? "todas" : "Privado",
-                        )
-                      }
-                      className="sr-only"
-                    />
-                    <Lock size={14} className="text-amber-500" />
-                    <span className="biblio-filter-option__text">
-                      <ST>Privado / Administrativo</ST>
-                    </span>
-                  </label>
-                </div>
-              </FilterSection>
-            )}
-
             {/* Etiquetas / Chips Populares */}
             {facetas.etiquetas && facetas.etiquetas.length > 0 && (
               <FilterSection
@@ -760,7 +729,7 @@ export function Sidebar({
           >
             <Upload size={15} />
             <span>
-              <ST>Enviar / Proponer archivo</ST>
+              <ST>Enviar</ST>
             </span>
           </button>
         </div>

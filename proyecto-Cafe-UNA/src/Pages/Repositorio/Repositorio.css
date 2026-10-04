@@ -17,9 +17,10 @@
   --biblio-text-secondary: #475569;
   --biblio-text-muted: #64748b;
   --biblio-sidebar-width: 270px;
-  --biblio-radius-sm: 6px;
-  --biblio-radius-md: 10px;
-  --biblio-radius-lg: 12px;
+  --biblio-radius-sm: 8px;
+  --biblio-radius-md: 12px;
+  --biblio-radius-card: 14px;
+  --biblio-radius-lg: 16px;
   --biblio-radius-full: 9999px;
   --biblio-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
   --biblio-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
@@ -612,17 +613,29 @@
 
 .biblio-filter-sec__header {
   width: 100%;
-  padding: 0.55rem 0.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: #ffffff;
   border: none;
-  cursor: pointer;
-  text-align: left;
+  padding: 0;
+  transition: var(--biblio-transition);
 }
 
-.biblio-filter-sec__header:hover {
+.biblio-filter-sec__toggle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.biblio-filter-sec__toggle:hover {
   background: #f8fafc;
 }
 
@@ -875,20 +888,24 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.6rem 1rem;
-  border-radius: 8px; /* matching admin .btn-primario-admin */
-  background: #0f172a;
+  padding: 0.65rem 1rem;
+  min-height: 42px;
+  border-radius: 999px;
+  background: #1a1410;
   color: #ffffff;
-  font-size: 0.825rem;
-  font-weight: 600;
-  border: 1px solid #0f172a;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: 1px solid #1a1410;
   cursor: pointer;
-  transition: background 0.15s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(26, 20, 16, 0.2);
 }
 
 .biblio-sidebar__propose-btn:hover {
-  background: #1e293b;
+  background: #2a1711;
+  border-color: #2a1711;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(42, 23, 17, 0.28);
 }
 
 .biblio-sidebar__clear-btn {
@@ -1051,25 +1068,6 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.biblio-toolbar__print-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.65rem;
-  background: #ffffff;
-  border: 1px solid var(--biblio-border-input);
-  border-radius: 7px;
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.biblio-toolbar__print-btn:hover {
-  background: #f8fafc;
-  color: #0f172a;
-}
 
 /* Chips de filtros activos */
 .biblio-active-chips {
@@ -1841,35 +1839,6 @@
   }
 }
 
-/* ==========================================================================
-   IMPRESIÓN
-   ========================================================================== */
-@media print {
-  .no-print,
-  .biblio-sidebar,
-  .biblio-toolbar,
-  .biblio-pagination,
-  .biblio-card__actions,
-  .biblio-card__fav-btn {
-    display: none !important;
-  }
-
-  .biblio-layout-container {
-    padding: 0;
-    display: block;
-  }
-
-  .biblio-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-
-  .biblio-card {
-    break-inside: avoid;
-    box-shadow: none;
-    border: 1px solid #cbd5e1;
-  }
-}
 
 /* ==========================================================================
    MODALES DEL REPOSITORIO: VISUALIZADOR Y SOLICITUD DE ARCHIVO
@@ -2100,18 +2069,19 @@
   margin: 0 0 1rem;
 }
 
-/* Modal Contenedor Genérico (Solicitar / Proponer) */
+/* Modal Contenedor Genérico (Envío / Solicitud de Documento) */
 .repositorio-modal-container {
   background: #ffffff;
-  border-radius: var(--biblio-radius-lg);
+  border-radius: var(--biblio-radius-lg, 16px);
   width: 100%;
-  max-width: 620px;
-  max-height: 92vh;
+  max-width: 640px;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
   border: 1px solid var(--biblio-border);
   overflow: hidden;
+  isolation: isolate;
   animation: biblioScaleUp 0.15s ease-out;
 }
 
@@ -2122,6 +2092,8 @@
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--biblio-border);
   gap: 1rem;
+  background: #ffffff;
+  flex-shrink: 0;
 }
 
 .badge--repositorio-modal {
@@ -2145,20 +2117,275 @@
   letter-spacing: -0.01em;
 }
 
+.repositorio-modal-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .repositorio-modal-body {
   padding: 1.5rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 1.25rem;
+  flex: 1;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.repositorio-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.repositorio-modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
 }
 
 .repositorio-modal-footer {
-  padding: 1rem 1.5rem;
+  padding: 1.15rem 1.5rem;
   border-top: 1px solid var(--biblio-border);
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.75rem;
+  gap: 0.85rem;
   background: #f8fafc;
+  flex-shrink: 0;
+}
+
+/* Botón de Enviar (Primario) - Sigue el diseño de toda la página Café-UNA */
+.repositorio-btn-primary,
+.repositorio-modal-footer .btn-primario-admin,
+.repositorio-viewer-fallback .btn-primario-admin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 44px;
+  padding: 0.65rem 1.75rem;
+  border: 1px solid #1a1410;
+  border-radius: 999px;
+  background: #1a1410;
+  color: #ffffff !important;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(26, 20, 16, 0.22);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.repositorio-btn-primary:hover:not(:disabled),
+.repositorio-btn-primary:focus-visible:not(:disabled),
+.repositorio-modal-footer .btn-primario-admin:hover:not(:disabled),
+.repositorio-modal-footer .btn-primario-admin:focus-visible:not(:disabled),
+.repositorio-viewer-fallback .btn-primario-admin:hover:not(:disabled),
+.repositorio-viewer-fallback .btn-primario-admin:focus-visible:not(:disabled) {
+  background: #2a1711;
+  border-color: #2a1711;
+  color: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(42, 23, 17, 0.32);
+}
+
+.repositorio-btn-primary:active:not(:disabled),
+.repositorio-modal-footer .btn-primario-admin:active:not(:disabled),
+.repositorio-viewer-fallback .btn-primario-admin:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+  box-shadow: 0 2px 8px rgba(26, 20, 16, 0.2);
+}
+
+.repositorio-btn-primary:disabled,
+.repositorio-modal-footer .btn-primario-admin:disabled,
+.repositorio-viewer-fallback .btn-primario-admin:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Botón Cancelar / Secundario */
+.repositorio-btn-secondary,
+.repositorio-modal-footer .btn-secundario-admin,
+.repositorio-viewer-fallback .btn-secundario-admin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0.65rem 1.4rem;
+  border: 1.5px solid rgba(112, 103, 96, 0.35);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #4a413a !important;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.repositorio-btn-secondary:hover:not(:disabled),
+.repositorio-btn-secondary:focus-visible:not(:disabled),
+.repositorio-modal-footer .btn-secundario-admin:hover:not(:disabled),
+.repositorio-modal-footer .btn-secundario-admin:focus-visible:not(:disabled),
+.repositorio-viewer-fallback .btn-secundario-admin:hover:not(:disabled),
+.repositorio-viewer-fallback .btn-secundario-admin:focus-visible:not(:disabled) {
+  background: #f7f3f0;
+  border-color: #1a1410;
+  color: #1a1410 !important;
+  transform: translateY(-1px);
+}
+
+.repositorio-btn-secondary:active:not(:disabled),
+.repositorio-modal-footer .btn-secundario-admin:active:not(:disabled),
+.repositorio-viewer-fallback .btn-secundario-admin:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.repositorio-btn-secondary:disabled,
+.repositorio-modal-footer .btn-secundario-admin:disabled,
+.repositorio-viewer-fallback .btn-secundario-admin:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Indicador de carga dentro del botón */
+.spinner-sm {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: biblioSpin 0.7s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@keyframes biblioSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Dropzone de subida interactiva */
+.dropzone-doc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.75rem 1.25rem;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.dropzone-doc:hover,
+.dropzone-doc--dragging {
+  background: #f1f5f9;
+  border-color: #0f172a;
+}
+
+.dropzone-doc--has-file {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  padding: 0.85rem 1rem;
+}
+
+.dropzone-doc__file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  text-align: left;
+}
+
+.dropzone-doc__file-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #fef3c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dropzone-doc__file-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.dropzone-doc__file-name {
+  display: block;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropzone-doc__file-size {
+  display: block;
+  font-size: 0.75rem;
+  color: #16a34a;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.dropzone-doc__file-remove {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.45rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.dropzone-doc__file-remove:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.dropzone-doc__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dropzone-doc__icon {
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.dropzone-doc__title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #1e293b;
+}
+
+.dropzone-doc__sub {
+  font-size: 0.75rem;
+  color: #64748b;
 }

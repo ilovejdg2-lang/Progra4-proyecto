@@ -9,7 +9,6 @@ import {
   FileSpreadsheet,
   FileText,
   Globe,
-  HardDrive,
   Heart,
   Lock,
   Share2,
@@ -168,11 +167,6 @@ export function DocumentCard({
           <span className="biblio-card__meta-item" title="Idioma">
             <Globe size={12} />
             <span>{idiomaLabel}</span>
-          </span>
-          <span className="biblio-card__meta-sep">•</span>
-          <span className="biblio-card__meta-item" title="Tamaño de archivo">
-            <HardDrive size={12} />
-            <span>{formatearTamano(documento.tamanoBytes)}</span>
           </span>
           {documento.paginas ? (
             <>
