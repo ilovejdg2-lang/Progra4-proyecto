@@ -2,11 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   Archive,
-  BarChart3,
   BookOpen,
   Check,
   CheckCircle2,
-  ChevronDown,
   Download,
   Eye,
   FileArchive,
@@ -14,11 +12,8 @@ import {
   FileLock2,
   FileSpreadsheet,
   FileText,
-  Filter,
   FolderOpen,
   FolderPlus,
-  HardDrive,
-  Info,
   Layers,
   Lock,
   Pencil,
@@ -26,11 +21,9 @@ import {
   Power,
   RotateCcw,
   Search,
-  Tag,
+  ShieldCheck,
   Trash2,
-  Unlock,
   UploadCloud,
-  User,
   X,
 } from "lucide-react";
 
@@ -54,22 +47,20 @@ import {
   obtenerEstadisticasDocumentosAdmin,
 } from "../../../services/documentosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
-import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
+import { rolesDeUsuario } from "../../../lib/permisos";
 import { ST } from "../../../Components/T/ST";
-import { useTraducir } from "../../../hooks/useTraducir";
 import { VisualizarDocumentoModal } from "../../Repositorio/VisualizarDocumentoModal";
-import "../../Voluntariado/SolicitarVoluntariado.css";
 import "./Documentos.css";
 
-const FORM_DOCUMENTO_INICIAL = {
+const FORM_DOC_ADMIN_INICIAL = {
   titulo: "",
   descripcion: "",
   categoria: "",
   subcategoria: "",
-  esPrivado: false,
-  autor: "Proyecto Café-UNA",
+  esPrivado: true, // Privado por defecto para documentación administrativa
+  autor: "Administración Café-UNA",
   version: "1.0",
-  palabrasClave: "",
+  palabrasClave: "administrativo, confidencial, interno",
   activo: true,
 };
 
@@ -100,7 +91,7 @@ function formatearTamano(bytes = 0) {
   return `${(b / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default function AdminDocumentos() {
+export default function DocumentacionAdministrativa() {
   const actor = getActiveSessionUser();
   const roles = rolesDeUsuario(actor);
   const esAdmin =
@@ -109,9 +100,6 @@ export default function AdminDocumentos() {
         String(r || "").toLowerCase(),
       ),
     ) || String(actor?.role || "").toLowerCase() === "admin";
-  const puedeCrear = esAdmin || tienePermiso(roles, "crear_documentacion");
-  const puedeEditar = esAdmin || tienePermiso(roles, "actualizar_documentacion");
-  const puedeInactivar = esAdmin || tienePermiso(roles, "inactivar_documentacion");
 
   // Pestaña activa: 'documentos' | 'categorias'
   const [tabActivo, setTabActivo] = useState("documentos");
@@ -124,29 +112,28 @@ export default function AdminDocumentos() {
   const [error, setError] = useState("");
   const [mensajeExito, setMensajeExito] = useState("");
 
-  // Filtros de Documentos
+  // Filtros
   const [filtroBuscar, setFiltroBuscar] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState("");
-  const [filtroPrivacidad, setFiltroPrivacidad] = useState("");
   const [filtroActivo, setFiltroActivo] = useState("");
 
   // Modal Subida / Edición
   const [modalAbierto, setModalAbierto] = useState(false);
   const [documentoEditando, setDocumentoEditando] = useState(null);
-  const [formDoc, setFormDoc] = useState(FORM_DOCUMENTO_INICIAL);
+  const [formDoc, setFormDoc] = useState(FORM_DOC_ADMIN_INICIAL);
   const [archivoSeleccionado, setArchivoSeleccionado] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const [errorForm, setErrorForm] = useState("");
   const fileInputRef = useRef(null);
 
-  // Formulario de Nueva Categoría (REP-P01-T2)
+  // Formulario de Categoría
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
   const [catNombre, setCatNombre] = useState("");
   const [catPadre, setCatPadre] = useState("");
   const [guardandoCat, setGuardandoCat] = useState(false);
   const [errorCat, setErrorCat] = useState("");
 
-  // Descarga en curso y visualizador
+  // Descarga y visualizador
   const [descargandoId, setDescargandoId] = useState(null);
   const [docAVisualizar, setDocAVisualizar] = useState(null);
 
@@ -197,11 +184,12 @@ export default function AdminDocumentos() {
     try {
       setCargando(true);
       setError("");
+      // En documentación administrativa filtramos los documentos privados (o todos los de ámbito administrativo)
       const [docs, cats, stats] = await Promise.all([
         obtenerDocumentosAdmin({
           buscar: filtroBuscar,
           categoria: filtroCategoria,
-          esPrivado: filtroPrivacidad,
+          esPrivado: "true", // Restringido a documentación privada/administrativa
           activo: filtroActivo,
         }),
         obtenerCategoriasDocumentos().catch(() => []),
@@ -213,12 +201,12 @@ export default function AdminDocumentos() {
         setMetricas(stats.metricas || null);
       }
     } catch (err) {
-      console.error("Error al cargar administración de documentos:", err);
-      setError("No se pudieron cargar los datos de documentación.");
+      console.error("Error al cargar documentación administrativa:", err);
+      setError("No se pudieron cargar los datos de documentación administrativa.");
     } finally {
       setCargando(false);
     }
-  }, [filtroBuscar, filtroCategoria, filtroPrivacidad, filtroActivo]);
+  }, [filtroBuscar, filtroCategoria, filtroActivo]);
 
   useEffect(() => {
     cargarDatos();
@@ -226,7 +214,7 @@ export default function AdminDocumentos() {
 
   const abrirModalCrear = () => {
     setDocumentoEditando(null);
-    setFormDoc(FORM_DOCUMENTO_INICIAL);
+    setFormDoc(FORM_DOC_ADMIN_INICIAL);
     setArchivoSeleccionado(null);
     setErrorForm("");
     setModalAbierto(true);
@@ -239,8 +227,8 @@ export default function AdminDocumentos() {
       descripcion: doc.descripcion || "",
       categoria: doc.categoria || "",
       subcategoria: doc.subcategoria || "",
-      esPrivado: Boolean(doc.esPrivado),
-      autor: doc.autor || "",
+      esPrivado: true, // Siempre privado
+      autor: doc.autor || "Administración Café-UNA",
       version: doc.version || "1.0",
       palabrasClave: doc.palabrasClave || "",
       activo: Boolean(doc.activo),
@@ -293,7 +281,7 @@ export default function AdminDocumentos() {
       fd.append("descripcion", formDoc.descripcion.trim());
       fd.append("categoria", formDoc.categoria.trim());
       fd.append("subcategoria", formDoc.subcategoria.trim());
-      fd.append("esPrivado", String(formDoc.esPrivado));
+      fd.append("esPrivado", "true"); // Siempre privado en documentación administrativa
       fd.append("autor", formDoc.autor.trim());
       fd.append("version", formDoc.version.trim());
       fd.append("palabrasClave", formDoc.palabrasClave.trim());
@@ -305,16 +293,16 @@ export default function AdminDocumentos() {
 
       if (documentoEditando) {
         await actualizarDocumentoAdmin(documentoEditando.id, fd);
-        setMensajeExito("Documento actualizado con éxito.");
+        setMensajeExito("Documento administrativo actualizado con éxito.");
       } else {
         await crearDocumentoAdmin(fd);
-        setMensajeExito("Documento registrado y subido con éxito.");
+        setMensajeExito("Documento administrativo registrado y resguardado con éxito.");
       }
 
       cerrarModal();
       await cargarDatos();
     } catch (err) {
-      console.error("Error al guardar documento:", err);
+      console.error("Error al guardar documento administrativo:", err);
       setErrorForm(err?.message || "No se pudo guardar el documento.");
     } finally {
       setGuardando(false);
@@ -328,7 +316,7 @@ export default function AdminDocumentos() {
         prev.map((d) => (d.id === doc.id ? { ...d, activo: !d.activo } : d)),
       );
       setMensajeExito(
-        `Documento ${!doc.activo ? "activado" : "inactivado"} exitosamente.`,
+        `Documento administrativo ${!doc.activo ? "activado" : "inactivado"} exitosamente.`,
       );
     } catch (err) {
       alert(err?.message || "No se pudo cambiar el estado del documento.");
@@ -338,7 +326,7 @@ export default function AdminDocumentos() {
   const handleEliminarDocumento = async (doc) => {
     if (
       !window.confirm(
-        `¿Está seguro de eliminar permanentemente el documento "${doc.titulo}"? Esta acción no se puede deshacer.`,
+        `¿Está seguro de eliminar permanentemente el documento administrativo "${doc.titulo}"? Esta acción no se puede deshacer.`,
       )
     ) {
       return;
@@ -347,7 +335,7 @@ export default function AdminDocumentos() {
     try {
       await eliminarDocumentoAdmin(doc.id);
       setDocumentos((prev) => prev.filter((d) => d.id !== doc.id));
-      setMensajeExito("Documento eliminado correctamente.");
+      setMensajeExito("Documento administrativo eliminado correctamente.");
     } catch (err) {
       alert(err?.message || "No se pudo eliminar el documento.");
     }
@@ -383,7 +371,7 @@ export default function AdminDocumentos() {
       setCatNombre("");
       setCatPadre("");
       setModalCatAbierto(false);
-      setMensajeExito("Categoría creada con éxito.");
+      setMensajeExito("Categoría administrativa creada con éxito.");
       await cargarDatos();
     } catch (err) {
       console.error("Error al crear categoría:", err);
@@ -422,16 +410,35 @@ export default function AdminDocumentos() {
     });
   }, [formDoc.categoria, categorias]);
 
-  const totalEspacioBytes = useMemo(
-    () => documentos.reduce((acc, d) => acc + (Number(d.tamanoBytes) || 0), 0),
-    [documentos],
+  const { showLoading, loadingMessage } = useAdminPageGate(
+    "/admin/documentacion/administrativa",
+    !cargando,
   );
 
-  const { showLoading, loadingMessage } = useAdminPageGate("/admin/documentacion", !cargando);
   if (showLoading) {
     return (
       <AdminLayout>
-        <PageLoading message={loadingMessage || "Cargando documentación..."} />
+        <PageLoading message={loadingMessage || "Cargando documentación administrativa..."} />
+      </AdminLayout>
+    );
+  }
+
+  if (!esAdmin) {
+    return (
+      <AdminLayout>
+        <div className="admin-docs-container">
+          <div className="admin-docs-panel text-center py-12">
+            <ShieldCheck size={48} className="text-slate-400 mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-slate-800">
+              <ST>Acceso Restringido</ST>
+            </h3>
+            <p className="text-sm text-slate-500 max-w-md mx-auto mt-1">
+              <ST>
+                Este apartado es exclusivo para roles administrativos y superadministrativos.
+              </ST>
+            </p>
+          </div>
+        </div>
       </AdminLayout>
     );
   }
@@ -443,15 +450,15 @@ export default function AdminDocumentos() {
         <div className="admin-docs-header">
           <div>
             <span className="badge--admin-docs">
-              <BookOpen size={14} className="mr-1.5" />
-              <ST>Repositorio Institucional</ST>
+              <ShieldCheck size={14} className="mr-1.5 text-amber-600" />
+              <ST>Área Administrativa Restringida</ST>
             </span>
             <h1 className="admin-docs-title">
-              <ST>Gestión de Documentos y Categorías</ST>
+              <ST>Documentación Administrativa</ST>
             </h1>
             <p className="admin-docs-subtitle">
               <ST>
-                Administre los archivos, clasificaciones temáticas, permisos de privacidad y registro de descargas del repositorio.
+                Gestión confidencial de documentos y clasificaciones privadas exclusivas para roles administrativos y superadministrativos.
               </ST>
             </p>
           </div>
@@ -461,21 +468,19 @@ export default function AdminDocumentos() {
               type="button"
               className="btn-secundario-admin"
               onClick={exportarCatalogoDocumentosCsv}
-              title="Descargar catálogo completo en CSV"
+              title="Descargar catálogo en CSV"
             >
               <Download size={16} />
               <span><ST>Exportar Catálogo</ST></span>
             </button>
-            {puedeCrear ? (
-              <button
-                type="button"
-                className="btn-primario-admin"
-                onClick={abrirModalCrear}
-              >
-                <Plus size={16} />
-                <span><ST>Nuevo Documento</ST></span>
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className="btn-primario-admin"
+              onClick={abrirModalCrear}
+            >
+              <Plus size={16} />
+              <span><ST>Nuevo Documento Privado</ST></span>
+            </button>
           </div>
         </div>
 
@@ -483,12 +488,21 @@ export default function AdminDocumentos() {
         {metricas ? (
           <div className="admin-docs-kpi-grid">
             <div className="admin-docs-kpi-card">
-              <div className="kpi-icon kpi-icon--blue">
-                <BookOpen size={20} />
+              <div className="kpi-icon kpi-icon--amber">
+                <Lock size={20} />
               </div>
               <div>
-                <span className="kpi-num">{metricas.totalDocs}</span>
-                <span className="kpi-lbl"><ST>Total Documentos</ST></span>
+                <span className="kpi-num">{documentos.length}</span>
+                <span className="kpi-lbl"><ST>Documentos Privados</ST></span>
+              </div>
+            </div>
+            <div className="admin-docs-kpi-card">
+              <div className="kpi-icon kpi-icon--blue">
+                <Layers size={20} />
+              </div>
+              <div>
+                <span className="kpi-num">{categorias.length}</span>
+                <span className="kpi-lbl"><ST>Categorías Temáticas</ST></span>
               </div>
             </div>
             <div className="admin-docs-kpi-card">
@@ -496,26 +510,21 @@ export default function AdminDocumentos() {
                 <Download size={20} />
               </div>
               <div>
-                <span className="kpi-num">{metricas.totalDescargas}</span>
+                <span className="kpi-num">
+                  {documentos.reduce((acc, d) => acc + (Number(d.descargasCount) || 0), 0)}
+                </span>
                 <span className="kpi-lbl"><ST>Descargas Totales</ST></span>
               </div>
             </div>
             <div className="admin-docs-kpi-card">
               <div className="kpi-icon kpi-icon--green">
-                <Unlock size={20} />
+                <ShieldCheck size={20} />
               </div>
               <div>
-                <span className="kpi-num">{metricas.publicos}</span>
-                <span className="kpi-lbl"><ST>Públicos</ST></span>
-              </div>
-            </div>
-            <div className="admin-docs-kpi-card">
-              <div className="kpi-icon kpi-icon--amber">
-                <Lock size={20} />
-              </div>
-              <div>
-                <span className="kpi-num">{metricas.privados}</span>
-                <span className="kpi-lbl"><ST>Privados / Restringidos</ST></span>
+                <span className="kpi-num">
+                  {documentos.filter((d) => d.activo).length}
+                </span>
+                <span className="kpi-lbl"><ST>Archivos Activos</ST></span>
               </div>
             </div>
           </div>
@@ -542,8 +551,8 @@ export default function AdminDocumentos() {
             className={`admin-docs-tab ${tabActivo === "documentos" ? "admin-docs-tab--active" : ""}`}
             onClick={() => setTabActivo("documentos")}
           >
-            <BookOpen size={16} />
-            <span><ST>Documentos ({documentos.length})</ST></span>
+            <Lock size={16} />
+            <span><ST>Documentos Privados ({documentos.length})</ST></span>
           </button>
           <button
             type="button"
@@ -556,17 +565,17 @@ export default function AdminDocumentos() {
         </div>
 
         {/* ============================================================
-            PESTAÑA 1: GESTIÓN DE DOCUMENTOS (REP-P02-T2)
+            PESTAÑA 1: GESTIÓN DE DOCUMENTOS PRIVADOS
         ============================================================ */}
         {tabActivo === "documentos" ? (
           <div className="admin-docs-panel">
-            {/* Toolbar de Filtros */}
+            {/* Toolbar de Filtros: alineados verticalmente a la par */}
             <div className="admin-docs-filter-bar">
               <div className="admin-docs-search">
                 <Search size={16} className="text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Buscar documento..."
+                  placeholder="Buscar documento privado..."
                   value={filtroBuscar}
                   onChange={(e) => setFiltroBuscar(e.target.value)}
                 />
@@ -595,17 +604,6 @@ export default function AdminDocumentos() {
               />
 
               <UiSelect
-                ariaLabel="Visibilidad"
-                value={filtroPrivacidad}
-                onChange={setFiltroPrivacidad}
-                options={[
-                  { value: "", label: "Cualquier visibilidad" },
-                  { value: "false", label: "Solo Públicos" },
-                  { value: "true", label: "Solo Privados" },
-                ]}
-              />
-
-              <UiSelect
                 ariaLabel="Estado"
                 value={filtroActivo}
                 onChange={setFiltroActivo}
@@ -616,14 +614,13 @@ export default function AdminDocumentos() {
                 ]}
               />
 
-              {(filtroBuscar || filtroCategoria || filtroPrivacidad || filtroActivo) ? (
+              {(filtroBuscar || filtroCategoria || filtroActivo) ? (
                 <button
                   type="button"
                   className="btn-limpiar-filtros"
                   onClick={() => {
                     setFiltroBuscar("");
                     setFiltroCategoria("");
-                    setFiltroPrivacidad("");
                     setFiltroActivo("");
                   }}
                 >
@@ -637,23 +634,21 @@ export default function AdminDocumentos() {
             {cargando ? (
               <div className="admin-docs-loading">
                 <span className="spinner-sm" />
-                <span>Cargando documentos...</span>
+                <span>Cargando documentos administrativos...</span>
               </div>
             ) : documentos.length === 0 ? (
               <div className="admin-docs-empty">
-                <FolderOpen size={48} className="text-slate-300" />
-                <h4>No se encontraron documentos</h4>
-                <p>Pruebe con otros filtros o registre un nuevo archivo en el repositorio.</p>
-                {puedeCrear ? (
-                  <button
-                    type="button"
-                    className="btn-primario-admin mt-3"
-                    onClick={abrirModalCrear}
-                  >
-                    <Plus size={16} />
-                    <span>Nuevo Documento</span>
-                  </button>
-                ) : null}
+                <FileLock2 size={48} className="text-slate-300" />
+                <h4>No se encontraron documentos administrativos</h4>
+                <p>Pruebe con otros filtros o registre un nuevo documento privado.</p>
+                <button
+                  type="button"
+                  className="btn-primario-admin mt-3"
+                  onClick={abrirModalCrear}
+                >
+                  <Plus size={16} />
+                  <span>Nuevo Documento Privado</span>
+                </button>
               </div>
             ) : (
               <div className="admin-docs-table-wrapper">
@@ -700,17 +695,10 @@ export default function AdminDocumentos() {
                             </span>
                           </td>
                           <td>
-                            {doc.esPrivado ? (
-                              <span className="badge-priv-cell badge-priv-cell--priv">
-                                <Lock size={12} />
-                                <span>Privado</span>
-                              </span>
-                            ) : (
-                              <span className="badge-priv-cell badge-priv-cell--pub">
-                                <Unlock size={12} />
-                                <span>Público</span>
-                              </span>
-                            )}
+                            <span className="badge-priv-cell badge-priv-cell--priv">
+                              <Lock size={12} />
+                              <span>Privado / Administrativo</span>
+                            </span>
                           </td>
                           <td>
                             <span className="doc-size-text">
@@ -748,36 +736,30 @@ export default function AdminDocumentos() {
                               >
                                 <Download size={15} />
                               </button>
-                              {puedeEditar ? (
-                                <button
-                                  type="button"
-                                  className="action-btn action-btn--edit"
-                                  title="Editar documento"
-                                  onClick={() => abrirModalEditar(doc)}
-                                >
-                                  <Pencil size={15} />
-                                </button>
-                              ) : null}
-                              {puedeInactivar ? (
-                                <button
-                                  type="button"
-                                  className={`action-btn ${doc.activo ? "action-btn--toggle-on" : "action-btn--toggle-off"}`}
-                                  title={doc.activo ? "Inactivar documento" : "Activar documento"}
-                                  onClick={() => handleToggleEstado(doc)}
-                                >
-                                  <Power size={15} />
-                                </button>
-                              ) : null}
-                              {puedeInactivar ? (
-                                <button
-                                  type="button"
-                                  className="action-btn action-btn--delete"
-                                  title="Eliminar permanentemente"
-                                  onClick={() => handleEliminarDocumento(doc)}
-                                >
-                                  <Trash2 size={15} />
-                                </button>
-                              ) : null}
+                              <button
+                                type="button"
+                                className="action-btn action-btn--edit"
+                                title="Editar documento"
+                                onClick={() => abrirModalEditar(doc)}
+                              >
+                                <Pencil size={15} />
+                              </button>
+                              <button
+                                type="button"
+                                className={`action-btn ${doc.activo ? "action-btn--toggle-on" : "action-btn--toggle-off"}`}
+                                title={doc.activo ? "Inactivar documento" : "Activar documento"}
+                                onClick={() => handleToggleEstado(doc)}
+                              >
+                                <Power size={15} />
+                              </button>
+                              <button
+                                type="button"
+                                className="action-btn action-btn--delete"
+                                title="Eliminar permanentemente"
+                                onClick={() => handleEliminarDocumento(doc)}
+                              >
+                                <Trash2 size={15} />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -791,32 +773,30 @@ export default function AdminDocumentos() {
         ) : null}
 
         {/* ============================================================
-            PESTAÑA 2: CATEGORÍAS DE DOCUMENTOS (REP-P01-T2)
+            PESTAÑA 2: CATEGORÍAS ADMINISTRATIVAS
         ============================================================ */}
         {tabActivo === "categorias" ? (
           <div className="admin-docs-panel">
             <div className="admin-cat-banner">
               <div>
-                <h4>Clasificación Temática del Repositorio</h4>
+                <h4>Clasificación Temática de Documentación Administrativa</h4>
                 <p>
-                  Defina las categorías raíz y subcategorías para organizar los documentos y estructurar los filtros en la vista pública.
+                  Defina las categorías raíz y subcategorías para organizar los documentos de uso interno y confidencial.
                 </p>
               </div>
-              {puedeCrear ? (
-                <button
-                  type="button"
-                  className="btn-primario-admin"
-                  onClick={() => {
-                    setErrorCat("");
-                    setCatNombre("");
-                    setCatPadre("");
-                    setModalCatAbierto(true);
-                  }}
-                >
-                  <FolderPlus size={16} />
-                  <span>Nueva Categoría</span>
-                </button>
-              ) : null}
+              <button
+                type="button"
+                className="btn-primario-admin"
+                onClick={() => {
+                  setErrorCat("");
+                  setCatNombre("");
+                  setCatPadre("");
+                  setModalCatAbierto(true);
+                }}
+              >
+                <FolderPlus size={16} />
+                <span>Nueva Categoría</span>
+              </button>
             </div>
 
             <div className="admin-docs-table-wrapper">
@@ -859,16 +839,14 @@ export default function AdminDocumentos() {
                         </td>
                         <td>
                           <div className="admin-actions-cell">
-                            {puedeInactivar ? (
-                              <button
-                                type="button"
-                                className="action-btn action-btn--delete"
-                                title="Eliminar categoría"
-                                onClick={() => handleEliminarCategoria(cat)}
-                              >
-                                <Trash2 size={15} />
-                              </button>
-                            ) : null}
+                            <button
+                              type="button"
+                              className="action-btn action-btn--delete"
+                              title="Eliminar categoría"
+                              onClick={() => handleEliminarCategoria(cat)}
+                            >
+                              <Trash2 size={15} />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -882,13 +860,7 @@ export default function AdminDocumentos() {
       </div>
 
       {/* ============================================================
-          MODAL DE SUBIDA Y EDICIÓN DE DOCUMENTO (REP-P02-T1)
-          Siguiendo la estructura y estilos de SectionCard
-      ============================================================ */}
-      {/* ============================================================
-          MODAL DE SUBIDA Y EDICIÓN DE DOCUMENTO
-          Bloqueo de fondo, scroll exclusivo en el formulario,
-          preguntas definidas y botones a la derecha
+          MODAL DE SUBIDA Y EDICIÓN DE DOCUMENTO PRIVADO
       ============================================================ */}
       {modalAbierto ? (
         createPortal(
@@ -907,11 +879,11 @@ export default function AdminDocumentos() {
             <div className="admin-form-modal-header">
               <div className="admin-form-modal-header__title">
                 <span className="badge--admin-docs">
-                  <BookOpen size={14} />
-                  <ST>{documentoEditando ? "Edición de Documento" : "Subida de Documento"}</ST>
+                  <ShieldCheck size={14} className="text-amber-600 inline mr-1" />
+                  <ST>{documentoEditando ? "Edición Administrativa" : "Nuevo Documento Privado"}</ST>
                 </span>
                 <h3>
-                  <ST>{documentoEditando ? "Editar Metadatos del Documento" : "Subir Nuevo Documento al Repositorio"}</ST>
+                  <ST>{documentoEditando ? "Editar Documento Administrativo" : "Subir Documento al Repositorio Administrativo"}</ST>
                 </h3>
               </div>
               <button
@@ -926,19 +898,19 @@ export default function AdminDocumentos() {
             </div>
 
             <div className="admin-form-modal-body">
-              <form id="form-documento-admin" onSubmit={handleSubmitDocumento} className="admin-form-grid">
+              <form id="form-doc-admin" onSubmit={handleSubmitDocumento} className="admin-form-grid">
                 {/* Pregunta 1: Título */}
                 <div className="admin-form-group">
-                  <label htmlFor="doc-form-titulo" className="admin-form-label">
+                  <label htmlFor="admin-doc-titulo" className="admin-form-label">
                     <ST>¿Cuál es el título del documento?</ST> <span className="campo-requerido">*</span>
                   </label>
-                  <p className="admin-form-helper"><ST>Indique un título descriptivo y claro para el repositorio.</ST></p>
+                  <p className="admin-form-helper"><ST>Indique un título claro y formal para el archivo institucional.</ST></p>
                   <input
-                    id="doc-form-titulo"
+                    id="admin-doc-titulo"
                     type="text"
                     required
                     className="admin-form-input"
-                    placeholder="Ej. Estudio de Calidad de Taza y Procesamiento 2026"
+                    placeholder="Ej. Acta de Asamblea Administrativa Ordinaria 2026"
                     value={formDoc.titulo}
                     onChange={(e) => setFormDoc({ ...formDoc, titulo: e.target.value })}
                   />
@@ -947,27 +919,27 @@ export default function AdminDocumentos() {
                 {/* Pregunta 2: Autor y Versión */}
                 <div className="admin-form-row-2">
                   <div className="admin-form-group">
-                    <label htmlFor="doc-form-autor" className="admin-form-label">
+                    <label htmlFor="admin-doc-autor" className="admin-form-label">
                       <ST>¿Quién es el autor o entidad responsable?</ST>
                     </label>
-                    <p className="admin-form-helper"><ST>Autor, grupo de investigación o institución emisora.</ST></p>
+                    <p className="admin-form-helper"><ST>Unidad administrativa responsable.</ST></p>
                     <input
-                      id="doc-form-autor"
+                      id="admin-doc-autor"
                       type="text"
                       className="admin-form-input"
-                      placeholder="Ej. Universidad Nacional / Proyecto Café-UNA"
+                      placeholder="Ej. Junta Directiva / Administración Café-UNA"
                       value={formDoc.autor}
                       onChange={(e) => setFormDoc({ ...formDoc, autor: e.target.value })}
                     />
                   </div>
 
                   <div className="admin-form-group">
-                    <label htmlFor="doc-form-version" className="admin-form-label">
+                    <label htmlFor="admin-doc-version" className="admin-form-label">
                       <ST>¿Qué versión del documento corresponde?</ST>
                     </label>
-                    <p className="admin-form-helper"><ST>Versión de publicación (ej. 1.0, 2.1).</ST></p>
+                    <p className="admin-form-helper"><ST>Versión de archivo (ej. 1.0, 2.0).</ST></p>
                     <input
-                      id="doc-form-version"
+                      id="admin-doc-version"
                       type="text"
                       className="admin-form-input"
                       placeholder="1.0"
@@ -980,12 +952,12 @@ export default function AdminDocumentos() {
                 {/* Pregunta 3: Categoría y Subcategoría */}
                 <div className="admin-form-row-2">
                   <div className="admin-form-group">
-                    <label htmlFor="doc-form-cat" className="admin-form-label">
+                    <label htmlFor="admin-doc-cat" className="admin-form-label">
                       <ST>¿Cuál es la categoría temática principal?</ST> <span className="campo-requerido">*</span>
                     </label>
-                    <p className="admin-form-helper"><ST>Seleccione la categoría raíz en el repositorio.</ST></p>
+                    <p className="admin-form-helper"><ST>Clasificación interna.</ST></p>
                     <SelectFiltro
-                      id="doc-form-cat"
+                      id="admin-doc-cat"
                       required
                       className="admin-form-select"
                       value={formDoc.categoria}
@@ -1013,12 +985,12 @@ export default function AdminDocumentos() {
                   </div>
 
                   <div className="admin-form-group">
-                    <label htmlFor="doc-form-subcat" className="admin-form-label">
+                    <label htmlFor="admin-doc-subcat" className="admin-form-label">
                       <ST>¿Pertenece a una subcategoría específica?</ST>
                     </label>
-                    <p className="admin-form-helper"><ST>Subclasificación opcional vinculada a la categoría principal.</ST></p>
+                    <p className="admin-form-helper"><ST>Opcional.</ST></p>
                     <SelectFiltro
-                      id="doc-form-subcat"
+                      id="admin-doc-subcat"
                       className="admin-form-select"
                       value={formDoc.subcategoria}
                       disabled={!subcategoriasDisponibles.length}
@@ -1040,15 +1012,15 @@ export default function AdminDocumentos() {
 
                 {/* Pregunta 4: Descripción */}
                 <div className="admin-form-group">
-                  <label htmlFor="doc-form-desc" className="admin-form-label">
+                  <label htmlFor="admin-doc-desc" className="admin-form-label">
                     <ST>¿Cuál es la descripción o resumen del contenido?</ST>
                   </label>
-                  <p className="admin-form-helper"><ST>Breve resumen de hallazgos, propósito o temática central.</ST></p>
+                  <p className="admin-form-helper"><ST>Resumen de acuerdos, temas o contenido confidencial.</ST></p>
                   <textarea
-                    id="doc-form-desc"
+                    id="admin-doc-desc"
                     rows={3}
                     className="admin-form-textarea"
-                    placeholder="Breve resumen de los contenidos, hallazgos o propósito del documento..."
+                    placeholder="Breve resumen del contenido y propósito del documento..."
                     value={formDoc.descripcion}
                     onChange={(e) => setFormDoc({ ...formDoc, descripcion: e.target.value })}
                   />
@@ -1056,62 +1028,37 @@ export default function AdminDocumentos() {
 
                 {/* Pregunta 5: Palabras clave */}
                 <div className="admin-form-group">
-                  <label htmlFor="doc-form-tags" className="admin-form-label">
+                  <label htmlFor="admin-doc-tags" className="admin-form-label">
                     <ST>¿Cuáles son las palabras clave para búsqueda rápida?</ST>
                   </label>
-                  <p className="admin-form-helper"><ST>Términos separados por comas que faciliten la indexación.</ST></p>
+                  <p className="admin-form-helper"><ST>Términos separados por comas.</ST></p>
                   <input
-                    id="doc-form-tags"
+                    id="admin-doc-tags"
                     type="text"
                     className="admin-form-input"
-                    placeholder="agronomía, cosecha, beneficio, catación, suelos"
+                    placeholder="actas, financiero, compras, convenios"
                     value={formDoc.palabrasClave}
                     onChange={(e) => setFormDoc({ ...formDoc, palabrasClave: e.target.value })}
                   />
                 </div>
 
-                {/* Pregunta 6: Visibilidad / Privacidad */}
+                {/* Aviso de Privacidad fija para Documentación Administrativa */}
                 <div className="admin-form-group">
                   <label className="admin-form-label">
-                    <ST>¿Cuál es el nivel de visibilidad y acceso?</ST>
+                    <ST>Nivel de privacidad y acceso</ST>
                   </label>
-                  <p className="admin-form-helper"><ST>Defina si el archivo podrá descargarse libremente o requerirá autorización.</ST></p>
-                  <div className="admin-form-privacy-options">
-                    <label className={`admin-form-radio-card ${!formDoc.esPrivado ? "is-selected" : ""}`}>
-                      <input
-                        type="radio"
-                        name="privacidadDoc"
-                        checked={!formDoc.esPrivado}
-                        onChange={() => setFormDoc({ ...formDoc, esPrivado: false })}
-                      />
-                      <div className="radio-content">
-                        <span className="radio-title">
-                          <Unlock size={14} className="text-emerald-600 inline mr-1.5" />
-                          <ST>Documento Público</ST>
-                        </span>
-                        <span className="radio-desc">
-                          <ST>Cualquier visitante podrá descargar el archivo directamente sin solicitar permiso.</ST>
-                        </span>
-                      </div>
-                    </label>
-
-                    <label className={`admin-form-radio-card ${formDoc.esPrivado ? "is-selected" : ""}`}>
-                      <input
-                        type="radio"
-                        name="privacidadDoc"
-                        checked={formDoc.esPrivado}
-                        onChange={() => setFormDoc({ ...formDoc, esPrivado: true })}
-                      />
-                      <div className="radio-content">
-                        <span className="radio-title">
-                          <Lock size={14} className="text-amber-600 inline mr-1.5" />
-                          <ST>Documento Privado / Restringido</ST>
-                        </span>
-                        <span className="radio-desc">
-                          <ST>Los visitantes requerirán enviar una solicitud formal que debe ser aprobada.</ST>
-                        </span>
-                      </div>
-                    </label>
+                  <div className="admin-form-radio-card is-selected cursor-default">
+                    <Lock size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                    <div className="radio-content">
+                      <span className="radio-title">
+                        <ST>Documento Privado y Confidencial</ST>
+                      </span>
+                      <span className="radio-desc">
+                        <ST>
+                          Este documento está reservado estrictamente para los roles administrativos y superadministrativos. No es visible ni descargable para el público general.
+                        </ST>
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -1192,7 +1139,7 @@ export default function AdminDocumentos() {
               </button>
               <button
                 type="submit"
-                form="form-documento-admin"
+                form="form-doc-admin"
                 className="btn-primario-admin"
                 disabled={guardando}
               >
@@ -1204,7 +1151,7 @@ export default function AdminDocumentos() {
                 ) : (
                   <>
                     <Check size={16} />
-                    <ST>{documentoEditando ? "Actualizar documento" : "Guardar y publicar"}</ST>
+                    <ST>{documentoEditando ? "Actualizar documento" : "Guardar documento privado"}</ST>
                   </>
                 )}
               </button>
@@ -1229,7 +1176,7 @@ export default function AdminDocumentos() {
           <div className="admin-form-modal-container max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="admin-form-modal-header">
               <div className="admin-form-modal-header__title">
-                <h3><ST>Nueva Categoría de Documentos</ST></h3>
+                <h3><ST>Nueva Categoría Administrativa</ST></h3>
               </div>
               <button
                 type="button"
@@ -1242,30 +1189,30 @@ export default function AdminDocumentos() {
             </div>
 
             <div className="admin-form-modal-body">
-              <form id="form-crear-cat" onSubmit={handleCrearCategoria} className="admin-form-grid">
+              <form id="form-crear-cat-admin" onSubmit={handleCrearCategoria} className="admin-form-grid">
                 <div className="admin-form-group">
-                  <label htmlFor="cat-nombre" className="admin-form-label">
+                  <label htmlFor="cat-nombre-admin" className="admin-form-label">
                     <ST>¿Cuál es el nombre de la categoría?</ST> <span className="campo-requerido">*</span>
                   </label>
-                  <p className="admin-form-helper"><ST>Ejemplo: Tesis de Grado, Guías Técnicas, Informes.</ST></p>
+                  <p className="admin-form-helper"><ST>Ejemplo: Actas de Junta, Contratos, Auditoría Interna.</ST></p>
                   <input
-                    id="cat-nombre"
+                    id="cat-nombre-admin"
                     type="text"
                     required
                     className="admin-form-input"
-                    placeholder="Ej. Tesis de Grado"
+                    placeholder="Ej. Actas de Junta Directiva"
                     value={catNombre}
                     onChange={(e) => setCatNombre(e.target.value)}
                   />
                 </div>
 
                 <div className="admin-form-group">
-                  <label htmlFor="cat-padre" className="admin-form-label">
+                  <label htmlFor="cat-padre-admin" className="admin-form-label">
                     <ST>¿Desea asignarle una categoría padre?</ST>
                   </label>
                   <p className="admin-form-helper"><ST>Deje en blanco si desea que sea una categoría raíz.</ST></p>
                   <SelectFiltro
-                    id="cat-padre"
+                    id="cat-padre-admin"
                     className="admin-form-select"
                     value={catPadre}
                     onChange={(e) => setCatPadre(e.target.value)}
@@ -1305,7 +1252,7 @@ export default function AdminDocumentos() {
               </button>
               <button
                 type="submit"
-                form="form-crear-cat"
+                form="form-crear-cat-admin"
                 className="btn-primario-admin"
                 disabled={guardandoCat}
               >

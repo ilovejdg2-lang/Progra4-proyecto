@@ -113,7 +113,7 @@
   padding: 16px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 0 !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
@@ -212,30 +212,31 @@
   border-bottom-color: #0f172a;
 }
 
-/* Panel */
+/* Panel sin bordes redondeados en el fondo */
 .admin-docs-panel {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  border-radius: 0 !important;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
-/* Filter Bar */
+/* Filter Bar: todos los elementos alineados verticalmente a la par con 40px */
 .admin-docs-filter-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .admin-docs-search {
   position: relative;
   display: flex;
   align-items: center;
-  flex: 1;
+  flex: 1 1 240px;
   min-width: 220px;
+  height: 40px;
 }
 
 .admin-docs-search svg {
@@ -246,11 +247,12 @@
 
 .admin-docs-search input {
   width: 100%;
-  height: 38px;
-  padding: 0 32px 0 34px;
+  height: 40px;
+  padding: 0 32px 0 36px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
+  line-height: 1.25;
 }
 
 .admin-docs-search input:focus {
@@ -265,14 +267,36 @@
   border: none;
   color: #94a3b8;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Selects en la barra de filtros alineados exactamente a la par */
+.admin-docs-filter-bar .ui-select {
+  flex: 0 1 200px;
+  min-width: 170px;
+  width: auto;
+}
+
+.admin-docs-filter-bar .ui-select__trigger {
+  height: 40px;
+  min-height: 40px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
 }
 
 .admin-docs-select {
-  height: 38px;
+  height: 40px;
   padding: 0 28px 0 12px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   background: #ffffff;
   color: #334155;
   cursor: pointer;
@@ -286,19 +310,24 @@
 .btn-limpiar-filtros {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 8px 12px;
+  height: 40px;
+  padding: 0 14px;
   background: #f1f5f9;
-  border: none;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: #475569;
   cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
 }
 
 .btn-limpiar-filtros:hover {
   background: #e2e8f0;
+  color: #0f172a;
 }
 
 /* Tabla */
@@ -507,7 +536,7 @@
   gap: 14px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 0 !important;
   padding: 16px;
   margin-bottom: 20px;
 }
@@ -553,29 +582,231 @@
   color: #64748b;
 }
 
-/* Modal Form Styles */
-.grid-dos-columnas {
+/* ==========================================================================
+   MODAL DE DOCUMENTO: BLOQUEO DE FONDO Y SCROLL INTERNO ÚNICAMENTE
+   ========================================================================== */
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  animation: adminModalFadeIn 0.15s ease-out;
+}
+
+@keyframes adminModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.admin-form-modal-container {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 760px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  overscroll-behavior: contain !important;
+  animation: adminModalScaleUp 0.15s ease-out;
+}
+
+@keyframes adminModalScaleUp {
+  from { transform: scale(0.97); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.admin-form-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  background: #ffffff;
+  gap: 16px;
+}
+
+.admin-form-modal-header__title h3 {
+  margin: 4px 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.admin-form-modal-close {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.admin-form-modal-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Scroll interno exclusivo para el formulario */
+.admin-form-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain !important;
+  flex: 1 1 auto;
+  max-height: calc(90vh - 140px);
+}
+
+.admin-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-form-row-2 {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 14px;
+  gap: 16px;
 }
 
 @media (min-width: 640px) {
-  .grid-dos-columnas {
+  .admin-form-row-2 {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-.columna-completa {
-  grid-column: 1 / -1;
+.admin-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
-.doc-privacidad-box {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px 14px;
+.admin-form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.campo-requerido {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.admin-form-helper {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0 0 4px;
+}
+
+.admin-form-input,
+.admin-form-textarea,
+.admin-form-select {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  color: #0f172a;
+  background: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-form-input:focus,
+.admin-form-textarea:focus,
+.admin-form-select:focus {
+  outline: none;
+  border-color: #0f172a;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08);
+}
+
+.admin-form-privacy-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
   margin-top: 4px;
+}
+
+@media (min-width: 640px) {
+  .admin-form-privacy-options {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.admin-form-radio-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9px;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-form-radio-card:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.admin-form-radio-card.is-selected {
+  border-color: #0f172a;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.admin-form-radio-card input[type="radio"] {
+  margin-top: 3px;
+  accent-color: #0f172a;
+  cursor: pointer;
+}
+
+.radio-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.radio-title {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+}
+
+.radio-desc {
+  font-size: 0.725rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+/* Botones presentados al costado derecho del formulario */
+.admin-form-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  flex-shrink: 0;
 }
 
 .dropzone-doc {
@@ -583,10 +814,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 28px 16px;
+  padding: 24px 16px;
   background: #f8fafc;
   border: 2px dashed #cbd5e1;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
   text-align: center;
   transition: all 0.15s ease;
@@ -605,6 +836,18 @@
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 10px 14px;
+}
+
+.aviso-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
 }
 
 .admin-docs-empty,
@@ -630,6 +873,12 @@
   color: #64748b;
   max-width: 380px;
   margin: 0;
+}
+
+/* Quitar bordes redondeados en los fondos de estos apartados */
+.admin-sidebar,
+aside.admin-sidebar {
+  border-radius: 0 !important;
 }
 
 /* Modo oscuro admin */
@@ -824,4 +1073,59 @@ html.admin-theme-dark body.admin-route-active .repositorio-error-card {
 
 html.admin-theme-dark body.admin-route-active .repositorio-error-card p {
   color: #fecdd3;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-form-modal-container {
+  background: #161b22;
+  border-color: #2a3340;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+html.admin-theme-dark body.admin-route-active .admin-form-modal-header {
+  background: #161b22;
+  border-bottom-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-form-modal-header__title h3,
+html.admin-theme-dark body.admin-route-active .admin-form-label,
+html.admin-theme-dark body.admin-route-active .radio-title {
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-form-helper,
+html.admin-theme-dark body.admin-route-active .radio-desc {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-form-input,
+html.admin-theme-dark body.admin-route-active .admin-form-textarea,
+html.admin-theme-dark body.admin-route-active .admin-form-select {
+  background: #12161c;
+  border-color: #2a3340;
+  color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-form-radio-card {
+  background: #12161c;
+  border-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-form-radio-card:hover {
+  background: #1a212b;
+  border-color: #3b4758;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-form-radio-card.is-selected {
+  background: #1a212b;
+  border-color: #60a5fa;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-form-modal-footer {
+  background: #12161c;
+  border-top-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .admin-form-modal-close:hover {
+  background: #243041;
+  color: #f1f5f9;
 }
