@@ -443,3 +443,50 @@ html.admin-theme-dark body.admin-route-active .text-red-700 {
 html.admin-theme-dark body.admin-route-active .perfil-back-admin a {
   color: #cbd5e1;
 }
+
+html.admin-theme-vt::view-transition-old(root),
+html.admin-theme-vt::view-transition-new(root) {
+  mix-blend-mode: normal;
+}
+
+html.admin-theme-vt::view-transition-old(root) {
+  z-index: 1;
+  animation: none;
+}
+
+html.admin-theme-vt::view-transition-new(root) {
+  z-index: 2;
+  animation: admin-theme-reveal 0.68s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes admin-theme-reveal {
+  from {
+    clip-path: circle(0px at var(--admin-theme-x, 50%) var(--admin-theme-y, 0px));
+  }
+  to {
+    clip-path: circle(var(--admin-theme-r, 150vmax) at var(--admin-theme-x, 50%) var(--admin-theme-y, 0px));
+  }
+}
+
+html.admin-theme-animating body.admin-route-active,
+html.admin-theme-animating body.admin-route-active *:not(img):not(video):not(canvas):not(iframe),
+html.admin-theme-animating body.admin-route-active *:not(img):not(video):not(canvas):not(iframe)::before,
+html.admin-theme-animating body.admin-route-active *:not(img):not(video):not(canvas):not(iframe)::after {
+  transition-property: background-color, color, border-color, outline-color, fill, stroke, box-shadow, caret-color !important;
+  transition-duration: 0.68s !important;
+  transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.admin-theme-vt::view-transition-old(root),
+  html.admin-theme-vt::view-transition-new(root) {
+    animation: none !important;
+  }
+
+  html.admin-theme-animating body.admin-route-active,
+  html.admin-theme-animating body.admin-route-active *,
+  html.admin-theme-animating body.admin-route-active *::before,
+  html.admin-theme-animating body.admin-route-active *::after {
+    transition: none !important;
+  }
+}

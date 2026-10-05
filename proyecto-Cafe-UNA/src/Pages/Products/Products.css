@@ -668,7 +668,8 @@
     justify-content: flex-start;
   }
 
-  .products-page__quick-buy {
+  .products-page__quick-buy,
+  .products-page__quick-buy:disabled {
     position: absolute;
     right: 0;
     bottom: 0;
@@ -678,7 +679,9 @@
   }
 
   .products-page__card:hover .products-page__quick-buy,
-  .products-page__quick-buy:focus-visible {
+  .products-page__card:hover .products-page__quick-buy:disabled,
+  .products-page__quick-buy:focus-visible,
+  .products-page__quick-buy:focus-visible:disabled {
     opacity: 1;
     transform: translateY(0) scale(1);
     pointer-events: auto;
@@ -717,7 +720,6 @@
 
 .products-page__quick-buy:disabled {
   cursor: not-allowed;
-  opacity: 0.45;
 }
 
 /* Modal / drawer styles for product details */

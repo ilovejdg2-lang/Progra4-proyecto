@@ -103,7 +103,11 @@ export function AppSidebar() {
   const puedeVerCmsGrupo = puedeCms || puedeGaleria;
 
   const puedeInventario = tienePermiso(roles, "ver_inventario");
-  const puedePuntosVenta = tienePermiso(roles, "ver_inventario") || tienePermiso(roles, "actualizar_inventario");
+  const puedePuntosVenta =
+    tienePermiso(roles, "ver_inventario") ||
+    tienePermiso(roles, "actualizar_inventario") ||
+    tienePermiso(roles, "registrar_ventas") ||
+    tienePermiso(roles, "ver_ventas");
   const puedeActivosFijos = tienePermiso(roles, "ver_inventario") || tienePermiso(roles, "actualizar_inventario");
   const puedeDistribucion = tienePermiso(roles, "ver_inventario");
   const puedeProductos = tienePermiso(roles, "ver_productos") || tienePermiso(roles, "ver_inventario");
@@ -151,7 +155,7 @@ export function AppSidebar() {
     tienePermiso(roles, "ver_todas_las_facturas") ||
     tienePermiso(roles, "ver_ventas") ||
     tienePermiso(roles, "descargar_facturas");
-  const puedeUsuarios = tienePermiso(roles, "editar_usuarios") || tienePermiso(roles, "crear_usuarios");
+  const puedeUsuarios = tienePermiso(roles, "editar_usuarios") || tienePermiso(roles, "crear_usuarios") || tienePermiso(roles, "gestionar_asignaciones_puntos");
   const puedeAjustes = tienePermiso(roles, "administrar_roles_permisos");
   const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
   const puedePerfil = tienePermiso(roles, "ver_perfil_propio");
@@ -440,7 +444,7 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent scrollKey="admin">
         {puedeVerCmsGrupo ? (
         <Collapsible.Root
           open={generalOpen}
