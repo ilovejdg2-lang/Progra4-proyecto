@@ -922,6 +922,18 @@ const DICCIONARIO = {
   "Ocurrió un error al iniciar sesión.": "An error occurred while signing in.",
 
   // Checkout
+  "Resumen de la compra": "Purchase summary",
+  "Número de orden": "Order number",
+  "Método de pago": "Payment method",
+  "Precio unitario": "Unit price",
+  "Descargar resumen PDF": "Download summary PDF",
+  "Preparando PDF...": "Preparing PDF...",
+  "No se pudo descargar el resumen.": "Could not download the summary.",
+  "Comprobante": "Payment receipt",
+  "Dirección fiscal": "Tax address",
+  "No tienes puntos de venta asignados. Contacta a un administrador.":
+    "You have no points of sale assigned. Contact an administrator.",
+  "Puntos de venta asignados": "Assigned points of sale",
   "Gracias por tu compra": "Thank you for your purchase",
   "Tu pedido quedó pendiente de revisión. Te avisamos cuando se apruebe y envíe.":
     "Your order is pending review. We'll let you know when it's approved and shipped.",

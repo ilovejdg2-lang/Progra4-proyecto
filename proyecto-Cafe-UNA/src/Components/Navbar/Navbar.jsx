@@ -3,8 +3,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import './Navbar.css';
 import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
-import { Bell, BookOpen, ChevronDown, ClipboardList, Coffee, Gift, HandHeart, Info, LayoutDashboard, LogOut, MapPin, Menu, Minus, Package, Plus, ShoppingBag, ShoppingCart, Trash2, User, Users, X } from 'lucide-react';
+import { Bell, BookOpen, ChevronDown, ClipboardList, Coffee, Gift, HandHeart, Info, LayoutDashboard, LogOut, MapPin, Menu, Package, ShoppingBag, ShoppingCart, User, Users, X } from 'lucide-react';
 import { LanguageSwitcher } from '../LanguageSwitcher/LanguageSwitcher';
+import { CartLine, metaCarrito } from './CartLine';
 import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
 import { FacebookIcon, InstagramIcon } from '../Footer/SocialIcons';
 import { normalizeImageUrl } from '../../lib/imageUtils';
@@ -247,8 +248,7 @@ const Navbar = () => {
     const tIva = useTraducir('IVA:');
     const tTotal = useTraducir('Total:');
     const tCerrarCart = useTraducir('Cerrar carrito');
-    const tSinIva = useTraducir('Sin IVA:');
-    const tConIva = useTraducir('Con IVA:');
+    const tIvaIncluido = useTraducir('IVA incluido');
     const tIniciarSesion = useTraducir('Iniciar sesión');
     const tMiCuenta = useTraducir('Mi cuenta');
     const tCerrarSesion = useTraducir('Cerrar sesión');
@@ -1199,66 +1199,27 @@ const Navbar = () => {
                             ) : (
                                 <>
                                     <section className="cart-items" aria-label={tCartResumen}>
-                                        {cartItems.map((item) => (
-                                            <article key={item.id} className="cart-item">
-                                                <button
-                                                    type="button"
-                                                    className="cart-item__remove-inline"
-                                                    onClick={() => removeLineItem(item.id)}
-                                                    aria-label={`${tEliminarProducto}: ${item.name || item.nombre || 'producto'}`}
-                                                    title={tEliminarProducto}
-                                                >
-                                                    <Trash2 size={16} strokeWidth={2.2} aria-hidden="true" />
-                                                </button>
-                                                <div className="cart-item__media">
-                                                    {item.imagen ? (
-                                                        <img
-                                                            src={item.imagen}
-                                                            alt={item.nombre || item.name || 'Producto'}
-                                                            className="cart-item__image"
-                                                        />
-                                                    ) : (
-                                                        <div className="cart-item__image cart-item__image--placeholder" aria-hidden="true" />
-                                                    )}
-                                                </div>
-                                                <div className="cart-item__details">
-                                                    <div className="cart-item__name">
-                                                        <NombreCarrito nombre={item.nombre || item.name} />
-                                                    </div>
-                                                    <div className="cart-item__weight">{item.peso || item.quantity || '—'} x {getQuantity(item)}</div>
-                                                    <div className="cart-item__prices">
-                                                        <span className="cart-item__price-pill">{tSinIva} {formatCRC(getUnitPriceWithoutIva(item))}</span>
-                                                        <span className="cart-item__price-pill cart-item__price-pill--strong">{tConIva} {formatCRC(getUnitPriceWithIva(item))}</span>
-                                                    </div>
-                                                </div>
-                                                <footer className="cart-item__bottom">
-                                                    <div className="cart-item__controls" aria-label="Controles de cantidad">
-                                                        <button
-                                                            type="button"
-                                                            className="cart-item__stepper"
-                                                            onClick={() => removeOneUnit(item.id)}
-                                                            aria-label={`Quitar una unidad de ${item.name}`}
-                                                        >
-                                                            <Minus size={14} strokeWidth={2.8} aria-hidden="true" />
-                                                        </button>
-                                                        <span className="cart-item__units">{item.units}</span>
-                                                        <button
-                                                            type="button"
-                                                            className="cart-item__stepper"
-                                                            onClick={() => addOneUnit(item.id)}
-                                                            aria-label={`Agregar una unidad de ${item.name}`}
-                                                            disabled={getAvailableStock(item) <= getQuantity(item) || item.estado === 'Agotado'}
-                                                        >
-                                                            <Plus size={14} strokeWidth={2.8} aria-hidden="true" />
-                                                        </button>
-                                                    </div>
-                                                    <div className="cart-item__line-total">
-                                                        <span className="cart-item__line-total-label">{tSubtotal.replace(':', '')}</span>
-                                                        <strong>{formatCRC(getUnitPriceWithIva(item) * getQuantity(item))}</strong>
-                                                    </div>
-                                                </footer>
-                                            </article>
-                                        ))}
+                                        {cartItems.map((item) => {
+                                            const nombre = item.nombre || item.name || 'producto';
+                                            return (
+                                            <CartLine
+                                                key={item.id}
+                                                nombre={<NombreCarrito nombre={item.nombre || item.name} />}
+                                                meta={metaCarrito(item)}
+                                                precio={formatCRC(getUnitPriceWithIva(item))}
+                                                imagen={item.imagen}
+                                                unidades={item.units}
+                                                onRemove={() => removeLineItem(item.id)}
+                                                onDecrease={() => removeOneUnit(item.id)}
+                                                onIncrease={() => addOneUnit(item.id)}
+                                                increaseDisabled={getAvailableStock(item) <= getQuantity(item) || item.estado === 'Agotado'}
+                                                removeLabel={`${tEliminarProducto}: ${nombre}`}
+                                                ivaLabel={tIvaIncluido}
+                                                decreaseLabel={`Quitar una unidad de ${item.name || nombre}`}
+                                                increaseLabel={`Agregar una unidad de ${item.name || nombre}`}
+                                            />
+                                            );
+                                        })}
                                     </section>
                                     <footer className="cart-subtotal" aria-label={tCartResumen}>
                                         <div className="cart-subtotal-row">

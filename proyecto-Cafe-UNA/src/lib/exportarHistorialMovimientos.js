@@ -104,15 +104,15 @@ function pdfEscape(texto) {
   return out;
 }
 
-function pdfText(x, y, texto, size = 10, font = "/F1", gray = 0) {
+export function pdfText(x, y, texto, size = 10, font = "/F1", gray = 0) {
   return `q ${gray} g BT ${font} ${size} Tf ${x} ${y} Td (${pdfEscape(texto)}) Tj ET Q`;
 }
 
-function pdfLineStroke(x1, y1, x2, y2, gray = 0.6, width = 0.5) {
+export function pdfLineStroke(x1, y1, x2, y2, gray = 0.6, width = 0.5) {
   return `q ${gray} G ${width} w ${x1} ${y1} m ${x2} ${y2} l S Q`;
 }
 
-function pdfRectFill(x, y, w, h, gray = 0.92) {
+export function pdfRectFill(x, y, w, h, gray = 0.92) {
   return `q ${gray} g ${x} ${y} ${w} ${h} re f Q`;
 }
 
@@ -173,7 +173,7 @@ export async function cargarLogoWebpParaPdf(url = "/logo.webp") {
   }
 }
 
-function ensamblarPdf(paginas, pageWidth, pageHeight, logoData = null) {
+export function ensamblarPdf(paginas, pageWidth, pageHeight, logoData = null) {
   const objects = [];
   objects.push("1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj");
 

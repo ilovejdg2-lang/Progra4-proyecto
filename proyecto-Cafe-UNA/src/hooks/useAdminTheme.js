@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 
 import {
   ADMIN_THEME_CHANGED_EVENT,
   applyAdminDocumentTheme,
   readAdminTheme,
   toggleAdminTheme as toggleStoredAdminTheme,
+  transitionAdminTheme,
 } from "../lib/adminTheme";
 
 export function useAdminTheme() {
@@ -21,8 +23,12 @@ export function useAdminTheme() {
     };
   }, []);
 
-  const toggleTheme = useCallback(() => {
-    setTheme(toggleStoredAdminTheme());
+  const toggleTheme = useCallback((origin) => {
+    transitionAdminTheme(() => {
+      flushSync(() => {
+        setTheme(toggleStoredAdminTheme());
+      });
+    }, origin);
   }, []);
 
   return {

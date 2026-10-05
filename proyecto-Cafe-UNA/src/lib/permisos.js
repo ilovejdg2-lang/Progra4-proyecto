@@ -77,6 +77,7 @@ export let PERMISOS_POR_ROL = {
   administrar_solicitudes_donaciones: admins,
   actualizar_solicitud_donaciones: [SA],
   inactivar_donacion: admins,
+  gestionar_asignaciones_puntos: [SA],
   ver_auditoria: [SA],
 };
 

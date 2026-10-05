@@ -234,13 +234,35 @@ export function SidebarHeader({ className, ...props }) {
   );
 }
 
-export function SidebarContent({ className, ...props }) {
+const sidebarScrollTops = new Map();
+
+function sidebarVisible(element) {
+  return element.getClientRects().length > 0;
+}
+
+export function SidebarContent({ className, scrollKey, onScroll, ...props }) {
+  const ref = React.useRef(null);
+
+  React.useLayoutEffect(() => {
+    const element = ref.current;
+    if (!scrollKey || !element || !sidebarVisible(element)) return;
+    element.scrollTop = sidebarScrollTops.get(scrollKey) || 0;
+  }, [scrollKey]);
+
   return (
     <div
+      ref={ref}
       className={cn(
         "flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden p-2",
         className,
       )}
+      onScroll={(event) => {
+        const element = event.currentTarget;
+        if (scrollKey && sidebarVisible(element)) {
+          sidebarScrollTops.set(scrollKey, element.scrollTop);
+        }
+        onScroll?.(event);
+      }}
       {...props}
     />
   );

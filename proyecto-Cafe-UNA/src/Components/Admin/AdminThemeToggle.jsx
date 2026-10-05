@@ -15,7 +15,13 @@ export function AdminThemeToggle() {
       aria-label={isDark ? labelLight : labelDark}
       title={isDark ? labelLight : labelDark}
       aria-pressed={isDark}
-      onClick={toggleTheme}
+      onClick={(event) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        toggleTheme({
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
+        });
+      }}
     >
       {isDark ? (
         <Sun className="size-4" aria-hidden="true" />

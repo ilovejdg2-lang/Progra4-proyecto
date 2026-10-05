@@ -30,7 +30,7 @@ import { useCachedPublicPage } from '../../hooks/useCachedPublicPage';
 import { addProductToCart, pulseButton } from '../../lib/cartStorage';
 import { fetchProductsPageData } from '../../lib/productsPageData';
 import { obtenerCategorias } from '../../services/categoriasService';
-import { calcularPrecioConIVA } from '../../services/productosService';
+import { calcularPrecioConIVA, obtenerDisponibilidadPuntosVenta } from '../../services/productosService';
 import { clasificarDisponibilidad } from '../../lib/productoDisponibilidad';
 import { useTraducir, useTraducirLista } from '../../hooks/useTraducir';
 
@@ -99,6 +99,9 @@ const Products = () => {
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
   const [categoriasApi, setCategoriasApi] = useState([]);
   const [abiertas, setAbiertas] = useState({});
+  const [stockPorPunto, setStockPorPunto] = useState({});
+  const [stockPuntosListo, setStockPuntosListo] = useState(false);
+  const [stockPuntosError, setStockPuntosError] = useState(false);
 
   useEffect(() => {
     let activo = true;
@@ -118,6 +121,52 @@ const Products = () => {
     () => products.filter((product) => product.estado !== 'Deshabilitado'),
     [products],
   );
+
+  const idsCatalogo = useMemo(
+    () => visibleProducts.map((product) => String(product.id || '')).filter(Boolean).join(','),
+    [visibleProducts],
+  );
+
+  useEffect(() => {
+    const ids = idsCatalogo ? idsCatalogo.split(',') : [];
+    if (ids.length === 0) {
+      setStockPorPunto({});
+      setStockPuntosListo(true);
+      return undefined;
+    }
+
+    let activo = true;
+    setStockPuntosListo(false);
+    setStockPuntosError(false);
+    obtenerDisponibilidadPuntosVenta(ids)
+      .then((data) => {
+        if (!activo) return;
+        const mapa = {};
+        ids.forEach((id) => {
+          mapa[id] = 0;
+        });
+        (data.porProducto || []).forEach((row) => {
+          const id = String(row.productoId || '');
+          if (!id) return;
+          mapa[id] = (row.puntos || []).reduce(
+            (max, punto) => Math.max(max, Number(punto.stock) || 0),
+            0,
+          );
+        });
+        setStockPorPunto(mapa);
+        setStockPuntosListo(true);
+      })
+      .catch(() => {
+        if (!activo) return;
+        setStockPorPunto({});
+        setStockPuntosError(true);
+        setStockPuntosListo(true);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [idsCatalogo]);
 
   const categoriasRaizApi = useMemo(
     () => categoriasApi.filter(esCategoriaRaiz).map((item) => item.nombre),
@@ -222,8 +271,12 @@ const Products = () => {
   const productCards = currentProducts.map((product) => {
     const precioNormal = Number(product.precioNormal ?? product.priceWithoutIva ?? product.price ?? 0) || 0;
     const precioConIVA = calcularPrecioConIVA(precioNormal);
-    const disponibilidad = clasificarDisponibilidad(product);
-    const estaAgotado = disponibilidad.codigo === 'agotado';
+    const stockEnPuntos = stockPorPunto[String(product.id)];
+    const sinStockEnPuntos = stockPuntosListo && !stockPuntosError && (Number(stockEnPuntos) || 0) <= 0;
+    const disponibilidad = clasificarDisponibilidad(
+      sinStockEnPuntos ? { ...product, stock: 0, stockTotal: 0 } : product,
+    );
+    const estaAgotado = disponibilidad.codigo === 'agotado' || sinStockEnPuntos;
 
     return {
       product,
@@ -488,11 +541,15 @@ const Products = () => {
                         className="products-page__quick-buy"
                         onClick={(e) => {
                           e.stopPropagation();
-                          addProductToCart(product, 1);
-                          pulseButton(e.currentTarget);
+                          if (!stockPuntosListo || estaAgotado) return;
+                          const unidades = Number(stockPorPunto[String(product.id)]) || 0;
+                          const agregado = stockPuntosError
+                            ? addProductToCart(product, 1)
+                            : unidades > 0 && addProductToCart({ ...product, stock: unidades }, 1);
+                          if (agregado) pulseButton(e.currentTarget);
                           e.currentTarget.blur();
                         }}
-                        disabled={estaAgotado}
+                        disabled={estaAgotado || !stockPuntosListo}
                         aria-label={`A\u00f1adir ${product.nombre} al carrito`}
                       >
                         <ShoppingCart className="products-page__quick-buy-icon" aria-hidden="true" />

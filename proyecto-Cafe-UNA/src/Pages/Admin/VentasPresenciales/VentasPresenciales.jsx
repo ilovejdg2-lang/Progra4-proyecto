@@ -38,6 +38,13 @@ import {
   registrarVentaPresencial,
 } from "../../../services/ventasPresencialesService";
 
+function operaSoloPuntosAsignados(roles) {
+  return !roles.some((rol) => {
+    const valor = String(rol || "").toLowerCase();
+    return valor === "admin" || valor === "administrador" || valor === "superadmin" || valor === "superadministrador";
+  });
+}
+
 function formatearColones(monto) {
   const n = Math.round(Number(monto) || 0);
   return `₡${n.toLocaleString("es-CR")}`;
@@ -103,7 +110,7 @@ export default function AdminVentasPresenciales() {
       ]);
       const puntosActivos = puntosData.filter((p) => p.activo !== false);
       setPuntos(puntosActivos);
-      if (puntosActivos.length > 0 && !ubicacionCodigo) {
+      if (puntosActivos.length === 1) {
         setUbicacionCodigo(puntosActivos[0].code);
       }
       setProductos(Array.isArray(catalogo) ? catalogo : catalogo?.data || []);
@@ -454,6 +461,27 @@ export default function AdminVentasPresenciales() {
             </h1>
             <p className="mx-auto mt-2 max-w-md text-[length:var(--text-body)] text-slate-500">
               <ST>No tiene permiso para registrar ventas presenciales.</ST>
+            </p>
+          </section>
+        </AdminLayout>
+      </AdminPageGate>
+    );
+  }
+
+  const sinAsignaciones = ready && operaSoloPuntosAsignados(roles) && puntos.length === 0 && !loadError;
+  if (sinAsignaciones) {
+    return (
+      <AdminPageGate showLoading={showLoading} loadingMessage={loadingMessage}>
+        <AdminLayout>
+          <section
+            className="border border-slate-200 bg-white px-5 py-14 text-center shadow-sm"
+            style={{ borderRadius: "16px" }}
+          >
+            <h1 className="text-[length:var(--text-title)] font-semibold text-slate-950">
+              <ST>Registrar Venta Física</ST>
+            </h1>
+            <p className="mx-auto mt-3 max-w-md text-[length:var(--text-body)] text-slate-600">
+              <ST>No tienes puntos de venta asignados. Contacta a un administrador.</ST>
             </p>
           </section>
         </AdminLayout>

@@ -26,8 +26,12 @@ import { PointOfSaleStockTable } from "./components/PointOfSaleStockTable";
 const AdminPuntosVenta = () => {
   const actor = getActiveSessionUser();
   const roles = rolesDeUsuario(actor);
-  const puedeVer = tienePermiso(roles, "ver_inventario");
-  const puedeEditar = tienePermiso(roles, "ajustar_stock_ubicaciones");
+  const puedeVer =
+    tienePermiso(roles, "ver_inventario") ||
+    tienePermiso(roles, "registrar_ventas") ||
+    tienePermiso(roles, "ver_ventas");
+  const puedeEditar = tienePermiso(roles, "ver_inventario") && tienePermiso(roles, "ajustar_stock_ubicaciones");
+  const soloAsignados = !tienePermiso(roles, "ver_inventario");
   const locationsState = useInventoryLocations({ enabled: puedeVer });
   const catalogState = useProductCatalog({ enabled: puedeVer });
   const [selectedCode, setSelectedCode] = useState("");
@@ -147,6 +151,10 @@ const AdminPuntosVenta = () => {
         <RefreshCw className="size-4" aria-hidden="true" />
         <ST>Reintentar</ST>
       </button>
+    </section>
+  ) : locationsState.data.length === 0 && soloAsignados ? (
+    <section className="rounded-2xl border border-slate-200 bg-white px-5 py-14 text-center shadow-sm">
+      <p className="text-sm text-slate-600"><ST>No tienes puntos de venta asignados. Contacta a un administrador.</ST></p>
     </section>
   ) : locationsState.data.length === 0 && !puedeEditar ? (
     <section className="rounded-2xl border border-slate-200 bg-white px-5 py-14 text-center shadow-sm">
@@ -281,7 +289,11 @@ const AdminPuntosVenta = () => {
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-amber-800"><ST>Inventario</ST></p>
             <h1 className="mt-1 text-2xl font-semibold text-slate-950 sm:text-3xl"><ST>Puntos de venta</ST></h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-500">
-              <ST>Administrá ubicaciones y actualizá el stock de cada punto sin mezclarlo con Bodega Central.</ST>
+              <ST>
+                {soloAsignados
+                  ? "Consultá el stock y el historial de los puntos de venta que tenés asignados."
+                  : "Administrá ubicaciones y actualizá el stock de cada punto sin mezclarlo con Bodega Central."}
+              </ST>
             </p>
           </header>
           {successMessage ? (

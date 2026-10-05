@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, Coffee, ShoppingCart, Store, UploadCloud } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Store, UploadCloud } from 'lucide-react';
 import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { Switch } from '../../Components/ui/Switch';
 import { usePublicPageLoadingGate } from '../../hooks/usePublicPageLoadingGate';
@@ -17,7 +17,14 @@ import { getActiveSessionUser } from '../../services/sessionService';
 import { marcarIntentRegistroCliente, puedeComprar } from '../../services/authService';
 import { clearCart, getStoredCart } from '../../lib/cartStorage';
 import { confirmarCompraEnBackend, validarComprobante } from './checkoutValidation';
+import { CheckoutConfirmacion } from './CheckoutConfirmacion';
 import { rutaMisCompras } from '../HistorialCompras/rutasCompras';
+import { cargarLogoWebpParaPdf, descargarArchivo } from '../../lib/exportarHistorialMovimientos';
+import { LOGO_OSCURO_FALLBACK } from '../../lib/brandLogoCache';
+import {
+  construirPdfResumenCompra,
+  nombreArchivoResumenCompra,
+} from '../../lib/resumenCompraPdf';
 
 const formatCRC = (amount) => {
   const value = Number.isFinite(amount) ? amount : 0;
@@ -32,7 +39,6 @@ const canCompletePurchase = (user) => puedeComprar(user);
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const redirectTimeoutRef = useRef(null);
   const fileInputRef = useRef(null);
   const [cartItems, setCartItems] = useState(getStoredCart);
   const [paid, setPaid] = useState(false);
@@ -45,14 +51,9 @@ const Checkout = () => {
   const [comprobante, setComprobante] = useState(null);
   const [dropActivo, setDropActivo] = useState(false);
   const [logoUrl, setLogoUrl] = useState('');
+  const [compraConfirmada, setCompraConfirmada] = useState(null);
+  const [descargandoPdf, setDescargandoPdf] = useState(false);
 
-  const tGracias = useTraducir('Gracias por tu compra');
-  const tPedidoPendiente = useTraducir(
-    'Tu pedido quedó pendiente de revisión. Te avisamos cuando se apruebe y envíe.',
-  );
-  const tRedirigido = useTraducir('Serás redirigido a inicio automáticamente en unos segundos.');
-  const tVolverInicio = useTraducir('Volver al inicio');
-  const tRastrearPedido = useTraducir('Rastrear pedido');
   const tSeguir = useTraducir('Seguir comprando');
   const tResumen = useTraducir('Resumen de tu pedido');
   const tResumenLead = useTraducir('Revisa los productos, elegí un punto de venta y completá tu compra.');
@@ -94,15 +95,6 @@ const Checkout = () => {
     [cartItems],
   );
   const cartItemsUi = useTraducirLista(cartItemsConNombre, ['nombre']);
-
-  useEffect(() => {
-    return () => {
-      if (redirectTimeoutRef.current) {
-        window.clearTimeout(redirectTimeoutRef.current);
-        redirectTimeoutRef.current = null;
-      }
-    };
-  }, []);
 
   useEffect(() => {
     let activo = true;
@@ -193,11 +185,45 @@ const Checkout = () => {
   const ivaTotal = useMemo(() => totalConIva - subtotalSinIva, [totalConIva, subtotalSinIva]);
 
   const handleContinueShopping = () => {
-    if (redirectTimeoutRef.current) {
-      window.clearTimeout(redirectTimeoutRef.current);
-      redirectTimeoutRef.current = null;
-    }
     navigate({ to: '/productos' });
+  };
+
+  const handleDescargarResumen = async () => {
+    if (!compraConfirmada || descargandoPdf) return;
+    setDescargandoPdf(true);
+    try {
+      const logoData = await cargarLogoWebpParaPdf(logoUrl || LOGO_OSCURO_FALLBACK);
+      const pdf = construirPdfResumenCompra({
+        compra: compraConfirmada,
+        logoData,
+        textos: {
+          titulo: t('Resumen de la compra'),
+          nota: t('Tu pedido quedó pendiente de revisión. Te avisamos cuando se apruebe y envíe.'),
+          producto: t('Producto'),
+          cantidad: t('Cantidad'),
+          precio: t('Precio unitario'),
+          subtotal: t('Subtotal'),
+          subtotalSinIva: t('Subtotal (sin IVA)'),
+          iva: t('IVA (13%)'),
+          total: t('Total'),
+          traducirEtiqueta: (etiqueta) => t(etiqueta),
+          traducirValor: (etiqueta, valor) =>
+            etiqueta === 'Estado' || etiqueta === 'Método de pago' ? t(valor) : valor,
+        },
+      });
+      descargarArchivo(
+        nombreArchivoResumenCompra(compraConfirmada.numero),
+        pdf,
+        'application/pdf',
+        { binario: true },
+      );
+    } catch (error) {
+      const message = error?.message || 'No se pudo descargar el resumen.';
+      setPaymentError(message);
+      window.alert(t(message));
+    } finally {
+      setDescargandoPdf(false);
+    }
   };
 
   const handleValidateCartItems = (items) => {
@@ -303,8 +329,13 @@ const Checkout = () => {
         ubicacionId: punto.id,
       };
 
+      let compra = null;
       try {
-        await confirmarCompraEnBackend({ registrarCompraFn: registrarCompra, payload, archivo: comprobante.file });
+        compra = await confirmarCompraEnBackend({
+          registrarCompraFn: registrarCompra,
+          payload,
+          archivo: comprobante.file,
+        });
       } catch (error) {
         const status = error?.cause?.response?.status;
         if (status === 401) {
@@ -321,11 +352,29 @@ const Checkout = () => {
       clearCart();
       quitarComprobante();
       window.dispatchEvent(new CustomEvent('order-confirmed', { detail: { total: totalConIva } }));
+      setCompraConfirmada({
+        numero: compra?.numero || '',
+        fecha: compra?.fecha || new Date().toISOString(),
+        estado: compra?.estado || 'Pendiente',
+        clienteNombre: compra?.clienteNombre || payload.clienteNombre,
+        clienteCorreo: compra?.clienteCorreo || payload.clienteCorreo,
+        metodoPago: compra?.metodoPago || 'Comprobante',
+        ubicacionNombre: compra?.ubicacionNombre || punto.name,
+        ubicacionCodigo: compra?.ubicacionCodigo || punto.code,
+        subtotal: Number.isFinite(Number(compra?.subtotal)) ? Number(compra.subtotal) : subtotalSinIva,
+        impuestos: Number.isFinite(Number(compra?.impuestos)) ? Number(compra.impuestos) : ivaTotal,
+        total: Number.isFinite(Number(compra?.total)) ? Number(compra.total) : totalConIva,
+        cliente: compra?.cliente || null,
+        items: compra?.items?.length
+          ? compra.items
+          : cartItems.map((item) => ({
+              nombre: item.nombre || item.name || 'Producto',
+              cantidad: getQuantity(item),
+              precioUnitario: getUnitPriceWithIva(item),
+              subtotal: getUnitPriceWithIva(item) * getQuantity(item),
+            })),
+      });
       setPaid(true);
-      redirectTimeoutRef.current = window.setTimeout(() => {
-        redirectTimeoutRef.current = null;
-        navigate({ to: '/' });
-      }, 8000);
     } catch (error) {
       const message = error?.message || 'No se pudo completar la compra por falta de stock.';
       setPaymentError(message);
@@ -338,40 +387,15 @@ const Checkout = () => {
   return (
     <PublicPageGate showLoading={showLoading} loadingMessage={loadingMessage}>
       {paid ? (
-      <main className="checkout-page">
-        <section className="checkout-success-card" aria-live="polite">
-          <div className="checkout-success-card__top">
-            <Coffee size={88} strokeWidth={1.9} aria-hidden="true" className="checkout-success-card__icon" />
-          </div>
-          <div className="checkout-success-card__body">
-            <h2>{tGracias}</h2>
-            <p>{tPedidoPendiente}</p>
-            <span className="checkout-success-card__hint">{tRedirigido}</span>
-          </div>
-          <div className="checkout-success-card__actions">
-            <button
-              type="button"
-              className="checkout-success-card__primary"
-              onClick={() => {
-                if (redirectTimeoutRef.current) {
-                  window.clearTimeout(redirectTimeoutRef.current);
-                  redirectTimeoutRef.current = null;
-                }
-                navigate({ to: rutaMisCompras(getCurrentUser()) });
-              }}
-            >
-              {tRastrearPedido}
-            </button>
-            <button type="button" className="checkout-success-card__secondary" onClick={() => navigate({ to: '/' })}>
-              {tVolverInicio}
-            </button>
-            <button type="button" className="checkout-success-card__secondary" onClick={handleContinueShopping}>
-              {tSeguir}
-            </button>
-          </div>
-          <p className="checkout-success-card__brand">Café UNA</p>
-        </section>
-      </main>
+      <CheckoutConfirmacion
+        compra={compraConfirmada}
+        logoUrl={logoUrl}
+        descargando={descargandoPdf}
+        onDescargar={handleDescargarResumen}
+        onRastrear={() => navigate({ to: rutaMisCompras(getCurrentUser()) })}
+        onInicio={() => navigate({ to: '/' })}
+        onSeguir={handleContinueShopping}
+      />
       ) : (
     <main className="checkout-page">
       <div className="checkout-shell">
