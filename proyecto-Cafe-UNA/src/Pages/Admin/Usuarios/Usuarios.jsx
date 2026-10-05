@@ -27,6 +27,7 @@ import {
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { consultarCedulaDetallada } from "../../../services/cedulaService";
 import { tienePermiso } from "../../../lib/permisos";
+import { AsignacionesVendedor } from "./AsignacionesVendedor";
 import { nombrePais, obtenerOpcionesPaises } from "../../../lib/paises";
 import { useIdioma } from "../../../lib/useIdioma";
 import {
@@ -191,7 +192,7 @@ function filaCliente(label, valor) {
   const texto = String(valor ?? "").trim();
   if (!texto) return null;
   return (
-    <div className="grid grid-cols-[minmax(7rem,9rem)_1fr] gap-x-3 gap-y-0.5 text-sm">
+    <div className="grid grid-cols-1 gap-x-3 text-[13px] sm:grid-cols-[7.25rem_minmax(0,1fr)]">
       <dt className="text-slate-500"><ST>{label}</ST></dt>
       <dd className="font-medium text-slate-900 break-words">{texto}</dd>
     </div>
@@ -207,7 +208,7 @@ function InfoClienteLectura({ usuario }) {
   const tituloTipo = esEmpresa ? "Empresa" : tipo === "persona" ? "Persona" : "Cliente";
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2 dark:border-slate-700 dark:bg-slate-900/50">
+    <section className="space-y-1.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-900"><ST>Datos de cliente</ST></h3>
         <span className="rounded-full border border-slate-200 bg-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-800 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100">
@@ -219,7 +220,7 @@ function InfoClienteLectura({ usuario }) {
           <ST>Tiene el rol Cliente, pero no hay ficha registrada.</ST>
         </p>
       ) : (
-        <dl className="space-y-1.5">
+        <dl className="space-y-1">
           {esEmpresa ? (
             <>
               {filaCliente("Razón social", usuario.razonSocial)}
@@ -292,7 +293,7 @@ const btnCancelarGris =
 
 const ROLES_DISPONIBLES = ["SuperAdmin", "Admin", "Vendedor", "Usuario", "Cliente"];
 
-function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, setCargando, puedeEditarRoles = false }) {
+function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, setCargando, puedeEditarRoles = false, pie = null }) {
   const actor = (() => {
     return getActiveSessionUser();
   })();
@@ -657,7 +658,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
     "w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none";
 
   return (
-    <form onSubmit={handleSubmit} className="usuarios-form space-y-4">
+    <form onSubmit={handleSubmit} className={`usuarios-form ${inicial ? "space-y-3" : "space-y-4"}`}>
       <div>
         <label className="mb-1 block text-xs font-medium text-slate-600"><ST>Nombre</ST></label>
         <form.Field name="nombre">
@@ -1156,6 +1157,8 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 
       {fieldErrors.formulario ? <p className="text-xs text-red-600"><ST>{fieldErrors.formulario}</ST></p> : null}
 
+      {pie}
+
       <div className="flex flex-row flex-wrap justify-end gap-2 pt-2">
         <AdminModalActions
           onCancel={onCancelar}
@@ -1286,6 +1289,7 @@ const AdminUsuarios = () => {
   const actorId = Number(actor?.id) || null;
   const actorRoles = Array.isArray(actor?.roles) ? actor.roles : [];
   const esSuperAdmin = tienePermiso(actorRoles, "editar_usuarios");
+  const puedeGestionarAsignaciones = tienePermiso(actorRoles, "gestionar_asignaciones_puntos");
 
   const [usuarios, setUsuarios]   = useState([]);
   const [cargando, setCargando]   = useState(true);
@@ -1537,12 +1541,14 @@ const AdminUsuarios = () => {
             <h1 className="text-xl font-semibold text-slate-900"><ST>Administrar usuarios</ST></h1>
             <p className="mt-0.5 text-sm text-slate-600"><ST>{"Gesti\u00f3n de acceso y roles"}</ST></p>
           </div>
+          {esSuperAdmin ? (
           <button
             onClick={() => setModalCrear(true)}
             className="w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2 text-sm font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 sm:w-auto"
           >
             <ST>Nuevo usuario +</ST>
           </button>
+          ) : null}
         </div>
 
         {!cargando && !error ? (
@@ -1699,8 +1705,9 @@ const AdminUsuarios = () => {
         <Modal
           titulo={t("Editar usuario")}
           onClose={() => setUsuarioEditar(null)}
-          maxWidth="max-w-2xl"
+          maxWidth="max-w-lg"
         >
+          {esSuperAdmin ? (
           <FormUsuario
             inicial={usuarioEditar}
             onCreado={handleCrear}
@@ -1709,7 +1716,17 @@ const AdminUsuarios = () => {
             cargando={guardando}
             setCargando={setGuardando}
             puedeEditarRoles={esSuperAdmin}
+            pie={
+              puedeGestionarAsignaciones && (usuarioEditar.roles || []).some((rol) => String(rol).toLowerCase() === "vendedor")
+                ? <AsignacionesVendedor usuarioId={usuarioEditar.id} />
+                : null
+            }
           />
+          ) : puedeGestionarAsignaciones && (usuarioEditar.roles || []).some((rol) => String(rol).toLowerCase() === "vendedor") ? (
+            <AsignacionesVendedor usuarioId={usuarioEditar.id} />
+          ) : (
+            <p className="text-sm text-slate-600"><ST>Solo se pueden asignar puntos a un vendedor.</ST></p>
+          )}
         </Modal>
       ) : null}
     </AdminLayout>

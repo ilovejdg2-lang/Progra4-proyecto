@@ -318,7 +318,7 @@ export default function HistorialVentas({
                           ? `Historial de ventas · ${nombrePunto}`
                           : esAdmin
                             ? "Historial de ventas (Todos los vendedores)"
-                            : "Historial de ventas personales"}
+                            : "Historial de tus puntos de venta"}
                     </ST>
                   </h1>
                   <p className="mt-1 text-[length:var(--text-body)] text-slate-500">
@@ -329,7 +329,7 @@ export default function HistorialVentas({
                           ? "Ventas asociadas a este punto de venta, incluyendo compras web y presenciales."
                           : esAdmin
                             ? "Supervisión y control de ventas realizadas por todos los vendedores en puntos físicos y web."
-                            : "Mostrando únicamente las ventas registradas por su usuario."}
+                            : "Ventas de tus puntos asignados y las que registraste personalmente."}
                     </ST>
                   </p>
                 </div>

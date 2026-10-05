@@ -65,3 +65,32 @@ export async function cambiarEstadoUsuario(id, estado = null) {
     data: { estado },
   });
 }
+
+export async function obtenerAsignacionesPunto(vendedorId) {
+  return request(`${BASE_URL}/${vendedorId}/asignaciones-puntos`);
+}
+
+export async function obtenerPuntosAsignables() {
+  return request(`${BASE_URL}/asignaciones-puntos/elegibles`);
+}
+
+export async function asignarPuntosVendedor(vendedorId, ubicacionIds) {
+  return request(`${BASE_URL}/${vendedorId}/asignaciones-puntos`, {
+    method: "POST",
+    data: { ubicacionIds },
+  });
+}
+
+export async function cambiarEstadoAsignacionPunto(vendedorId, ubicacionId, activo) {
+  return request(`${BASE_URL}/${vendedorId}/asignaciones-puntos/${ubicacionId}`, {
+    method: "PATCH",
+    data: { activo },
+  });
+}
+
+export async function cambiarPuntoAsignado(vendedorId, desdeUbicacionId, haciaUbicacionId) {
+  return request(`${BASE_URL}/${vendedorId}/asignaciones-puntos/cambiar`, {
+    method: "POST",
+    data: { desdeUbicacionId, haciaUbicacionId },
+  });
+}

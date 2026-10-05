@@ -521,44 +521,162 @@ button.checkout-pos__card.is-selected,
   cursor: pointer;
 }
 
+.checkout-page:has(.checkout-success-card),
+.checkout-page--confirmed {
+  justify-content: flex-start;
+}
+
 .checkout-success-card {
-  width: min(100%, 520px);
+  width: min(100%, 760px);
   margin: 0 auto;
-  padding: 2rem 1.75rem 1.5rem;
+  padding: 1.6rem 1.4rem 1.35rem;
   border: 1px solid #efe7dc;
   border-radius: 28px;
   background: #fff;
-  text-align: center;
+  text-align: left;
   box-shadow: 0 10px 30px rgba(61, 42, 36, 0.06);
 }
 
 .checkout-success-card__top {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
 }
 
-.checkout-success-card__icon {
-  color: #2c211c;
-  display: block;
-  margin-inline: auto;
+.checkout-success-card__logo {
+  width: 168px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 .checkout-success-card__body h2 {
-  margin: 0.85rem 0 0.35rem;
+  margin: 1rem 0 0.35rem;
   font-size: var(--text-title);
 }
 
-.checkout-success-card__hint,
-.checkout-success-card__brand {
+.checkout-success-card__body p {
+  margin: 0;
+  color: #5c514c;
+  line-height: 1.5;
+}
+
+.checkout-receipt {
+  margin-top: 1.2rem;
+  border: 1px solid #efe7dc;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.checkout-receipt h3 {
+  margin: 0;
+  padding: 0.95rem 1.05rem 0;
+  font-size: 1rem;
+}
+
+.checkout-receipt__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1.1rem;
+  margin: 0.85rem 0 0;
+  padding: 0 1.05rem 1rem;
+}
+
+.checkout-receipt__meta div {
+  min-width: 0;
+}
+
+.checkout-receipt__meta dt {
   color: #8a7b72;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.checkout-receipt__meta dd {
+  margin: 0.15rem 0 0;
+  color: #2c211c;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.checkout-receipt__table-wrap {
+  overflow-x: auto;
+}
+
+.checkout-receipt table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.checkout-receipt th,
+.checkout-receipt td {
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.checkout-receipt th {
+  background: #2c211c;
+  color: #fff;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+}
+
+.checkout-receipt td {
+  border-top: 1px solid #f1ebe4;
+  color: #2c211c;
+}
+
+.checkout-receipt .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.checkout-receipt__totals {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.9rem 1.05rem 0.2rem;
+}
+
+.checkout-receipt__totals div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #5c514c;
+}
+
+.checkout-receipt__totals .is-total {
+  margin-top: 0.2rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid #efe7dc;
+  color: #2c211c;
+  font-size: 1.05rem;
+}
+
+.checkout-receipt__download {
+  display: block;
+  width: calc(100% - 2.1rem);
+  margin: 0.9rem 1.05rem 1.05rem;
+  min-height: var(--control-height);
+  border: 1px solid #2c211c;
+  border-radius: 999px;
+  background: #fff;
+  color: #2c211c;
   font-size: var(--text-body);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.checkout-receipt__download:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .checkout-success-card__actions {
   display: grid;
   gap: 0.65rem;
-  margin-top: 1.25rem;
+  margin-top: 1.15rem;
 }
 
 .checkout-success-card__primary,
@@ -579,6 +697,12 @@ button.checkout-pos__card.is-selected,
 .checkout-success-card__secondary {
   border: 1px solid #e4d8cc;
   background: #fff;
+}
+
+@media (max-width: 640px) {
+  .checkout-receipt__meta {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
