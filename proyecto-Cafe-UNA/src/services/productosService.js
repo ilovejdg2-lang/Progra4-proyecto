@@ -43,7 +43,7 @@ const CATALOG_FIELDS = [
   "stockMinimo",
 ];
 
-function limpiarProductosCache() {
+export function limpiarProductosCache() {
   productosCache = { expiresAt: 0, data: null };
   productosInflight = null;
   productosRawCache = { expiresAt: 0, data: null };
