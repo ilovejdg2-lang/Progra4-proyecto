@@ -26,6 +26,7 @@ export function normalizarMovimiento(raw) {
     origenNombre: String(firstDefined(raw, ["origenNombre", "OrigenNombre"]) || "").trim(),
     ubicacionDestinoId: firstDefined(raw, ["ubicacionDestinoId", "UbicacionDestinoId"]) ?? null,
     destinoNombre: String(firstDefined(raw, ["destinoNombre", "DestinoNombre"]) || "").trim(),
+    destinatario: String(firstDefined(raw, ["destinatario", "Destinatario"]) || "").trim(),
     responsableId: firstDefined(raw, ["responsableId", "ResponsableId"]) ?? null,
     responsableNombre: String(
       firstDefined(raw, ["responsableNombre", "ResponsableNombre"]) || "",
