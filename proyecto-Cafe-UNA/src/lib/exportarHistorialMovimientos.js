@@ -27,6 +27,7 @@ export function construirCsvMovimientos(rows = []) {
     "CANTIDAD",
     "ORIGEN",
     "DESTINO",
+    "DESTINATARIO",
     "RESPONSABLE",
     "NOTAS",
   ];
@@ -40,6 +41,7 @@ export function construirCsvMovimientos(rows = []) {
         csvEscape(row.cantidad),
         csvEscape(row.origenNombre || "—"),
         csvEscape(row.destinoNombre || "—"),
+        csvEscape(row.destinatario || "—"),
         csvEscape(row.responsableNombre || "—"),
         csvEscape(row.notas || ""),
       ].join(","),
@@ -249,13 +251,14 @@ export function construirPdfMovimientos({
 
   // Usable width: 842 - 72 = 770 pt
   const colX = {
-    fecha: margin + 4,          // 40
-    tipo: margin + 115,         // 151
-    producto: margin + 225,     // 261
-    cantidad: margin + 415,     // 451
-    origen: margin + 475,       // 511
-    destino: margin + 575,      // 611
-    responsable: margin + 675,  // 711
+    fecha: margin + 4,
+    tipo: margin + 105,
+    producto: margin + 212,
+    cantidad: margin + 385,
+    origen: margin + 445,
+    destino: margin + 525,
+    destinatario: margin + 612,
+    responsable: margin + 704,
   };
 
   const paginas = [];
@@ -347,6 +350,7 @@ export function construirPdfMovimientos({
     ops.push(pdfText(colX.cantidad, tableHeaderY, "CANTIDAD", 8.5, "/F2", 1));
     ops.push(pdfText(colX.origen, tableHeaderY, "ORIGEN", 8.5, "/F2", 1));
     ops.push(pdfText(colX.destino, tableHeaderY, "DESTINO", 8.5, "/F2", 1));
+    ops.push(pdfText(colX.destinatario, tableHeaderY, "DESTINATARIO", 8.5, "/F2", 1));
     ops.push(pdfText(colX.responsable, tableHeaderY, "RESPONSABLE", 8.5, "/F2", 1));
 
     // Filas de datos
@@ -362,6 +366,7 @@ export function construirPdfMovimientos({
       ops.push(pdfText(colX.cantidad, y, String(row.cantidad ?? "0"), 8, "/F2", 0));
       ops.push(pdfText(colX.origen, y, String(row.origenNombre || "—").slice(0, 18), 8, "/F1", 0.25));
       ops.push(pdfText(colX.destino, y, String(row.destinoNombre || "—").slice(0, 18), 8, "/F1", 0.25));
+      ops.push(pdfText(colX.destinatario, y, String(row.destinatario || "—").slice(0, 16), 8, "/F1", 0.2));
       ops.push(pdfText(colX.responsable, y, String(row.responsableNombre || "—").slice(0, 18), 8, "/F1", 0.2));
 
       ops.push(pdfLineStroke(margin, y - 5, pageWidth - margin, y - 5, 0.88, 0.3));

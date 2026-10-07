@@ -364,6 +364,7 @@ export default function AdminHistorialMovimientos() {
                     <th className="px-3.5 py-2.5 text-right text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Cantidad</ST></th>
                     <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Origen</ST></th>
                     <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Destino</ST></th>
+                    <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Destinatario</ST></th>
                     <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Responsable</ST></th>
                   </tr>
                 </thead>
@@ -392,6 +393,9 @@ export default function AdminHistorialMovimientos() {
                       </td>
                       <td className="px-3.5 py-2.5 text-xs sm:text-sm text-slate-700">
                         {row.destinoNombre ? <ST>{row.destinoNombre}</ST> : "—"}
+                      </td>
+                      <td className="px-3.5 py-2.5 text-xs sm:text-sm text-slate-700">
+                        {row.destinatario || "—"}
                       </td>
                       <td className="px-3.5 py-2.5 text-xs sm:text-sm text-slate-700">
                         {row.responsableNombre || "—"}
