@@ -95,6 +95,10 @@ describe("AppSidebar", () => {
       "href",
       "/admin/historial-movimientos",
     );
+    expect(screen.getAllByRole("link", { name: /Salidas de bodega/i })[0]).toHaveAttribute(
+      "href",
+      "/admin/salidas-inventario",
+    );
     expect(screen.queryByText("Formularios")).not.toBeInTheDocument();
     expect(screen.getAllByText("Voluntariado")[0]).toBeInTheDocument();
     expect(screen.getAllByText("Visitas grupales")[0]).toBeInTheDocument();
@@ -131,7 +135,12 @@ describe("AppSidebar", () => {
 
   it("does not expose inventory navigation without permission", () => {
     permissions.tienePermiso.mockImplementation(
-      (_, permission) => !permission.includes("inventario") && permission !== "ver_productos",
+      (_, permission) =>
+        !permission.includes("inventario") &&
+        permission !== "ver_productos" &&
+        permission !== "ver_ventas" &&
+        permission !== "registrar_ventas" &&
+        permission !== "ajustar_stock_ubicaciones",
     );
 
     render(
@@ -143,5 +152,6 @@ describe("AppSidebar", () => {
     expect(screen.queryByRole("link", { name: /Puntos de venta/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Activos fijos/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /^Producto$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Salidas de bodega/i })).not.toBeInTheDocument();
   });
 });

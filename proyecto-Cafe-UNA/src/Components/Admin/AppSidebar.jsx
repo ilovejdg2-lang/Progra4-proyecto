@@ -14,6 +14,7 @@ import {
   Landmark,
   LogOut,
   Package,
+  PackageMinus,
   Receipt,
   ClipboardCheck,
   ClipboardList,
@@ -114,6 +115,7 @@ export function AppSidebar() {
   const puedeVentasPresenciales =
     tienePermiso(roles, "registrar_ventas") ||
     tienePermiso(roles, "ajustar_stock_ubicaciones");
+  const puedeSalidasBodega = tienePermiso(roles, "ajustar_stock_ubicaciones");
   const puedeVentas =
     tienePermiso(roles, "ver_ventas") ||
     tienePermiso(roles, "ver_historial_compras_clientes");
@@ -200,6 +202,7 @@ export function AppSidebar() {
     pathname === "/admin/ventas-presenciales" ||
     pathname === "/admin/historial-ventas" ||
     pathname === "/admin/ventas-pendientes" ||
+    pathname === "/admin/salidas-inventario" ||
     (pathname.startsWith("/admin/puntos-venta/") && pathname.includes("/ventas")) ||
     pathname === "/admin/historial-movimientos";
   const isAjustesRoute =
@@ -594,6 +597,16 @@ export function AppSidebar() {
                       <Link to="/admin/distribucion" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Truck />
                         <span><ST>Distribución</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
+                  {puedeSalidasBodega ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/salidas-inventario" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <PackageMinus />
+                        <span><ST>Salidas de bodega</ST></span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
