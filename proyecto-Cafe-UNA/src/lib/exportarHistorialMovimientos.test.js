@@ -17,6 +17,7 @@ describe("exportarHistorialMovimientos", () => {
       cantidad: 25,
       origenNombre: "Proveedor Sol",
       destinoNombre: "Bodega Central",
+      destinatario: "Punto 1",
       responsableNombre: "Admin Usuario",
       notas: "Lote nuevo, revisión OK",
     },
@@ -29,6 +30,7 @@ describe("exportarHistorialMovimientos", () => {
       cantidad: 2,
       origenNombre: "Tienda Principal",
       destinoNombre: "Cliente Final",
+      destinatario: null,
       responsableNombre: "Vendedor 1",
       notas: "",
     },
@@ -50,7 +52,7 @@ describe("exportarHistorialMovimientos", () => {
 
     const lineas = csv.replace("\uFEFF", "").split("\r\n");
     expect(lineas[0]).toBe(
-      "FECHA,TIPO DE MOVIMIENTO,PRODUCTO,CANTIDAD,ORIGEN,DESTINO,RESPONSABLE,NOTAS",
+      "FECHA,TIPO DE MOVIMIENTO,PRODUCTO,CANTIDAD,ORIGEN,DESTINO,DESTINATARIO,RESPONSABLE,NOTAS",
     );
 
     expect(lineas[1]).toContain("08/09/2026");
@@ -58,6 +60,7 @@ describe("exportarHistorialMovimientos", () => {
     expect(lineas[1]).toContain("Café Clásico 500g");
     expect(lineas[1]).toContain("25");
     expect(lineas[1]).toContain('"Lote nuevo, revisión OK"'); // comas escapadas con comillas
+    expect(lineas[1]).toContain("Punto 1");
 
     expect(lineas[2]).toContain("Venta presencial");
     expect(lineas[2]).toContain("Café Especial Tarrazú");
@@ -80,6 +83,8 @@ describe("exportarHistorialMovimientos", () => {
     expect(pdf.includes("Reporte Administrativo de Movimientos de Inventario")).toBe(true);
     expect(pdf.includes("SuperAdmin")).toBe(true);
     expect(pdf.includes("FECHA")).toBe(true);
+    expect(pdf.includes("DESTINATARIO")).toBe(true);
+    expect(pdf.includes("Punto 1")).toBe(true);
     expect(pdf.includes("TIPO DE MOVIMIENTO")).toBe(true);
     expect(pdf.includes("P")).toBe(true);
   });
