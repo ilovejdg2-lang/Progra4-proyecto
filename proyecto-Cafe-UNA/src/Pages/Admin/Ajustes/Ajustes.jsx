@@ -14,12 +14,14 @@ import {
   obtenerMatrizPermisos,
 } from "../../../services/ajustesService";
 import { getActiveSessionUser } from "../../../services/sessionService";
+import { CatalogosSistema } from "./CatalogosSistema";
 import { HorariosCalendario } from "./HorariosCalendario";
 import { PermisosMatriz } from "./PermisosMatriz";
 import { moduloDePermiso } from "./permisosModulos";
 
 function seccionDesdePath(pathname) {
   if (pathname.includes("/permisos")) return "permisos";
+  if (pathname.includes("/catalogos")) return "catalogos";
   return "horarios";
 }
 
@@ -31,6 +33,10 @@ const TITULOS = {
   permisos: {
     title: "Permisos",
     lead: "Qué puede hacer cada rol. Filtrá por módulo y tocá el ícono para activar o quitar.",
+  },
+  catalogos: {
+    title: "Catálogos",
+    lead: "Listas que se usan en formularios y en la tienda: categorías e íconos, presentaciones en gramos, estados de artículos y métodos de pago.",
   },
 };
 
@@ -56,7 +62,18 @@ export default function AdminAjustes() {
   const [filtroModulo, setFiltroModulo] = useState("todos");
   const [error, setError] = useState("");
   const [okMsg, setOkMsg] = useState("");
+  const [tonoMsg, setTonoMsg] = useState("ok");
   const [guardandoMatriz, setGuardandoMatriz] = useState(false);
+
+  const mostrarMensaje = useCallback((msg, tono = "ok") => {
+    setOkMsg(msg || "");
+    setTonoMsg(tono);
+    setError("");
+  }, []);
+  const mostrarError = useCallback((msg) => {
+    setError(msg || "");
+    if (msg) setOkMsg("");
+  }, []);
 
   const { showLoading, loadingMessage } = useAdminPageGate(
     redirigirRaiz ? "/admin/ajustes/horarios" : pathname,
@@ -135,7 +152,7 @@ export default function AdminAjustes() {
       setMatrizData(actualizado);
       setMatrizLocal(actualizado.matriz || {});
       aplicarMatrizPermisos(actualizado.matriz || {});
-      setOkMsg("Matriz de permisos guardada.");
+      mostrarMensaje("Matriz de permisos guardada.");
     } catch (err) {
       setError(sanitizeUserFacingError(err?.message || "No se pudo guardar la matriz."));
     } finally {
@@ -154,12 +171,15 @@ export default function AdminAjustes() {
           </header>
 
           {error ? (
-            <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[length:var(--text-body)] text-red-700" role="alert">
+            <p className="text-[length:var(--text-body)] font-semibold text-red-600" role="alert">
               <ST>{error}</ST>
             </p>
           ) : null}
           {okMsg ? (
-            <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[length:var(--text-body)] text-emerald-800">
+            <p
+              className={`text-[length:var(--text-body)] font-semibold ${tonoMsg === "eliminado" ? "text-red-600" : "text-emerald-700"}`}
+              role="status"
+            >
               <ST>{okMsg}</ST>
             </p>
           ) : null}
@@ -175,6 +195,10 @@ export default function AdminAjustes() {
                 if (msg) setOkMsg("");
               }}
             />
+          ) : null}
+
+          {seccion === "catalogos" ? (
+            <CatalogosSistema onMessage={mostrarMensaje} onError={mostrarError} />
           ) : null}
 
           {seccion === "permisos" ? (

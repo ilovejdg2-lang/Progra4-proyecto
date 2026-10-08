@@ -38,6 +38,7 @@ function mapFaqItem(item) {
     id: item?.id ?? item?.Id ?? null,
     pregunta: textoCampo(item?.pregunta ?? item?.Pregunta),
     respuesta: textoCampo(item?.respuesta ?? item?.Respuesta),
+    icono: textoCampo(item?.icono ?? item?.Icono),
     orden: Number(item?.orden ?? item?.Orden ?? 0) || 0,
   };
 }

@@ -5,6 +5,7 @@ import { normalizeImageUrl } from "../../lib/imageUtils";
 import { LOGO_OSCURO_FALLBACK } from "../../lib/brandLogoCache";
 import { LOGO_CAFE_UNA_JPEG_BASE64 } from "../../lib/logoCafeUnaBase64";
 import { presentarCompra } from "../../lib/resumenCompraPdf";
+import { HorarioCompra } from "../ProductDetail/HorarioCompra";
 
 const formatCRC = (amount) => {
   const value = Number.isFinite(Number(amount)) ? Number(amount) : 0;
@@ -116,6 +117,13 @@ export function CheckoutConfirmacion({
           >
             {descargando ? tPreparando : tDescargar}
           </button>
+          {compra?.ubicacionId ? (
+            <HorarioCompra
+              ubicacionId={compra.ubicacionId}
+              titulo="Días y horario para retirar tu pedido"
+              variante="tarjeta"
+            />
+          ) : null}
         </article>
 
         <div className="checkout-success-card__actions">

@@ -129,7 +129,7 @@ export function ActiveFilterChips({
       <div className="biblio-active-chips__list">
         {chips.map((chip) => (
           <span key={chip.id} className="biblio-active-chip">
-            <span className="biblio-active-chip__label">{chip.label}</span>
+            <span className="biblio-active-chip__label"><ST>{chip.label}</ST></span>
             <button
               type="button"
               className="biblio-active-chip__remove"

@@ -50,6 +50,19 @@ export function invalidarCacheDocumentos() {
   cache.clear();
 }
 
+/** Nombres subidos antes de corregir el backend quedaron leídos como latin1 (ej. "VISIÃ\u0093N"). */
+function repararNombreArchivo(nombre) {
+  const valor = String(nombre ?? "");
+  if (!/[\u00c2-\u00f4][\u0080-\u00bf]/.test(valor)) return valor;
+  try {
+    const bytes = Uint8Array.from(valor, (ch) => ch.charCodeAt(0) & 0xff);
+    if ([...valor].some((ch) => ch.charCodeAt(0) > 0xff)) return valor;
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    return valor;
+  }
+}
+
 export function normalizarDoc(d) {
   if (!d) return null;
   return {
@@ -59,7 +72,7 @@ export function normalizarDoc(d) {
     descripcion: d.descripcion ?? d.Descripcion ?? "",
     categoria: d.categoria ?? d.Categoria ?? "General",
     subcategoria: d.subcategoria ?? d.Subcategoria ?? "",
-    nombreOriginal: d.nombreOriginal ?? d.NombreOriginal ?? d.nombreArchivo ?? d.NombreArchivo ?? "",
+    nombreOriginal: repararNombreArchivo(d.nombreOriginal ?? d.NombreOriginal ?? d.nombreArchivo ?? d.NombreArchivo ?? ""),
     mimeType: d.mimeType ?? d.MimeType ?? "application/pdf",
     tamanoBytes: Number(d.tamanoBytes ?? d.TamanoBytes ?? 0),
     esPrivado: Boolean(d.esPrivado ?? d.EsPrivado),

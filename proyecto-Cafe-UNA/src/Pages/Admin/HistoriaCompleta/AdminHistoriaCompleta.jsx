@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, ChevronDown, ExternalLink, ImagePlus, Plus, Save, T
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { ST } from "../../../Components/T/ST";
+import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useTraducir } from "../../../hooks/useTraducir";
@@ -29,11 +30,19 @@ const claseEtiqueta = "grid gap-2 text-[length:var(--text-body)] font-bold upper
 const claseBotonSecundario =
   "inline-flex h-[var(--control-height)] items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-60";
 
-function Campo({ label, value, onChange, multiline = false, rows = 3, placeholder, maxLength = 1000 }) {
+function Campo({ label, value, onChange, multiline = false, numerico = false, rows = 3, placeholder, maxLength = 1000 }) {
   return (
     <label className={claseEtiqueta}>
       <ST>{label}</ST>
-      {multiline ? (
+      {numerico ? (
+        <NumericInput
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          className={claseInput}
+        />
+      ) : multiline ? (
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -128,7 +137,7 @@ function Seccion({ titulo, descripcion, accion, children }) {
         </div>
         {accion}
       </div>
-      <div className="grid gap-4 p-4 sm:p-6">{children}</div>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 p-4 sm:p-6">{children}</div>
     </section>
   );
 }
@@ -196,13 +205,13 @@ function EditorCapitulo({ capitulo, indice, total, abierto, onToggle, onChange, 
   const cambiarBloques = (nuevos) => onChange({ bloques: nuevos });
 
   return (
-    <article className="rounded-2xl border border-slate-200">
-      <div className="flex items-center gap-3 px-4 py-3">
+    <article className="min-w-0 rounded-2xl border border-slate-200">
+      <div className="flex flex-wrap items-center justify-end gap-3 px-4 py-3">
         <button
           type="button"
           onClick={onToggle}
           aria-expanded={abierto}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+          className="flex min-w-[12rem] flex-1 items-center gap-3 text-left"
         >
           <span className="text-[length:var(--text-body)] font-bold text-amber-700">{String(indice + 1).padStart(2, "0")}</span>
           <span className="min-w-0 flex-1">
@@ -361,7 +370,7 @@ const AdminHistoriaCompleta = () => {
                   <Campo label="Etiqueta superior" value={portada.eyebrow} onChange={cambiarPortada("eyebrow")} maxLength={120} />
                   <Campo label="Título" value={portada.titulo} onChange={cambiarPortada("titulo")} maxLength={200} />
                   <Campo label="Autora o autor" value={portada.autora} onChange={cambiarPortada("autora")} maxLength={200} />
-                  <Campo label="Año del relato" value={portada.anio} onChange={cambiarPortada("anio")} maxLength={20} />
+                  <Campo label="Año del relato" value={portada.anio} onChange={cambiarPortada("anio")} numerico maxLength={4} />
                 </div>
                 <Campo label="Subtítulo" value={portada.subtitulo} onChange={cambiarPortada("subtitulo")} multiline rows={2} maxLength={500} />
                 <div className="grid gap-4 md:grid-cols-2">
@@ -400,7 +409,7 @@ const AdminHistoriaCompleta = () => {
                 {hitos.length === 0 ? <ListaVacia mensaje="No hay hitos." /> : null}
                 {hitos.map((hito, i) => (
                   <div key={i} className="grid items-end gap-3 md:grid-cols-[8rem_minmax(0,1fr)_auto]">
-                    <Campo label="Año" value={hito.anio} onChange={(anio) => cambiarLista("hitos")(reemplazar(hitos, i, { anio }))} maxLength={20} />
+                    <Campo label="Año" value={hito.anio} onChange={(anio) => cambiarLista("hitos")(reemplazar(hitos, i, { anio }))} numerico maxLength={4} />
                     <Campo label="Qué pasó" value={hito.texto} onChange={(texto) => cambiarLista("hitos")(reemplazar(hitos, i, { texto }))} maxLength={500} />
                     <AccionesFila
                       indice={i}
@@ -420,14 +429,21 @@ const AdminHistoriaCompleta = () => {
                 {compost.length === 0 ? <ListaVacia mensaje="No hay datos de compost." /> : null}
                 {compost.map((fila, i) => (
                   <div key={i} className="grid items-end gap-3 sm:grid-cols-[8rem_12rem_auto]">
-                    <Campo label="Año" value={fila.anio} onChange={(anio) => cambiarLista("compost")(reemplazar(compost, i, { anio }))} maxLength={20} />
+                    <label className={claseEtiqueta}>
+                      <ST>Año</ST>
+                      <NumericInput
+                        value={fila.anio}
+                        onChange={(e) => cambiarLista("compost")(reemplazar(compost, i, { anio: e.target.value }))}
+                        maxLength={4}
+                        className={claseInput}
+                      />
+                    </label>
                     <label className={claseEtiqueta}>
                       <ST>Kilos</ST>
-                      <input
-                        type="number"
-                        min={0}
+                      <NumericInput
                         value={fila.kg}
-                        onChange={(e) => cambiarLista("compost")(reemplazar(compost, i, { kg: Math.max(0, Number(e.target.value) || 0) }))}
+                        onChange={(e) => cambiarLista("compost")(reemplazar(compost, i, { kg: Number(e.target.value) || 0 }))}
+                        maxLength={9}
                         className={claseInput}
                       />
                     </label>

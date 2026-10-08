@@ -7,9 +7,12 @@ import { AdminEditorConPreview } from "../../../Components/Admin/ui/AdminCmsPrev
 import { PersonaEquipo } from "../../AboutUs/EquipoSection";
 import "../../AboutUs/AboutUs.css";
 import { CampoLimitePalabras } from "../../../Components/Admin/ui/CampoLimitePalabras";
+import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { normalizarEquipo } from "../../../lib/aboutPageData";
+import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
+import { filtrarEnteros } from "../../../lib/numericInput";
 import { MAX_PALABRAS_TITULO } from "../../../lib/formLimits";
 import { t } from "../../../lib/t";
 import { asegurarCamposEnEspanol, camposParaVistaAdmin } from "../../../lib/traducir";
@@ -84,11 +87,15 @@ function ModalMiembro({ inicial, guardando, onCerrar, onGuardar }) {
   const tEditar = useTraducir("Editar persona");
   const tNueva = useTraducir("Nueva persona");
   const { idioma } = useIdioma();
-  const [form, setForm] = useState(() => ({ ...MIEMBRO_VACIO, ...inicial }));
+  const [form, setForm] = useState(() => ({
+    ...MIEMBRO_VACIO,
+    ...inicial,
+    telefono: filtrarEnteros(inicial?.telefono).slice(0, 15),
+  }));
 
   useEffect(() => {
     let cancelado = false;
-    const base = { ...MIEMBRO_VACIO, ...inicial };
+    const base = { ...MIEMBRO_VACIO, ...inicial, telefono: filtrarEnteros(inicial?.telefono).slice(0, 15) };
     (async () => {
       const vista = await camposParaVistaAdmin(base, CAMPOS_TRADUCIBLES, idioma);
       if (!cancelado) setForm(vista);
@@ -100,7 +107,7 @@ function ModalMiembro({ inicial, guardando, onCerrar, onGuardar }) {
 
   const cambiarCampo = (event) => {
     const { name, value } = event.target;
-    setForm((actual) => ({ ...actual, [name]: value }));
+    setForm((actual) => ({ ...actual, [name]: name === "correo" ? limpiarCorreo(value) : value }));
   };
 
   const enviar = async (event) => {
@@ -115,6 +122,10 @@ function ModalMiembro({ inicial, guardando, onCerrar, onGuardar }) {
       foto: form.foto.trim(),
     };
     if (!miembro.nombre || !miembro.cargo) return;
+    if (miembro.correo && !esCorreoValido(miembro.correo)) {
+      alert(t(MENSAJE_CORREO_INVALIDO));
+      return;
+    }
     onGuardar(inicial?.id, miembro);
   };
 
@@ -169,6 +180,7 @@ function ModalMiembro({ inicial, guardando, onCerrar, onGuardar }) {
             <ST>Correo</ST>
             <input
               type="email"
+              inputMode="email"
               name="correo"
               value={form.correo}
               onChange={cambiarCampo}
@@ -180,13 +192,12 @@ function ModalMiembro({ inicial, guardando, onCerrar, onGuardar }) {
 
           <label className={claseEtiqueta}>
             <ST>{"Tel\u00e9fono"}</ST>
-            <input
-              type="tel"
+            <NumericInput
               name="telefono"
               value={form.telefono}
               onChange={cambiarCampo}
-              placeholder="+506 8888 8888"
-              maxLength={50}
+              placeholder="88888888"
+              maxLength={15}
               className={claseInput}
             />
           </label>

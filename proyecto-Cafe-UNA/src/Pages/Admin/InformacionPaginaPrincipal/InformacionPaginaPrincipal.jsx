@@ -15,6 +15,17 @@ import {
   PreviewTarjetasInicioLive,
 } from "../../../Components/Admin/ui/AdminCmsPreview";
 import { AdminSeccionCard } from "../../../Components/Admin/ui/AdminSeccionCard";
+import { SelectorIcono } from "../../../Components/Admin/ui/SelectorIcono";
+import { iconoDePreguntaFaq, iconoPorClave } from "../../../lib/iconosCatalogo";
+import { iconoOriginalSitio } from "../../../lib/iconosSitio";
+import { recargarIconosSitio } from "../../../hooks/useIconosSitio";
+import {
+  actualizarItemCatalogo,
+  crearItemCatalogo,
+  eliminarItemCatalogo,
+  listarCatalogo,
+  TIPOS_CATALOGO,
+} from "../../../services/catalogosService";
 import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
@@ -39,6 +50,7 @@ import {
 } from "../../../services/informacionService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { tienePermiso } from "../../../lib/permisos";
+import { esCorreoValido, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
 import { CampoLimitePalabras } from "../../../Components/Admin/ui/CampoLimitePalabras";
 import {
   MAX_PALABRAS_BOTON,
@@ -261,6 +273,7 @@ function CampoTexto({
         <input
           name={name}
           type={type === "url" ? "text" : type}
+          inputMode={type === "email" ? "email" : undefined}
           value={value}
           onChange={onChange}
           placeholder={tPlaceholder || undefined}
@@ -811,11 +824,66 @@ function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
   );
 }
 
-function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
+/** Íconos del sitio que se eligen dentro de un modal y se guardan junto con el formulario. */
+function useIconosSitioEditables(activo) {
+  const [guardados, setGuardados] = useState(() => new Map());
+  const [pendientes, setPendientes] = useState({});
+
+  useEffect(() => {
+    if (!activo) return undefined;
+    let vivo = true;
+    listarCatalogo(TIPOS_CATALOGO.iconoSitio, { forzar: true })
+      .then((items) => {
+        if (vivo) setGuardados(new Map(items.map((item) => [item.nombre, item])));
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, [activo]);
+
+  if (!activo) return null;
+
+  const valor = (lugar) => (lugar in pendientes ? pendientes[lugar] : guardados.get(lugar)?.icono || "");
+  const elegir = (lugar, clave) => setPendientes((actual) => ({ ...actual, [lugar]: clave }));
+  const guardar = async () => {
+    const tipo = TIPOS_CATALOGO.iconoSitio;
+    let cambio = false;
+    for (const [lugar, clave] of Object.entries(pendientes)) {
+      const actual = guardados.get(lugar);
+      if ((actual?.icono || "") === clave) continue;
+      if (actual && !clave) await eliminarItemCatalogo(tipo, actual.id);
+      else if (actual) await actualizarItemCatalogo(tipo, actual.id, { icono: clave });
+      else await crearItemCatalogo(tipo, { nombre: lugar, icono: clave });
+      cambio = true;
+    }
+    if (cambio) await recargarIconosSitio();
+  };
+  return { valor, elegir, guardar };
+}
+
+function CampoConIcono({ lugar, iconos, children }) {
+  if (!iconos) return children;
+  const valor = iconos.valor(lugar);
+  return (
+    <div className="flex min-w-0 items-end gap-2">
+      <SelectorIcono
+        valor={valor}
+        IconoActual={iconoPorClave(valor) || iconoOriginalSitio(lugar)}
+        onElegir={(clave) => iconos.elegir(lugar, clave)}
+        etiquetaAuto="Ícono original"
+      />
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}
+
+function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando, puedeEditarIconos = false }) {
   const [form, setForm] = useState(() => ({ ...footerInicial, ...footer }));
   const { idioma } = useIdioma();
   const tGuardando = useTraducir("Guardando...");
   const tGuardarCambios = useTraducir("Guardar cambios");
+  const iconos = useIconosSitioEditables(puedeEditarIconos);
 
   useEffect(() => {
     let cancelado = false;
@@ -837,6 +905,14 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
 
   const enviar = async (event) => {
     event.preventDefault();
+    if (iconos) {
+      try {
+        await iconos.guardar();
+      } catch (err) {
+        alert(t(err?.message || "No se pudieron guardar los íconos."));
+        return;
+      }
+    }
     const paraGuardar = await asegurarCamposEnEspanol(form, FOOTER_CAMPOS_TEXTO);
     onGuardar(paraGuardar);
   };
@@ -861,7 +937,13 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
 
         <AdminModalBody cms>
           <AdminEditorConPreview
-            preview={<PreviewFooterLive form={form} enlaces={enlaces} />}
+            preview={
+              <PreviewFooterLive
+                form={form}
+                enlaces={enlaces}
+                iconoDe={iconos ? (lugar) => iconoPorClave(iconos.valor(lugar)) || iconoOriginalSitio(lugar) : undefined}
+              />
+            }
             ayuda={"Informaci\u00f3n de contacto y pie de p\u00e1gina del sitio."}
           >
           <div className="grid gap-4 md:grid-cols-2">
@@ -893,53 +975,68 @@ function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando }) {
           />
 
           <div className="grid gap-4 md:grid-cols-2">
-            <CampoTexto
-              label={"Tel\u00e9fono"}
-              name="telefono"
-              value={form.telefono}
-              onChange={cambiarCampo}
-              placeholder="88888888"
-              soloNumeros
-              maxLength={8}
-              sinLimite
-            />
-            <CampoTexto
-              label="Correo"
-              name="correo"
-              type="email"
-              value={form.correo}
-              onChange={cambiarCampo}
-              placeholder="correo@ejemplo.com"
-            />
+            <CampoConIcono lugar="footer.telefono" iconos={iconos}>
+              <CampoTexto
+                label={"Tel\u00e9fono"}
+                name="telefono"
+                value={form.telefono}
+                onChange={cambiarCampo}
+                placeholder="88888888"
+                soloNumeros
+                maxLength={8}
+                sinLimite
+              />
+            </CampoConIcono>
+            <CampoConIcono lugar="footer.correo" iconos={iconos}>
+              <CampoTexto
+                label="Correo"
+                name="correo"
+                type="email"
+                value={form.correo}
+                onChange={cambiarCampo}
+                placeholder="correo@ejemplo.com"
+              />
+            </CampoConIcono>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <CampoTexto
-              label="Facebook URL"
-              name="facebookUrl"
-            sinLimite
-              value={form.facebookUrl}
-              onChange={cambiarCampo}
-              placeholder="https://facebook.com/..."
-            />
-            <CampoTexto
-              label="Instagram URL"
-              name="instagramUrl"
-            sinLimite
-              value={form.instagramUrl}
-              onChange={cambiarCampo}
-              placeholder="https://instagram.com/..."
-            />
+            <CampoConIcono lugar="redes.facebook" iconos={iconos}>
+              <CampoTexto
+                label="Facebook URL"
+                name="facebookUrl"
+                sinLimite
+                value={form.facebookUrl}
+                onChange={cambiarCampo}
+                placeholder="https://facebook.com/..."
+              />
+            </CampoConIcono>
+            <CampoConIcono lugar="redes.instagram" iconos={iconos}>
+              <CampoTexto
+                label="Instagram URL"
+                name="instagramUrl"
+                sinLimite
+                value={form.instagramUrl}
+                onChange={cambiarCampo}
+                placeholder="https://instagram.com/..."
+              />
+            </CampoConIcono>
           </div>
 
-          <CampoTexto
-            label="Google Maps URL"
-            name="mapsUrl"
-            sinLimite
-            value={form.mapsUrl}
-            onChange={cambiarCampo}
-            placeholder="https://maps.google.com/..."
-          />
+          <CampoConIcono lugar="footer.ubicacion" iconos={iconos}>
+            <CampoTexto
+              label="Google Maps URL"
+              name="mapsUrl"
+              sinLimite
+              value={form.mapsUrl}
+              onChange={cambiarCampo}
+              placeholder="https://maps.google.com/..."
+            />
+          </CampoConIcono>
+          {iconos ? (
+            <p className="text-[length:var(--text-body)] text-slate-500">
+              <ST>El botón redondo junto a cada campo cambia el ícono que se ve en el pie de página.</ST>
+            </p>
+          ) : null}
 
           <CampoTexto
             label="Texto de copyright"
@@ -1212,6 +1309,7 @@ function ModalFaqInicio({ items, seccion, onCerrar, onGuardar, guardando, puedeE
         id: `nuevo-${Date.now()}`,
         pregunta: "",
         respuesta: "",
+        icono: "",
         orden: siguienteOrden,
       },
     ]);
@@ -1289,7 +1387,16 @@ function ModalFaqInicio({ items, seccion, onCerrar, onGuardar, guardando, puedeE
                 <div className="space-y-4">
                   {itemsFiltrados.map((item) => (
                     <div key={item.id} className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                      <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-end justify-between gap-2">
+                        <div className="space-y-1">
+                          <span className="block text-[length:var(--text-body)] font-medium text-slate-600"><ST>Ícono</ST></span>
+                          <SelectorIcono
+                            valor={item.icono || ""}
+                            IconoActual={iconoDePreguntaFaq(item.icono, lista.indexOf(item))}
+                            etiquetaAuto="Automático según la posición"
+                            onElegir={(clave) => cambiarItem(item.id, "icono", clave)}
+                          />
+                        </div>
                         <label className="min-w-0 flex-1 space-y-1">
                           <span className="text-[length:var(--text-body)] font-medium text-slate-600"><ST>Pregunta</ST></span>
                           <input
@@ -1531,6 +1638,10 @@ const AdminInformacionPaginaPrincipal = () => {
   };
 
   const guardarFooter = async (form) => {
+    if (String(form.correo ?? "").trim() && !esCorreoValido(form.correo)) {
+      alert(t(MENSAJE_CORREO_INVALIDO));
+      return;
+    }
     try {
       setGuardando(true);
       const payload = {
@@ -1538,7 +1649,7 @@ const AdminInformacionPaginaPrincipal = () => {
         logoClaroUrl: form.logoClaroUrl ?? "",
         fraseMarca: form.fraseMarca ?? "",
         telefono: form.telefono ?? "",
-        correo: form.correo ?? "",
+        correo: String(form.correo ?? "").trim(),
         facebookUrl: form.facebookUrl ?? "",
         instagramUrl: form.instagramUrl ?? "",
         mapsUrl: form.mapsUrl ?? "",
@@ -1637,6 +1748,7 @@ const AdminInformacionPaginaPrincipal = () => {
       return (
         (previo.pregunta ?? "") !== (item.pregunta ?? "").trim()
         || (previo.respuesta ?? "") !== (item.respuesta ?? "").trim()
+        || (previo.icono ?? "") !== (item.icono ?? "")
         || Number(previo.orden ?? 0) !== Number(item.orden ?? 0)
       );
     });
@@ -1649,6 +1761,7 @@ const AdminInformacionPaginaPrincipal = () => {
           crearFaqInicio({
             pregunta: item.pregunta.trim(),
             respuesta: item.respuesta.trim(),
+            icono: item.icono || "",
             orden: Number(item.orden) || undefined,
           }),
         ),
@@ -1658,6 +1771,7 @@ const AdminInformacionPaginaPrincipal = () => {
           actualizarFaqInicio(item.id, {
             pregunta: item.pregunta.trim(),
             respuesta: item.respuesta.trim(),
+            icono: item.icono || "",
             orden: Number(item.orden) || 0,
           }),
         ),
@@ -1668,6 +1782,7 @@ const AdminInformacionPaginaPrincipal = () => {
           id: item?.id ?? item?.Id ?? null,
           pregunta: item?.pregunta ?? item?.Pregunta ?? "",
           respuesta: item?.respuesta ?? item?.Respuesta ?? "",
+          icono: item?.icono ?? item?.Icono ?? "",
           orden: Number(item?.orden ?? item?.Orden ?? 0) || 0,
         })),
       );
@@ -1954,6 +2069,7 @@ const AdminInformacionPaginaPrincipal = () => {
           onCerrar={() => setEditando(null)}
           onGuardar={guardarFooter}
           guardando={guardando}
+          puedeEditarIconos={tienePermiso(actorRoles, "administrar_roles_permisos")}
         />
       ) : null}
 

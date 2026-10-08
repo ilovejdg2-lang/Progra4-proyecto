@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ST } from "../../../Components/T/ST";
+import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
 import {
   asignarPuntosVendedor,
   cambiarEstadoAsignacionPunto,
@@ -108,7 +109,7 @@ export function AsignacionesVendedor({ usuarioId }) {
                 <button
                   type="button"
                   disabled={ocupado}
-                  className="w-full rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 sm:w-auto"
+                  className="h-[var(--control-height)] w-full rounded-full border border-slate-300 px-4 text-[length:var(--text-body)] font-semibold text-slate-700 sm:w-auto"
                   onClick={() =>
                     ejecutar(() =>
                       cambiarEstadoAsignacionPunto(usuarioId, item.ubicacionId, !item.asignacionActiva),
@@ -118,14 +119,13 @@ export function AsignacionesVendedor({ usuarioId }) {
                   {item.asignacionActiva ? <ST>Desactivar asignación</ST> : <ST>Reactivar asignación</ST>}
                 </button>
                 {item.asignacionActiva ? (
-                  <select
-                    className="w-full min-w-0 rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] sm:w-auto"
-                    defaultValue=""
+                  <div className="w-full min-w-0 sm:w-56">
+                  <SelectFiltro
+                    value=""
                     disabled={ocupado}
                     aria-label="Cambiar punto"
                     onChange={(event) => {
                       const hacia = Number(event.target.value);
-                      event.target.value = "";
                       if (!hacia) return;
                       ejecutar(() => cambiarPuntoAsignado(usuarioId, item.ubicacionId, hacia));
                     }}
@@ -134,7 +134,8 @@ export function AsignacionesVendedor({ usuarioId }) {
                     {disponibles.map((punto) => (
                       <option key={punto.id} value={punto.id}>{punto.name}</option>
                     ))}
-                  </select>
+                  </SelectFiltro>
+                  </div>
                 ) : null}
               </div>
             </li>

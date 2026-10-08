@@ -1,4 +1,12 @@
 import { useMemo, useState } from "react";
+import { NumericInput } from "../../../Components/NumericInput/NumericInput";
+import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
+import { ST } from "../../../Components/T/ST";
+
+const claseEtiqueta = "block text-[length:var(--text-body)] font-semibold text-slate-800 dark:text-slate-100";
+const claseCampo =
+  "h-[var(--control-height)] w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
+const claseAyuda = "text-[length:var(--text-body)] text-slate-500";
 
 const MOTIVOS_CANONICOS = ["Venta", "Donación", "Traslado", "Ajuste por merma"];
 const MOTIVOS_CON_DESTINATARIO = new Set(["Donación", "Traslado"]);
@@ -98,14 +106,14 @@ export function SalidaInventarioForm({
     <form noValidate onSubmit={handleSubmit} className="space-y-5">
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2">
-          <label htmlFor="salida-producto" className="block text-sm font-semibold text-slate-800 dark:text-slate-100">Producto</label>
-          <select
+          <label htmlFor="salida-producto" className={claseEtiqueta}><ST>Producto</ST></label>
+          <SelectFiltro
             id="salida-producto"
             name="productoId"
             value={productoId}
             onChange={(event) => setProductoId(event.target.value)}
             required
-            className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            traducirOpciones
           >
             <option value="">Seleccionar…</option>
             {productosElegibles.map((producto) => (
@@ -113,15 +121,15 @@ export function SalidaInventarioForm({
                 {producto.nombre}
               </option>
             ))}
-          </select>
+          </SelectFiltro>
           {productosElegibles.length === 0 ? (
-            <p className="text-xs text-slate-500">No hay productos habilitados con stock en Bodega Central.</p>
+            <p className={claseAyuda}><ST>No hay productos habilitados con stock en Bodega Central.</ST></p>
           ) : null}
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="salida-motivo" className="block text-sm font-semibold text-slate-800 dark:text-slate-100">Motivo de salida</label>
-          <select
+          <label htmlFor="salida-motivo" className={claseEtiqueta}><ST>Motivo de salida</ST></label>
+          <SelectFiltro
             id="salida-motivo"
             name="motivoSalidaId"
             value={motivoId}
@@ -130,38 +138,34 @@ export function SalidaInventarioForm({
               setDestinatario("");
             }}
             required
-            className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            traducirOpciones
           >
             <option value="">Seleccionar…</option>
             {motivosDisponibles.map((motivo) => (
               <option key={motivo.id} value={String(motivo.id)}>{motivo.nombre}</option>
             ))}
-          </select>
+          </SelectFiltro>
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="salida-cantidad" className="block text-sm font-semibold text-slate-800 dark:text-slate-100">Cantidad</label>
-          <input
+          <label htmlFor="salida-cantidad" className={claseEtiqueta}><ST>Cantidad</ST></label>
+          <NumericInput
             id="salida-cantidad"
             name="cantidad"
-            type="number"
-            min="1"
-            max={productoSeleccionado ? stockCentralDe(productoSeleccionado) : undefined}
-            step="1"
-            inputMode="numeric"
+            maxLength={9}
             value={cantidad}
             onChange={(event) => setCantidad(event.target.value)}
             required
-            className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className={claseCampo}
           />
           {productoSeleccionado ? (
-            <p className="text-xs text-slate-500">Stock disponible: {stockCentralDe(productoSeleccionado)}</p>
+            <p className={claseAyuda}><ST>Stock disponible</ST>: {stockCentralDe(productoSeleccionado)}</p>
           ) : null}
         </div>
 
         {requiereDestinatario ? (
           <div className="space-y-2">
-            <label htmlFor="salida-destinatario" className="block text-sm font-semibold text-slate-800 dark:text-slate-100">Destinatario</label>
+            <label htmlFor="salida-destinatario" className={claseEtiqueta}><ST>Destinatario</ST></label>
             <input
               id="salida-destinatario"
               name="destinatario"
@@ -170,21 +174,21 @@ export function SalidaInventarioForm({
               onChange={(event) => setDestinatario(event.target.value)}
               required
               autoComplete="organization"
-              className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              className={claseCampo}
             />
           </div>
         ) : null}
       </div>
 
-      {error ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950/40 dark:text-red-200" role="alert">{error}</p> : null}
+      {error ? <p className="rounded-2xl bg-red-50 px-4 py-3 text-[length:var(--text-body)] text-red-800 dark:bg-red-950/40 dark:text-red-200" role="alert"><ST>{error}</ST></p> : null}
 
       <div className="flex flex-col-reverse gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-end dark:border-slate-700">
         <button
           type="submit"
           disabled={isSubmitting || productosElegibles.length === 0 || motivosDisponibles.length === 0}
-          className="inline-flex min-h-11 items-center justify-center rounded-full bg-slate-950 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+          className="inline-flex h-[var(--control-height)] items-center justify-center rounded-full bg-slate-950 px-5 text-[length:var(--text-body)] font-semibold text-white transition hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
         >
-          {isSubmitting ? "Registrando…" : "Registrar salida"}
+          <ST>{isSubmitting ? "Registrando…" : "Registrar salida"}</ST>
         </button>
       </div>
     </form>

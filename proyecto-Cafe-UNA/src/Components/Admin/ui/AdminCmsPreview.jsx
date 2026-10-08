@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ExternalLink, Mail, MapPin, Phone, ShoppingCart, User } from "lucide-react";
-import { FacebookIcon, InstagramIcon } from "../../Footer/SocialIcons";
+import { createElement, useEffect, useMemo, useState } from "react";
+import { ArrowRight, ExternalLink, ShoppingCart, User } from "lucide-react";
 import { adminBtnVoluntariadoCancel, adminBtnVoluntariadoPrimary } from "./AdminModal";
 
 import Hero from "../../Hero/Hero";
@@ -8,6 +7,7 @@ import Gallery from "../../Gallery/Gallery";
 import SiteNavLink from "../../SiteNavLink/SiteNavLink";
 import { AboutNarrativeBlock } from "../../AboutNarrativeBlock/AboutNarrativeBlock";
 import { HomeActionLink } from "../../../lib/homeActionLink";
+import { iconoDePreguntaFaq } from "../../../lib/iconosCatalogo";
 import { normalizeImageUrl } from "../../../lib/imageUtils";
 import { productoPuedeDestacarse } from "../../../lib/productoDisponibilidad";
 import { toGoogleMapsEmbedUrl } from "../../../lib/googleMaps";
@@ -24,6 +24,7 @@ import "../../Navbar/Navbar.css";
 import "./AdminCmsPreview.css";
 
 import { useTraducir } from "../../../hooks/useTraducir";
+import { useIconosSitio } from "../../../hooks/useIconosSitio";
 import { buildIniciativasCards } from "../../../lib/iniciativasCards";
 
 function useProductosDestacados(enabled) {
@@ -504,7 +505,11 @@ function PreviewNavbarLive({ form, enlaces = [] }) {
   );
 }
 
-function PreviewFooterLive({ form, enlaces = [] }) {
+function PreviewFooterLive({ form, enlaces = [], iconoDe }) {
+  const iconoGuardado = useIconosSitio();
+  const icono = iconoDe || iconoGuardado;
+  const iconoContacto = (lugar) => createElement(icono(lugar), { className: "footer__contact-icon", "aria-hidden": true });
+  const iconoRed = (lugar) => createElement(icono(lugar), { className: "footer__social-icon", "aria-hidden": true });
   const footerLogoSrc = normalizeImageUrl(form.logoClaroUrl || form.logoUrl, { width: 480 });
   const explorar = enlaces.filter(enlaceTieneContenido);
   const hasContactos = Boolean(form.telefono || form.correo || form.mapsUrl);
@@ -537,19 +542,19 @@ function PreviewFooterLive({ form, enlaces = [] }) {
               <h2>Contactos</h2>
               {form.telefono ? (
                 <a href={`tel:${form.telefono}`} className="footer__contact-item">
-                  <Phone className="footer__contact-icon" aria-hidden="true" />
+                  {iconoContacto("footer.telefono")}
                   <span>{form.telefono}</span>
                 </a>
               ) : null}
               {form.correo ? (
                 <a href={`mailto:${form.correo}`} className="footer__contact-item">
-                  <Mail className="footer__contact-icon" aria-hidden="true" />
+                  {iconoContacto("footer.correo")}
                   <span>{form.correo}</span>
                 </a>
               ) : null}
               {form.mapsUrl ? (
                 <a href={form.mapsUrl} className="footer__contact-item">
-                  <MapPin className="footer__contact-icon" aria-hidden="true" />
+                  {iconoContacto("footer.ubicacion")}
                   <span>{"Ubicaci\u00f3n"}</span>
                 </a>
               ) : null}
@@ -562,12 +567,12 @@ function PreviewFooterLive({ form, enlaces = [] }) {
               <div className="footer__social-links">
                 {form.instagramUrl ? (
                   <a href={form.instagramUrl} aria-label="Instagram">
-                    <InstagramIcon className="footer__social-icon" />
+                    {iconoRed("redes.instagram")}
                   </a>
                 ) : null}
                 {form.facebookUrl ? (
                   <a href={form.facebookUrl} aria-label="Facebook">
-                    <FacebookIcon className="footer__social-icon" />
+                    {iconoRed("redes.facebook")}
                   </a>
                 ) : null}
               </div>
@@ -649,16 +654,24 @@ function PreviewFaqInicioLive({ items = [], seccion = {} }) {
               ) : (
                 (Array.isArray(items) ? items : [])
                   .filter((item) => item.pregunta?.trim())
-                  .map((item) => (
+                  .map((item, index) => {
+                    const Icono = iconoDePreguntaFaq(item.icono, index);
+                    return (
                     <details key={item.id ?? item.pregunta} className="home-faq__item" open>
-                      <summary>{item.pregunta}</summary>
+                      <summary>
+                        <span className="home-faq__pregunta">
+                          <Icono className="home-faq__icono" size={20} strokeWidth={1.75} aria-hidden="true" />
+                          <span>{item.pregunta}</span>
+                        </span>
+                      </summary>
                       <div className="home-faq__cuerpo">
                         <div className="home-faq__cuerpo-inner">
                           <p>{item.respuesta || "Sin respuesta"}</p>
                         </div>
                       </div>
                     </details>
-                  ))
+                    );
+                  })
               )}
             </div>
           </section>

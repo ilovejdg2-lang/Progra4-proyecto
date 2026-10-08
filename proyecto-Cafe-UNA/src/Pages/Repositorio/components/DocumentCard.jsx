@@ -15,6 +15,7 @@ import {
   User,
 } from "lucide-react";
 import { ST } from "../../../Components/T/ST";
+import { useTraducir } from "../../../hooks/useTraducir";
 
 function resolverIconoArchivo(nombre = "", mimeType = "") {
   const ext = (nombre.split(".").pop() || "").toLowerCase();
@@ -79,6 +80,7 @@ export function DocumentCard({
 }) {
   const [copiado, setCopiado] = useState(false);
   const [descargando, setDescargando] = useState(false);
+  const descripcion = useTraducir(documento.descripcion || "");
 
   const { icon: ArchivoIcon, colorClass, label: tipoLabel } = resolverIconoArchivo(
     documento.nombreOriginal || documento.NombreOriginal,
@@ -123,14 +125,14 @@ export function DocumentCard({
       <div className="biblio-card__thumb-area">
         <div className={`biblio-card__thumb-placeholder ${colorClass}`}>
           <ArchivoIcon size={esLista ? 28 : 36} className="biblio-card__type-icon" />
-          <span className="biblio-card__type-badge">{tipoLabel}</span>
+          <span className="biblio-card__type-badge"><ST>{tipoLabel}</ST></span>
         </div>
 
         {/* Badges superiores flotantes */}
         <div className="biblio-card__badges">
           {documento.categoria && (
             <span className="biblio-badge biblio-badge--cat">
-              {documento.categoria}
+              <ST>{documento.categoria}</ST>
             </span>
           )}
           {anio && (
@@ -138,7 +140,7 @@ export function DocumentCard({
           )}
           {esAdmin && documento.esPrivado && (
             <span className="biblio-badge biblio-badge--private" title="Solo visible para administradores">
-              <Lock size={10} /> Privado
+              <Lock size={10} /> <ST>Privado</ST>
             </span>
           )}
         </div>
@@ -172,7 +174,7 @@ export function DocumentCard({
             <>
               <span className="biblio-card__meta-sep">•</span>
               <span className="biblio-card__meta-item">
-                <span>{documento.paginas} págs.</span>
+                <span>{documento.paginas} <ST>págs.</ST></span>
               </span>
             </>
           ) : null}
@@ -194,10 +196,10 @@ export function DocumentCard({
         )}
 
         {/* Resumen / Descripción */}
-        {documento.descripcion && (
+        {descripcion && (
           <p className="biblio-card__desc">
             <HighlightText
-              text={documento.descripcion}
+              text={descripcion}
               highlight={terminoBusqueda}
             />
           </p>

@@ -5,6 +5,7 @@ import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { CalendarClock } from "lucide-react";
 import { ST } from "../../../Components/T/ST";
+import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { useIdioma } from "../../../lib/useIdioma";
 import { t } from "../../../lib/t";
@@ -13,6 +14,7 @@ import {
   guardarExcepcionHorario,
   listarDisponibilidad,
 } from "../../../services/ajustesService";
+import { obtenerDisponibilidadPuntosVenta } from "../../../services/productosService";
 import { sanitizeUserFacingError } from "../../../lib/formLimits";
 
 const inputClass =
@@ -78,6 +80,8 @@ export function HorariosCalendario({ onMessage, onError }) {
       "Lunes a viernes de 8:00 a. m. a 5:00 p. m. Sábados y domingos no están disponibles.",
   });
   const [excepciones, setExcepciones] = useState([]);
+  const [puntos, setPuntos] = useState([]);
+  const [ubicacionId, setUbicacionId] = useState(null);
   const [fechaSel, setFechaSel] = useState(null);
   const [modo, setModo] = useState("normal");
   const [horaInicio, setHoraInicio] = useState("08:00");
@@ -92,11 +96,14 @@ export function HorariosCalendario({ onMessage, onError }) {
   const tElegirDia = useTraducir("Elegí un día hábil en el calendario");
   const tCerrado = useTraducir("Cerrado / no disponible");
   const tMensajeReglas = useTraducir(reglas.mensaje || "");
+  const tPuntoVenta = useTraducir("Punto de venta");
+  const tTodosPuntos = useTraducir("Todos los puntos de venta (horario general)");
 
-  /** Una entrada por fecha (si hay varias por tipo, prioriza cerrado > especial). */
-  const excepcionPorFecha = useMemo(() => {
+  /** Excepciones generales por fecha (si hay varias, prioriza cerrado > especial). */
+  const generalPorFecha = useMemo(() => {
     const map = new Map();
     for (const e of excepciones) {
+      if (e.ubicacionId) continue;
       const prev = map.get(e.fecha);
       if (!prev) {
         map.set(e.fecha, e);
@@ -107,6 +114,16 @@ export function HorariosCalendario({ onMessage, onError }) {
     }
     return map;
   }, [excepciones]);
+
+  /** Lo que aplica en el punto elegido: su excepción manda sobre la general. */
+  const excepcionPorFecha = useMemo(() => {
+    const map = new Map(generalPorFecha);
+    if (!ubicacionId) return map;
+    for (const e of excepciones) {
+      if (e.ubicacionId === ubicacionId) map.set(e.fecha, e);
+    }
+    return map;
+  }, [generalPorFecha, excepciones, ubicacionId]);
 
   const fechasCerradas = useMemo(
     () =>
@@ -130,10 +147,10 @@ export function HorariosCalendario({ onMessage, onError }) {
     [excepcionPorFecha, reglas],
   );
 
-  const cargar = async () => {
+  const cargar = async (punto = ubicacionId) => {
     setCargando(true);
     try {
-      const data = await listarDisponibilidad(TIPO_HORARIO);
+      const data = await listarDisponibilidad(TIPO_HORARIO, punto);
       setReglas(data.reglas || reglas);
       setExcepciones(data.excepciones || []);
     } catch (err) {
@@ -144,8 +161,23 @@ export function HorariosCalendario({ onMessage, onError }) {
   };
 
   useEffect(() => {
-    void cargar();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga de datos al cambiar el punto de venta
+    void cargar(ubicacionId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ubicacionId]);
+
+  useEffect(() => {
+    let cancelado = false;
+    obtenerDisponibilidadPuntosVenta()
+      .then(({ puntosVenta }) => {
+        if (!cancelado) setPuntos(puntosVenta.filter((p) => p.id));
+      })
+      .catch(() => {
+        if (!cancelado) setPuntos([]);
+      });
+    return () => {
+      cancelado = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -205,13 +237,28 @@ export function HorariosCalendario({ onMessage, onError }) {
     onError?.("");
     setErrorHoras("");
     try {
-      if (modo === "normal") {
-        await eliminarExcepcionPorFecha(TIPO_HORARIO, fecha);
+      const general = generalPorFecha.get(fecha);
+      const generalCambiaDia =
+        general && !(general.disponible && esMismoHorarioBase(general.horaInicio, general.horaFin, reglas));
+      if (modo === "normal" && ubicacionId && generalCambiaDia) {
+        await guardarExcepcionHorario({
+          tipo: TIPO_HORARIO,
+          fecha,
+          ubicacionId,
+          disponible: true,
+          horaInicio: normalizarHoraUi(reglas.horaApertura || "08:00"),
+          horaFin: normalizarHoraUi(reglas.horaCierre || "17:00"),
+          nota: "",
+        });
+        onMessage?.(t("Día restaurado al horario normal de compras (8:00 a. m. – 5:00 p. m.)."));
+      } else if (modo === "normal") {
+        await eliminarExcepcionPorFecha(TIPO_HORARIO, fecha, ubicacionId);
         onMessage?.(t("Día restaurado al horario normal de compras (8:00 a. m. – 5:00 p. m.)."));
       } else if (modo === "cerrado") {
         await guardarExcepcionHorario({
           tipo: TIPO_HORARIO,
           fecha,
+          ubicacionId,
           disponible: false,
           horaInicio: "",
           horaFin: "",
@@ -247,6 +294,7 @@ export function HorariosCalendario({ onMessage, onError }) {
         await guardarExcepcionHorario({
           tipo: TIPO_HORARIO,
           fecha,
+          ubicacionId,
           disponible: true,
           horaInicio: desde,
           horaFin: hasta,
@@ -309,6 +357,30 @@ export function HorariosCalendario({ onMessage, onError }) {
       </div>
 
       <div className="border-b border-slate-100 px-4 pt-4 sm:px-6">
+        <div className="mb-4 grid gap-1 text-[length:var(--text-body)]">
+          <span className="font-semibold text-slate-700">{tPuntoVenta}</span>
+          <div className="w-full sm:max-w-md">
+            <SelectFiltro
+              value={ubicacionId ? String(ubicacionId) : ""}
+              onChange={(e) => {
+                setFechaSel(null);
+                setUbicacionId(Number(e.target.value) || null);
+              }}
+              aria-label={tPuntoVenta}
+              options={[
+                { value: "", label: tTodosPuntos },
+                ...puntos.map((p) => ({ value: String(p.id), label: p.name })),
+              ]}
+            />
+          </div>
+          <p className="text-slate-500">
+            {ubicacionId ? (
+              <ST>Los cambios aplican solo a este punto de venta. Los días sin cambios siguen el horario general.</ST>
+            ) : (
+              <ST>El horario general aplica a todos los puntos de venta, salvo los días que cambiés en un punto.</ST>
+            )}
+          </p>
+        </div>
         <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[length:var(--text-body)] text-slate-800">
           <p className="font-semibold text-slate-900">
             <ST>Horario base</ST>

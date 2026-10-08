@@ -19,7 +19,9 @@ import {
 } from "../../services/documentosService";
 import { getActiveSessionUser } from "../../services/sessionService";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../lib/correo";
 import { ST } from "../../Components/T/ST";
+import { useTraducir } from "../../hooks/useTraducir";
 import { SelectFiltro } from "../../Components/ui/SelectFiltro";
 import "../Admin/Documentacion/Documentos.css";
 import "./Repositorio.css";
@@ -36,6 +38,13 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
   const user = getActiveSessionUser();
   const esDocumentoEspecifico = Boolean(documento && (documento.id || documento.titulo));
   const fileInputRef = useRef(null);
+
+  const tPhTitulo = useTraducir("Ej. Estudio de Microcuencas y Rendimiento Cafetalero 2026");
+  const tPhAutor = useTraducir("Ej. Universidad Nacional / Investigador");
+  const tPhDescripcion = useTraducir("Resuma brevemente los contenidos o motivos para incluir este material en el repositorio...");
+  const tPhPalabras = useTraducir("investigación, caficultura, calidad, suelo");
+  const tPhNombre = useTraducir("Ej. Carlos Rodríguez");
+  const tPhInstitucion = useTraducir("Ej. Cooperativa de Caficultores / Estudiante UNA");
 
   // Lista de categorías obtenidas del backend
   const [categorias, setCategorias] = useState([]);
@@ -160,8 +169,8 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
       setError("Por favor ingrese su nombre completo.");
       return;
     }
-    if (!correo.trim() || !correo.includes("@")) {
-      setError("Por favor ingrese un correo electrónico válido.");
+    if (!esCorreoValido(correo)) {
+      setError(MENSAJE_CORREO_INVALIDO);
       return;
     }
     if (!descripcion.trim() && !archivo) {
@@ -335,7 +344,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                   required
                   disabled={esDocumentoEspecifico}
                   className="admin-form-input"
-                  placeholder="Ej. Estudio de Microcuencas y Rendimiento Cafetalero 2026"
+                  placeholder={tPhTitulo}
                   value={titulo}
                   onChange={(e) => setTitulo(e.target.value)}
                 />
@@ -354,7 +363,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                     id="sol-doc-autor"
                     type="text"
                     className="admin-form-input"
-                    placeholder="Ej. Universidad Nacional / Investigador"
+                    placeholder={tPhAutor}
                     value={autor}
                     onChange={(e) => setAutor(e.target.value)}
                   />
@@ -389,6 +398,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                     <ST>Seleccione la categoría raíz en el repositorio.</ST>
                   </p>
                   <SelectFiltro
+                    traducirOpciones
                     id="sol-doc-cat"
                     required
                     className="admin-form-select"
@@ -421,6 +431,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                     <ST>Subclasificación opcional vinculada a la categoría principal.</ST>
                   </p>
                   <SelectFiltro
+                    traducirOpciones
                     id="sol-doc-subcat"
                     className="admin-form-select"
                     value={subcategoria}
@@ -453,7 +464,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                   id="sol-doc-desc"
                   rows={3}
                   className="admin-form-textarea"
-                  placeholder="Resuma brevemente los contenidos o motivos para incluir este material en el repositorio..."
+                  placeholder={tPhDescripcion}
                   value={descripcion}
                   onChange={(e) => setDescripcion(e.target.value)}
                 />
@@ -471,7 +482,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                   id="sol-doc-tags"
                   type="text"
                   className="admin-form-input"
-                  placeholder="investigación, caficultura, calidad, suelo"
+                  placeholder={tPhPalabras}
                   value={palabrasClave}
                   onChange={(e) => setPalabrasClave(e.target.value)}
                 />
@@ -597,7 +608,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                       type="text"
                       required
                       className="admin-form-input"
-                      placeholder="Ej. Carlos Rodríguez"
+                      placeholder={tPhNombre}
                       value={nombre}
                       onChange={(e) => setNombre(e.target.value)}
                     />
@@ -614,7 +625,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                       className="admin-form-input"
                       placeholder="carlos@ejemplo.com"
                       value={correo}
-                      onChange={(e) => setCorreo(e.target.value)}
+                      onChange={(e) => setCorreo(limpiarCorreo(e.target.value))}
                     />
                   </div>
                 </div>
@@ -627,7 +638,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                     id="sol-remitente-inst"
                     type="text"
                     className="admin-form-input"
-                    placeholder="Ej. Cooperativa de Caficultores / Estudiante UNA"
+                    placeholder={tPhInstitucion}
                     value={institucion}
                     onChange={(e) => setInstitucion(e.target.value)}
                   />

@@ -118,7 +118,7 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
                 {documento.esPrivado && (
                   <span className="badge-priv-cell badge-priv-cell--priv">
                     <Lock size={12} />
-                    <span>Privado</span>
+                    <span><ST>Privado</ST></span>
                   </span>
                 )}
                 <span className="text-xs text-slate-400">

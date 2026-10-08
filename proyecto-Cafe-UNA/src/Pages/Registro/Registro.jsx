@@ -4,6 +4,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { ST } from '../../Components/T/ST';
 import { useTraducir } from '../../hooks/useTraducir';
 import { sanitizeUserFacingError, MAX_PASSWORD } from '../../lib/formLimits';
+import { esCorreoValido, MENSAJE_CORREO_INVALIDO } from '../../lib/correo';
 import { queueFocusFormError } from '../../lib/formFocus';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { obtenerOpcionesPaises } from '../../lib/paises';
@@ -27,7 +28,6 @@ import { UiSelect } from '../../Components/ui/Select';
 import '../Login/Login.css';
 import './Registro.css';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TELEFONO_RE = /^(\+?\d{1,3}[\s-]?)?(\(?\d{2,4}\)?[\s-]?)?\d{3,4}[\s-]?\d{3,4}$/;
 const NOMBRE_RE = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/;
 const CEDULA_JURIDICA_RE = /^\d{1}-\d{3}-\d{6}$/;
@@ -79,13 +79,6 @@ function soloLetras(valor, max) {
 
 function soloDigitos(valor, max) {
   return String(valor ?? '').replace(/\D/g, '').slice(0, max);
-}
-
-function soloTelefono(valor) {
-  const texto = String(valor ?? '');
-  const tieneMas = texto.trimStart().startsWith('+');
-  const digitos = texto.replace(/\D/g, '').slice(0, LIMITE.telefono - (tieneMas ? 1 : 0));
-  return tieneMas ? `+${digitos}` : digitos;
 }
 
 function formatearCedulaJuridica(valor) {
@@ -437,7 +430,7 @@ const Registro = () => {
 
     if (!upgradeMode) {
       if (!form.correo.trim()) next.correo = 'El correo es obligatorio.';
-      else if (!EMAIL_RE.test(form.correo.trim())) next.correo = 'El correo no tiene un formato válido.';
+      else if (!esCorreoValido(form.correo)) next.correo = MENSAJE_CORREO_INVALIDO;
       next.password = validarPasswordCliente(form.password);
       if (!form.confirmPassword) next.confirmPassword = 'Confirmá la contraseña.';
       else if (form.password !== form.confirmPassword) {
@@ -624,10 +617,10 @@ const Registro = () => {
   const campoTelefono = (key, label, extra = {}) => field(key, label, {
     ...extra,
     input: {
-      inputMode: 'tel',
+      inputMode: 'numeric',
       autoComplete: 'tel',
       maxLength: LIMITE.telefono,
-      onChange: (ev) => setField(key, soloTelefono(ev.target.value)),
+      onChange: (ev) => setField(key, soloDigitos(ev.target.value, LIMITE.telefono)),
       ...(extra.input || {}),
     },
   });
@@ -827,6 +820,7 @@ const Registro = () => {
                 {field('correo', tCorreo, {
                   input: {
                     type: 'email',
+                    inputMode: 'email',
                     autoComplete: 'email',
                     maxLength: LIMITE.correo,
                     onChange: (ev) => setField('correo', soloCorreo(ev.target.value)),

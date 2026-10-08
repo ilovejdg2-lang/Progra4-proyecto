@@ -43,6 +43,7 @@ import { getActiveSessionUser } from "../../../services/sessionService";
 import { tienePermiso } from "../../../lib/permisos";
 import { ContadorPalabras } from "../../../Components/Admin/ui/CampoLimitePalabras";
 import { NumericInput } from "../../../Components/NumericInput/NumericInput";
+import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
 import {
   conLimitePalabras,
   limitarPalabras,
@@ -572,12 +573,18 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
       name === "lugar"
     ) {
       next = limitarPalabras(value, MAX_PALABRAS_TITULO);
+    } else if (name === "email") {
+      next = limpiarCorreo(value);
     }
     setForm((prev) => ({ ...prev, [name]: next }));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (!esCorreoValido(form.email)) {
+      alert(t(MENSAJE_CORREO_INVALIDO));
+      return;
+    }
     setGuardando(true);
     try {
       const textoEs = await asegurarCamposEnEspanol(form, CAMPOS_TEXTO_VOL);
@@ -696,6 +703,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
                 ) : (
                   <input
                     type={campo.type || "text"}
+                    inputMode={campo.type === "email" ? "email" : undefined}
                     name={campo.name}
                     value={form[campo.name]}
                     onChange={handleChange}
