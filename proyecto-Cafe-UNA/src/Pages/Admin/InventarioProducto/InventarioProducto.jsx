@@ -5,6 +5,7 @@ import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { CategoriaNueva, CategoriaOpcionBorrar } from "../../../Components/Admin/ui/CategoriaCampo";
+import { ModalCatalogo } from "../../../Components/Admin/ui/CatalogoPaneles";
 import { ProductActions } from "./components/ProductActions";
 import { CentralStockEditor } from "./components/CentralStockEditor";
 import { ProductCatalogFormDrawer } from "./components/ProductCatalogFormDrawer";
@@ -57,6 +58,7 @@ const AdminInventarioProducto = () => {
   const puedeInactivar = esSuperAdmin && tienePermiso(actorRoles, "inactivar_productos");
   const puedeActualizarStock = tienePermiso(actorRoles, "actualizar_stock_productos");
   const [modalCrear, setModalCrear] = useState(false);
+  const [modalCategorias, setModalCategorias] = useState(false);
   const [productoEditar, setProductoEditar] = useState(null);
   const [productoStockEditar, setProductoStockEditar] = useState(null);
   const [guardando, setGuardando] = useState(false);
@@ -324,6 +326,18 @@ const AdminInventarioProducto = () => {
         isSaving={guardando}
       />
 
+      <ModalCatalogo
+        open={modalCategorias}
+        onClose={() => {
+          setModalCategorias(false);
+          recargarCategorias();
+          catalogState.retry({ silent: true });
+        }}
+        tipo="categorias"
+        titulo="Categorías de productos"
+        ayuda="Renombrá categorías y subcategorías y elegí el ícono que aparece en la tienda. Al renombrar, los productos que la usan se actualizan solos."
+      />
+
       <section className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
         {cargando ? (
           <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 px-4 py-14 text-center sm:px-6">
@@ -365,15 +379,26 @@ const AdminInventarioProducto = () => {
             </p>
           </div>
 
-          {puedeCrear ? (
-          <button
-            type="button"
-            onClick={() => setModalCrear(true)}
-            className="w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2 text-sm font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700 sm:w-auto"
-          >
-            <ST>+ Nuevo producto</ST>
-          </button>
-          ) : null}
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            {puedeEditar ? (
+            <button
+              type="button"
+              onClick={() => setModalCategorias(true)}
+              className="w-full rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
+            >
+              <ST>Categorías</ST>
+            </button>
+            ) : null}
+            {puedeCrear ? (
+            <button
+              type="button"
+              onClick={() => setModalCrear(true)}
+              className="w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2 text-sm font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700 sm:w-auto"
+            >
+              <ST>+ Nuevo producto</ST>
+            </button>
+            ) : null}
+          </div>
         </div>
 
         {!cargando && !error ? (

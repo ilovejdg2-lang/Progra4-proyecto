@@ -60,11 +60,13 @@ const AdminHistorialVentasPunto = lazy(() => import("./Pages/Admin/PuntosVenta/H
 const AdminHistorialMovimientos = lazy(() => import("./Pages/Admin/HistorialMovimientos/HistorialMovimientos"));
 const AdminAuditoria = lazy(() => import("./Pages/Admin/Auditoria/Auditoria"));
 const AdminAjustes = lazy(() => import("./Pages/Admin/Ajustes/Ajustes"));
+const AdminManual = lazy(() => import("./Pages/Admin/Manual/ManualAdmin"));
 const Checkout = lazy(() => import("./Pages/Checkout/Checkout"));
 const Perfil = lazy(() => import("./Pages/Perfil/Perfil"));
 const HistorialComprasCliente = lazy(() => import("./Pages/HistorialCompras/HistorialComprasCliente"));
 const AdminMisCompras = lazy(() => import("./Pages/Admin/MisCompras/AdminMisCompras"));
 const HistorialSolicitudesCliente = lazy(() => import("./Pages/HistorialSolicitudes/HistorialSolicitudesCliente"));
+const ManualCliente = lazy(() => import("./Pages/ManualCliente/ManualCliente"));
 const AdminMisSolicitudes = lazy(() => import("./Pages/Admin/MisSolicitudes/AdminMisSolicitudes"));
 const AdminPerfil = lazy(() => import("./Pages/Admin/Perfil/AdminPerfil"));
 const Repositorio = lazy(() => import("./Pages/Repositorio/Repositorio"));
@@ -417,6 +419,16 @@ const adminAjustesIdiomaRoute = createRoute({
     path: "/admin/ajustes/idioma",
     component: AdminAjustes,
 })
+const adminAjustesCatalogosRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/ajustes/catalogos",
+    component: AdminAjustes,
+})
+const adminManualRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/ajustes/manual",
+    component: AdminManual,
+})
 const productsRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/productos",
@@ -502,6 +514,11 @@ const historialSolicitudesClienteRoute = createRoute({
     path: "/perfil/solicitudes",
     component: HistorialSolicitudesCliente,
 })
+const manualClienteRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/perfil/manual",
+    component: ManualCliente,
+})
 const adminMisSolicitudesRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/mis-solicitudes",
@@ -584,6 +601,8 @@ const routeTree= rootRoute.addChildren([
     adminAjustesHorariosRoute,
     adminAjustesPermisosRoute,
     adminAjustesIdiomaRoute,
+    adminAjustesCatalogosRoute,
+    adminManualRoute,
     productsRoute,
     productDetailRoute,
     checkoutRoute,
@@ -597,6 +616,7 @@ const routeTree= rootRoute.addChildren([
     historialComprasClienteRoute,
     adminMisComprasRoute,
     historialSolicitudesClienteRoute,
+    manualClienteRoute,
     adminMisSolicitudesRoute,
     adminPerfilRoute,
     repositorioRoute,

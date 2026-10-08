@@ -26,7 +26,10 @@ import {
 import { UiSelect } from "../../../Components/ui/Select";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
+import { useCatalogo } from "../../../hooks/useCatalogo";
+import { TIPOS_CATALOGO } from "../../../services/catalogosService";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
+import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
 import { ST } from "../../../Components/T/ST";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
@@ -50,12 +53,12 @@ function formatearColones(monto) {
   return `₡${n.toLocaleString("es-CR")}`;
 }
 
-const METODOS_PAGO = [
-  { value: "Efectivo", label: "Efectivo" },
-  { value: "Tarjeta", label: "Tarjeta de débito / crédito" },
-  { value: "SINPE Móvil", label: "SINPE Móvil" },
-  { value: "Transferencia", label: "Transferencia bancaria" },
-];
+const METODOS_PAGO_RESPALDO = ["Efectivo", "Tarjeta", "SINPE Móvil", "Transferencia"];
+
+const ETIQUETAS_METODO_PAGO = {
+  Tarjeta: "Tarjeta de débito / crédito",
+  Transferencia: "Transferencia bancaria",
+};
 
 export default function AdminVentasPresenciales() {
   const user = getActiveSessionUser();
@@ -80,7 +83,15 @@ export default function AdminVentasPresenciales() {
 
   // Carrito de compra
   const [carrito, setCarrito] = useState([]);
-  const [metodoPago, setMetodoPago] = useState("Efectivo");
+  const nombresMetodosPago = useCatalogo(TIPOS_CATALOGO.metodoPago, METODOS_PAGO_RESPALDO);
+  const opcionesMetodoPago = nombresMetodosPago.map((nombre) => ({
+    value: nombre,
+    label: ETIQUETAS_METODO_PAGO[nombre] || nombre,
+  }));
+  const [metodoPagoElegido, setMetodoPago] = useState("Efectivo");
+  const metodoPago = nombresMetodosPago.includes(metodoPagoElegido)
+    ? metodoPagoElegido
+    : nombresMetodosPago[0] || metodoPagoElegido;
   const [clienteNombre, setClienteNombre] = useState("");
   const [clienteCorreo, setClienteCorreo] = useState("");
   const [enviarCorreo, setEnviarCorreo] = useState(false);
@@ -325,8 +336,8 @@ export default function AdminVentasPresenciales() {
       }
     }
 
-    if (enviarCorreo && (!clienteCorreo || !clienteCorreo.includes("@"))) {
-      setFormError("Ingresá un correo electrónico válido para enviar el comprobante.");
+    if (enviarCorreo && !esCorreoValido(clienteCorreo)) {
+      setFormError(MENSAJE_CORREO_INVALIDO);
       return;
     }
 
@@ -396,8 +407,8 @@ export default function AdminVentasPresenciales() {
 
   // Envío manual o reenvío de correo desde el modal de resumen
   const handleEnviarCorreoModal = async () => {
-    if (!correoResumenInput || !correoResumenInput.includes("@")) {
-      setMensajeCorreoModal({ tipo: "error", texto: "Ingresá un correo electrónico válido." });
+    if (!esCorreoValido(correoResumenInput)) {
+      setMensajeCorreoModal({ tipo: "error", texto: MENSAJE_CORREO_INVALIDO });
       return;
     }
     if (!resumenVenta) return;
@@ -668,7 +679,7 @@ export default function AdminVentasPresenciales() {
                         {/* Nombre del Producto */}
                         <div className="flex-1">
                           <h3 className="line-clamp-2 text-sm font-bold text-slate-900 transition group-hover:text-black dark:text-slate-100 dark:group-hover:text-white">
-                            {prod.nombre}
+                            <ST>{prod.nombre}</ST>
                           </h3>
                         </div>
 
@@ -770,7 +781,7 @@ export default function AdminVentasPresenciales() {
                         <div key={item.productoId} className="py-3 flex items-center justify-between gap-3">
                           <div className="min-w-0 flex-1">
                             <h4 className="text-xs font-bold text-slate-900 truncate">
-                              {item.productoNombre}
+                              <ST>{item.productoNombre}</ST>
                             </h4>
                             <p className="text-[11px] text-slate-500">
                               {formatearColones(item.precioUnitario)} {t("c/u")}
@@ -831,7 +842,7 @@ export default function AdminVentasPresenciales() {
                         ariaLabel={t("Método de Pago")}
                         value={metodoPago}
                         onChange={setMetodoPago}
-                        options={METODOS_PAGO}
+                        options={opcionesMetodoPago}
                         className="w-full text-xs h-9"
                       />
                     </div>
@@ -862,8 +873,9 @@ export default function AdminVentasPresenciales() {
                         type="email"
                         value={clienteCorreo}
                         onChange={(e) => {
-                          setClienteCorreo(e.target.value);
-                          if (e.target.value.includes("@")) {
+                          const valor = limpiarCorreo(e.target.value);
+                          setClienteCorreo(valor);
+                          if (esCorreoValido(valor)) {
                             setEnviarCorreo(true);
                           }
                         }}
@@ -1013,7 +1025,7 @@ export default function AdminVentasPresenciales() {
                         <div key={idx} className="flex justify-between items-baseline text-xs py-0.5">
                           <div className="min-w-0 pr-2">
                             <span className="font-bold text-slate-900 mr-1.5">{it.cantidad}×</span>
-                            <span className="text-slate-700 font-medium">{it.productoNombre}</span>
+                            <span className="text-slate-700 font-medium"><ST>{it.productoNombre}</ST></span>
                             <div className="text-[10px] text-slate-400">
                               {formatearColones(it.precioUnitario)} c/u
                             </div>
@@ -1072,7 +1084,7 @@ export default function AdminVentasPresenciales() {
                     <input
                       type="email"
                       value={correoResumenInput}
-                      onChange={(e) => setCorreoResumenInput(e.target.value)}
+                      onChange={(e) => setCorreoResumenInput(limpiarCorreo(e.target.value))}
                       placeholder="cliente@correo.com"
                       className="flex-1 h-9 rounded-full border border-slate-300 bg-white px-3 text-xs text-slate-900 outline-none focus:border-black"
                     />

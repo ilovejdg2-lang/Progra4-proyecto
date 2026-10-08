@@ -38,6 +38,8 @@ import {
   validatePassword,
 } from "../../../lib/formLimits";
 import { queueFocusFormError } from "../../../lib/formFocus";
+import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
+import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { ST } from "../../../Components/T/ST";
 import { t } from "../../../lib/t";
 import { UiSelect } from "../../../Components/ui/Select";
@@ -51,13 +53,6 @@ function soloLetras(valor, max = 100) {
 
 function soloDigitos(valor, max) {
   return String(valor ?? "").replace(/\D/g, "").slice(0, max);
-}
-
-function soloTelefono(valor) {
-  const texto = String(valor ?? "");
-  const tieneMas = texto.trimStart().startsWith("+");
-  const digitos = texto.replace(/\D/g, "").slice(0, tieneMas ? 14 : 15);
-  return tieneMas ? `+${digitos}` : digitos;
 }
 
 function formatearCedulaJuridica(valor) {
@@ -451,8 +446,8 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
         payload.datosCliente = armarDatosClientePayload(clienteForm);
       }
 
-      if (!payload.correo) {
-        setErrorCorreo("Ingrese el correo.");
+      if (!payload.correo || !esCorreoValido(payload.correo)) {
+        setErrorCorreo(payload.correo ? MENSAJE_CORREO_INVALIDO : "Ingrese el correo.");
         queueFocusFormError({
           errors: { correo: true },
           root: document.querySelector('[role="dialog"]'),
@@ -592,6 +587,10 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
       setErrorCorreo("Ingrese el nuevo correo.");
       return;
     }
+    if (!esCorreoValido(correo)) {
+      setErrorCorreo(MENSAJE_CORREO_INVALIDO);
+      return;
+    }
     if (!passwordCorreoUsuario) {
       setErrorPasswordCorreo(
         editandoPropioUsuario
@@ -692,12 +691,14 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
             <input
               name="correo"
               type="email"
+              inputMode="email"
               className={inputCls}
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(event) => {
-                field.handleChange(event.target.value);
-                setCorreoForm(event.target.value);
+                const valor = limpiarCorreo(event.target.value);
+                field.handleChange(valor);
+                setCorreoForm(valor);
               }}
               required
               disabled={!inicial && pasoCreacion === "codigo"}
@@ -1019,19 +1020,21 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                   </label>
                   <label className="block text-xs font-medium text-slate-600">
                     <ST>Teléfono</ST>
-                    <input
+                    <NumericInput
                       className={`${inputCls} mt-1`}
                       value={clienteForm.telefono}
-                      onChange={(e) => setClienteForm((prev) => ({ ...prev, telefono: soloTelefono(e.target.value) }))}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, telefono: e.target.value }))}
+                      maxLength={15}
                       required
                     />
                   </label>
                   <label className="block text-xs font-medium text-slate-600">
                     <ST>Tel. oficina</ST>
-                    <input
+                    <NumericInput
                       className={`${inputCls} mt-1`}
                       value={clienteForm.telefonoOficina}
-                      onChange={(e) => setClienteForm((prev) => ({ ...prev, telefonoOficina: soloTelefono(e.target.value) }))}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, telefonoOficina: e.target.value }))}
+                      maxLength={15}
                     />
                   </label>
                   <label className="block text-xs font-medium text-slate-600 sm:col-span-2">
@@ -1113,10 +1116,11 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                   ) : null}
                   <label className="block text-xs font-medium text-slate-600">
                     <ST>Teléfono</ST>
-                    <input
+                    <NumericInput
                       className={`${inputCls} mt-1`}
                       value={clienteForm.telefono}
-                      onChange={(e) => setClienteForm((prev) => ({ ...prev, telefono: soloTelefono(e.target.value) }))}
+                      onChange={(e) => setClienteForm((prev) => ({ ...prev, telefono: e.target.value }))}
+                      maxLength={15}
                       required
                     />
                   </label>

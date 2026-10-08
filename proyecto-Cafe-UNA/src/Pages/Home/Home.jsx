@@ -1,4 +1,4 @@
-import { ArrowRight, ExternalLink, FileText, Heart, MapPin, Users } from 'lucide-react';
+import { ArrowRight, ExternalLink } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -9,6 +9,7 @@ import { useHomeVisualReady } from '../../hooks/usePreloadImages';
 import { contactSupportMessage, sanitizeUserFacingError } from '../../lib/formLimits';
 import { fetchHomePageData } from '../../lib/homePageData';
 import { HomeActionLink } from '../../lib/homeActionLink';
+import { iconoDePreguntaFaq } from '../../lib/iconosCatalogo';
 import { collectHomeImageUrls } from '../../lib/homeImageUrls';
 import { isPageInstantReady, markPageRevealed } from '../../lib/pageSessionState';
 import { removeHomeInitialLoader, setHomePageLoading } from '../../lib/homePageLoading';
@@ -36,8 +37,6 @@ const CAMPOS_FAQ = ['eyebrow', 'title', 'description'];
 const CAMPOS_FAQ_ITEM = ['pregunta', 'respuesta'];
 const CAMPOS_TARJETAS = ['etiqueta', 'titulo', 'descripcion', 'textoBoton'];
 const CAMPOS_PRODUCTOS = ['nombre', 'descripcion', 'categoria', 'subcategoria'];
-
-const FAQ_ICONOS = [MapPin, Heart, Users, FileText];
 
 function HomeFaqItem({ question, children, icon: Icon }) {
   const handleSummaryClick = (event) => {
@@ -461,7 +460,7 @@ const Home = () => {
                   <HomeFaqItem
                     key={item.id ?? item.pregunta}
                     question={item.pregunta}
-                    icon={FAQ_ICONOS[index % FAQ_ICONOS.length]}
+                    icon={iconoDePreguntaFaq(item.icono, index)}
                   >
                     <p>{item.respuesta}</p>
                   </HomeFaqItem>

@@ -3,14 +3,11 @@ import { Link } from '@tanstack/react-router';
 import {
   Check,
   ChevronDown,
-  Coffee,
   Filter,
   Package,
   Search,
-  Shirt,
   ShoppingCart,
   SlidersHorizontal,
-  Tag,
   X,
 } from 'lucide-react';
 import BackToHomeLink from '../../Components/BackToHomeLink/BackToHomeLink';
@@ -24,6 +21,7 @@ import {
   TIPO_CATEGORIA_PRODUCTO,
 } from '../../lib/categorias';
 import { imagenPrincipalProducto } from '../../lib/productoImagenes';
+import { iconoDeCategoriaProducto } from '../../lib/iconosCatalogo';
 import './Products.css';
 import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { useCachedPublicPage } from '../../hooks/useCachedPublicPage';
@@ -49,15 +47,6 @@ function coincidenciaBusqueda(producto, query) {
 
 function mergeNombres(...listas) {
   return categoriasUnicas(listas.flat().map((nombre) => ({ categoria: nombre })));
-}
-
-function iconoDeCategoria(nombre) {
-  const n = String(nombre || '').toLowerCase();
-  if (n.includes('caf')) return Coffee;
-  if (n.includes('camisa') || n.includes('ropa') || n.includes('shirt') || n.includes('polo')) {
-    return Shirt;
-  }
-  return Tag;
 }
 
 const Products = () => {
@@ -116,6 +105,14 @@ const Products = () => {
       activo = false;
     };
   }, []);
+
+  const iconoPorCategoria = useMemo(() => {
+    const map = new Map();
+    for (const cat of categoriasApi) {
+      if (!cat.padre && cat.icono) map.set(cat.nombre.toLowerCase(), cat.icono);
+    }
+    return map;
+  }, [categoriasApi]);
 
   const visibleProducts = useMemo(
     () => products.filter((product) => product.estado !== 'Deshabilitado'),
@@ -307,7 +304,7 @@ const Products = () => {
         const activa = nombreCategoria(categoria).toLowerCase() === nombre.toLowerCase();
         const hijas = subcategoriasPorCategoria[nombre] || [];
         const expandida = Boolean(abiertas[nombre]) || activa;
-        const Icono = iconoDeCategoria(nombre);
+        const Icono = iconoDeCategoriaProducto(nombre, iconoPorCategoria.get(nombre.toLowerCase()));
         const categoriaSeleccionada = activa && subcategoria === 'todas';
         return (
           <div key={nombre} className={`products-page__aside-group${activa ? ' is-open' : ''}`}>

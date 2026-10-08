@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { format, isBefore, startOfDay } from "date-fns";
-import { es } from "date-fns/locale";
+import { enUS, es } from "date-fns/locale";
 import {
   AlertTriangle,
   Bug,
   CalendarCheck2,
-  CalendarDays,
   CalendarX2,
   Car,
   CheckCircle2,
-  ClipboardList,
   Clock,
   Download,
   Droplets,
@@ -18,13 +16,15 @@ import {
   Footprints,
   Info,
   ShieldCheck,
-  UserRound,
-  Users,
   X,
 } from "lucide-react";
+import { IconoSitio } from "../../Components/IconoSitio/IconoSitio";
 
 import { Calendar } from "@/Components/ui/calendar";
 import { SelectFiltro } from "../../Components/ui/SelectFiltro";
+import { ST } from "../../Components/T/ST";
+import { useTraducir } from "../../hooks/useTraducir";
+import { useIdioma } from "../../lib/useIdioma";
 import PageLoading from "../../Components/PageLoading/PageLoading";
 import AvisoSedeFinca from "../../Components/AvisoSedeFinca/AvisoSedeFinca";
 import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
@@ -38,6 +38,8 @@ import {
   validarIdentificacion,
 } from "../../lib/identificacionPersona";
 import { obtenerOpcionesPaises } from "../../lib/paises";
+import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../lib/correo";
+import { NumericInput } from "../../Components/NumericInput/NumericInput";
 import { sedeDesdeHomeLocation } from "../../lib/sedeFinca";
 import { consultarCedulaDetallada } from "../../services/cedulaService";
 import { obtenerSeccion } from "../../services/informacionService";
@@ -87,13 +89,13 @@ function partesNombreCedula(datos) {
 function Field({ label, children }) {
   return (
     <label className="campo">
-      {label}
+      <ST>{label}</ST>
       {children}
     </label>
   );
 }
 
-function SectionCard({ icon: Icon, paso, title, hint, children }) {
+function SectionCard({ lugar, paso, title, hint, children }) {
   return (
     <section className="section-card">
       <div className="section-card__header">
@@ -106,10 +108,10 @@ function SectionCard({ icon: Icon, paso, title, hint, children }) {
           {paso != null ? (
             <span className="sr-only">Paso {paso}. </span>
           ) : null}
-          {title}
+          <ST>{title}</ST>
         </h4>
-        {Icon ? <Icon aria-hidden="true" className="section-card__icon-inline" size={20} /> : null}
-        {hint ? <span className="section-card__hint">{hint}</span> : null}
+        {lugar ? <IconoSitio lugar={lugar} className="section-card__icon-inline" size={20} /> : null}
+        {hint ? <span className="section-card__hint"><ST>{hint}</ST></span> : null}
       </div>
       <div className="section-card__body">{children}</div>
     </section>
@@ -125,6 +127,16 @@ function parseIsoLocal(isoStr) {
 
 export default function SolicitarVisita() {
   const navigate = useNavigate();
+  const { idioma } = useIdioma();
+  const localeFecha = idioma === "en" ? enUS : es;
+  const tPhPais = useTraducir("País de procedencia");
+  const tPhProvincia = useTraducir("Provincia o Estado");
+  const tPhCiudad = useTraducir("Ciudad");
+  const tPhTipoGrupo = useTraducir("Universidad, empresa, asociación…");
+  const tCerrarVentana = useTraducir("Cerrar ventana");
+  const tElegirProvincia = useTraducir("Seleccioná una provincia");
+  const tElegirCanton = useTraducir("Seleccioná un cantón");
+  const tPrimeroProvincia = useTraducir("Primero seleccioná una provincia");
   const session = getActiveSessionUser();
   const isAuthenticated = Boolean(session?.token || session?.id);
 
@@ -145,6 +157,7 @@ export default function SolicitarVisita() {
   const [avisoCedula, setAvisoCedula] = useState(null);
   const [sedeFinca, setSedeFinca] = useState(() => sedeDesdeHomeLocation(null));
   const tipoDocumento = form.encargadoTipoIdentificacion;
+  const tPhIdentificacion = useTraducir(placeholderIdentificacion(tipoDocumento));
   const esPasaporte = tipoDocumento === "pasaporte";
   const opcionesPais = useMemo(() => obtenerOpcionesPaises("es"), []);
 
@@ -413,7 +426,9 @@ export default function SolicitarVisita() {
           ? checked
           : name === "encargadoIdentificacion"
             ? limpiarIdentificacion(current.encargadoTipoIdentificacion, value)
-            : value,
+            : name === "encargadoEmail"
+              ? limpiarCorreo(value)
+              : value,
       };
       if (name === "encargadoTipoIdentificacion") {
         next.encargadoIdentificacion = "";
@@ -457,6 +472,11 @@ export default function SolicitarVisita() {
       !form.encargadoTelefono.trim()
     ) {
       setError("Completá los campos obligatorios antes de enviar la solicitud.");
+      return;
+    }
+
+    if (!esCorreoValido(form.encargadoEmail)) {
+      setError(MENSAJE_CORREO_INVALIDO);
       return;
     }
 
@@ -565,10 +585,12 @@ export default function SolicitarVisita() {
       >
         <section className="voluntariado-section">
           <header className="voluntariado-header">
-            <h1>Solicitud de visitas grupales</h1>
+            <h1><ST>Solicitud de visitas grupales</ST></h1>
             <p>
-              Completá la información del grupo y elegí uno de los horarios habilitados por la administración.
-              La solicitud quedará pendiente de revisión.
+              <ST>
+                Completá la información del grupo y elegí uno de los horarios habilitados por la administración.
+                La solicitud quedará pendiente de revisión.
+              </ST>
             </p>
           </header>
 
@@ -582,7 +604,7 @@ export default function SolicitarVisita() {
             <div className="form-secciones">
               <SectionCard
                 paso={1}
-                icon={UserRound}
+                lugar="visitas.encargado"
                 title="Información del encargado"
                 hint="Datos de la persona responsable de coordinar la visita."
               >
@@ -592,6 +614,7 @@ export default function SolicitarVisita() {
                       name="encargadoTipoIdentificacion"
                       value={tipoDocumento}
                       onChange={update}
+                      traducirOpciones
                     >
                       {TIPOS_IDENTIFICACION.map((tipo) => (
                         <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
@@ -620,10 +643,10 @@ export default function SolicitarVisita() {
                       onBlur={handleIdentificacionBlur}
                       inputMode={esPasaporte ? "text" : "numeric"}
                       autoComplete="off"
-                      placeholder={placeholderIdentificacion(tipoDocumento)}
+                      placeholder={tPhIdentificacion}
                     />
                     {consultandoCedula ? (
-                      <span className="text-xs text-slate-500 mt-1 block">Consultando identificación…</span>
+                      <span className="text-xs text-slate-500 mt-1 block"><ST>Consultando identificación…</ST></span>
                     ) : null}
                     {avisoCedula ? (
                       <span
@@ -631,7 +654,7 @@ export default function SolicitarVisita() {
                           avisoCedula.includes("automáticamente") ? "text-emerald-700" : "text-amber-700"
                         }`}
                       >
-                        {avisoCedula}
+                        <ST>{avisoCedula}</ST>
                       </span>
                     ) : null}
                   </Field>
@@ -659,16 +682,18 @@ export default function SolicitarVisita() {
                   <Field label="Correo electrónico *">
                     <input
                       type="email"
+                      inputMode="email"
                       name="encargadoEmail"
                       value={form.encargadoEmail}
                       onChange={update}
                     />
                   </Field>
                   <Field label="Teléfono *">
-                    <input
+                    <NumericInput
                       name="encargadoTelefono"
                       value={form.encargadoTelefono}
                       onChange={update}
+                      maxLength={15}
                     />
                   </Field>
                   <Field label="Institución">
@@ -683,13 +708,13 @@ export default function SolicitarVisita() {
 
               <SectionCard
                 paso={2}
-                icon={Users}
+                lugar="visitas.grupo"
                 title="Información del grupo"
                 hint="Las visitas grupales requieren al menos dos personas."
               >
                 <div className="form-grid">
                   <Field label="Tipo de visitante *">
-                    <SelectFiltro name="tipoVisitante" value={form.tipoVisitante} onChange={update}>
+                    <SelectFiltro name="tipoVisitante" value={form.tipoVisitante} onChange={update} traducirOpciones>
                       <option value="Nacional">Nacional</option>
                       <option value="Internacional">Internacional</option>
                     </SelectFiltro>
@@ -702,7 +727,7 @@ export default function SolicitarVisita() {
                           name="paisProcedencia"
                           value={form.paisProcedencia}
                           onChange={update}
-                          placeholder="País de procedencia"
+                          placeholder={tPhPais}
                         />
                       </Field>
                       <Field label="Provincia o Estado *">
@@ -710,7 +735,7 @@ export default function SolicitarVisita() {
                           name="provincia"
                           value={form.provincia}
                           onChange={update}
-                          placeholder="Provincia o Estado"
+                          placeholder={tPhProvincia}
                         />
                       </Field>
                       <Field label="Ciudad *">
@@ -718,7 +743,7 @@ export default function SolicitarVisita() {
                           name="canton"
                           value={form.canton}
                           onChange={update}
-                          placeholder="Ciudad"
+                          placeholder={tPhCiudad}
                         />
                       </Field>
                     </>
@@ -726,7 +751,7 @@ export default function SolicitarVisita() {
                     <>
                       <Field label="Provincia *">
                         <SelectFiltro name="provincia" value={form.provincia} onChange={update}>
-                          <option value="">Seleccioná una provincia</option>
+                          <option value="">{tElegirProvincia}</option>
                           {PROVINCIAS_CR.map((prov) => (
                             <option key={prov} value={prov}>
                               {prov}
@@ -742,7 +767,7 @@ export default function SolicitarVisita() {
                           disabled={!form.provincia}
                         >
                           <option value="">
-                            {form.provincia ? "Seleccioná un cantón" : "Primero seleccioná una provincia"}
+                            {form.provincia ? tElegirCanton : tPrimeroProvincia}
                           </option>
                           {cantonesDeProvincia(form.provincia).map((can) => (
                             <option key={can} value={can}>
@@ -755,12 +780,11 @@ export default function SolicitarVisita() {
                   )}
 
                   <Field label="Cantidad de visitantes *">
-                    <input
-                      min="2"
-                      type="number"
+                    <NumericInput
                       name="cantidadVisitantes"
                       value={form.cantidadVisitantes}
                       onChange={update}
+                      maxLength={4}
                     />
                   </Field>
                   <Field label="Tipo de grupo *">
@@ -768,7 +792,7 @@ export default function SolicitarVisita() {
                       name="tipoGrupo"
                       value={form.tipoGrupo}
                       onChange={update}
-                      placeholder="Universidad, empresa, asociación…"
+                      placeholder={tPhTipoGrupo}
                     />
                   </Field>
                   <Field label="Motivo de la visita *">
@@ -784,7 +808,7 @@ export default function SolicitarVisita() {
               {/* Sección de Horarios Homologada a Voluntariado */}
               <SectionCard
                 paso={3}
-                icon={CalendarDays}
+                lugar="visitas.fecha"
                 title="Fecha y horario disponibles *"
                 hint="Seleccioná un día habilitado en el calendario y luego el turno de tu preferencia."
               >
@@ -792,21 +816,21 @@ export default function SolicitarVisita() {
                   <div className="voluntariado-aviso-bloque">
                     <div className="size-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mb-2" />
                     <p className="voluntariado-aviso-bloque__texto">
-                      Cargando fechas y horarios disponibles…
+                      <ST>Cargando fechas y horarios disponibles…</ST>
                     </p>
                   </div>
                 ) : availabilityStatus === "error" ? (
                   <p className="mensaje-error text-center" role="alert">
-                    {availabilityError || "No se pudieron cargar los horarios disponibles."}
+                    <ST>{availabilityError || "No se pudieron cargar los horarios disponibles."}</ST>
                   </p>
                 ) : fechasHabilitadasDates.length === 0 ? (
                   <div className="voluntariado-aviso-bloque">
                     <CalendarX2 className="voluntariado-aviso-bloque__icono size-8 text-amber-500" />
                     <p className="voluntariado-aviso-bloque__titulo text-amber-900">
-                      No hay fechas y horarios habilitados
+                      <ST>No hay fechas y horarios habilitados</ST>
                     </p>
                     <p className="voluntariado-aviso-bloque__texto text-amber-700">
-                      Actualmente no hay fechas habilitadas para visitas grupales. Por favor consultá más adelante.
+                      <ST>Actualmente no hay fechas habilitadas para visitas grupales. Por favor consultá más adelante.</ST>
                     </p>
                   </div>
                 ) : (
@@ -814,10 +838,10 @@ export default function SolicitarVisita() {
                     {fechaSeleccionada && (
                       <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-900 bg-white px-5 py-2 shadow-xs">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                          FECHA SELECCIONADA:
+                          <ST>FECHA SELECCIONADA:</ST>
                         </span>
                         <span className="text-xs font-bold text-slate-950 capitalize">
-                          {format(fechaSeleccionada, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: es })}
+                          {format(fechaSeleccionada, idioma === "en" ? "EEEE, MMMM dd, yyyy" : "EEEE, dd 'de' MMMM 'de' yyyy", { locale: localeFecha })}
                         </span>
                       </div>
                     )}
@@ -828,7 +852,7 @@ export default function SolicitarVisita() {
                         selected={fechaSeleccionada}
                         onSelect={handleSelectFecha}
                         disabled={isDateDisabled}
-                        locale={es}
+                        locale={localeFecha}
                         modifiers={{
                           habilitado: fechasHabilitadasDates,
                         }}
@@ -844,13 +868,13 @@ export default function SolicitarVisita() {
                         <span className="inline-flex size-5 items-center justify-center rounded-full border-2 border-slate-950 bg-white font-bold text-slate-950 text-[11px]">
                           15
                         </span>
-                        <span>Fecha disponible para visitas</span>
+                        <span><ST>Fecha disponible para visitas</ST></span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="inline-flex size-5 items-center justify-center text-slate-400 opacity-40 text-[11px]">
                           15
                         </span>
-                        <span>Fecha no disponible</span>
+                        <span><ST>Fecha no disponible</ST></span>
                       </div>
                     </div>
 
@@ -859,35 +883,35 @@ export default function SolicitarVisita() {
                         <div className="voluntariado-aviso-bloque">
                           <Clock className="voluntariado-aviso-bloque__icono size-8 text-slate-400" />
                           <p className="voluntariado-aviso-bloque__titulo text-slate-800">
-                            Seleccioná una fecha en el calendario
+                            <ST>Seleccioná una fecha en el calendario</ST>
                           </p>
                           <p className="voluntariado-aviso-bloque__texto text-slate-600">
-                            Al seleccionar un día habilitado, se consultarán y cargarán los turnos u horarios disponibles para esa fecha.
+                            <ST>Al seleccionar un día habilitado, se consultarán y cargarán los turnos u horarios disponibles para esa fecha.</ST>
                           </p>
                         </div>
                       ) : cargandoFranjas ? (
                         <div className="voluntariado-aviso-bloque">
                           <div className="size-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mb-2" />
                           <p className="voluntariado-aviso-bloque__texto">
-                            Consultando bloques horarios y aforo disponible…
+                            <ST>Consultando bloques horarios y aforo disponible…</ST>
                           </p>
                         </div>
                       ) : slotsActuales.length === 0 ? (
                         <div className="voluntariado-aviso-bloque">
                           <CalendarX2 className="voluntariado-aviso-bloque__icono size-8 text-amber-500" />
                           <p className="voluntariado-aviso-bloque__titulo text-amber-900">
-                            Sin turnos para esta fecha
+                            <ST>Sin turnos para esta fecha</ST>
                           </p>
                           <p className="voluntariado-aviso-bloque__texto text-amber-700">
-                            No hay turnos disponibles para el día seleccionado.
+                            <ST>No hay turnos disponibles para el día seleccionado.</ST>
                           </p>
                         </div>
                       ) : (
                         <div>
                           <p className="text-xs font-semibold text-slate-700 mb-3">
-                            Horarios disponibles para el{" "}
+                            <ST>Horarios disponibles para el</ST>{" "}
                             <strong>
-                              {format(fechaSeleccionada, "dd 'de' MMMM", { locale: es })}
+                              {format(fechaSeleccionada, idioma === "en" ? "MMMM dd" : "dd 'de' MMMM", { locale: localeFecha })}
                             </strong>:
                           </p>
 
@@ -945,22 +969,22 @@ export default function SolicitarVisita() {
                                   <div>
                                     {estaAgotada ? (
                                       <span className="opcion-disponibilidad__cupo-badge opcion-disponibilidad__cupo-badge--agotado">
-                                        Cupo agotado (0 cupos disponibles)
+                                        <ST>Cupo agotado (0 cupos disponibles)</ST>
                                       </span>
                                     ) : cupoRestante <= 5 ? (
                                       <span className="opcion-disponibilidad__cupo-badge opcion-disponibilidad__cupo-badge--bajo">
-                                        {`¡Últimos ${cupoRestante} cupos! (de ${capacidadMaxima})`}
+                                        <ST>{`¡Últimos ${cupoRestante} cupos! (de ${capacidadMaxima})`}</ST>
                                       </span>
                                     ) : (
                                       <span className="opcion-disponibilidad__cupo-badge opcion-disponibilidad__cupo-badge--disponible">
-                                        {`${cupoRestante} cupos disponibles (de ${capacidadMaxima})`}
+                                        <ST>{`${cupoRestante} cupos disponibles (de ${capacidadMaxima})`}</ST>
                                       </span>
                                     )}
                                   </div>
 
                                   {slot.nota ? (
                                     <span className="text-xs text-slate-500 mt-1 block">
-                                      {slot.nota}
+                                      <ST>{slot.nota}</ST>
                                     </span>
                                   ) : null}
                                 </label>
@@ -971,9 +995,9 @@ export default function SolicitarVisita() {
                           {cupoExcedido ? (
                             <div className="mt-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900" role="alert">
                               <AlertTriangle size={16} className="text-amber-600 shrink-0" />
-                              <span>
-                                Atención: La cantidad solicitada ({cantidadNum} personas) supera el cupo restante ({cupoRestanteSeleccionado} personas) de este horario.
-                              </span>
+                              <ST>
+                                {`Atención: La cantidad solicitada (${cantidadNum} personas) supera el cupo restante (${cupoRestanteSeleccionado} personas) de este horario.`}
+                              </ST>
                             </div>
                           ) : null}
                         </div>
@@ -985,18 +1009,18 @@ export default function SolicitarVisita() {
 
               <SectionCard
                 paso={4}
-                icon={ClipboardList}
+                lugar="visitas.necesidades"
                 title="Necesidades y recomendaciones"
                 hint="Todas las visitas serán recibidas o acompañadas por personal del proyecto."
               >
                 <fieldset className="grid gap-3 sm:grid-cols-2">
-                  <legend className="mb-3 text-sm font-semibold text-slate-700">Necesidades del grupo</legend>
+                  <legend className="mb-3 text-sm font-semibold text-slate-700"><ST>Necesidades del grupo</ST></legend>
                   {[
                     ["requiereAccesibilidad", "Requerimientos de accesibilidad"],
                     ["requiereParqueoBus", "Parqueo"],
                   ].map(([name, label]) => (
                     <label className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-3 text-sm font-medium" key={name}>
-                      <input type="checkbox" name={name} checked={form[name]} onChange={update} /> {label}
+                      <input type="checkbox" name={name} checked={form[name]} onChange={update} /> <ST>{label}</ST>
                     </label>
                   ))}
                 </fieldset>
@@ -1008,11 +1032,11 @@ export default function SolicitarVisita() {
                       <div className="flex items-center gap-2">
                         <ShieldCheck className="text-emerald-700" size={22} />
                         <p className="font-bold text-slate-900 text-sm sm:text-base">
-                          Recomendaciones para la visita
+                          <ST>Recomendaciones para la visita</ST>
                         </p>
                       </div>
                       <p className="text-xs text-slate-600 mt-0.5">
-                        Lineamientos obligatorios y sugerencias para un recorrido seguro en la finca experimental.
+                        <ST>Lineamientos obligatorios y sugerencias para un recorrido seguro en la finca experimental.</ST>
                       </p>
                     </div>
                   </div>
@@ -1023,9 +1047,9 @@ export default function SolicitarVisita() {
                         <Footprints size={20} className="text-emerald-700" />
                       </div>
                       <div>
-                        <p className="recomendacion-item__titulo">Calzado cerrado obligatorio</p>
+                        <p className="recomendacion-item__titulo"><ST>Calzado cerrado obligatorio</ST></p>
                         <p className="recomendacion-item__desc">
-                          Uso indispensable de calzado cerrado o botas con suela antideslizante para caminar por senderos agrícolas.
+                          <ST>Uso indispensable de calzado cerrado o botas con suela antideslizante para caminar por senderos agrícolas.</ST>
                         </p>
                       </div>
                     </div>
@@ -1035,9 +1059,9 @@ export default function SolicitarVisita() {
                         <Droplets size={20} className="text-blue-600" />
                       </div>
                       <div>
-                        <p className="recomendacion-item__titulo">Hidratación continua</p>
+                        <p className="recomendacion-item__titulo"><ST>Hidratación continua</ST></p>
                         <p className="recomendacion-item__desc">
-                          Llevá botella o termo reutilizable con agua potable para el recorrido.
+                          <ST>Llevá botella o termo reutilizable con agua potable para el recorrido.</ST>
                         </p>
                       </div>
                     </div>
@@ -1047,9 +1071,9 @@ export default function SolicitarVisita() {
                         <Bug size={20} className="text-amber-700" />
                       </div>
                       <div>
-                        <p className="recomendacion-item__titulo">Vestimenta y protección</p>
+                        <p className="recomendacion-item__titulo"><ST>Vestimenta y protección</ST></p>
                         <p className="recomendacion-item__desc">
-                          Usá vestimenta cómoda, repelente y protección solar para actividades en campo abierto.
+                          <ST>Usá vestimenta cómoda, repelente y protección solar para actividades en campo abierto.</ST>
                         </p>
                       </div>
                     </div>
@@ -1059,9 +1083,9 @@ export default function SolicitarVisita() {
                         <Car size={20} className="text-slate-800" />
                       </div>
                       <div>
-                        <p className="recomendacion-item__titulo">Zonas de parqueo</p>
+                        <p className="recomendacion-item__titulo"><ST>Zonas de parqueo</ST></p>
                         <p className="recomendacion-item__desc">
-                          Estacionamiento vigilado para vehículos particulares y espacio reservado para buses o microbuses.
+                          <ST>Estacionamiento vigilado para vehículos particulares y espacio reservado para buses o microbuses.</ST>
                         </p>
                       </div>
                     </div>
@@ -1076,7 +1100,7 @@ export default function SolicitarVisita() {
                       download="instructivo_recomendaciones_visitas_cafe_una.pdf"
                     >
                       <Download size={16} aria-hidden="true" />
-                      Descargar instructivo en PDF
+                      <ST>Descargar instructivo en PDF</ST>
                     </a>
 
                     <button
@@ -1085,7 +1109,7 @@ export default function SolicitarVisita() {
                       className="btn-modal-instructivo"
                     >
                       <Info size={16} aria-hidden="true" />
-                      Ver recomendaciones detalladas
+                      <ST>Ver recomendaciones detalladas</ST>
                     </button>
                   </div>
                 </div>
@@ -1107,14 +1131,14 @@ export default function SolicitarVisita() {
                         <div className="flex items-center gap-2">
                           <ShieldCheck className="text-emerald-700" size={24} />
                           <h3 id="modal-recomendaciones-titulo" className="text-lg font-bold text-slate-900">
-                            Instructivo de Recomendaciones y Seguridad
+                            <ST>Instructivo de Recomendaciones y Seguridad</ST>
                           </h3>
                         </div>
                         <button
                           type="button"
                           onClick={() => setModalRecomendacionesAbierto(false)}
                           className="rounded-full p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-                          aria-label="Cerrar ventana"
+                          aria-label={tCerrarVentana}
                         >
                           <X size={20} />
                         </button>
@@ -1126,47 +1150,47 @@ export default function SolicitarVisita() {
                             Finca Experimental Santa Lucía - Café UNA
                           </p>
                           <p className="text-xs">
-                            Para que tu experiencia sea memorable y segura, te solicitamos cumplir con las siguientes directrices durante la visita:
+                            <ST>Para que tu experiencia sea memorable y segura, te solicitamos cumplir con las siguientes directrices durante la visita:</ST>
                           </p>
                         </div>
 
                         <div>
                           <h4 className="font-bold text-slate-900 flex items-center gap-2">
                             <Footprints size={16} className="text-emerald-700" />
-                            1. Calzado cerrado obligatorio
+                            <ST>1. Calzado cerrado obligatorio</ST>
                           </h4>
                           <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                            Es indispensable utilizar tenis deportivas, botas de senderismo o botas con buen agarre. Por normativas de prevención, no se admiten sandalias ni calzado abierto en los senderos.
+                            <ST>Es indispensable utilizar tenis deportivas, botas de senderismo o botas con buen agarre. Por normativas de prevención, no se admiten sandalias ni calzado abierto en los senderos.</ST>
                           </p>
                         </div>
 
                         <div>
                           <h4 className="font-bold text-slate-900 flex items-center gap-2">
                             <Droplets size={16} className="text-blue-600" />
-                            2. Hidratación y vestimenta cómoda
+                            <ST>2. Hidratación y vestimenta cómoda</ST>
                           </h4>
                           <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                            Usá vestimenta cómoda y apropiada para recorridos al aire libre bajo el sol. Sugerimos pantalón largo ligero. La finca dispone de tomas de agua potable para rellenar botellas reutilizables.
+                            <ST>Usá vestimenta cómoda y apropiada para recorridos al aire libre bajo el sol. Sugerimos pantalón largo ligero. La finca dispone de tomas de agua potable para rellenar botellas reutilizables.</ST>
                           </p>
                         </div>
 
                         <div>
                           <h4 className="font-bold text-slate-900 flex items-center gap-2">
                             <Bug size={16} className="text-amber-700" />
-                            3. Repelente contra insectos y protección solar
+                            <ST>3. Repelente contra insectos y protección solar</ST>
                           </h4>
                           <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                            Llevá repelente si visitarán zonas con vegetación densa o cafetales. Considerá protección solar, sombrero o gorra y gafas oscuras durante las horas de mayor radiación.
+                            <ST>Llevá repelente si visitarán zonas con vegetación densa o cafetales. Considerá protección solar, sombrero o gorra y gafas oscuras durante las horas de mayor radiación.</ST>
                           </p>
                         </div>
 
                         <div>
                           <h4 className="font-bold text-slate-900 flex items-center gap-2">
                             <Car size={16} className="text-slate-800" />
-                            4. Zonas de parqueo y acceso
+                            <ST>4. Zonas de parqueo y acceso</ST>
                           </h4>
                           <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                            Disponemos de estacionamiento gratuito vigilado para automóviles y área reservada para el desembarque y parqueo de autobuses o microbuses.
+                            <ST>Disponemos de estacionamiento gratuito vigilado para automóviles y área reservada para el desembarque y parqueo de autobuses o microbuses.</ST>
                           </p>
                         </div>
 
@@ -1178,14 +1202,14 @@ export default function SolicitarVisita() {
                             className="btn-descargar-instructivo text-xs py-2 px-4"
                             download="instructivo_recomendaciones_visitas_cafe_una.pdf"
                           >
-                            <Download size={14} /> Descargar PDF
+                            <Download size={14} /> <ST>Descargar PDF</ST>
                           </a>
                           <button
                             type="button"
                             onClick={() => setModalRecomendacionesAbierto(false)}
                             className="btn-modal-instructivo text-xs py-2 px-4"
                           >
-                            Entendido, cerrar
+                            <ST>Entendido, cerrar</ST>
                           </button>
                         </div>
                       </div>
@@ -1201,12 +1225,12 @@ export default function SolicitarVisita() {
 
             {error ? (
               <p className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800" role="alert">
-                {error}
+                <ST>{error}</ST>
               </p>
             ) : null}
             {success ? (
               <p className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900" role="status">
-                <CheckCircle2 aria-hidden="true" /> Solicitud #{success.id} enviada en estado {success.estado}.
+                <CheckCircle2 aria-hidden="true" /> <ST>{`Solicitud #${success.id} enviada en estado ${success.estado}.`}</ST>
               </p>
             ) : null}
 
@@ -1223,7 +1247,7 @@ export default function SolicitarVisita() {
                 }
                 type="submit"
               >
-                {submitting ? "Enviando…" : "Enviar solicitud"}
+                <ST>{submitting ? "Enviando…" : "Enviar solicitud"}</ST>
               </button>
             </div>
           </form>

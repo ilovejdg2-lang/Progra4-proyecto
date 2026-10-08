@@ -10,6 +10,7 @@ import { PerfilClienteLayout } from "../../Components/Perfil/PerfilClienteLayout
 import { PublicPageGate } from "../../Components/PublicPageGate/PublicPageGate";
 import { ST } from "../../Components/T/ST";
 import { usePublicPageLoadingGate } from "../../hooks/usePublicPageLoadingGate";
+import { HorarioCompra } from "../ProductDetail/HorarioCompra";
 import { useTraducir } from "../../hooks/useTraducir";
 import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
 import { t } from "../../lib/t";
@@ -642,6 +643,13 @@ export function HistorialComprasContent({ variant = "standalone" }) {
                 correoContacto={correoContacto}
                 telefonoContacto={telefonoContacto}
               />
+              {detalle.estado === "Aceptado" && detalle.ubicacionId ? (
+                <HorarioCompra
+                  ubicacionId={detalle.ubicacionId}
+                  titulo="Días y horario para retirar tu pedido"
+                  variante="tarjeta"
+                />
+              ) : null}
               <ul className="mt-4 text-[var(--text-body)]">
                 {(detalle.items || []).map((item, index) => (
                   <li key={`${item.nombre}-${index}`} className="border-b border-slate-100 py-2">

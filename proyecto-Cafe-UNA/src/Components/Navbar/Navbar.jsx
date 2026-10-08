@@ -3,11 +3,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import './Navbar.css';
 import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
-import { Bell, BookOpen, ChevronDown, ClipboardList, Coffee, Gift, HandHeart, Info, LayoutDashboard, LogOut, MapPin, Menu, Package, ShoppingBag, ShoppingCart, User, Users, X } from 'lucide-react';
+import { Bell, ChevronDown, Gift, HandHeart, LayoutDashboard, LogOut, MapPin, Menu, Package, ShoppingBag, ShoppingCart, User, X } from 'lucide-react';
 import { LanguageSwitcher } from '../LanguageSwitcher/LanguageSwitcher';
 import { CartLine, metaCarrito } from './CartLine';
 import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
-import { FacebookIcon, InstagramIcon } from '../Footer/SocialIcons';
+import { IconoSitio } from '../IconoSitio/IconoSitio';
+import { lugarIconoMenu } from '../../lib/iconosSitio';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { useHomeBrandNavigation } from '../../hooks/useHomeBrandNavigation';
 import { readPageCache } from '../../lib/pageDataCache';
@@ -201,18 +202,6 @@ function filterNavLinks(enlaces) {
     }));
 }
 
-function resolveMobileNavIcon(ruta) {
-    const normalized = String(ruta || '').trim().toLowerCase();
-
-    if (normalized.includes('product')) return Coffee;
-    if (normalized.includes('equipo')) return Users;
-    if (normalized.includes('about') || normalized.includes('sobre')) return BookOpen;
-    if (normalized.includes('volunt') || normalized.includes('formulario') || normalized.includes('donacion')) return ClipboardList;
-    if (normalized.includes('iniciativa') || normalized.includes('gallery') || normalized.includes('galer')) return Info;
-    if (normalized.includes('checkout') || normalized.includes('cart')) return ShoppingCart;
-
-    return Package;
-}
 
 const Navbar = () => {
     const { idioma } = useIdioma();
@@ -1649,6 +1638,7 @@ const Navbar = () => {
                                                     onClick={() => setShowMobileAbout((open) => !open)}
                                                 >
                                                     <span className="navbar__mobile-about-trigger-main">
+                                                        <IconoSitio lugar="menu.sobre-nosotros" className="navbar__mobile-link-icon" size={22} strokeWidth={1.9} />
                                                         <span className="navbar__mobile-link-label">
                                                             <NombreCarrito
                                                                 nombre={enlace?.etiqueta || enlace?.Etiqueta || 'Sobre nosotros'}
@@ -1708,6 +1698,7 @@ const Navbar = () => {
                                                     onClick={() => setShowMobileForms((open) => !open)}
                                                 >
                                                     <span className="navbar__mobile-about-trigger-main">
+                                                        <IconoSitio lugar="menu.formularios" className="navbar__mobile-link-icon" size={22} strokeWidth={1.9} />
                                                         <span className="navbar__mobile-link-label">
                                                             {labelFormularios}
                                                         </span>
@@ -1748,7 +1739,6 @@ const Navbar = () => {
                                         );
                                     }
 
-                                    const NavIcon = resolveMobileNavIcon(enlace?.ruta ?? enlace?.Ruta);
                                     const label = enlace?.etiqueta || enlace?.Etiqueta || 'Enlace';
 
                                     return (
@@ -1760,7 +1750,7 @@ const Navbar = () => {
                                             onClick={closeMobileMenu}
                                         >
                                             <span className="navbar__mobile-link-content">
-                                                <NavIcon className="navbar__mobile-link-icon" size={22} strokeWidth={1.9} aria-hidden="true" />
+                                                <IconoSitio lugar={lugarIconoMenu(enlace?.ruta ?? enlace?.Ruta)} className="navbar__mobile-link-icon" size={22} strokeWidth={1.9} />
                                                 <span className="navbar__mobile-link-label">
                                                     <NombreCarrito nombre={label} />
                                                 </span>
@@ -1776,12 +1766,12 @@ const Navbar = () => {
                                     <div className="navbar__mobile-social-links">
                                         {instagramUrl ? (
                                             <a href={instagramUrl} target="_blank" rel="noreferrer" aria-label="Instagram" onClick={closeMobileMenu}>
-                                                <InstagramIcon className="navbar__mobile-social-icon" />
+                                                <IconoSitio lugar="redes.instagram" className="navbar__mobile-social-icon" />
                                             </a>
                                         ) : null}
                                         {facebookUrl ? (
                                             <a href={facebookUrl} target="_blank" rel="noreferrer" aria-label="Facebook" onClick={closeMobileMenu}>
-                                                <FacebookIcon className="navbar__mobile-social-icon" />
+                                                <IconoSitio lugar="redes.facebook" className="navbar__mobile-social-icon" />
                                             </a>
                                         ) : null}
                                     </div>

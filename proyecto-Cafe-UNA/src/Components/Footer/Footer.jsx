@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Mail, MapPin, Phone } from 'lucide-react';
-import { FacebookIcon, InstagramIcon } from './SocialIcons';
+import { IconoSitio } from '../IconoSitio/IconoSitio';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
 import { useHomeBrandNavigation } from '../../hooks/useHomeBrandNavigation';
 import { normalizeImageUrl } from '../../lib/imageUtils';
@@ -103,7 +102,7 @@ const Footer = () => {
             <h2>{labelContactos}</h2>
             {telHref ? (
               <a href={telHref} className="footer__contact-item">
-                <Phone className="footer__contact-icon" aria-hidden="true" />
+                <IconoSitio lugar="footer.telefono" className="footer__contact-icon" />
                 <span>{footer.telefono ?? footer.Telefono}</span>
               </a>
             ) : null}
@@ -112,7 +111,7 @@ const Footer = () => {
                 href={`mailto:${footer.correo ?? footer.Correo}`}
                 className="footer__contact-item"
               >
-                <Mail className="footer__contact-icon" aria-hidden="true" />
+                <IconoSitio lugar="footer.correo" className="footer__contact-icon" />
                 <span>{footer.correo ?? footer.Correo}</span>
               </a>
             ) : null}
@@ -123,7 +122,7 @@ const Footer = () => {
                 rel="noreferrer"
                 className="footer__contact-item"
               >
-                <MapPin className="footer__contact-icon" aria-hidden="true" />
+                <IconoSitio lugar="footer.ubicacion" className="footer__contact-icon" />
                 <span>{labelUbicacion}</span>
               </a>
             ) : null}
@@ -141,7 +140,7 @@ const Footer = () => {
                   rel="noreferrer"
                   aria-label="Instagram"
                 >
-                  <InstagramIcon className="footer__social-icon" />
+                  <IconoSitio lugar="redes.instagram" className="footer__social-icon" />
                 </a>
               ) : null}
               {(footer?.facebookUrl || footer?.FacebookUrl) ? (
@@ -151,7 +150,7 @@ const Footer = () => {
                   rel="noreferrer"
                   aria-label="Facebook"
                 >
-                  <FacebookIcon className="footer__social-icon" />
+                  <IconoSitio lugar="redes.facebook" className="footer__social-icon" />
                 </a>
               ) : null}
             </div>

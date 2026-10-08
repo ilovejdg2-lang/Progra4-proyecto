@@ -31,6 +31,7 @@ function mapFaqItem(item) {
     preguntaEn: pickString(item, 'preguntaEn', 'PreguntaEn'),
     respuesta: pickString(item, 'respuesta', 'Respuesta'),
     respuestaEn: pickString(item, 'respuestaEn', 'RespuestaEn'),
+    icono: pickString(item, 'icono', 'Icono'),
     orden: Number(item?.orden ?? item?.Orden ?? 0) || 0,
   };
 }

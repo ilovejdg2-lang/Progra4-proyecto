@@ -42,6 +42,8 @@ import {
 } from "../../../../lib/productoDisponibilidad";
 import { useIdioma } from "../../../../lib/useIdioma";
 import { camposParaVistaAdmin } from "../../../../lib/traducir";
+import { useCatalogo } from "../../../../hooks/useCatalogo";
+import { TIPOS_CATALOGO } from "../../../../services/catalogosService";
 
 const MAX_PRODUCTOS_DESTACADOS = 3;
 const CAMPOS_TEXTO_PRODUCTO = ["nombre", "descripcion"];
@@ -136,6 +138,16 @@ export function ProductCatalogFormDrawer({
   const tGuardando = useTraducir("Guardando...");
   const tGuardarCambios = useTraducir("Guardar cambios");
   const tCrearProducto = useTraducir("Crear producto");
+  const tPeso = useTraducir("Peso");
+  const tSinPeso = useTraducir("Sin presentación");
+  const presentaciones = useCatalogo(TIPOS_CATALOGO.presentacion);
+  const opcionesPeso = [
+    { value: "", label: tSinPeso },
+    ...presentaciones.map((nombre) => ({ value: nombre, label: nombre })),
+  ];
+  if (form.peso && !presentaciones.includes(form.peso)) {
+    opcionesPeso.push({ value: form.peso, label: form.peso });
+  }
 
   useEffect(() => {
     if (!open) return undefined;
@@ -389,7 +401,17 @@ export function ProductCatalogFormDrawer({
               <span className="flex items-end leading-tight">
                 <ST>Peso</ST>
               </span>
-              <input name="peso" value={form.peso} onChange={handleChange} className={`${inputClassName} h-full`} placeholder="500g / 1kg" />
+              <UiSelect
+                value={form.peso || ""}
+                onChange={(valor) => handleChange({ target: { name: "peso", value: valor } })}
+                options={opcionesPeso}
+                ariaLabel={tPeso}
+                buscable={opcionesPeso.length > 12}
+                traducirOpciones={false}
+              />
+              <span className="text-[length:var(--text-body)] font-normal text-slate-500">
+                <ST>Para agregar o editar presentaciones, andá a Ajustes del sistema → Catálogos → Presentaciones.</ST>
+              </span>
             </label>
             <label className="grid grid-rows-[2.75rem_var(--control-height)] gap-2 text-sm font-medium text-slate-700">
               <span className="flex items-end leading-tight">

@@ -88,6 +88,7 @@ export function ResultsToolbar({
             className="biblio-toolbar__select"
             value={orden}
             onChange={(e) => onCambiarOrden(e.target.value)}
+            traducirOpciones
           >
             <option value="recientes">Más recientes</option>
             <option value="descargas">Más descargados</option>

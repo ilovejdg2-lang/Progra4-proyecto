@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
+import { NumericInput } from '../../Components/NumericInput/NumericInput';
 import { ST } from '../../Components/T/ST';
 import { useTraducir } from '../../hooks/useTraducir';
+import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from '../../lib/correo';
 import { sanitizeUserFacingError } from '../../lib/formLimits';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { verificarRegistro } from '../../services/authService';
@@ -95,6 +97,10 @@ const VerificarCuenta = () => {
       setError('Correo y código son obligatorios.');
       return;
     }
+    if (!esCorreoValido(correoValor)) {
+      setError(MENSAJE_CORREO_INVALIDO);
+      return;
+    }
 
     setSubmitting(true);
     setError('');
@@ -157,19 +163,19 @@ const VerificarCuenta = () => {
                   id="correo"
                   type="email"
                   value={correo}
-                  onChange={(ev) => setCorreo(ev.target.value)}
+                  onChange={(ev) => setCorreo(limpiarCorreo(ev.target.value))}
+                  inputMode="email"
                   autoComplete="email"
                   required
                 />
               </div>
               <div className="login-field">
                 <label htmlFor="token"><ST>{tCodigo}</ST></label>
-                <input
+                <NumericInput
                   id="token"
                   value={token}
-                  onChange={(ev) => setToken(ev.target.value.replace(/\D/g, '').slice(0, 5))}
+                  onChange={(ev) => setToken(ev.target.value)}
                   autoComplete="one-time-code"
-                  inputMode="numeric"
                   maxLength={5}
                   placeholder="5 dígitos"
                   required

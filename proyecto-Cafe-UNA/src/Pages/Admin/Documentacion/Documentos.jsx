@@ -126,6 +126,7 @@ export default function AdminDocumentos() {
 
   // Filtros de Documentos
   const [filtroBuscar, setFiltroBuscar] = useState("");
+  const tPhBuscar = useTraducir("Buscar documento...");
   const [filtroCategoria, setFiltroCategoria] = useState("");
   const [filtroPrivacidad, setFiltroPrivacidad] = useState("");
   const [filtroActivo, setFiltroActivo] = useState("");
@@ -566,7 +567,7 @@ export default function AdminDocumentos() {
                 <Search size={16} className="text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Buscar documento..."
+                  placeholder={tPhBuscar}
                   value={filtroBuscar}
                   onChange={(e) => setFiltroBuscar(e.target.value)}
                 />
@@ -660,13 +661,13 @@ export default function AdminDocumentos() {
                 <table className="admin-docs-table">
                   <thead>
                     <tr>
-                      <th>Documento</th>
-                      <th>Categoría</th>
-                      <th>Visibilidad</th>
-                      <th>Tamaño</th>
-                      <th>Descargas</th>
-                      <th>Estado</th>
-                      <th className="text-right">Acciones</th>
+                      <th><ST>Documento</ST></th>
+                      <th><ST>Categoría</ST></th>
+                      <th><ST>Visibilidad</ST></th>
+                      <th><ST>Tamaño</ST></th>
+                      <th><ST>Descargas</ST></th>
+                      <th><ST>Estado</ST></th>
+                      <th className="text-right"><ST>Acciones</ST></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -823,10 +824,10 @@ export default function AdminDocumentos() {
               <table className="admin-docs-table">
                 <thead>
                   <tr>
-                    <th>Nombre de Categoría</th>
-                    <th>Nivel / Padre</th>
-                    <th>Documentos Asociados</th>
-                    <th className="text-right">Acciones</th>
+                    <th><ST>Nombre de Categoría</ST></th>
+                    <th><ST>Nivel / Padre</ST></th>
+                    <th><ST>Documentos Asociados</ST></th>
+                    <th className="text-right"><ST>Acciones</ST></th>
                   </tr>
                 </thead>
                 <tbody>

@@ -1,30 +1,24 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
-  BookOpen,
   Check,
-  CheckCircle2,
-  Clock,
   FileArchive,
   FileCode,
   FileImage,
   FileSpreadsheet,
   FileText,
-  Flame,
   Globe,
-  Heart,
-  History,
-  Layers,
   PanelLeftClose,
   PanelLeftOpen,
   RotateCcw,
   Search,
-  Sparkles,
   Tag,
-  Upload,
   User,
   X,
 } from "lucide-react";
+import { IconoSitio } from "../../../Components/IconoSitio/IconoSitio";
+import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { ST } from "../../../Components/T/ST";
+import { useTraducir } from "../../../hooks/useTraducir";
 import { CategoryTree } from "./CategoryTree";
 import { FilterSection } from "./FilterSection";
 
@@ -64,6 +58,10 @@ export function Sidebar({
   onToggleColapso,
 }) {
   const searchInputId = useId();
+  const tBuscarPlaceholder = useTraducir("Buscar título, autor, tema...");
+  const tBuscarAutor = useTraducir("Buscar autor...");
+  const tExpandir = useTraducir("Expandir barra lateral");
+  const tContraer = useTraducir("Contraer barra lateral");
   const searchInputRef = useRef(null);
 
   // Debounce para buscador local
@@ -173,7 +171,7 @@ export function Sidebar({
         {/* Cabecera del Sidebar */}
         <div className="biblio-sidebar__header">
           <div className="biblio-sidebar__brand">
-            <BookOpen size={20} className="biblio-sidebar__brand-icon" />
+            <IconoSitio lugar="repo.biblioteca" size={20} className="biblio-sidebar__brand-icon" />
             <h2 className="biblio-sidebar__brand-title">
               <ST>Biblioteca</ST>
             </h2>
@@ -190,8 +188,8 @@ export function Sidebar({
               type="button"
               className="biblio-sidebar__collapse-btn desktop-only"
               onClick={onToggleColapso}
-              title={sidebarColapsado ? "Expandir barra lateral" : "Contraer barra lateral"}
-              aria-label={sidebarColapsado ? "Expandir barra lateral" : "Contraer barra lateral"}
+              title={sidebarColapsado ? tExpandir : tContraer}
+              aria-label={sidebarColapsado ? tExpandir : tContraer}
             >
               {sidebarColapsado ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
             </button>
@@ -226,7 +224,7 @@ export function Sidebar({
                 ref={searchInputRef}
                 type="text"
                 className="biblio-sidebar__search-input"
-                placeholder="Buscar título, autor, tema..."
+                placeholder={tBuscarPlaceholder}
                 value={terminoLocal}
                 onChange={(e) => setTerminoLocal(e.target.value)}
                 autoComplete="off"
@@ -266,7 +264,7 @@ export function Sidebar({
                   if (mobileOpen) onCloseMobile?.();
                 }}
               >
-                <Layers size={15} />
+                <IconoSitio lugar="repo.todos" size={15} />
                 <span className="biblio-quick-link__text">
                   <ST>Todos</ST>
                 </span>
@@ -285,7 +283,7 @@ export function Sidebar({
                   if (mobileOpen) onCloseMobile?.();
                 }}
               >
-                <Sparkles size={15} className="text-amber-500" />
+                <IconoSitio lugar="repo.novedades" size={15} className="text-amber-500" />
                 <span className="biblio-quick-link__text">
                   <ST>Novedades</ST>
                 </span>
@@ -304,7 +302,7 @@ export function Sidebar({
                   if (mobileOpen) onCloseMobile?.();
                 }}
               >
-                <Flame size={15} className="text-orange-500" />
+                <IconoSitio lugar="repo.populares" size={15} className="text-orange-500" />
                 <span className="biblio-quick-link__text">
                   <ST>Más descargados</ST>
                 </span>
@@ -323,7 +321,7 @@ export function Sidebar({
                   if (mobileOpen) onCloseMobile?.();
                 }}
               >
-                <CheckCircle2 size={15} className="text-emerald-500" />
+                <IconoSitio lugar="repo.destacados" size={15} className="text-emerald-500" />
                 <span className="biblio-quick-link__text">
                   <ST>Destacados</ST>
                 </span>
@@ -388,7 +386,7 @@ export function Sidebar({
                     if (mobileOpen) onCloseMobile?.();
                   }}
                 >
-                  <Heart size={15} className="text-rose-500" />
+                  <IconoSitio lugar="repo.favoritos" size={15} className="text-rose-500" />
                   <span className="biblio-user-lib-link__text">
                     <ST>Mis Favoritos</ST>
                   </span>
@@ -413,7 +411,7 @@ export function Sidebar({
                     if (mobileOpen) onCloseMobile?.();
                   }}
                 >
-                  <Clock size={15} className="text-blue-500" />
+                  <IconoSitio lugar="repo.leer-tarde" size={15} className="text-blue-500" />
                   <span className="biblio-user-lib-link__text">
                     <ST>Leer más tarde</ST>
                   </span>
@@ -436,7 +434,7 @@ export function Sidebar({
                     if (mobileOpen) onCloseMobile?.();
                   }}
                 >
-                  <History size={15} className="text-amber-500" />
+                  <IconoSitio lugar="repo.historial" size={15} className="text-amber-500" />
                   <span className="biblio-user-lib-link__text">
                     <ST>Historial de vistos</ST>
                   </span>
@@ -473,8 +471,8 @@ export function Sidebar({
                     <span className="biblio-filter-year__lbl">
                       <ST>Desde</ST>
                     </span>
-                    <input
-                      type="number"
+                    <NumericInput
+                      maxLength={4}
                       className="biblio-filter-year__input"
                       placeholder={String(facetas.minAnio || 2020)}
                       value={filtros.anioDesde || ""}
@@ -486,8 +484,8 @@ export function Sidebar({
                     <span className="biblio-filter-year__lbl">
                       <ST>Hasta</ST>
                     </span>
-                    <input
-                      type="number"
+                    <NumericInput
+                      maxLength={4}
                       className="biblio-filter-year__input"
                       placeholder={String(facetas.maxAnio || 2026)}
                       value={filtros.anioHasta || ""}
@@ -564,7 +562,7 @@ export function Sidebar({
                       <span className={`biblio-filter-option__icon ${colorClass}`}>
                         <TipoIcon size={14} />
                       </span>
-                      <span className="biblio-filter-option__text">{t.label}</span>
+                      <span className="biblio-filter-option__text"><ST>{t.label}</ST></span>
                       <span className="biblio-filter-option__count">{t.count}</span>
                     </label>
                   );
@@ -583,7 +581,7 @@ export function Sidebar({
                 <input
                   type="text"
                   className="biblio-filter-author__input"
-                  placeholder="Buscar autor..."
+                  placeholder={tBuscarAutor}
                   value={filtroAutorTexto}
                   onChange={(e) => setFiltroAutorTexto(e.target.value)}
                 />
@@ -651,7 +649,7 @@ export function Sidebar({
                         className="sr-only"
                       />
                       <Globe size={14} className="biblio-filter-option__icon-muted" />
-                      <span className="biblio-filter-option__text">{lang.label}</span>
+                      <span className="biblio-filter-option__text"><ST>{lang.label}</ST></span>
                       <span className="biblio-filter-option__count">{lang.count}</span>
                     </label>
                   );
@@ -727,7 +725,7 @@ export function Sidebar({
             className="biblio-sidebar__propose-btn"
             onClick={onAbrirSolicitarModal}
           >
-            <Upload size={15} />
+            <IconoSitio lugar="repo.enviar" size={15} />
             <span>
               <ST>Enviar</ST>
             </span>

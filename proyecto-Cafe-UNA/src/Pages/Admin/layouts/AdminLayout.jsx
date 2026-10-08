@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { LifeBuoy } from "lucide-react";
 
 import AdminRouteLoading from "../../../Components/Admin/AdminRouteLoading";
 import { AdminStockNotificationsBell } from "../../../Components/Admin/AdminStockNotificationsBell";
@@ -13,10 +14,14 @@ import { useSesionProtegida } from "../../../hooks/useSesionProtegida";
 import { applyAdminDocumentTheme } from "../../../lib/adminTheme";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { useTraducir } from "../../../hooks/useTraducir";
+import { useTablasTarjetaMovil } from "../../../hooks/useTablasTarjetaMovil";
 
 function AdminMain({ children }) {
   const { openMobile } = useSidebar();
+  const tManual = useTraducir("Ayuda");
   const [esMobile, setEsMobile] = useState(false);
+  const contenido = useRef(null);
+  useTablasTarjetaMovil(contenido);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
@@ -39,11 +44,19 @@ function AdminMain({ children }) {
         <AdminBreadcrumb />
         <div className="ml-auto flex items-center gap-2">
           <LanguageSwitcher compact className="lang-switch--on-light" />
+          <Link
+            to="/admin/ajustes/manual"
+            aria-label={tManual}
+            title={tManual}
+            className="inline-flex size-9 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+          >
+            <LifeBuoy className="size-5" aria-hidden />
+          </Link>
           <AdminThemeToggle />
           <AdminStockNotificationsBell />
         </div>
       </div>
-      <div className="min-w-0 max-w-full overflow-x-clip p-4 pb-10 md:p-6 md:pb-12">{children}</div>
+      <div ref={contenido} className="min-w-0 max-w-full overflow-x-clip p-4 pb-10 md:p-6 md:pb-12">{children}</div>
     </main>
   );
 }

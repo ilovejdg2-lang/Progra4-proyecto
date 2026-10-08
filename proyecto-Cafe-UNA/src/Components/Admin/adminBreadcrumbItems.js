@@ -60,6 +60,8 @@ export function getAdminBreadcrumbItems(pathname, search) {
     "/admin/ajustes": [admin, ajustes],
     "/admin/ajustes/horarios": [admin, ajustes, crumb("Horarios")],
     "/admin/ajustes/permisos": [admin, ajustes, crumb("Permisos")],
+    "/admin/ajustes/catalogos": [admin, ajustes, crumb("Catálogos")],
+    "/admin/ajustes/manual": [admin, ajustes, crumb("Ayuda")],
     "/admin/ajustes/idioma": [admin, ajustes, crumb("Idioma")],
     "/admin/documentacion": [admin, crumb("Documentación")],
     "/admin/documentacion/solicitudes": [admin, crumb("Documentación", "/admin/documentacion"), crumb("Solicitudes de documentación")],

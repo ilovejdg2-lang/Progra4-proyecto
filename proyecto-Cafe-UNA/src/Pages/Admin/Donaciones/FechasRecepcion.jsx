@@ -613,7 +613,7 @@ export default function AdminFechasRecepcionDonacion() {
               </h3>
             </div>
             <span className="text-xs font-bold text-slate-500">
-              {fechas.length} {fechas.length === 1 ? "registro total" : "registros totales"}
+              {fechas.length} <ST>{fechas.length === 1 ? "registro total" : "registros totales"}</ST>
             </span>
           </div>
           {fechas.length === 0 ? (

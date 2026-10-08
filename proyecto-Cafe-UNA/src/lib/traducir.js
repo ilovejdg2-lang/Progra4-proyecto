@@ -66,6 +66,37 @@ const DICCIONARIO = {
   "Historia": "History",
   "Galería": "Gallery",
   "HISTORIA": "HISTORY",
+  "Equipo": "Team",
+  "Descargar": "Download",
+  "Descargando...": "Downloading...",
+  "Ayuda": "Help",
+  "disp.": "avail.",
+  "En carrito": "In cart",
+  "ítem(s)": "item(s)",
+  "c/u": "each",
+  "Disminuir": "Decrease",
+  "Aumentar": "Increase",
+  "Método de Pago": "Payment method",
+  "Nombre del cliente": "Customer name",
+  "Seleccionar punto de venta...": "Select point of sale...",
+  "Buscar por nombre, código o presentación...": "Search by name, code or size...",
+  "Al cambiar de punto de venta se reiniciará el carrito para validar el inventario del nuevo punto. ¿Deseás continuar?":
+    "Changing the point of sale will reset the cart to check the new point's inventory. Do you want to continue?",
+  "El botón redondo junto a cada campo cambia el ícono que se ve en el pie de página.":
+    "The round button next to each field changes the icon shown in the footer.",
+  "Buscar en la ayuda": "Search help",
+  "Buscar en el menú": "Search the menu",
+  "Próximos días para comprar": "Next days to buy",
+  "Días y horario para retirar en este punto de venta": "Pickup days and hours at this point of sale",
+  "Días y horario para retirar tu pedido": "Days and hours to pick up your order",
+  "Todos los puntos de venta (horario general)": "All points of sale (general schedule)",
+  "Los cambios aplican solo a este punto de venta. Los días sin cambios siguen el horario general.":
+    "Changes apply only to this point of sale. Days without changes follow the general schedule.",
+  "El horario general aplica a todos los puntos de venta, salvo los días que cambiés en un punto.":
+    "The general schedule applies to every point of sale, except the days you change for a specific point.",
+  "Limpiar búsqueda": "Clear search",
+  "No hay opciones con esa búsqueda.": "No options match that search.",
+  "Visualizar": "View",
 
   // Hero / CTAs
   "Ver productos": "View products",

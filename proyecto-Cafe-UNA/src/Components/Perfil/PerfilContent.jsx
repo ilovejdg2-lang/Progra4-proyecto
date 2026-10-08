@@ -13,6 +13,7 @@ import {
 import { applyPerfilToSession, getActiveSessionUser } from "../../services/sessionService";
 import { rutaMisCompras } from "../../Pages/HistorialCompras/rutasCompras";
 import { rutaMisSolicitudes } from "../../Pages/HistorialSolicitudes/HistorialSolicitudesCliente";
+import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../lib/correo";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { inicialDeNombre } from "../../lib/inicialDeNombre";
 import { obtenerOpcionesPaises } from "../../lib/paises";
@@ -26,6 +27,7 @@ import {
   validateNombreUsuario,
   validatePassword,
 } from "../../lib/formLimits";
+import { NumericInput } from "../NumericInput/NumericInput";
 import PageLoading from "../PageLoading/PageLoading";
 import { useTraducir } from "../../hooks/useTraducir";
 import { ST } from "../T/ST";
@@ -43,13 +45,6 @@ function soloLetras(valor, max = 100) {
 
 function soloDigitos(valor, max) {
   return String(valor ?? "").replace(/\D/g, "").slice(0, max);
-}
-
-function soloTelefono(valor) {
-  const texto = String(valor ?? "");
-  const tieneMas = texto.trimStart().startsWith("+");
-  const digitos = texto.replace(/\D/g, "").slice(0, tieneMas ? 14 : 15);
-  return tieneMas ? `+${digitos}` : digitos;
 }
 
 function formatearCedulaJuridica(valor) {
@@ -101,7 +96,7 @@ function buildClienteFormFromPerfil(perfil) {
     tipoDocumento,
     nacionalidad: perfil?.nacionalidad || "",
     nombreLegal: perfil?.nombreLegal || "",
-    telefono: perfil?.telefono || "",
+    telefono: soloDigitos(perfil?.telefono, 15),
     apellido1: apellidos.apellido1,
     apellido2: apellidos.apellido2,
     identificacion: perfil?.identificacion || "",
@@ -110,7 +105,7 @@ function buildClienteFormFromPerfil(perfil) {
     representanteLegal: perfil?.representanteLegal || "",
     cedulaJuridica: perfil?.cedulaJuridica || "",
     direccionFiscal: perfil?.direccionFiscal || "",
-    telefonoOficina: perfil?.telefonoOficina || "",
+    telefonoOficina: soloDigitos(perfil?.telefonoOficina, 15),
   };
 }
 
@@ -586,6 +581,10 @@ export function PerfilContent({ variant = "standalone" }) {
       setEmailErrors((prev) => ({ ...prev, nuevoCorreo: "Ingrese el nuevo correo." }));
       return;
     }
+    if (!esCorreoValido(nuevoCorreo)) {
+      setEmailErrors((prev) => ({ ...prev, nuevoCorreo: MENSAJE_CORREO_INVALIDO }));
+      return;
+    }
     if (!emailForm.passwordActual) {
       setEmailErrors((prev) => ({ ...prev, passwordActual: "Ingrese su contrase\u00f1a actual." }));
       return;
@@ -864,10 +863,11 @@ export function PerfilContent({ variant = "standalone" }) {
                 <span>{tNuevoCorreo}</span>
                 <input
                   type="email"
+                  inputMode="email"
                   value={emailForm.nuevoCorreo}
                   onChange={(e) => {
                     setEmailErrors((prev) => ({ ...prev, nuevoCorreo: "", formulario: "" }));
-                    setEmailForm((prev) => ({ ...prev, nuevoCorreo: e.target.value }));
+                    setEmailForm((prev) => ({ ...prev, nuevoCorreo: limpiarCorreo(e.target.value) }));
                   }}
                   className={emailErrors.nuevoCorreo ? "input-error" : ""}
                   required
@@ -1074,26 +1074,24 @@ export function PerfilContent({ variant = "standalone" }) {
                   </label>
                   <label className="perfil-field">
                     <span><ST>Tel. oficina</ST></span>
-                    <input
+                    <NumericInput
                       value={clienteForm.telefonoOficina}
                       onChange={(e) => setClienteForm((prev) => ({
                         ...prev,
-                        telefonoOficina: soloTelefono(e.target.value),
+                        telefonoOficina: e.target.value,
                       }))}
                       maxLength={15}
-                      inputMode="tel"
                     />
                   </label>
                   <label className="perfil-field">
                     <span><ST>Teléfono</ST></span>
-                    <input
+                    <NumericInput
                       value={clienteForm.telefono}
                       onChange={(e) => setClienteForm((prev) => ({
                         ...prev,
-                        telefono: soloTelefono(e.target.value),
+                        telefono: e.target.value,
                       }))}
                       maxLength={15}
-                      inputMode="tel"
                       required
                     />
                   </label>
@@ -1194,14 +1192,13 @@ export function PerfilContent({ variant = "standalone" }) {
                   </label>
                   <label className="perfil-field">
                     <span><ST>Teléfono</ST></span>
-                    <input
+                    <NumericInput
                       value={clienteForm.telefono}
                       onChange={(e) => setClienteForm((prev) => ({
                         ...prev,
-                        telefono: soloTelefono(e.target.value),
+                        telefono: e.target.value,
                       }))}
                       maxLength={15}
-                      inputMode="tel"
                       required
                     />
                   </label>
