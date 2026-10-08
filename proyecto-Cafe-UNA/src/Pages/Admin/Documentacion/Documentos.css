@@ -661,13 +661,24 @@
   color: #0f172a;
 }
 
+/* Contenedor de formulario que mantiene cabecera y pie de página siempre visibles */
+.admin-form-modal-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  height: 100%;
+  margin: 0;
+}
+
 /* Scroll interno exclusivo para el formulario */
 .admin-form-modal-body {
   padding: 24px;
   overflow-y: auto;
   overscroll-behavior: contain !important;
   flex: 1 1 auto;
-  max-height: calc(90vh - 140px);
+  min-height: 0;
 }
 
 .admin-form-grid {

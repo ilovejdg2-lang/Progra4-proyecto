@@ -196,9 +196,9 @@ const Registro = () => {
   const tSubtitulo = useTraducir(
     upgradeMode
       ? 'Completá tus datos para obtener el rol de cliente y poder comprar.'
-      : 'Registrate como persona natural o persona jurídica para comprar en Café UNA.',
+      : 'Registrate como persona física o persona jurídica para comprar en Café UNA.',
   );
-  const tPersona = useTraducir('Persona natural');
+  const tPersona = useTraducir('Persona física'); 
   const tEmpresa = useTraducir('Persona jurídica');
   const tNombre = useTraducir('Nombre');
   const tApellido1 = useTraducir('Apellido 1');

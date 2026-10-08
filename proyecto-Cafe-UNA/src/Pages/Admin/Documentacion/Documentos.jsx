@@ -66,7 +66,7 @@ const FORM_DOCUMENTO_INICIAL = {
   descripcion: "",
   categoria: "",
   subcategoria: "",
-  esPrivado: false,
+  esPrivado: true, // Privado por defecto para flujo administrativo y repositorio
   autor: "Proyecto Café-UNA",
   version: "1.0",
   palabrasClave: "",
