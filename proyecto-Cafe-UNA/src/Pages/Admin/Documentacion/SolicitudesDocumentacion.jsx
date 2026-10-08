@@ -47,6 +47,7 @@ export default function SolicitudesDocumentacion() {
   // Filtros
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const [filtroBuscar, setFiltroBuscar] = useState("");
+  const tPhBuscar = useTraducir("Buscar por solicitante, correo o documento...");
 
   // Modal para atender solicitud
   const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
@@ -184,7 +185,7 @@ export default function SolicitudesDocumentacion() {
               <Search size={16} className="text-slate-400" />
               <input
                 type="text"
-                placeholder="Buscar por solicitante, correo o documento..."
+                placeholder={tPhBuscar}
                 value={filtroBuscar}
                 onChange={(e) => setFiltroBuscar(e.target.value)}
               />
@@ -237,12 +238,12 @@ export default function SolicitudesDocumentacion() {
               <table className="admin-docs-table">
                 <thead>
                   <tr>
-                    <th>Solicitante</th>
-                    <th>Documento Solicitado</th>
-                    <th>Justificación / Motivo</th>
-                    <th>Fecha</th>
-                    <th>Estado</th>
-                    <th className="text-right">Acciones</th>
+                    <th><ST>Solicitante</ST></th>
+                    <th><ST>Documento Solicitado</ST></th>
+                    <th><ST>Justificación / Motivo</ST></th>
+                    <th><ST>Fecha</ST></th>
+                    <th><ST>Estado</ST></th>
+                    <th className="text-right"><ST>Acciones</ST></th>
                   </tr>
                 </thead>
                 <tbody>

@@ -278,6 +278,81 @@ body.admin-route-active #root {
   opacity: 0.7;
 }
 
+/* Celular: cada fila de tabla es una tarjeta con "columna: valor" (data-label lo pone useTablasTarjetaMovil) */
+@media (max-width: 767px) {
+  table.tabla-tarjetas {
+    display: block;
+    width: 100% !important;
+    min-width: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  table.tabla-tarjetas > thead {
+    display: none;
+  }
+
+  table.tabla-tarjetas > tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  table.tabla-tarjetas > tbody > tr {
+    display: block;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 1rem;
+    background: #fff;
+    padding: 0.5rem 0;
+  }
+
+  table.tabla-tarjetas > tbody > tr > td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.35rem 0.75rem;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 0.45rem 1rem !important;
+    border: 0 !important;
+    position: static !important;
+    text-align: left !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+  }
+
+  table.tabla-tarjetas > tbody > tr > td::before {
+    content: attr(data-label);
+    flex: 0 0 38%;
+    min-width: 0;
+    color: #64748b;
+    font-size: var(--text-body);
+    font-weight: 600;
+    letter-spacing: normal;
+    text-transform: none;
+  }
+
+  table.tabla-tarjetas > tbody > tr > td[data-label=""]::before {
+    content: none;
+  }
+
+  table.tabla-tarjetas > tbody > tr > td > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  html.admin-theme-dark table.tabla-tarjetas > tbody > tr {
+    border-color: #1e293b !important;
+    background: #0f172a;
+  }
+
+  html.admin-theme-dark table.tabla-tarjetas > tbody > tr > td::before {
+    color: #94a3b8;
+  }
+}
+
 /* Solo catálogo de productos: alto acotado + scroll interno (si se usa) */
 .admin-table-shell--constrained {
   max-height: min(70vh, 640px);

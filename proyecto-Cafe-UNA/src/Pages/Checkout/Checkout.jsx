@@ -18,6 +18,7 @@ import { marcarIntentRegistroCliente, puedeComprar } from '../../services/authSe
 import { clearCart, getStoredCart } from '../../lib/cartStorage';
 import { confirmarCompraEnBackend, validarComprobante } from './checkoutValidation';
 import { CheckoutConfirmacion } from './CheckoutConfirmacion';
+import { HorarioCompra } from '../ProductDetail/HorarioCompra';
 import { rutaMisCompras } from '../HistorialCompras/rutasCompras';
 import { cargarLogoWebpParaPdf, descargarArchivo } from '../../lib/exportarHistorialMovimientos';
 import { LOGO_OSCURO_FALLBACK } from '../../lib/brandLogoCache';
@@ -167,6 +168,7 @@ const Checkout = () => {
       }),
     [puntosVenta, stockPorProducto, cartItems],
   );
+  const puntoElegido = puntosConDisponibilidad.find((punto) => punto.code === ubicacionCodigo) || null;
 
   useEffect(() => {
     if (!ubicacionCodigo) return;
@@ -359,6 +361,7 @@ const Checkout = () => {
         clienteNombre: compra?.clienteNombre || payload.clienteNombre,
         clienteCorreo: compra?.clienteCorreo || payload.clienteCorreo,
         metodoPago: compra?.metodoPago || 'Comprobante',
+        ubicacionId: compra?.ubicacionId || punto.id,
         ubicacionNombre: compra?.ubicacionNombre || punto.name,
         ubicacionCodigo: compra?.ubicacionCodigo || punto.code,
         subtotal: Number.isFinite(Number(compra?.subtotal)) ? Number(compra.subtotal) : subtotalSinIva,
@@ -497,6 +500,13 @@ const Checkout = () => {
                 })}
               </div>
             )}
+            {puntoElegido?.id ? (
+              <HorarioCompra
+                ubicacionId={puntoElegido.id}
+                titulo="Días y horario para retirar en este punto de venta"
+                variante="tarjeta"
+              />
+            ) : null}
           </section>
         ) : null}
       </section>

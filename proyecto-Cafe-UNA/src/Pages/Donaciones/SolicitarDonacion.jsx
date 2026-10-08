@@ -5,14 +5,11 @@ import {
   CalendarX2,
   Check,
   Clock,
-  FileText,
-  MapPin,
   Package,
   Phone,
-  Truck,
   UploadCloud,
-  User,
 } from "lucide-react";
+import { IconoSitio } from "../../Components/IconoSitio/IconoSitio";
 import { format, isBefore, startOfDay } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
@@ -39,6 +36,8 @@ import {
   MAX_PALABRAS_TITULO,
 } from "../../lib/formLimits";
 import { useTraducir } from "../../hooks/useTraducir";
+import { useCatalogo } from "../../hooks/useCatalogo";
+import { TIPOS_CATALOGO } from "../../services/catalogosService";
 import { ST } from "../../Components/T/ST";
 import { SelectFiltro } from "../../Components/ui/SelectFiltro";
 import { ImageLightbox } from "../../Components/ImageLightbox/ImageLightbox";
@@ -60,7 +59,7 @@ import {
 import "../Voluntariado/SolicitarVoluntariado.css";
 import "./SolicitarDonacion.css";
 
-function SectionCard({ icon: Icon, paso, title, hint, children }) {
+function SectionCard({ lugar, paso, title, hint, children }) {
   return (
     <div className="section-card">
       <div className="section-card__header">
@@ -73,7 +72,7 @@ function SectionCard({ icon: Icon, paso, title, hint, children }) {
           </span>
           {title}
         </h4>
-        {Icon ? <Icon size={20} className="section-card__icon-inline" aria-hidden="true" /> : null}
+        {lugar ? <IconoSitio lugar={lugar} size={20} className="section-card__icon-inline" /> : null}
         {hint ? <span className="section-card__hint">{hint}</span> : null}
       </div>
       <div className="section-card__body">{children}</div>
@@ -81,6 +80,7 @@ function SectionCard({ icon: Icon, paso, title, hint, children }) {
   );
 }
 
+/** Respaldo si no carga el catálogo de Ajustes. */
 const ESTADOS_ARTICULOS = [
   "Nuevo",
   "Usado en buen estado",
@@ -213,6 +213,7 @@ function crearFormularioInicial(user, necesidadId = "") {
 }
 
 export default function SolicitarDonacion() {
+  const estadosArticulos = useCatalogo(TIPOS_CATALOGO.estadoArticulo, ESTADOS_ARTICULOS);
   const navigate = useNavigate();
   const params = useParams({ strict: false });
   const search = useRouterState({ select: (state) => state.location.search });
@@ -329,6 +330,7 @@ export default function SolicitarDonacion() {
   fotosRef.current = fotos;
   const esPersona = formulario.tipoDonante === "persona";
   const tipoDocumento = formulario.tipoDocumento;
+  const tPhIdentificacion = useTraducir(placeholderIdentificacion(tipoDocumento));
   const esPasaporte = esPersona && tipoDocumento === "pasaporte";
   const etiquetaDocumento = tipoDocumento === "dimex" ? tDimex : tipoDocumento === "pasaporte" ? tPasaporte : tCedula;
   const opcionesPais = useMemo(() => obtenerOpcionesPaises(idioma), [idioma]);
@@ -928,14 +930,16 @@ export default function SolicitarDonacion() {
               <ul className="donacion-intro__cats">
                 {necesidades.map((item) => (
                   <li key={item.id}>
-                    <strong>{item.titulo}</strong>
+                    <strong><ST>{item.titulo}</ST></strong>
                     {item.materiales?.length ? (
                       <span>
-                        {(item.materiales || [])
-                          .filter((mat) => !mat.estado || mat.estado === "ACTIVA")
-                          .slice(0, 4)
-                          .map((mat) => mat.nombre)
-                          .join(", ")}
+                        <ST>
+                          {(item.materiales || [])
+                            .filter((mat) => !mat.estado || mat.estado === "ACTIVA")
+                            .slice(0, 4)
+                            .map((mat) => mat.nombre)
+                            .join(", ")}
+                        </ST>
                       </span>
                     ) : null}
                   </li>
@@ -956,7 +960,7 @@ export default function SolicitarDonacion() {
               onPointerDownCapture={handleFormInteractionCapture}
             >
               <div className="form-secciones">
-                <SectionCard paso={1} icon={User} title={tDonante}>
+                <SectionCard paso={1} lugar="donacion.donante" title={tDonante}>
                   <div className="campo full tipo-postulacion">
                     <p className="campo-pregunta">
                       {tQuien}<span className="req">*</span>
@@ -1034,7 +1038,7 @@ export default function SolicitarDonacion() {
                             <input
                               type="text"
                               name="identificacion"
-                              placeholder={placeholderIdentificacion(tipoDocumento)}
+                              placeholder={tPhIdentificacion}
                               value={formulario.identificacion}
                               onChange={handleChange}
                               maxLength={LIMITE_IDENTIFICACION.pasaporte}
@@ -1043,7 +1047,7 @@ export default function SolicitarDonacion() {
                           ) : (
                             <NumericInput
                               name="identificacion"
-                              placeholder={placeholderIdentificacion(tipoDocumento)}
+                              placeholder={tPhIdentificacion}
                               value={formulario.identificacion}
                               onChange={handleChange}
                               onBlur={handleIdentificacionBlur}
@@ -1175,7 +1179,7 @@ export default function SolicitarDonacion() {
                   </div>
                 </SectionCard>
 
-                <SectionCard paso={2} icon={Package} title={tDetalles} hint={tDetallesHint}>
+                <SectionCard paso={2} lugar="donacion.detalles" title={tDetalles} hint={tDetallesHint}>
                   <div className="campo">
                     <label>
                       {tCategoria} <span className="req">*</span>
@@ -1246,7 +1250,7 @@ export default function SolicitarDonacion() {
                       </label>
                       <SelectFiltro name="estadoArticulos" value={formulario.estadoArticulos} onChange={handleChange}>
                         <option value="">{tSeleccione}</option>
-                        {ESTADOS_ARTICULOS.map((estado) => (
+                        {estadosArticulos.map((estado) => (
                           <option key={estado} value={estado}>
                             {estado}
                           </option>
@@ -1341,7 +1345,7 @@ export default function SolicitarDonacion() {
                   </div>
                 </SectionCard>
 
-                <SectionCard paso={3} icon={MapPin} title={tUbicacion} hint={tUbicacionHint}>
+                <SectionCard paso={3} lugar="donacion.ubicacion" title={tUbicacion} hint={tUbicacionHint}>
                   <div className="form-grid">
                     <div className="campo">
                       <label>
@@ -1395,7 +1399,7 @@ export default function SolicitarDonacion() {
                   </div>
                 </SectionCard>
 
-                <SectionCard paso={4} icon={Truck} title={tLogistica} hint={tLogisticaHint}>
+                <SectionCard paso={4} lugar="donacion.logistica" title={tLogistica} hint={tLogisticaHint}>
                   <div className="campo">
                     <p className="campo-pregunta">
                       {tMetodo} <span className="req">*</span>
@@ -1574,7 +1578,7 @@ export default function SolicitarDonacion() {
                   ) : null}
                 </SectionCard>
 
-                <SectionCard paso={5} icon={FileText} title={tDeclaracion} hint={tDeclaracionHint}>
+                <SectionCard paso={5} lugar="donacion.declaracion" title={tDeclaracion} hint={tDeclaracionHint}>
                   <div className="campo">
                     <label>{tFecha}</label>
                     <input

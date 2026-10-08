@@ -27,6 +27,7 @@ function mapBloque(row) {
     disponible: row.disponible ?? row.Disponible ?? true,
     cupoMaximo: row.cupoMaximo ?? row.CupoMaximo ?? null,
     nota: row.nota ?? row.Nota ?? "",
+    ubicacionId: Number(row.ubicacionId ?? row.UbicacionId) || null,
   };
 }
 
@@ -66,8 +67,11 @@ export async function obtenerReglasHorario() {
   };
 }
 
-export async function listarDisponibilidad(tipo) {
-  const qs = tipo ? `?tipo=${encodeURIComponent(tipo)}` : "";
+export async function listarDisponibilidad(tipo, ubicacionId = null) {
+  const params = new URLSearchParams();
+  if (tipo) params.set("tipo", tipo);
+  if (ubicacionId) params.set("ubicacionId", String(ubicacionId));
+  const qs = params.size ? `?${params}` : "";
   const data = await apiRequest(`${BASE}/disponibilidad${qs}`);
   if (Array.isArray(data)) {
     return {
@@ -91,10 +95,11 @@ export async function listarDisponibilidad(tipo) {
   };
 }
 
-export async function listarDisponibilidadPublica(tipo, desde, hasta) {
+export async function listarDisponibilidadPublica(tipo, desde, hasta, ubicacionId = null) {
   const params = new URLSearchParams({ tipo: tipo || "visitas" });
   if (desde) params.set("desde", desde);
   if (hasta) params.set("hasta", hasta);
+  if (ubicacionId) params.set("ubicacionId", String(ubicacionId));
   const data = await apiRequest(`${BASE}/disponibilidad/publica?${params}`, {
     skipAuth: true,
   });
@@ -121,11 +126,10 @@ export async function eliminarDisponibilidad(id) {
   await apiRequest(`${BASE}/disponibilidad/${id}`, { method: "DELETE" });
 }
 
-export async function eliminarExcepcionPorFecha(tipo, fecha) {
-  await apiRequest(
-    `${BASE}/disponibilidad?tipo=${encodeURIComponent(tipo)}&fecha=${encodeURIComponent(fecha)}`,
-    { method: "DELETE" },
-  );
+export async function eliminarExcepcionPorFecha(tipo, fecha, ubicacionId = null) {
+  const params = new URLSearchParams({ tipo, fecha });
+  if (ubicacionId) params.set("ubicacionId", String(ubicacionId));
+  await apiRequest(`${BASE}/disponibilidad?${params}`, { method: "DELETE" });
 }
 
 export async function crearDisponibilidad(payload) {

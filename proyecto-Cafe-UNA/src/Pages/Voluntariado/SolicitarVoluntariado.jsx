@@ -2,19 +2,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   AlertCircle,
-  CalendarCheck2,
   CalendarDays,
   CalendarX2,
   Check,
   Clock,
   FileText,
-  Mail,
   Sprout,
   Trash2,
   UploadCloud,
-  User,
-  Users,
 } from "lucide-react";
+import { IconoSitio } from "../../Components/IconoSitio/IconoSitio";
 import { format, isBefore, startOfDay } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
@@ -39,6 +36,7 @@ import {
 import { Calendar } from "@/Components/ui/calendar";
 import { queueFocusFormError } from "../../lib/formFocus";
 import { filtrarEnteros } from "../../lib/numericInput";
+import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../lib/correo";
 import {
   limitarPalabras,
   MAX_PALABRAS_TITULO,
@@ -58,7 +56,7 @@ import { ST } from "../../Components/T/ST";
 import { SelectFiltro } from "../../Components/ui/SelectFiltro";
 import "./SolicitarVoluntariado.css";
 
-function SectionCard({ icon: Icon, paso, title, hint, children }) {
+function SectionCard({ lugar, paso, title, hint, children }) {
   return (
     <div className="section-card">
       <div className="section-card__header">
@@ -75,7 +73,7 @@ function SectionCard({ icon: Icon, paso, title, hint, children }) {
           ) : null}
           {title}
         </h4>
-        {Icon ? <Icon size={20} className="section-card__icon-inline" aria-hidden="true" /> : null}
+        {lugar ? <IconoSitio lugar={lugar} size={20} className="section-card__icon-inline" /> : null}
         {hint ? <span className="section-card__hint">{hint}</span> : null}
       </div>
       <div className="section-card__body">{children}</div>
@@ -228,6 +226,7 @@ function SolicitarVoluntariado() {
   const esGrupal = formulario.modalidad === "grupal";
   const esTipoOtro = formulario.tipo === "Otro";
   const tipoDocumento = formulario.tipoDocumento;
+  const tPhIdentificacion = useTraducir(placeholderIdentificacion(tipoDocumento));
   const esPasaporte = tipoDocumento === "pasaporte";
   const etiquetaDocumento = tipoDocumento === "dimex" ? tDimex : esPasaporte ? tPasaporte : tCedula;
   const opcionesPais = useMemo(() => obtenerOpcionesPaises(idioma), [idioma]);
@@ -511,7 +510,7 @@ function SolicitarVoluntariado() {
     }
 
     if (name === "correo") {
-      valor = valor.toLowerCase();
+      valor = limpiarCorreo(valor).toLowerCase();
     }
 
     if (name === "telefono") {
@@ -629,8 +628,8 @@ function SolicitarVoluntariado() {
 
     const correo = formulario.correo?.trim();
     if (!correo) nuevosErrores.correo = "El correo es obligatorio";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
-      nuevosErrores.correo = "Correo electrónico inválido";
+    else if (!esCorreoValido(correo)) {
+      nuevosErrores.correo = MENSAJE_CORREO_INVALIDO;
     }
 
     const telefono = formulario.telefono?.trim();
@@ -851,7 +850,7 @@ function SolicitarVoluntariado() {
               <div className="form-secciones">
                 <SectionCard
                   paso={pasos.personal}
-                  icon={User}
+                  lugar="voluntariado.personal"
                   title={esGrupal ? tInfoResponsable : tInfoPersonal}
                   hint={esGrupal ? tInfoResponsableHint : tInfoPersonalHint}
                 >
@@ -904,7 +903,7 @@ function SolicitarVoluntariado() {
                         <input
                           type="text"
                           name="identificacion"
-                          placeholder={placeholderIdentificacion(tipoDocumento)}
+                          placeholder={tPhIdentificacion}
                           value={formulario.identificacion}
                           onChange={handleChange}
                           maxLength={LIMITE_IDENTIFICACION.pasaporte}
@@ -913,7 +912,7 @@ function SolicitarVoluntariado() {
                       ) : (
                         <NumericInput
                           name="identificacion"
-                          placeholder={placeholderIdentificacion(tipoDocumento)}
+                          placeholder={tPhIdentificacion}
                           value={formulario.identificacion}
                           onChange={handleChange}
                           onBlur={handleIdentificacionBlur}
@@ -1015,7 +1014,7 @@ function SolicitarVoluntariado() {
 
                 <SectionCard
                   paso={pasos.contacto}
-                  icon={Mail}
+                  lugar="voluntariado.contacto"
                   title={esGrupal ? tContactoResp : tContacto}
                 >
                   <div className="form-grid">
@@ -1025,6 +1024,8 @@ function SolicitarVoluntariado() {
                       </label>
                       <input
                         type="email"
+                        inputMode="email"
+                        autoComplete="email"
                         name="correo"
                         placeholder="correo@ejemplo.com"
                         value={formulario.correo}
@@ -1054,7 +1055,7 @@ function SolicitarVoluntariado() {
                 {esGrupal && (
                   <SectionCard
                     paso={pasos.grupo}
-                    icon={Users}
+                    lugar="voluntariado.grupo"
                     title={tInfoGrupo}
                     hint={tInfoGrupoHint}
                   >
@@ -1128,7 +1129,7 @@ function SolicitarVoluntariado() {
 
                 <SectionCard
                   paso={pasos.tipo}
-                  icon={Sprout}
+                  lugar="voluntariado.tipo"
                   title={tPaso1}
                   hint={tPaso1Hint}
                 >
@@ -1164,7 +1165,7 @@ function SolicitarVoluntariado() {
                             {tieneFechas ? (
                               <span className="opcion-radio__badge-disponible">
                                 <CalendarDays className="size-3" />
-                                <span>{count} {count === 1 ? "fecha disponible" : "fechas disponibles"}</span>
+                                <span>{count} <ST>{count === 1 ? "fecha disponible" : "fechas disponibles"}</ST></span>
                               </span>
                             ) : (
                               <span className="opcion-radio__badge-nodisponible">
@@ -1212,7 +1213,7 @@ function SolicitarVoluntariado() {
 
                 <SectionCard
                   paso={pasos.fecha}
-                  icon={CalendarCheck2}
+                  lugar="voluntariado.fechas"
                   title={tPaso2}
                   hint={tPaso2Hint}
                 >
@@ -1299,7 +1300,7 @@ function SolicitarVoluntariado() {
 
                 <SectionCard
                   paso={pasos.horario}
-                  icon={Clock}
+                  lugar="voluntariado.horario"
                   title={tPaso3}
                   hint={tPaso3Hint}
                 >

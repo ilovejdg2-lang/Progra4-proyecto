@@ -33,8 +33,11 @@ import {
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { AdminModal } from "../../../Components/Admin/ui/AdminModal";
 import { ST } from "../../../Components/T/ST";
+import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
 import { tabDeSearch } from "../../../Components/Admin/adminBreadcrumbItems";
+import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
+import { filtrarEnteros } from "../../../lib/numericInput";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
@@ -287,7 +290,7 @@ function ModalEditarVisita({ solicitud, onGuardar, onCerrar }) {
   const [form, setForm] = useState({
     encargadoNombre: solicitud.encargadoNombre || "",
     encargadoEmail: solicitud.encargadoEmail || "",
-    encargadoTelefono: solicitud.encargadoTelefono || "",
+    encargadoTelefono: filtrarEnteros(solicitud.encargadoTelefono).slice(0, 15),
     encargadoInstitucion: solicitud.encargadoInstitucion || "",
     cantidadVisitantes: solicitud.cantidadVisitantes || 2,
     tipoGrupo: solicitud.tipoGrupo || "",
@@ -295,9 +298,19 @@ function ModalEditarVisita({ solicitud, onGuardar, onCerrar }) {
     observaciones: solicitud.observaciones || "",
   });
   const [guardando, setGuardando] = useState(false);
+  const [errorForm, setErrorForm] = useState("");
 
   const guardar = async (e) => {
     e.preventDefault();
+    if (!esCorreoValido(form.encargadoEmail)) {
+      setErrorForm(MENSAJE_CORREO_INVALIDO);
+      return;
+    }
+    if (Number(form.cantidadVisitantes) < 2) {
+      setErrorForm("Las visitas grupales requieren al menos 2 personas.");
+      return;
+    }
+    setErrorForm("");
     setGuardando(true);
     try {
       await onGuardar(solicitud.id, {
@@ -354,19 +367,20 @@ function ModalEditarVisita({ solicitud, onGuardar, onCerrar }) {
               <ST>Correo electrónico</ST>
               <input
                 type="email"
+                inputMode="email"
                 value={form.encargadoEmail}
-                onChange={(e) => setForm((c) => ({ ...c, encargadoEmail: e.target.value }))}
+                onChange={(e) => setForm((c) => ({ ...c, encargadoEmail: limpiarCorreo(e.target.value) }))}
                 className="rounded-2xl border border-slate-300 p-2.5 text-xs sm:text-sm focus:border-slate-950 focus:outline-hidden"
                 required
               />
             </label>
             <label className="grid gap-1 text-xs font-semibold text-slate-700">
               <ST>Teléfono</ST>
-              <input
-                type="text"
+              <NumericInput
                 value={form.encargadoTelefono}
                 onChange={(e) => setForm((c) => ({ ...c, encargadoTelefono: e.target.value }))}
                 className="rounded-2xl border border-slate-300 p-2.5 text-xs sm:text-sm focus:border-slate-950 focus:outline-hidden"
+                maxLength={15}
                 required
               />
             </label>
@@ -374,12 +388,11 @@ function ModalEditarVisita({ solicitud, onGuardar, onCerrar }) {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="grid gap-1 text-xs font-semibold text-slate-700">
               <ST>Cantidad de visitantes</ST>
-              <input
-                type="number"
-                min="2"
+              <NumericInput
                 value={form.cantidadVisitantes}
                 onChange={(e) => setForm((c) => ({ ...c, cantidadVisitantes: e.target.value }))}
                 className="rounded-2xl border border-slate-300 p-2.5 text-xs sm:text-sm focus:border-slate-950 focus:outline-hidden"
+                maxLength={4}
                 required
               />
             </label>
@@ -415,6 +428,11 @@ function ModalEditarVisita({ solicitud, onGuardar, onCerrar }) {
               className="rounded-2xl border border-slate-300 p-2.5 text-xs sm:text-sm focus:border-slate-950 focus:outline-hidden resize-none"
             />
           </label>
+          {errorForm ? (
+            <p className="text-[length:var(--text-body)] font-semibold text-rose-700" role="alert">
+              <ST>{errorForm}</ST>
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-row flex-wrap justify-end gap-2 border-t border-slate-200 px-6 py-4">
           <button
@@ -629,7 +647,7 @@ export default function AdminVisitas() {
             }`}
           >
             <ClipboardList className="size-4" />
-            <span>Solicitudes registradas</span>
+            <span><ST>Solicitudes registradas</ST></span>
           </button>
 
           <button
@@ -642,7 +660,7 @@ export default function AdminVisitas() {
             }`}
           >
             <CalendarDays className="size-4" />
-            <span>Gestión de fechas de visitas</span>
+            <span><ST>Gestión de fechas de visitas</ST></span>
           </button>
         </div>
 

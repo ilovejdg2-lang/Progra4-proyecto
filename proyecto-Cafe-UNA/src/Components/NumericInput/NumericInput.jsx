@@ -13,6 +13,7 @@ export function NumericInput({
   onKeyDown,
   onPaste,
   onBeforeInput,
+  autoComplete = "off",
   ...rest
 }) {
   const sanitize = (raw) => {
@@ -49,7 +50,7 @@ export function NumericInput({
       type="text"
       inputMode={decimal ? "decimal" : "numeric"}
       pattern={decimal ? "[0-9]*[.,]?[0-9]*" : "[0-9]*"}
-      autoComplete="off"
+      autoComplete={autoComplete}
       value={value ?? ""}
       onBeforeInput={(event) => {
         onBeforeInput?.(event);

@@ -19,6 +19,8 @@ import {
   validatePassword,
 } from '../../lib/formLimits';
 import { queueFocusFormError } from '../../lib/formFocus';
+import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from '../../lib/correo';
+import { NumericInput } from '../../Components/NumericInput/NumericInput';
 import { saveAuthenticatedUser } from '../../services/sessionService';
 import { useTraducir } from '../../hooks/useTraducir';
 import { ST } from '../../Components/T/ST';
@@ -264,7 +266,11 @@ const Login = () => {
   const validateRegisterForm = () => {
     const nextErrors = {
       nombre: validateNombreUsuario(registerForm.nombre),
-      correo: registerForm.correo.trim() ? '' : 'Ingrese su correo.',
+      correo: !registerForm.correo.trim()
+        ? 'Ingrese su correo.'
+        : esCorreoValido(registerForm.correo)
+          ? ''
+          : MENSAJE_CORREO_INVALIDO,
       password: validatePassword(registerForm.password),
       confirmPassword: '',
     };
@@ -565,7 +571,7 @@ const Login = () => {
                 value={registerForm.correo}
                 onChange={(e) => {
                   setRegisterFieldErrors((prev) => ({ ...prev, correo: '' }));
-                  setRegisterForm((prev) => ({ ...prev, correo: e.target.value }));
+                  setRegisterForm((prev) => ({ ...prev, correo: limpiarCorreo(e.target.value) }));
                 }}
                 className={registerFieldErrors.correo ? 'input-error' : ''}
                 aria-invalid={Boolean(registerFieldErrors.correo)}
@@ -643,17 +649,15 @@ const Login = () => {
             </p>
             <div className="login-field">
               <label htmlFor="registerToken">{tCodigoRecibido}</label>
-              <input
+              <NumericInput
                 id="registerToken"
-                type="text"
-                inputMode="numeric"
                 autoComplete="one-time-code"
                 maxLength={5}
                 value={registerForm.token}
                 onChange={(e) =>
                   setRegisterForm((prev) => ({
                     ...prev,
-                    token: e.target.value.replace(/\D/g, '').slice(0, 5),
+                    token: e.target.value,
                   }))
                 }
                 placeholder="5 dígitos"
@@ -699,17 +703,15 @@ const Login = () => {
             <form className="login-form login-form--compact" onSubmit={handleResetPassword} noValidate>
               <div className="login-field">
                 <label htmlFor="recoverToken">{tCodigoRecibido}</label>
-                <input
+                <NumericInput
                   id="recoverToken"
-                  type="text"
-                  inputMode="numeric"
                   autoComplete="one-time-code"
                   maxLength={5}
                   value={recoverForm.token}
                   onChange={(e) =>
                     setRecoverForm((prev) => ({
                       ...prev,
-                      token: e.target.value.replace(/\D/g, '').slice(0, 5),
+                      token: e.target.value,
                     }))
                   }
                   placeholder="5 dígitos"

@@ -49,7 +49,7 @@ describe("SalidaInventarioForm", () => {
 
     const recipient = screen.getByRole("textbox", { name: "Destinatario" });
     expect(recipient).toBeRequired();
-    await user.type(screen.getByRole("spinbutton", { name: "Cantidad" }), "1");
+    await user.type(screen.getByRole("textbox", { name: "Cantidad" }), "1");
     await user.click(screen.getByRole("button", { name: "Registrar salida" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/destinatario/i);
@@ -73,7 +73,7 @@ describe("SalidaInventarioForm", () => {
     await user.selectOptions(screen.getByRole("combobox", { name: "Producto" }), "101");
     await user.selectOptions(screen.getByRole("combobox", { name: "Motivo de salida" }), "2");
     await user.type(screen.getByRole("textbox", { name: "Destinatario" }), "Fundación Café UNA");
-    await user.type(screen.getByRole("spinbutton", { name: "Cantidad" }), "3");
+    await user.type(screen.getByRole("textbox", { name: "Cantidad" }), "3");
     await user.click(screen.getByRole("button", { name: "Registrar salida" }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({
@@ -91,7 +91,7 @@ describe("SalidaInventarioForm", () => {
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Producto" }), "101");
     await user.selectOptions(screen.getByRole("combobox", { name: "Motivo de salida" }), "1");
-    fireEvent.change(screen.getByRole("spinbutton", { name: "Cantidad" }), { target: { value: "9" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Cantidad" }), { target: { value: "9" } });
     await user.click(screen.getByRole("button", { name: "Registrar salida" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/stock disponible|máximo/i);

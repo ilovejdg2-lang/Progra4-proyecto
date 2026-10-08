@@ -31,6 +31,10 @@ import {
   Shield,
   ShieldCheck,
   HandCoins,
+  LifeBuoy,
+  ListChecks,
+  Search,
+  X,
 } from "lucide-react";
 
 import {
@@ -78,6 +82,8 @@ import {
 import { readBrandLogos, LOGO_CLARO_FALLBACK, LOGO_OSCURO_FALLBACK, cacheBrandLogos } from "../../lib/brandLogoCache";
 import { ST } from "../T/ST";
 import { textoUi } from "../../lib/textoVisible";
+import { traducirSync } from "../../lib/traducir";
+import { useTraducir } from "../../hooks/useTraducir";
 
 const GENERAL_OPEN_KEY = "admin-sidebar-general-open";
 const INVENTORY_OPEN_KEY = "admin-sidebar-inventory-open";
@@ -92,6 +98,13 @@ const MI_CUENTA_OPEN_KEY = "admin-sidebar-mi-cuenta-open";
 const linkActivo = {
   className: "text-slate-950",
 };
+
+function claveBusqueda(texto) {
+  return String(texto ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
 
 export function AppSidebar() {
   const [user, setUser] = useState(() => getActiveSessionUser());
@@ -168,6 +181,55 @@ export function AppSidebar() {
     tienePermiso(roles, "ingresar_solicitud_voluntariado") ||
     tienePermiso(roles, "crear_solicitud_visitante");
   const puedeMiCuenta = puedePerfil || puedeMisCompras || puedeMisSolicitudes;
+
+  const [busqueda, setBusqueda] = useState("");
+  const tBuscarMenu = useTraducir("Buscar en el menú");
+  const tLimpiarBusqueda = useTraducir("Limpiar búsqueda");
+  const enlacesBuscables = [
+    { to: "/admin/informacion-pagina-principal", etiqueta: "Información página principal", grupo: "Configuración general del sitio", icono: Info, ver: puedeCms },
+    { to: "/admin/sobre-nosotros", etiqueta: "Historia", grupo: "Sobre nosotros", icono: Landmark, ver: puedeCms },
+    { to: "/admin/historia-completa", etiqueta: "Historia completa", grupo: "Sobre nosotros", icono: ScrollText, ver: puedeCms },
+    { to: "/admin/galeria", etiqueta: "Galería", grupo: "Sobre nosotros", icono: Image, ver: puedeGaleria },
+    { to: "/admin/equipo", etiqueta: "Equipo", grupo: "Sobre nosotros", icono: Users, ver: puedeCms },
+    { to: "/admin/producto", etiqueta: "Producto", grupo: "Manejo de inventario", icono: Box, ver: puedeProductos },
+    { to: "/admin/puntos-venta", etiqueta: "Puntos de venta", grupo: "Manejo de inventario", icono: Store, ver: puedePuntosVenta },
+    { to: "/admin/activos-fijos", etiqueta: "Activos fijos", grupo: "Manejo de inventario", icono: Wrench, ver: puedeActivosFijos },
+    { to: "/admin/distribucion", etiqueta: "Distribución", grupo: "Manejo de inventario", icono: Truck, ver: puedeDistribucion },
+    { to: "/admin/salidas-inventario", etiqueta: "Salidas de bodega", grupo: "Manejo de inventario", icono: PackageMinus, ver: puedeSalidasBodega },
+    { to: "/admin/historial-movimientos", etiqueta: "Historial de movimientos", grupo: "Manejo de inventario", icono: History, ver: puedeInventario },
+    { to: "/admin/ventas-presenciales", etiqueta: "Ventas presenciales", grupo: "Manejo de inventario", icono: ShoppingBag, ver: puedeVentasPresenciales },
+    { to: "/admin/ventas-pendientes", etiqueta: "Ventas pendientes", grupo: "Manejo de inventario", icono: ClipboardCheck, ver: puedeVentas },
+    { to: "/admin/historial-ventas", etiqueta: "Historial de ventas", grupo: "Manejo de inventario", icono: Receipt, ver: puedeVentas },
+    { to: "/admin/voluntariado", etiqueta: "Voluntariado", grupo: "Voluntariado", icono: HandHeart, ver: puedeVoluntariado },
+    { to: "/admin/voluntariado", search: { tab: "fechas" }, etiqueta: "Fechas disponibles", grupo: "Voluntariado", icono: CalendarDays, ver: puedeVoluntariado },
+    { to: "/admin/visitas", etiqueta: "Visitas grupales", grupo: "Visitas grupales", icono: Users, ver: puedeVisitas },
+    { to: "/admin/visitas", search: { tab: "fechas" }, etiqueta: "Fechas disponibles", grupo: "Visitas grupales", icono: CalendarDays, ver: puedeVisitas },
+    { to: "/admin/donaciones/necesidades", etiqueta: "Necesidades de donación", grupo: "Donaciones", icono: HandCoins, ver: puedeDonacionesNecesidades },
+    { to: "/admin/donaciones/solicitudes", etiqueta: "Solicitudes de donación", grupo: "Donaciones", icono: HandCoins, ver: puedeDonacionesSolicitudes },
+    { to: "/admin/donaciones/fechas-recepcion", etiqueta: "Fechas de recepción", grupo: "Donaciones", icono: CalendarClock, ver: puedeDonacionesSolicitudes },
+    { to: "/admin/documentacion", etiqueta: "Documentos", grupo: "Documentación", icono: BookOpenText, ver: puedeDocumentacionDocumentos },
+    { to: "/admin/documentacion/solicitudes", etiqueta: "Solicitudes", grupo: "Documentación", icono: ScrollText, ver: puedeDocumentacionSolicitudes },
+    { to: "/admin/documentacion/administrativa", etiqueta: "Documentación Administrativa", grupo: "Documentación", icono: ShieldCheck, ver: puedeDocumentacionAdministrativa },
+    { to: "/admin/facturas", etiqueta: "Facturación", grupo: "Facturas", icono: Receipt, ver: puedeFacturas },
+    { to: "/admin/usuarios", etiqueta: "Administrar usuarios", grupo: "Usuarios", icono: Users, ver: puedeUsuarios },
+    { to: "/admin/ajustes/horarios", etiqueta: "Horarios", grupo: "Ajustes del sistema", icono: CalendarClock, ver: puedeAjustes },
+    { to: "/admin/ajustes/permisos", etiqueta: "Permisos", grupo: "Ajustes del sistema", icono: Shield, ver: puedeAjustes },
+    { to: "/admin/ajustes/catalogos", etiqueta: "Catálogos", grupo: "Ajustes del sistema", icono: ListChecks, ver: puedeAjustes },
+    { to: "/admin/ajustes/manual", etiqueta: "Ayuda", grupo: "Ajustes del sistema", extra: "manual guía help guide", icono: LifeBuoy, ver: true },
+    { to: "/admin/auditoria", etiqueta: "Auditoría", grupo: "Auditoría", icono: ScrollText, ver: puedeAuditoria },
+    { to: "/admin/perfil", etiqueta: "Mi perfil", grupo: "Mi cuenta", icono: UserRound, ver: puedePerfil },
+    { to: "/admin/mis-compras", etiqueta: "Mis compras", grupo: "Mi cuenta", icono: ShoppingBag, ver: puedeMisCompras },
+    { to: "/admin/mis-solicitudes", etiqueta: "Mis solicitudes", grupo: "Mi cuenta", icono: ClipboardList, ver: puedeMisSolicitudes },
+  ];
+  const consulta = claveBusqueda(busqueda.trim());
+  const resultadosBusqueda = consulta
+    ? enlacesBuscables.filter((enlace) => {
+        if (!enlace.ver) return false;
+        const textos = [enlace.etiqueta, enlace.grupo, enlace.extra, traducirSync(enlace.etiqueta), traducirSync(enlace.grupo)];
+        return claveBusqueda(textos.join(" ")).includes(consulta);
+      })
+    : [];
+
   const avatarUrl = user?.fotoPerfilUrl?.trim()
     ? normalizeImageUrl(user.fotoPerfilUrl.trim(), { width: 96 })
     : "";
@@ -445,9 +507,68 @@ export function AppSidebar() {
             </span>
           )}
         </Link>
+        <label className="relative mt-3 block group-data-[state=collapsed]/sidebar:hidden">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden />
+          <input
+            type="text"
+            value={busqueda}
+            onChange={(event) => setBusqueda(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setBusqueda("");
+            }}
+            placeholder={tBuscarMenu}
+            aria-label={tBuscarMenu}
+            className="h-[var(--control-height)] w-full rounded-full border border-slate-200 bg-white pl-9 pr-10 text-[length:var(--text-body)] text-slate-900 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          />
+          {busqueda ? (
+            <button
+              type="button"
+              onClick={() => setBusqueda("")}
+              aria-label={tLimpiarBusqueda}
+              title={tLimpiarBusqueda}
+              className="absolute right-2 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800"
+            >
+              <X className="size-4" aria-hidden />
+            </button>
+          ) : null}
+        </label>
       </SidebarHeader>
 
       <SidebarContent scrollKey="admin">
+        {consulta ? (
+          <SidebarGroup>
+            {resultadosBusqueda.length ? (
+              <SidebarMenu>
+                {resultadosBusqueda.map((enlace) => {
+                  const Icono = enlace.icono;
+                  return (
+                    <SidebarMenuItem key={`${enlace.to}-${enlace.etiqueta}`}>
+                      <SidebarMenuButton asChild>
+                        <Link
+                          to={enlace.to}
+                          search={enlace.search}
+                          activeProps={linkActivo}
+                          onClick={() => {
+                            setBusqueda("");
+                            closeMobileSidebar();
+                          }}
+                        >
+                          <Icono />
+                          <span className="truncate"><ST>{enlace.etiqueta}</ST></span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            ) : (
+              <p className="px-2 py-3 text-[length:var(--text-body)] text-slate-500">
+                <ST>No hay opciones con esa búsqueda.</ST>
+              </p>
+            )}
+          </SidebarGroup>
+        ) : null}
+        <div className={consulta ? "hidden" : "contents"}>
         {puedeVerCmsGrupo ? (
         <Collapsible.Root
           open={generalOpen}
@@ -728,6 +849,19 @@ export function AppSidebar() {
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link
+                        to="/admin/visitas"
+                        search={{ tab: "fechas" }}
+                        activeProps={linkActivo}
+                        onClick={closeMobileSidebar}
+                      >
+                        <CalendarDays />
+                        <span><ST>Fechas disponibles</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
                 </SidebarMenuSub>
               </SidebarGroupContent>
             </Collapsible.Content>
@@ -870,7 +1004,6 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             ) : null}
-            {puedeAjustes ? (
             <Collapsible.Root
               open={ajustesOpen}
               onOpenChange={updateAjustesOpen}
@@ -887,6 +1020,8 @@ export function AppSidebar() {
                 </Collapsible.Trigger>
                 <Collapsible.Content>
                   <SidebarMenuSub className="mt-1">
+                    {puedeAjustes ? (
+                    <>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild>
                         <Link to="/admin/ajustes/horarios" activeProps={linkActivo} onClick={closeMobileSidebar}>
@@ -903,11 +1038,28 @@ export function AppSidebar() {
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild>
+                        <Link to="/admin/ajustes/catalogos" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                          <ListChecks />
+                          <span><ST>{"Cat\u00e1logos"}</ST></span>
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    </>
+                    ) : null}
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild>
+                        <Link to="/admin/ajustes/manual" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                          <LifeBuoy />
+                          <span><ST>Ayuda</ST></span>
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
                   </SidebarMenuSub>
                 </Collapsible.Content>
               </SidebarMenuItem>
             </Collapsible.Root>
-            ) : null}
             {puedeAuditoria ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
@@ -974,6 +1126,7 @@ export function AppSidebar() {
           </SidebarGroup>
         </Collapsible.Root>
         ) : null}
+        </div>
       </SidebarContent>
 
       <SidebarFooter>

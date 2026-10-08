@@ -49,6 +49,7 @@ import {
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { rolesDeUsuario } from "../../../lib/permisos";
 import { ST } from "../../../Components/T/ST";
+import { useTraducir } from "../../../hooks/useTraducir";
 import { VisualizarDocumentoModal } from "../../Repositorio/VisualizarDocumentoModal";
 import "./Documentos.css";
 
@@ -114,6 +115,7 @@ export default function DocumentacionAdministrativa() {
 
   // Filtros
   const [filtroBuscar, setFiltroBuscar] = useState("");
+  const tPhBuscar = useTraducir("Buscar documento privado...");
   const [filtroCategoria, setFiltroCategoria] = useState("");
   const [filtroActivo, setFiltroActivo] = useState("");
 
@@ -575,7 +577,7 @@ export default function DocumentacionAdministrativa() {
                 <Search size={16} className="text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Buscar documento privado..."
+                  placeholder={tPhBuscar}
                   value={filtroBuscar}
                   onChange={(e) => setFiltroBuscar(e.target.value)}
                 />
@@ -655,13 +657,13 @@ export default function DocumentacionAdministrativa() {
                 <table className="admin-docs-table">
                   <thead>
                     <tr>
-                      <th>Documento</th>
-                      <th>Categoría</th>
-                      <th>Visibilidad</th>
-                      <th>Tamaño</th>
-                      <th>Descargas</th>
-                      <th>Estado</th>
-                      <th className="text-right">Acciones</th>
+                      <th><ST>Documento</ST></th>
+                      <th><ST>Categoría</ST></th>
+                      <th><ST>Visibilidad</ST></th>
+                      <th><ST>Tamaño</ST></th>
+                      <th><ST>Descargas</ST></th>
+                      <th><ST>Estado</ST></th>
+                      <th className="text-right"><ST>Acciones</ST></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -803,10 +805,10 @@ export default function DocumentacionAdministrativa() {
               <table className="admin-docs-table">
                 <thead>
                   <tr>
-                    <th>Nombre de Categoría</th>
-                    <th>Nivel / Padre</th>
-                    <th>Documentos Asociados</th>
-                    <th className="text-right">Acciones</th>
+                    <th><ST>Nombre de Categoría</ST></th>
+                    <th><ST>Nivel / Padre</ST></th>
+                    <th><ST>Documentos Asociados</ST></th>
+                    <th className="text-right"><ST>Acciones</ST></th>
                   </tr>
                 </thead>
                 <tbody>

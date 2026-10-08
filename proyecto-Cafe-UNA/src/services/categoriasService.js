@@ -19,6 +19,7 @@ function normalizar(item) {
     nombre: String(item.nombre ?? item.Nombre ?? "").trim(),
     tipo: String(item.tipo ?? item.Tipo ?? "").trim().toLowerCase(),
     padre: String(item.padre ?? item.Padre ?? "").trim(),
+    icono: String(item.icono ?? item.Icono ?? "").trim(),
     usos: Number(item.usos ?? item.Usos ?? 0) || 0,
   };
 }
@@ -38,6 +39,14 @@ export async function crearCategoria({ nombre, tipo, padre = "" }) {
     method: "POST",
     data: { nombre, tipo, padre: padre || "" },
   });
+  return normalizar(result);
+}
+
+export async function actualizarCategoria(id, { nombre, icono }) {
+  const data = {};
+  if (nombre != null) data.nombre = nombre;
+  if (icono != null) data.icono = icono;
+  const result = await request(`${BASE_URL}/${id}`, { method: "PUT", data });
   return normalizar(result);
 }
 

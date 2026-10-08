@@ -2,7 +2,7 @@
 
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ClipboardList, ChevronDown, LogOut, ShoppingBag, UserRound } from "lucide-react";
+import { ClipboardList, ChevronDown, LifeBuoy, LogOut, ShoppingBag, UserRound } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -219,6 +219,16 @@ export function ClienteSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ) : null}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/perfil/manual" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                    <LifeBuoy />
+                    <span>
+                      <ST>Ayuda</ST>
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

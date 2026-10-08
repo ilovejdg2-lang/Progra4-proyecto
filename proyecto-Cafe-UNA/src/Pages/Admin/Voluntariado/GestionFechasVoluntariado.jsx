@@ -19,6 +19,7 @@ import {
 
 import { Calendar } from "@/Components/ui/calendar";
 import { ST } from "../../../Components/T/ST";
+import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { useIdioma } from "../../../lib/useIdioma";
 import {
@@ -745,13 +746,14 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     <ST>Cupo máximo de voluntarios (opcional):</ST>
                   </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="500"
+                  <NumericInput
+                    maxLength={3}
                     placeholder="Ej. 20"
                     value={cupoMaximo}
-                    onChange={(e) => setCupoMaximo(e.target.value)}
+                    onChange={(e) => {
+                      const valor = e.target.value.replace(/^0+/, "");
+                      setCupoMaximo(valor && Number(valor) > 500 ? "500" : valor);
+                    }}
                     disabled={guardando || esFechaPasada}
                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-950 focus:bg-white transition"
                   />
@@ -824,7 +826,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
             </h3>
           </div>
           <span className="text-xs font-bold text-slate-500">
-            {fechas.length} {fechas.length === 1 ? "registro total" : "registros totales"}
+            {fechas.length} <ST>{fechas.length === 1 ? "registro total" : "registros totales"}</ST>
           </span>
         </div>
 

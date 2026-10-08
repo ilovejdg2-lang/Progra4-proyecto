@@ -8,6 +8,7 @@ import {
   FileDown,
   FileText,
   Hash,
+  ListChecks,
   Mail,
   MapPin,
   Package,
@@ -25,6 +26,8 @@ import {
   AdminModalHeader,
 } from "../../../Components/Admin/ui/AdminModal";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
+import { ModalCatalogo } from "../../../Components/Admin/ui/CatalogoPaneles";
+import { TIPOS_CATALOGO } from "../../../services/catalogosService";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { AdminLayout } from "../layouts/AdminLayout";
@@ -500,7 +503,9 @@ export default function AdminSolicitudesDonacion() {
   const puedeResolver =
     tienePermiso(roles, "administrar_solicitudes_donaciones") ||
     tienePermiso(roles, "actualizar_solicitud_donaciones");
+  const puedeEditarEstadosArticulo = tienePermiso(roles, "administrar_roles_permisos");
 
+  const [modalEstados, setModalEstados] = useState(false);
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState(() => (puedeVer ? "loading" : "idle"));
   const [error, setError] = useState("");
@@ -824,6 +829,14 @@ export default function AdminSolicitudesDonacion() {
 
   return (
     <AdminLayout>
+      <ModalCatalogo
+        open={modalEstados}
+        onClose={() => setModalEstados(false)}
+        tipo={TIPOS_CATALOGO.estadoArticulo}
+        titulo="Estados de artículos donados"
+        ayuda="Opciones que ve la persona donante al indicar en qué estado están los artículos."
+        placeholder="Ej. Como nuevo"
+      />
       <div className="space-y-6">
         {/* Cabecera con Métricas y Acciones */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
@@ -838,6 +851,17 @@ export default function AdminSolicitudesDonacion() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              {puedeEditarEstadosArticulo ? (
+                <button
+                  type="button"
+                  onClick={() => setModalEstados(true)}
+                  className={`${btnCancelarGris} gap-2 px-4 py-2 text-sm`}
+                >
+                  <ListChecks className="size-4" />
+                  <ST>Estados de artículos</ST>
+                </button>
+              ) : null}
+
               <button
                 type="button"
                 onClick={handleExportarPdf}

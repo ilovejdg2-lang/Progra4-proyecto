@@ -61,7 +61,7 @@ describe("AdminSalidasInventario", () => {
     await user.selectOptions(await screen.findByRole("combobox", { name: "Producto" }), "101");
     await user.selectOptions(screen.getByRole("combobox", { name: "Motivo de salida" }), "2");
     await user.type(screen.getByRole("textbox", { name: "Destinatario" }), "Fundación Café UNA");
-    await user.type(screen.getByRole("spinbutton", { name: "Cantidad" }), "3");
+    await user.type(screen.getByRole("textbox", { name: "Cantidad" }), "3");
     await user.click(screen.getByRole("button", { name: "Registrar salida" }));
 
     await waitFor(() => expect(mocks.registrarSalidaInventario).toHaveBeenCalledWith({

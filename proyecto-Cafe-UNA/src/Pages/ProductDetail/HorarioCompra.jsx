@@ -19,15 +19,28 @@ function horaLegible(hora) {
   return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${sufijo}`;
 }
 
-export function HorarioCompra() {
+/**
+ * Próximos días abiertos para comprar. Con `ubicacionId` usa el horario de ese punto de venta.
+ * `variante="tarjeta"` es para usarlo fuera del detalle de producto (checkout, mis compras).
+ */
+export function HorarioCompra({
+  ubicacionId = null,
+  titulo = 'Próximos días para comprar',
+  variante = 'producto',
+}) {
   const { idioma } = useIdioma();
   const [dias, setDias] = useState([]);
-  const tTitulo = useTraducir('Próximos días para comprar');
+  const tTitulo = useTraducir(titulo);
 
   useEffect(() => {
     let activo = true;
     const hoy = new Date();
-    listarDisponibilidadPublica('compras', format(hoy, 'yyyy-MM-dd'), format(addDays(hoy, 30), 'yyyy-MM-dd'))
+    listarDisponibilidadPublica(
+      'compras',
+      format(hoy, 'yyyy-MM-dd'),
+      format(addDays(hoy, 30), 'yyyy-MM-dd'),
+      ubicacionId,
+    )
       .then((lista) => {
         if (!activo) return;
         setDias(lista.filter((dia) => dia.disponible).slice(0, DIAS_A_MOSTRAR));
@@ -38,12 +51,33 @@ export function HorarioCompra() {
     return () => {
       activo = false;
     };
-  }, []);
+  }, [ubicacionId]);
 
   if (!dias.length) return null;
 
   const locale = idioma === 'en' ? enUS : es;
   const patron = idioma === 'en' ? 'EEEE, MMM d' : "EEEE d 'de' MMMM";
+
+  if (variante === 'tarjeta') {
+    return (
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[length:var(--text-body)]">
+        <p className="flex items-center gap-2 font-semibold text-slate-900">
+          <CalendarClock size={16} aria-hidden="true" />
+          {tTitulo}
+        </p>
+        <ul className="mt-2 grid gap-1">
+          {dias.map((dia) => (
+            <li key={dia.fecha} className="flex flex-wrap items-center justify-between gap-x-3 text-slate-700">
+              <span className="capitalize">{format(fechaLocal(dia.fecha), patron, { locale })}</span>
+              <strong className="text-slate-900">
+                {`${horaLegible(dia.horaInicio)} – ${horaLegible(dia.horaFin)}`}
+              </strong>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
 
   return (
     <div className="product-detail-page__pos">

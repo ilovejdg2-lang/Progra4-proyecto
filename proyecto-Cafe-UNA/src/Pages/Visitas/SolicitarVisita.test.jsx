@@ -125,7 +125,7 @@ describe("SolicitarVisita", () => {
         encargadoIdentificacion: "111111111",
         encargadoTipoIdentificacion: "cedula",
         encargadoEmail: "ana@ejemplo.com",
-        encargadoTelefono: "8888-7777",
+        encargadoTelefono: "88887777",
         ciudadProvincia: "Heredia, Barva",
         paisProcedencia: "Costa Rica",
         cantidadVisitantes: "4",
