@@ -87,9 +87,11 @@ body {
   max-width: 100%;
 }
 
+/* overflow:auto en body lo vuelve contenedor de scroll y rompe position: sticky (scrollea la ventana). */
 body.admin-route-active {
   background: #fafafa !important;
-  overflow: auto;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 html.admin-modal-open,

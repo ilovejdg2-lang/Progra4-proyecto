@@ -29,7 +29,7 @@ export function SeccionManual({ seccion, carpetaFotos }) {
   const tTitulo = useTraducir(seccion.titulo);
 
   return (
-    <section id={seccion.id} className="scroll-mt-20 rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+    <section id={seccion.id} className="scroll-mt-36 lg:scroll-mt-20 rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
       <p className="text-[length:var(--text-body)] font-semibold text-slate-500">
         <ST>{seccion.grupo}</ST>
       </p>
