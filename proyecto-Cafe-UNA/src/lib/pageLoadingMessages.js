@@ -11,6 +11,8 @@ const CACHE_KEY_MESSAGES = {
   voluntariado: 'Cargando voluntariado...',
   visitas: 'Cargando visitas...',
   donaciones: 'Cargando donaciones...',
+  productores: 'Cargando productores...',
+  'perfil-propuestas': 'Cargando propuestas...',
   checkout: 'Cargando checkout...',
   login: 'Cargando...',
   registro: 'Cargando registro...',
@@ -45,6 +47,8 @@ export function getLoadingMessageForPathname(pathname = normalizePathname()) {
   if (path.startsWith('/voluntariado')) return msg(CACHE_KEY_MESSAGES.voluntariado);
   if (path.startsWith('/visitas') || path === '/solicitar-visita') return msg(CACHE_KEY_MESSAGES.visitas);
   if (path.startsWith('/donaciones')) return msg('Cargando donaciones...');
+  if (path.startsWith('/productores')) return msg(CACHE_KEY_MESSAGES.productores);
+  if (path.startsWith('/perfil/propuestas')) return msg(CACHE_KEY_MESSAGES['perfil-propuestas']);
   if (path === '/checkout') return msg(CACHE_KEY_MESSAGES.checkout);
   if (path === '/login') return msg(CACHE_KEY_MESSAGES.login);
   if (path === '/registro' || path === '/verificar-cuenta') {

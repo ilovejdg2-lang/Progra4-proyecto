@@ -47,6 +47,7 @@ export function UiSelect({
   traducirOpciones = true,
 }) {
   const [open, setOpen] = useState(false);
+  const [menuClaro, setMenuClaro] = useState(false);
   const [menuStyle, setMenuStyle] = useState(null);
   const [busqueda, setBusqueda] = useState("");
   const rootRef = useRef(null);
@@ -144,6 +145,7 @@ export function UiSelect({
         className="ui-select__trigger"
         onClick={() => {
           setBusqueda("");
+          setMenuClaro(Boolean(rootRef.current?.closest(".voluntariado-page, .formulario-card, .campo")));
           setOpen((actualOpen) => !actualOpen);
         }}
       >
@@ -156,7 +158,7 @@ export function UiSelect({
         ? createPortal(
             <div
               ref={menuRef}
-              className={`ui-select__menu ui-select__menu--portal${className ? ` ${className}` : ""}`}
+              className={`ui-select__menu ui-select__menu--portal${menuClaro ? " ui-select__menu--claro" : ""}${className ? ` ${className}` : ""}`}
               style={menuStyle}
             >
               {buscable ? (

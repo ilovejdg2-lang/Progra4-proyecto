@@ -84,6 +84,18 @@ export const SECCIONES_MANUAL_CLIENTE = [
     ],
   },
   {
+    id: "productores",
+    titulo: "Enviar una propuesta de productor",
+    grupo: "Formularios",
+    ruta: "/productores/propuesta",
+    resumen: "Formulario para proponer tu emprendimiento y, si se aprueba, publicarlo en el sitio.",
+    pasos: [
+      "En el menú Formularios elegí Productores y tocá Enviar propuesta.",
+      "Completá los datos, la imagen y la autorización.",
+      "Revisá el estado en Mis propuestas, dentro de Mi cuenta.",
+    ],
+  },
+  {
     id: "mis-solicitudes",
     titulo: "Mis solicitudes",
     grupo: "Mi cuenta",

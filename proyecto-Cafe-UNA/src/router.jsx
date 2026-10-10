@@ -74,6 +74,11 @@ const AdminDocumentos = lazy(() => import("./Pages/Admin/Documentacion/Documento
 const AdminSolicitudesDocumentacion = lazy(() => import("./Pages/Admin/Documentacion/SolicitudesDocumentacion"));
 const AdminDocumentacionAdministrativa = lazy(() => import("./Pages/Admin/Documentacion/DocumentacionAdministrativa"));
 const AdminFacturas = lazy(() => import("./Pages/Admin/Facturas/Facturas"));
+const Productores = lazy(() => import("./Pages/Productores/Productores"));
+const PropuestaProductor = lazy(() => import("./Pages/Productores/PropuestaProductor"));
+const MisPropuestasCliente = lazy(() => import("./Pages/Productores/MisPropuestas"));
+const AdminPropuestas = lazy(() => import("./Pages/Admin/Propuestas/Propuestas"));
+const AdminMisPropuestasProductor = lazy(() => import("./Pages/Admin/MisPropuestas/AdminMisPropuestas"));
 
 function HomeRouteLoading() {
     return <PageLoading message="Cargando inicio..." />;
@@ -159,6 +164,8 @@ const rootRoute = createRootRoute({
         const isPerfilComprasRoute = pathname === "/perfil/compras" || pathname.startsWith("/perfil/compras/");
         const isPerfilSolicitudesRoute =
             pathname === "/perfil/solicitudes" || pathname.startsWith("/perfil/solicitudes/");
+        const isPerfilPropuestasRoute =
+            pathname === "/perfil/propuestas" || pathname.startsWith("/perfil/propuestas/");
         const isCheckoutRoute = pathname === "/checkout";
         const isChromelessRoute =
             isLoginRoute ||
@@ -166,6 +173,7 @@ const rootRoute = createRootRoute({
             isPerfilRoute ||
             isPerfilComprasRoute ||
             isPerfilSolicitudesRoute ||
+            isPerfilPropuestasRoute ||
             isCheckoutRoute;
         const loadingKey = isHomeRoute ? 'home' : cacheKey || pathname;
 
@@ -194,7 +202,7 @@ const rootRoute = createRootRoute({
             document.body.classList.toggle("admin-route-active", isAdminRoute);
             document.body.classList.toggle(
                 "perfil-route-active",
-                isPerfilRoute || isPerfilComprasRoute || isPerfilSolicitudesRoute,
+                isPerfilRoute || isPerfilComprasRoute || isPerfilSolicitudesRoute || isPerfilPropuestasRoute,
             );
             document.body.classList.toggle("checkout-route-active", isCheckoutRoute);
             if (
@@ -202,6 +210,7 @@ const rootRoute = createRootRoute({
                 isPerfilRoute ||
                 isPerfilComprasRoute ||
                 isPerfilSolicitudesRoute ||
+                isPerfilPropuestasRoute ||
                 isCheckoutRoute
             ) {
                 document.body.classList.remove("home-hero-ready");
@@ -213,7 +222,7 @@ const rootRoute = createRootRoute({
                 document.body.classList.remove("perfil-route-active");
                 document.body.classList.remove("checkout-route-active");
             };
-        }, [isAdminRoute, isPerfilRoute, isPerfilComprasRoute, isPerfilSolicitudesRoute, isCheckoutRoute]);
+        }, [isAdminRoute, isPerfilRoute, isPerfilComprasRoute, isPerfilSolicitudesRoute, isPerfilPropuestasRoute, isCheckoutRoute]);
 
         useLayoutEffect(() => {
             applyAdminDocumentTheme(isAdminRoute);
@@ -559,6 +568,46 @@ const adminFacturasRoute = createRoute({
     path: "/admin/facturas",
     component: AdminFacturas,
 })
+const productoresRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/productores",
+    component: Productores,
+})
+const propuestaProductorRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/productores/propuesta",
+    component: PropuestaProductor,
+})
+const misPropuestasRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/perfil/propuestas",
+    component: MisPropuestasCliente,
+})
+const miPropuestaDetalleRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/perfil/propuestas/$propuestaId",
+    component: MisPropuestasCliente,
+})
+const adminPropuestasRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/propuestas",
+    component: AdminPropuestas,
+})
+const adminPropuestaDetalleRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/propuestas/$propuestaId",
+    component: AdminPropuestas,
+})
+const adminMisPropuestasProductorRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/mis-propuestas",
+    component: AdminMisPropuestasProductor,
+})
+const adminMiPropuestaDetalleRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/mis-propuestas/$propuestaId",
+    component: AdminMisPropuestasProductor,
+})
 const notFoundCatchAllRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/$",
@@ -625,6 +674,14 @@ const routeTree= rootRoute.addChildren([
     adminDocumentacionSolicitudesRoute,
     adminDocumentacionAdministrativaRoute,
     adminFacturasRoute,
+    productoresRoute,
+    propuestaProductorRoute,
+    misPropuestasRoute,
+    miPropuestaDetalleRoute,
+    adminPropuestasRoute,
+    adminPropuestaDetalleRoute,
+    adminMisPropuestasProductorRoute,
+    adminMiPropuestaDetalleRoute,
     notFoundCatchAllRoute,
 ])
 export const router = createRouter({

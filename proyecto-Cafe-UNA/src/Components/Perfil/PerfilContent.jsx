@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Camera, ChevronRight, ClipboardList, Eye, EyeOff, IdCard, KeyRound, Mail, ShoppingBag, UserRound, X } from "lucide-react";
+import { Camera, ChevronRight, ClipboardList, Eye, EyeOff, IdCard, KeyRound, Mail, ShoppingBag, Sprout, UserRound, X } from "lucide-react";
 import {
   actualizarPerfil,
   actualizarPerfilCliente,
@@ -13,6 +13,7 @@ import {
 import { applyPerfilToSession, getActiveSessionUser } from "../../services/sessionService";
 import { rutaMisCompras } from "../../Pages/HistorialCompras/rutasCompras";
 import { rutaMisSolicitudes } from "../../Pages/HistorialSolicitudes/HistorialSolicitudesCliente";
+import { rutaMisPropuestas } from "../../Pages/Productores/MisPropuestas";
 import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../lib/correo";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { inicialDeNombre } from "../../lib/inicialDeNombre";
@@ -255,6 +256,9 @@ export function PerfilContent({ variant = "standalone" }) {
   const tMisSolicitudes = useTraducir("Mis solicitudes");
   const tRevisaSolicitudes = useTraducir("Consultá voluntariado, donaciones y visitas que enviaste.");
   const tVerSolicitudes = useTraducir("Ver mis solicitudes");
+  const tMisPropuestas = useTraducir("Mis propuestas");
+  const tRevisaPropuestas = useTraducir("Consultá el estado de las propuestas de tu emprendimiento.");
+  const tVerPropuestas = useTraducir("Ver mis propuestas");
   const tInfoPersonal = useTraducir("Información personal");
   const tSinNombre = useTraducir("Sin nombre");
   const tCambiarNombre = useTraducir("Cambiar nombre");
@@ -1252,6 +1256,21 @@ export function PerfilContent({ variant = "standalone" }) {
           <p className="perfil-card__current-value">{tRevisaSolicitudes}</p>
           <Link to={rutaMisSolicitudes(getActiveSessionUser())} className="perfil-link-action">
             {tVerSolicitudes}
+            <ChevronRight size={16} />
+          </Link>
+        </section>
+      ) : null}
+
+      {tienePermiso(rolesDeUsuario(getActiveSessionUser()), "ingresar_propuesta_productor") ||
+      tienePermiso(rolesDeUsuario(getActiveSessionUser()), "ver_solicitudes_propias") ? (
+        <section className="perfil-card" style={{ marginBottom: "1rem" }}>
+          <header className="perfil-card__header">
+            <Sprout size={18} />
+            <h2>{tMisPropuestas}</h2>
+          </header>
+          <p className="perfil-card__current-value">{tRevisaPropuestas}</p>
+          <Link to={rutaMisPropuestas(getActiveSessionUser())} className="perfil-link-action">
+            {tVerPropuestas}
             <ChevronRight size={16} />
           </Link>
         </section>

@@ -137,6 +137,19 @@ export const SECCIONES_MANUAL = [
     consejos: ["Los métodos de pago se agregan o cambian en Ajustes del sistema › Catálogos."],
   },
   {
+    id: "propuestas-productores",
+    titulo: "Propuestas de productores",
+    grupo: "Solicitudes",
+    ruta: "/admin/propuestas",
+    visible: alguno("administrar_solicitudes_productores"),
+    resumen: "Revisión de emprendimientos que piden publicarse en el sitio.",
+    pasos: [
+      "Abrí una propuesta pendiente para ver la imagen, la ubicación y el contacto.",
+      "Aprobala para publicarla o rechazala con un motivo.",
+      "La persona solicitante recibe el aviso en la campanita y en Mis propuestas.",
+    ],
+  },
+  {
     id: "voluntariado",
     titulo: "Voluntariado",
     grupo: "Solicitudes",

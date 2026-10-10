@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import './Navbar.css';
 import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
-import { Bell, ChevronDown, Gift, HandHeart, LayoutDashboard, LogOut, MapPin, Menu, Package, ShoppingBag, ShoppingCart, User, X } from 'lucide-react';
+import { Bell, ChevronDown, Gift, HandHeart, LayoutDashboard, LogOut, MapPin, Menu, Package, ShoppingBag, ShoppingCart, Sprout, User, X } from 'lucide-react';
 import { LanguageSwitcher } from '../LanguageSwitcher/LanguageSwitcher';
 import { CartLine, metaCarrito } from './CartLine';
 import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
@@ -23,6 +23,7 @@ import {
     obtenerSolicitudesVisitas,
 } from '../../services/visitasService';
 import { obtenerMisSolicitudes } from '../../services/solicitudesService';
+import { marcarNotificacionLeida, obtenerNotificacionesPropias } from '../../services/propuestasProductoresService';
 import { cancelPendingSessionRefresh } from '../../services/apiClient';
 import { beginLogout, clearSession, getActiveSessionUser } from '../../services/sessionService';
 import { marcarIntentRegistroCliente, puedeComprar } from '../../services/authService';
@@ -219,6 +220,7 @@ const Navbar = () => {
     const labelVoluntariado = useTraducir('Voluntariado');
     const labelVisitas = useTraducir('Visitas');
     const labelDonaciones = useTraducir('Donaciones');
+    const labelProductores = useTraducir('Productores');
     const labelVentasNotif = useTraducir('Ventas');
     const labelMisComprasNotif = useTraducir('Mis compras');
     const labelVentaAceptar = useTraducir('Pendiente de aceptar');
@@ -266,6 +268,7 @@ const Navbar = () => {
     const [solicitudesVisita, setSolicitudesVisita] = useState([]);
     const [alertasStock, setAlertasStock] = useState([]);
     const [ventasNotificaciones, setVentasNotificaciones] = useState([]);
+    const [propuestasNotificaciones, setPropuestasNotificaciones] = useState([]);
     const [notificationsLoading, setNotificationsLoading] = useState(false);
     const [notificationsError, setNotificationsError] = useState('');
     const [enlacesNavbar, setEnlacesNavbar] = useState(() => getCachedNavbarLinks());
@@ -326,6 +329,7 @@ const Navbar = () => {
                 setSolicitudesVisita([]);
                 setAlertasStock([]);
                 setVentasNotificaciones([]);
+                setPropuestasNotificaciones([]);
                 setShowNotifications(false);
             }
         };
@@ -345,6 +349,7 @@ const Navbar = () => {
             setSolicitudesVisita([]);
             setAlertasStock([]);
             setVentasNotificaciones([]);
+            setPropuestasNotificaciones([]);
             return;
         }
 
@@ -412,6 +417,8 @@ const Navbar = () => {
             setSolicitudesVisita(visitas);
             setAlertasStock(Array.isArray(alertas) ? alertas : []);
             setVentasNotificaciones(Array.isArray(ventas) ? ventas : []);
+            const propuestas = await obtenerNotificacionesPropias().catch(() => ({ data: [] }));
+            setPropuestasNotificaciones(Array.isArray(propuestas?.data) ? propuestas.data : []);
         } catch (err) {
             console.error('No se pudieron cargar las notificaciones.', err);
             setNotificationsError('No se pudieron cargar las notificaciones.');
@@ -431,12 +438,14 @@ const Navbar = () => {
         window.addEventListener('donaciones-updated', syncSolicitudes);
         window.addEventListener('compras-updated', syncSolicitudes);
         window.addEventListener('visitas-updated', syncSolicitudes);
+        window.addEventListener('propuestas-updated', syncSolicitudes);
         return () => {
             window.clearTimeout(initialLoadId);
             window.removeEventListener('voluntariado-updated', syncSolicitudes);
             window.removeEventListener('donaciones-updated', syncSolicitudes);
             window.removeEventListener('compras-updated', syncSolicitudes);
             window.removeEventListener('visitas-updated', syncSolicitudes);
+            window.removeEventListener('propuestas-updated', syncSolicitudes);
         };
     }, [user, loadSolicitudesUsuario]);
 
@@ -691,12 +700,14 @@ const Navbar = () => {
     const visitasPendientesCount = visitasPendientes.length;
     const alertasStockCount = alertasStock.length;
     const ventasNotificacionesCount = ventasNotificaciones.length;
+    const propuestasNotificacionesCount = propuestasNotificaciones.length;
     const notificationsCount =
         solicitudesPendientesCount +
         donacionesPendientesCount +
         visitasPendientesCount +
         alertasStockCount +
-        ventasNotificacionesCount;
+        ventasNotificacionesCount +
+        propuestasNotificacionesCount;
     const puedeAbrirVentasAdmin = canSeeAdminVentas(user);
     const puedeAbrirSolicitudesAdmin = canSeeAllSolicitudes(user);
     const puedeAbrirDonacionesAdmin = canSeeAllDonaciones(user);
@@ -891,6 +902,23 @@ const Navbar = () => {
             return;
         }
         navigate({ to: rutaMisCompras(user) });
+    };
+
+    const handlePropuestaNotificationOpen = async (item) => {
+        setShowNotifications(false);
+        try {
+            await marcarNotificacionLeida(item.id);
+        } catch {
+            /* el contador se actualiza en el próximo refresco */
+        }
+        const enlace = String(item?.enlace || '');
+        const id = enlace.split('/').filter(Boolean).pop();
+        if (!id) return;
+        if (enlace.startsWith('/admin/propuestas/')) {
+            navigate({ to: '/admin/propuestas/$propuestaId', params: { propuestaId: id } });
+            return;
+        }
+        navigate({ to: '/perfil/propuestas/$propuestaId', params: { propuestaId: id } });
     };
 
     const handleStockAlertOpen = (alerta) => {
@@ -1122,6 +1150,15 @@ const Navbar = () => {
                                         onClick={() => setShowFormsMenu(false)}
                                     >
                                         {labelDonaciones}
+                                    </Link>
+                                    <Link
+                                        to="/productores"
+                                        role="menuitem"
+                                        className="navbar__about-item"
+                                        activeProps={{ className: "navbar__about-item" }}
+                                        onClick={() => setShowFormsMenu(false)}
+                                    >
+                                        {labelProductores}
                                     </Link>
                                 </div>
                             </div>
@@ -1471,6 +1508,28 @@ const Navbar = () => {
                                                 })}
                                             </section>
                                         ) : null}
+
+                                        {propuestasNotificacionesCount > 0 ? (
+                                            <section className="notifications-section" aria-label={labelProductores}>
+                                                <p className="notifications-section-label">{labelProductores}</p>
+                                                {propuestasNotificaciones.map((item) => (
+                                                    <button
+                                                        key={`propuesta-${item.id}`}
+                                                        type="button"
+                                                        className="notification-item notification-item--propuesta"
+                                                        onClick={() => handlePropuestaNotificationOpen(item)}
+                                                    >
+                                                        <span className="notification-item__icon" aria-hidden="true">
+                                                            <Sprout size={16} />
+                                                        </span>
+                                                        <div className="notification-item__main">
+                                                            <strong>{item.titulo}</strong>
+                                                            <span>{item.mensaje}</span>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </section>
+                                        ) : null}
                                     </div>
                                 )}
                             </aside>
@@ -1515,7 +1574,9 @@ const Navbar = () => {
                                 path.startsWith('/perfil/') ||
                                 path === '/admin/perfil' ||
                                 path === '/admin/mis-compras' ||
-                                path === '/admin/mis-solicitudes';
+                                path === '/admin/mis-solicitudes' ||
+                                path.startsWith('/perfil/propuestas') ||
+                                path.startsWith('/admin/mis-propuestas');
                               const perfilTo = puedePanel ? '/admin/perfil' : '/perfil';
                               // Solo una: en sitio público con panel → Panel; en admin/perfil/compras → Mi perfil.
                               if (puedePanel && !enAdmin && !enZonaPerfil) {
@@ -1686,6 +1747,7 @@ const Navbar = () => {
                                         const voluntariadoActive = pathNorm.startsWith('/voluntariado');
                                         const visitasActive = pathNorm.startsWith('/visitas');
                                         const donacionesActive = pathNorm.startsWith('/donaciones');
+                                        const productoresActive = pathNorm.startsWith('/productores');
                                         return (
                                             <div
                                                 key={`mobile-forms-${enlace.id ?? enlace.ruta}`}
@@ -1732,6 +1794,13 @@ const Navbar = () => {
                                                             onClick={closeMobileMenu}
                                                         >
                                                             {labelDonaciones}
+                                                        </Link>
+                                                        <Link
+                                                            to="/productores"
+                                                            className={`navbar__mobile-about-item ${productoresActive ? 'is-active' : ''}`}
+                                                            onClick={closeMobileMenu}
+                                                        >
+                                                            {labelProductores}
                                                         </Link>
                                                     </div>
                                                 ) : null}

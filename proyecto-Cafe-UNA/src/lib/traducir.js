@@ -1373,6 +1373,23 @@ const DICCIONARIO = {
   "Ajustes del sistema": "System settings",
   "Fechas y horas para recibir grupos de visitas o voluntariado.":
     "Dates and hours to receive visit or volunteering groups.",
+  "Productores": "Producers",
+  "Dale a conocer tu emprendimiento": "Share your business",
+  "Comparte tu historia y forma parte del espacio de productores de Café UNA.":
+    "Share your story and become part of Café UNA's producer space.",
+  "Nuestros productores": "Our producers",
+  "Pronto conocerás a nuestros productores": "You will soon meet our producers",
+  "¿Tienes un emprendimiento? Tu propuesta puede ser la primera.":
+    "Do you have a business? Your proposal could be the first.",
+  "Propuesta de productor": "Producer proposal",
+  "Propuestas de productores": "Producer proposals",
+  "Mis propuestas": "My proposals",
+  "Enviar propuesta": "Submit proposal",
+  "Pendiente de revisión": "Pending review",
+  "Recibimos la información de tu emprendimiento. Nuestro equipo revisará tu propuesta y te notificará el resultado":
+    "We received your business information. Our team will review your proposal and notify you of the result",
+  "Cuéntanos qué ofrecen, su historia, sus valores y qué distingue a su emprendimiento":
+    "Tell us what they offer, their story, their values and what sets the business apart",
   "Horario y disponibilidad": "Hours and availability",
   "Actividades de limpieza y mantenimiento": "Cleaning and maintenance activities",
   "Idioma predeterminado del sitio (cuando alguien entra por primera vez). Cualquier visitante puede cambiarlo en la barra superior (ES / EN). El contenido se guarda en español en Supabase y se traduce automáticamente al mostrar en inglés.":

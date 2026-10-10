@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Bell, Gift, HandHeart, Package, ShoppingBag } from "lucide-react";
+import { Bell, Gift, HandHeart, Package, ShoppingBag, Sprout } from "lucide-react";
 
 import { obtenerAlertasStock } from "../../services/productosService";
 import { obtenerSolicitudes } from "../../services/voluntariadoService";
 import { obtenerSolicitudesDonacionAdmin } from "../../services/donacionesService";
 import { obtenerVentasParaNotificaciones } from "../../services/comprasService";
+import { marcarNotificacionLeida, obtenerNotificacionesPropias } from "../../services/propuestasProductoresService";
 import { getActiveSessionUser } from "../../services/sessionService";
 import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
 import { requestAdminStockProduct } from "../../lib/adminStockAlert";
@@ -44,6 +45,11 @@ function puedeVerDonaciones(user) {
   );
 }
 
+function puedeVerPropuestas(user) {
+  const roles = rolesDeUsuario(user);
+  return tienePermiso(roles, "administrar_solicitudes_productores");
+}
+
 function puedeVerVentas(user) {
   const roles = rolesDeUsuario(user);
   return (
@@ -65,7 +71,8 @@ export function AdminStockNotificationsBell() {
   const puedeVoluntariado = puedeVerVoluntariado(user);
   const puedeDonaciones = puedeVerDonaciones(user);
   const puedeVentas = puedeVerVentas(user);
-  const enabled = puedeStock || puedeVoluntariado || puedeDonaciones || puedeVentas;
+  const puedePropuestas = puedeVerPropuestas(user);
+  const enabled = puedeStock || puedeVoluntariado || puedeDonaciones || puedeVentas || puedePropuestas;
 
   const labelNotificaciones = useTraducir("Notificaciones");
   const labelStockBajo = useTraducir("STOCK BAJO");
@@ -77,6 +84,7 @@ export function AdminStockNotificationsBell() {
   const labelVol = useTraducir("Voluntariado");
   const labelDon = useTraducir("Donaciones");
   const labelVentas = useTraducir("Ventas");
+  const labelProductores = useTraducir("Productores");
   const labelVentaAceptar = useTraducir("Pendiente de aceptar");
   const labelVentaEntregar = useTraducir("Pendiente de entregar");
   const labelAbrirAdmin = useTraducir("Abrir en administración");
@@ -88,6 +96,7 @@ export function AdminStockNotificationsBell() {
   const [solicitudes, setSolicitudes] = useState([]);
   const [solicitudesDonacion, setSolicitudesDonacion] = useState([]);
   const [ventas, setVentas] = useState([]);
+  const [propuestas, setPropuestas] = useState([]);
   const [panelStyle, setPanelStyle] = useState(null);
   const rootRef = useRef(null);
   const buttonRef = useRef(null);
@@ -99,26 +108,30 @@ export function AdminStockNotificationsBell() {
       setSolicitudes([]);
       setSolicitudesDonacion([]);
       setVentas([]);
+      setPropuestas([]);
       return;
     }
     setLoading(true);
     setError("");
     try {
-      const [stockData, voluntariadoData, donacionesData, ventasData] = await Promise.all([
+      const [stockData, voluntariadoData, donacionesData, ventasData, propuestasData] = await Promise.all([
         puedeStock ? obtenerAlertasStock().catch(() => []) : Promise.resolve([]),
         puedeVoluntariado ? obtenerSolicitudes().catch(() => []) : Promise.resolve([]),
         puedeDonaciones ? obtenerSolicitudesDonacionAdmin().catch(() => []) : Promise.resolve([]),
         puedeVentas ? obtenerVentasParaNotificaciones({ admin: true }).catch(() => []) : Promise.resolve([]),
+        obtenerNotificacionesPropias().catch(() => ({ data: [] })),
       ]);
       setAlertas(Array.isArray(stockData) ? stockData : []);
       setSolicitudes(Array.isArray(voluntariadoData) ? voluntariadoData : []);
       setSolicitudesDonacion(Array.isArray(donacionesData) ? donacionesData : []);
       setVentas(Array.isArray(ventasData) ? ventasData : []);
+      setPropuestas(Array.isArray(propuestasData?.data) ? propuestasData.data : []);
     } catch (err) {
       setAlertas([]);
       setSolicitudes([]);
       setSolicitudesDonacion([]);
       setVentas([]);
+      setPropuestas([]);
       setError(err?.message || "No se pudieron cargar las notificaciones.");
     } finally {
       setLoading(false);
@@ -135,11 +148,13 @@ export function AdminStockNotificationsBell() {
     window.addEventListener("voluntariado-updated", syncVoluntariado);
     window.addEventListener("donaciones-updated", syncVoluntariado);
     window.addEventListener("compras-updated", syncVoluntariado);
+    window.addEventListener("propuestas-updated", syncVoluntariado);
     return () => {
       window.clearTimeout(id);
       window.removeEventListener("voluntariado-updated", syncVoluntariado);
       window.removeEventListener("donaciones-updated", syncVoluntariado);
       window.removeEventListener("compras-updated", syncVoluntariado);
+      window.removeEventListener("propuestas-updated", syncVoluntariado);
     };
   }, [enabled, loadNotificaciones]);
 
@@ -210,7 +225,8 @@ export function AdminStockNotificationsBell() {
   const voluntariadoCount = puedeVoluntariado ? solicitudesPendientes.length : 0;
   const donacionesCount = puedeDonaciones ? donacionesPendientes.length : 0;
   const ventasCount = puedeVentas ? ventas.length : 0;
-  const count = alertasCount + voluntariadoCount + donacionesCount + ventasCount;
+  const propuestasCount = propuestas.length;
+  const count = alertasCount + voluntariadoCount + donacionesCount + ventasCount + propuestasCount;
 
   const openProducto = (item) => {
     setOpen(false);
@@ -228,6 +244,23 @@ export function AdminStockNotificationsBell() {
   const openDonaciones = () => {
     setOpen(false);
     navigate({ to: "/admin/donaciones/solicitudes" });
+  };
+
+  const openPropuesta = async (item) => {
+    setOpen(false);
+    try {
+      await marcarNotificacionLeida(item.id);
+    } catch {
+      /* el contador se actualiza en el próximo refresco */
+    }
+    const enlace = String(item?.enlace || "");
+    const id = enlace.split("/").filter(Boolean).pop();
+    if (!id) return;
+    if (enlace.startsWith("/admin/propuestas/")) {
+      navigate({ to: "/admin/propuestas/$propuestaId", params: { propuestaId: id } });
+      return;
+    }
+    navigate({ to: "/perfil/propuestas/$propuestaId", params: { propuestaId: id } });
   };
 
   const openVenta = (venta) => {
@@ -382,6 +415,28 @@ export function AdminStockNotificationsBell() {
                         </button>
                       );
                     })}
+                  </section>
+                ) : null}
+
+                {propuestasCount > 0 ? (
+                  <section className="notifications-section" aria-label={labelProductores}>
+                    <p className="notifications-section-label">{labelProductores}</p>
+                    {propuestas.map((item) => (
+                      <button
+                        key={`propuesta-${item.id}`}
+                        type="button"
+                        className="notification-item notification-item--propuesta"
+                        onClick={() => openPropuesta(item)}
+                      >
+                        <span className="notification-item__icon" aria-hidden="true">
+                          <Sprout size={16} />
+                        </span>
+                        <div className="notification-item__main">
+                          <strong>{item.titulo}</strong>
+                          <span>{item.mensaje}</span>
+                        </div>
+                      </button>
+                    ))}
                   </section>
                 ) : null}
               </div>

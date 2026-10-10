@@ -57,6 +57,8 @@ export function getAdminBreadcrumbItems(pathname, search) {
     "/admin/perfil": [admin, crumb("Mi perfil")],
     "/admin/mis-compras": [admin, crumb("Mi perfil", "/admin/perfil"), crumb("Mis compras")],
     "/admin/mis-solicitudes": [admin, crumb("Mi perfil", "/admin/perfil"), crumb("Mis solicitudes")],
+    "/admin/mis-propuestas": [admin, crumb("Mi perfil", "/admin/perfil"), crumb("Mis propuestas")],
+    "/admin/propuestas": [admin, crumb("Propuestas de productores")],
     "/admin/ajustes": [admin, ajustes],
     "/admin/ajustes/horarios": [admin, ajustes, crumb("Horarios")],
     "/admin/ajustes/permisos": [admin, ajustes, crumb("Permisos")],
@@ -78,6 +80,14 @@ export function getAdminBreadcrumbItems(pathname, search) {
       return [admin, crumb("Voluntariado", "/admin/voluntariado"), crumb("Fechas disponibles")];
     }
     return [admin, crumb("Voluntariado")];
+  }
+
+  if (path.startsWith("/admin/propuestas/")) {
+    return [admin, crumb("Propuestas de productores", "/admin/propuestas"), crumb("Detalle")];
+  }
+
+  if (path.startsWith("/admin/mis-propuestas/")) {
+    return [admin, crumb("Mis propuestas", "/admin/mis-propuestas"), crumb("Detalle")];
   }
 
   if (path === "/admin/visitas") {
