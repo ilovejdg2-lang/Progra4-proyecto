@@ -13,6 +13,8 @@ export function getRouteCacheKey(pathname = normalizePathname()) {
   if (path.startsWith('/voluntariado')) return 'voluntariado';
   if (path.startsWith('/visitas') || path === '/solicitar-visita') return 'visitas';
   if (path.startsWith('/donaciones')) return 'donaciones';
+  if (path.startsWith('/productores')) return 'productores';
+  if (path === '/perfil/propuestas' || path.startsWith('/perfil/propuestas/')) return 'perfil-propuestas';
   if (path === '/repositorio' || path === '/documentos') return 'repositorio';
   if (path === '/checkout') return 'checkout';
   if (path === '/login') return 'login';

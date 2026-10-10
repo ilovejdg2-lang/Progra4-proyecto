@@ -2,7 +2,7 @@
 
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ClipboardList, ChevronDown, LifeBuoy, LogOut, ShoppingBag, UserRound } from "lucide-react";
+import { ClipboardList, ChevronDown, LifeBuoy, LogOut, ShoppingBag, Sprout, UserRound } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -60,6 +60,9 @@ export function ClienteSidebar() {
     tienePermiso(roles, "hacer_solicitud_donacion") ||
     tienePermiso(roles, "ingresar_solicitud_voluntariado") ||
     tienePermiso(roles, "crear_solicitud_visitante");
+  const puedeMisPropuestas =
+    tienePermiso(roles, "ingresar_propuesta_productor") ||
+    tienePermiso(roles, "ver_solicitudes_propias");
 
   const avatarUrl = user?.fotoPerfilUrl?.trim()
     ? normalizeImageUrl(user.fotoPerfilUrl.trim(), { width: 96 })
@@ -214,6 +217,22 @@ export function ClienteSidebar() {
                       <ClipboardList />
                       <span>
                         <ST>Mis solicitudes</ST>
+                      </span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : null}
+              {puedeMisPropuestas ? (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link
+                      to="/perfil/propuestas"
+                      activeProps={linkActivo}
+                      onClick={closeMobileSidebar}
+                    >
+                      <Sprout />
+                      <span>
+                        <ST>Mis propuestas</ST>
                       </span>
                     </Link>
                   </SidebarMenuButton>

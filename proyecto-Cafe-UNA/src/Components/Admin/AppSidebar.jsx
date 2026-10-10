@@ -31,6 +31,7 @@ import {
   Shield,
   ShieldCheck,
   HandCoins,
+  Sprout,
   LifeBuoy,
   ListChecks,
   Search,
@@ -173,6 +174,8 @@ export function AppSidebar() {
   const puedeUsuarios = tienePermiso(roles, "editar_usuarios") || tienePermiso(roles, "crear_usuarios") || tienePermiso(roles, "gestionar_asignaciones_puntos");
   const puedeAjustes = tienePermiso(roles, "administrar_roles_permisos");
   const puedeAuditoria = tienePermiso(roles, "ver_auditoria");
+  const puedePropuestas = tienePermiso(roles, "administrar_solicitudes_productores");
+  const puedeMisPropuestas = tienePermiso(roles, "ingresar_propuesta_productor") || tienePermiso(roles, "ver_solicitudes_propias");
   const puedePerfil = tienePermiso(roles, "ver_perfil_propio");
   const puedeMisCompras = tienePermiso(roles, "ver_historial_compras_propio");
   const puedeMisSolicitudes =
@@ -180,7 +183,7 @@ export function AppSidebar() {
     tienePermiso(roles, "hacer_solicitud_donacion") ||
     tienePermiso(roles, "ingresar_solicitud_voluntariado") ||
     tienePermiso(roles, "crear_solicitud_visitante");
-  const puedeMiCuenta = puedePerfil || puedeMisCompras || puedeMisSolicitudes;
+  const puedeMiCuenta = puedePerfil || puedeMisCompras || puedeMisSolicitudes || puedeMisPropuestas;
 
   const [busqueda, setBusqueda] = useState("");
   const tBuscarMenu = useTraducir("Buscar en el menú");
@@ -216,10 +219,12 @@ export function AppSidebar() {
     { to: "/admin/ajustes/permisos", etiqueta: "Permisos", grupo: "Ajustes del sistema", icono: Shield, ver: puedeAjustes },
     { to: "/admin/ajustes/catalogos", etiqueta: "Catálogos", grupo: "Ajustes del sistema", icono: ListChecks, ver: puedeAjustes },
     { to: "/admin/ajustes/manual", etiqueta: "Ayuda", grupo: "Ajustes del sistema", extra: "manual guía help guide", icono: LifeBuoy, ver: true },
+    { to: "/admin/propuestas", etiqueta: "Propuestas de productores", grupo: "Productores", icono: Sprout, ver: puedePropuestas },
     { to: "/admin/auditoria", etiqueta: "Auditoría", grupo: "Auditoría", icono: ScrollText, ver: puedeAuditoria },
     { to: "/admin/perfil", etiqueta: "Mi perfil", grupo: "Mi cuenta", icono: UserRound, ver: puedePerfil },
     { to: "/admin/mis-compras", etiqueta: "Mis compras", grupo: "Mi cuenta", icono: ShoppingBag, ver: puedeMisCompras },
     { to: "/admin/mis-solicitudes", etiqueta: "Mis solicitudes", grupo: "Mi cuenta", icono: ClipboardList, ver: puedeMisSolicitudes },
+    { to: "/admin/mis-propuestas", etiqueta: "Mis propuestas", grupo: "Mi cuenta", icono: Sprout, ver: puedeMisPropuestas },
   ];
   const consulta = claveBusqueda(busqueda.trim());
   const resultadosBusqueda = consulta
@@ -277,7 +282,8 @@ export function AppSidebar() {
   const isMiCuentaRoute =
     pathname === "/admin/perfil" ||
     pathname === "/admin/mis-compras" ||
-    pathname === "/admin/mis-solicitudes";
+    pathname === "/admin/mis-solicitudes" ||
+    pathname.startsWith("/admin/mis-propuestas");
 
   const [generalOpen, setGeneralOpen] = useState(() => {
     const savedValue = localStorage.getItem(GENERAL_OPEN_KEY);
@@ -1060,6 +1066,16 @@ export function AppSidebar() {
                 </Collapsible.Content>
               </SidebarMenuItem>
             </Collapsible.Root>
+            {puedePropuestas ? (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link to="/admin/propuestas" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                  <Sprout />
+                  <span><ST>Propuestas de productores</ST></span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            ) : null}
             {puedeAuditoria ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
@@ -1116,6 +1132,16 @@ export function AppSidebar() {
                       <Link to="/admin/mis-solicitudes" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <ClipboardList />
                         <span><ST>Mis solicitudes</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
+                  {puedeMisPropuestas ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/mis-propuestas" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <Sprout />
+                        <span><ST>Mis propuestas</ST></span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
@@ -1182,6 +1208,14 @@ export function AppSidebar() {
                 <Link to="/admin/mis-solicitudes" className="cursor-pointer" activeProps={linkActivo}>
                   <ClipboardList className="size-4" />
                   <span><ST>Mis solicitudes</ST></span>
+                </Link>
+              </DropdownMenuItem>
+            ) : null}
+            {puedeMisPropuestas ? (
+              <DropdownMenuItem asChild>
+                <Link to="/admin/mis-propuestas" className="cursor-pointer" activeProps={linkActivo}>
+                  <Sprout className="size-4" />
+                  <span><ST>Mis propuestas</ST></span>
                 </Link>
               </DropdownMenuItem>
             ) : null}

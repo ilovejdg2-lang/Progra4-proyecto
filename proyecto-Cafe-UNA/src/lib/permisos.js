@@ -45,6 +45,7 @@ export let PERMISOS_POR_ROL = {
   agregar_articulo_inventario: admins,
   inactivar_articulo_inventario: admins,
   ver_productores: todosRoles,
+  ingresar_propuesta_productor: logueados,
   administrar_solicitudes_productores: admins,
   agregar_productor: admins,
   actualizar_productor: [SA],
