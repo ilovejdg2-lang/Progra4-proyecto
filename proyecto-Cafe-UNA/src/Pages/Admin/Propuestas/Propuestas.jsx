@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "@tanstack/react-router";
-import { Eye, RefreshCw } from "lucide-react";
+import { ArrowUpRight, Eye, Pencil, RefreshCw } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
@@ -20,10 +20,19 @@ import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
-import { MOTIVO_MAX, MOTIVO_MIN, formatearFechaPropuesta } from "../../../lib/propuestaProductor";
+import {
+  COMENTARIO_MAX,
+  ESTADOS_PROPUESTA,
+  MOTIVO_MAX,
+  MOTIVO_MIN,
+  SUGERENCIAS_MAX,
+  esPropuestaAbierta,
+  formatearFechaPropuesta,
+} from "../../../lib/propuestaProductor";
 import { DetallePropuestaSecciones, SeccionRevision } from "../../Productores/DetallePropuesta";
 import {
   aprobarPropuesta,
+  cambiarEstadoPropuesta,
   obtenerBlobImagenPropuesta,
   obtenerPropuestaAdmin,
   obtenerPropuestasAdmin,
@@ -31,14 +40,65 @@ import {
 } from "../../../services/propuestasProductoresService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { AdminLayout } from "../layouts/AdminLayout";
+import { EditarPropuestaForm, HistorialPropuesta, NotaInternaPropuesta } from "./RevisionPropuesta";
 
-const ESTADOS = ["Pendiente", "Aprobada", "Rechazada"];
+const ESTADOS = ESTADOS_PROPUESTA;
+const CONFIRMACIONES = {
+  aprobar: {
+    titulo: "Confirmar aprobación",
+    texto: "La propuesta pasará a Aprobada, se publicará en la sección de productores y se enviará un correo de aprobación al productor con el enlace a su perfil.",
+    boton: "Aprobar y publicar",
+  },
+  rechazar: {
+    titulo: "Confirmar rechazo",
+    texto: "La propuesta pasará a Rechazada y se enviará un correo al productor con el motivo, las sugerencias y la invitación a enviar una nueva propuesta.",
+    boton: "Rechazar",
+  },
+  revision: {
+    titulo: "Marcar En revisión",
+    texto: "La propuesta pasará a En revisión. El productor no recibe correo por este cambio.",
+    boton: "Marcar En revisión",
+  },
+  pendiente: {
+    titulo: "Volver a Pendiente",
+    texto: "La propuesta vuelve a Pendiente. El productor no recibe correo por este cambio.",
+    boton: "Volver a Pendiente",
+  },
+};
+
+function claveFecha(valor) {
+  const fecha = new Date(valor);
+  if (Number.isNaN(fecha.getTime())) return "";
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}-${String(fecha.getDate()).padStart(2, "0")}`;
+}
+
+const FILTROS_CONFIG = [
+  { id: "estado", label: "Estado", obtenerValor: (item) => item.estado },
+  {
+    id: "desde",
+    label: "Desde",
+    tipo: "fecha",
+    valorInicial: "",
+    aplicar: (lista, valor) => (valor ? lista.filter((item) => claveFecha(item.fechaEnvio) >= valor) : lista),
+  },
+  {
+    id: "hasta",
+    label: "Hasta",
+    tipo: "fecha",
+    valorInicial: "",
+    aplicar: (lista, valor) => (valor ? lista.filter((item) => {
+      const clave = claveFecha(item.fechaEnvio);
+      return Boolean(clave) && clave <= valor;
+    }) : lista),
+  },
+];
 const btnCancelarGris =
   "inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60";
 const accionBtnBase =
   "inline-flex items-center justify-center gap-1 rounded-full border text-[11px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
 const colorEstado = {
   Pendiente: "text-amber-600",
+  "En revisión": "text-sky-600",
   Aprobada: "text-emerald-600",
   Rechazada: "text-rose-600",
 };
@@ -76,14 +136,16 @@ function ImagenAdmin({ nombre, alt }) {
   if (!src) return null;
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setAbierta(true)}
-        className="h-36 w-36 overflow-hidden rounded-2xl border border-slate-200 p-0"
-        aria-label="Ver imagen más grande"
-      >
-        <img src={src} alt={alt || ""} className="h-full w-full cursor-zoom-in object-cover" />
-      </button>
+      <div className="aspect-[4/3] w-full max-w-[16rem] overflow-hidden rounded-2xl border border-slate-200">
+        <button
+          type="button"
+          onClick={() => setAbierta(true)}
+          className="block h-full w-full p-0"
+          aria-label="Ver imagen más grande"
+        >
+          <img src={src} alt={alt || ""} className="h-full w-full cursor-zoom-in object-cover" />
+        </button>
+      </div>
       <ImageLightbox
         images={[src]}
         index={abierta ? 0 : -1}
@@ -105,8 +167,11 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
   const [error, setError] = useState("");
   const [accion, setAccion] = useState("");
   const [motivo, setMotivo] = useState("");
+  const [sugerencias, setSugerencias] = useState("");
+  const [comentario, setComentario] = useState("");
   const [confirmar, setConfirmar] = useState("");
   const [aviso, setAviso] = useState("");
+  const [editando, setEditando] = useState(false);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -133,7 +198,10 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
   const abrir = useCallback(async (id) => {
     setAviso("");
     setMotivo("");
+    setSugerencias("");
+    setComentario("");
     setConfirmar("");
+    setEditando(false);
     try {
       setDetalle(await obtenerPropuestaAdmin(id));
     } catch (err) {
@@ -144,29 +212,6 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
   useEffect(() => {
     if (propuestaId) abrir(propuestaId);
   }, [propuestaId, abrir]);
-
-  const filtrosConfig = [
-    {
-      id: "estado",
-      label: "Estado",
-      obtenerValor: (item) => item.estado,
-    },
-    {
-      id: "fecha",
-      label: "Fecha",
-      tipo: "fecha",
-      valorInicial: "",
-      aplicar: (lista, valor) => {
-        if (!valor) return lista;
-        return lista.filter((item) => {
-          const fecha = new Date(item.fechaEnvio);
-          if (Number.isNaN(fecha.getTime())) return false;
-          const clave = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}-${String(fecha.getDate()).padStart(2, "0")}`;
-          return clave === valor;
-        });
-      },
-    },
-  ];
 
   const {
     busqueda,
@@ -179,8 +224,8 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
     total,
     visibles,
   } = useAdminListaFiltros(items, {
-    buscarEn: (item) => [item.id, item.nombre, item.correo],
-    filtrosConfig,
+    buscarEn: (item) => [item.id, `#${item.id}`, item.nombre, item.correo],
+    filtrosConfig: FILTROS_CONFIG,
   });
   const { page, setPage, pageItems, totalPages } = useAdminPaginacion(filtrados);
 
@@ -188,28 +233,46 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
     const estado = ESTADOS.includes(item.estado) ? item.estado : "Pendiente";
     acc[estado] = (acc[estado] || 0) + 1;
     return acc;
-  }, { Pendiente: 0, Aprobada: 0, Rechazada: 0 });
+  }, { Pendiente: 0, "En revisión": 0, Aprobada: 0, Rechazada: 0 });
+
+  const actualizarDetalle = useCallback((respuesta) => {
+    if (!respuesta?.id) return;
+    setDetalle(respuesta);
+    setItems((prev) => prev.map((item) => (String(item.id) === String(respuesta.id) ? { ...item, ...respuesta } : item)));
+  }, []);
+
+  const cerrarConfirmacion = () => {
+    setConfirmar("");
+    setMotivo("");
+    setSugerencias("");
+    setComentario("");
+  };
 
   const ejecutar = async () => {
     if (!detalle || accion) return;
     if (confirmar === "rechazar" && motivo.trim().length < MOTIVO_MIN) return;
-    setAccion(confirmar);
+    const tipo = confirmar;
+    const esResolucion = tipo === "aprobar" || tipo === "rechazar";
+    setAccion(tipo);
     setError("");
     const id = detalle.id;
     try {
-      const respuesta = confirmar === "aprobar"
-        ? await aprobarPropuesta(id)
-        : await rechazarPropuesta(id, motivo.trim());
-      aplicarDecision(respuesta);
+      let respuesta;
+      if (tipo === "aprobar") respuesta = await aprobarPropuesta(id, comentario.trim());
+      else if (tipo === "rechazar") respuesta = await rechazarPropuesta(id, motivo.trim(), sugerencias.trim());
+      else respuesta = await cambiarEstadoPropuesta(id, tipo === "revision" ? "En revisión" : "Pendiente", comentario.trim());
+      aplicarDecision(respuesta, esResolucion);
     } catch (err) {
-      try {
-        const actual = await obtenerPropuestaAdmin(id);
-        if (actual?.estado && actual.estado !== "Pendiente") {
-          aplicarDecision(actual);
-          return;
+      if (esResolucion) {
+        try {
+          const actual = await obtenerPropuestaAdmin(id);
+          if (actual?.estado && !esPropuestaAbierta(actual.estado)) {
+            aplicarDecision(actual, true);
+            return;
+          }
+        } catch {
+          /* si no se puede confirmar, se muestra el error original */
         }
-      } catch {
-        /* si no se puede confirmar, se muestra el error original */
       }
       setError(err?.message || "No se pudo completar la revisión.");
     } finally {
@@ -217,12 +280,14 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
     }
   };
 
-  const aplicarDecision = (respuesta) => {
-    setDetalle(respuesta);
-    setItems((prev) => prev.map((item) => (String(item.id) === String(respuesta.id) ? { ...item, ...respuesta } : item)));
-    setConfirmar("");
-    setMotivo("");
-    setAviso("La decisión quedó registrada. El correo se enviará aunque esta pantalla ya haya mostrado el resultado.");
+  const aplicarDecision = (respuesta, esResolucion) => {
+    actualizarDetalle(respuesta);
+    cerrarConfirmacion();
+    setAviso(
+      esResolucion
+        ? "La decisión quedó registrada. El correo se enviará aunque esta pantalla ya haya mostrado el resultado."
+        : "Estado actualizado.",
+    );
   };
 
   if (!puedeAdministrar()) {
@@ -245,13 +310,22 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
       ],
     },
     {
-      id: "fecha",
-      label: "Fecha",
+      id: "desde",
+      label: "Desde",
       tipo: "fecha",
-      value: valoresFiltro.fecha ?? "",
-      onChange: (valor) => setValorFiltro("fecha", valor),
+      value: valoresFiltro.desde ?? "",
+      onChange: (valor) => setValorFiltro("desde", valor),
+    },
+    {
+      id: "hasta",
+      label: "Hasta",
+      tipo: "fecha",
+      value: valoresFiltro.hasta ?? "",
+      onChange: (valor) => setValorFiltro("hasta", valor),
     },
   ];
+  const abierta = detalle ? esPropuestaAbierta(detalle.estado) : false;
+  const confirmacion = CONFIRMACIONES[confirmar] || null;
 
   return (
     <section className="mx-auto w-full max-w-4xl space-y-6">
@@ -307,7 +381,7 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
           <AdminListaToolbar
             busqueda={busqueda}
             onBusquedaChange={setBusqueda}
-            placeholder="Buscar por identificador, nombre o correo..."
+            placeholder="Buscar por número de propuesta, nombre o correo..."
             filtros={toolbarFiltros}
             total={total}
             visibles={visibles}
@@ -316,7 +390,10 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
             compacto
           />
           {filtrados.length === 0 ? (
-            <AdminListaVacia onLimpiar={limpiar} />
+            <AdminListaVacia
+              mensaje="No se encontraron propuestas con los criterios utilizados."
+              onLimpiar={limpiar}
+            />
           ) : (
             <>
               <div className="hidden overflow-hidden md:block">
@@ -348,7 +425,7 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
                               className={`${accionBtnBase} h-8 border-slate-300 bg-white px-2.5 text-slate-700 hover:bg-slate-50`}
                             >
                               <Eye className="size-3" aria-hidden="true" />
-                              <span><ST>Ver</ST></span>
+                              <span><ST>Ver detalle</ST></span>
                             </button>
                           </td>
                         </tr>
@@ -374,7 +451,7 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
                       className={`${accionBtnBase} h-8 border-slate-300 bg-white px-2.5 text-slate-700`}
                     >
                       <Eye className="size-3" aria-hidden="true" />
-                      <span><ST>Ver</ST></span>
+                      <span><ST>Ver detalle</ST></span>
                     </button>
                   </article>
                 ))}
@@ -392,9 +469,9 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
       ) : null}
 
       {detalle ? (
-        <AdminModal open onClose={() => setDetalle(null)} maxWidth="max-w-2xl">
+        <AdminModal open onClose={() => { setDetalle(null); setEditando(false); }} maxWidth="max-w-xl">
           <AdminModalHeader>
-            <ST>Detalle de la propuesta</ST>
+            <ST>{editando ? "Editar propuesta antes de aprobar" : "Detalle de la propuesta"}</ST>
           </AdminModalHeader>
           <AdminModalBody>
             <header className="mb-6 flex items-center gap-4 border-b border-slate-100 pb-5">
@@ -410,50 +487,127 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
             </header>
             {aviso ? <p className="mb-4 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700"><ST>{aviso}</ST></p> : null}
             {error ? <p className="mb-4 text-sm text-rose-700"><ST>{error}</ST></p> : null}
-            <DetallePropuestaSecciones
-              propuesta={detalle}
-              imagen={<ImagenAdmin nombre={detalle.imagenNombre} alt={detalle.nombre} />}
-            />
-            <SeccionRevision propuesta={detalle}>
-              {detalle.estado === "Pendiente" ? (
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" className={adminBtnPrimary} disabled={Boolean(accion)} onClick={() => setConfirmar("aprobar")}>
-                    <ST>Aprobar</ST>
-                  </button>
-                  <button type="button" className={adminBtnVoluntariadoCancel} disabled={Boolean(accion)} onClick={() => setConfirmar("rechazar")}>
-                    <ST>Rechazar</ST>
-                  </button>
-                </div>
-              ) : null}
-            </SeccionRevision>
+            {editando ? (
+              <EditarPropuestaForm
+                propuesta={detalle}
+                onGuardado={(actualizada) => {
+                  actualizarDetalle(actualizada);
+                  setEditando(false);
+                  setAviso("Los cambios se guardaron.");
+                }}
+                onCancelar={() => setEditando(false)}
+              />
+            ) : (
+              <>
+                <DetallePropuestaSecciones
+                  propuesta={detalle}
+                  imagen={<ImagenAdmin nombre={detalle.imagenNombre} alt={detalle.nombre} />}
+                />
+                <SeccionRevision propuesta={detalle}>
+                  {abierta ? (
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" className={adminBtnPrimary} disabled={Boolean(accion)} onClick={() => setConfirmar("aprobar")}>
+                        <ST>Aprobar</ST>
+                      </button>
+                      <button type="button" className={adminBtnVoluntariadoCancel} disabled={Boolean(accion)} onClick={() => setConfirmar("rechazar")}>
+                        <ST>Rechazar</ST>
+                      </button>
+                      <button
+                        type="button"
+                        className={adminBtnVoluntariadoCancel}
+                        disabled={Boolean(accion)}
+                        onClick={() => {
+                          setAviso("");
+                          setEditando(true);
+                        }}
+                      >
+                        <Pencil className="mr-1.5 size-4" aria-hidden="true" />
+                        <ST>Editar datos</ST>
+                      </button>
+                      <button
+                        type="button"
+                        className={adminBtnVoluntariadoCancel}
+                        disabled={Boolean(accion)}
+                        onClick={() => setConfirmar(detalle.estado === "En revisión" ? "pendiente" : "revision")}
+                      >
+                        <ST>{detalle.estado === "En revisión" ? "Volver a Pendiente" : "Marcar En revisión"}</ST>
+                      </button>
+                    </div>
+                  ) : null}
+                  {detalle.estado === "Aprobada" && detalle.enlacePerfilPublico ? (
+                    <a
+                      href={detalle.enlacePerfilPublico}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${adminBtnVoluntariadoCancel} gap-1.5`}
+                    >
+                      <ST>Ver perfil publicado</ST>
+                      <ArrowUpRight className="size-4" aria-hidden="true" />
+                    </a>
+                  ) : null}
+                </SeccionRevision>
+              </>
+            )}
+            <NotaInternaPropuesta key={detalle.id} propuesta={detalle} onGuardado={actualizarDetalle} />
+            <HistorialPropuesta historial={detalle.historial} />
           </AdminModalBody>
         </AdminModal>
       ) : null}
 
-      <AdminModal open={Boolean(confirmar)} onClose={() => !accion && setConfirmar("")}>
+      <AdminModal open={Boolean(confirmacion)} onClose={() => !accion && cerrarConfirmacion()}>
         <AdminModalHeader>
-          <ST>{confirmar === "aprobar" ? "Confirmar aprobación" : "Confirmar rechazo"}</ST>
+          <ST>{confirmacion?.titulo || ""}</ST>
         </AdminModalHeader>
         <AdminModalBody>
-          <p className="text-slate-700">
-            <ST>
-              {confirmar === "aprobar"
-                ? "La propuesta pasará a Aprobada y se publicará."
-                : "Indicá el motivo. La propuesta pasará a Rechazada."}
-            </ST>
+          <p className="text-[length:var(--text-body)] text-slate-700">
+            <ST>{confirmacion?.texto || ""}</ST>
           </p>
           {confirmar === "rechazar" ? (
-            <label className="mt-4 grid gap-1 text-sm">
-              <span className="font-medium text-slate-700"><ST>Motivo del rechazo</ST></span>
+            <>
+              <label className="mt-4 grid gap-1 text-[length:var(--text-body)]">
+                <span className="font-medium text-slate-700">
+                  <ST>Motivo del rechazo (obligatorio)</ST>
+                </span>
+                <textarea
+                  rows={3}
+                  maxLength={MOTIVO_MAX}
+                  value={motivo}
+                  onChange={(event) => setMotivo(event.target.value)}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-slate-400 focus:bg-white"
+                />
+                <span className={motivo.trim().length < MOTIVO_MIN ? "text-amber-700" : "text-slate-500"}>
+                  {motivo.trim().length < MOTIVO_MIN
+                    ? t(`Escribí al menos ${MOTIVO_MIN} caracteres para orientar al productor.`)
+                    : `${motivo.trim().length}/${MOTIVO_MAX}`}
+                </span>
+              </label>
+              <label className="mt-4 grid gap-1 text-[length:var(--text-body)]">
+                <span className="font-medium text-slate-700">
+                  <ST>Sugerencias para el productor (opcional)</ST>
+                </span>
+                <textarea
+                  rows={3}
+                  maxLength={SUGERENCIAS_MAX}
+                  value={sugerencias}
+                  onChange={(event) => setSugerencias(event.target.value)}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-slate-400 focus:bg-white"
+                />
+              </label>
+            </>
+          ) : (
+            <label className="mt-4 grid gap-1 text-[length:var(--text-body)]">
+              <span className="font-medium text-slate-700">
+                <ST>Comentario interno (opcional, solo administradores)</ST>
+              </span>
               <textarea
-                rows={3}
-                maxLength={MOTIVO_MAX}
-                value={motivo}
-                onChange={(event) => setMotivo(event.target.value)}
+                rows={2}
+                maxLength={COMENTARIO_MAX}
+                value={comentario}
+                onChange={(event) => setComentario(event.target.value)}
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-slate-400 focus:bg-white"
               />
             </label>
-          ) : null}
+          )}
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
@@ -461,9 +615,9 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
               disabled={Boolean(accion) || (confirmar === "rechazar" && motivo.trim().length < MOTIVO_MIN)}
               onClick={ejecutar}
             >
-              {accion ? <ST>Guardando...</ST> : <ST>{confirmar === "aprobar" ? "Aceptar" : "Rechazar"}</ST>}
+              {accion ? <ST>Guardando...</ST> : <ST>{confirmacion?.boton || "Aceptar"}</ST>}
             </button>
-            <button type="button" className={adminBtnVoluntariadoCancel} disabled={Boolean(accion)} onClick={() => { setConfirmar(""); setMotivo(""); }}>
+            <button type="button" className={adminBtnVoluntariadoCancel} disabled={Boolean(accion)} onClick={cerrarConfirmacion}>
               <ST>Cancelar</ST>
             </button>
           </div>

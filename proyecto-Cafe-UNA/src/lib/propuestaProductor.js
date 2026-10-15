@@ -10,6 +10,11 @@ export const DIRECCION_MAX = 500;
 export const URL_MAX = 500;
 export const MOTIVO_MIN = 10;
 export const MOTIVO_MAX = 1000;
+export const SUGERENCIAS_MAX = 1000;
+export const NOTA_INTERNA_MAX = 2000;
+export const COMENTARIO_MAX = 1000;
+export const ESTADOS_PROPUESTA = ["Pendiente", "En revisión", "Aprobada", "Rechazada"];
+export const esPropuestaAbierta = (estado) => estado === "Pendiente" || estado === "En revisión";
 export const IMAGEN_MAX_BYTES = 5 * 1024 * 1024;
 export const TERMINOS_VERSION = "propuesta-productor-v1";
 export const TERMINOS_TEXTO =
@@ -167,6 +172,17 @@ export function validarFormularioPropuesta(form, archivo) {
   if (!form.aceptaTerminos) {
     errores.aceptaTerminos = "Debés aceptar la autorización de publicación para enviar la propuesta.";
   }
+  return errores;
+}
+
+/** Mismas reglas del formulario público, sin imagen ni términos (edición del administrador). */
+export function validarEdicionPropuesta(form) {
+  const errores = validarFormularioPropuesta(
+    { ...form, aceptaTerminos: true },
+    { name: "actual.jpg", type: "image/jpeg", size: 1 },
+  );
+  delete errores.imagen;
+  delete errores.aceptaTerminos;
   return errores;
 }
 
