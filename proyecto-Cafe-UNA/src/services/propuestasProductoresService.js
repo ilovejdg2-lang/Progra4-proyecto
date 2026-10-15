@@ -60,23 +60,50 @@ export async function obtenerPropuestaAdmin(id) {
   });
 }
 
-export async function aprobarPropuesta(id) {
+export async function aprobarPropuesta(id, comentario = "") {
   const data = await apiRequest(`${BASE}/${encodeURIComponent(id)}/aprobar`, {
     method: "POST",
+    body: JSON.stringify({ comentario }),
     errorPrefix: "No se pudo aprobar la propuesta",
   });
   avisar();
   return data;
 }
 
-export async function rechazarPropuesta(id, motivo) {
+export async function rechazarPropuesta(id, motivo, sugerencias = "") {
   const data = await apiRequest(`${BASE}/${encodeURIComponent(id)}/rechazar`, {
     method: "POST",
-    body: JSON.stringify({ motivo }),
+    body: JSON.stringify({ motivo, sugerencias }),
     errorPrefix: "No se pudo rechazar la propuesta",
   });
   avisar();
   return data;
+}
+
+export async function cambiarEstadoPropuesta(id, estado, comentario = "") {
+  const data = await apiRequest(`${BASE}/${encodeURIComponent(id)}/estado`, {
+    method: "PATCH",
+    body: JSON.stringify({ estado, comentario }),
+    errorPrefix: "No se pudo cambiar el estado",
+  });
+  avisar();
+  return data;
+}
+
+export async function actualizarPropuestaAdmin(id, datos) {
+  return apiRequest(`${BASE}/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify(datos),
+    errorPrefix: "No se pudieron guardar los cambios",
+  });
+}
+
+export async function guardarNotaInternaPropuesta(id, nota) {
+  return apiRequest(`${BASE}/${encodeURIComponent(id)}/nota-interna`, {
+    method: "PUT",
+    body: JSON.stringify({ nota }),
+    errorPrefix: "No se pudo guardar la nota interna",
+  });
 }
 
 export async function obtenerBlobImagenPropuesta(nombre) {
