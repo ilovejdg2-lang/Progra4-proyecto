@@ -53,7 +53,7 @@ export function AdminModal({
         aria-modal="true"
         aria-labelledby={labelledBy}
         className={cn(
-          "relative z-10 flex max-h-[92dvh] w-full min-h-0 min-w-0 max-w-full flex-col overflow-x-hidden overflow-hidden bg-white shadow-2xl",
+          "relative z-10 flex max-h-[92dvh] w-full min-h-0 min-w-0 flex-col overflow-x-hidden overflow-hidden bg-white shadow-2xl",
           "rounded-t-2xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl",
           maxWidth,
           className,

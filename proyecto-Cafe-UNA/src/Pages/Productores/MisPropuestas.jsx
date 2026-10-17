@@ -27,6 +27,7 @@ export function rutaMisPropuestas(user) {
 function colorEstado(estado) {
   const valor = String(estado || "").toLowerCase();
   if (valor.includes("pendiente")) return "text-amber-800";
+  if (valor.includes("revisi")) return "text-sky-800";
   if (valor.includes("aprob")) return "text-emerald-800";
   if (valor.includes("rechaz")) return "text-rose-800";
   return "text-slate-700";
@@ -178,6 +179,7 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
             options={[
               { value: "todos", label: "Todos" },
               { value: "Pendiente", label: "Pendiente" },
+              { value: "En revisión", label: "En revisión" },
               { value: "Aprobada", label: "Aprobada" },
               { value: "Rechazada", label: "Rechazada" },
             ]}
