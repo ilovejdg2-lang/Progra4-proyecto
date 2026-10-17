@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, ArrowUpRight, Globe, MapPin, Sprout, X } from "lucide-react";
 
-import { FacebookIcon, InstagramIcon } from "../../Components/Footer/SocialIcons";
+import { FacebookIcon, InstagramIcon, WhatsAppIcon } from "../../Components/Footer/SocialIcons";
 import PageLoading from "../../Components/PageLoading/PageLoading";
 import { ST } from "../../Components/T/ST";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
@@ -35,20 +35,11 @@ function lugarCorto(item) {
   return zona || provincia || String(item?.direccion || "").trim();
 }
 
-function IconoWhatsApp({ size = 16 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M20 11.5a8 8 0 0 1-11.6 7.1L4 20l1.5-4.2A8 8 0 1 1 20 11.5z" />
-      <path d="M9.2 9.4c.2-.4.4-.4.7-.4h.6c.2 0 .4 0 .5.4.2.5.6 1.6.6 1.7.1.2 0 .4-.1.5l-.3.4c-.1.1-.2.3-.1.5.2.4.7 1.1 1.4 1.5.6.3 1 .4 1.2.2l.5-.5c.2-.2.3-.2.6-.1.2.1 1.4.7 1.6.8.2.1.4.2.4.4.1.3 0 1.5-.7 1.8-.6.3-1.4.2-2.3-.1-1.3-.5-2.6-1.5-3.6-2.8-.8-1.1-1.5-2.4-1.6-2.8-.2-.5 0-1.1.2-1.5z" />
-    </svg>
-  );
-}
-
 function redesVisibles(item) {
   return [
     { id: "instagram", etiqueta: "Instagram", href: enlacePublico(item?.instagram), icono: <InstagramIcon size={16} /> },
     { id: "facebook", etiqueta: "Facebook", href: enlacePublico(item?.facebook), icono: <FacebookIcon size={16} /> },
-    { id: "whatsapp", etiqueta: "WhatsApp", href: enlacePublico(item?.whatsapp), icono: <IconoWhatsApp /> },
+    { id: "whatsapp", etiqueta: "WhatsApp", href: enlacePublico(item?.whatsapp), icono: <WhatsAppIcon /> },
     { id: "sitio", etiqueta: "Sitio web", href: enlacePublico(item?.sitioWeb), icono: <Globe size={16} aria-hidden="true" /> },
   ].filter((red) => red.href);
 }
@@ -156,7 +147,11 @@ export default function Productores() {
     let activo = true;
     obtenerProductoresPublicos()
       .then((items) => {
-        if (activo) setProductores(items);
+        if (!activo) return;
+        setProductores(items);
+        const pedido = new URLSearchParams(window.location.search).get("productor");
+        const encontrado = pedido ? items.find((item) => String(item.id) === pedido) : null;
+        if (encontrado) setSeleccionado(encontrado);
       })
       .catch((err) => {
         if (activo) setError(err?.message || "No se pudieron cargar los productores.");
