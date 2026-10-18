@@ -41,7 +41,7 @@ export function imagenPrincipalProducto(producto) {
 export function esImagenSubidaProducto(url) {
   const texto = String(url || "").trim();
   if (!texto) return false;
-  return /\/api\/(productos|informacion)\/imagenes\//i.test(texto);
+  return /\/api\/(productos\/imagenes|informacion\/imagenes|inventario\/ubicaciones\/imagenes)\//i.test(texto);
 }
 
 export const TIPOS_IMAGEN_PRODUCTO = new Set(["image/jpeg", "image/png", "image/webp"]);

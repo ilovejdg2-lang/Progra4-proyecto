@@ -128,12 +128,29 @@ export function normalizarUbicacion(ubicacion) {
   const name = firstDefined(ubicacion, ["name", "Name", "nombre", "Nombre"]);
   const fallbackName = FALLBACK_LOCATION_NAMES[normalizedCode] || normalizedCode;
   const rawActivo = firstDefined(ubicacion, ["activo", "Activo"]);
+  const textoOpcional = (campo) => {
+    const valor = firstDefined(ubicacion, campo);
+    if (!hasIdentity(valor)) return "";
+    return String(valor).trim();
+  };
   return {
     id: firstDefined(ubicacion, ["id", "Id"]) ?? null,
     code: normalizedCode,
     name: hasIdentity(name) ? String(name).trim() : fallbackName,
     activo: rawActivo === undefined || rawActivo === null ? true : toBoolean(rawActivo),
+    imagenUrl: textoOpcional(["imagenUrl", "ImagenUrl", "imagen", "Imagen"]),
+    direccion: textoOpcional(["direccion", "Direccion"]),
+    mapsUrl: textoOpcional(["mapsUrl", "MapsUrl"]),
+    telefono: textoOpcional(["telefono", "Telefono"]),
+    horario: textoOpcional(["horario", "Horario"]),
+    imagenes: listaImagenes(firstDefined(ubicacion, ["imagenes", "Imagenes"])),
   };
+}
+
+function listaImagenes(valor) {
+  if (Array.isArray(valor)) return valor.map((item) => String(item || "").trim()).filter(Boolean);
+  if (!hasIdentity(valor)) return [];
+  return String(valor).split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
 }
 
 export function validarCodigoUbicacion(locationCode) {
@@ -373,6 +390,12 @@ export async function obtenerDisponibilidadPuntosVenta(productIds = []) {
     id: Number(punto.id ?? punto.Id) || null,
     code: String(punto.code ?? punto.Code ?? punto.codigo ?? punto.Codigo ?? ""),
     name: String(punto.name ?? punto.Name ?? punto.nombre ?? punto.Nombre ?? ""),
+    imagenUrl: String(punto.imagenUrl ?? punto.ImagenUrl ?? "").trim(),
+    direccion: String(punto.direccion ?? punto.Direccion ?? "").trim(),
+    mapsUrl: String(punto.mapsUrl ?? punto.MapsUrl ?? "").trim(),
+    telefono: String(punto.telefono ?? punto.Telefono ?? "").trim(),
+    horario: String(punto.horario ?? punto.Horario ?? "").trim(),
+    imagenes: listaImagenes(punto.imagenes ?? punto.Imagenes),
   })).filter((punto) => punto.code);
   const porProducto = (Array.isArray(data?.porProducto) ? data.porProducto : []).map((row) => ({
     productoId: String(row.productoId ?? row.ProductoId ?? ""),
@@ -451,9 +474,38 @@ export async function actualizarStockCentral(productId, stock) {
   return normalizarStockCentral({ ...actualizado, productId });
 }
 
-export async function crearUbicacion({ nombre, codigo } = {}) {
+export async function subirImagenPuntoVenta(archivo) {
+  const form = new FormData();
+  form.append("imagen", archivo);
+  const resultado = await inventoryRequest(`${INVENTORY_BASE_URL}/ubicaciones/imagenes`, {
+    method: "POST",
+    body: form,
+  });
+  const url = String(resultado?.url ?? resultado?.Url ?? "").trim();
+  if (!url) {
+    throw new Error("No se pudo subir la imagen del punto de venta.");
+  }
+  return url;
+}
+
+export async function crearUbicacion({
+  nombre,
+  codigo,
+  imagenUrl,
+  direccion,
+  mapsUrl,
+  telefono,
+  horario,
+  imagenes,
+} = {}) {
   const payload = { nombre };
   if (hasIdentity(codigo)) payload.codigo = String(codigo).trim().toUpperCase();
+  if (imagenUrl !== undefined) payload.imagenUrl = imagenUrl || null;
+  if (direccion !== undefined) payload.direccion = direccion || null;
+  if (mapsUrl !== undefined) payload.mapsUrl = mapsUrl || null;
+  if (telefono !== undefined) payload.telefono = telefono || null;
+  if (horario !== undefined) payload.horario = horario || null;
+  if (imagenes !== undefined) payload.imagenes = imagenes?.length ? imagenes : null;
 
   const creada = await inventoryRequest(`${INVENTORY_BASE_URL}/ubicaciones`, {
     method: "POST",
@@ -474,6 +526,14 @@ export async function actualizarUbicacion(locationCode, cambios = {}) {
   const payload = {};
   if (Object.prototype.hasOwnProperty.call(cambios, "nombre")) payload.nombre = cambios.nombre;
   if (Object.prototype.hasOwnProperty.call(cambios, "activo")) payload.activo = cambios.activo;
+  if (Object.prototype.hasOwnProperty.call(cambios, "imagenUrl")) payload.imagenUrl = cambios.imagenUrl || null;
+  if (Object.prototype.hasOwnProperty.call(cambios, "direccion")) payload.direccion = cambios.direccion || null;
+  if (Object.prototype.hasOwnProperty.call(cambios, "mapsUrl")) payload.mapsUrl = cambios.mapsUrl || null;
+  if (Object.prototype.hasOwnProperty.call(cambios, "telefono")) payload.telefono = cambios.telefono || null;
+  if (Object.prototype.hasOwnProperty.call(cambios, "horario")) payload.horario = cambios.horario || null;
+  if (Object.prototype.hasOwnProperty.call(cambios, "imagenes")) {
+    payload.imagenes = Array.isArray(cambios.imagenes) && cambios.imagenes.length ? cambios.imagenes : null;
+  }
 
   const actualizada = await inventoryRequest(
     `${INVENTORY_BASE_URL}/ubicaciones/${encodeURIComponent(String(locationCode).trim().toUpperCase())}`,

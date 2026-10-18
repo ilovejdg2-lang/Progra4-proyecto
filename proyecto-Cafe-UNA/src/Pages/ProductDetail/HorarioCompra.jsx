@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { addDays, format } from 'date-fns';
 import { enUS, es } from 'date-fns/locale';
-import { CalendarClock } from 'lucide-react';
+import { CalendarClock, Clock } from 'lucide-react';
 import { useTraducir } from '../../hooks/useTraducir';
 import { useIdioma } from '../../lib/useIdioma';
 import { listarDisponibilidadPublica } from '../../services/ajustesService';
@@ -30,10 +30,14 @@ export function HorarioCompra({
 }) {
   const { idioma } = useIdioma();
   const [dias, setDias] = useState([]);
+  const [cargando, setCargando] = useState(true);
   const tTitulo = useTraducir(titulo);
+  const tCargando = useTraducir('Cargando horario de retiro...');
+  const tSinDias = useTraducir('Este punto no tiene días de retiro publicados por ahora.');
 
   useEffect(() => {
     let activo = true;
+    setCargando(true);
     const hoy = new Date();
     listarDisponibilidadPublica(
       'compras',
@@ -47,34 +51,75 @@ export function HorarioCompra({
       })
       .catch(() => {
         if (activo) setDias([]);
+      })
+      .finally(() => {
+        if (activo) setCargando(false);
       });
     return () => {
       activo = false;
     };
   }, [ubicacionId]);
 
-  if (!dias.length) return null;
+  if (variante !== 'tarjeta' && variante !== 'incrustada' && !dias.length) return null;
 
   const locale = idioma === 'en' ? enUS : es;
   const patron = idioma === 'en' ? 'EEEE, MMM d' : "EEEE d 'de' MMMM";
 
+  if (variante === 'incrustada') {
+    const etiqueta = (fecha) => {
+      const dia = format(fecha, 'EEEE', { locale });
+      const mes = format(fecha, 'MMMM', { locale });
+      const capital = (texto) => texto.charAt(0).toUpperCase() + texto.slice(1);
+      if (idioma === 'en') return `${capital(dia)}, ${format(fecha, 'MMM d', { locale })}`;
+      return `${capital(dia)} ${format(fecha, 'd')} de ${capital(mes)}`;
+    };
+    return (
+      <div className="checkout-retiro">
+        <p className="checkout-retiro__title">
+          <Clock size={16} aria-hidden="true" />
+          {tTitulo}
+        </p>
+        {cargando ? (
+          <p className="checkout-retiro__status">{tCargando}</p>
+        ) : dias.length === 0 ? (
+          <p className="checkout-retiro__status">{tSinDias}</p>
+        ) : (
+          <ul>
+            {dias.map((dia) => (
+              <li key={dia.fecha} className="checkout-retiro__row">
+                <span>{etiqueta(fechaLocal(dia.fecha))}</span>
+                <strong>{`${horaLegible(dia.horaInicio)} – ${horaLegible(dia.horaFin)}`}</strong>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
+
   if (variante === 'tarjeta') {
     return (
-      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[length:var(--text-body)]">
+      <div className="rounded-2xl border border-[#efe4d8] bg-[#fbf8f5] px-4 py-3 text-[length:var(--text-body)]">
         <p className="flex items-center gap-2 font-semibold text-slate-900">
           <CalendarClock size={16} aria-hidden="true" />
           {tTitulo}
         </p>
-        <ul className="mt-2 grid gap-1">
-          {dias.map((dia) => (
-            <li key={dia.fecha} className="flex flex-wrap items-center justify-between gap-x-3 text-slate-700">
-              <span className="capitalize">{format(fechaLocal(dia.fecha), patron, { locale })}</span>
-              <strong className="text-slate-900">
-                {`${horaLegible(dia.horaInicio)} – ${horaLegible(dia.horaFin)}`}
-              </strong>
-            </li>
-          ))}
-        </ul>
+        {cargando ? (
+          <p className="mt-2 text-slate-500">{tCargando}</p>
+        ) : dias.length === 0 ? (
+          <p className="mt-2 text-slate-500">{tSinDias}</p>
+        ) : (
+          <ul className="mt-2 grid gap-1">
+            {dias.map((dia) => (
+              <li key={dia.fecha} className="flex flex-wrap items-center justify-between gap-x-3 text-slate-700">
+                <span className="capitalize">{format(fechaLocal(dia.fecha), patron, { locale })}</span>
+                <strong className="text-slate-900">
+                  {`${horaLegible(dia.horaInicio)} – ${horaLegible(dia.horaFin)}`}
+                </strong>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     );
   }
