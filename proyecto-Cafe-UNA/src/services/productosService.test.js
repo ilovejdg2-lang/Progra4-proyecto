@@ -130,10 +130,26 @@ describe("productosService contract", () => {
     expect(["BODEGA_CENTRAL", "POS_FUNA_UNA", "POS_EDITORIAL", "POS_STAND_FERIAS", "POS_NUEVO"]
       .every((code) => validarCodigoUbicacion(code))).toBe(true);
     expect(normalizarUbicacion({ Code: "POS_EDITORIAL", Nombre: "Editorial", Activo: true })).toEqual({
-      id: null, code: "POS_EDITORIAL", name: "Editorial", activo: true,
+      id: null, code: "POS_EDITORIAL", name: "Editorial", activo: true, imagenUrl: "", direccion: "", mapsUrl: "", telefono: "", horario: "", imagenes: [],
     });
-    expect(normalizarUbicacion({ codigo: "POS_NUEVO", nombre: "Kiosco", activo: false })).toEqual({
-      id: null, code: "POS_NUEVO", name: "Kiosco", activo: false,
+    expect(normalizarUbicacion({
+      codigo: "POS_NUEVO",
+      nombre: "Kiosco",
+      activo: false,
+      imagenUrl: "/api/inventario/ubicaciones/imagenes/punto-1.jpg",
+      direccion: "Campus Omar Dengo",
+      mapsUrl: "https://maps.app.goo.gl/abc",
+    })).toEqual({
+      id: null,
+      code: "POS_NUEVO",
+      name: "Kiosco",
+      activo: false,
+      imagenUrl: "/api/inventario/ubicaciones/imagenes/punto-1.jpg",
+      direccion: "Campus Omar Dengo",
+      mapsUrl: "https://maps.app.goo.gl/abc",
+      telefono: "",
+      horario: "",
+      imagenes: [],
     });
     expect(normalizarUbicacion({ codigo: "bad code!" })).toBeNull();
     expect(validarCodigoUbicacion("bad code!")).toBe(false);
@@ -155,8 +171,8 @@ describe("productosService contract", () => {
     const first = await obtenerUbicaciones();
     const second = await obtenerUbicaciones();
     expect(first).toEqual([
-      { id: null, code: "BODEGA_CENTRAL", name: "Bodega Central", activo: true },
-      { id: null, code: "POS_FUNA_UNA", name: "FUNA-UNA", activo: true },
+      { id: null, code: "BODEGA_CENTRAL", name: "Bodega Central", activo: true, imagenUrl: "", direccion: "", mapsUrl: "", telefono: "", horario: "", imagenes: [] },
+      { id: null, code: "POS_FUNA_UNA", name: "FUNA-UNA", activo: true, imagenUrl: "", direccion: "", mapsUrl: "", telefono: "", horario: "", imagenes: [] },
     ]);
     expect(second).toBe(first);
     expect(apiRequestMock).toHaveBeenCalledTimes(1);
