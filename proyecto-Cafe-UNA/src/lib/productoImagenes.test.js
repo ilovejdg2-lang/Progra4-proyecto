@@ -21,6 +21,7 @@ describe("validarArchivoImagenProducto", () => {
 
   it("detects uploaded product image paths", () => {
     expect(esImagenSubidaProducto("/api/productos/imagenes/producto-1.jpg")).toBe(true);
+    expect(esImagenSubidaProducto("/api/inventario/ubicaciones/imagenes/punto-1.jpg")).toBe(true);
     expect(esImagenSubidaProducto("https://img.example/1.jpg")).toBe(false);
   });
 

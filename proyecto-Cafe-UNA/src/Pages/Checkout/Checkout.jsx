@@ -9,6 +9,7 @@ import { ST } from '../../Components/T/ST';
 import { t } from '../../lib/t';
 import { getLoadingMessageForCacheKey } from '../../lib/pageLoadingMessages';
 import { normalizeImageUrl } from '../../lib/imageUtils';
+import { CheckoutPuntoCard } from './CheckoutPuntoCard';
 import './Checkout.css';
 import { calcularPrecioConIVA, obtenerDisponibilidadPuntosVenta } from '../../services/productosService';
 import { obtenerNavbar } from '../../services/informacionService';
@@ -18,7 +19,7 @@ import { marcarIntentRegistroCliente, puedeComprar } from '../../services/authSe
 import { clearCart, getStoredCart } from '../../lib/cartStorage';
 import { confirmarCompraEnBackend, validarComprobante } from './checkoutValidation';
 import { CheckoutConfirmacion } from './CheckoutConfirmacion';
-import { HorarioCompra } from '../ProductDetail/HorarioCompra';
+import { CheckoutPuntoDetalle } from './CheckoutPuntoDetalle';
 import { rutaMisCompras } from '../HistorialCompras/rutasCompras';
 import { cargarLogoWebpParaPdf, descargarArchivo } from '../../lib/exportarHistorialMovimientos';
 import { LOGO_OSCURO_FALLBACK } from '../../lib/brandLogoCache';
@@ -78,6 +79,7 @@ const Checkout = () => {
   const tElegiPunto = useTraducir('Elegí dónde retirar o realizar tu compra. Solo se listan puntos con stock para todos los productos del carrito.');
   const tDisponible = useTraducir('Disponible');
   const tUnidades = useTraducir('unidades');
+  const tUnidadesEnStock = useTraducir('unidades en stock');
   const tSinStockPos = useTraducir('Sin stock suficiente para este pedido');
   const tComprobante = useTraducir('Comprobante de pago');
   const tComprobanteCta = useTraducir('Arrastrá o seleccioná una imagen del comprobante');
@@ -458,55 +460,33 @@ const Checkout = () => {
             {puntosConDisponibilidad.length === 0 ? (
               <p className="checkout-page__hint"><ST>No hay puntos de venta disponibles en este momento.</ST></p>
             ) : (
-              <div className="checkout-pos__grid">
+              <div className="checkout-pos__grid" role="radiogroup" aria-labelledby="checkout-pos-title">
                 {puntosConDisponibilidad.map((punto) => {
-                  const seleccionado = ubicacionCodigo === punto.code;
+                  const lineasStock = cartItems.map((item) => ({
+                    id: item.id,
+                    nombre: item.nombre || item.name || 'Producto',
+                    disponible: Number(stockPorProducto[String(item.id)]?.[punto.code]) || 0,
+                  }));
                   return (
-                    <button
+                    <CheckoutPuntoCard
                       key={punto.code}
-                      type="button"
-                      className={`checkout-pos__card${seleccionado ? ' is-selected' : ''}${punto.cubrePedido ? '' : ' is-disabled'}`}
-                      disabled={!punto.cubrePedido}
-                      aria-pressed={seleccionado}
-                      onClick={() => {
-                        setUbicacionCodigo(punto.code);
+                      punto={punto}
+                      seleccionado={ubicacionCodigo === punto.code}
+                      lineasStock={lineasStock}
+                      onSelect={(code) => {
+                        setUbicacionCodigo(code);
                         setPaymentError(null);
                       }}
-                    >
-                      <span className="checkout-pos__radio" aria-hidden="true" />
-                      <span className="checkout-pos__card-icon"><Store size={18} aria-hidden="true" /></span>
-                      <span className="checkout-pos__card-body">
-                        <span className="checkout-pos__card-name">{punto.name}</span>
-                        {punto.cubrePedido ? (
-                          <ul className="checkout-pos__stock">
-                            {cartItems.map((item) => {
-                              const disponible = Number(stockPorProducto[String(item.id)]?.[punto.code]) || 0;
-                              return (
-                                <li key={`${punto.code}-${item.id}`}>
-                                  {item.nombre || item.name}: {disponible} {tUnidades}
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        ) : (
-                          <span className="checkout-pos__card-meta">{tSinStockPos}</span>
-                        )}
-                        {punto.cubrePedido ? (
-                          <span className="checkout-pos__badge">{tDisponible}</span>
-                        ) : null}
-                      </span>
-                    </button>
+                      etiquetaDisponible={tDisponible}
+                      etiquetaSinStock={tSinStockPos}
+                      etiquetaUnidades={tUnidades}
+                      etiquetaUnidadesEnStock={tUnidadesEnStock}
+                    />
                   );
                 })}
               </div>
             )}
-            {puntoElegido?.id ? (
-              <HorarioCompra
-                ubicacionId={puntoElegido.id}
-                titulo="Días y horario para retirar en este punto de venta"
-                variante="tarjeta"
-              />
-            ) : null}
+            {puntoElegido?.id ? <CheckoutPuntoDetalle punto={puntoElegido} /> : null}
           </section>
         ) : null}
       </section>

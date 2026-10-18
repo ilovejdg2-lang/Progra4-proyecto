@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Plus, RefreshCw } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
@@ -40,6 +40,12 @@ const AdminPuntosVenta = () => {
   const [saveError, setSaveError] = useState("");
   const [locationError, setLocationError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [successToken, setSuccessToken] = useState(0);
+  const [successShown, setSuccessShown] = useState(false);
+  const anunciarExito = (mensaje) => {
+    setSuccessToken((token) => token + 1);
+    setSuccessMessage(mensaje);
+  };
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingLocation, setIsSavingLocation] = useState(false);
   const [togglingCode, setTogglingCode] = useState("");
@@ -70,6 +76,24 @@ const AdminPuntosVenta = () => {
       { id: "estado", obtenerValor: (product) => product.estado },
     ],
   });
+  useEffect(() => {
+    if (!successMessage) {
+      setSuccessShown(false);
+      return undefined;
+    }
+    setSuccessShown(false);
+    const enter = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setSuccessShown(true));
+    });
+    const hide = setTimeout(() => setSuccessShown(false), 3000);
+    const clear = setTimeout(() => setSuccessMessage(""), 3550);
+    return () => {
+      cancelAnimationFrame(enter);
+      clearTimeout(hide);
+      clearTimeout(clear);
+    };
+  }, [successMessage, successToken]);
+
   const ready = !puedeVer || (locationsState.status !== "idle" && catalogState.status !== "idle");
   const { showLoading, loadingMessage } = useAdminPageGate("/admin/puntos-venta", ready);
 
@@ -81,7 +105,7 @@ const AdminPuntosVenta = () => {
       await ajustarStockPorUbicacion(effectiveSelectedCode, selectedProduct.id, stock, reason);
       await stockState.retry();
       setSelectedProduct(null);
-      setSuccessMessage(`Stock de ${selectedProduct.nombre} actualizado en ${selectedLocation.name}.`);
+      anunciarExito(`Stock de ${selectedProduct.nombre} actualizado en ${selectedLocation.name}.`);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "No se pudo guardar el ajuste.");
     } finally {
@@ -94,13 +118,22 @@ const AdminPuntosVenta = () => {
     setLocationError("");
     setSuccessMessage("");
     try {
+      const presentacion = {
+        nombre: payload.nombre,
+        imagenUrl: payload.imagenUrl || null,
+        imagenes: payload.imagenes || [],
+        direccion: payload.direccion || null,
+        telefono: payload.telefono || null,
+        horario: payload.horario || null,
+        mapsUrl: payload.mapsUrl || null,
+      };
       if (locationEditor?.code) {
-        const actualizada = await actualizarUbicacion(locationEditor.code, { nombre: payload.nombre });
-        setSuccessMessage(`Se actualizó ${actualizada.name}.`);
+        const actualizada = await actualizarUbicacion(locationEditor.code, presentacion);
+        anunciarExito(`Se actualizó ${actualizada.name}.`);
       } else {
-        const creada = await crearUbicacion(payload);
+        const creada = await crearUbicacion({ ...presentacion, codigo: payload.codigo });
         setSelectedCode(creada.code);
-        setSuccessMessage(`Se agregó ${creada.name}.`);
+        anunciarExito(`Se agregó ${creada.name}.`);
       }
       setLocationEditor(null);
       await locationsState.retry();
@@ -118,7 +151,7 @@ const AdminPuntosVenta = () => {
       const nextActivo = location.activo === false;
       const actualizada = await actualizarUbicacion(location.code, { activo: nextActivo });
       await locationsState.retry();
-      setSuccessMessage(
+      anunciarExito(
         nextActivo
           ? `${actualizada.name} quedó activo.`
           : `${actualizada.name} quedó inhabilitado.`,
@@ -297,9 +330,19 @@ const AdminPuntosVenta = () => {
             </p>
           </header>
           {successMessage ? (
-            <div className="flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800" role="status" aria-live="polite">
-              <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              <ST>{successMessage}</ST>
+            <div
+              className={`grid transition-[grid-template-rows,opacity,transform] duration-500 ease-in-out ${
+                successShown ? "grid-rows-[1fr] translate-y-0 opacity-100" : "grid-rows-[0fr] -translate-y-1 opacity-0"
+              }`}
+              role="status"
+              aria-live="polite"
+            >
+              <div className="overflow-hidden">
+                <div className="flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                  <ST>{successMessage}</ST>
+                </div>
+              </div>
             </div>
           ) : null}
           {locationError && !locationEditor ? (
