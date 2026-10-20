@@ -274,3 +274,71 @@ export async function obtenerInformacionSobreNosotros() {
     };
   });
 }
+
+export const DEFAULT_PRODUCTORES_HERO = {
+  eyebrow: "PRODUCTORES LOCALES",
+  eyebrowEn: "LOCAL PRODUCERS",
+  title: "Da a conocer tu emprendimiento",
+  titleEn: "Promote your venture",
+  description: "Conecta con amantes del café y dale visibilidad a tus productos en nuestro mapa interactivo.",
+  descriptionEn: "Connect with coffee lovers and give visibility to your products on our interactive map.",
+  image: "https://i.ibb.co/LX9p9NmQ/finca-santa-lucia-mapa-con-nombres-1792378976823.jpg",
+  linkText: "Enviar propuesta",
+  linkTextEn: "Submit proposal",
+  linkUrl: "/productores/propuesta",
+  secondaryButtonText: "Explorar mapa",
+  secondaryButtonTextEn: "Explore map",
+  secondaryButtonUrl: "/productores",
+  tertiaryButtonText: "",
+  tertiaryButtonTextEn: "",
+  tertiaryButtonUrl: "",
+  footerText: "+30 Ubicaciones activas",
+  footerTextEn: "+30 Active locations",
+};
+
+export function normalizarProductoresHero(data) {
+  if (!data || typeof data !== "object") return { ...DEFAULT_PRODUCTORES_HERO };
+
+  const getStr = (pascal, camel, defecto) => {
+    const val = data[pascal] ?? data[camel];
+    if (val !== undefined && val !== null && String(val).trim() !== "") {
+      return String(val).trim();
+    }
+    return defecto;
+  };
+
+  return {
+    eyebrow: getStr("Eyebrow", "eyebrow", DEFAULT_PRODUCTORES_HERO.eyebrow),
+    eyebrowEn: getStr("EyebrowEn", "eyebrowEn", DEFAULT_PRODUCTORES_HERO.eyebrowEn),
+    title: getStr("Title", "title", DEFAULT_PRODUCTORES_HERO.title),
+    titleEn: getStr("TitleEn", "titleEn", DEFAULT_PRODUCTORES_HERO.titleEn),
+    description: getStr("Description", "description", DEFAULT_PRODUCTORES_HERO.description),
+    descriptionEn: getStr("DescriptionEn", "descriptionEn", DEFAULT_PRODUCTORES_HERO.descriptionEn),
+    image: getStr("Image", "image", DEFAULT_PRODUCTORES_HERO.image),
+    linkText: getStr("LinkText", "linkText", DEFAULT_PRODUCTORES_HERO.linkText),
+    linkTextEn: getStr("LinkTextEn", "linkTextEn", DEFAULT_PRODUCTORES_HERO.linkTextEn),
+    linkUrl: getStr("LinkUrl", "linkUrl", DEFAULT_PRODUCTORES_HERO.linkUrl),
+    secondaryButtonText: getStr("SecondaryButtonText", "secondaryButtonText", DEFAULT_PRODUCTORES_HERO.secondaryButtonText),
+    secondaryButtonTextEn: getStr("SecondaryButtonTextEn", "secondaryButtonTextEn", DEFAULT_PRODUCTORES_HERO.secondaryButtonTextEn),
+    secondaryButtonUrl: getStr("SecondaryButtonUrl", "secondaryButtonUrl", DEFAULT_PRODUCTORES_HERO.secondaryButtonUrl),
+    tertiaryButtonText: getStr("TertiaryButtonText", "tertiaryButtonText", DEFAULT_PRODUCTORES_HERO.tertiaryButtonText),
+    tertiaryButtonTextEn: getStr("TertiaryButtonTextEn", "tertiaryButtonTextEn", DEFAULT_PRODUCTORES_HERO.tertiaryButtonTextEn),
+    tertiaryButtonUrl: getStr("TertiaryButtonUrl", "tertiaryButtonUrl", DEFAULT_PRODUCTORES_HERO.tertiaryButtonUrl),
+    footerText: getStr("FooterText", "footerText", DEFAULT_PRODUCTORES_HERO.footerText),
+    footerTextEn: getStr("FooterTextEn", "footerTextEn", DEFAULT_PRODUCTORES_HERO.footerTextEn),
+  };
+}
+
+export async function obtenerProductoresHero() {
+  try {
+    const res = await obtenerSeccion("productores");
+    return normalizarProductoresHero(res);
+  } catch {
+    return { ...DEFAULT_PRODUCTORES_HERO };
+  }
+}
+
+export async function actualizarProductoresHero(cambios) {
+  const result = await actualizarSeccion("productores", cambios);
+  return normalizarProductoresHero(result);
+}

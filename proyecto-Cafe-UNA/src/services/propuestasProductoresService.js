@@ -131,3 +131,92 @@ export async function marcarNotificacionLeida(id) {
   avisar();
   return data;
 }
+
+export async function editarMiPropuesta(id, formData) {
+  const data = await apiRequest(`${BASE}/mias/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    data: formData,
+    timeout: 60000,
+    errorPrefix: "No se pudo actualizar la propuesta",
+  });
+  avisar();
+  return data;
+}
+
+export async function eliminarMiPropuesta(id) {
+  const data = await apiRequest(`${BASE}/mias/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    errorPrefix: "No se pudo eliminar la solicitud",
+  });
+  avisar();
+  return data;
+}
+
+export async function solicitarEdicionMiPropuesta(id, formData) {
+  const data = await apiRequest(`${BASE}/mias/${encodeURIComponent(id)}/solicitar-edicion`, {
+    method: "POST",
+    data: formData,
+    timeout: 60000,
+    errorPrefix: "No se pudo enviar la solicitud de cambios",
+  });
+  avisar();
+  return data;
+}
+
+export async function cancelarSolicitudEdicionMiPropuesta(id) {
+  const data = await apiRequest(`${BASE}/mias/${encodeURIComponent(id)}/solicitar-edicion`, {
+    method: "DELETE",
+    errorPrefix: "No se pudo cancelar la solicitud de cambios",
+  });
+  avisar();
+  return data;
+}
+
+export async function solicitarEliminacionMiPropuesta(id, motivo) {
+  const data = await apiRequest(`${BASE}/mias/${encodeURIComponent(id)}/solicitar-eliminacion`, {
+    method: "POST",
+    body: JSON.stringify({ motivo }),
+    errorPrefix: "No se pudo enviar la solicitud de baja",
+  });
+  avisar();
+  return data;
+}
+
+export async function cancelarSolicitudEliminacionMiPropuesta(id) {
+  const data = await apiRequest(`${BASE}/mias/${encodeURIComponent(id)}/solicitar-eliminacion`, {
+    method: "DELETE",
+    errorPrefix: "No se pudo cancelar la solicitud de baja",
+  });
+  avisar();
+  return data;
+}
+
+export async function resolverSolicitudEdicionAdmin(id, accion, comentario = "") {
+  const data = await apiRequest(`${BASE}/${encodeURIComponent(id)}/resolver-edicion`, {
+    method: "POST",
+    body: JSON.stringify({ accion, comentario }),
+    errorPrefix: "No se pudo procesar la solicitud de cambios",
+  });
+  avisar();
+  return data;
+}
+
+export async function resolverSolicitudEliminacionAdmin(id, accion, comentario = "") {
+  const data = await apiRequest(`${BASE}/${encodeURIComponent(id)}/resolver-eliminacion`, {
+    method: "POST",
+    body: JSON.stringify({ accion, comentario }),
+    errorPrefix: "No se pudo procesar la solicitud de baja",
+  });
+  avisar();
+  return data;
+}
+
+export async function eliminarPropuestaAdmin(id, comentario = "") {
+  const data = await apiRequest(`${BASE}/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    body: JSON.stringify({ comentario }),
+    errorPrefix: "No se pudo eliminar la propuesta",
+  });
+  avisar();
+  return data;
+}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CircleHelp, Coffee, ClipboardList, FileText, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Sparkles, Trash2, Users, X } from "lucide-react";
+import { CircleHelp, Coffee, ClipboardList, FileText, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Search, Send, Sparkles, Sprout, Trash2, Upload, Users, X } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModal, AdminModalActions, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
@@ -35,10 +36,12 @@ import { filtrarPorBusqueda } from "../../../lib/adminListaFiltros";
 import { fetchAdminMainPageData } from "../../../lib/adminMainPageData";
 import { mapHero } from "../../../lib/heroData";
 import {
+  DEFAULT_PRODUCTORES_HERO,
   actualizarEnlace,
   actualizarFaqInicio,
   actualizarFooter,
   actualizarNavbar,
+  actualizarProductoresHero,
   actualizarSeccion,
   actualizarTarjetasInicio,
   crearEnlace,
@@ -47,6 +50,8 @@ import {
   eliminarFaqInicio,
   obtenerEnlaces,
   obtenerFaqInicio,
+  obtenerProductoresHero,
+  subirImagenInformacion,
 } from "../../../services/informacionService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { tienePermiso } from "../../../lib/permisos";
@@ -579,6 +584,237 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
               placeholder="/productos o https://..."
             />
           ) : null}
+          </AdminEditorConPreview>
+        </AdminModalBody>
+
+        <AdminModalFooter>
+          <AdminModalActions
+            buttonStyle="voluntariado"
+            onCancel={onCerrar}
+            primaryLabel={guardando ? tGuardando : tGuardarCambios}
+            primaryDisabled={guardando}
+          />
+        </AdminModalFooter>
+      </form>
+    </AdminModal>
+  );
+}
+
+function PreviewProductoresHeroLive({ form }) {
+  const previewImage = form.image || DEFAULT_PRODUCTORES_HERO.image;
+  return (
+    <div className="relative h-[420px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-[#dce5df] flex items-center justify-center p-3">
+      <div
+        className="absolute inset-0 bg-cover bg-center transition-all duration-300"
+        style={{ backgroundImage: `url("${previewImage}")` }}
+      />
+      <div className="absolute inset-0 bg-black/5 pointer-events-none" />
+      <div className="relative z-10 w-full max-w-[340px] rounded-2xl bg-white shadow-xl overflow-hidden border border-black/5 p-5">
+        {form.eyebrow ? (
+          <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-emerald-800 uppercase">
+            <Sprout className="size-3 text-emerald-700" />
+            <span>{form.eyebrow}</span>
+          </div>
+        ) : null}
+        <h3 className="text-base font-extrabold leading-snug text-slate-900 line-clamp-2">
+          {form.title || "Da a conocer tu emprendimiento"}
+        </h3>
+        {form.description ? (
+          <p className="mt-1.5 text-xs text-[#5a5148] line-clamp-3 leading-relaxed">
+            {form.description}
+          </p>
+        ) : null}
+        <div className="mt-3.5 flex flex-wrap items-center gap-2">
+          {form.linkText ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm">
+              <Send className="size-2.5" />
+              <span>{form.linkText}</span>
+            </span>
+          ) : null}
+          {form.secondaryButtonText ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-900 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-900 shadow-sm">
+              <Search className="size-2.5" />
+              <span>{form.secondaryButtonText}</span>
+            </span>
+          ) : null}
+        </div>
+        {form.footerText ? (
+          <div className="mt-4 pt-2.5 border-t border-slate-100 flex items-center gap-1.5 text-[10px] font-semibold text-slate-600">
+            <MapPin className="size-3 text-slate-500" />
+            <span>{form.footerText}</span>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
+  const [form, setForm] = useState(() => ({ ...DEFAULT_PRODUCTORES_HERO, ...data }));
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
+  const { idioma } = useIdioma();
+  const tModalTitle = useTraducir("Productores (inicio)");
+  const tGuardando = useTraducir("Guardando...");
+  const tGuardarCambios = useTraducir("Guardar cambios");
+
+  useEffect(() => {
+    let cancelado = false;
+    const base = { ...DEFAULT_PRODUCTORES_HERO, ...data };
+    setForm(base);
+    (async () => {
+      const vista = await camposParaVistaAdmin(base, ["eyebrow", "title", "description", "linkText", "secondaryButtonText", "footerText"], idioma);
+      if (!cancelado) setForm(vista);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [data, idioma]);
+
+  const cambiarCampo = (event) => {
+    const { name, value } = event.target;
+    setForm((actual) => ({ ...actual, [name]: value }));
+  };
+
+  const handleSubirImagen = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setSubiendoImagen(true);
+      const url = await subirImagenInformacion(file);
+      setForm((actual) => ({ ...actual, image: url }));
+    } catch (err) {
+      alert(t(err?.message || "No se pudo subir la imagen."));
+    } finally {
+      setSubiendoImagen(false);
+      e.target.value = "";
+    }
+  };
+
+  const enviar = async (event) => {
+    event.preventDefault();
+    const paraGuardar = await asegurarCamposEnEspanol(form, ["eyebrow", "title", "description", "linkText", "secondaryButtonText", "footerText"]);
+    onGuardar(paraGuardar);
+  };
+
+  return (
+    <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-productores-modal-title">
+      <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
+        <AdminModalHeader>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Sprout className="size-6 shrink-0 text-amber-700" strokeWidth={1.75} aria-hidden="true" />
+            <h2 id="admin-productores-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">
+              {tModalTitle}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onCerrar}
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label={t("Cerrar")}
+          >
+            <X className="size-5" />
+          </button>
+        </AdminModalHeader>
+
+        <AdminModalBody cms>
+          <AdminEditorConPreview
+            preview={<PreviewProductoresHeroLive form={form} />}
+            ayuda="Sección interactiva con el mapa y presentación de productores locales en el inicio."
+          >
+            <CampoTexto
+              label="Etiqueta superior"
+              name="eyebrow"
+              value={form.eyebrow}
+              onChange={cambiarCampo}
+              maxPalabras={MAX_PALABRAS_ETIQUETA}
+              hint="Texto en la insignia sobre el título."
+            />
+
+            <CampoTexto
+              label="Título principal"
+              name="title"
+              value={form.title}
+              onChange={cambiarCampo}
+              required
+              maxPalabras={MAX_PALABRAS_TITULO}
+            />
+
+            <CampoArea
+              label="Descripción"
+              name="description"
+              value={form.description}
+              onChange={cambiarCampo}
+              rows={3}
+              required
+              maxPalabras={MAX_PALABRAS_TEXTO}
+            />
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <CampoTexto
+                label="Texto botón principal"
+                name="linkText"
+                value={form.linkText}
+                onChange={cambiarCampo}
+                maxPalabras={MAX_PALABRAS_BOTON}
+              />
+              <CampoTexto
+                label="Enlace botón principal"
+                name="linkUrl"
+                sinLimite
+                value={form.linkUrl}
+                onChange={cambiarCampo}
+                placeholder="/productores/propuesta"
+              />
+              <CampoTexto
+                label="Texto botón secundario"
+                name="secondaryButtonText"
+                value={form.secondaryButtonText}
+                onChange={cambiarCampo}
+                maxPalabras={MAX_PALABRAS_BOTON}
+              />
+              <CampoTexto
+                label="Enlace botón secundario"
+                name="secondaryButtonUrl"
+                sinLimite
+                value={form.secondaryButtonUrl}
+                onChange={cambiarCampo}
+                placeholder="/productores"
+              />
+            </div>
+
+            <CampoTexto
+              label="Texto inferior (ubicaciones)"
+              name="footerText"
+              value={form.footerText}
+              onChange={cambiarCampo}
+              maxPalabras={MAX_PALABRAS_ETIQUETA}
+              hint="Ejemplo: +30 Ubicaciones activas"
+            />
+
+            <div className="space-y-2">
+              <CampoTexto
+                label="Imagen de fondo del mapa (URL)"
+                name="image"
+                sinLimite
+                value={form.image}
+                onChange={cambiarCampo}
+                placeholder="https://..."
+                hint="URL de la imagen del mapa ilustrado o sube un archivo."
+              />
+              <div className="flex items-center gap-3 pt-1">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                  <Upload className="size-3.5" />
+                  <span><ST>{subiendoImagen ? "Subiendo imagen..." : "Subir archivo de mapa"}</ST></span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={subiendoImagen}
+                    onChange={handleSubirImagen}
+                  />
+                </label>
+              </div>
+            </div>
           </AdminEditorConPreview>
         </AdminModalBody>
 
@@ -1502,6 +1738,7 @@ function mapTarjetaInicio(item) {
 }
 
 const AdminInformacionPaginaPrincipal = () => {
+  const navigate = useNavigate();
   const actor = (() => {
     try {
       return getActiveSessionUser();
@@ -1527,12 +1764,23 @@ const AdminInformacionPaginaPrincipal = () => {
   const [enlacesFooter, setEnlacesFooter] = useState([]);
   const [tarjetasInicio, setTarjetasInicio] = useState([]);
   const [faqInicio, setFaqInicio] = useState([]);
+  const [productoresHero, setProductoresHero] = useState(() => ({ ...DEFAULT_PRODUCTORES_HERO }));
   const [guardando, setGuardando] = useState(false);
   const [editando, setEditando] = useState(null);
 
   const loadMain = useCallback(() => fetchAdminMainPageData(), []);
   const { data, status, error: loadError, reload } = useCachedPageData("admin-main", loadMain);
   const { showLoading, loadingMessage } = useAdminPageGate('/admin/informacion-pagina-principal', status === 'ready');
+
+  useEffect(() => {
+    let activo = true;
+    obtenerProductoresHero().then((res) => {
+      if (activo && res) setProductoresHero(res);
+    }).catch(() => {});
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!data) return;
@@ -1560,6 +1808,20 @@ const AdminInformacionPaginaPrincipal = () => {
     : data?.hasError
       ? "No se pudo cargar la informaci\u00f3n principal."
       : "";
+
+  const guardarProductoresHero = async (form) => {
+    try {
+      setGuardando(true);
+      const actualizado = await actualizarProductoresHero(form);
+      setProductoresHero(actualizado);
+      await reload();
+      setEditando(null);
+    } catch (err) {
+      alert(t(err.message || "No se pudo guardar la sección de productores."));
+    } finally {
+      setGuardando(false);
+    }
+  };
 
   const guardarHero = async (form) => {
     try {
@@ -1852,6 +2114,16 @@ const AdminInformacionPaginaPrincipal = () => {
           resumenEnlacesFooter,
         ],
       },
+      {
+        id: "productores-hero",
+        grupo: "inicio",
+        busqueda: [
+          "Productores",
+          "Portada y mapa de productores",
+          "Finca Santa Lucía",
+          "Emprendimientos",
+        ],
+      },
     ];
   }, [
     hero,
@@ -1861,6 +2133,7 @@ const AdminInformacionPaginaPrincipal = () => {
     resumenFooter,
     resumenEnlacesNavbar,
     resumenEnlacesFooter,
+    productoresHero,
   ]);
 
   const {
@@ -1954,8 +2227,17 @@ const AdminInformacionPaginaPrincipal = () => {
                 icono={config.icon}
                 onEditar={() => setEditando(clave)}
               />
-              ) : null,
+              ) : null
             )}
+
+            {idsVisibles.has("productores-hero") ? (
+            <AdminSeccionCard
+              etiqueta="Inicio"
+              titulo="Portada y mapa de productores"
+              icono={Sprout}
+              onEditar={() => setEditando("productores-hero")}
+            />
+            ) : null}
 
             {idsVisibles.has("tarjetas-inicio") ? (
             <AdminSeccionCard
@@ -2028,6 +2310,15 @@ const AdminInformacionPaginaPrincipal = () => {
           tarjetasInicio={tarjetasInicio}
           onCerrar={() => setEditando(null)}
           onGuardar={(form) => guardarSeccionInicio(editando, form)}
+          guardando={guardando}
+        />
+      ) : null}
+
+      {editando === "productores-hero" ? (
+        <ModalProductoresHero
+          data={productoresHero}
+          onCerrar={() => setEditando(null)}
+          onGuardar={guardarProductoresHero}
           guardando={guardando}
         />
       ) : null}

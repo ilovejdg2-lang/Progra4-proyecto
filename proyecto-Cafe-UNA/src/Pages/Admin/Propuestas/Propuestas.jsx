@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "@tanstack/react-router";
-import { ArrowUpRight, Eye, Pencil, RefreshCw } from "lucide-react";
+import { ArrowUpRight, Eye, Pencil, RefreshCw, Trash2 } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
@@ -41,8 +41,13 @@ import {
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { EditarPropuestaForm, HistorialPropuesta, NotaInternaPropuesta } from "./RevisionPropuesta";
+import {
+  ModalEliminarPropuestaAdmin,
+  RevisionSolicitudEdicion,
+  RevisionSolicitudEliminacion,
+} from "./RevisionSolicitudesAdmin";
 
-const ESTADOS = ESTADOS_PROPUESTA;
+const ESTADOS = [...ESTADOS_PROPUESTA, "Eliminada"];
 const CONFIRMACIONES = {
   aprobar: {
     titulo: "Confirmar aprobación",
@@ -101,6 +106,7 @@ const colorEstado = {
   "En revisión": "text-sky-600",
   Aprobada: "text-emerald-600",
   Rechazada: "text-rose-600",
+  Eliminada: "text-slate-400",
 };
 
 function BadgeEstado({ estado }) {
@@ -172,6 +178,7 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
   const [confirmar, setConfirmar] = useState("");
   const [aviso, setAviso] = useState("");
   const [editando, setEditando] = useState(false);
+  const [modalEliminarAdmin, setModalEliminarAdmin] = useState(false);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -417,7 +424,21 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
                           </td>
                           <td className="px-5 py-4 text-slate-700">{item.correo}</td>
                           <td className="px-5 py-4 text-slate-700">{formatearFechaPropuesta(item.fechaEnvio) || t("Sin fecha")}</td>
-                          <td className="px-5 py-4"><BadgeEstado estado={item.estado} /></td>
+                          <td className="px-5 py-4">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <BadgeEstado estado={item.estado} />
+                              {item.solicitudEdicion ? (
+                                <span className="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-800 border border-sky-300">
+                                  <ST>Edición solicitada</ST>
+                                </span>
+                              ) : null}
+                              {item.solicitudEliminacion ? (
+                                <span className="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-800 border border-rose-300">
+                                  <ST>Baja solicitada</ST>
+                                </span>
+                              ) : null}
+                            </div>
+                          </td>
                           <td className="px-5 py-4">
                             <button
                               type="button"
@@ -442,7 +463,19 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
                         <h3 className="font-semibold text-slate-950">{item.nombre}</h3>
                         <p className="mt-0.5 text-sm text-slate-500">{item.correo}</p>
                       </div>
-                      <BadgeEstado estado={item.estado} />
+                      <div className="flex flex-col items-end gap-1">
+                        <BadgeEstado estado={item.estado} />
+                        {item.solicitudEdicion ? (
+                          <span className="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-800 border border-sky-300">
+                            <ST>Edición solicitada</ST>
+                          </span>
+                        ) : null}
+                        {item.solicitudEliminacion ? (
+                          <span className="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-800 border border-rose-300">
+                            <ST>Baja solicitada</ST>
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                     <p className="text-sm text-slate-600">#{item.id} · {formatearFechaPropuesta(item.fechaEnvio)}</p>
                     <button
@@ -503,6 +536,29 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
                   propuesta={detalle}
                   imagen={<ImagenAdmin nombre={detalle.imagenNombre} alt={detalle.nombre} />}
                 />
+
+                {detalle.solicitudEdicion ? (
+                  <RevisionSolicitudEdicion
+                    propuesta={detalle}
+                    onResuelto={(actualizada) => {
+                      actualizarDetalle(actualizada);
+                      cargar();
+                      setAviso("La solicitud de edición se resolvió.");
+                    }}
+                  />
+                ) : null}
+
+                {detalle.solicitudEliminacion ? (
+                  <RevisionSolicitudEliminacion
+                    propuesta={detalle}
+                    onResuelto={(actualizada) => {
+                      actualizarDetalle(actualizada);
+                      cargar();
+                      setAviso("La solicitud de baja se resolvió.");
+                    }}
+                  />
+                ) : null}
+
                 <SeccionRevision propuesta={detalle}>
                   {abierta ? (
                     <div className="flex flex-wrap gap-2">
@@ -545,6 +601,17 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
                       <ArrowUpRight className="size-4" aria-hidden="true" />
                     </a>
                   ) : null}
+                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3.5 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
+                      disabled={Boolean(accion)}
+                      onClick={() => setModalEliminarAdmin(true)}
+                    >
+                      <Trash2 className="size-3.5" aria-hidden="true" />
+                      <ST>Eliminar definitivamente</ST>
+                    </button>
+                  </div>
                 </SeccionRevision>
               </>
             )}
@@ -623,6 +690,17 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
           </div>
         </AdminModalBody>
       </AdminModal>
+
+      <ModalEliminarPropuestaAdmin
+        open={modalEliminarAdmin}
+        propuesta={detalle}
+        onClose={() => setModalEliminarAdmin(false)}
+        onEliminado={() => {
+          setDetalle(null);
+          setModalEliminarAdmin(false);
+          cargar();
+        }}
+      />
     </section>
   );
 }

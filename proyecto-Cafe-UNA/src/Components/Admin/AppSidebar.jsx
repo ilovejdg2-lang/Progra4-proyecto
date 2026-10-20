@@ -13,6 +13,7 @@ import {
   Info,
   Landmark,
   LogOut,
+  MapPin,
   Package,
   PackageMinus,
   Receipt,
