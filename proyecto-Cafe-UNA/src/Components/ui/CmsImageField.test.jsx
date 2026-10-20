@@ -7,6 +7,14 @@ const imageFile = (name = "cafe.png", type = "image/png", size = 4) =>
   new File([new Uint8Array(size)], name, { type });
 
 describe("CmsImageField", () => {
+  it("preserves explicit native URL input constraints", () => {
+    render(<CmsImageField label="Imagen" name="image" required maxLength={1000} value="" onChange={vi.fn()} />);
+    const input = screen.getByRole("textbox", { name: "Imagen" });
+    expect(input).toHaveAttribute("name", "image");
+    expect(input).toBeRequired();
+    expect(input).toHaveAttribute("maxLength", "1000");
+  });
+
   it("keeps manual URL editing available", () => {
     const onChange = vi.fn();
     render(<CmsImageField label="Imagen de fondo" value="https://example.test/old.png" onChange={onChange} />);

@@ -16,6 +16,9 @@ function validarArchivo(file) {
 
 export function CmsImageField({
   label,
+  name,
+  required = false,
+  maxLength,
   value,
   onChange,
   subir = subirImagenInformacion,
@@ -63,6 +66,9 @@ export function CmsImageField({
         {label}
         <input
           type="text"
+          name={name}
+          required={required}
+          maxLength={maxLength}
           value={value}
           disabled={isDisabled}
           onChange={(event) => {
