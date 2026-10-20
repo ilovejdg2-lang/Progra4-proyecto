@@ -51,6 +51,7 @@ export const GRUPOS_ICONOS_SITIO = [
       { id: "menu.sobre-nosotros", etiqueta: "Sobre nosotros", Original: BookOpen },
       { id: "menu.productos", etiqueta: "Productos", Original: Coffee },
       { id: "menu.formularios", etiqueta: "Formularios", Original: ClipboardList },
+      { id: "menu.productores", etiqueta: "Productores", Original: Sprout },
       { id: "menu.repositorio", etiqueta: "Repositorio", Original: Package },
       { id: "menu.equipo", etiqueta: "Equipo", Original: Users },
       { id: "menu.galeria", etiqueta: "Galería e iniciativas", Original: Info },
@@ -126,6 +127,7 @@ export function iconoOriginalSitio(id) {
 /** Lugar del menú del celular según la ruta del enlace. */
 export function lugarIconoMenu(ruta) {
   const r = String(ruta || "").trim().toLowerCase();
+  if (r.includes("productor")) return "menu.productores";
   if (r.includes("product")) return "menu.productos";
   if (r.includes("repositorio")) return "menu.repositorio";
   if (r.includes("equipo")) return "menu.equipo";

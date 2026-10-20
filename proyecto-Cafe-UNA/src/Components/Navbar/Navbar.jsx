@@ -184,9 +184,25 @@ function getCachedNavbarLinks() {
 }
 
 const ENLACE_EQUIPO = { id: 'equipo', etiqueta: 'Equipo', ruta: EQUIPO_PATH };
+const ENLACE_PRODUCTORES = {
+    id: 'productores',
+    etiqueta: 'Productores',
+    etiquetaEn: 'Producers',
+    ruta: '/productores',
+};
 
 const esEnlaceEquipo = (enlace) =>
     normalizePathname(String(enlace?.ruta ?? enlace?.Ruta ?? '')) === EQUIPO_PATH;
+
+const esEnlaceProductores = (enlace) => {
+    const r = normalizePathname(String(enlace?.ruta ?? enlace?.Ruta ?? ''));
+    return r === '/productores' || r.startsWith('/productores');
+};
+
+const esEnlaceRepositorio = (enlace) => {
+    const r = normalizePathname(String(enlace?.ruta ?? enlace?.Ruta ?? ''));
+    return r === '/repositorio';
+};
 
 /** Equipo va dentro del submenú de Sobre nosotros; solo queda suelto si no hay ese enlace. */
 function conEnlaceEquipo(enlaces) {
@@ -196,11 +212,35 @@ function conEnlaceEquipo(enlaces) {
     return [...enlaces, ENLACE_EQUIPO];
 }
 
+/** Productores se coloca siempre como apartado independiente entre Formularios y Repositorio. */
+function conEnlaceProductores(enlaces) {
+    if (!enlaces || !enlaces.length) return enlaces;
+    const prodExistente = enlaces.find(esEnlaceProductores) || ENLACE_PRODUCTORES;
+    const sinProd = enlaces.filter((e) => !esEnlaceProductores(e));
+
+    const idxRepo = sinProd.findIndex(esEnlaceRepositorio);
+    if (idxRepo !== -1) {
+        const result = [...sinProd];
+        result.splice(idxRepo, 0, prodExistente);
+        return result;
+    }
+
+    const idxForms = sinProd.findIndex(isFormsNavLink);
+    if (idxForms !== -1) {
+        const result = [...sinProd];
+        result.splice(idxForms + 1, 0, prodExistente);
+        return result;
+    }
+
+    return [...sinProd, prodExistente];
+}
+
 function filterNavLinks(enlaces) {
-    return conEnlaceEquipo(enlaces.filter((enlace) => {
+    const filtrados = conEnlaceEquipo(enlaces.filter((enlace) => {
         const ruta = String(enlace?.ruta ?? enlace?.Ruta ?? '').trim();
         return ruta !== '/' && ruta !== '';
     }));
+    return conEnlaceProductores(filtrados);
 }
 
 
@@ -1151,15 +1191,6 @@ const Navbar = () => {
                                     >
                                         {labelDonaciones}
                                     </Link>
-                                    <Link
-                                        to="/productores"
-                                        role="menuitem"
-                                        className="navbar__about-item"
-                                        activeProps={{ className: "navbar__about-item" }}
-                                        onClick={() => setShowFormsMenu(false)}
-                                    >
-                                        {labelProductores}
-                                    </Link>
                                 </div>
                             </div>
                         );
@@ -1747,7 +1778,6 @@ const Navbar = () => {
                                         const voluntariadoActive = pathNorm.startsWith('/voluntariado');
                                         const visitasActive = pathNorm.startsWith('/visitas');
                                         const donacionesActive = pathNorm.startsWith('/donaciones');
-                                        const productoresActive = pathNorm.startsWith('/productores');
                                         return (
                                             <div
                                                 key={`mobile-forms-${enlace.id ?? enlace.ruta}`}
@@ -1794,13 +1824,6 @@ const Navbar = () => {
                                                             onClick={closeMobileMenu}
                                                         >
                                                             {labelDonaciones}
-                                                        </Link>
-                                                        <Link
-                                                            to="/productores"
-                                                            className={`navbar__mobile-about-item ${productoresActive ? 'is-active' : ''}`}
-                                                            onClick={closeMobileMenu}
-                                                        >
-                                                            {labelProductores}
                                                         </Link>
                                                     </div>
                                                 ) : null}

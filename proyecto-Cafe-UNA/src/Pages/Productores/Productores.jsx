@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, ArrowUpRight, Globe, MapPin, Sprout, X } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Globe, MapPin, Send, Sprout, X } from "lucide-react";
 
 import { FacebookIcon, InstagramIcon, WhatsAppIcon } from "../../Components/Footer/SocialIcons";
 import PageLoading from "../../Components/PageLoading/PageLoading";
@@ -11,7 +11,6 @@ import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
 import { urlImagenPublica } from "../../lib/propuestaProductor";
 import { obtenerProductoresPublicos } from "../../services/propuestasProductoresService";
 import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
-import { rutaMisPropuestas } from "./MisPropuestas";
 import "./propuesta.css";
 
 function enlacePublico(valor) {
@@ -164,12 +163,6 @@ export default function Productores() {
     };
   }, []);
 
-  const abrirMisPropuestas = (event) => {
-    if (usuario) return;
-    event.preventDefault();
-    sessionStorage.setItem("postLoginRedirect", "/perfil/propuestas");
-    navigate({ to: "/login" });
-  };
 
   const cerrarDetalle = useCallback(() => {
     setSeleccionado(null);
@@ -184,30 +177,23 @@ export default function Productores() {
         className={`productores-directorio${showPrepaint ? " propuesta-page--prepaint" : ""}`}
         inert={inert}
       >
-        <header className="productores-directorio__hero">
-          <h1><ST>Dale a conocer tu emprendimiento</ST></h1>
-          <p className="productores-directorio__lead">
-            <ST>Comparte tu historia y forma parte del espacio de productores de Café UNA.</ST>
-          </p>
-          <div className="productores-directorio__acciones">
-            <Link className="productores-directorio__boton" to="/productores/propuesta">
-              <ST>Enviar propuesta</ST>
-            </Link>
-            <Link
-              className="productores-directorio__boton"
-              to={usuario ? rutaMisPropuestas(usuario) : "/login"}
-              onClick={abrirMisPropuestas}
-            >
-              <ST>Mis propuestas</ST>
-            </Link>
+        <section id="nuestros-productores" className="productores-directorio__lista" aria-labelledby="nuestros-productores-titulo">
+          <div className="productores-directorio__header-top">
+            <div>
+              <h1 id="nuestros-productores-titulo" className="productores-directorio__title">
+                <ST>Propuestas de productores</ST>
+              </h1>
+              <p className="productores-directorio__lista-lead">
+                <ST>Conoce los emprendimientos de café participantes, sus productos y dónde encontrarlos.</ST>
+              </p>
+            </div>
+            <div className="productores-directorio__header-actions">
+              <Link to="/productores/propuesta" className="productores-directorio__btn-enviar">
+                <Send size={15} aria-hidden="true" />
+                <span><ST>Enviar propuesta</ST></span>
+              </Link>
+            </div>
           </div>
-        </header>
-
-        <section className="productores-directorio__lista" aria-labelledby="nuestros-productores">
-          <h2 id="nuestros-productores"><ST>Nuestros productores</ST></h2>
-          <p className="productores-directorio__lista-lead">
-            <ST>Conoce sus historias, sus productos y dónde encontrarlos.</ST>
-          </p>
 
           {cargando ? (
             <div className="productores-directorio__vacio">

@@ -323,6 +323,11 @@ const adminInformacionPaginaPrincipalRoute = createRoute({
     path: "/admin/informacion-pagina-principal",
     component: AdminInformacionPaginaPrincipal,
 })
+const adminInformacionProductoresRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/informacion-productores",
+    component: () => <Navigate to="/admin/informacion-pagina-principal" replace />,
+})
 const adminSobreNosotrosRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/sobre-nosotros",
@@ -625,6 +630,7 @@ const routeTree= rootRoute.addChildren([
     verificarCuentaRoute,
     adminPanelRoute,
     adminInformacionPaginaPrincipalRoute,
+    adminInformacionProductoresRoute,
     adminSobreNosotrosRoute,
     adminGaleriaRoute,
     adminEquipoRoute,

@@ -18,6 +18,7 @@ import { runHomeScrollWhenReady } from '../../lib/homeScrollTarget';
 import { productoPuedeDestacarse } from '../../lib/productoDisponibilidad';
 import { readPageCache, readStalePageCache } from '../../lib/pageDataCache';
 import FeaturedCafesCarousel from '../../Components/FeaturedCafesCarousel/FeaturedCafesCarousel';
+import ProductoresHero from '../../Components/ProductoresHero/ProductoresHero';
 import { imagenPrincipalProducto } from '../../lib/productoImagenes';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { toGoogleMapsEmbedUrl } from '../../lib/googleMaps';
@@ -404,6 +405,8 @@ const Home = () => {
             </article>
           </div>
         </section>
+
+        <ProductoresHero className="reveal-on-scroll" />
 
         <section className="home-page__location reveal-on-scroll" aria-labelledby="location-title">
           <div className="location-card">
