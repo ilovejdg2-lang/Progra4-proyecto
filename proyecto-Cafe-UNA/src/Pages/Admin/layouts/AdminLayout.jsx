@@ -13,6 +13,7 @@ import { forceUnlockAdminScroll } from "../../../hooks/useBodyScrollLock";
 import { useSesionProtegida } from "../../../hooks/useSesionProtegida";
 import { applyAdminDocumentTheme } from "../../../lib/adminTheme";
 import { getActiveSessionUser } from "../../../services/sessionService";
+import { rolesDeUsuario } from "../../../lib/permisos";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { useTablasTarjetaMovil } from "../../../hooks/useTablasTarjetaMovil";
 
@@ -64,22 +65,30 @@ function AdminMain({ children }) {
 export function AdminLayout({ children }) {
   const navigate = useNavigate();
   const user = getActiveSessionUser();
+  const roles = rolesDeUsuario(user);
+  const esAdmin =
+    String(user?.role || "").toLowerCase() === "admin" ||
+    roles.some((r) =>
+      ["admin", "superadmin", "administrador", "superadministrador"].includes(
+        String(r || "").toLowerCase(),
+      ),
+    );
   const tVerificando = useTraducir("Verificando acceso...");
 
   useSesionProtegida();
 
   useEffect(() => {
-    if (user && user.role !== "admin") {
+    if (user && !esAdmin) {
       navigate({ to: "/" });
     }
-  }, [navigate, user]);
+  }, [navigate, user, esAdmin]);
 
   useEffect(() => {
     forceUnlockAdminScroll();
     applyAdminDocumentTheme(true);
   }, []);
 
-  if (!user || user.role !== "admin") {
+  if (!user || !esAdmin) {
     return <AdminRouteLoading message={tVerificando} />;
   }
 
