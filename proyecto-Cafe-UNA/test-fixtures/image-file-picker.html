@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://127.0.0.1:* ws://localhost:*; img-src 'self' blob: data:; font-src 'self' data:" />
+    <title>Image picker local fixture</title>
+    <style>
+      body { background: #f8fafc; color: #0f172a; }
+      html.dark body { background: #0f172a; color: #f1f5f9; }
+    </style>
+  </head>
+  <body class="bg-slate-50 p-4 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    <main id="root" class="mx-auto max-w-xl"></main>
+    <script type="module">
+      import React, { useState } from "react";
+      import { createRoot } from "react-dom/client";
+      import { ImageFilePicker } from "/src/Components/ui/ImageFilePicker.jsx";
+      import "/src/index.css";
+
+      function Fixture() {
+        const [file, setFile] = useState(null);
+        const [disabled, setDisabled] = useState(false);
+        const [error, setError] = useState("");
+        return React.createElement("section", { className: "grid gap-4" },
+          React.createElement("h1", null, "Selector de imagen: prueba local"),
+          React.createElement("label", { htmlFor: "fixture-image" }, "Imagen representativa"),
+          React.createElement(ImageFilePicker, {
+            id: "fixture-image", accept: "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp",
+            hint: "JPG, JPEG, PNG o WebP (máx. 5 MB)", onSelect: setFile, disabled, error,
+          }),
+          React.createElement("output", { "aria-live": "polite" }, file?.name || "Sin imagen seleccionada"),
+          React.createElement("button", { onClick: () => setFile(null) }, "Quitar imagen"),
+          React.createElement("button", { onClick: () => setDisabled(!disabled) }, "Alternar deshabilitado"),
+          React.createElement("button", { onClick: () => setError(error ? "" : "La imagen no puede superar 5 MB.") }, "Alternar error"),
+          React.createElement("button", { onClick: () => document.documentElement.classList.toggle("dark") }, "Alternar tema"),
+        );
+      }
+      createRoot(document.getElementById("root")).render(React.createElement(Fixture));
+    </script>
+  </body>
+</html>
