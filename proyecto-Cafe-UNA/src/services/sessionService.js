@@ -22,6 +22,7 @@ export function isManualLogout() {
 export function beginLogout() {
   loggingOut = true;
   manualLogout = true;
+  notifySessionChange();
 }
 
 function notifySessionChange() {
