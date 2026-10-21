@@ -1,3 +1,4 @@
+import { useProfileImage } from "../../hooks/useProfileImage";
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -236,9 +237,9 @@ export function AppSidebar() {
       })
     : [];
 
-  const avatarUrl = user?.fotoPerfilUrl?.trim()
+  const avatarUrl = useProfileImage(user?.fotoPerfilUrl?.trim()
     ? normalizeImageUrl(user.fotoPerfilUrl.trim(), { width: 96 })
-    : "";
+    : "");
   const [avatarRoto, setAvatarRoto] = useState(false);
   const inicialAvatar = inicialDeNombre(displayName);
 
