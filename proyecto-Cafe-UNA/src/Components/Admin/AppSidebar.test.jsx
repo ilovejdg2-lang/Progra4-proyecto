@@ -53,9 +53,21 @@ vi.mock("../../services/sessionService", () => ({
 
 import { AppSidebar } from "./AppSidebar";
 import { SidebarProvider } from "./ui/Sidebar";
+import { getActiveSessionUser } from "../../services/sessionService";
+
+vi.mock("../../hooks/useProfileImage", () => ({
+  useProfileImage: (source) => source ? "blob:private-avatar" : "",
+}));
 
 describe("AppSidebar", () => {
+  it("renders private avatars through the authenticated image lifecycle", () => {
+    getActiveSessionUser.mockReturnValue({ id: "1", name: "Admin", fotoPerfilUrl: "/api/perfil/imagenes/550e8400-e29b-41d4-a716-446655440000.webp" });
+    const { container } = render(<SidebarProvider><AppSidebar /></SidebarProvider>);
+    expect(container.querySelector('img[src="blob:private-avatar"]')).not.toBeNull();
+    expect(container.querySelector('img[src^="/api/perfil/imagenes/"]')).toBeNull();
+  });
   beforeEach(() => {
+    getActiveSessionUser.mockReturnValue({ id: "1", name: "Admin" });
     Object.defineProperty(window, "localStorage", {
       configurable: true,
       value: {

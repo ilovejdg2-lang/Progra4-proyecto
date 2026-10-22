@@ -37,6 +37,7 @@ import {
   MAX_PALABRAS_TITULO,
 } from "../../../lib/formLimits";
 import { ST } from "../../../Components/T/ST";
+import { CmsImageField } from "../../../Components/ui/CmsImageField";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
 import { asegurarCamposEnEspanol, camposParaVistaAdmin } from "../../../lib/traducir";
@@ -92,8 +93,9 @@ const estilos = {
   },
 };
 
-function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
+export function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
   const [form, setForm] = useState(() => ({ title: "", description: "", image: "", eyebrow: "", ...data }));
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
   const estilo = estilos[tipo];
   const Icon = estilo.Icon;
   const tEtiqueta = useTraducir(estilo.etiqueta);
@@ -119,6 +121,7 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
 
   const enviar = async (event) => {
     event.preventDefault();
+    if (guardando || subiendoImagen) return;
     const paraGuardar = await asegurarCamposEnEspanol(form, TEXTO_CAMPOS);
     onGuardar(tipo, paraGuardar);
   };
@@ -171,16 +174,14 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
               required
             />
 
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-              <ST>URL de foto</ST>
-              <input
-                name="image"
-                value={form.image}
-                onChange={cambiarCampo}
-                placeholder="https://..."
-                className="h-[var(--control-height)] w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-[length:var(--text-body)] font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
-              />
-            </label>
+            <CmsImageField
+              label="URL de foto"
+              name="image"
+              value={form.image}
+              onChange={(image) => setForm((actual) => ({ ...actual, image }))}
+              onUploadingChange={setSubiendoImagen}
+              disabled={guardando}
+            />
 
           </AdminEditorConPreview>
         </AdminModalBody>
@@ -190,7 +191,7 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
             buttonStyle="voluntariado"
             onCancel={onCerrar}
             primaryLabel={guardando ? "Guardando..." : "Guardar cambios"}
-            primaryDisabled={guardando}
+            primaryDisabled={guardando || subiendoImagen}
           />
         </AdminModalFooter>
       </form>
@@ -198,8 +199,9 @@ function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
   );
 }
 
-function ModalFoto({ onCerrar, onGuardar, categorias = [], inicial = null, guardando = false }) {
+export function ModalFoto({ onCerrar, onGuardar, categorias = [], inicial = null, guardando = false }) {
   const esEdicion = Boolean(inicial);
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
   const tEditar = useTraducir("Editar");
   const tNuevaFoto = useTraducir("Nueva foto");
   const { idioma } = useIdioma();
@@ -233,7 +235,7 @@ function ModalFoto({ onCerrar, onGuardar, categorias = [], inicial = null, guard
 
   const enviar = async (event) => {
     event.preventDefault();
-    if (guardando) return;
+    if (guardando || subiendoImagen) return;
     const paraGuardar = await asegurarCamposEnEspanol(form, FOTO_CAMPOS);
     const title = paraGuardar.title.trim();
     const image = form.image.trim();
@@ -292,17 +294,15 @@ function ModalFoto({ onCerrar, onGuardar, categorias = [], inicial = null, guard
             required
           />
 
-          <label className="grid gap-2 text-[length:var(--text-body)] font-bold uppercase tracking-wide text-slate-500">
-            <ST>URL de imagen</ST>
-            <input
-              name="image"
-              value={form.image}
-              onChange={cambiarCampo}
-              placeholder="https://..."
-              className="h-[var(--control-height)] rounded-full border border-slate-200 bg-slate-50 px-4 text-[length:var(--text-body)] font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-slate-400 focus:bg-white"
-              required
-            />
-          </label>
+          <CmsImageField
+            label="URL de imagen"
+            name="image"
+            required
+            value={form.image}
+            onChange={(image) => setForm((actual) => ({ ...actual, image }))}
+            onUploadingChange={setSubiendoImagen}
+            disabled={guardando}
+          />
 
           <CategoriaCampo
             tipo={TIPO_CATEGORIA_GALERIA}
@@ -316,7 +316,7 @@ function ModalFoto({ onCerrar, onGuardar, categorias = [], inicial = null, guard
           <AdminModalActions
             buttonStyle="voluntariado"
             onCancel={onCerrar}
-            primaryDisabled={guardando}
+            primaryDisabled={guardando || subiendoImagen}
             primaryLabel={
               guardando
                 ? "Guardando..."
