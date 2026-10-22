@@ -1,8 +1,11 @@
 import { apiRequest } from "./apiClient";
-import { getActiveSessionUser, getStoredUser, isSessionExpired } from "./sessionService";
+import { getActiveSessionUser, getStoredUser, isLoggingOut, isSessionExpired } from "./sessionService";
 import { obtenerUsuarioPorId } from "./usuariosService";
 
 const BASE_URL = `${import.meta.env.BACKEND_URL}/perfil`;
+const IMAGE_ENDPOINT = `${BASE_URL}/imagenes`;
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const IMAGE_NAME = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}\.webp$/;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 let perfilCache = { expiresAt: 0, data: null };
 let perfilInflight = null;
@@ -150,4 +153,63 @@ export async function cambiarPasswordPerfil({ passwordActual, passwordNueva }) {
     method: "PUT",
     body: JSON.stringify({ passwordActual, passwordNueva }),
   });
+}
+
+export function classifyProfileImageSource(source) {
+  const raw = typeof source === "string" ? source.trim() : "";
+  if (!raw) return { kind: "empty", url: "" };
+  let parsed;
+  let decodedPath;
+  try {
+    parsed = new URL(raw, window.location.origin);
+    decodedPath = decodeURIComponent(parsed.pathname);
+  } catch {
+    return { kind: "blocked" };
+  }
+  if (!decodedPath.toLowerCase().includes("/perfil/imagenes")) return { kind: "external", url: raw };
+  const trusted = new URL(IMAGE_ENDPOINT, window.location.origin);
+  const unsafeSyntax = /[%\\?#]/.test(raw) || raw.split("/").some((part) => part === "." || part === "..");
+  if (unsafeSyntax || parsed.username || parsed.password || ![trusted.origin, window.location.origin].includes(parsed.origin)) {
+    return { kind: "blocked" };
+  }
+  const prefixes = ["/api/perfil/imagenes/", `${trusted.pathname}/`];
+  const prefix = prefixes.find((candidate) => parsed.pathname.startsWith(candidate));
+  const name = prefix ? parsed.pathname.slice(prefix.length) : "";
+  if (!IMAGE_NAME.test(name)) return { kind: "blocked" };
+  return { kind: "private", path: `/api/perfil/imagenes/${name}`, requestUrl: `${IMAGE_ENDPOINT}/${name}` };
+}
+
+function requireImageSession() {
+  const user = getStoredUser();
+  if (!user?.id || !user.token || isLoggingOut() || isSessionExpired(user)) {
+    throw new Error("Inicie sesión para acceder a imágenes de perfil.");
+  }
+  return user;
+}
+
+export async function subirImagenPerfil(file, signal) {
+  const user = requireImageSession();
+  const supported = /\.(jpe?g|png|webp)$/i.test(file?.name || "") || ["image/jpeg", "image/png", "image/webp"].includes(file?.type);
+  if (!file || file.size > MAX_IMAGE_BYTES || !supported) {
+    throw new Error("Adjunte una imagen JPG, PNG o WEBP de hasta 10 MB.");
+  }
+  const data = new FormData();
+  data.append("imagen", file);
+  const response = await request(IMAGE_ENDPOINT, { method: "POST", data, signal });
+  const result = classifyProfileImageSource(response?.url ?? response?.Url);
+  if (result.kind !== "private" || String(requireImageSession().id) !== String(user.id)) {
+    throw new Error("No se pudo confirmar la imagen de perfil.");
+  }
+  return result.path;
+}
+
+export async function obtenerImagenPerfil(source, signal) {
+  requireImageSession();
+  const image = classifyProfileImageSource(source);
+  if (image.kind !== "private") throw new Error("La ruta de imagen de perfil no es válida.");
+  const blob = await request(image.requestUrl, { responseType: "blob", signal });
+  if (!(blob instanceof Blob) || blob.type !== "image/webp" || !blob.size || blob.size > MAX_IMAGE_BYTES) {
+    throw new Error("No se pudo leer la imagen de perfil.");
+  }
+  return blob;
 }
