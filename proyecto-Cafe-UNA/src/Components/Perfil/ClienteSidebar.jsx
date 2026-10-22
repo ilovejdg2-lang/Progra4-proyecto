@@ -1,3 +1,4 @@
+import { useProfileImage } from "../../hooks/useProfileImage";
 "use client";
 
 import { Link, useRouterState } from "@tanstack/react-router";
@@ -64,9 +65,9 @@ export function ClienteSidebar() {
     tienePermiso(roles, "ingresar_propuesta_productor") ||
     tienePermiso(roles, "ver_solicitudes_propias");
 
-  const avatarUrl = user?.fotoPerfilUrl?.trim()
+  const avatarUrl = useProfileImage(user?.fotoPerfilUrl?.trim()
     ? normalizeImageUrl(user.fotoPerfilUrl.trim(), { width: 96 })
-    : "";
+    : "");
   const [avatarRoto, setAvatarRoto] = useState(false);
   const inicialAvatar = inicialDeNombre(displayName);
 

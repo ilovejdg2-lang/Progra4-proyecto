@@ -9,6 +9,7 @@ import "../../AboutUs/AboutUs.css";
 import { CampoLimitePalabras } from "../../../Components/Admin/ui/CampoLimitePalabras";
 import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { ST } from "../../../Components/T/ST";
+import { CmsImageField } from "../../../Components/ui/CmsImageField";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { normalizarEquipo } from "../../../lib/aboutPageData";
 import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
@@ -82,8 +83,9 @@ function PreviewMiembro({ form }) {
   );
 }
 
-function ModalMiembro({ inicial, guardando, onCerrar, onGuardar }) {
+export function ModalMiembro({ inicial, guardando, onCerrar, onGuardar }) {
   const esEdicion = Boolean(inicial?.id);
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
   const tEditar = useTraducir("Editar persona");
   const tNueva = useTraducir("Nueva persona");
   const { idioma } = useIdioma();
@@ -112,7 +114,7 @@ function ModalMiembro({ inicial, guardando, onCerrar, onGuardar }) {
 
   const enviar = async (event) => {
     event.preventDefault();
-    if (guardando) return;
+    if (guardando || subiendoImagen) return;
     const enEspanol = await asegurarCamposEnEspanol(form, CAMPOS_TRADUCIBLES);
     const miembro = {
       nombre: form.nombre.trim(),
@@ -202,17 +204,15 @@ function ModalMiembro({ inicial, guardando, onCerrar, onGuardar }) {
             />
           </label>
 
-          <label className={claseEtiqueta}>
-            <ST>URL de foto (opcional)</ST>
-            <input
-              name="foto"
-              value={form.foto}
-              onChange={cambiarCampo}
-              placeholder="https://..."
-              maxLength={1000}
-              className={claseInput}
-            />
-          </label>
+          <CmsImageField
+            label="URL de foto (opcional)"
+            name="foto"
+            maxLength={1000}
+            value={form.foto}
+            onChange={(foto) => setForm((actual) => ({ ...actual, foto }))}
+            onUploadingChange={setSubiendoImagen}
+            disabled={guardando}
+          />
           </AdminEditorConPreview>
         </AdminModalBody>
 
@@ -220,7 +220,7 @@ function ModalMiembro({ inicial, guardando, onCerrar, onGuardar }) {
           <AdminModalActions
             buttonStyle="voluntariado"
             onCancel={onCerrar}
-            primaryDisabled={guardando}
+            primaryDisabled={guardando || subiendoImagen}
             primaryLabel={guardando ? "Guardando..." : esEdicion ? "Guardar cambios" : "Agregar persona"}
           />
         </AdminModalFooter>
