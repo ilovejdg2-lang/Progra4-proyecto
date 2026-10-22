@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CircleHelp, Coffee, ClipboardList, FileText, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Search, Send, Sparkles, Sprout, Trash2, Upload, Users, X } from "lucide-react";
+import { CircleHelp, Coffee, ClipboardList, FileText, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Search, Send, Sparkles, Sprout, Trash2, Users, X } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
 import { AdminLayout } from "../layouts/AdminLayout";
@@ -51,7 +51,6 @@ import {
   obtenerEnlaces,
   obtenerFaqInicio,
   obtenerProductoresHero,
-  subirImagenInformacion,
 } from "../../../services/informacionService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { tienePermiso } from "../../../lib/permisos";
@@ -71,6 +70,7 @@ import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
 import { asegurarCamposEnEspanol, camposParaVistaAdmin, traducirListaObjetos } from "../../../lib/traducir";
 import { useIdioma } from "../../../lib/useIdioma";
+import { CmsImageField } from "../../../Components/ui/CmsImageField";
 
 const HERO_CAMPOS_TEXTO = ["eyebrow", "title", "subtitle", "primaryButtonText", "buttonText"];
 const SECCION_CAMPOS_TEXTO = ["eyebrow", "title", "description", "linkText"];
@@ -323,8 +323,9 @@ function CampoArea({ label, name, value, onChange, rows = 4, required, maxPalabr
   );
 }
 
-function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
+export function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
   const [form, setForm] = useState(() => ({ ...heroInicial, ...hero }));
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
   const { idioma } = useIdioma();
   const tGuardando = useTraducir("Guardando...");
   const tGuardarCambios = useTraducir("Guardar cambios");
@@ -440,13 +441,12 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
             />
           </div>
 
-          <CampoTexto
+          <CmsImageField
             label="Imagen de fondo URL"
-            name="backgroundImage"
-            sinLimite
             value={form.backgroundImage}
-            onChange={cambiarCampo}
-            placeholder="https://..."
+            onChange={(backgroundImage) => setForm((actual) => ({ ...actual, backgroundImage }))}
+            onUploadingChange={setSubiendoImagen}
+            disabled={guardando}
           />
           </AdminEditorConPreview>
         </AdminModalBody>
@@ -456,7 +456,7 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
             buttonStyle="voluntariado"
             onCancel={onCerrar}
             primaryLabel={guardando ? tGuardando : tGuardarCambios}
-            primaryDisabled={guardando}
+            primaryDisabled={guardando || subiendoImagen}
           />
         </AdminModalFooter>
       </form>
@@ -464,8 +464,9 @@ function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
   );
 }
 
-function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar, onGuardar, guardando }) {
+export function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar, onGuardar, guardando }) {
   const [form, setForm] = useState(() => ({ ...seccionInicioVacia, ...data }));
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
   const tModalTitle = useTraducir(config.modalTitle || "");
   const tGuardando = useTraducir("Guardando...");
   const tGuardarCambios = useTraducir("Guardar cambios");
@@ -562,7 +563,18 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
             />
           ) : null}
 
-          {config.showImage ? (
+          {config.showImage && clave === "homeLocation" ? (
+            <CmsImageField
+              label="Imagen URL"
+              value={form.image}
+              onChange={(image) => setForm((actual) => ({ ...actual, image }))}
+              onUploadingChange={setSubiendoImagen}
+              disabled={guardando}
+              hint="Imagen propia del bloque. JPG, PNG o WEBP. Máximo 10 MB."
+            />
+          ) : null}
+
+          {config.showImage && clave !== "homeLocation" ? (
             <CampoTexto
               label="Imagen URL"
               name="image"
@@ -592,7 +604,7 @@ function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar
             buttonStyle="voluntariado"
             onCancel={onCerrar}
             primaryLabel={guardando ? tGuardando : tGuardarCambios}
-            primaryDisabled={guardando}
+            primaryDisabled={guardando || subiendoImagen}
           />
         </AdminModalFooter>
       </form>
@@ -649,7 +661,7 @@ function PreviewProductoresHeroLive({ form }) {
   );
 }
 
-function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
+export function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
   const [form, setForm] = useState(() => ({ ...DEFAULT_PRODUCTORES_HERO, ...data }));
   const [subiendoImagen, setSubiendoImagen] = useState(false);
   const { idioma } = useIdioma();
@@ -673,21 +685,6 @@ function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
   const cambiarCampo = (event) => {
     const { name, value } = event.target;
     setForm((actual) => ({ ...actual, [name]: value }));
-  };
-
-  const handleSubirImagen = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      setSubiendoImagen(true);
-      const url = await subirImagenInformacion(file);
-      setForm((actual) => ({ ...actual, image: url }));
-    } catch (err) {
-      alert(t(err?.message || "No se pudo subir la imagen."));
-    } finally {
-      setSubiendoImagen(false);
-      e.target.value = "";
-    }
   };
 
   const enviar = async (event) => {
@@ -791,30 +788,14 @@ function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
               hint="Ejemplo: +30 Ubicaciones activas"
             />
 
-            <div className="space-y-2">
-              <CampoTexto
-                label="Imagen de fondo del mapa (URL)"
-                name="image"
-                sinLimite
-                value={form.image}
-                onChange={cambiarCampo}
-                placeholder="https://..."
-                hint="URL de la imagen del mapa ilustrado o sube un archivo."
-              />
-              <div className="flex items-center gap-3 pt-1">
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
-                  <Upload className="size-3.5" />
-                  <span><ST>{subiendoImagen ? "Subiendo imagen..." : "Subir archivo de mapa"}</ST></span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={subiendoImagen}
-                    onChange={handleSubirImagen}
-                  />
-                </label>
-              </div>
-            </div>
+            <CmsImageField
+              label="Imagen de fondo del mapa (URL)"
+              value={form.image}
+              onChange={(image) => setForm((actual) => ({ ...actual, image }))}
+              onUploadingChange={setSubiendoImagen}
+              disabled={guardando}
+              hint="URL de la imagen del mapa ilustrado o JPG, PNG o WEBP de máximo 10 MB."
+            />
           </AdminEditorConPreview>
         </AdminModalBody>
 
@@ -823,7 +804,7 @@ function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
             buttonStyle="voluntariado"
             onCancel={onCerrar}
             primaryLabel={guardando ? tGuardando : tGuardarCambios}
-            primaryDisabled={guardando}
+            primaryDisabled={guardando || subiendoImagen}
           />
         </AdminModalFooter>
       </form>
