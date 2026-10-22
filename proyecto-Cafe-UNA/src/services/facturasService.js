@@ -50,14 +50,24 @@ export function normalizarFactura(item) {
  * Listado de todas las facturas para el panel administrativo
  */
 export async function obtenerFacturasAdmin(params = {}) {
-  const data = await apiRequest(`${BASE_URL}${buildQuery(params)}`, {
-    errorPrefix: "Error al consultar facturas",
-  });
-  const lista = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
-  return {
-    items: lista.map(normalizarFactura).filter(Boolean),
-    total: Number(data?.total ?? lista.length),
-  };
+  const pageSize = 50;
+  const items = [];
+  let total = 0;
+  let page = 1;
+
+  do {
+    const data = await apiRequest(
+      `${BASE_URL}${buildQuery({ ...params, page, pageSize })}`,
+      { errorPrefix: "Error al consultar facturas" },
+    );
+    const lista = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+    total = Number(data?.total ?? lista.length);
+    items.push(...lista.map(normalizarFactura).filter(Boolean));
+    if (lista.length === 0) break;
+    page += 1;
+  } while (items.length < total && page <= 20);
+
+  return { items, total };
 }
 
 /**

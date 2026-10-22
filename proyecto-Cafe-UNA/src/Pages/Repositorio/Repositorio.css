@@ -51,6 +51,7 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 0.25rem 1.5rem 1.25rem;
+  min-width: 0;
 }
 
 .biblio-header-content {
@@ -59,6 +60,8 @@
   border-radius: var(--biblio-radius-lg);
   padding: 1.75rem 2rem;
   box-shadow: var(--biblio-shadow-sm);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .biblio-header-top {
@@ -99,8 +102,10 @@
 /* KPI Grid idéntico a Documentos.css */
 .admin-docs-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+  width: 100%;
+  min-width: 0;
 }
 
 @media (min-width: 1024px) {
@@ -113,6 +118,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
+  min-width: 0;
   padding: 14px 18px;
   background: #ffffff;
   border: 1px solid var(--biblio-border);
@@ -159,6 +165,7 @@
 .kpi-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .kpi-num {
@@ -169,11 +176,13 @@
 }
 
 .kpi-lbl {
-  font-size: 0.75rem;
+  font-size: var(--text-body);
   font-weight: 500;
-  color: #64748b;
+  color: #475569;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 /* ==========================================================================
@@ -1660,13 +1669,13 @@
   }
 
   .admin-docs-kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
   }
 
   .admin-docs-kpi-card {
-    padding: 10px 12px;
-    gap: 10px;
+    padding: 0.75rem 0.9rem;
+    gap: 0.75rem;
   }
 
   .kpi-icon {
@@ -1679,7 +1688,23 @@
   }
 
   .kpi-lbl {
-    font-size: 0.68rem;
+    font-size: var(--text-body);
+  }
+
+  .repositorio-viewer-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: 0.75rem;
+  }
+
+  .repositorio-viewer-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .repositorio-modal-close {
+    min-width: var(--control-height);
+    min-height: var(--control-height);
   }
 
   .biblio-layout-container {

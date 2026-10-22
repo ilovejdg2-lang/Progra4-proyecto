@@ -10,6 +10,7 @@ import { SidebarProvider, SidebarTrigger, useSidebar } from "../../../Components
 import { AdminThemeToggle } from "../../../Components/Admin/AdminThemeToggle";
 import { LanguageSwitcher } from "../../../Components/LanguageSwitcher/LanguageSwitcher";
 import { forceUnlockAdminScroll } from "../../../hooks/useBodyScrollLock";
+import { endRouteLoading } from "../../../lib/routeLoadingLock";
 import { useSesionProtegida } from "../../../hooks/useSesionProtegida";
 import { applyAdminDocumentTheme } from "../../../lib/adminTheme";
 import { getActiveSessionUser } from "../../../services/sessionService";
@@ -79,6 +80,7 @@ export function AdminLayout({ children }) {
 
   useEffect(() => {
     if (user && !esAdmin) {
+      endRouteLoading();
       navigate({ to: "/" });
     }
   }, [navigate, user, esAdmin]);

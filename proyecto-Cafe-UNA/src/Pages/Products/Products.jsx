@@ -15,7 +15,6 @@ import OptimizedImage from '../../Components/OptimizedImage/OptimizedImage';
 import { HOME_SCROLL_SECTIONS } from '../../lib/homeScrollTarget';
 import {
   categoriasUnicas,
-  esCategoriaRaiz,
   filtrarPorCategoria,
   nombreCategoria,
   TIPO_CATEGORIA_PRODUCTO,
@@ -43,10 +42,6 @@ function coincidenciaBusqueda(producto, query) {
   const q = String(query || '').trim().toLowerCase();
   if (!q) return true;
   return String(producto?.nombre || '').toLowerCase().includes(q);
-}
-
-function mergeNombres(...listas) {
-  return categoriasUnicas(listas.flat().map((nombre) => ({ categoria: nombre })));
 }
 
 const Products = () => {
@@ -165,33 +160,21 @@ const Products = () => {
     };
   }, [idsCatalogo]);
 
-  const categoriasRaizApi = useMemo(
-    () => categoriasApi.filter(esCategoriaRaiz).map((item) => item.nombre),
-    [categoriasApi],
-  );
-
   const categorias = useMemo(
-    () => mergeNombres(categoriasRaizApi, categoriasUnicas(visibleProducts)),
-    [categoriasRaizApi, visibleProducts],
+    () => categoriasUnicas(visibleProducts),
+    [visibleProducts],
   );
 
   const subcategoriasPorCategoria = useMemo(() => {
     const mapa = {};
     for (const nombre of categorias) {
-      const desdeApi = categoriasApi
-        .filter(
-          (item) =>
-            nombreCategoria(item.padre).toLowerCase() === nombre.toLowerCase(),
-        )
-        .map((item) => item.nombre);
-      const desdeProductos = categoriasUnicas(
+      mapa[nombre] = categoriasUnicas(
         filtrarPorCategoria(visibleProducts, nombre),
         (item) => item?.subcategoria,
       );
-      mapa[nombre] = mergeNombres(desdeApi, desdeProductos);
     }
     return mapa;
-  }, [categorias, categoriasApi, visibleProducts]);
+  }, [categorias, visibleProducts]);
 
   useEffect(() => {
     if (!categorias.length) return;
@@ -448,28 +431,6 @@ const Products = () => {
                 {tFiltros}
               </button>
 
-              <div className="products-page__pills" role="group" aria-label={tCategoria}>
-                <button
-                  type="button"
-                  className={`products-page__pill${categoria === 'todas' ? ' is-active' : ''}`}
-                  onClick={() => cambiarCategoria('todas')}
-                >
-                  {tTodas}
-                </button>
-                {categorias.map((nombre) => {
-                  const activa = nombreCategoria(categoria).toLowerCase() === nombre.toLowerCase();
-                  return (
-                    <button
-                      key={nombre}
-                      type="button"
-                      className={`products-page__pill${activa ? ' is-active' : ''}`}
-                      onClick={() => cambiarCategoria(nombre)}
-                    >
-                      <Etiqueta texto={nombre} />
-                    </button>
-                  );
-                })}
-              </div>
             </div>
 
             <section className="products-page__grid" aria-label={tProductos}>

@@ -13,7 +13,6 @@ import { clasificarDisponibilidad } from '../../lib/productoDisponibilidad';
 import { useTraducir, useTraducirLista, useTraducirObjeto } from '../../hooks/useTraducir';
 import { ST } from '../../Components/T/ST';
 import { ImageLightbox } from '../../Components/ImageLightbox/ImageLightbox';
-import { HorarioCompra } from './HorarioCompra';
 import './ProductDetail.css';
 
 function formatCRC(value) {
@@ -295,29 +294,6 @@ const ProductDetail = () => {
                 </div>
               ) : null}
 
-              {puntosVenta.length > 0 ? (
-                <div className="product-detail-page__pos">
-                  <p className="product-detail-page__pos-title">{tPuntosVenta}</p>
-                  <ul>
-                    {puntosVenta.map((punto) => (
-                      <li key={punto.code}>
-                        <span className="product-detail-page__pos-name">
-                          <Store size={16} aria-hidden="true" />
-                          {punto.name}
-                        </span>
-                        <strong>
-                          {Number(punto.stock) > 0
-                            ? `${punto.stock} ${tUnidades}`
-                            : tAgotado}
-                        </strong>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-
-              <HorarioCompra />
-
               <div className="product-detail-page__quantity-row">
                 <span className="product-detail-page__quantity-label">{tCantidad}</span>
                 <div className="product-detail-page__quantity-stepper" aria-label={tCantidad}>
@@ -358,6 +334,27 @@ const ProductDetail = () => {
                   {tVolver}
                 </button>
               </div>
+
+              {puntosVenta.length > 0 ? (
+                <div className="product-detail-page__pos">
+                  <p className="product-detail-page__pos-title">{tPuntosVenta}</p>
+                  <ul>
+                    {puntosVenta.map((punto) => (
+                      <li key={punto.code}>
+                        <span className="product-detail-page__pos-name">
+                          <Store size={16} aria-hidden="true" />
+                          {punto.name}
+                        </span>
+                        <strong>
+                          {Number(punto.stock) > 0
+                            ? `${punto.stock} ${tUnidades}`
+                            : tAgotado}
+                        </strong>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
 
             <aside className="product-detail-page__specs">

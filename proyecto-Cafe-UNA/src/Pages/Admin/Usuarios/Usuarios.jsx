@@ -1294,6 +1294,7 @@ const AdminUsuarios = () => {
   const actorRoles = Array.isArray(actor?.roles) ? actor.roles : [];
   const esSuperAdmin = tienePermiso(actorRoles, "editar_usuarios");
   const puedeGestionarAsignaciones = tienePermiso(actorRoles, "gestionar_asignaciones_puntos");
+  const puedeVer = esSuperAdmin || puedeGestionarAsignaciones;
 
   const [usuarios, setUsuarios]   = useState([]);
   const [cargando, setCargando]   = useState(true);
@@ -1392,6 +1393,11 @@ const AdminUsuarios = () => {
   }
 
   useEffect(() => {
+    if (!puedeVer) {
+      setCargando(false);
+      return undefined;
+    }
+
     let activo = true;
 
     obtenerUsuarios()
@@ -1408,7 +1414,7 @@ const AdminUsuarios = () => {
     return () => {
       activo = false;
     };
-  }, []);
+  }, [puedeVer]);
 
   async function handleCrear(usuario) {
     setUsuarios((prev) => [...prev, usuario]);
@@ -1533,6 +1539,23 @@ const AdminUsuarios = () => {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
+
+  if (!puedeVer) {
+    return (
+      <AdminPageGate showLoading={showLoading} message={loadingMessage}>
+        <AdminLayout>
+          <section className="rounded-xl border border-slate-200 bg-white px-6 py-8 shadow-sm">
+            <h1 className="text-[length:var(--text-subtitle)] font-semibold text-slate-900">
+              <ST>Administrar usuarios</ST>
+            </h1>
+            <p className="mt-2 text-[length:var(--text-body)] text-slate-600" role="alert">
+              <ST>No tenés permiso para ver esta sección.</ST>
+            </p>
+          </section>
+        </AdminLayout>
+      </AdminPageGate>
+    );
+  }
 
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>

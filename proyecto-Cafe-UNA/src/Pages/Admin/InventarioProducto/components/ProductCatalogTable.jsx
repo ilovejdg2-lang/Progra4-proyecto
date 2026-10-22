@@ -4,6 +4,7 @@ import { destacadoDeshabilitado, etiquetaEstadoProducto, formatearPrecio } from 
 import { etiquetaCategoriaProducto } from "../../../../lib/categorias";
 import { imagenPrincipalProducto } from "../../../../lib/productoImagenes";
 import { ST } from "../../../../Components/T/ST";
+import { FotoMini } from "../../../../Components/FotoMini";
 
 function SortHeader({ label, active, direction, onClick }) {
   return (
@@ -122,17 +123,15 @@ export function ProductCatalogTable({
             return (
               <tr key={producto.id} className="border-b border-slate-100 last:border-b-0">
                 <td className="py-2.5">
-                  {foto ? (
-                    <img
-                      src={foto}
-                      alt=""
-                      className="mx-auto h-10 w-10 rounded-lg object-cover ring-1 ring-slate-200"
-                    />
-                  ) : (
-                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-slate-200 text-[length:var(--text-body)] text-slate-500">
-                      —
-                    </div>
-                  )}
+                  <FotoMini
+                    src={foto}
+                    className="mx-auto h-10 w-10 rounded-lg object-cover ring-1 ring-slate-200"
+                    fallback={
+                      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-slate-200 text-[length:var(--text-body)] text-slate-500">
+                        —
+                      </div>
+                    }
+                  />
                 </td>
                 <td className="px-2 py-2.5">
                   <div className="truncate font-medium text-[#2a1612]" title={producto.nombre}>

@@ -327,7 +327,12 @@ button.product-detail-page__thumb,
 }
 
 .product-detail-page__horario-dia {
-  text-transform: capitalize;
+  align-items: flex-start;
+}
+
+.product-detail-page__horario-texto {
+  display: grid;
+  line-height: 1.25;
 }
 
 .product-detail-page__pos strong {

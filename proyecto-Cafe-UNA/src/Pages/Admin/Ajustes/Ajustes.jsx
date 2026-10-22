@@ -15,21 +15,16 @@ import {
 } from "../../../services/ajustesService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { CatalogosSistema } from "./CatalogosSistema";
-import { HorariosCalendario } from "./HorariosCalendario";
 import { PermisosMatriz } from "./PermisosMatriz";
 import { moduloDePermiso } from "./permisosModulos";
 
 function seccionDesdePath(pathname) {
   if (pathname.includes("/permisos")) return "permisos";
   if (pathname.includes("/catalogos")) return "catalogos";
-  return "horarios";
+  return "";
 }
 
 const TITULOS = {
-  horarios: {
-    title: "Horarios",
-    lead: "Días y horas en que se puede llegar a comprar productos.",
-  },
   permisos: {
     title: "Permisos",
     lead: "Qué puede hacer cada rol. Filtrá por módulo y tocá el ícono para activar o quitar.",
@@ -43,13 +38,14 @@ const TITULOS = {
 export default function AdminAjustes() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const seccion = seccionDesdePath(pathname);
-  const meta = TITULOS[seccion] || TITULOS.horarios;
+  const meta = TITULOS[seccion] || TITULOS.catalogos;
   const tEyebrow = useTraducir("Ajustes del sistema");
   const tTitle = useTraducir(meta.title);
   const tLead = useTraducir(meta.lead);
   const redirigirRaiz =
     pathname === "/admin/ajustes" ||
     pathname === "/admin/ajustes/" ||
+    pathname.includes("/ajustes/horarios") ||
     pathname.includes("/ajustes/idioma");
 
   const actor = getActiveSessionUser();
@@ -76,8 +72,8 @@ export default function AdminAjustes() {
   }, []);
 
   const { showLoading, loadingMessage } = useAdminPageGate(
-    redirigirRaiz ? "/admin/ajustes/horarios" : pathname,
-    listo && puede,
+    redirigirRaiz ? "/admin/ajustes/catalogos" : pathname,
+    listo,
   );
 
   const cargar = useCallback(async () => {
@@ -130,7 +126,7 @@ export default function AdminAjustes() {
   }, [permisosConModulo]);
 
   if (redirigirRaiz) {
-    return <Navigate to="/admin/ajustes/horarios" replace />;
+    return <Navigate to="/admin/ajustes/catalogos" replace />;
   }
 
   const togglePermiso = (codigo, rol) => {
@@ -182,19 +178,6 @@ export default function AdminAjustes() {
             >
               <ST>{okMsg}</ST>
             </p>
-          ) : null}
-
-          {seccion === "horarios" ? (
-            <HorariosCalendario
-              onMessage={(msg) => {
-                setOkMsg(msg || "");
-                setError("");
-              }}
-              onError={(msg) => {
-                setError(msg || "");
-                if (msg) setOkMsg("");
-              }}
-            />
           ) : null}
 
           {seccion === "catalogos" ? (

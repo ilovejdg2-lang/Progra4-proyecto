@@ -157,7 +157,44 @@ export function PermisosMatriz({
         />
       ) : (
         <>
-          <div className="overflow-x-auto px-2 pb-4 sm:px-4">
+          <div className="grid gap-3 px-4 pb-4 md:hidden">
+            {pageItems.map((p) => {
+              const meta = p.modulo || moduloDePermiso(p);
+              if (!meta) return null;
+              const Icon = meta.Icon;
+              return (
+                <article key={p.codigo} className="rounded-2xl border border-slate-200 p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+                      <Icon className="size-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-900"><ST>{p.nombre}</ST></p>
+                      <p className="text-slate-400"><ST>{meta.label}</ST></p>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-2">
+                    {(roles || []).map((rol) => {
+                      const activo = (matrizLocal[p.codigo] || []).includes(rol);
+                      return (
+                        <div key={`${p.codigo}-${rol}`} className="flex items-center justify-between gap-3">
+                          <span className="text-[length:var(--text-body)] font-semibold text-slate-600">
+                            <ST>{rol}</ST>
+                          </span>
+                          <TogglePermiso
+                            activo={activo}
+                            onClick={() => onToggle(p.codigo, rol)}
+                            label={`${p.nombre} — ${rol}`}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto px-2 pb-4 sm:px-4 md:block">
             <table className="min-w-full border-collapse text-left text-[length:var(--text-body)]">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
