@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Check, MapPin, UploadCloud } from "lucide-react";
+import { Check, MapPin } from "lucide-react";
 
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
 import { IconoSitio } from "../../Components/IconoSitio/IconoSitio";
 import PageLoading from "../../Components/PageLoading/PageLoading";
 import { ST } from "../../Components/T/ST";
+import { ImageFilePicker } from "../../Components/ui/ImageFilePicker";
 import { SelectFiltro } from "../../Components/ui/SelectFiltro";
 import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
 import { HOME_SCROLL_SECTIONS } from "../../lib/homeScrollTarget";
@@ -137,8 +138,7 @@ export default function PropuestaProductor() {
     });
   };
 
-  const elegirImagen = (event) => {
-    const file = event.target.files?.[0] || null;
+  const elegirImagen = (file) => {
     setArchivo(file);
     if (previewRef.current) URL.revokeObjectURL(previewRef.current);
     const url = file ? URL.createObjectURL(file) : "";
@@ -312,46 +312,30 @@ export default function PropuestaProductor() {
                     <span className="req">*</span>
                   </label>
                   <div className="documento-upload-wrapper">
-                    {!archivo ? (
-                      <label className="documento-upload-dropzone" htmlFor="imagen">
-                        <input
-                          id="imagen"
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-                          aria-invalid={Boolean(errores.imagen)}
-                          onChange={elegirImagen}
-                        />
-                        <div className="documento-upload-dropzone__icon">
-                          <UploadCloud size={22} />
-                        </div>
-                        <span className="documento-upload-dropzone__texto">
-                          <ST>Hacé clic aquí para elegir la imagen</ST>
-                        </span>
-                        <span className="documento-upload-dropzone__hint">
-                          <ST>JPG, JPEG, PNG o WebP (máx. 5 MB)</ST>
-                        </span>
-                      </label>
-                    ) : (
+                    {archivo ? (
                       <div className="documento-preview-card">
                         <div className="documento-preview__info">
-                          {preview ? <img src={preview} alt="" className="propuesta-imagen-mini" /> : null}
+                          {preview ? <img src={preview} alt="Vista previa de la imagen seleccionada" className="propuesta-imagen-mini" /> : null}
                           <div>
                             <p className="documento-preview__nombre">{archivo.name}</p>
                             <p className="documento-preview__tamano">{(archivo.size / 1024 / 1024).toFixed(2)} MB</p>
                           </div>
                         </div>
-                        <label className="propuesta-reemplazar">
-                          <ST>Reemplazar</ST>
-                          <input
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-                            onChange={elegirImagen}
-                          />
-                        </label>
+                        <button type="button" className="propuesta-reemplazar" disabled={enviando} onClick={() => elegirImagen(null)}>
+                          <ST>Quitar imagen</ST>
+                        </button>
                       </div>
-                    )}
+                    ) : null}
+                    <ImageFilePicker
+                      id="imagen"
+                      accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                      hint="JPG, JPEG, PNG o WebP (máx. 5 MB)"
+                      onSelect={elegirImagen}
+                      disabled={enviando}
+                      required
+                      error={errores.imagen}
+                    />
                   </div>
-                  {errores.imagen ? <span className="mensaje-error"><ST>{errores.imagen}</ST></span> : null}
                 </div>
               </SectionCard>
 

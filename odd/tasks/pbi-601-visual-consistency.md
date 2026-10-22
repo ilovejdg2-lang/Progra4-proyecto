@@ -21,7 +21,7 @@ Feature branch: feat/601-visual-consistency, starting at development 10651a8560e
 - Do not change backend behavior, database schema, credentials, production data, or unrelated features.
 - Profile verification found no file-upload endpoint: GET/PUT /api/perfil only read/update image URLs under ver_perfil_propio/actualizar_perfil_propio. CMS POST /api/informacion/imagenes requires actualizar_informacion (admin seed). Do not reuse that uploader for ordinary profile users or broaden permissions. A separate authorized backend-capability decision is pending for this part of #602.
 - No push, PR creation, merge, Azure state transition, remote application request, or database migration is authorized by this implementation run.
-- No source code has been modified yet.
+- Source changes are limited to T602.1a producer creation and its shared image selector; backend untouched.
 
 ## Source map (app-relative unless marked backend)
 App directory: proyecto-Cafe-UNA.
@@ -46,9 +46,9 @@ App directory: proyecto-Cafe-UNA.
 - Build from repository root: npm run build.
 - Lint from repository root: npm run lint.
 - Browser verification: real rendered component/form behavior, keyboard operation, mobile/desktop, light/dark themes; do not access an authenticated remote backend without separate authorization.
-- Baseline npm test: initial sandbox run failed at Vite/Tailwind startup with spawn EPERM; approved rerun outside sandbox executed successfully and reported 145 passed / 8 failed tests in 40 files (38 passed / 2 failed), exit 1, 111.97 s. Failures predate source edits and are in SalidaInventarioForm.test.jsx (7) and SalidasInventario.test.jsx (1); at least the Producto queries expect a native combobox, but current UI renders a custom button/listbox trigger. Do not fix unrelated inventory tests under this PBI without separate authorization. Baseline build/lint not yet executed.
+- Baseline npm test: initial sandbox run failed at Vite/Tailwind startup with spawn EPERM; approved rerun outside sandbox executed successfully and reported 145 passed / 8 failed tests in 40 files (38 passed / 2 failed), exit 1, 111.97 s. Failures predate source edits and are in SalidaInventarioForm.test.jsx (7) and SalidasInventario.test.jsx (1); at least the Producto queries expect a native combobox, but current UI renders a custom button/listbox trigger. Do not fix unrelated inventory tests under this PBI without separate authorization. Baseline lint (before production edits): npm run lint reported 279 problems (261 errors/18 warnings), with no producer create/test paths in its output. Baseline build after approved EPERM rerun failed because installed dependencies cannot resolve declared recharts ^3.10.1 from UserStatusChart.jsx. No dependency installed or unrelated lint/test fixed. The build's ignored public/_redirects was regenerated from the normal environment after the local-only BACKEND_URL check.
 - RDD: on, decided by default; global and clone-local unset. Initial empty-current-candidate assessment was unassessable (no pending changes); do not interpret it as low risk or an actual reviewed candidate. Reassess each real work-unit commit against the last reviewed boundary.
-- Initial review boundary: 10651a8560e7cc618f21789a2c05d0292baf6fdc.
+- Initial branch point: 10651a8560e7cc618f21789a2c05d0292baf6fdc. Last reviewed boundary: 4a5a35d9ed66022e6c7b9bdd662c97a27e7f6da7 (docs-only assessment: passive/non_executable_only; review_due false).
 - Work units close only after observed checks and a Conventional Commit; no AI attribution.
 
 ## Delivery forecast
@@ -57,19 +57,26 @@ App directory: proyecto-Cafe-UNA.
 - Chain strategy: feature-branch-chain, explicitly confirmed by the user. Keep small dependent delivery slices inside the PBI feature chain; eventually integrate into development only after verification. No push or PR publication yet. Tracker branch: feat/601-visual-consistency; first implementation child: feat/602-image-selection.
 - One honest slice-planning pass; do not omit tests, compress code, or delete formatting to meet the advisory task size.
 - Planned slice boundaries below are provisional until delivery strategy and contracts are resolved.
-- Running authored count: 0.
-- Commit/PR boundaries: planning document is a standalone docs work unit (runtime N/A); implementation children follow the tracker and immediate prior slice. Record exact commit identities as observed; no remote publication authorized.
+- Running authored count: 119 (planning docs commit; production code 0). Active implementation child: feat/602-image-selection.
+- Commit/PR boundaries: tracker docs commit 4a5a35d (119 additions, diff --check passed; runtime N/A: documentation only). First child feat/602-image-selection starts at that tracker commit and will target feat/601-visual-consistency if publication is later authorized. No remote publication authorized.
 
 ## Implementation checklist
 
 ### T602.1 — Shared image selection and producer integration
-- [ ] Introduce/reuse a presentational image drag/select control without forcing an upload lifecycle.
+- [x] Introduce/reuse a presentational image drag/select control without forcing an upload lifecycle.
 - [ ] Integrate producer create/edit image fields while preserving 5 MB validation and deferred File submission.
 - [ ] Test selection, drop, cancel, invalid type/size, replacement, loading/error, and keyboard behavior as applicable.
 - Route: delegated; multiple non-trivial components/tests.
 - Checks: focused image/control/producer tests, applicable full checks, browser verification.
 - Rollback: control and its producer integrations/tests only.
-- Commit and evidence: pending.
+- T602.1a producer CREATE implemented by delegated writer; T602.1b producer EDIT remains pending.
+- TDD evidence: keyboard RED 1 failed/7 skipped (5.10 s), initial GREEN 8 passed (6.62 s); removal RED 1 failed/8 skipped (5.23 s); final GREEN 9 passed (11.05 s). Runner: npm --prefix proyecto-Cafe-UNA test -- src/Pages/Productores/PropuestaProductor.test.jsx; RED selections used -t keyboard and -t removes.
+- Preserved deferred File/FormData, 5 MB, MIME OR extension, retry/idempotency; covered selection/drop/cancel/replacement/removal/blob cleanup/loading/error.
+- Targeted ESLint: all three changed JSX pass, exit 0. Full suite: 154 passed/8 failed in 41 files (38.10 s); same two preexisting inventory test files fail, no new failures.
+- Browser: local Vite 5191, isolated actual component fixture with CSP and no auth/services; Enter opens file chooser and synthetic PNG selection updates output. Clearing, disabled/error states and theme controls exercised; final dark mobile 320 px screenshot readable, document scrollWidth 305 <= 320, no captured console errors/warnings. This is NOT backend/storage E2E. Screenshot: C:/CAFE-UNA/pbi602-mobile-dark.png.
+- Build: post-change npm run build fails resolving recharts from MonthlyRevenueChart.jsx (same missing installed dependency as baseline); no dependency installed. Redirect file regenerated from normal environment. Global lint baseline remains 279 problems; targeted lint clean.
+- Rollback for T602.1a: ImageFilePicker.jsx, producer CREATE integration/test, test-fixtures/image-file-picker.html; leave editor/CMS/backend unchanged.
+- Commit and native assessment: pending.
 
 ### T602.2 — CMS image intake consistency
 - [ ] Integrate existing information image uploader into relevant hero, location, map, about, gallery, and team image fields while preserving optional URLs and save payloads.
@@ -115,5 +122,5 @@ App directory: proyecto-Cafe-UNA.
 - Commit and evidence: pending.
 
 ## Current status and next step
-Read-only frontend/backend contract mapping and initial frontend tests completed. Branch remains feat/601-visual-consistency. No production source changed; only this tracking document was added. No feature commits yet.
+Tracker documentation committed as 4a5a35d. Active child feat/602-image-selection; T602.1a implemented and checked with TDD. Work-unit commit/native assessment pending; no PR publication. #602 remains incomplete: producer EDIT, CMS and profile-capability decision still pending.
 User confirmed TDD ON, order #602 -> #603 -> #604, and feature-branch-chain delivery without PR publication. Start #602 only: T602.1a covers the shared image selector plus producer creation, T602.1b covers producer editing; then T602.2 CMS integrations. T602.3 profile uploads remain pending a safe backend-capability decision. Preserve the eight known baseline inventory test failures without changing unrelated source/tests.
