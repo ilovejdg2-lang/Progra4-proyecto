@@ -57,26 +57,30 @@ App directory: proyecto-Cafe-UNA.
 - Chain strategy: feature-branch-chain, explicitly confirmed by the user. Keep small dependent delivery slices inside the PBI feature chain; eventually integrate into development only after verification. No push or PR publication yet. Tracker branch: feat/601-visual-consistency; first implementation child: feat/602-image-selection.
 - One honest slice-planning pass; do not omit tests, compress code, or delete formatting to meet the advisory task size.
 - Planned slice boundaries below are provisional until delivery strategy and contracts are resolved.
-- Running authored count: 119 (planning docs commit; production code 0). Active implementation child: feat/602-image-selection.
+- Running authored count: 418 (119 tracker + 299 T602.1a). Active implementation child: feat/602-producer-edit-image, based on d035eb9; first slice feat/602-image-selection is 299 authored changed lines, second child will target it if publication is authorized.
 - Commit/PR boundaries: tracker docs commit 4a5a35d (119 additions, diff --check passed; runtime N/A: documentation only). First child feat/602-image-selection starts at that tracker commit and will target feat/601-visual-consistency if publication is later authorized. No remote publication authorized.
 
 ## Implementation checklist
 
 ### T602.1 — Shared image selection and producer integration
 - [x] Introduce/reuse a presentational image drag/select control without forcing an upload lifecycle.
-- [ ] Integrate producer create/edit image fields while preserving 5 MB validation and deferred File submission.
-- [ ] Test selection, drop, cancel, invalid type/size, replacement, loading/error, and keyboard behavior as applicable.
+- [x] Integrate producer create/edit image fields while preserving 5 MB validation and deferred File submission.
+- [x] Test selection, drop, cancel, invalid type/size, replacement, loading/error, and keyboard behavior as applicable.
 - Route: delegated; multiple non-trivial components/tests.
 - Checks: focused image/control/producer tests, applicable full checks, browser verification.
 - Rollback: control and its producer integrations/tests only.
-- T602.1a producer CREATE implemented by delegated writer; T602.1b producer EDIT remains pending.
+- T602.1a producer CREATE and T602.1b producer EDIT implemented by bounded delegated writer.
+- T602.1b observed RED UI: 1 failed (2.05 s), accessible picker absent; multipart RED: 2 failed/1 skipped (2.92 s), plain object was not FormData. GREEN editor 10 passed (2.49 s), combined CREATE/EDIT 19 passed in 2 files (2.99 s). Same Vitest command as CREATE with ModalEditarMiPropuesta.test.jsx.
+- Required correctness fix: existing modal passed File as an ignored third service argument. Modal now supplies existing (id, FormData) contract; optional imagen and request-only motivo (not motivoCambio). Backend read-only confirmation: both routes use FileInterceptor('imagen'); request service reads body.motivo. No backend/service edits, API changes or migration. Optional replacement preserves existing image and discarding restores it; blob cleanup covered.
+- Editor targeted lint has two existing react-hooks/set-state-in-effect errors, confirmed against HEAD; new editor test clean and previous unused X import removed. No new lint errors. Shared-component browser evidence applies; actual modal/backend E2E remains unverified, no credential reuse or live writes.
+- T602.1b rollback: ModalEditarMiPropuesta.jsx and ModalEditarMiPropuesta.test.jsx only. Full suite after editor: 164 passed/8 failed in 42 files (24.53 s), same known inventory failures. Build remains blocked by missing installed recharts; not rerun after editor-only change. Commit/native assessment pending.
 - TDD evidence: keyboard RED 1 failed/7 skipped (5.10 s), initial GREEN 8 passed (6.62 s); removal RED 1 failed/8 skipped (5.23 s); final GREEN 9 passed (11.05 s). Runner: npm --prefix proyecto-Cafe-UNA test -- src/Pages/Productores/PropuestaProductor.test.jsx; RED selections used -t keyboard and -t removes.
 - Preserved deferred File/FormData, 5 MB, MIME OR extension, retry/idempotency; covered selection/drop/cancel/replacement/removal/blob cleanup/loading/error.
 - Targeted ESLint: all three changed JSX pass, exit 0. Full suite: 154 passed/8 failed in 41 files (38.10 s); same two preexisting inventory test files fail, no new failures.
 - Browser: local Vite 5191, isolated actual component fixture with CSP and no auth/services; Enter opens file chooser and synthetic PNG selection updates output. Clearing, disabled/error states and theme controls exercised; final dark mobile 320 px screenshot readable, document scrollWidth 305 <= 320, no captured console errors/warnings. This is NOT backend/storage E2E. Screenshot: C:/CAFE-UNA/pbi602-mobile-dark.png.
 - Build: post-change npm run build fails resolving recharts from MonthlyRevenueChart.jsx (same missing installed dependency as baseline); no dependency installed. Redirect file regenerated from normal environment. Global lint baseline remains 279 problems; targeted lint clean.
 - Rollback for T602.1a: ImageFilePicker.jsx, producer CREATE integration/test, test-fixtures/image-file-picker.html; leave editor/CMS/backend unchanged.
-- Commit and native assessment: pending.
+- Commit: d035eb99f50a00e0e88859f0dd8f5897b3b255b9 (257 additions/42 deletions; diff --check passed). Native assessment against 4a5a35d: medium/executable_change, review_due false, under_budget. Last reviewed boundary remains 4a5a35d; this pending slice is not approved/reviewed.
 
 ### T602.2 — CMS image intake consistency
 - [ ] Integrate existing information image uploader into relevant hero, location, map, about, gallery, and team image fields while preserving optional URLs and save payloads.
@@ -122,5 +126,5 @@ App directory: proyecto-Cafe-UNA.
 - Commit and evidence: pending.
 
 ## Current status and next step
-Tracker documentation committed as 4a5a35d. Active child feat/602-image-selection; T602.1a implemented and checked with TDD. Work-unit commit/native assessment pending; no PR publication. #602 remains incomplete: producer EDIT, CMS and profile-capability decision still pending.
+Tracker documentation committed as 4a5a35d. T602.1a committed as d035eb9 with TDD and local browser proof. Native review deferred under budget, not approval; no PR publication. Active child feat/602-producer-edit-image: T602.1b producer EDIT assigned to bounded delegated writer (component plus tests, TDD ON). #602 remains incomplete: producer EDIT, CMS and profile-capability decision still pending.
 User confirmed TDD ON, order #602 -> #603 -> #604, and feature-branch-chain delivery without PR publication. Start #602 only: T602.1a covers the shared image selector plus producer creation, T602.1b covers producer editing; then T602.2 CMS integrations. T602.3 profile uploads remain pending a safe backend-capability decision. Preserve the eight known baseline inventory test failures without changing unrelated source/tests.
