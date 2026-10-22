@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src ws://127.0.0.1:* ws://localhost:*; img-src data: blob:; font-src 'self' data:" />
+    <title>Private profile image local fixture</title>
+  </head>
+  <body class="admin-route-active">
+    <main id="root"></main>
+    <script type="module">
+      import React, { useState } from "react";
+      import { createRoot } from "react-dom/client";
+      import axios from "axios";
+      import { ProfileImageModal } from "/src/Components/Perfil/ProfileImageModal.jsx";
+      import { beginLogout, saveAuthenticatedUser } from "/src/services/sessionService.js";
+      import "/src/index.css";
+      import "/src/Components/Perfil/PerfilContent.css";
+      import "/src/styles/adminDark.css";
+
+      const privatePath = "/api/perfil/imagenes/00000000-0000-4000-8000-000000000000.webp";
+      const pixel = Uint8Array.from(atob("UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA"), (char) => char.charCodeAt(0));
+      let failUpload = false;
+      let delayUpload = false;
+      const requests = [];
+      axios.defaults.adapter = async (config) => {
+        const path = new URL(config.url, location.origin).pathname;
+        const method = (config.method || "get").toLowerCase();
+        requests.push(`${method.toUpperCase()} ${path}`);
+        if (method === "get" && path === privatePath && config.responseType === "blob") {
+          return { data: new Blob([pixel], { type: "image/webp" }), status: 200, statusText: "OK", headers: {}, config };
+        }
+        if (method === "post" && path === "/api/perfil/imagenes" && config.data instanceof FormData) {
+          if (delayUpload) await new Promise((resolve) => setTimeout(resolve, 1500));
+          if (failUpload) throw new Error("Synthetic upload failure");
+          return { data: { url: privatePath }, status: 201, statusText: "Created", headers: {}, config };
+        }
+        throw new Error("Unexpected request blocked by local fixture.");
+      };
+      window.fetch = async () => { throw new Error("Fetch is disabled in this local fixture."); };
+      localStorage.setItem("cafe-una-idioma", "es");
+      const signIn = () => saveAuthenticatedUser({ id: 999, token: "synthetic-local-fixture", name: "Local fixture" });
+      signIn();
+      function Fixture() {
+        const [type, setType] = useState(null);
+        const [value, setValue] = useState(privatePath);
+        const [saved, setSaved] = useState("");
+        const open = (nextType) => { setValue(privatePath); setType(nextType); };
+        return React.createElement("section", { className: "grid gap-4 p-4" },
+          React.createElement("h1", null, "Perfil: prueba local sin API"),
+          React.createElement("button", { onClick: () => { const dark = !document.documentElement.classList.contains("dark"); document.documentElement.classList.toggle("dark", dark); document.documentElement.classList.toggle("admin-theme-dark", dark); } }, "Cambiar tema"),
+          React.createElement("button", { onClick: () => open("avatar") }, "Abrir avatar"),
+          React.createElement("button", { onClick: () => open("banner") }, "Abrir banner"),
+          React.createElement("label", null, React.createElement("input", { type: "checkbox", onChange: (event) => { failUpload = event.target.checked; } }), " Simular error"),
+          React.createElement("label", null, React.createElement("input", { type: "checkbox", onChange: (event) => { delayUpload = event.target.checked; } }), " Simular demora"),
+          React.createElement("button", { onClick: beginLogout }, "Cerrar sesión sintética"),
+          React.createElement("button", { onClick: signIn }, "Iniciar sesión sintética"),
+          React.createElement("output", { "aria-live": "polite" }, saved || "Sin cambios guardados"),
+          React.createElement("pre", { id: "fixture-requests" }, requests.join("\n")),
+          type && React.createElement(ProfileImageModal, { key: type, open: true, type, variant: "admin", value, onChange: setValue, saving: false, onClose: () => setType(null), onSave: () => { setSaved(JSON.stringify({ type, url: value })); setType(null); } }),
+        );
+      }
+      createRoot(document.getElementById("root")).render(React.createElement(Fixture));
+    </script>
+  </body>
+</html>

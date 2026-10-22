@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { ProfileImageModal } from "./ProfileImageModal";
+import { useProfileImage } from "../../hooks/useProfileImage";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Camera, ChevronRight, ClipboardList, Eye, EyeOff, IdCard, KeyRound, Mail, ShoppingBag, Sprout, UserRound, X } from "lucide-react";
+import { Camera, ChevronRight, ClipboardList, Eye, EyeOff, IdCard, KeyRound, Mail, ShoppingBag, Sprout, UserRound } from "lucide-react";
 import {
   actualizarPerfil,
   actualizarPerfilCliente,
@@ -10,7 +12,7 @@ import {
   obtenerPerfil,
   solicitarCambioCorreo,
 } from "../../services/perfilService";
-import { applyPerfilToSession, getActiveSessionUser } from "../../services/sessionService";
+import { applyPerfilToSession, getActiveSessionUser, getStoredUser, isLoggingOut, isSessionExpired } from "../../services/sessionService";
 import { rutaMisCompras } from "../../Pages/HistorialCompras/rutasCompras";
 import { rutaMisSolicitudes } from "../../Pages/HistorialSolicitudes/HistorialSolicitudesCliente";
 import { rutaMisPropuestas } from "../../Pages/Productores/MisPropuestas";
@@ -152,97 +154,6 @@ function PerfilPasswordField({ label, value, onChange, visible, onToggle, autoFo
   );
 }
 
-function ImageUrlModal({
-  open,
-  type,
-  variant,
-  value,
-  onChange,
-  onClose,
-  onSave,
-  saving,
-}) {
-  const tCerrar = useTraducir("Cerrar");
-  const tCambiarFoto = useTraducir("Cambiar foto de perfil");
-  const tCambiarBanner = useTraducir("Cambiar banner");
-  const tUrlImagen = useTraducir("URL de la imagen");
-  const tVistaPreviaAvatarAdmin = useTraducir("Vista previa (96×96 px)");
-  const tVistaPreviaAvatar = useTraducir("Vista previa (112×112 px)");
-  const tVistaPreviaBannerAdmin = useTraducir("Vista previa (220 px de alto)");
-  const tVistaPreviaBanner = useTraducir("Vista previa (280 px de alto)");
-  const tVistaPrevia = useTraducir("Vista previa");
-  const tPegaEnlace = useTraducir("Pega un enlace para ver la vista previa al tamaño real.");
-  const tGuardando = useTraducir("Guardando...");
-  const tGuardarImagen = useTraducir("Guardar imagen");
-  const tCancelar = useTraducir("Cancelar");
-
-  if (!open) return null;
-
-  const isAvatar = type === "avatar";
-  const isAdmin = variant === "admin";
-  const preview = value ? normalizeImageUrl(value, { width: isAvatar ? 320 : 1600 }) : "";
-  const previewLabel = isAvatar
-    ? (isAdmin ? tVistaPreviaAvatarAdmin : tVistaPreviaAvatar)
-    : (isAdmin ? tVistaPreviaBannerAdmin : tVistaPreviaBanner);
-
-  return (
-    <div className="perfil-modal" role="dialog" aria-modal="true">
-      <button type="button" className="perfil-modal__backdrop" aria-label={tCerrar} onClick={onClose} />
-      <div className={`perfil-modal__card perfil-modal__card--image ${isAvatar ? "perfil-modal__card--avatar" : "perfil-modal__card--banner"}`}>
-        <header className="perfil-modal__header">
-          <h3>{isAvatar ? tCambiarFoto : tCambiarBanner}</h3>
-          <button type="button" className="perfil-modal__close" onClick={onClose} aria-label={tCerrar}>
-            <X size={18} />
-          </button>
-        </header>
-
-        <label className="perfil-field">
-          <span>{tUrlImagen}</span>
-          <input
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="https://..."
-            autoFocus
-          />
-        </label>
-
-        {preview ? (
-          <div className="perfil-modal__preview-block">
-            <p className="perfil-modal__preview-label">{previewLabel}</p>
-            <div
-              className={[
-                "perfil-modal__preview-frame",
-                isAvatar ? "perfil-modal__preview-frame--avatar" : "perfil-modal__preview-frame--banner",
-                isAdmin ? "perfil-modal__preview-frame--admin" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              <img
-                src={preview}
-                alt={tVistaPrevia}
-                className="perfil-modal__preview-img"
-                draggable={false}
-              />
-            </div>
-          </div>
-        ) : (
-          <p className="perfil-modal__empty-preview">{tPegaEnlace}</p>
-        )}
-
-        <div className="perfil-modal__actions">
-          <button type="button" className="perfil-button" onClick={onSave} disabled={saving || !value.trim()}>
-            {saving ? tGuardando : tGuardarImagen}
-          </button>
-          <button type="button" className="perfil-button perfil-button--ghost" onClick={onClose}>
-            {tCancelar}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function PerfilContent({ variant = "standalone" }) {
   const sessionUser = getActiveSessionUser();
   const sessionUserId = Number(sessionUser?.id) || null;
@@ -291,6 +202,18 @@ export function PerfilContent({ variant = "standalone" }) {
   const tMensaje = useTraducir(mensaje);
   const [imageModal, setImageModal] = useState(null);
   const [imageDraft, setImageDraft] = useState("");
+  const imageGeneration = useRef(0);
+  const imageSession = useRef("");
+  function currentImageSession() {
+    const user = getStoredUser();
+    return user && !isLoggingOut() && !isSessionExpired(user) ? JSON.stringify([String(user.id), user.token]) : "";
+  }
+  function closeImageModal() {
+    imageGeneration.current += 1;
+    setImageModal(null);
+    setGuardando(false);
+  }
+  useEffect(() => () => { imageGeneration.current += 1; }, []);
   const [form, setForm] = useState({
     nombre: "",
     correo: "",
@@ -412,12 +335,12 @@ export function PerfilContent({ variant = "standalone" }) {
     return () => window.clearTimeout(timer);
   }, [mensaje]);
 
-  const bannerSrc = form.fotoBannerUrl
+  const bannerSrc = useProfileImage(form.fotoBannerUrl
     ? normalizeImageUrl(form.fotoBannerUrl, { width: 1200 })
-    : null;
-  const avatarSrc = form.fotoPerfilUrl
+    : null);
+  const avatarSrc = useProfileImage(form.fotoPerfilUrl
     ? normalizeImageUrl(form.fotoPerfilUrl, { width: 320 })
-    : null;
+    : null);
   const inicialAvatar = inicialDeNombre(form.nombre || sessionUser?.name || sessionUser?.username);
   const esCliente = Boolean(perfil?.tipoCliente)
     || (Array.isArray(perfil?.roles)
@@ -531,7 +454,10 @@ export function PerfilContent({ variant = "standalone" }) {
   }
 
   async function handleGuardarImagen() {
-    if (!imageModal) return;
+    if (!imageModal || guardando || !imageSession.current || imageSession.current !== currentImageSession()) return;
+    const generation = imageGeneration.current;
+    const session = imageSession.current;
+    const stillCurrent = () => generation === imageGeneration.current && session === currentImageSession();
     setError("");
     setMensaje("");
     setGuardando(true);
@@ -550,6 +476,7 @@ export function PerfilContent({ variant = "standalone" }) {
         fotoPerfilPosicion: nextForm.fotoPerfilPosicion || null,
         fotoBannerPosicion: nextForm.fotoBannerPosicion || null,
       });
+      if (!stillCurrent()) return;
       setPerfil(actualizado);
       setForm({
         nombre: actualizado.nombre,
@@ -563,13 +490,15 @@ export function PerfilContent({ variant = "standalone" }) {
       setImageModal(null);
       setMensaje("Imagen actualizada correctamente.");
     } catch (err) {
-      setError(err.message || "No se pudo guardar la imagen.");
+      if (stillCurrent()) setError(err.message || "No se pudo guardar la imagen.");
     } finally {
-      setGuardando(false);
+      if (stillCurrent()) setGuardando(false);
     }
   }
 
   function openImageModal(type) {
+    imageGeneration.current += 1;
+    imageSession.current = currentImageSession();
     setImageDraft(type === "avatar" ? form.fotoPerfilUrl : form.fotoBannerUrl);
     setImageModal(type);
   }
@@ -1285,16 +1214,17 @@ export function PerfilContent({ variant = "standalone" }) {
         </p>
       ) : null}
 
-      <ImageUrlModal
+      {imageModal ? <ProfileImageModal
+        key={imageModal}
         open={Boolean(imageModal)}
         type={imageModal}
         variant={variant}
         value={imageDraft}
         onChange={setImageDraft}
-        onClose={() => setImageModal(null)}
+        onClose={closeImageModal}
         onSave={handleGuardarImagen}
         saving={guardando}
-      />
+      /> : null}
     </div>
   );
 }
