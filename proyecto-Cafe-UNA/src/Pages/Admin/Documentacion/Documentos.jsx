@@ -103,15 +103,13 @@ function formatearTamano(bytes = 0) {
 export default function AdminDocumentos() {
   const actor = getActiveSessionUser();
   const roles = rolesDeUsuario(actor);
-  const esAdmin =
-    roles.some((r) =>
-      ["admin", "superadmin", "administrador", "superadministrador"].includes(
-        String(r || "").toLowerCase(),
-      ),
-    ) || String(actor?.role || "").toLowerCase() === "admin";
-  const puedeCrear = esAdmin || tienePermiso(roles, "crear_documentacion");
-  const puedeEditar = esAdmin || tienePermiso(roles, "actualizar_documentacion");
-  const puedeInactivar = esAdmin || tienePermiso(roles, "inactivar_documentacion");
+  const puedeVer =
+    tienePermiso(roles, "ver_documentacion_privada") ||
+    tienePermiso(roles, "crear_documentacion") ||
+    tienePermiso(roles, "actualizar_documentacion");
+  const puedeCrear = tienePermiso(roles, "crear_documentacion");
+  const puedeEditar = tienePermiso(roles, "actualizar_documentacion");
+  const puedeInactivar = tienePermiso(roles, "inactivar_documentacion");
 
   // Pestaña activa: 'documentos' | 'categorias'
   const [tabActivo, setTabActivo] = useState("documentos");
@@ -195,6 +193,12 @@ export default function AdminDocumentos() {
   }, [modalAbierto, modalCatAbierto, docAVisualizar]);
 
   const cargarDatos = useCallback(async () => {
+    if (!puedeVer) {
+      setCargando(false);
+      setError("No tenés permiso para ver el repositorio de documentación.");
+      setDocumentos([]);
+      return;
+    }
     try {
       setCargando(true);
       setError("");
@@ -215,11 +219,16 @@ export default function AdminDocumentos() {
       }
     } catch (err) {
       console.error("Error al cargar administración de documentos:", err);
-      setError("No se pudieron cargar los datos de documentación.");
+      const estado = err?.cause?.response?.status;
+      setError(
+        estado === 403
+          ? "No tenés permiso para ver el repositorio de documentación."
+          : "No se pudieron cargar los datos de documentación.",
+      );
     } finally {
       setCargando(false);
     }
-  }, [filtroBuscar, filtroCategoria, filtroPrivacidad, filtroActivo]);
+  }, [filtroBuscar, filtroCategoria, filtroPrivacidad, filtroActivo, puedeVer]);
 
   useEffect(() => {
     cargarDatos();
@@ -437,6 +446,19 @@ export default function AdminDocumentos() {
     );
   }
 
+  if (!puedeVer) {
+    return (
+      <AdminLayout>
+        <div className="admin-docs-container">
+          <h1 className="admin-docs-title">
+            <ST>Repositorio de documentación</ST>
+          </h1>
+          <p role="alert">No tenés permiso para ver el repositorio de documentación.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="admin-docs-container">
@@ -639,6 +661,10 @@ export default function AdminDocumentos() {
               <div className="admin-docs-loading">
                 <span className="spinner-sm" />
                 <span>Cargando documentos...</span>
+              </div>
+            ) : error ? (
+              <div className="admin-docs-empty" role="alert">
+                <h4>{error}</h4>
               </div>
             ) : documentos.length === 0 ? (
               <div className="admin-docs-empty">

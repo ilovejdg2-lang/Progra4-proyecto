@@ -72,7 +72,8 @@
 
 html {
   height: 100%;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
+  scrollbar-gutter: stable;
   overflow-x: clip;
 }
 
@@ -979,4 +980,29 @@ button[class*="backdrop"],
   html {
     @apply font-sans;
   }
+}
+
+.propuesta-aviso {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid #7dd3fc;
+  border-radius: var(--ui-radius);
+  background: #e0f2fe;
+  color: #0c4a6e;
+}
+
+.propuesta-aviso__titulo,
+.propuesta-aviso__texto {
+  margin: 0;
+  font-size: var(--text-body);
+  line-height: 1.45;
+}
+
+.propuesta-aviso__titulo {
+  font-weight: 700;
+}
+
+.propuesta-aviso__texto {
+  margin-top: 0.35rem;
+  color: #075985;
 }

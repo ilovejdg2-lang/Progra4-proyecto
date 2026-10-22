@@ -56,7 +56,7 @@ const AboutUs = () => {
       errorMessage={"No se pudo cargar la informaci\u00f3n de Sobre Nosotros."}
       onRetry={reload}
     >
-      <main className="about-page site-canvas">
+      <main className={`about-page site-canvas${esGaleria ? ' about-page--galeria' : ''}`}>
         <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.about} />
 
         {esGaleria ? (

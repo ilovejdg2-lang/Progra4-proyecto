@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ImagePlus, Save, Send, X } from "lucide-react";
+import { Save, Send } from "lucide-react";
 
 import {
   AdminModal,
@@ -11,6 +11,7 @@ import {
 import { NumericInput } from "../../Components/NumericInput/NumericInput";
 import { ST } from "../../Components/T/ST";
 import { SelectFiltro } from "../../Components/ui/SelectFiltro";
+import { ImageFilePicker } from "../../Components/ui/ImageFilePicker";
 import { useTraducir } from "../../hooks/useTraducir";
 import { limpiarCorreo } from "../../lib/correo";
 import {
@@ -104,11 +105,11 @@ export function ModalEditarMiPropuesta({
   }, [propuesta, open]);
 
   useEffect(() => {
-    if (!imagenFile) return undefined;
+    if (!open || !imagenFile) return undefined;
     const objectUrl = URL.createObjectURL(imagenFile);
     setImagenPreview(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
-  }, [imagenFile]);
+  }, [imagenFile, open]);
 
   if (!open || !propuesta) return null;
 
@@ -128,8 +129,7 @@ export function ModalEditarMiPropuesta({
     setErrorGeneral("");
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
+  const handleFileChange = (file) => {
     if (!file) return;
     const err = validarImagenArchivo(file);
     if (err) {
@@ -166,16 +166,17 @@ export function ModalEditarMiPropuesta({
 
     setGuardando(true);
     try {
+      const data = new FormData();
+      for (const [campo, valor] of Object.entries(form)) {
+        if (campo !== "motivoCambio") data.append(campo, valor);
+      }
+      if (imagenFile) data.append("imagen", imagenFile);
+      if (esSolicitud) data.append("motivo", form.motivoCambio.trim());
       let resultado;
       if (esSolicitud) {
-        resultado = await solicitarEdicionMiPropuesta(
-          propuesta.id,
-          form,
-          imagenFile,
-          form.motivoCambio.trim(),
-        );
+        resultado = await solicitarEdicionMiPropuesta(propuesta.id, data);
       } else {
-        resultado = await editarMiPropuesta(propuesta.id, form, imagenFile);
+        resultado = await editarMiPropuesta(propuesta.id, data);
       }
       if (onGuardado) onGuardado(resultado);
       onClose();
@@ -213,7 +214,7 @@ export function ModalEditarMiPropuesta({
 
   return (
     <AdminModal open={open} onClose={() => !guardando && onClose()} maxWidth="max-w-2xl">
-      <AdminModalHeader>
+      <AdminModalHeader onClose={() => !guardando && onClose()}>
         <ST>
           {esSolicitud
             ? "Solicitar cambios para mi emprendimiento"
@@ -222,11 +223,11 @@ export function ModalEditarMiPropuesta({
       </AdminModalHeader>
       <AdminModalBody>
         {esSolicitud ? (
-          <div className="mb-5 rounded-2xl border border-sky-200 bg-sky-50/80 p-4 text-[length:var(--text-body)] text-sky-950">
-            <p className="font-semibold">
+          <div className="propuesta-aviso">
+            <p className="propuesta-aviso__titulo">
               <ST>Tu emprendimiento ya está aprobado y visible en el catálogo público.</ST>
             </p>
-            <p className="mt-1 text-sm text-sky-800">
+            <p className="propuesta-aviso__texto">
               <ST>
                 Los cambios que envíes aquí serán revisados por el equipo administrativo. Una vez
                 aprobados, se actualizará tu perfil publicado automáticamente.
@@ -414,27 +415,35 @@ export function ModalEditarMiPropuesta({
                   />
                 </div>
               ) : null}
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
-                <ImagePlus className="size-4" />
-                <span>
-                  <ST>{imagenPreview ? "Cambiar imagen" : "Seleccionar imagen"}</ST>
-                </span>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </label>
               {imagenFile ? (
-                <span className="text-xs text-emerald-700 font-medium">
-                  {imagenFile.name} ({(imagenFile.size / 1024).toFixed(0)} KB)
-                </span>
+                <div className="grid gap-2">
+                  <span className="text-xs text-emerald-700 font-medium">
+                    {imagenFile.name} ({(imagenFile.size / 1024).toFixed(0)} KB)
+                  </span>
+                  <button
+                    type="button"
+                    disabled={guardando}
+                    className="text-sm font-semibold text-slate-700"
+                    onClick={() => {
+                      setImagenFile(null);
+                      setImagenPreview(propuesta.imagenUrl || "");
+                      setErrores((prev) => ({ ...prev, imagen: "" }));
+                    }}
+                  >
+                    <ST>Descartar nueva imagen</ST>
+                  </button>
+                </div>
               ) : null}
             </div>
-            {errores.imagen ? (
-              <p className="text-xs text-rose-700"><ST>{errores.imagen}</ST></p>
-            ) : null}
+            <label htmlFor="edit-mi-imagen" className="sr-only"><ST>Nueva imagen representativa</ST></label>
+            <ImageFilePicker
+              id="edit-mi-imagen"
+              accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+              hint="JPG, JPEG, PNG o WebP (máx. 5 MB). Reemplazo opcional."
+              onSelect={handleFileChange}
+              disabled={guardando}
+              error={errores.imagen}
+            />
           </section>
 
           {errorGeneral ? (

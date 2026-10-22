@@ -63,7 +63,13 @@ export function HorarioCompra({
   if (variante !== 'tarjeta' && variante !== 'incrustada' && !dias.length) return null;
 
   const locale = idioma === 'en' ? enUS : es;
-  const patron = idioma === 'en' ? 'EEEE, MMM d' : "EEEE d 'de' MMMM";
+  const capital = (texto) => texto.charAt(0).toUpperCase() + texto.slice(1);
+  const partesFecha = (fecha) => {
+    const dia = capital(format(fecha, 'EEEE', { locale }));
+    const mes = format(fecha, 'MMMM', { locale });
+    if (idioma === 'en') return { cuando: dia, fecha: format(fecha, 'MMM d', { locale }) };
+    return { cuando: dia, fecha: `${format(fecha, 'd')} de ${mes}` };
+  };
 
   if (variante === 'incrustada') {
     const etiqueta = (fecha) => {
@@ -110,14 +116,17 @@ export function HorarioCompra({
           <p className="mt-2 text-slate-500">{tSinDias}</p>
         ) : (
           <ul className="mt-2 grid gap-1">
-            {dias.map((dia) => (
+            {dias.map((dia) => {
+              const fecha = partesFecha(fechaLocal(dia.fecha));
+              return (
               <li key={dia.fecha} className="flex flex-wrap items-center justify-between gap-x-3 text-slate-700">
-                <span className="capitalize">{format(fechaLocal(dia.fecha), patron, { locale })}</span>
+                <span>{`${fecha.cuando}, ${fecha.fecha}`}</span>
                 <strong className="text-slate-900">
                   {`${horaLegible(dia.horaInicio)} – ${horaLegible(dia.horaFin)}`}
                 </strong>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>
@@ -128,15 +137,21 @@ export function HorarioCompra({
     <div className="product-detail-page__pos">
       <p className="product-detail-page__pos-title">{tTitulo}</p>
       <ul>
-        {dias.map((dia) => (
+        {dias.map((dia) => {
+          const fecha = partesFecha(fechaLocal(dia.fecha));
+          return (
           <li key={dia.fecha}>
             <span className="product-detail-page__pos-name product-detail-page__horario-dia">
               <CalendarClock size={16} aria-hidden="true" />
-              {format(fechaLocal(dia.fecha), patron, { locale })}
+              <span className="product-detail-page__horario-texto">
+                <span>{fecha.cuando}</span>
+                <span>{fecha.fecha}</span>
+              </span>
             </span>
             <strong>{`${horaLegible(dia.horaInicio)} – ${horaLegible(dia.horaFin)}`}</strong>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </div>
   );

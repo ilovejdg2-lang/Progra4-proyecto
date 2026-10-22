@@ -6,6 +6,12 @@
   overflow: hidden;
 }
 
+@media (max-width: 767px) {
+  .admin-breadcrumb {
+    display: none;
+  }
+}
+
 .admin-breadcrumb__list {
   display: flex;
   min-width: 0;

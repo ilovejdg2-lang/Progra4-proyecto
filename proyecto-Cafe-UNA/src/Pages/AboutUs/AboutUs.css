@@ -21,6 +21,12 @@
   margin-bottom: 0;
 }
 
+.about-page--galeria {
+  gap: 1rem;
+  padding-top: clamp(1.15rem, 2.5vw, 1.75rem);
+  padding-bottom: clamp(2rem, 5vw, 3rem);
+}
+
 .about-page__intro {
   display: flex;
   flex-direction: column;
@@ -180,7 +186,8 @@
 
 .about-equipo__lista {
   display: grid;
-  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -188,15 +195,17 @@
 
 .about-equipo__persona {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   grid-template-areas:
-    "retrato nombre contactos"
-    "retrato rol contactos";
+    "retrato nombre"
+    "retrato rol"
+    "contactos contactos";
   align-items: center;
-  column-gap: 1.25rem;
-  row-gap: 0.35rem;
+  column-gap: 1rem;
+  row-gap: 0.3rem;
   min-width: 0;
-  padding: 1.15rem 1.35rem;
+  min-height: 100%;
+  padding: 1.15rem;
   background: #fff;
   border: 1px solid var(--equipo-linea);
   border-radius: var(--ui-radius);
@@ -237,7 +246,7 @@
   align-self: end;
   margin: 0;
   color: var(--equipo-tinta);
-  font-size: 1.15rem;
+  font-size: var(--text-subtitle);
   font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1.25;
@@ -252,15 +261,16 @@
   border-radius: 0.6rem;
   background: var(--equipo-crema);
   color: var(--about-accent);
-  font-size: 0.8rem;
+  font-size: var(--text-body);
   font-weight: 700;
   line-height: 1.35;
 }
 
 .about-equipo__persona:not(:has(.about-equipo__rol)) {
   grid-template-areas:
-    "retrato nombre contactos"
-    "retrato nombre contactos";
+    "retrato nombre"
+    "retrato nombre"
+    "contactos contactos";
 }
 
 .about-equipo__persona:not(:has(.about-equipo__rol)) .about-equipo__nombre {
@@ -269,25 +279,25 @@
 
 .about-equipo__contactos {
   grid-area: contactos;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.5rem;
+  display: grid;
+  gap: 0.45rem;
   min-width: 0;
+  margin-top: 0.55rem;
 }
 
 .about-equipo__contacto {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  max-width: 17rem;
+  max-width: none;
   min-width: 0;
-  padding: 0.4rem 0.95rem 0.4rem 0.4rem;
+  min-height: var(--control-height);
+  padding: 0 0.95rem 0 0.4rem;
   border: 1px solid var(--equipo-linea);
   border-radius: 999px;
   background: #fff;
   color: var(--equipo-tinta);
-  font-size: 0.88rem;
+  font-size: var(--text-body);
   font-weight: 600;
   text-decoration: none;
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
@@ -416,37 +426,24 @@
 }
 
 @media (max-width: 720px) {
-  .about-equipo__persona {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-      "retrato nombre"
-      "retrato rol"
-      "contactos contactos";
-    padding: 1.1rem;
+  .about-equipo__lista {
+    grid-template-columns: 1fr;
   }
 
-  .about-equipo__persona:not(:has(.about-equipo__rol)) {
-    grid-template-areas:
-      "retrato nombre"
-      "retrato nombre"
-      "contactos contactos";
+  .about-equipo__persona {
+    padding: 1.1rem;
   }
 
   .about-equipo__retrato {
     width: 3.6rem;
     height: 3.6rem;
-    font-size: 1rem;
+    font-size: var(--text-body);
   }
 
   .about-equipo__contactos {
-    flex-direction: column;
     margin-top: 0.75rem;
     padding-top: 0.85rem;
     border-top: 1px solid var(--equipo-linea);
-  }
-
-  .about-equipo__contacto {
-    max-width: none;
   }
 
   .about-equipo__cierre-enlace {

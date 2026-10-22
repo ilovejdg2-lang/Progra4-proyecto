@@ -2,16 +2,22 @@ import { Edit3, Package } from "lucide-react";
 import { imagenPrincipalProducto } from "../../../../lib/productoImagenes";
 import { indicadorStockCantidad } from "../../../../lib/productoDisponibilidad";
 import { ST } from "../../../../Components/T/ST";
+import { FotoMini } from "../../../../Components/FotoMini";
 import { t } from "../../../../lib/t";
 
 function ProductImage({ product }) {
   const foto = imagenPrincipalProducto(product);
-  return foto ? (
-    <img src={foto} alt={product.nombre} className="size-12 rounded-xl object-cover ring-1 ring-slate-200" />
-  ) : (
-    <span className="flex size-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400" aria-label={t("Producto sin imagen")}>
-      <Package className="size-5" aria-hidden="true" />
-    </span>
+  return (
+    <FotoMini
+      src={foto}
+      alt={product.nombre}
+      className="size-12 rounded-xl object-cover ring-1 ring-slate-200"
+      fallback={
+        <span className="flex size-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400" aria-label={t("Producto sin imagen")}>
+          <Package className="size-5" aria-hidden="true" />
+        </span>
+      }
+    />
   );
 }
 

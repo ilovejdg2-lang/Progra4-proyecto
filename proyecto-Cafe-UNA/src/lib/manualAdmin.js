@@ -17,7 +17,7 @@ export const SECCIONES_MANUAL = [
       "El panel administrativo es donde se cambia todo lo que se ve en la web y se gestionan inventario, ventas, solicitudes y usuarios.",
     pasos: [
       "Usá el menú de la izquierda para moverte entre módulos. En celular se abre con el botón de las tres rayitas arriba a la izquierda.",
-      "Arriba ves la ruta en la que estás (por ejemplo: Administración › Ajustes del sistema › Horarios). Tocá cualquier parte para volver.",
+      "Arriba ves la ruta en la que estás (por ejemplo: Administración › Ajustes del sistema › Catálogos). Tocá cualquier parte para volver.",
       "En la barra superior podés cambiar el idioma del panel, activar el modo oscuro y ver las alertas de stock bajo (la campanita).",
       "Solo ves los módulos para los que tu rol tiene permiso. Si te falta alguno, pedile a una persona administradora que lo active en Ajustes del sistema › Permisos.",
       "Esta ayuda siempre está en Ajustes del sistema › Ayuda, o con el botón del salvavidas en la barra superior.",
@@ -236,11 +236,10 @@ export const SECCIONES_MANUAL = [
     id: "ajustes",
     titulo: "Ajustes del sistema",
     grupo: "Administración",
-    ruta: "/admin/ajustes/horarios",
+    ruta: "/admin/ajustes/catalogos",
     visible: alguno("administrar_roles_permisos"),
-    resumen: "Configuración general: días de compra, permisos de cada rol y catálogos (listas) que usan los formularios.",
+    resumen: "Configuración general: permisos de cada rol y catálogos (listas) que usan los formularios.",
     pasos: [
-      "Horarios: marcá en el calendario los días cerrados, feriados u horarios especiales para llegar a comprar productos.",
       "Permisos: elegí qué puede hacer cada rol. Filtrá por módulo, activá o quitá permisos y tocá Guardar.",
       "Catálogos: editá las presentaciones (cantidad y unidad: g, kg, ml o L) y los métodos de pago. En la pestaña Íconos ves todos los íconos disponibles con su nombre.",
     ],

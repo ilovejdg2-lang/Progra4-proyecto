@@ -265,9 +265,90 @@ html.admin-theme-dark body.admin-route-active .dropdown--notifications-portal {
 }
 
 html.admin-theme-dark body.admin-route-active .notifications-header h2,
-html.admin-theme-dark body.admin-route-active .notification-item strong,
 html.admin-theme-dark body.admin-route-active .dropdown__empty {
   color: #f1f5f9;
+}
+
+html.admin-theme-dark body.admin-route-active .notifications-header,
+html.admin-theme-dark body.admin-route-active .notifications-section + .notifications-section {
+  border-color: #2a3340;
+}
+
+html.admin-theme-dark body.admin-route-active .notifications-section-label {
+  color: #94a3b8;
+}
+
+html.admin-theme-dark body.admin-route-active .notification-item,
+html.admin-theme-dark body.admin-route-active .notification-item--agotado {
+  background: #12161c !important;
+  border-color: #2a3340 !important;
+  color: #e2e8f0;
+  box-shadow: none;
+}
+
+html.admin-theme-dark body.admin-route-active .dropdown--notifications .notification-item:not(.notification-item--readonly):hover,
+html.admin-theme-dark body.admin-route-active .dropdown--notifications .notification-item:not(.notification-item--readonly):focus-visible,
+html.admin-theme-dark body.admin-route-active .dropdown--notifications .notification-item:not(.notification-item--readonly):active,
+html.admin-theme-dark body.admin-route-active .notification-item:not(.notification-item--readonly):hover,
+html.admin-theme-dark body.admin-route-active .notification-item:not(.notification-item--readonly):focus-visible,
+html.admin-theme-dark body.admin-route-active .notification-item:not(.notification-item--readonly):active {
+  background: #1c2430 !important;
+  border-color: #3a4658 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .notification-item strong,
+html.admin-theme-dark body.admin-route-active .notification-item__main strong {
+  color: #f1f5f9 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .notification-item__main span {
+  color: #cbd5e1 !important;
+}
+
+html.admin-theme-dark body.admin-route-active .notification-item__main small,
+html.admin-theme-dark body.admin-route-active .notification-item__stock {
+  color: #93c5fd !important;
+}
+
+html.admin-theme-dark body.admin-route-active .notification-item__icon {
+  background: #243040;
+  color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .notification-item--bajo .notification-item__icon,
+html.admin-theme-dark body.admin-route-active .notification-item--agotado .notification-item__icon {
+  background: #3a2e22;
+  color: #e7c9a8;
+}
+
+html.admin-theme-dark body.admin-route-active .notification-item--voluntariado .notification-item__icon {
+  background: #1e2e24;
+  color: #b7d4b8;
+}
+
+html.admin-theme-dark body.admin-route-active .notification-item--donacion .notification-item__icon {
+  background: #3a2a1c;
+  color: #f0c9a0;
+}
+
+html.admin-theme-dark body.admin-route-active .notification-item--visita .notification-item__icon {
+  background: #163044;
+  color: #7dd3fc;
+}
+
+html.admin-theme-dark body.admin-route-active .notification-item--venta .notification-item__icon {
+  background: #243040;
+  color: #cbd5e1;
+}
+
+html.admin-theme-dark body.admin-route-active .propuesta-aviso {
+  background: #0c4a6e !important;
+  border-color: #38bdf8 !important;
+  color: #f0f9ff !important;
+}
+
+html.admin-theme-dark body.admin-route-active .propuesta-aviso__texto {
+  color: #e0f2fe !important;
 }
 
 html.admin-theme-dark .lang-switch--on-light {

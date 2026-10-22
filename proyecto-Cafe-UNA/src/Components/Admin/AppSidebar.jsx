@@ -1,3 +1,4 @@
+import { useProfileImage } from "../../hooks/useProfileImage";
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -148,27 +149,20 @@ export function AppSidebar() {
     tienePermiso(roles, "administrar_solicitudes_donaciones");
   const puedeDonaciones =
     puedeDonacionesNecesidades || puedeDonacionesSolicitudes;
-  const esAdminUsuario =
-    roles.some((r) =>
-      ["admin", "superadmin", "administrador", "superadministrador"].includes(
-        String(r || "").toLowerCase(),
-      ),
-    ) || String(user?.role || "").toLowerCase() === "admin";
   const puedeDocumentacionDocumentos =
-    esAdminUsuario ||
     tienePermiso(roles, "ver_documentacion_privada") ||
     tienePermiso(roles, "crear_documentacion") ||
     tienePermiso(roles, "actualizar_documentacion");
-  const puedeDocumentacionSolicitudes =
-    esAdminUsuario ||
-    tienePermiso(roles, "administrar_solicitudes_documentacion");
-  const puedeDocumentacionAdministrativa = esAdminUsuario;
+  const puedeDocumentacionSolicitudes = tienePermiso(
+    roles,
+    "administrar_solicitudes_documentacion",
+  );
+  const puedeDocumentacionAdministrativa = puedeDocumentacionDocumentos;
   const puedeDocumentacion =
     puedeDocumentacionDocumentos ||
     puedeDocumentacionSolicitudes ||
     puedeDocumentacionAdministrativa;
   const puedeFacturas =
-    esAdminUsuario ||
     tienePermiso(roles, "ver_todas_las_facturas") ||
     tienePermiso(roles, "ver_ventas") ||
     tienePermiso(roles, "descargar_facturas");
@@ -216,7 +210,6 @@ export function AppSidebar() {
     { to: "/admin/documentacion/administrativa", etiqueta: "Documentación Administrativa", grupo: "Documentación", icono: ShieldCheck, ver: puedeDocumentacionAdministrativa },
     { to: "/admin/facturas", etiqueta: "Facturación", grupo: "Facturas", icono: Receipt, ver: puedeFacturas },
     { to: "/admin/usuarios", etiqueta: "Administrar usuarios", grupo: "Usuarios", icono: Users, ver: puedeUsuarios },
-    { to: "/admin/ajustes/horarios", etiqueta: "Horarios", grupo: "Ajustes del sistema", icono: CalendarClock, ver: puedeAjustes },
     { to: "/admin/ajustes/permisos", etiqueta: "Permisos", grupo: "Ajustes del sistema", icono: Shield, ver: puedeAjustes },
     { to: "/admin/ajustes/catalogos", etiqueta: "Catálogos", grupo: "Ajustes del sistema", icono: ListChecks, ver: puedeAjustes },
     { to: "/admin/ajustes/manual", etiqueta: "Ayuda", grupo: "Ajustes del sistema", extra: "manual guía help guide", icono: LifeBuoy, ver: true },
@@ -236,9 +229,9 @@ export function AppSidebar() {
       })
     : [];
 
-  const avatarUrl = user?.fotoPerfilUrl?.trim()
+  const avatarUrl = useProfileImage(user?.fotoPerfilUrl?.trim()
     ? normalizeImageUrl(user.fotoPerfilUrl.trim(), { width: 96 })
-    : "";
+    : "");
   const [avatarRoto, setAvatarRoto] = useState(false);
   const inicialAvatar = inicialDeNombre(displayName);
 
@@ -1029,14 +1022,6 @@ export function AppSidebar() {
                   <SidebarMenuSub className="mt-1">
                     {puedeAjustes ? (
                     <>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link to="/admin/ajustes/horarios" activeProps={linkActivo} onClick={closeMobileSidebar}>
-                          <CalendarClock />
-                          <span><ST>Horarios</ST></span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild>
                         <Link to="/admin/ajustes/permisos" activeProps={linkActivo} onClick={closeMobileSidebar}>
