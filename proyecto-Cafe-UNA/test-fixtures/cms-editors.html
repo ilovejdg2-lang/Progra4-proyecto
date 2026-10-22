@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src ws://127.0.0.1:* ws://localhost:*; img-src data: blob:; font-src 'self' data:" />
+    <title>CMS editor local fixtures</title>
+  </head>
+  <body>
+    <main id="root"></main>
+    <script type="module">
+      import React, { useState } from "react";
+      import { createRoot } from "react-dom/client";
+      import axios from "axios";
+      import { ModalTexto, ModalFoto } from "/src/Pages/Admin/InformacionSobreNosotros/InformacionSobreNosotros.jsx";
+      import { ModalMiembro } from "/src/Pages/Admin/Equipo/EquipoEditor.jsx";
+      import "/src/index.css";
+
+      axios.defaults.adapter = async (config) => {
+        const url = new URL(config.url, location.origin);
+        if ((config.method || "get").toLowerCase() === "get" && url.pathname === "/api/categorias" && url.searchParams.get("tipo") === "galeria" && url.searchParams.get("padre") === "") {
+          return { data: [], status: 200, statusText: "OK", headers: {}, config };
+        }
+        throw new Error("Network requests are disabled in this local fixture.");
+      };
+      window.fetch = async () => { throw new Error("Fetch is disabled in this local fixture."); };
+      localStorage.setItem("cafe-una-idioma", "es");
+      const pixel = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+      const about = { title: "Historia", description: "Historia del café", eyebrow: "Café UNA", image: pixel };
+      const photo = { id: 9, title: "Cultivo", image: pixel, categoria: "Finca" };
+      const person = { id: 7, nombre: "Ana", cargo: "Coordinación", correo: "", telefono: "", foto: pixel };
+      function Fixture() {
+        const [modal, setModal] = useState(null);
+        const [saved, setSaved] = useState("");
+        const close = () => setModal(null);
+        const save = (...args) => { setSaved(JSON.stringify(args)); close(); };
+        return React.createElement("section", { className: "grid gap-4 p-4" },
+          React.createElement("h1", null, "Editores CMS: prueba local sin API"),
+          ...["About", "Galería", "Equipo"].map((name) => React.createElement("button", { key: name, onClick: () => setModal(name) }, `Abrir ${name}`)),
+          React.createElement("output", { "aria-live": "polite" }, saved || "Sin cambios guardados"),
+          modal === "About" && React.createElement(ModalTexto, { tipo: "historia", data: about, onCerrar: close, onGuardar: save, guardando: false }),
+          modal === "Galería" && React.createElement(ModalFoto, { inicial: photo, onCerrar: close, onGuardar: save }),
+          modal === "Equipo" && React.createElement(ModalMiembro, { inicial: person, guardando: false, onCerrar: close, onGuardar: save }),
+        );
+      }
+      createRoot(document.getElementById("root")).render(React.createElement(Fixture));
+    </script>
+  </body>
+</html>
