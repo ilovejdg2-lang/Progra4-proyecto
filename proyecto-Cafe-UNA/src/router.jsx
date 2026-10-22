@@ -693,4 +693,6 @@ const routeTree= rootRoute.addChildren([
 export const router = createRouter({
     routeTree,
     defaultNotFoundComponent: NotFoundRouteComponent,
+    scrollRestoration: true,
+    scrollRestorationBehavior: 'instant',
 })

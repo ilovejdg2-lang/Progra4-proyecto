@@ -47,7 +47,7 @@ import {
   obtenerEstadisticasDocumentosAdmin,
 } from "../../../services/documentosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
-import { rolesDeUsuario } from "../../../lib/permisos";
+import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
 import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { VisualizarDocumentoModal } from "../../Repositorio/VisualizarDocumentoModal";
@@ -95,12 +95,15 @@ function formatearTamano(bytes = 0) {
 export default function DocumentacionAdministrativa() {
   const actor = getActiveSessionUser();
   const roles = rolesDeUsuario(actor);
-  const esAdmin =
-    roles.some((r) =>
-      ["admin", "superadmin", "administrador", "superadministrador"].includes(
-        String(r || "").toLowerCase(),
-      ),
-    ) || String(actor?.role || "").toLowerCase() === "admin";
+  const puedeCrear = tienePermiso(roles, "crear_documentacion");
+  const puedeVer =
+    tienePermiso(roles, "ver_documentacion_privada") ||
+    tienePermiso(roles, "crear_documentacion") ||
+    tienePermiso(roles, "actualizar_documentacion");
+  const puedeEditar = tienePermiso(roles, "actualizar_documentacion");
+  const puedeCambiarEstado =
+    puedeEditar || tienePermiso(roles, "inactivar_documentacion");
+  const puedeEliminar = tienePermiso(roles, "inactivar_documentacion");
 
   // Pestaña activa: 'documentos' | 'categorias'
   const [tabActivo, setTabActivo] = useState("documentos");
@@ -425,7 +428,7 @@ export default function DocumentacionAdministrativa() {
     );
   }
 
-  if (!esAdmin) {
+  if (!puedeVer) {
     return (
       <AdminLayout>
         <div className="admin-docs-container">
@@ -475,6 +478,7 @@ export default function DocumentacionAdministrativa() {
               <Download size={16} />
               <span><ST>Exportar Catálogo</ST></span>
             </button>
+            {puedeCrear ? (
             <button
               type="button"
               className="btn-primario-admin"
@@ -483,6 +487,7 @@ export default function DocumentacionAdministrativa() {
               <Plus size={16} />
               <span><ST>Nuevo Documento Privado</ST></span>
             </button>
+            ) : null}
           </div>
         </div>
 
@@ -643,6 +648,7 @@ export default function DocumentacionAdministrativa() {
                 <FileLock2 size={48} className="text-slate-300" />
                 <h4>No se encontraron documentos administrativos</h4>
                 <p>Pruebe con otros filtros o registre un nuevo documento privado.</p>
+                {puedeCrear ? (
                 <button
                   type="button"
                   className="btn-primario-admin mt-3"
@@ -651,6 +657,7 @@ export default function DocumentacionAdministrativa() {
                   <Plus size={16} />
                   <span>Nuevo Documento Privado</span>
                 </button>
+                ) : null}
               </div>
             ) : (
               <div className="admin-docs-table-wrapper">
@@ -738,22 +745,27 @@ export default function DocumentacionAdministrativa() {
                               >
                                 <Download size={15} />
                               </button>
-                              <button
-                                type="button"
-                                className="action-btn action-btn--edit"
-                                title="Editar documento"
-                                onClick={() => abrirModalEditar(doc)}
-                              >
-                                <Pencil size={15} />
-                              </button>
-                              <button
-                                type="button"
-                                className={`action-btn ${doc.activo ? "action-btn--toggle-on" : "action-btn--toggle-off"}`}
-                                title={doc.activo ? "Inactivar documento" : "Activar documento"}
-                                onClick={() => handleToggleEstado(doc)}
-                              >
-                                <Power size={15} />
-                              </button>
+                              {puedeEditar ? (
+                                <button
+                                  type="button"
+                                  className="action-btn action-btn--edit"
+                                  title="Editar documento"
+                                  onClick={() => abrirModalEditar(doc)}
+                                >
+                                  <Pencil size={15} />
+                                </button>
+                              ) : null}
+                              {puedeCambiarEstado ? (
+                                <button
+                                  type="button"
+                                  className={`action-btn ${doc.activo ? "action-btn--toggle-on" : "action-btn--toggle-off"}`}
+                                  title={doc.activo ? "Inactivar documento" : "Activar documento"}
+                                  onClick={() => handleToggleEstado(doc)}
+                                >
+                                  <Power size={15} />
+                                </button>
+                              ) : null}
+                              {puedeEliminar ? (
                               <button
                                 type="button"
                                 className="action-btn action-btn--delete"
@@ -762,6 +774,7 @@ export default function DocumentacionAdministrativa() {
                               >
                                 <Trash2 size={15} />
                               </button>
+                              ) : null}
                             </div>
                           </td>
                         </tr>
@@ -786,6 +799,7 @@ export default function DocumentacionAdministrativa() {
                   Defina las categorías raíz y subcategorías para organizar los documentos de uso interno y confidencial.
                 </p>
               </div>
+              {puedeCrear ? (
               <button
                 type="button"
                 className="btn-primario-admin"
@@ -799,6 +813,7 @@ export default function DocumentacionAdministrativa() {
                 <FolderPlus size={16} />
                 <span>Nueva Categoría</span>
               </button>
+              ) : null}
             </div>
 
             <div className="admin-docs-table-wrapper">
@@ -841,6 +856,7 @@ export default function DocumentacionAdministrativa() {
                         </td>
                         <td>
                           <div className="admin-actions-cell">
+                            {puedeCambiarEstado ? (
                             <button
                               type="button"
                               className="action-btn action-btn--delete"
@@ -849,6 +865,7 @@ export default function DocumentacionAdministrativa() {
                             >
                               <Trash2 size={15} />
                             </button>
+                            ) : null}
                           </div>
                         </td>
                       </tr>

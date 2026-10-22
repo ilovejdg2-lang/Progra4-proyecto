@@ -503,7 +503,7 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
 
       {detalle ? (
         <AdminModal open onClose={() => { setDetalle(null); setEditando(false); }} maxWidth="max-w-xl">
-          <AdminModalHeader>
+          <AdminModalHeader onClose={() => { setDetalle(null); setEditando(false); }}>
             <ST>{editando ? "Editar propuesta antes de aprobar" : "Detalle de la propuesta"}</ST>
           </AdminModalHeader>
           <AdminModalBody>

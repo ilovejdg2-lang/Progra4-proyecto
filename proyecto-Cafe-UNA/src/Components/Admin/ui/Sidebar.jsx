@@ -161,7 +161,7 @@ export function Sidebar({
             "absolute inset-0 z-0 touch-none border-0 bg-slate-950/55 transition-opacity duration-300 ease-out",
             openMobile ? "opacity-100" : "opacity-0",
           )}
-          aria-label="Cerrar sidebar"
+          aria-label="Cerrar menú"
           tabIndex={openMobile ? 0 : -1}
           onClick={() => setOpenMobile(false)}
           onPointerDown={(event) => event.stopPropagation()}
@@ -186,7 +186,7 @@ export function Sidebar({
             onClick={() => setOpenMobile(false)}
           >
             <X className="size-4" />
-            <span className="sr-only">Cerrar sidebar</span>
+            <span className="sr-only">Cerrar menú</span>
           </button>
           {children}
         </aside>
@@ -198,7 +198,18 @@ export function Sidebar({
 export { useSidebar };
 
 export function SidebarTrigger({ className, onClick, ...props }) {
-  const { toggleSidebar, open } = useSidebar();
+  const { toggleSidebar, open, openMobile } = useSidebar();
+  const [esMobile, setEsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const sync = () => setEsMobile(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  const abierto = esMobile ? openMobile : open;
 
   return (
     <button
@@ -207,9 +218,9 @@ export function SidebarTrigger({ className, onClick, ...props }) {
         "inline-flex size-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-100 hover:text-slate-950 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white",
         className,
       )}
-      aria-expanded={open}
-      aria-label={open ? "Cerrar sidebar" : "Abrir sidebar"}
-      title={open ? "Cerrar sidebar" : "Abrir sidebar"}
+      aria-expanded={abierto}
+      aria-label={abierto ? "Cerrar menú" : "Abrir menú"}
+      title={abierto ? "Cerrar menú" : "Abrir menú"}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
@@ -217,7 +228,7 @@ export function SidebarTrigger({ className, onClick, ...props }) {
       {...props}
     >
       <PanelLeft className="size-4" />
-      <span className="sr-only">Abrir/cerrar sidebar</span>
+      <span className="sr-only">Abrir o cerrar el menú</span>
     </button>
   );
 }

@@ -214,7 +214,7 @@ export function ModalEditarMiPropuesta({
 
   return (
     <AdminModal open={open} onClose={() => !guardando && onClose()} maxWidth="max-w-2xl">
-      <AdminModalHeader>
+      <AdminModalHeader onClose={() => !guardando && onClose()}>
         <ST>
           {esSolicitud
             ? "Solicitar cambios para mi emprendimiento"
@@ -223,11 +223,11 @@ export function ModalEditarMiPropuesta({
       </AdminModalHeader>
       <AdminModalBody>
         {esSolicitud ? (
-          <div className="mb-5 rounded-2xl border border-sky-200 bg-sky-50/80 p-4 text-[length:var(--text-body)] text-sky-950">
-            <p className="font-semibold">
+          <div className="propuesta-aviso">
+            <p className="propuesta-aviso__titulo">
               <ST>Tu emprendimiento ya está aprobado y visible en el catálogo público.</ST>
             </p>
-            <p className="mt-1 text-sm text-sky-800">
+            <p className="propuesta-aviso__texto">
               <ST>
                 Los cambios que envíes aquí serán revisados por el equipo administrativo. Una vez
                 aprobados, se actualizará tu perfil publicado automáticamente.

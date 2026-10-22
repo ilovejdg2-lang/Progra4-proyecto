@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 
 import { useAdminModalLock } from "../../../hooks/useBodyScrollLock";
 import { useTraducir } from "../../../hooks/useTraducir";
@@ -68,7 +69,8 @@ export function AdminModal({
   );
 }
 
-export function AdminModalHeader({ children, className }) {
+export function AdminModalHeader({ children, className, onClose }) {
+  const tCerrar = useTraducir("Cerrar");
   return (
     <header
       className={cn(
@@ -76,7 +78,17 @@ export function AdminModalHeader({ children, className }) {
         className,
       )}
     >
-      {children}
+      <div className="min-w-0 flex-1 text-[length:var(--text-subtitle)] font-bold">{children}</div>
+      {onClose ? (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={tCerrar}
+          className="inline-flex size-[var(--control-height)] shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100"
+        >
+          <X size={20} strokeWidth={2.4} aria-hidden="true" />
+        </button>
+      ) : null}
     </header>
   );
 }

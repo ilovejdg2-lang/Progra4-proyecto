@@ -372,7 +372,7 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
 
       {detalle ? (
         <AdminModal open onClose={() => setDetalle(null)} maxWidth="max-w-2xl">
-          <AdminModalHeader>
+          <AdminModalHeader onClose={() => setDetalle(null)}>
             <ST>Detalle de la propuesta</ST>
           </AdminModalHeader>
           <AdminModalBody>
@@ -401,25 +401,25 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
             </header>
 
             {detalle.solicitudEdicion ? (
-              <div className="mb-6 space-y-2 rounded-2xl border border-sky-200 bg-sky-50/70 p-4 text-sky-950">
+              <div className="propuesta-aviso">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 font-semibold">
-                    <AlertCircle className="size-4 text-sky-700" />
+                  <div className="flex items-center gap-2 propuesta-aviso__titulo">
+                    <AlertCircle className="size-4" aria-hidden="true" />
                     <span><ST>Tenés una solicitud de edición en revisión</ST></span>
                   </div>
                   <button
                     type="button"
                     disabled={accionEnCurso === `cancelar-edicion-${detalle.id}`}
                     onClick={() => handleCancelarEdicion(detalle.id)}
-                    className="text-xs font-semibold text-rose-700 underline transition hover:text-rose-900"
+                    className="text-[length:var(--text-body)] font-semibold text-rose-700 underline transition hover:text-rose-900"
                   >
                     <ST>Cancelar solicitud</ST>
                   </button>
                 </div>
-                <p className="text-xs text-sky-800">
+                <p className="propuesta-aviso__texto">
                   <ST>Enviada el</ST> {formatearFechaPropuesta(detalle.solicitudEdicion.fecha)}
                 </p>
-                <p className="text-xs text-sky-900">
+                <p className="propuesta-aviso__texto">
                   <span className="font-semibold"><ST>Motivo del cambio:</ST></span> {detalle.solicitudEdicion.motivo}
                 </p>
               </div>

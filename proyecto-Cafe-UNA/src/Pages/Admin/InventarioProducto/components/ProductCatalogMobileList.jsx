@@ -3,6 +3,7 @@ import { destacadoDeshabilitado, etiquetaEstadoProducto, formatearPrecio } from 
 import { etiquetaCategoriaProducto } from "../../../../lib/categorias";
 import { imagenPrincipalProducto } from "../../../../lib/productoImagenes";
 import { ST } from "../../../../Components/T/ST";
+import { FotoMini } from "../../../../Components/FotoMini";
 
 export function ProductCatalogMobileList({
   productos,
@@ -22,17 +23,16 @@ export function ProductCatalogMobileList({
         return (
           <article key={producto.id} className="space-y-3 px-4 py-4">
             <div className="flex items-start gap-3">
-              {foto ? (
-                <img
-                  src={foto}
-                  alt={producto.nombre}
-                  className="h-16 w-16 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
-                />
-              ) : (
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-xs text-slate-500">
-                  <ST>Sin foto</ST>
-                </div>
-              )}
+              <FotoMini
+                src={foto}
+                alt={producto.nombre}
+                className="h-16 w-16 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
+                fallback={
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-[length:var(--text-body)] text-slate-500">
+                    <ST>Sin foto</ST>
+                  </div>
+                }
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-semibold text-slate-900"><ST>{producto.nombre}</ST></h3>

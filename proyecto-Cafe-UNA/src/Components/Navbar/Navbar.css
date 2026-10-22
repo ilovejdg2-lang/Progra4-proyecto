@@ -1784,6 +1784,33 @@
     gap: 0.15rem;
   }
 
+  .navbar__actions .lang-switch {
+    display: none;
+  }
+
+  .navbar__brand {
+    flex: 0 1 auto;
+    max-width: 46vw;
+    overflow: visible;
+  }
+
+  .navbar__brand-logos {
+    width: 46vw;
+    max-width: 168px;
+    height: 40px;
+    overflow: visible;
+  }
+
+  .navbar__brand-logos .navbar__brand-logo {
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none;
+    max-height: none;
+    object-fit: contain;
+    object-position: left center;
+  }
+
   .navbar__menu-toggle {
     display: inline-flex;
     margin-left: 0.15rem;
@@ -1795,21 +1822,6 @@
 
   .navbar__mobile-drawer {
     display: block;
-  }
-
-  .navbar__brand-logos {
-    height: 40px;
-    width: min(180px, 48vw);
-    max-width: 180px;
-  }
-
-  .navbar__brand-logo {
-    height: 40px !important;
-    max-width: 180px;
-  }
-
-  .navbar__brand-logos .navbar__brand-logo {
-    max-height: 40px;
   }
 
   .navbar__brand-text {
