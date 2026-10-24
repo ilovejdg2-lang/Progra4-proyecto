@@ -83,7 +83,7 @@ export function CheckoutPuntoDetalle({ punto }) {
       ) : null}
       <HorarioCompra
         ubicacionId={punto.id}
-        titulo="Horarios disponibles para retiro"
+        titulo="Fechas sin retiro de pedidos"
         variante="incrustada"
       />
     </section>

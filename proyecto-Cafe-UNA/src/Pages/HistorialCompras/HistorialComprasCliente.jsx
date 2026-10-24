@@ -543,6 +543,11 @@ export function HistorialComprasContent({ variant = "standalone" }) {
                     <p className="mt-1 text-[var(--text-body)] text-slate-600">
                       {compra.cantidadProductos} <ST>productos</ST>
                     </p>
+                    {compra.vendedorNombre || compra.vendedorCorreo ? (
+                      <p className="mt-1 break-words text-[var(--text-body)] text-slate-600">
+                        <ST>Vendedor</ST>: {compra.vendedorNombre || compra.vendedorCorreo}
+                      </p>
+                    ) : null}
                     <p className="mt-1">
                       <EstadoTexto estado={compra.estado} />
                     </p>
@@ -603,7 +608,7 @@ export function HistorialComprasContent({ variant = "standalone" }) {
         {detalle ? (
           <AdminModal open onClose={() => setDetalle(null)} maxWidth="max-w-xl" labelledBy="compra-cliente-detalle">
             <AdminModalHeader>
-              <h2 id="compra-cliente-detalle" className="text-[var(--text-subtitle)] font-semibold">
+              <h2 id="compra-cliente-detalle" className="break-all text-[var(--text-subtitle)] font-semibold">
                 <ST>Compra</ST> {detalle.numero}
               </h2>
               <button
@@ -616,23 +621,35 @@ export function HistorialComprasContent({ variant = "standalone" }) {
               </button>
             </AdminModalHeader>
             <AdminModalBody>
-              <dl className="grid gap-2 text-[var(--text-body)]">
-                <div className="flex justify-between border-b border-slate-100 py-2">
-                  <dt className="text-slate-500"><ST>Fecha</ST></dt>
-                  <dd>{formatFecha(detalle.fecha) || tSinFecha}</dd>
+              <dl className="grid text-[var(--text-body)]">
+                <div className="flex flex-col gap-0.5 border-b border-slate-100 py-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                  <dt className="shrink-0 text-slate-500"><ST>Fecha</ST></dt>
+                  <dd className="min-w-0 break-words sm:text-right">{formatFecha(detalle.fecha) || tSinFecha}</dd>
                 </div>
-                {detalle.ubicacionNombre ? (
-                  <div className="flex justify-between border-b border-slate-100 py-2">
-                    <dt className="text-slate-500"><ST>Punto de venta</ST></dt>
-                    <dd>{detalle.ubicacionNombre}</dd>
+                {detalle.vendedorNombre || detalle.vendedorCorreo ? (
+                  <div className="flex flex-col gap-0.5 border-b border-slate-100 py-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                    <dt className="shrink-0 text-slate-500"><ST>Vendedor</ST></dt>
+                    <dd className="min-w-0 break-words sm:text-right">{detalle.vendedorNombre || detalle.vendedorCorreo}</dd>
                   </div>
                 ) : null}
-                <div className="flex justify-between border-b border-slate-100 py-2">
-                  <dt className="text-slate-500"><ST>Método</ST></dt>
-                  <dd>{detalle.metodoPago}</dd>
+                {detalle.ubicacionNombre ? (
+                  <div className="flex flex-col gap-0.5 border-b border-slate-100 py-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                    <dt className="shrink-0 text-slate-500"><ST>Punto de venta</ST></dt>
+                    <dd className="min-w-0 break-words sm:text-right">{detalle.ubicacionNombre}</dd>
+                  </div>
+                ) : null}
+                {detalle.ubicacionDireccion ? (
+                  <div className="flex flex-col gap-0.5 border-b border-slate-100 py-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                    <dt className="shrink-0 text-slate-500"><ST>Dirección de retiro</ST></dt>
+                    <dd className="min-w-0 break-words sm:text-right">{detalle.ubicacionDireccion}</dd>
+                  </div>
+                ) : null}
+                <div className="flex flex-col gap-0.5 border-b border-slate-100 py-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                  <dt className="shrink-0 text-slate-500"><ST>Método</ST></dt>
+                  <dd className="min-w-0 break-words sm:text-right">{detalle.metodoPago}</dd>
                 </div>
-                <div className="flex items-center justify-between border-b border-slate-100 py-2">
-                  <dt className="text-slate-500"><ST>Estado</ST></dt>
+                <div className="flex flex-col gap-0.5 border-b border-slate-100 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                  <dt className="shrink-0 text-slate-500"><ST>Estado</ST></dt>
                   <dd>
                     <EstadoTexto estado={detalle.estado} />
                   </dd>
@@ -646,16 +663,16 @@ export function HistorialComprasContent({ variant = "standalone" }) {
               {detalle.estado === "Aceptado" && detalle.ubicacionId ? (
                 <HorarioCompra
                   ubicacionId={detalle.ubicacionId}
-                  titulo="Días y horario para retirar tu pedido"
+                  titulo="Fechas sin retiro de pedidos"
                   variante="tarjeta"
                 />
               ) : null}
               <ul className="mt-4 text-[var(--text-body)]">
                 {(detalle.items || []).map((item, index) => (
                   <li key={`${item.nombre}-${index}`} className="border-b border-slate-100 py-2">
-                    <div className="flex justify-between gap-3">
-                      <span className="font-medium">{item.nombre}</span>
-                      <span className="font-semibold">{formatCRC(item.subtotal)}</span>
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="min-w-0 break-words font-medium">{item.nombre}</span>
+                      <span className="shrink-0 font-semibold">{formatCRC(item.subtotal)}</span>
                     </div>
                     <p className="mt-1 text-slate-500">
                       {item.cantidad} × {formatCRC(item.precioUnitario)}

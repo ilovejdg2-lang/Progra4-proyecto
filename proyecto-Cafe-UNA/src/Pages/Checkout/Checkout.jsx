@@ -366,6 +366,7 @@ const Checkout = () => {
         ubicacionId: compra?.ubicacionId || punto.id,
         ubicacionNombre: compra?.ubicacionNombre || punto.name,
         ubicacionCodigo: compra?.ubicacionCodigo || punto.code,
+        ubicacionDireccion: compra?.ubicacionDireccion || punto.direccion || "",
         subtotal: Number.isFinite(Number(compra?.subtotal)) ? Number(compra.subtotal) : subtotalSinIva,
         impuestos: Number.isFinite(Number(compra?.impuestos)) ? Number(compra.impuestos) : ivaTotal,
         total: Number.isFinite(Number(compra?.total)) ? Number(compra.total) : totalConIva,

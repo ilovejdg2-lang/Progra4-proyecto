@@ -29,7 +29,7 @@ function normalizarPunto(raw) {
   };
 }
 
-export function AsignacionesVendedor({ usuarioId }) {
+export function AsignacionesVendedor({ usuarioId, onChange }) {
   const [asignaciones, setAsignaciones] = useState([]);
   const [elegibles, setElegibles] = useState([]);
   const [seleccion, setSeleccion] = useState([]);
@@ -41,7 +41,9 @@ export function AsignacionesVendedor({ usuarioId }) {
       obtenerAsignacionesPunto(usuarioId),
       obtenerPuntosAsignables(),
     ]);
-    setAsignaciones((Array.isArray(actuales) ? actuales : []).map(normalizarAsignacion));
+    const lista = (Array.isArray(actuales) ? actuales : []).map(normalizarAsignacion);
+    setAsignaciones(lista);
+    onChange?.(lista);
     setElegibles((Array.isArray(puntos) ? puntos : []).map(normalizarPunto));
   };
 
@@ -84,12 +86,12 @@ export function AsignacionesVendedor({ usuarioId }) {
       </p>
       {error ? <p className="mt-2 text-xs text-red-700">{error}</p> : null}
       <ul className="mt-2 space-y-1.5">
-        {error ? null : asignaciones.length === 0 ? (
-          <li className="text-xs text-slate-500">
-            <ST>Este vendedor no tiene puntos asignados.</ST>
+        {error || activos.size > 0 ? null : (
+          <li className="break-words text-xs leading-snug text-amber-800">
+            <ST>Este vendedor no tiene un punto de venta activo. Asignale uno para que pueda registrar ventas y atender las compras en línea de ese punto.</ST>
           </li>
-        ) : (
-          asignaciones.map((item) => (
+        )}
+        {error ? null : asignaciones.map((item) => (
             <li
               key={item.id || item.ubicacionId}
               className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 sm:flex-row sm:items-center sm:justify-between"
@@ -139,8 +141,7 @@ export function AsignacionesVendedor({ usuarioId }) {
                 ) : null}
               </div>
             </li>
-          ))
-        )}
+        ))}
       </ul>
       {disponibles.length > 0 ? (
         <div className="mt-2">

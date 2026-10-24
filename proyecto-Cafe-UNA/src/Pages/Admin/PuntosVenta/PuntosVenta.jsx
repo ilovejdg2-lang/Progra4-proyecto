@@ -196,14 +196,14 @@ const AdminPuntosVenta = () => {
   ) : (
     <section className="space-y-5">
       {puedeEditar ? (
-        <div className="flex justify-end">
+        <div className="flex sm:justify-end">
           <button
             type="button"
             onClick={() => {
               setLocationError("");
               setLocationEditor({ mode: "create" });
             }}
-            className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 sm:w-auto"
           >
             <Plus className="size-4" aria-hidden="true" />
             <ST>Agregar punto de venta</ST>
@@ -234,11 +234,11 @@ const AdminPuntosVenta = () => {
         />
       )}
       {selectedLocation ? (
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <div>
+        <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex min-w-0 flex-col gap-3 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
+            <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500"><ST>Inventario por ubicación</ST></p>
-              <h2 className="mt-1 text-lg font-semibold text-slate-950"><ST>{selectedLocation.name}</ST></h2>
+              <h2 className="mt-1 break-words text-lg font-semibold text-slate-950"><ST>{selectedLocation.name}</ST></h2>
               <p className="mt-1 text-sm text-slate-500">
                 {selectedIsActive
                   ? <ST>Stock independiente de Bodega Central.</ST>
@@ -246,7 +246,7 @@ const AdminPuntosVenta = () => {
               </p>
             </div>
             {selectedIsActive && stockState.error ? (
-              <button type="button" onClick={stockState.retry} className="inline-flex min-h-10 items-center gap-2 self-start rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+              <button type="button" onClick={stockState.retry} className="inline-flex min-h-11 w-full items-center justify-center gap-2 self-start rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 sm:w-auto">
                 <RefreshCw className="size-4" aria-hidden="true" />
                 <ST>Reintentar stock</ST>
               </button>
@@ -270,6 +270,7 @@ const AdminPuntosVenta = () => {
               <AdminListaToolbar
                 busqueda={filters.busqueda}
                 onBusquedaChange={filters.setBusqueda}
+                filtrosContenedorClassName="grid w-full min-w-0 grid-cols-1 gap-3 min-[480px]:grid-cols-2"
                 placeholder="Buscar por nombre, descripción, categoría, estado o peso..."
                 total={filters.total}
                 visibles={filters.visibles}
@@ -317,10 +318,10 @@ const AdminPuntosVenta = () => {
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage} allowed={puedeVer}>
       <AdminLayout>
-        <div className="mx-auto max-w-7xl space-y-6">
-          <header>
+        <div className="mx-auto min-w-0 max-w-7xl space-y-6">
+          <header className="min-w-0">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-amber-800"><ST>Inventario</ST></p>
-            <h1 className="mt-1 text-2xl font-semibold text-slate-950 sm:text-3xl"><ST>Puntos de venta</ST></h1>
+            <h1 className="mt-1 break-words text-2xl font-semibold text-slate-950 sm:text-3xl"><ST>Puntos de venta</ST></h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-500">
               <ST>
                 {soloAsignados

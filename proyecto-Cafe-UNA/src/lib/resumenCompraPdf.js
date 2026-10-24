@@ -46,6 +46,8 @@ export function presentarCompra(compra = {}) {
   if (ficha?.cedulaJuridica) meta.push(["Cédula jurídica", texto(ficha.cedulaJuridica)]);
   if (ficha?.direccionFiscal) meta.push(["Dirección fiscal", texto(ficha.direccionFiscal)]);
   meta.push(["Punto de venta", texto(compra.ubicacionNombre || compra.ubicacionCodigo)]);
+  const direccionRetiro = String(compra.ubicacionDireccion || "").trim();
+  if (direccionRetiro) meta.push(["Dirección de retiro", direccionRetiro]);
   meta.push(["Método de pago", texto(compra.metodoPago, "Comprobante")]);
 
   return {

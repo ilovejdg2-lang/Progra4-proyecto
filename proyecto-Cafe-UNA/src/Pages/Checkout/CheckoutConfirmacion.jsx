@@ -120,7 +120,7 @@ export function CheckoutConfirmacion({
           {compra?.ubicacionId ? (
             <HorarioCompra
               ubicacionId={compra.ubicacionId}
-              titulo="Días y horario para retirar tu pedido"
+              titulo="Fechas sin retiro de pedidos"
               variante="tarjeta"
             />
           ) : null}

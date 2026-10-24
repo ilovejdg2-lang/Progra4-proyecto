@@ -10,6 +10,7 @@ const compra = {
   clienteCorreo: "ana@una.cr",
   metodoPago: "Comprobante",
   ubicacionNombre: "FUNA-UNA",
+  ubicacionDireccion: "Avenida 2 y Calle 9, Heredia",
   subtotal: 5309.73,
   impuestos: 690.27,
   total: 6000,
@@ -38,9 +39,11 @@ describe("resumen de compra", () => {
         ["Teléfono", "8888-0000"],
         ["Identificación", "1-1111-1111"],
         ["Punto de venta", "FUNA-UNA"],
+        ["Dirección de retiro", "Avenida 2 y Calle 9, Heredia"],
         ["Método de pago", "Comprobante"],
       ]),
     );
+    expect(presentarCompra({ ...compra, ubicacionDireccion: "  " }).meta.some((fila) => fila[0] === "Dirección de retiro")).toBe(false);
     expect(vista.items).toHaveLength(1);
     expect(vista.total).toBe(6000);
   });
@@ -51,6 +54,7 @@ describe("resumen de compra", () => {
     expect(pdf).toContain("C-99");
     expect(pdf).toContain("ana@una.cr");
     expect(pdf).toContain("FUNA-UNA");
+    expect(pdf).toContain("Avenida 2 y Calle 9, Heredia");
     expect(pdf).toContain("Cafe molido");
     expect(pdf).toContain("CRC 6.000,00");
     expect(pdf).not.toContain("?");

@@ -39,7 +39,7 @@ describe("CheckoutPuntoDetalle", () => {
     expect(screen.getByText("+506 4000-2010")).toBeTruthy();
     expect(screen.getByText("Horario")).toBeTruthy();
     expect(container.querySelectorAll("img")).toHaveLength(3);
-    expect(screen.getByTestId("horario-retiro").textContent).toBe("Horarios disponibles para retiro");
+    expect(screen.getByTestId("horario-retiro").textContent).toBe("Fechas sin retiro de pedidos");
     expect(screen.getByTestId("horario-retiro").getAttribute("data-ubicacion")).toBe("2");
   });
 

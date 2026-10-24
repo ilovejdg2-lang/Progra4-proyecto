@@ -36,6 +36,48 @@ a.btn-enviar {
   color: #0f172a;
 }
 
+.voluntariado-page.propuesta-page {
+  padding: 24px 0 60px;
+}
+
+.propuesta-page .section-card__header {
+  row-gap: 14px;
+  align-items: start;
+}
+
+.propuesta-page .section-card__hint {
+  margin-top: 6px;
+  line-height: 1.55;
+}
+
+.propuesta-page .campo {
+  gap: 10px;
+}
+
+.propuesta-page .campo label {
+  margin-bottom: 0;
+}
+
+.propuesta-page .mensaje-info {
+  margin: 4px 0 0;
+  line-height: 1.55;
+}
+
+.propuesta-page .campo button.flex-col {
+  gap: 0.7rem;
+}
+
+@media (max-width: 720px) {
+  .propuesta-page .donacion-intro {
+    padding: 20px 18px;
+  }
+
+  .propuesta-page .section-card__hint {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+}
+
 .propuesta-page--prepaint {
   visibility: hidden;
   position: fixed;
