@@ -3,7 +3,6 @@ import {
   AlertCircle,
   CheckCircle2,
   Coffee,
-  CreditCard,
   Mail,
   Minus,
   Plus,
@@ -14,7 +13,6 @@ import {
   Store,
   Trash2,
   User,
-  X,
 } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
@@ -26,8 +24,8 @@ import {
 import { UiSelect } from "../../../Components/ui/Select";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
-import { useCatalogo } from "../../../hooks/useCatalogo";
-import { TIPOS_CATALOGO } from "../../../services/catalogosService";
+import { calcularVuelto, deduplicarMetodos, esEfectivo } from "../../../lib/pagoPresencial";
+import { listarCatalogo, TIPOS_CATALOGO } from "../../../services/catalogosService";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
 import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
 import { ST } from "../../../Components/T/ST";
@@ -40,6 +38,7 @@ import {
   obtenerPuntosVentaPresencial,
   registrarVentaPresencial,
 } from "../../../services/ventasPresencialesService";
+import { PagoVentaPresencial } from "./PagoVentaPresencial";
 
 function operaSoloPuntosAsignados(roles) {
   return !roles.some((rol) => {
@@ -53,12 +52,16 @@ function formatearColones(monto) {
   return `₡${n.toLocaleString("es-CR")}`;
 }
 
-const METODOS_PAGO_RESPALDO = ["Efectivo", "Tarjeta", "SINPE Móvil", "Transferencia"];
+function FilaResumen({ etiqueta, children }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+      <span className="text-slate-500 font-medium">{etiqueta}</span>
+      <span className="min-w-0 break-words font-semibold text-slate-900 sm:text-right">{children}</span>
+    </div>
+  );
+}
 
-const ETIQUETAS_METODO_PAGO = {
-  Tarjeta: "Tarjeta de débito / crédito",
-  Transferencia: "Transferencia bancaria",
-};
+const METODOS_PAGO_RESPALDO = ["Efectivo", "Tarjeta", "SINPE Móvil", "Transferencia"];
 
 export default function AdminVentasPresenciales() {
   const user = getActiveSessionUser();
@@ -83,15 +86,12 @@ export default function AdminVentasPresenciales() {
 
   // Carrito de compra
   const [carrito, setCarrito] = useState([]);
-  const nombresMetodosPago = useCatalogo(TIPOS_CATALOGO.metodoPago, METODOS_PAGO_RESPALDO);
-  const opcionesMetodoPago = nombresMetodosPago.map((nombre) => ({
-    value: nombre,
-    label: ETIQUETAS_METODO_PAGO[nombre] || nombre,
-  }));
+  const [metodosPago, setMetodosPago] = useState([]);
   const [metodoPagoElegido, setMetodoPago] = useState("Efectivo");
-  const metodoPago = nombresMetodosPago.includes(metodoPagoElegido)
+  const metodoPago = metodosPago.includes(metodoPagoElegido)
     ? metodoPagoElegido
-    : nombresMetodosPago[0] || metodoPagoElegido;
+    : metodosPago[0] || "";
+  const [montoRecibido, setMontoRecibido] = useState("");
   const [clienteNombre, setClienteNombre] = useState("");
   const [clienteCorreo, setClienteCorreo] = useState("");
   const [enviarCorreo, setEnviarCorreo] = useState(false);
@@ -111,6 +111,20 @@ export default function AdminVentasPresenciales() {
   const [mensajeCorreoModal, setMensajeCorreoModal] = useState({ tipo: "", texto: "" });
 
   const nombreVendedor = user?.nombre || user?.Nombre || user?.correo || user?.email || "Vendedor Café UNA";
+
+  useEffect(() => {
+    let activo = true;
+    listarCatalogo(TIPOS_CATALOGO.metodoPago)
+      .then((items) => {
+        if (activo) setMetodosPago(deduplicarMetodos(items.map((item) => item.nombre)));
+      })
+      .catch(() => {
+        if (activo) setMetodosPago(deduplicarMetodos(METODOS_PAGO_RESPALDO));
+      });
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   const loadBase = async () => {
     setLoadError("");
@@ -301,6 +315,7 @@ export default function AdminVentasPresenciales() {
     setClienteCorreo("");
     setEnviarCorreo(false);
     setNotas("");
+    setMontoRecibido("");
     setFormError("");
   };
 
@@ -341,6 +356,16 @@ export default function AdminVentasPresenciales() {
       return;
     }
 
+    const pago = esEfectivo(metodoPago) ? calcularVuelto(totalCarrito, montoRecibido) : null;
+    if (!metodoPago) {
+      setFormError("Seleccioná un método de pago.");
+      return;
+    }
+    if (pago && !pago.suficiente) {
+      setFormError("El monto recibido es menor que el total.");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const payload = {
@@ -353,6 +378,7 @@ export default function AdminVentasPresenciales() {
           subtotal: item.subtotal,
         })),
         metodoPago,
+        montoRecibido: pago ? pago.montoRecibido : undefined,
         clienteNombre: clienteNombre.trim(),
         clienteCorreo: clienteCorreo.trim(),
         enviarCorreo: Boolean(enviarCorreo && clienteCorreo.trim()),
@@ -381,9 +407,11 @@ export default function AdminVentasPresenciales() {
         vendedor: resultado?.responsableNombre || nombreVendedor,
         clienteNombre: clienteNombre.trim(),
         clienteCorreo: clienteCorreo.trim(),
-        metodoPago,
+        metodoPago: resultado?.metodoPago || metodoPago,
         items: [...carrito],
-        total: totalCarrito,
+        total: Number.isFinite(Number(resultado?.total)) ? Number(resultado.total) : totalCarrito,
+        montoRecibido: resultado?.montoRecibido ?? pago?.montoRecibido ?? null,
+        vuelto: resultado?.vuelto ?? pago?.vuelto ?? null,
         notas: notas.trim(),
         correoEnviado: Boolean(resultado?.correoEnviado),
       };
@@ -431,6 +459,8 @@ export default function AdminVentasPresenciales() {
           subtotal: i.subtotal,
         })),
         total: resumenVenta.total,
+        montoRecibido: resumenVenta.montoRecibido,
+        vuelto: resumenVenta.vuelto,
         notas: resumenVenta.notas,
       });
 
@@ -727,7 +757,7 @@ export default function AdminVentasPresenciales() {
                 {/* Cabecera del Carrito en Color Negro con Tipografía Nítida */}
                 <div
                   style={{ backgroundColor: "#000000", color: "#ffffff" }}
-                  className="px-5 py-4 flex items-center justify-between border-b border-neutral-800"
+                  className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800 px-4 py-4 sm:px-5"
                 >
                   <div className="flex items-center gap-3">
                     <div
@@ -778,9 +808,9 @@ export default function AdminVentasPresenciales() {
                   ) : (
                     <div className="divide-y divide-slate-100 max-h-[360px] overflow-y-auto pr-1">
                       {carrito.map((item) => (
-                        <div key={item.productoId} className="py-3 flex items-center justify-between gap-3">
+                        <div key={item.productoId} className="py-3 flex flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
                           <div className="min-w-0 flex-1">
-                            <h4 className="text-xs font-bold text-slate-900 truncate">
+                            <h4 className="text-sm font-bold text-slate-900 break-words">
                               <ST>{item.productoNombre}</ST>
                             </h4>
                             <p className="text-[11px] text-slate-500">
@@ -791,37 +821,39 @@ export default function AdminVentasPresenciales() {
                             </p>
                           </div>
 
-                          {/* Controles de cantidad (-) 1 (+) y Basurero */}
-                          <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="flex items-center justify-between gap-2 min-[420px]:justify-end">
                             <div className="flex items-center rounded-full border border-slate-200 bg-slate-50 p-0.5">
                               <button
                                 type="button"
                                 onClick={() => modificarCantidadCarrito(item.productoId, -1)}
-                                className="size-6 rounded-full flex items-center justify-center text-slate-700 hover:bg-black hover:text-white transition active:scale-95"
+                                className="size-9 rounded-full flex items-center justify-center text-slate-700 hover:bg-black hover:text-white transition active:scale-95"
                                 title={t("Disminuir")}
+                                aria-label={t("Disminuir")}
                               >
-                                <Minus className="size-3" />
+                                <Minus className="size-4" />
                               </button>
-                              <span className="w-7 text-center text-xs font-bold text-slate-900">
+                              <span className="w-8 text-center text-sm font-bold text-slate-900">
                                 {item.cantidad}
                               </span>
                               <button
                                 type="button"
                                 onClick={() => modificarCantidadCarrito(item.productoId, 1)}
-                                className="size-6 rounded-full flex items-center justify-center text-slate-700 hover:bg-black hover:text-white transition active:scale-95"
+                                className="size-9 rounded-full flex items-center justify-center text-slate-700 hover:bg-black hover:text-white transition active:scale-95"
                                 title={t("Aumentar")}
+                                aria-label={t("Aumentar")}
                               >
-                                <Plus className="size-3" />
+                                <Plus className="size-4" />
                               </button>
                             </div>
 
                             <button
                               type="button"
                               onClick={() => eliminarDelCarrito(item.productoId)}
-                              className="size-7 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition"
+                              className="size-9 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition"
                               title={t("Eliminar")}
+                              aria-label={t("Eliminar")}
                             >
-                              <Trash2 className="size-3.5" />
+                              <Trash2 className="size-4" />
                             </button>
                           </div>
                         </div>
@@ -832,20 +864,14 @@ export default function AdminVentasPresenciales() {
                   {/* Formulario de Checkout (Método de Pago, Cliente, Correo) */}
                   <div className="space-y-3 pt-3 border-t border-slate-100 text-xs">
                     {/* Método de Pago */}
-                    <div className="space-y-1">
-                      <label className="font-semibold text-slate-700 flex items-center gap-1">
-                        <CreditCard className="size-3 text-neutral-900" />
-                        <ST>Método de Pago</ST>
-                      </label>
-                      <UiSelect
-                        id="pos-metodo-pago"
-                        ariaLabel={t("Método de Pago")}
-                        value={metodoPago}
-                        onChange={setMetodoPago}
-                        options={opcionesMetodoPago}
-                        className="w-full text-xs h-9"
-                      />
-                    </div>
+                    <PagoVentaPresencial
+                      metodos={metodosPago}
+                      metodoPago={metodoPago}
+                      onMetodoPago={setMetodoPago}
+                      total={totalCarrito}
+                      montoRecibido={montoRecibido}
+                      onMontoRecibido={setMontoRecibido}
+                    />
 
                     {/* Cliente (opcional) */}
                     <div className="space-y-1">
@@ -884,14 +910,14 @@ export default function AdminVentasPresenciales() {
                       />
 
                       {clienteCorreo.trim() ? (
-                        <label className="flex items-center gap-2 mt-1.5 cursor-pointer text-slate-700 select-none">
+                        <label className="flex items-start gap-2 mt-1.5 cursor-pointer text-slate-700 select-none">
                           <input
                             type="checkbox"
                             checked={enviarCorreo}
                             onChange={(e) => setEnviarCorreo(e.target.checked)}
-                            className="rounded text-black focus:ring-black size-3.5"
+                            className="mt-0.5 rounded text-black focus:ring-black size-3.5 shrink-0"
                           />
-                          <span className="text-[11px] font-medium text-slate-600">
+                          <span className="text-[11px] font-medium leading-snug text-slate-600">
                             <ST>Enviar comprobante automáticamente al registrar</ST>
                           </span>
                         </label>
@@ -899,7 +925,7 @@ export default function AdminVentasPresenciales() {
                     </div>
 
                     {/* Total de la venta */}
-                    <div className="flex items-baseline justify-between pt-3 border-t border-slate-200">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 pt-3 border-t border-slate-200">
                       <span className="text-sm font-semibold text-slate-700">
                         <ST>Total</ST>
                       </span>
@@ -911,7 +937,14 @@ export default function AdminVentasPresenciales() {
                     {/* Botón Principal: Registrar Venta (Color Negro) */}
                     <button
                       type="button"
-                      disabled={isSaving || carrito.length === 0 || !ubicacionCodigo || !puedeRegistrar}
+                      disabled={
+                        isSaving ||
+                        carrito.length === 0 ||
+                        !ubicacionCodigo ||
+                        !puedeRegistrar ||
+                        !metodoPago ||
+                        (esEfectivo(metodoPago) && !calcularVuelto(totalCarrito, montoRecibido).suficiente)
+                      }
                       onClick={registrarVenta}
                       className="w-full mt-2 rounded-2xl bg-black py-3.5 text-sm font-bold text-white shadow-sm hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-40 transition active:scale-[0.99] flex items-center justify-center gap-2"
                     >
@@ -950,23 +983,15 @@ export default function AdminVentasPresenciales() {
             maxWidth="max-w-lg"
             labelledBy="resumen-compra-title"
           >
-            <AdminModalHeader>
-              <div className="flex items-center gap-2">
-                <div className="flex size-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+            <AdminModalHeader onClose={() => setModalResumenOpen(false)}>
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                   <CheckCircle2 className="size-5" />
                 </div>
-                <h2 id="resumen-compra-title" className="text-lg font-bold text-slate-950">
+                <h2 id="resumen-compra-title" className="min-w-0 text-base font-bold text-slate-950 sm:text-lg">
                   <ST>Resumen de Compra</ST>
                 </h2>
               </div>
-              <button
-                type="button"
-                onClick={() => setModalResumenOpen(false)}
-                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100"
-                aria-label={t("Cerrar")}
-              >
-                <X className="size-5" />
-              </button>
             </AdminModalHeader>
 
             <AdminModalBody>
@@ -975,62 +1000,53 @@ export default function AdminVentasPresenciales() {
                 <div
                   id="ticket-imprimible"
                   style={{ borderRadius: "16px" }}
-                  className="overflow-hidden border border-slate-200 bg-white shadow-sm font-sans"
+                  className="min-w-0 max-w-full overflow-hidden border border-slate-200 bg-white shadow-sm font-sans"
                 >
                   {/* Franja roja institucional */}
                   <div className="h-1 bg-[#C41E3A] w-full" />
 
-                  <div className="p-5 space-y-4 text-xs text-slate-700">
-                    {/* Datos integrados de la factura: Comprobante, Fecha, Punto, Vendedor, Cliente, Pago */}
-                    <div className="space-y-2 text-xs rounded-xl bg-slate-50 p-4 border border-slate-200/80">
-                      <div className="flex justify-between items-center pb-2 border-b border-slate-200/60">
-                        <span className="text-slate-500 font-medium">Comprobante:</span>
-                        <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 text-xs">
-                          {resumenVenta.numero}
-                        </span>
+                  <div className="space-y-4 p-3 text-xs text-slate-700 sm:p-5">
+                    <div className="space-y-2 rounded-xl border border-slate-200/80 bg-slate-50 p-3 text-xs sm:p-4">
+                      <div className="border-b border-slate-200/60 pb-2">
+                        <FilaResumen etiqueta="Comprobante:">
+                          <span className="inline-block max-w-full break-all rounded border border-slate-200 bg-white px-2 py-0.5 font-mono text-xs font-bold text-slate-900">
+                            {resumenVenta.numero}
+                          </span>
+                        </FilaResumen>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-medium">Fecha y hora:</span>
-                        <span className="font-semibold text-slate-900">
-                          {new Date(resumenVenta.fecha).toLocaleString("es-CR")}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-medium">Punto de venta:</span>
-                        <span className="font-semibold text-slate-900">{resumenVenta.puntoVenta}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-medium">Atendido por:</span>
-                        <span className="font-semibold text-slate-900">{resumenVenta.vendedor}</span>
-                      </div>
+                      <FilaResumen etiqueta="Fecha y hora:">
+                        {new Date(resumenVenta.fecha).toLocaleString("es-CR")}
+                      </FilaResumen>
+                      <FilaResumen etiqueta="Punto de venta:">{resumenVenta.puntoVenta}</FilaResumen>
+                      <FilaResumen etiqueta="Atendido por:">{resumenVenta.vendedor}</FilaResumen>
                       {resumenVenta.clienteNombre ? (
-                        <div className="flex justify-between items-center">
-                          <span className="text-slate-500 font-medium">Cliente:</span>
-                          <span className="font-semibold text-slate-900">{resumenVenta.clienteNombre}</span>
-                        </div>
+                        <FilaResumen etiqueta="Cliente:">{resumenVenta.clienteNombre}</FilaResumen>
                       ) : null}
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-medium">Método de Pago:</span>
-                        <span className="font-semibold text-slate-900">{resumenVenta.metodoPago}</span>
-                      </div>
+                      <FilaResumen etiqueta="Método de Pago:">{resumenVenta.metodoPago}</FilaResumen>
+                      {resumenVenta.montoRecibido != null ? (
+                        <FilaResumen etiqueta="Monto recibido:">{formatearColones(resumenVenta.montoRecibido)}</FilaResumen>
+                      ) : null}
+                      {resumenVenta.vuelto != null ? (
+                        <FilaResumen etiqueta="Vuelto:">{formatearColones(resumenVenta.vuelto)}</FilaResumen>
+                      ) : null}
                     </div>
 
                     {/* Tabla de ítems */}
                     <div className="space-y-2 border-b border-dashed border-slate-200 pb-3">
-                      <div className="flex justify-between font-bold text-slate-400 text-[10px] uppercase tracking-wider">
+                      <div className="flex justify-between gap-3 font-bold text-slate-400 text-[10px] uppercase tracking-wider">
                         <span>Cant. / Detalle</span>
                         <span className="text-right">Subtotal</span>
                       </div>
                       {resumenVenta.items.map((it, idx) => (
-                        <div key={idx} className="flex justify-between items-baseline text-xs py-0.5">
-                          <div className="min-w-0 pr-2">
+                        <div key={idx} className="flex min-w-0 items-start justify-between gap-3 py-0.5 text-xs">
+                          <div className="min-w-0 flex-1">
                             <span className="font-bold text-slate-900 mr-1.5">{it.cantidad}×</span>
-                            <span className="text-slate-700 font-medium"><ST>{it.productoNombre}</ST></span>
+                            <span className="break-words font-medium text-slate-700"><ST>{it.productoNombre}</ST></span>
                             <div className="text-[10px] text-slate-400">
                               {formatearColones(it.precioUnitario)} c/u
                             </div>
                           </div>
-                          <span className="font-bold text-slate-900 shrink-0 font-mono text-xs">
+                          <span className="shrink-0 font-mono text-xs font-bold text-slate-900">
                             {formatearColones(it.subtotal)}
                           </span>
                         </div>
@@ -1038,24 +1054,24 @@ export default function AdminVentasPresenciales() {
                     </div>
 
                     {/* Desglose de impuestos */}
-                    <div className="space-y-1 text-[11px] text-slate-500 border-b border-slate-100 pb-2">
-                      <div className="flex justify-between">
-                        <span>Subtotal (sin IVA):</span>
-                        <span className="font-mono">{formatearColones(Math.round(resumenVenta.total / 1.13))}</span>
+                    <div className="space-y-1 border-b border-slate-100 pb-2 text-[11px] text-slate-500">
+                      <div className="flex min-w-0 justify-between gap-3">
+                        <span className="min-w-0">Subtotal (sin IVA):</span>
+                        <span className="shrink-0 font-mono">{formatearColones(Math.round(resumenVenta.total / 1.13))}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>IVA (13% incluido):</span>
-                        <span className="font-mono">{formatearColones(Math.round(resumenVenta.total - Math.round(resumenVenta.total / 1.13)))}</span>
+                      <div className="flex min-w-0 justify-between gap-3">
+                        <span className="min-w-0">IVA (13% incluido):</span>
+                        <span className="shrink-0 font-mono">{formatearColones(Math.round(resumenVenta.total - Math.round(resumenVenta.total / 1.13)))}</span>
                       </div>
                     </div>
 
                     {/* Total destacado */}
-                    <div className="rounded-xl bg-black px-4 py-3 text-white flex justify-between items-center shadow-sm">
-                      <div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-black px-4 py-3 text-white shadow-sm">
+                      <div className="min-w-0">
                         <span className="text-[10px] uppercase font-bold tracking-widest text-neutral-400 block">Total Pagado</span>
                         <span className="text-[10px] text-neutral-400">CRC - Colones</span>
                       </div>
-                      <span className="text-xl font-extrabold tracking-tight text-white font-mono">
+                      <span className="text-lg font-extrabold tracking-tight text-white font-mono sm:text-xl">
                         {formatearColones(resumenVenta.total)}
                       </span>
                     </div>
@@ -1070,29 +1086,29 @@ export default function AdminVentasPresenciales() {
                 {/* Sección de Envío por Correo Electrónico (Botón Negro) */}
                 <div
                   style={{ borderRadius: "16px" }}
-                  className="border border-slate-200 bg-slate-50 p-4 space-y-2 text-xs"
+                  className="min-w-0 space-y-2 border border-slate-200 bg-slate-50 p-3 text-xs sm:p-4"
                 >
-                  <div className="flex items-center gap-1.5 font-bold text-slate-950">
-                    <Mail className="size-4 text-black" />
+                  <div className="flex items-start gap-1.5 font-bold text-slate-950">
+                    <Mail className="mt-0.5 size-4 shrink-0 text-black" />
                     <ST>Enviar comprobante por correo al cliente</ST>
                   </div>
-                  <p className="text-[11px] text-slate-600">
+                  <p className="text-[11px] leading-snug text-slate-600">
                     <ST>Podés enviar o reenviar el comprobante digital a la dirección que indique el cliente:</ST>
                   </p>
 
-                  <div className="flex gap-2 pt-1">
+                  <div className="flex flex-col gap-2 pt-1 sm:flex-row">
                     <input
                       type="email"
                       value={correoResumenInput}
                       onChange={(e) => setCorreoResumenInput(limpiarCorreo(e.target.value))}
                       placeholder="cliente@correo.com"
-                      className="flex-1 h-9 rounded-full border border-slate-300 bg-white px-3 text-xs text-slate-900 outline-none focus:border-black"
+                      className="h-11 w-full min-w-0 rounded-full border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-black sm:h-10 sm:flex-1 sm:text-xs"
                     />
                     <button
                       type="button"
                       disabled={isEnviandoCorreoModal || !correoResumenInput}
                       onClick={handleEnviarCorreoModal}
-                      className="rounded-full bg-black px-4 py-2 text-xs font-bold text-white hover:bg-neutral-900 disabled:opacity-50 transition flex items-center gap-1.5 shrink-0"
+                      className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-full bg-black px-4 text-sm font-bold text-white transition hover:bg-neutral-900 disabled:opacity-50 sm:h-10 sm:w-auto sm:shrink-0 sm:text-xs"
                     >
                       {isEnviandoCorreoModal ? (
                         <RefreshCw className="size-3.5 animate-spin" />
@@ -1122,20 +1138,20 @@ export default function AdminVentasPresenciales() {
                 </div>
 
                 {/* Botones de acción del Modal (Botones Negros) */}
-                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                <div className="flex flex-col gap-2 pt-2 sm:flex-row">
                   <button
                     type="button"
                     onClick={imprimirTicket}
-                    className="flex-1 h-10 rounded-full border-2 border-black bg-white px-4 text-xs font-bold text-black hover:bg-black hover:text-white transition flex items-center justify-center gap-2"
+                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-normal rounded-full border-2 border-black bg-white px-4 py-2.5 text-center text-sm font-bold text-black transition hover:bg-black hover:text-white sm:min-h-10 sm:flex-1 sm:text-xs"
                   >
-                    <Printer className="size-4" />
+                    <Printer className="size-4 shrink-0" />
                     <span><ST>Imprimir comprobante</ST></span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setModalResumenOpen(false)}
-                    className="flex-1 h-10 rounded-full bg-black px-4 text-xs font-bold text-white hover:bg-neutral-900 transition flex items-center justify-center gap-2"
+                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-normal rounded-full bg-black px-4 py-2.5 text-center text-sm font-bold text-white transition hover:bg-neutral-900 sm:min-h-10 sm:flex-1 sm:text-xs"
                   >
                     <ST>Nueva venta</ST>
                   </button>

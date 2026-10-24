@@ -17,6 +17,7 @@ import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
 import {
   obtenerUsuarios,
+  obtenerAsignacionesPunto,
   actualizarUsuario,
   cambiarEstadoUsuario,
   solicitarCreacionUsuario,
@@ -1213,6 +1214,7 @@ function mapUsuario(item) {
     tieneComprasOSolicitudes: Boolean(
       item?.tieneComprasOSolicitudes ?? item?.TieneComprasOSolicitudes,
     ),
+    puntosVentaActivos: item?.puntosVentaActivos ?? item?.PuntosVentaActivos ?? null,
   };
 }
 
@@ -1436,7 +1438,24 @@ const AdminUsuarios = () => {
         delete cambios.passwordActual;
       }
       const actualizado = await actualizarUsuario(usuarioEditar.id, cambios);
-      setUsuarios((prev) => prev.map((u) => (u.id === actualizado.id ? mapUsuario(actualizado) : u)));
+      const mapped = mapUsuario(actualizado);
+      const esVendedor = (mapped.roles || []).some((rol) => String(rol).toLowerCase() === "vendedor");
+      if (esVendedor) {
+        try {
+          const actuales = await obtenerAsignacionesPunto(mapped.id);
+          const activas = (Array.isArray(actuales) ? actuales : []).filter((item) =>
+            Boolean(item?.asignacionActiva ?? item?.AsignacionActiva),
+          ).length;
+          mapped.puntosVentaActivos = activas;
+        } catch {
+          mapped.puntosVentaActivos = 0;
+        }
+      }
+      setUsuarios((prev) => prev.map((u) => (u.id === mapped.id ? mapped : u)));
+      if (esVendedor && Number(mapped.puntosVentaActivos) === 0) {
+        setUsuarioEditar(mapped);
+        return;
+      }
       setUsuarioEditar(null);
     } catch (err) {
       throw err;
@@ -1487,11 +1506,21 @@ const AdminUsuarios = () => {
       accessorKey: "roles",
       header: () => <ST>Roles</ST>,
       enableSorting: false,
-      cell: ({ getValue }) => (
-        <div className="flex flex-wrap gap-1">
-          {(Array.isArray(getValue()) ? getValue() : []).map((rol) => <BadgeRol key={rol} rol={rol} />)}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const roles = Array.isArray(row.original.roles) ? row.original.roles : [];
+        const sinPunto = roles.some((rol) => String(rol).toLowerCase() === "vendedor")
+          && Number(row.original.puntosVentaActivos) === 0;
+        return (
+          <div className="flex flex-wrap gap-1">
+            {roles.map((rol) => <BadgeRol key={rol} rol={rol} />)}
+            {sinPunto ? (
+              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+                <ST>Sin punto de venta</ST>
+              </span>
+            ) : null}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "estado",
@@ -1691,6 +1720,12 @@ const AdminUsuarios = () => {
                       {(Array.isArray(usuario.roles) ? usuario.roles : []).map((rol) => (
                         <BadgeRol key={rol} rol={rol} />
                       ))}
+                      {(usuario.roles || []).some((rol) => String(rol).toLowerCase() === "vendedor")
+                        && Number(usuario.puntosVentaActivos) === 0 ? (
+                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+                          <ST>Sin punto de venta</ST>
+                        </span>
+                      ) : null}
                     </div>
 
                     <AccionesUsuario
@@ -1745,7 +1780,24 @@ const AdminUsuarios = () => {
             puedeEditarRoles={esSuperAdmin}
             pie={
               puedeGestionarAsignaciones && (usuarioEditar.roles || []).some((rol) => String(rol).toLowerCase() === "vendedor")
-                ? <AsignacionesVendedor usuarioId={usuarioEditar.id} />
+                ? (
+                  <AsignacionesVendedor
+                    usuarioId={usuarioEditar.id}
+                    onChange={(lista) => {
+                      const activas = lista.filter((item) => item.asignacionActiva).length;
+                      setUsuarioEditar((actual) => (
+                        actual && Number(actual.id) === Number(usuarioEditar.id)
+                          ? { ...actual, puntosVentaActivos: activas }
+                          : actual
+                      ));
+                      setUsuarios((prev) => prev.map((usuario) => (
+                        Number(usuario.id) === Number(usuarioEditar.id)
+                          ? { ...usuario, puntosVentaActivos: activas }
+                          : usuario
+                      )));
+                    }}
+                  />
+                )
                 : null
             }
           />

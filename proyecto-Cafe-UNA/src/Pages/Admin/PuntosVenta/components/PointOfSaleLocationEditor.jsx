@@ -24,7 +24,7 @@ import { subirImagenPuntoVenta } from "../../../../services/productosService";
 
 const CAMPOS_TEXTO = ["nombre", "direccion", "horario"];
 const INPUT_CLASS =
-  "min-h-11 rounded-2xl border bg-slate-50 px-3 py-2.5 text-base text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
+  "box-border w-full min-w-0 max-w-full min-h-11 rounded-2xl border bg-slate-50 px-3 py-2.5 text-base text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
 
 export function PointOfSaleLocationEditor({
   open,
@@ -153,7 +153,7 @@ export function PointOfSaleLocationEditor({
             <h2 id="pos-location-editor-title" className="truncate text-lg font-semibold text-slate-950">
               {isEdit ? tEditar : tAgregar}
             </h2>
-            <p className="truncate text-sm text-slate-500">
+            <p className="break-all text-sm text-slate-500">
               {isEdit ? location.code : tHint}
             </p>
           </div>
@@ -168,7 +168,7 @@ export function PointOfSaleLocationEditor({
         </button>
       </AdminModalHeader>
       <AdminModalBody>
-        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        <form onSubmit={handleSubmit} className="min-w-0 space-y-5" noValidate>
           <label className="grid gap-2 text-sm font-medium text-slate-700">
             <ST>Nombre</ST>
             <input
@@ -331,6 +331,7 @@ export function PointOfSaleLocationEditor({
           ) : null}
           <div className="border-t border-slate-100 pt-4">
             <AdminModalActions
+              className="flex-col sm:flex-row"
               onCancel={onClose}
               primaryLabel={isSaving ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear punto"}
               primaryDisabled={isSaving}

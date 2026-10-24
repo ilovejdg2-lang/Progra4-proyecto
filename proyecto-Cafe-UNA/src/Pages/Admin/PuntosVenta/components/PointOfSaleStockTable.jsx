@@ -81,9 +81,28 @@ export function PointOfSaleStockTable({ products, stockByProductId, stockLoading
         {products.map((product) => {
           const stockRecord = stockByProductId.get(String(product.id));
           return (
-            <article key={product.id} className="space-y-3 px-4 py-4">
-              <div className="flex items-start gap-3"><ProductImage product={product} /><div className="min-w-0 flex-1"><h3 className="font-semibold text-slate-900"><ST>{product.nombre}</ST></h3><p className="mt-1 text-xs text-slate-500">{product.descripcion ? <ST>{product.descripcion}</ST> : <ST>Sin descripción</ST>}</p></div></div>
-              <dl className="grid grid-cols-2 gap-3 text-sm"><div><dt className="text-xs text-slate-500"><ST>Estado</ST></dt><dd className={`mt-1 text-xs font-semibold ${product.estado === "Habilitado" ? "text-green-700" : "text-red-600"}`}><ST>{product.estado}</ST></dd></div><div><dt className="text-xs text-slate-500"><ST>Stock POS</ST></dt><dd className="mt-1"><StockCell stockRecord={stockRecord} loading={stockLoading} /></dd></div></dl>
+            <article key={product.id} className="min-w-0 space-y-3 px-4 py-4">
+              <div className="flex min-w-0 items-start gap-3">
+                <ProductImage product={product} />
+                <div className="min-w-0 flex-1">
+                  <h3 className="break-words font-semibold text-slate-900"><ST>{product.nombre}</ST></h3>
+                  <p className="mt-1 break-words text-xs text-slate-500">{product.descripcion ? <ST>{product.descripcion}</ST> : <ST>Sin descripción</ST>}</p>
+                </div>
+              </div>
+              <dl className="grid grid-cols-1 gap-3 text-sm min-[420px]:grid-cols-3">
+                <div className="min-w-0">
+                  <dt className="text-xs text-slate-500"><ST>Peso</ST></dt>
+                  <dd className="mt-1 break-words text-slate-700">{product.peso || "—"}</dd>
+                </div>
+                <div className="min-w-0">
+                  <dt className="text-xs text-slate-500"><ST>Estado</ST></dt>
+                  <dd className={`mt-1 break-words text-xs font-semibold ${product.estado === "Habilitado" ? "text-green-700" : "text-red-600"}`}><ST>{product.estado}</ST></dd>
+                </div>
+                <div className="min-w-0">
+                  <dt className="text-xs text-slate-500"><ST>Stock POS</ST></dt>
+                  <dd className="mt-1"><StockCell stockRecord={stockRecord} loading={stockLoading} /></dd>
+                </div>
+              </dl>
               {canEdit ? <EditButton product={product} onEdit={onEdit} fullWidth /> : null}
             </article>
           );

@@ -46,6 +46,12 @@ export function getAdminBreadcrumbItems(pathname, search) {
     "/admin/equipo": [admin, cms, sobreNosotros, crumb("Equipo")],
     "/admin/producto": [admin, inventario, crumb("Producto")],
     "/admin/puntos-venta": [admin, inventario, crumb("Puntos de venta")],
+    "/admin/puntos-venta/dias-sin-retiro": [
+      admin,
+      inventario,
+      crumb("Puntos de venta", "/admin/puntos-venta"),
+      crumb("Días sin retiro"),
+    ],
     "/admin/activos-fijos": [admin, inventario, crumb("Activos fijos")],
     "/admin/distribucion": [admin, inventario, crumb("Distribución")],
     "/admin/historial-movimientos": [admin, inventario, crumb("Historial de movimientos")],
