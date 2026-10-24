@@ -32,6 +32,8 @@ export function normalizarCompra(compra) {
     fecha: String(firstDefined(compra, ["fecha", "Fecha"]) || ""),
     clienteNombre: String(firstDefined(compra, ["clienteNombre", "ClienteNombre", "cliente"]) || ""),
     clienteCorreo: String(firstDefined(compra, ["clienteCorreo", "ClienteCorreo", "correo"]) || ""),
+    vendedorNombre: String(firstDefined(compra, ["vendedorNombre", "VendedorNombre"]) || ""),
+    vendedorCorreo: String(firstDefined(compra, ["vendedorCorreo", "VendedorCorreo"]) || ""),
     cantidadProductos: Number(firstDefined(compra, ["cantidadProductos", "CantidadProductos"]) || 0),
     subtotal: Number(firstDefined(compra, ["subtotal", "Subtotal"]) || 0),
     impuestos: Number(firstDefined(compra, ["impuestos", "Impuestos", "iva", "Iva"]) || 0),
@@ -53,6 +55,7 @@ export function normalizarCompra(compra) {
     ubicacionId: firstDefined(compra, ["ubicacionId", "UbicacionId"]) ?? null,
     ubicacionCodigo: String(firstDefined(compra, ["ubicacionCodigo", "UbicacionCodigo"]) || "") || null,
     ubicacionNombre: String(firstDefined(compra, ["ubicacionNombre", "UbicacionNombre"]) || "") || null,
+    ubicacionDireccion: String(firstDefined(compra, ["ubicacionDireccion", "UbicacionDireccion"]) || "").trim() || null,
     tieneComprobante: Boolean(firstDefined(compra, ["tieneComprobante", "TieneComprobante"])),
     cliente: (() => {
       const raw = firstDefined(compra, ["cliente", "Cliente"]);
@@ -123,6 +126,30 @@ export async function obtenerMisCompras(params = {}) {
     pageSize: Number(data?.pageSize) || 10,
     total: Number(data?.total) || 0,
     totalPages: Number(data?.totalPages) || 1,
+  };
+}
+
+export async function obtenerOpcionesFiltroVentas() {
+  const data = await apiRequest(`${BASE_URL}/opciones-filtro`, {
+    errorPrefix: "Error al consultar filtros de ventas",
+  });
+  const puntos = Array.isArray(data?.puntos) ? data.puntos : [];
+  const categorias = Array.isArray(data?.categorias) ? data.categorias : [];
+  const vendedores = Array.isArray(data?.vendedores) ? data.vendedores : [];
+  return {
+    puntos: puntos
+      .map((punto) => ({
+        codigo: String(punto.codigo || punto.code || "").trim(),
+        nombre: String(punto.nombre || punto.name || punto.codigo || "").trim(),
+      }))
+      .filter((punto) => punto.codigo),
+    categorias: categorias.map((categoria) => String(categoria || "").trim()).filter(Boolean),
+    vendedores: vendedores
+      .map((vendedor) => ({
+        id: String(vendedor.id ?? ""),
+        nombre: String(vendedor.nombre || vendedor.correo || "").trim(),
+      }))
+      .filter((vendedor) => vendedor.id && vendedor.nombre),
   };
 }
 

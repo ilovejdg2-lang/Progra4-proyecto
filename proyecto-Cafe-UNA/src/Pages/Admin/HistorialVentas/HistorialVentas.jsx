@@ -9,9 +9,16 @@ import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { ComprobantePago } from "../../../Components/ComprobantePago/ComprobantePago";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import {
+  filtrarVentasLocales,
+  filtrosInicialesHistorial,
+  hayFiltrosHistorial,
+  parametrosListadoVentas,
+} from "../../../lib/filtrosHistorialVentas";
+import {
   cambiarEstadoCompra,
   obtenerCompraPorId,
   obtenerComprasAdmin,
+  obtenerOpcionesFiltroVentas,
 } from "../../../services/comprasService";
 import { obtenerVentas } from "../../../lib/ventasStorage";
 import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
@@ -86,7 +93,9 @@ function mapLocalVenta(venta) {
     facturaId: null,
     editable: estado === "Pendiente" || estado === "Aceptado" || estado === "Rechazado",
     ganado: estado === "Entregado" ? total : null,
+    ubicacionCodigo: venta.ubicacionCodigo || venta.puntoCodigo || null,
     ubicacionNombre: venta.puntoVenta || null,
+    vendedorId: venta.vendedorId ? String(venta.vendedorId) : "",
     tieneComprobante: false,
     cliente: null,
     items: (venta.items || []).map((item) => ({
@@ -94,6 +103,7 @@ function mapLocalVenta(venta) {
       cantidad: item.units || 1,
       precioUnitario: item.precioUnitario ?? ((item.total || 0) / (item.units || 1)),
       subtotal: item.total || 0,
+      categoria: item.categoria || "",
     })),
   };
 }
@@ -112,63 +122,41 @@ function BadgeEstadoCompra({ estado }) {
   );
 }
 
+const filaDetalle = "flex flex-col gap-0.5 border-b border-slate-100 py-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3";
+const valorDetalle = "min-w-0 break-words font-medium text-slate-900 no-underline sm:text-right";
+
+function FilaDetalle({ etiqueta, children }) {
+  return (
+    <div className={filaDetalle}>
+      <dt className="shrink-0 text-slate-500"><ST>{etiqueta}</ST></dt>
+      <dd className={valorDetalle}>{children}</dd>
+    </div>
+  );
+}
+
 function ClienteVenta({ detalle }) {
   const cliente = detalle?.cliente;
   if (!cliente && !detalle?.clienteCorreo) {
-    return (
-      <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
-        <dt className="text-slate-500"><ST>Cliente</ST></dt>
-        <dd className="font-medium text-slate-900 no-underline">{detalle?.clienteNombre}</dd>
-      </div>
-    );
+    return <FilaDetalle etiqueta="Cliente">{detalle?.clienteNombre}</FilaDetalle>;
   }
   const nombre = cliente?.tipo === "empresa"
     ? (cliente.razonSocial || cliente.nombreComercial || detalle.clienteNombre)
     : [cliente?.nombre, cliente?.apellidos].filter(Boolean).join(" ") || detalle.clienteNombre;
   return (
     <>
-      <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
-        <dt className="text-slate-500"><ST>Cliente</ST></dt>
-        <dd className="font-medium text-slate-900 no-underline">{nombre}</dd>
-      </div>
+      <FilaDetalle etiqueta="Cliente">{nombre}</FilaDetalle>
       {cliente?.tipo ? (
-        <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
-          <dt className="text-slate-500"><ST>Tipo de cliente</ST></dt>
-          <dd className="font-medium text-slate-900 no-underline">
-            <ST>{cliente.tipo === "empresa" ? "Persona jurídica" : "Persona física"}</ST>
-          </dd>
-        </div>
+        <FilaDetalle etiqueta="Tipo de cliente">
+          <ST>{cliente.tipo === "empresa" ? "Persona jurídica" : "Persona física"}</ST>
+        </FilaDetalle>
       ) : null}
       {detalle.clienteCorreo || cliente?.correo ? (
-        <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
-          <dt className="text-slate-500"><ST>Correo</ST></dt>
-          <dd className="font-medium text-slate-900 no-underline">{cliente?.correo || detalle.clienteCorreo}</dd>
-        </div>
+        <FilaDetalle etiqueta="Correo">{cliente?.correo || detalle.clienteCorreo}</FilaDetalle>
       ) : null}
-      {cliente?.telefono ? (
-        <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
-          <dt className="text-slate-500"><ST>Teléfono</ST></dt>
-          <dd className="font-medium text-slate-900 no-underline">{cliente.telefono}</dd>
-        </div>
-      ) : null}
-      {cliente?.identificacion ? (
-        <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
-          <dt className="text-slate-500"><ST>Identificación</ST></dt>
-          <dd className="font-medium text-slate-900 no-underline">{cliente.identificacion}</dd>
-        </div>
-      ) : null}
-      {cliente?.cedulaJuridica ? (
-        <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
-          <dt className="text-slate-500"><ST>Cédula jurídica</ST></dt>
-          <dd className="font-medium text-slate-900 no-underline">{cliente.cedulaJuridica}</dd>
-        </div>
-      ) : null}
-      {cliente?.representanteLegal ? (
-        <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
-          <dt className="text-slate-500"><ST>Representante legal</ST></dt>
-          <dd className="font-medium text-slate-900 no-underline">{cliente.representanteLegal}</dd>
-        </div>
-      ) : null}
+      {cliente?.telefono ? <FilaDetalle etiqueta="Teléfono">{cliente.telefono}</FilaDetalle> : null}
+      {cliente?.identificacion ? <FilaDetalle etiqueta="Identificación">{cliente.identificacion}</FilaDetalle> : null}
+      {cliente?.cedulaJuridica ? <FilaDetalle etiqueta="Cédula jurídica">{cliente.cedulaJuridica}</FilaDetalle> : null}
+      {cliente?.representanteLegal ? <FilaDetalle etiqueta="Representante legal">{cliente.representanteLegal}</FilaDetalle> : null}
     </>
   );
 }
@@ -200,37 +188,33 @@ export default function HistorialVentas({
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [filtros, setFiltros] = useState({
-    busqueda: "",
-    estado: esPendientes ? "Pendiente" : "todos",
-    desde: "",
-    hasta: "",
-  });
+  const [opcionesFiltro, setOpcionesFiltro] = useState({ puntos: [], categorias: [], vendedores: [] });
+  const [filtros, setFiltros] = useState(() => filtrosInicialesHistorial(esPendientes));
 
   const load = useCallback(async () => {
     if (!puedeVer) return;
     setStatus("loading");
     setError("");
     try {
-      const result = await obtenerComprasAdmin({
-        page,
-        pageSize: 10,
-        q: filtros.busqueda,
-        estado: esPendientes ? "Pendiente" : filtros.estado,
-        desde: filtros.desde,
-        hasta: filtros.hasta,
-        ubicacionCodigo: locationCode || undefined,
-      });
+      const result = await obtenerComprasAdmin(
+        parametrosListadoVentas({
+          page,
+          pageSize: 10,
+          filtros,
+          esPendientes,
+          locationCode,
+        }),
+      );
       setCompras(result.data);
       setTotal(result.total);
       setTotalPages(result.totalPages);
       setStatus("success");
     } catch (loadError) {
-      let local = obtenerVentas().map(mapLocalVenta);
-      if (esPendientes) local = local.filter((venta) => venta.estado === "Pendiente");
-      if (locationCode) {
-        local = local.filter((venta) => String(venta.ubicacionCodigo || "") === locationCode);
-      }
+      const local = filtrarVentasLocales(obtenerVentas().map(mapLocalVenta), {
+        esPendientes,
+        locationCode,
+        filtros,
+      });
       setCompras(local);
       setTotal(local.length);
       setTotalPages(1);
@@ -239,10 +223,30 @@ export default function HistorialVentas({
     }
   }, [puedeVer, page, filtros, esPendientes, locationCode]);
 
+  const limpiarFiltros = () => {
+    setPage(1);
+    setFiltros(filtrosInicialesHistorial(esPendientes));
+  };
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- carga de datos al cambiar filtros
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!puedeVer) return undefined;
+    let activo = true;
+    obtenerOpcionesFiltroVentas()
+      .then((opciones) => {
+        if (activo) setOpcionesFiltro(opciones);
+      })
+      .catch(() => {
+        if (activo) setOpcionesFiltro({ puntos: [], categorias: [], vendedores: [] });
+      });
+    return () => {
+      activo = false;
+    };
+  }, [puedeVer]);
 
   const ganadoTotal = useMemo(
     () =>
@@ -334,8 +338,8 @@ export default function HistorialVentas({
                   </p>
                 </div>
                 {!esAdmin ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900 border border-amber-200">
-                    <span>{user?.nombre || user?.correo || "Vendedor"}</span>
+                  <span className="inline-flex max-w-full items-center gap-1.5 self-start rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
+                    <span className="break-all">{user?.nombre || user?.correo || "Vendedor"}</span>
                   </span>
                 ) : null}
               </div>
@@ -344,11 +348,11 @@ export default function HistorialVentas({
 
             <div className="grid gap-3 border-b border-slate-100 px-4 py-4 sm:grid-cols-3 sm:px-6">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500"><ST>Pedidos</ST></p>
+                <p className="break-words text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500"><ST>Pedidos</ST></p>
                 <p className="mt-1 text-[length:var(--text-subtitle)] font-semibold text-slate-950">{total}</p>
               </div>
               <div className="rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 sm:col-span-2">
-                <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-700">
+                <p className="break-words text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-700">
                   <ST>Ganado (enviados en esta página)</ST>
                 </p>
                 <p className="mt-1 text-[length:var(--text-subtitle)] font-semibold text-slate-900">
@@ -366,11 +370,10 @@ export default function HistorialVentas({
               placeholder="Buscar por cliente o número de compra..."
               total={total}
               visibles={compras.length}
-              hayFiltrosActivos={Boolean(filtros.busqueda || filtros.desde || filtros.hasta || (!esPendientes && filtros.estado && filtros.estado !== "todos"))}
-              onLimpiar={() => {
-                setPage(1);
-                setFiltros({ busqueda: "", estado: esPendientes ? "Pendiente" : "todos", desde: "", hasta: "" });
-              }}
+              hayFiltrosActivos={hayFiltrosHistorial(filtros, { esPendientes, locationCode })}
+              onLimpiar={limpiarFiltros}
+              filaClassName="mx-auto flex w-full min-w-0 flex-col gap-4"
+              filtrosContenedorClassName="grid w-full min-w-0 grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-3"
               filtros={[
                 { id: "desde", label: "Desde", tipo: "fecha", value: filtros.desde, onChange: (valor) => { setPage(1); setFiltros((c) => ({ ...c, desde: valor })); } },
                 { id: "hasta", label: "Hasta", tipo: "fecha", value: filtros.hasta, onChange: (valor) => { setPage(1); setFiltros((c) => ({ ...c, hasta: valor })); } },
@@ -390,15 +393,84 @@ export default function HistorialVentas({
                         { value: "Devolucion", label: "Devolución" },
                       ],
                     }]),
+                ...(locationCode
+                  ? []
+                  : [{
+                      id: "punto",
+                      label: "Punto de venta",
+                      value: filtros.punto || "todos",
+                      onChange: (valor) => { setPage(1); setFiltros((c) => ({ ...c, punto: valor === "todos" ? "" : valor })); },
+                      opciones: [
+                        { value: "todos", label: "Todos" },
+                        ...opcionesFiltro.puntos.map((punto) => ({ value: punto.codigo, label: punto.nombre })),
+                      ],
+                    }]),
+                {
+                  id: "categoria",
+                  label: "Categoría",
+                  value: filtros.categoria || "todos",
+                  onChange: (valor) => { setPage(1); setFiltros((c) => ({ ...c, categoria: valor === "todos" ? "" : valor })); },
+                  opciones: [
+                    { value: "todos", label: "Todas" },
+                    ...opcionesFiltro.categorias.map((categoria) => ({ value: categoria, label: categoria })),
+                  ],
+                },
+                {
+                  id: "vendedor",
+                  label: "Vendedor",
+                  value: filtros.vendedorId || "todos",
+                  onChange: (valor) => { setPage(1); setFiltros((c) => ({ ...c, vendedorId: valor === "todos" ? "" : valor })); },
+                  opciones: [
+                    { value: "todos", label: "Todos" },
+                    ...opcionesFiltro.vendedores.map((vendedor) => ({ value: vendedor.id, label: vendedor.nombre })),
+                  ],
+                },
               ]}
             />
 
             {status === "loading" ? (
               <div className="px-4 py-14 text-center text-[length:var(--text-body)] text-slate-500"><ST>Cargando compras...</ST></div>
             ) : compras.length === 0 ? (
-              <AdminListaVacia onLimpiar={() => setFiltros({ busqueda: "", estado: esPendientes ? "Pendiente" : "todos", desde: "", hasta: "" })} />
+              <AdminListaVacia onLimpiar={limpiarFiltros} />
             ) : (
-              <div className="admin-table-shell">
+              <>
+              <ul className="divide-y divide-slate-100 md:hidden">
+                {compras.map((compra) => (
+                  <li key={compra.id || compra.numero} className="space-y-2 px-4 py-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="break-all font-medium text-slate-900">{compra.numero || "—"}</p>
+                        <p className="mt-0.5 text-slate-500"><ST>{formatFechaCorta(compra.fecha)}</ST></p>
+                      </div>
+                      <BadgeEstadoCompra estado={compra.estado} />
+                    </div>
+                    <p className="break-words text-slate-700">{compra.clienteNombre || "—"}</p>
+                    {compra.ubicacionNombre ? (
+                      <p className="break-words text-slate-500">
+                        <ST>Punto de venta</ST>: {compra.ubicacionNombre}
+                      </p>
+                    ) : null}
+                    {compra.vendedorNombre || compra.vendedorCorreo ? (
+                      <p className="break-words text-slate-500">
+                        <ST>Vendedor</ST>: {compra.vendedorNombre || compra.vendedorCorreo}
+                      </p>
+                    ) : null}
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-slate-600">{compra.cantidadProductos} <ST>productos</ST></p>
+                      <p className="font-semibold text-slate-900">{formatCRC(compra.total)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => abrirDetalle(compra)}
+                      className="inline-flex h-[var(--control-height)] w-full items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-[length:var(--text-body)] font-semibold text-slate-700"
+                      aria-label={`${t("Ver compra")} ${compra.numero}`}
+                    >
+                      <Eye className="size-4" /> <ST>Ver</ST>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="admin-table-shell hidden md:block">
                 <table className="w-full text-left text-[length:var(--text-body)]">
                   <thead>
                     <tr>
@@ -420,8 +492,16 @@ export default function HistorialVentas({
                         <td className="whitespace-nowrap px-4 py-3 text-slate-600">
                           <ST>{formatFechaCorta(compra.fecha)}</ST>
                         </td>
-                        <td className="max-w-[10rem] truncate px-4 py-3 text-slate-700" title={compra.clienteNombre}>
-                          {compra.clienteNombre}
+                        <td className="max-w-[16rem] px-4 py-3 text-slate-700">
+                          <p className="truncate" title={compra.clienteNombre}>{compra.clienteNombre}</p>
+                          {compra.ubicacionNombre ? (
+                            <p className="truncate text-slate-500" title={compra.ubicacionNombre}>{compra.ubicacionNombre}</p>
+                          ) : null}
+                          {compra.vendedorNombre || compra.vendedorCorreo ? (
+                            <p className="truncate text-slate-500" title={compra.vendedorNombre || compra.vendedorCorreo}>
+                              {compra.vendedorNombre || compra.vendedorCorreo}
+                            </p>
+                          ) : null}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-slate-700">{compra.cantidadProductos}</td>
                         <td className="whitespace-nowrap px-4 py-3 text-slate-800">{formatCRC(compra.total)}</td>
@@ -443,6 +523,7 @@ export default function HistorialVentas({
                   </tbody>
                 </table>
               </div>
+              </>
             )}
 
             <AdminPaginacion
@@ -459,7 +540,7 @@ export default function HistorialVentas({
         {detalle ? (
           <AdminModal open onClose={() => setDetalle(null)} maxWidth="max-w-xl" labelledBy="venta-detalle-title">
             <AdminModalHeader>
-              <h2 id="venta-detalle-title" className="text-[length:var(--text-subtitle)] font-semibold text-slate-900">
+              <h2 id="venta-detalle-title" className="break-all text-[length:var(--text-subtitle)] font-semibold text-slate-900">
                 <ST>Compra</ST> {detalle.numero}
               </h2>
               <button type="button" onClick={() => setDetalle(null)} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100" aria-label={t("Cerrar")}>
@@ -470,41 +551,27 @@ export default function HistorialVentas({
               {actionError ? (
                 <p className="mb-3 text-[length:var(--text-body)] text-rose-700 no-underline" role="alert"><ST>{actionError}</ST></p>
               ) : null}
-              <dl className="grid gap-2 text-[length:var(--text-body)]">
-                {detalle.vendedorNombre || detalle.vendedorCorreo ? (
-                  <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
-                    <dt className="text-slate-500"><ST>Vendedor</ST></dt>
-                    <dd className="font-medium text-slate-900 no-underline">
-                      {detalle.vendedorNombre || detalle.vendedorCorreo}
-                    </dd>
-                  </div>
-                ) : null}
+              <dl className="grid text-[length:var(--text-body)]">
+                <FilaDetalle etiqueta="Vendedor">
+                  {detalle.vendedorNombre || detalle.vendedorCorreo || <ST>Sin registrar</ST>}
+                </FilaDetalle>
                 <ClienteVenta detalle={detalle} />
                 {detalle.ubicacionNombre ? (
-                  <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
-                    <dt className="text-slate-500"><ST>Punto de venta</ST></dt>
-                    <dd className="font-medium text-slate-900 no-underline">{detalle.ubicacionNombre}</dd>
-                  </div>
+                  <FilaDetalle etiqueta="Punto de venta">{detalle.ubicacionNombre}</FilaDetalle>
                 ) : null}
-                <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
-                  <dt className="text-slate-500"><ST>Fecha</ST></dt>
-                  <dd className="font-medium text-slate-900 no-underline"><ST>{formatFecha(detalle.fecha)}</ST></dd>
-                </div>
-                <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
-                  <dt className="text-slate-500"><ST>Método</ST></dt>
-                  <dd className="font-medium text-slate-900 no-underline"><ST>{detalle.metodoPago}</ST></dd>
-                </div>
-                <div className="flex justify-between gap-3 border-b border-slate-100 py-2">
-                  <dt className="text-slate-500"><ST>Estado</ST></dt>
+                <FilaDetalle etiqueta="Fecha"><ST>{formatFecha(detalle.fecha)}</ST></FilaDetalle>
+                <FilaDetalle etiqueta="Método"><ST>{detalle.metodoPago}</ST></FilaDetalle>
+                <div className={filaDetalle}>
+                  <dt className="shrink-0 text-slate-500"><ST>Estado</ST></dt>
                   <dd><BadgeEstadoCompra estado={detalle.estado} /></dd>
                 </div>
               </dl>
               <ul className="mt-4 space-y-2 text-[length:var(--text-body)]">
                 {(detalle.items || []).map((item, index) => (
                   <li key={`${item.nombre}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                    <div className="flex justify-between gap-3">
-                      <span className="font-medium no-underline"><ST>{item.nombre}</ST></span>
-                      <span className="font-semibold">{formatCRC(item.subtotal)}</span>
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="min-w-0 break-words font-medium no-underline"><ST>{item.nombre}</ST></span>
+                      <span className="shrink-0 font-semibold">{formatCRC(item.subtotal)}</span>
                     </div>
                     <p className="mt-1 text-[length:var(--text-body)] text-slate-500">{item.cantidad} × {formatCRC(item.precioUnitario)}</p>
                   </li>
@@ -531,12 +598,12 @@ export default function HistorialVentas({
               ) : null}
 
               {puedeGestionar && estadoDetalle === "Pendiente" ? (
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                   <button
                     type="button"
                     disabled={Boolean(actionLoading)}
                     onClick={() => actualizarEstado(detalle, "Aceptado")}
-                    className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full bg-slate-800 px-4 text-[length:var(--text-body)] font-semibold text-white disabled:opacity-50"
+                    className="inline-flex h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full bg-slate-800 px-4 text-[length:var(--text-body)] font-semibold text-white disabled:opacity-50 sm:w-auto"
                   >
                     <Check className="size-4" /> <ST>Aceptado</ST>
                   </button>
@@ -544,7 +611,7 @@ export default function HistorialVentas({
                     type="button"
                     disabled={Boolean(actionLoading)}
                     onClick={() => actualizarEstado(detalle, "Rechazado")}
-                    className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 disabled:opacity-50"
+                    className="inline-flex h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 disabled:opacity-50 sm:w-auto"
                   >
                     <X className="size-4" /> <ST>Rechazado</ST>
                   </button>
@@ -552,12 +619,12 @@ export default function HistorialVentas({
               ) : null}
 
               {puedeGestionar && estadoDetalle === "Aceptado" ? (
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                   <button
                     type="button"
                     disabled={Boolean(actionLoading)}
                     onClick={() => actualizarEstado(detalle, "Entregado")}
-                    className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full bg-slate-800 px-4 text-[length:var(--text-body)] font-semibold text-white disabled:opacity-50"
+                    className="inline-flex h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full bg-slate-800 px-4 text-[length:var(--text-body)] font-semibold text-white disabled:opacity-50 sm:w-auto"
                   >
                     <Truck className="size-4" /> <ST>Entregado</ST>
                   </button>
@@ -565,7 +632,7 @@ export default function HistorialVentas({
                     type="button"
                     disabled={Boolean(actionLoading)}
                     onClick={() => actualizarEstado(detalle, "Pendiente")}
-                    className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 disabled:opacity-50"
+                    className="inline-flex h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 disabled:opacity-50 sm:w-auto"
                   >
                     <RotateCcw className="size-4" /> <ST>Marcar como pendiente</ST>
                   </button>
@@ -573,12 +640,12 @@ export default function HistorialVentas({
               ) : null}
 
               {puedeGestionar && estadoDetalle === "Rechazado" ? (
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                   <button
                     type="button"
                     disabled={Boolean(actionLoading)}
                     onClick={() => actualizarEstado(detalle, "Pendiente")}
-                    className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 disabled:opacity-50"
+                    className="inline-flex h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 disabled:opacity-50 sm:w-auto"
                   >
                     <RotateCcw className="size-4" /> <ST>Reabrir como pendiente</ST>
                   </button>
@@ -586,12 +653,12 @@ export default function HistorialVentas({
               ) : null}
 
               {puedeGestionar && estadoDetalle === "Entregado" ? (
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                   <button
                     type="button"
                     disabled={Boolean(actionLoading)}
                     onClick={() => actualizarEstado(detalle, "Devolucion")}
-                    className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full border border-violet-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-violet-800 disabled:opacity-50"
+                    className="inline-flex h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full border border-violet-300 bg-white px-4 text-[length:var(--text-body)] font-semibold text-violet-800 disabled:opacity-50 sm:w-auto"
                   >
                     <RotateCcw className="size-4" /> <ST>Marcar devolución</ST>
                   </button>

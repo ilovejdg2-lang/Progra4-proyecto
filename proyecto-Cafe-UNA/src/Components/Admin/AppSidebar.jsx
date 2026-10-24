@@ -191,6 +191,7 @@ export function AppSidebar() {
     { to: "/admin/equipo", etiqueta: "Equipo", grupo: "Sobre nosotros", icono: Users, ver: puedeCms },
     { to: "/admin/producto", etiqueta: "Producto", grupo: "Manejo de inventario", icono: Box, ver: puedeProductos },
     { to: "/admin/puntos-venta", etiqueta: "Puntos de venta", grupo: "Manejo de inventario", icono: Store, ver: puedePuntosVenta },
+    { to: "/admin/puntos-venta/dias-sin-retiro", etiqueta: "Días sin retiro", grupo: "Manejo de inventario", icono: CalendarClock, ver: puedeInventario },
     { to: "/admin/activos-fijos", etiqueta: "Activos fijos", grupo: "Manejo de inventario", icono: Wrench, ver: puedeActivosFijos },
     { to: "/admin/distribucion", etiqueta: "Distribución", grupo: "Manejo de inventario", icono: Truck, ver: puedeDistribucion },
     { to: "/admin/salidas-inventario", etiqueta: "Salidas de bodega", grupo: "Manejo de inventario", icono: PackageMinus, ver: puedeSalidasBodega },
@@ -258,6 +259,7 @@ export function AppSidebar() {
   const isInventoryRoute =
     pathname === "/admin/producto" ||
     pathname === "/admin/puntos-venta" ||
+    pathname === "/admin/puntos-venta/dias-sin-retiro" ||
     pathname === "/admin/activos-fijos" ||
     pathname === "/admin/distribucion" ||
     pathname === "/admin/ventas-presenciales" ||
@@ -698,6 +700,16 @@ export function AppSidebar() {
                       <Link to="/admin/puntos-venta" activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Store />
                         <span><ST>Puntos de venta</ST></span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  ) : null}
+                  {puedeInventario ? (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <Link to="/admin/puntos-venta/dias-sin-retiro" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <CalendarClock />
+                        <span><ST>Días sin retiro</ST></span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>

@@ -95,6 +95,33 @@ export async function listarDisponibilidad(tipo, ubicacionId = null) {
   };
 }
 
+export async function listarCierresCompra(ubicacionId = null) {
+  const params = new URLSearchParams();
+  if (ubicacionId) params.set("ubicacionId", String(ubicacionId));
+  const qs = params.size ? `?${params}` : "";
+  const data = await apiRequest(`${BASE}/disponibilidad/cierres-compra${qs}`, {
+    skipAuth: true,
+  });
+  return (Array.isArray(data) ? data : []).map(mapBloque).filter(Boolean);
+}
+
+export async function listarCierresCompraAdmin() {
+  const data = await apiRequest(`${BASE}/disponibilidad/cierres-compra/admin`);
+  return (Array.isArray(data) ? data : []).map(mapBloque).filter(Boolean);
+}
+
+export async function guardarCierreCompra(payload) {
+  const data = await apiRequest(`${BASE}/disponibilidad/cierres-compra`, {
+    method: "POST",
+    data: payload,
+  });
+  return mapBloque(data);
+}
+
+export async function eliminarCierreCompra(id) {
+  await apiRequest(`${BASE}/disponibilidad/cierres-compra/${id}`, { method: "DELETE" });
+}
+
 export async function listarDisponibilidadPublica(tipo, desde, hasta, ubicacionId = null) {
   const params = new URLSearchParams({ tipo: tipo || "visitas" });
   if (desde) params.set("desde", desde);

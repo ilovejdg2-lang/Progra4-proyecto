@@ -79,6 +79,7 @@ describe("HistorialComprasContent", () => {
       subtotal: 5000,
       impuestos: 650,
       ubicacionNombre: "FUNDA-UNA",
+      ubicacionDireccion: "Avenida 2 y Calle 9, Heredia",
       items: [{ nombre: "Café de prueba", cantidad: 1, precioUnitario: 5650, subtotal: 5650 }],
     });
     render(<HistorialComprasContent />);
@@ -86,6 +87,8 @@ describe("HistorialComprasContent", () => {
     fireEvent.click(await screen.findByRole("button", { name: /Ver detalle/i }));
 
     expect(await screen.findByText("FUNDA-UNA")).toBeInTheDocument();
+    expect(screen.getByText("Avenida 2 y Calle 9, Heredia")).toBeInTheDocument();
+    expect(screen.getByText("Dirección de retiro")).toBeInTheDocument();
     expect(screen.getByText("Café de prueba")).toBeInTheDocument();
     expect(screen.getByText("Rastreo del pedido")).toBeInTheDocument();
     expect(screen.getByText("Tu pedido está en procesamiento.")).toBeInTheDocument();

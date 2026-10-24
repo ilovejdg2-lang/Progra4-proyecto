@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Check, MapPin } from "lucide-react";
+import { Check, MapPin, Store } from "lucide-react";
 
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
 import { IconoSitio } from "../../Components/IconoSitio/IconoSitio";
@@ -201,7 +201,7 @@ export default function PropuestaProductor() {
     }
   };
 
-  const pagina = `voluntariado-page${showPrepaint ? " voluntariado-page--prepaint" : ""}`;
+  const pagina = `voluntariado-page propuesta-page${showPrepaint ? " voluntariado-page--prepaint" : ""}`;
 
   if (confirmacion) {
     return (
@@ -247,6 +247,18 @@ export default function PropuestaProductor() {
           <div className="voluntariado-header">
             <h1><ST>Propuesta de productor</ST></h1>
             <p><ST>Contanos sobre tu emprendimiento para que el equipo de Café UNA pueda revisarlo.</ST></p>
+          </div>
+
+          <div className="donacion-intro">
+            <div className="donacion-intro__encabezado">
+              <Store size={20} aria-hidden="true" />
+              <h2><ST>Promoción del emprendimiento</ST></h2>
+            </div>
+            <p>
+              <ST>
+                Café UNA usa este espacio para dar a conocer tu emprendimiento: quiénes son, qué producen y cómo contactarlos. La publicación busca promover tu proyecto. Café UNA no vende tus productos ni comercializa en tu nombre.
+              </ST>
+            </p>
           </div>
 
           <form
@@ -455,7 +467,6 @@ export default function PropuestaProductor() {
                   <div className="campo">
                     <label htmlFor="whatsapp">WhatsApp</label>
                     <input id="whatsapp" inputMode="tel" placeholder="+506 8888 8888" value={form.whatsapp} onChange={(event) => cambiar("whatsapp", event.target.value)} />
-                    <span className="mensaje-info"><ST>Número con código de país.</ST></span>
                     {errores.whatsapp ? <span className="mensaje-error"><ST>{errores.whatsapp}</ST></span> : null}
                   </div>
                   <div className="campo">
@@ -502,7 +513,6 @@ export default function PropuestaProductor() {
                       aria-invalid={Boolean(errores.telefono)}
                       onChange={(event) => cambiar("telefono", event.target.value)}
                     />
-                    <span className="mensaje-info"><ST>Formato local de Costa Rica o internacional.</ST></span>
                     {errores.telefono ? <span className="mensaje-error"><ST>{errores.telefono}</ST></span> : null}
                   </div>
                 </div>

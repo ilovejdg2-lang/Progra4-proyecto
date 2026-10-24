@@ -80,19 +80,24 @@ export function UiSelect({
       const viewportPad = 8;
       const gap = 6;
       const preferred = Math.min(288, window.innerHeight * 0.55);
-      const spaceBelow = Math.max(96, window.innerHeight - rect.bottom - viewportPad - gap);
-      const maxHeight = Math.min(preferred, spaceBelow);
-      const width = Math.max(rect.width, footer ? 264 : rect.width);
+      const spaceBelow = window.innerHeight - rect.bottom - viewportPad - gap;
+      const spaceAbove = rect.top - viewportPad - gap;
+      const openUp = spaceBelow < Math.min(preferred, 168) && spaceAbove > spaceBelow;
+      const available = Math.max(48, openUp ? spaceAbove : spaceBelow);
+      const maxHeight = Math.min(preferred, available);
+      const maxWidth = Math.max(160, window.innerWidth - viewportPad * 2);
+      const width = Math.min(Math.max(rect.width, footer ? 264 : rect.width), maxWidth);
       let left = rect.left;
       if (left + width > window.innerWidth - viewportPad) {
         left = Math.max(viewportPad, window.innerWidth - width - viewportPad);
       }
-      // Siempre debajo del trigger para no tapar etiquetas (ROL, ESTADO, etc.).
       setMenuStyle({
         position: "fixed",
-        top: `${rect.bottom + gap}px`,
+        top: openUp ? "auto" : `${rect.bottom + gap}px`,
+        bottom: openUp ? `${window.innerHeight - rect.top + gap}px` : "auto",
         left: `${left}px`,
         width: `${width}px`,
+        height: "auto",
         maxHeight: `${maxHeight}px`,
         zIndex: 100030,
       });

@@ -47,6 +47,7 @@ const AdminEquipo = lazy(() => import("./Pages/Admin/Equipo/AdminEquipo"));
 const AdminHistoriaCompleta = lazy(() => import("./Pages/Admin/HistoriaCompleta/AdminHistoriaCompleta"));
 const AdminInventarioProducto = lazy(() => import("./Pages/Admin/InventarioProducto/InventarioProducto"));
 const AdminPuntosVenta = lazy(() => import("./Pages/Admin/PuntosVenta/PuntosVenta"));
+const AdminDiasSinRetiro = lazy(() => import("./Pages/Admin/PuntosVenta/DiasSinRetiro"));
 const AdminActivosFijos = lazy(() => import("./Pages/Admin/ActivosFijos/ActivosFijos"));
 const AdminDistribucion = lazy(() => import("./Pages/Admin/Distribucion/Distribucion"));
 const AdminSalidasInventario = lazy(() => import("./Pages/Admin/SalidasInventario/SalidasInventario"));
@@ -358,6 +359,11 @@ const adminPuntosVentaRoute = createRoute({
     path: "/admin/puntos-venta",
     component: AdminPuntosVenta,
 })
+const adminDiasSinRetiroRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/puntos-venta/dias-sin-retiro",
+    component: AdminDiasSinRetiro,
+})
 const adminActivosFijosRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/activos-fijos",
@@ -637,6 +643,7 @@ const routeTree= rootRoute.addChildren([
     adminHistoriaCompletaRoute,
     adminProductoRoute,
     adminPuntosVentaRoute,
+    adminDiasSinRetiroRoute,
     adminActivosFijosRoute,
     adminDistribucionRoute,
     adminSalidasInventarioRoute,

@@ -40,6 +40,12 @@ describe("producer proposal image intake", () => {
     crearPropuestaProductor.mockReset();
   });
 
+  it("explica que la publicación promueve el emprendimiento", () => {
+    render(<PropuestaProductor />);
+    expect(screen.getByRole("heading", { name: "Promoción del emprendimiento" })).toBeVisible();
+    expect(screen.getByText(/no vende tus productos ni comercializa en tu nombre/i)).toBeVisible();
+  });
+
   it("supports a keyboard-accessible picker and keeps selection deferred", async () => {
     const user = userEvent.setup();
     render(<PropuestaProductor />);

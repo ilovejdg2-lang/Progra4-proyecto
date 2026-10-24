@@ -576,6 +576,8 @@ body.checkout-route-active {
 
 .checkout-pos-detail {
   margin-top: 0.95rem;
+  min-width: 0;
+  max-width: 100%;
   padding: 0.9rem 0.95rem 0.8rem;
   border: 1px solid #efe4d8;
   border-radius: 18px;
@@ -720,7 +722,10 @@ body.checkout-route-active {
 }
 
 .checkout-retiro {
+  box-sizing: border-box;
   margin-top: 0.85rem;
+  min-width: 0;
+  max-width: 100%;
   padding: 0.7rem 0.8rem 0.15rem;
   border: 1px solid #efe4d8;
   border-radius: 14px;
@@ -729,12 +734,15 @@ body.checkout-route-active {
 
 .checkout-retiro__title {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
   gap: 0.4rem;
+  min-width: 0;
   margin: 0 0 0.15rem;
   color: #1c1614;
   font-size: 0.88rem;
   font-weight: 800;
+  line-height: 1.3;
 }
 
 .checkout-retiro__title svg {
@@ -756,19 +764,43 @@ body.checkout-route-active {
 
 .checkout-retiro__row {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.42rem 0;
+  gap: 0.15rem 0.85rem;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.5rem 0;
   border-top: 1px solid #f1ebe4;
   color: #5c514a;
   font-size: 0.8rem;
 }
 
+.checkout-retiro__row strong,
+.checkout-retiro__row span {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
 .checkout-retiro__row strong {
+  flex: 1 1 11rem;
   color: #1c1614;
   font-weight: 700;
-  white-space: nowrap;
+}
+
+.checkout-retiro__row span {
+  flex: 1 1 9rem;
+}
+
+@media (max-width: 480px) {
+  .checkout-pos-detail {
+    padding: 0.75rem 0.7rem 0.65rem;
+  }
+
+  .checkout-retiro {
+    padding: 0.65rem 0.65rem 0.15rem;
+  }
 }
 
 .checkout-pos__badge::before {
@@ -1060,6 +1092,11 @@ body.checkout-route-active {
 @media (max-width: 640px) {
   .checkout-receipt__meta {
     grid-template-columns: 1fr;
+  }
+
+  .checkout-success-card {
+    padding: 1.05rem 0.85rem 1rem;
+    border-radius: 20px;
   }
 }
 

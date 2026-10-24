@@ -57,7 +57,7 @@ export function PointOfSaleStockEditor({ open, location, product, stockRecord, o
             <h2 id="pos-stock-editor-title" className="truncate text-[length:var(--text-subtitle)] font-semibold text-slate-950">
               {tTitulo}
             </h2>
-            <p className="truncate text-[length:var(--text-body)] text-slate-500">
+            <p className="break-words text-[length:var(--text-body)] text-slate-500">
               <ST>{product.nombre}</ST> · <ST>{location?.name}</ST>
             </p>
           </div>
@@ -77,7 +77,7 @@ export function PointOfSaleStockEditor({ open, location, product, stockRecord, o
             <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">
               <ST>Ubicación</ST>
             </p>
-            <p className="mt-1 text-[length:var(--text-body)] font-semibold text-slate-900"><ST>{location?.name}</ST></p>
+            <p className="mt-1 break-words text-[length:var(--text-body)] font-semibold text-slate-900"><ST>{location?.name}</ST></p>
             <p className="mt-1 text-[length:var(--text-body)] text-slate-500">
               <ST>Este ajuste modifica únicamente el stock de este punto de venta.</ST>
             </p>
@@ -91,7 +91,7 @@ export function PointOfSaleStockEditor({ open, location, product, stockRecord, o
                 setStock(event.target.value);
                 setValidationError("");
               }}
-              className={`h-[var(--control-height)] rounded-full border bg-slate-50 px-3 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0 ${message ? "border-red-500" : "border-slate-200"}`}
+              className={`box-border h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full border bg-slate-50 px-3 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0 ${message ? "border-red-500" : "border-slate-200"}`}
               aria-invalid={Boolean(message)}
               aria-describedby={message ? "pos-stock-error" : "pos-stock-help"}
               required
@@ -110,7 +110,7 @@ export function PointOfSaleStockEditor({ open, location, product, stockRecord, o
                 setReason(event.target.value);
                 setValidationError("");
               }, MAX_PALABRAS_MOTIVO)}
-              className={`rounded-2xl border bg-slate-50 px-3 py-2.5 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0 ${message ? "border-red-500" : "border-slate-200"}`}
+              className={`box-border w-full min-w-0 max-w-full rounded-2xl border bg-slate-50 px-3 py-2.5 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0 ${message ? "border-red-500" : "border-slate-200"}`}
               aria-invalid={Boolean(message)}
               aria-describedby={message ? "pos-stock-error" : undefined}
               required
@@ -124,7 +124,7 @@ export function PointOfSaleStockEditor({ open, location, product, stockRecord, o
           ) : null}
           <div className="border-t border-slate-100 pt-4">
             <AdminModalActions
-              className="w-full justify-start"
+              className="w-full flex-col sm:flex-row sm:justify-start"
               onCancel={onClose}
               primaryLabel={isSaving ? "Guardando..." : "Guardar stock"}
               primaryDisabled={isSaving}

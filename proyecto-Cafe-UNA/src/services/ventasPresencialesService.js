@@ -57,6 +57,14 @@ export function normalizarVentaPresencial(raw) {
     clienteCorreo: String(firstDefined(raw, ["clienteCorreo", "ClienteCorreo"]) || ""),
     metodoPago: String(firstDefined(raw, ["metodoPago", "MetodoPago"]) || "Efectivo"),
     total: Number(firstDefined(raw, ["total", "Total"]) || 0),
+    montoRecibido: (() => {
+      const valor = firstDefined(raw, ["montoRecibido", "MontoRecibido"]);
+      return valor == null || valor === "" ? null : Number(valor);
+    })(),
+    vuelto: (() => {
+      const valor = firstDefined(raw, ["vuelto", "Vuelto"]);
+      return valor == null || valor === "" ? null : Number(valor);
+    })(),
     correoEnviado: Boolean(firstDefined(raw, ["correoEnviado", "CorreoEnviado"])),
     items: items.length > 0 ? items : (raw.productoId ? [{
       productoId: String(raw.productoId),
