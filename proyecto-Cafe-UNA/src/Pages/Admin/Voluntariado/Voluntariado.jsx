@@ -57,7 +57,7 @@ import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
 import { asegurarCamposEnEspanol, camposParaVistaAdmin } from "../../../lib/traducir";
 
-const ESTADOS = ["Pendiente", "En revisi\u00f3n", "Aprobado", "Rechazado"];
+const ESTADOS = ["Pendiente", "En revisi\u00f3n", "Aprobado", "Rechazado", "Cancelada"];
 
 import { TIPOS_VOLUNTARIADO } from "../../../lib/voluntariadoCatalogo";
 
@@ -70,7 +70,7 @@ const HORARIOS_VOLUNTARIADO = [
 ];
 
 const accionBtnBase =
-  "inline-flex items-center justify-center gap-1 rounded-full border text-[11px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
+  "inline-flex items-center justify-center gap-1.5 rounded-full border text-[11px] font-semibold leading-none whitespace-nowrap transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
 
 const btnNegro =
   "inline-flex items-center justify-center rounded-full border border-slate-950 bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60";
@@ -86,6 +86,7 @@ const colorEstado = {
   "En revisi\u00f3n": "text-sky-800",
   Aprobado: "text-green-600",
   Rechazado: "text-red-600",
+  Cancelada: "text-slate-600 dark:text-slate-400",
 };
 
 function normalizarEstado(estado) {
@@ -97,6 +98,7 @@ function normalizarEstado(estado) {
 
   if (normalized === "aprobada" || normalized === "aprobado") return "Aprobado";
   if (normalized === "rechazada" || normalized === "rechazado") return "Rechazado";
+  if (normalized === "cancelada" || normalized === "cancelado") return "Cancelada";
   if (normalized === "en revision" || normalized === "revision") return "En revisi\u00f3n";
   return "Pendiente";
 }
@@ -232,12 +234,12 @@ function AccionesSolicitud({
   if (esMovil) {
     return (
       <div className="flex flex-wrap gap-1.5">
-        <button type="button" onClick={onVer} className={`${verCls} h-8 px-2.5`}>
-          <Eye className="size-3 shrink-0" aria-hidden="true" />
+        <button type="button" onClick={onVer} className={`${verCls} h-8 px-3`}>
+          <Eye className="size-3.5 shrink-0" aria-hidden="true" />
           <span><ST>Ver</ST></span>
         </button>
-        <button type="button" onClick={onEditar} className={`${editarCls} h-8 px-2.5`}>
-          <Pencil className="size-3 shrink-0" aria-hidden="true" />
+        <button type="button" onClick={onEditar} className={`${editarCls} h-8 px-3`}>
+          <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
           <span><ST>Editar</ST></span>
         </button>
         {esSuperAdmin ? (
@@ -245,12 +247,12 @@ function AccionesSolicitud({
             type="button"
             onClick={onEliminar}
             disabled={eliminando === solicitud.id}
-            className={`${eliminarCls} h-8 px-2.5 disabled:cursor-not-allowed disabled:opacity-50`}
+            className={`${eliminarCls} h-8 px-3 disabled:cursor-not-allowed disabled:opacity-50`}
           >
             {eliminando === solicitud.id ? (
-              <RefreshCw className="size-3 shrink-0 animate-spin" aria-hidden="true" />
+              <RefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden="true" />
             ) : (
-              <Trash2 className="size-3 shrink-0" aria-hidden="true" />
+              <Trash2 className="size-3.5 shrink-0" aria-hidden="true" />
             )}
             <span><ST>Eliminar</ST></span>
           </button>
@@ -260,13 +262,13 @@ function AccionesSolicitud({
   }
 
   return (
-    <div className="flex gap-1">
-      <button type="button" onClick={onVer} className={`${verCls} h-7 px-2`} title={t("Ver solicitud")}>
-        <Eye className="size-3 shrink-0" aria-hidden="true" />
+    <div className="flex items-center gap-1.5 whitespace-nowrap">
+      <button type="button" onClick={onVer} className={`${verCls} h-7 px-2.5`} title={t("Ver solicitud")}>
+        <Eye className="size-3.5 shrink-0" aria-hidden="true" />
         <span><ST>Ver</ST></span>
       </button>
-      <button type="button" onClick={onEditar} className={`${editarCls} h-7 px-2`} title={t("Editar solicitud")}>
-        <Pencil className="size-3 shrink-0" aria-hidden="true" />
+      <button type="button" onClick={onEditar} className={`${editarCls} h-7 px-2.5`} title={t("Editar solicitud")}>
+        <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
         <span><ST>Editar</ST></span>
       </button>
       {esSuperAdmin ? (
@@ -274,13 +276,13 @@ function AccionesSolicitud({
           type="button"
           onClick={onEliminar}
           disabled={eliminando === solicitud.id}
-          className={`${eliminarCls} h-7 px-2 disabled:cursor-not-allowed disabled:opacity-50`}
+          className={`${eliminarCls} h-7 px-2.5 disabled:cursor-not-allowed disabled:opacity-50`}
           title={t("Eliminar solicitud")}
         >
           {eliminando === solicitud.id ? (
-            <RefreshCw className="size-3 shrink-0 animate-spin" aria-hidden="true" />
+            <RefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden="true" />
           ) : (
-            <Trash2 className="size-3 shrink-0" aria-hidden="true" />
+            <Trash2 className="size-3.5 shrink-0" aria-hidden="true" />
           )}
           <span><ST>Eliminar</ST></span>
         </button>
@@ -463,12 +465,12 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
               <DetailField
                 icon={Calendar}
                 label="Fecha de voluntariado"
-                value={solicitud.dias || "No indicada"}
+                value={solicitud.dias || solicitud.fechaSolicitud || "No indicada"}
               />
               <DetailField
                 icon={Clock}
                 label="Horario asignado"
-                value={solicitud.horario || "No indicado"}
+                value={solicitud.horario || "Horario flexible"}
                 className="md:col-span-2"
                 traducirValor
               />
@@ -1091,7 +1093,6 @@ const AdminVoluntariado = () => {
                             <tr>
                               <th><ST>Nombre</ST></th>
                               <th><ST>Tipo de voluntariado</ST></th>
-                              <th><ST>Fecha y horario</ST></th>
                               <th><ST>Estado</ST></th>
                               <th><ST>Acciones</ST></th>
                             </tr>
@@ -1104,15 +1105,6 @@ const AdminVoluntariado = () => {
                                   <div className="mt-1 text-[length:var(--text-body)] text-slate-500">{solicitud.email || t("Sin correo")}</div>
                                 </td>
                                 <td className="px-5 py-4 text-slate-700">{solicitud.tipoVoluntariado ? <ST>{solicitud.tipoVoluntariado}</ST> : t("No indicado")}</td>
-                                <td className="px-5 py-4 text-slate-700">
-                                  <div className="font-semibold text-slate-900">{solicitud.dias || solicitud.fechaSolicitud || t("No indicada")}</div>
-                                  {solicitud.horario && (
-                                    <div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
-                                      <Clock className="size-3 text-slate-400" />
-                                      <span>{solicitud.horario}</span>
-                                    </div>
-                                  )}
-                                </td>
                                 <td className="px-5 py-4">
                                   <BadgeEstado estado={solicitud.estado} />
                                 </td>
@@ -1146,11 +1138,6 @@ const AdminVoluntariado = () => {
 
                           <div className="grid gap-1 text-sm text-slate-600">
                             <p><span className="font-medium text-slate-800"><ST>Tipo</ST>:</span> {solicitud.tipoVoluntariado ? <ST>{solicitud.tipoVoluntariado}</ST> : t("No indicado")}</p>
-                            <p>
-                              <span className="font-medium text-slate-800"><ST>Fecha y horario</ST>:</span>{" "}
-                              {solicitud.dias || solicitud.fechaSolicitud || t("No indicada")}
-                              {solicitud.horario ? ` • ${solicitud.horario}` : ""}
-                            </p>
                           </div>
 
                           <AccionesSolicitud

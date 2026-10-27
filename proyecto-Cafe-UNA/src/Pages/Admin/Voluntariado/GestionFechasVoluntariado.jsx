@@ -2,22 +2,35 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { format, isBefore, startOfDay } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import {
+  AlertTriangle,
   CalendarCheck2,
   CalendarDays,
   CalendarX2,
   CheckCircle2,
   Clock,
   Info,
+  Mail,
   Plus,
   RefreshCw,
+  RotateCcw,
   Save,
+  Send,
   Tag,
   Trash2,
+  Users,
   X,
   XCircle,
 } from "lucide-react";
 
 import { Calendar } from "@/Components/ui/calendar";
+import {
+  AdminModal,
+  AdminModalBody,
+  AdminModalHeader,
+  AdminModalFooter,
+  adminBtnCancel,
+  adminBtnPrimary,
+} from "../../../Components/Admin/ui/AdminModal";
 import { ST } from "../../../Components/T/ST";
 import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { useTraducir } from "../../../hooks/useTraducir";
@@ -28,11 +41,16 @@ import {
 } from "../../../lib/voluntariadoCatalogo";
 import {
   actualizarEstadoFechaAdmin,
+  cancelarActividadYRetirarFecha,
   eliminarFechaAdmin,
   habilitarFechaAdmin,
+  obtenerConfigFechas,
+  obtenerHoyIso,
   obtenerResumenTipos,
+  obtenerSolicitudesVinculadasFecha,
   obtenerTodasFechasAdmin,
-  toggleFechaAdmin,
+  reintentarNotificacionesCancelacion,
+  ZONA_HORARIA_PREDETERMINADA,
 } from "../../../services/voluntariadoFechasService";
 
 function toIsoString(date) {
@@ -64,10 +82,19 @@ function getCantidadFechas(resumen, tipo, esActivo, totalActivas) {
   return 0;
 }
 
+const TEXTO_ORIENTACION_DEFAULT =
+  "Estimados participantes: por motivos de logística y mantenimiento de las instalaciones de Café UNA, la actividad programada para esta fecha ha sido cancelada. Sus solicitudes se conservan en su historial de cliente. Les invitamos a ingresar nuevamente a nuestro portal para postular en una de las nuevas fechas disponibles.";
+
 export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
   const { idioma } = useIdioma();
   const locale = idioma === "en" ? enUS : es;
-  const hoy = useMemo(() => startOfDay(new Date()), []);
+
+  const [zonaHoraria, setZonaHoraria] = useState(ZONA_HORARIA_PREDETERMINADA);
+  const hoyIso = useMemo(() => obtenerHoyIso(zonaHoraria), [zonaHoraria]);
+  const hoy = useMemo(
+    () => parseIsoLocal(hoyIso) || startOfDay(new Date()),
+    [hoyIso]
+  );
 
   const [tipoSeleccionado, setTipoSeleccionado] = useState(TIPOS_VOLUNTARIADO[0]);
   const [resumenTipos, setResumenTipos] = useState({});
@@ -86,10 +113,43 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
   const [horarios, setHorarios] = useState([]);
   const [nuevoHorarioPersonalizado, setNuevoHorarioPersonalizado] = useState("");
 
+  // Estado para el modal de confirmación de cancelación de fecha con inscritos
+  const [modalCancelacionAbierto, setModalCancelacionAbierto] = useState(false);
+  const [cancelacionConfig, setCancelacionConfig] = useState({
+    iso: "",
+    accion: "deshabilitar",
+    solicitudes: [],
+    orientacion: TEXTO_ORIENTACION_DEFAULT,
+  });
+  const [cancelandoActividad, setCancelandoActividad] = useState(false);
+  const [reintentando, setReintentando] = useState(false);
+  const [resultadoCancelacion, setResultadoCancelacion] = useState(null);
+
+  // Estado para el modal del sistema de confirmación de eliminación sin participantes
+  const [fechaAEliminar, setFechaAEliminar] = useState(null);
+
   const tTitulo = useTraducir("Gestión de fechas y horarios de voluntariado");
   const tSub = useTraducir(
     "Configure la disponibilidad de fechas y horarios de forma independiente para cada tipo de voluntariado. Los días habilitados se identifican con un círculo negro en el calendario."
   );
+
+  // Cargar configuración de zona horaria del servidor
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      try {
+        const config = await obtenerConfigFechas();
+        if (!cancelado && config?.zonaHoraria) {
+          setZonaHoraria(config.zonaHoraria);
+        }
+      } catch (err) {
+        console.warn("No se pudo cargar la configuración de fechas:", err);
+      }
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, []);
 
   const cargarResumen = useCallback(async () => {
     try {
@@ -126,6 +186,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
     setFechaSeleccionada(null);
     setError(null);
     setMensajeExito(null);
+    setResultadoCancelacion(null);
   };
 
   // Mapa de fechas habilitadas (ISO string -> registro) para el tipo seleccionado
@@ -219,10 +280,44 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
     setNuevoHorarioPersonalizado("");
   };
 
+  /**
+   * Alternar estado de fecha.
+   * Si la fecha es futura y se va a deshabilitar, verifica si existen participantes vinculados.
+   */
   const handleToggleEstado = async () => {
     if (!fechaSeleccionada) return;
     const iso = toIsoString(fechaSeleccionada);
     const nuevoEstado = !estaHabilitadaSeleccionada;
+
+    // Si se va a deshabilitar una fecha futura, verificar participantes antes de retirar
+    if (!nuevoEstado && iso >= hoyIso) {
+      try {
+        setGuardando(true);
+        const vinculadas = await obtenerSolicitudesVinculadasFecha(
+          tipoSeleccionado,
+          iso
+        );
+        setGuardando(false);
+
+        if (vinculadas?.activas > 0) {
+          const activas = (vinculadas.solicitudes || []).filter((s) => {
+            const e = String(s.Estado || "").toLowerCase();
+            return !e.includes("rechaz") && !e.includes("cancel");
+          });
+          setCancelacionConfig({
+            iso,
+            accion: "deshabilitar",
+            solicitudes: activas,
+            orientacion: TEXTO_ORIENTACION_DEFAULT,
+          });
+          setResultadoCancelacion(null);
+          setModalCancelacionAbierto(true);
+          return;
+        }
+      } catch (err) {
+        console.warn("No se pudo verificar solicitudes vinculadas:", err);
+      }
+    }
 
     setGuardando(true);
     setError(null);
@@ -279,6 +374,18 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
       );
     } catch (err) {
       console.error("Error al actualizar estado de la fecha:", err);
+      // Si el backend detectó participantes vinculados
+      if (err?.response?.data?.requiereConfirmacion) {
+        setCancelacionConfig({
+          iso,
+          accion: "deshabilitar",
+          solicitudes: err.response.data.solicitudesVinculadas || [],
+          orientacion: TEXTO_ORIENTACION_DEFAULT,
+        });
+        setResultadoCancelacion(null);
+        setModalCancelacionAbierto(true);
+        return;
+      }
       setError(
         err?.response?.data?.message ||
           "Error al actualizar la disponibilidad de la fecha."
@@ -353,19 +460,59 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
     }
   };
 
+  /**
+   * Eliminar fecha: detecta solicitudes vinculadas antes de retirar una fecha futura.
+   */
   const handleEliminarFecha = async (isoTarget) => {
     const iso = isoTarget || (fechaSeleccionada ? toIsoString(fechaSeleccionada) : "");
     if (!iso) return;
 
-    const confirmar = window.confirm(
-      `¿Desea eliminar la configuración de la fecha ${iso} para "${tipoSeleccionado}"?`
-    );
-    if (!confirmar) return;
+    // Si es fecha futura, verificar primero si existen participantes inscritos
+    if (iso >= hoyIso) {
+      try {
+        setGuardando(true);
+        const vinculadas = await obtenerSolicitudesVinculadasFecha(
+          tipoSeleccionado,
+          iso
+        );
+        setGuardando(false);
+
+        if (vinculadas?.activas > 0) {
+          const activas = (vinculadas.solicitudes || []).filter((s) => {
+            const e = String(s.Estado || "").toLowerCase();
+            return !e.includes("rechaz") && !e.includes("cancel");
+          });
+          setCancelacionConfig({
+            iso,
+            accion: "eliminar",
+            solicitudes: activas,
+            orientacion: TEXTO_ORIENTACION_DEFAULT,
+          });
+          setResultadoCancelacion(null);
+          setModalCancelacionAbierto(true);
+          return;
+        }
+      } catch (err) {
+        console.warn("No se pudo verificar solicitudes vinculadas:", err);
+      }
+    }
+
+    // Si no tiene participantes inscritos, abrir modal del sistema de confirmación
+    setFechaAEliminar({ iso, tipo: tipoSeleccionado });
+  };
+
+  /**
+   * Ejecutar la eliminación directa confirmada en el modal del sistema
+   * (para fechas sin participantes vinculados).
+   */
+  const handleConfirmarEliminacionDirecta = async () => {
+    if (!fechaAEliminar) return;
+    const { iso, tipo } = fechaAEliminar;
 
     setGuardando(true);
     setError(null);
     try {
-      await eliminarFechaAdmin(tipoSeleccionado, iso);
+      await eliminarFechaAdmin(tipo, iso);
       setFechas((prev) =>
         prev.filter((f) => String(f.Fecha || f.fecha || "").slice(0, 10) !== iso)
       );
@@ -376,14 +523,126 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
         setHorarios([]);
       }
       await cargarResumen();
-      setMensajeExito(`Fecha ${iso} eliminada del tipo "${tipoSeleccionado}".`);
+      setMensajeExito(`Fecha ${iso} eliminada del tipo "${tipo}".`);
+      setFechaAEliminar(null);
     } catch (err) {
       console.error("Error al eliminar fecha:", err);
+      if (err?.response?.data?.requiereConfirmacion) {
+        setFechaAEliminar(null);
+        setCancelacionConfig({
+          iso,
+          accion: "eliminar",
+          solicitudes: err.response.data.solicitudesVinculadas || [],
+          orientacion: TEXTO_ORIENTACION_DEFAULT,
+        });
+        setResultadoCancelacion(null);
+        setModalCancelacionAbierto(true);
+        return;
+      }
       setError(
         err?.response?.data?.message || "Error al eliminar el registro de la fecha."
       );
     } finally {
       setGuardando(false);
+    }
+  };
+
+  /**
+   * Ejecutar la cancelación de actividad confirmada por el administrador:
+   * Conserva solicitudes, actualiza a Cancelada y notifica a los participantes.
+   */
+  const handleConfirmarCancelacionActividad = async () => {
+    const { iso, accion, orientacion } = cancelacionConfig;
+    if (!iso) return;
+
+    setCancelandoActividad(true);
+    setError(null);
+
+    try {
+      const res = await cancelarActividadYRetirarFecha(tipoSeleccionado, iso, {
+        accion,
+        orientacion,
+      });
+
+      setResultadoCancelacion(res);
+
+      // Si no hubo fallos en notificaciones, actualizar vista y cerrar modal
+      if (!res.fallidos || res.fallidos.length === 0) {
+        setModalCancelacionAbierto(false);
+        setMensajeExito(
+          `Actividad del ${iso} cancelada con éxito. Se conservaron ${res.solicitudesCanceladas} solicitud(es) y se enviaron ${res.notificacionesExitosas} notificación(es) por correo.`
+        );
+
+        if (accion === "eliminar") {
+          setFechas((prev) =>
+            prev.filter((f) => String(f.Fecha || f.fecha || "").slice(0, 10) !== iso)
+          );
+          if (isoSeleccionada === iso) {
+            setFechaSeleccionada(null);
+            setCupoMaximo("");
+            setObservaciones("");
+            setHorarios([]);
+          }
+        } else {
+          setFechas((prev) =>
+            prev.map((f) =>
+              String(f.Fecha || f.fecha || "").slice(0, 10) === iso
+                ? { ...f, Habilitada: false, habilitada: false }
+                : f
+            )
+          );
+        }
+        await cargarResumen();
+      }
+    } catch (err) {
+      console.error("Error al cancelar actividad y retirar fecha:", err);
+      setError(
+        err?.response?.data?.message ||
+          "Ocurrió un error al procesar la cancelación de la actividad."
+      );
+    } finally {
+      setCancelandoActividad(false);
+    }
+  };
+
+  /**
+   * Reintentar notificación a participantes cuyos correos hayan fallado.
+   * Solo envía a participantes con NotificacionCancelacionEnviada = false (no duplica).
+   */
+  const handleReintentarNotificaciones = async () => {
+    const { iso, orientacion } = cancelacionConfig;
+    if (!iso) return;
+
+    setReintentando(true);
+    try {
+      const res = await reintentarNotificacionesCancelacion(
+        tipoSeleccionado,
+        iso,
+        orientacion
+      );
+
+      setResultadoCancelacion((prev) => ({
+        ...prev,
+        notificacionesExitosas:
+          (prev?.notificacionesExitosas || 0) + res.notificacionesExitosas,
+        notificacionesFallidas: res.notificacionesFallidas,
+        fallidos: res.fallidos || [],
+      }));
+
+      if (!res.fallidos || res.fallidos.length === 0) {
+        setModalCancelacionAbierto(false);
+        setMensajeExito(
+          `Reintento completado: se enviaron exitosamente todas las notificaciones pendientes para la fecha ${iso}.`
+        );
+        await cargarResumen();
+      }
+    } catch (err) {
+      console.error("Error al reintentar notificaciones:", err);
+      setError(
+        err?.response?.data?.message || "No se pudo completar el reintento de envío."
+      );
+    } finally {
+      setReintentando(false);
     }
   };
 
@@ -471,7 +730,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
           </div>
         </div>
 
-        {/* Resumen rápido del tipo seleccionado */}
+        {/* Resumen rápido del tipo seleccionado y zona horaria */}
         <div className="mt-5 flex flex-wrap items-center gap-4 rounded-lg bg-slate-50 p-3 text-sm text-slate-700 border border-slate-100">
           <div className="flex items-center gap-2">
             <Tag className="size-4 text-slate-600" />
@@ -487,10 +746,11 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
               <span className="capitalize">{format(mesActual, "MMMM yyyy", { locale })}</span>
             </span>
           </div>
-          <div className="flex items-center gap-1.5 ml-auto text-xs text-slate-500">
-            <Info className="size-4" />
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 ml-auto">
+            <Clock className="size-3.5" />
             <span>
-              <ST>Haga clic en cualquier día para configurar su horario y disponibilidad.</ST>
+              <ST>Zona:</ST> <span className="font-mono font-medium">{zonaHoraria}</span>
+              {" · "}<ST>Hoy:</ST> <span className="font-mono font-bold text-slate-800">{hoyIso}</span>
             </span>
           </div>
         </div>
@@ -585,7 +845,14 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                 <p className="text-lg font-bold text-slate-950 capitalize mt-0.5">
                   {format(fechaSeleccionada, "EEEE, dd 'de' MMMM 'de' yyyy", { locale })}
                 </p>
-                <p className="text-xs text-slate-500 font-mono mt-0.5">ISO: {isoSeleccionada}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-xs text-slate-500 font-mono">ISO: {isoSeleccionada}</span>
+                  {esFechaPasada && (
+                    <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                      <ST>Fecha histórica (pasada)</ST>
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Indicador de estado y botón de activación rápida */}
@@ -640,7 +907,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
 
               {esFechaPasada && (
                 <p className="text-xs text-amber-600 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
-                  <ST>Esta fecha ya pasó. No se puede modificar su disponibilidad.</ST>
+                  <ST>Esta fecha ya pasó según la zona horaria del sistema. Permanece disponible para consulta histórica, pero no puede ser modificada.</ST>
                 </p>
               )}
 
@@ -815,7 +1082,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
         </div>
       </div>
 
-      {/* VISUALIZACIÓN DE FECHAS Y HORARIOS CONFIGURADOS PARA EL TIPO */}
+      {/* VISUALIZACIÓN DE FECHAS Y HORARIOS CONFIGURADOS PARA EL TIPO (INCLUYE HISTÓRICAS) */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
           <div className="flex items-center gap-2">
@@ -860,20 +1127,21 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                   const hList = f.Horarios ?? f.horarios ?? [];
                   const esActual = isoSeleccionada === iso;
                   const dateObj = parseIsoLocal(iso);
+                  const pasada = iso < hoyIso;
 
                   return (
                     <tr
                       key={iso}
                       className={`hover:bg-slate-50/80 transition ${
                         esActual ? "bg-slate-50 font-semibold" : ""
-                      }`}
+                      } ${pasada ? "opacity-75" : ""}`}
                     >
                       <td className="px-4 py-3 whitespace-nowrap font-medium text-slate-900">
                         {dateObj
                           ? format(dateObj, "EEE, dd MMM yyyy", { locale })
                           : iso}
                         <span className="block text-[11px] text-slate-400 font-mono">
-                          {iso}
+                          {iso} {pasada ? "· (Histórica)" : ""}
                         </span>
                       </td>
 
@@ -949,6 +1217,285 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
           </div>
         )}
       </div>
+
+      {/* MODAL DE CONFIRMACIÓN DE CANCELACIÓN DE ACTIVIDAD CON PARTICIPANTES */}
+      {modalCancelacionAbierto && (
+        <AdminModal
+          isOpen={modalCancelacionAbierto}
+          onClose={() => {
+            if (!cancelandoActividad) {
+              setModalCancelacionAbierto(false);
+              setResultadoCancelacion(null);
+            }
+          }}
+          size="lg"
+        >
+          <AdminModalHeader
+            onClose={() => {
+              if (!cancelandoActividad) {
+                setModalCancelacionAbierto(false);
+                setResultadoCancelacion(null);
+              }
+            }}
+          >
+            <div>
+              <h3 className="text-base font-bold text-slate-950">
+                <ST>Confirmar cancelación de actividad con participantes</ST>
+              </h3>
+              <p className="text-xs font-normal text-slate-500">
+                <ST>Fecha:</ST> {cancelacionConfig.iso} · <ST>Tipo:</ST> {tipoSeleccionado}
+              </p>
+            </div>
+          </AdminModalHeader>
+
+          <AdminModalBody>
+            <div className="space-y-4 text-sm text-slate-700">
+              {/* Aviso de participantes inscritos */}
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900 flex items-start gap-3">
+                <AlertTriangle className="size-6 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-bold text-sm">
+                    <ST>Existen participantes inscritos para esta fecha</ST>
+                  </p>
+                  <p className="text-xs text-amber-800">
+                    <ST>
+                      Esta fecha cuenta con{" "}
+                      <strong>{cancelacionConfig.solicitudes?.length || 0}</strong>{" "}
+                      solicitud(es) activa(s). Para retirar la fecha, es necesario
+                      confirmar la cancelación de la actividad. Las solicitudes se
+                      conservarán íntegras en el historial administrativo y de los
+                      clientes con estado <strong>Cancelada</strong>, y se enviará una
+                      notificación automática por correo a cada participante con la debida
+                      orientación.
+                    </ST>
+                  </p>
+                </div>
+              </div>
+
+              {/* Lista de participantes afectados */}
+              <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                    <Users className="size-4 text-slate-600" />
+                    <span><ST>Participantes que serán notificados:</ST></span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    {cancelacionConfig.solicitudes?.length || 0} inscritos
+                  </span>
+                </div>
+
+                <div className="max-h-44 overflow-y-auto divide-y divide-slate-100 text-xs">
+                  {(cancelacionConfig.solicitudes || []).map((sol) => (
+                    <div
+                      key={sol.Id || sol.id}
+                      className="py-2 flex items-center justify-between gap-3"
+                    >
+                      <div>
+                        <p className="font-bold text-slate-900">
+                          {sol.Nombre || sol.nombre || "Participante"}
+                        </p>
+                        <p className="text-slate-500 flex items-center gap-1">
+                          <Mail className="size-3 text-slate-400" />
+                          <span>{sol.Email || sol.email || "Sin correo"}</span>
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                          {sol.Horario || sol.horario || "Horario regular"}
+                        </span>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          {sol.CantidadParticipantes
+                            ? `${sol.CantidadParticipantes} pers.`
+                            : "Individual"}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Campo para ingresar orientación para los participantes */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-900">
+                  <ST>Orientación y mensaje para los participantes:</ST>
+                </label>
+                <p className="text-xs text-slate-500">
+                  <ST>
+                    Este mensaje se incluirá en el correo electrónico de aviso para
+                    orientar a cada participante sobre los próximos pasos.
+                  </ST>
+                </p>
+                <textarea
+                  rows={3}
+                  value={cancelacionConfig.orientacion}
+                  onChange={(e) =>
+                    setCancelacionConfig((prev) => ({
+                      ...prev,
+                      orientacion: e.target.value,
+                    }))
+                  }
+                  disabled={cancelandoActividad || reintentando}
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs text-slate-900 outline-none focus:border-slate-950 focus:bg-white transition resize-none"
+                />
+              </div>
+
+              {/* Mensaje de resultado o fallos en notificaciones */}
+              {resultadoCancelacion && (
+                <div
+                  className={`rounded-xl border p-3 text-xs ${
+                    resultadoCancelacion.fallidos &&
+                    resultadoCancelacion.fallidos.length > 0
+                      ? "border-amber-300 bg-amber-50 text-amber-900"
+                      : "border-green-200 bg-green-50 text-green-900"
+                  }`}
+                >
+                  <p className="font-bold">
+                    {resultadoCancelacion.fallidos &&
+                    resultadoCancelacion.fallidos.length > 0
+                      ? "Atención: algunos avisos no pudieron ser entregados"
+                      : "Cancelación procesada correctamente"}
+                  </p>
+                  <p className="mt-0.5">
+                    Notificaciones exitosas:{" "}
+                    <strong>{resultadoCancelacion.notificacionesExitosas}</strong> ·
+                    Fallidas:{" "}
+                    <strong>{resultadoCancelacion.notificacionesFallidas}</strong>
+                  </p>
+                  {resultadoCancelacion.fallidos &&
+                    resultadoCancelacion.fallidos.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-amber-200">
+                        <p className="font-semibold mb-1">
+                          Participantes pendientes de aviso:
+                        </p>
+                        <ul className="list-disc list-inside space-y-0.5 text-[11px]">
+                          {resultadoCancelacion.fallidos.map((f, i) => (
+                            <li key={i}>{f.email || `ID ${f.id}`}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                </div>
+              )}
+            </div>
+          </AdminModalBody>
+
+          <AdminModalFooter>
+            {resultadoCancelacion &&
+            resultadoCancelacion.fallidos &&
+            resultadoCancelacion.fallidos.length > 0 ? (
+              <button
+                type="button"
+                onClick={handleReintentarNotificaciones}
+                disabled={reintentando}
+                className={adminBtnPrimary}
+              >
+                <RotateCcw className={`size-4 mr-2 ${reintentando ? "animate-spin" : ""}`} />
+                <span>
+                  {reintentando ? (
+                    <ST>Reintentando avisos...</ST>
+                  ) : (
+                    <ST>Reintentar notificaciones fallidas</ST>
+                  )}
+                </span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConfirmarCancelacionActividad}
+                disabled={cancelandoActividad}
+                className={adminBtnPrimary}
+              >
+                <span>
+                  {cancelandoActividad ? (
+                    <ST>Eliminando fecha...</ST>
+                  ) : (
+                    <ST>Eliminar fecha</ST>
+                  )}
+                </span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              className={adminBtnCancel}
+              onClick={() => {
+                setModalCancelacionAbierto(false);
+                setResultadoCancelacion(null);
+              }}
+              disabled={cancelandoActividad || reintentando}
+            >
+              <ST>Cancelar</ST>
+            </button>
+          </AdminModalFooter>
+        </AdminModal>
+      )}
+
+      {/* MODAL DEL SISTEMA PARA CONFIRMAR ELIMINACIÓN DE FECHA SIN PARTICIPANTES */}
+      {Boolean(fechaAEliminar) && (
+        <AdminModal
+          open={Boolean(fechaAEliminar)}
+          onClose={() => {
+            if (!guardando) setFechaAEliminar(null);
+          }}
+          maxWidth="max-w-md"
+        >
+          <AdminModalHeader
+            onClose={() => {
+              if (!guardando) setFechaAEliminar(null);
+            }}
+          >
+            <div>
+              <h3 className="text-base font-bold text-slate-950">
+                <ST>Confirmar eliminación</ST>
+              </h3>
+            </div>
+          </AdminModalHeader>
+
+          <AdminModalBody>
+            <div className="space-y-3 text-sm text-slate-700">
+              <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <AlertTriangle className="size-5 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    <ST>¿Seguro que desea eliminar esta fecha?</ST>
+                  </p>
+                  <p className="text-xs text-slate-600 mt-1">
+                    <ST>Se eliminará la configuración de la fecha</ST>{" "}
+                    <strong>{fechaAEliminar?.iso}</strong>{" "}
+                    <ST>para</ST> <strong>"{fechaAEliminar?.tipo}"</strong>.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </AdminModalBody>
+
+          <AdminModalFooter>
+            <button
+              type="button"
+              onClick={handleConfirmarEliminacionDirecta}
+              disabled={guardando}
+              className={adminBtnPrimary}
+            >
+              <span>
+                {guardando ? (
+                  <ST>Eliminando fecha...</ST>
+                ) : (
+                  <ST>Eliminar fecha</ST>
+                )}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className={adminBtnCancel}
+              onClick={() => setFechaAEliminar(null)}
+              disabled={guardando}
+            >
+              <ST>Cancelar</ST>
+            </button>
+          </AdminModalFooter>
+        </AdminModal>
+      )}
     </div>
   );
 }
