@@ -48,6 +48,9 @@ function colorEstado(estadoRaw) {
   if (estado.includes("rechaz") || estado.includes("inactiv")) {
     return "text-rose-800";
   }
+  if (estado.includes("cancelad")) {
+    return "text-slate-600 dark:text-slate-400";
+  }
   return "text-slate-700";
 }
 
@@ -77,6 +80,7 @@ const OPCIONES_ESTADO = [
   { value: "En revisión", label: "En revisión" },
   { value: "Aceptada", label: "Aceptada" },
   { value: "Rechazada", label: "Rechazada" },
+  { value: "Cancelada", label: "Cancelada" },
 ];
 
 const CAMPOS_DETALLE = [
