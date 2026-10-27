@@ -26,8 +26,11 @@ import { obtenerSeccion } from "../../services/informacionService";
 import { crearSolicitud } from "../../services/voluntariadoService";
 import { consultarCedulaDetallada } from "../../services/cedulaService";
 import {
+  obtenerConfigFechas,
   obtenerFechasDisponibles,
+  obtenerHoyIso,
   obtenerResumenTipos,
+  ZONA_HORARIA_PREDETERMINADA,
 } from "../../services/voluntariadoFechasService";
 import {
   HORARIOS_PREDETERMINADOS,
@@ -200,6 +203,9 @@ function SolicitarVoluntariado() {
   const [usuario] = useState(() => obtenerUsuarioActual());
   const [formulario, setFormulario] = useState(() => crearFormularioInicial(obtenerUsuarioActual()));
 
+  const [zonaHoraria, setZonaHoraria] = useState(ZONA_HORARIA_PREDETERMINADA);
+  const hoyIso = useMemo(() => obtenerHoyIso(zonaHoraria), [zonaHoraria]);
+
   const [resumenTipos, setResumenTipos] = useState({});
   const [fechasDisponibles, setFechasDisponibles] = useState([]);
   const [cargandoFechas, setCargandoFechas] = useState(false);
@@ -234,6 +240,24 @@ function SolicitarVoluntariado() {
   const pasos = esGrupal
     ? { personal: 1, contacto: 2, grupo: 3, tipo: 4, fecha: 5, horario: 6 }
     : { personal: 1, contacto: 2, tipo: 3, fecha: 4, horario: 5 };
+
+  // Cargar configuración de zona horaria del servidor
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      try {
+        const config = await obtenerConfigFechas();
+        if (!cancelado && config?.zonaHoraria) {
+          setZonaHoraria(config.zonaHoraria);
+        }
+      } catch (err) {
+        console.warn("No se pudo cargar la configuración de fechas:", err);
+      }
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, []);
 
   // Cargar resumen de disponibilidad de tipos
   useEffect(() => {
@@ -314,12 +338,11 @@ function SolicitarVoluntariado() {
   // Función para deshabilitar días en el calendario
   const isDateDisabled = useCallback(
     (date) => {
-      const hoy = startOfDay(new Date());
-      if (isBefore(startOfDay(date), hoy)) return true;
       const iso = format(date, "yyyy-MM-dd");
+      if (iso < hoyIso) return true;
       return !fechasHabilitadasMap.has(iso);
     },
-    [fechasHabilitadasMap]
+    [fechasHabilitadasMap, hoyIso]
   );
 
   const redirectToLogin = useCallback(() => {
@@ -647,6 +670,8 @@ function SolicitarVoluntariado() {
     // Validar Fecha (Paso 2)
     if (!formulario.fechaVoluntariado) {
       nuevosErrores.fechaVoluntariado = "Seleccione una fecha disponible en el calendario";
+    } else if (formulario.fechaVoluntariado < hoyIso) {
+      nuevosErrores.fechaVoluntariado = "No se permiten fechas pasadas. Seleccione una fecha vigente.";
     } else if (!fechasHabilitadasMap.has(formulario.fechaVoluntariado)) {
       nuevosErrores.fechaVoluntariado = "La fecha seleccionada no está habilitada para este tipo de voluntariado";
     }
