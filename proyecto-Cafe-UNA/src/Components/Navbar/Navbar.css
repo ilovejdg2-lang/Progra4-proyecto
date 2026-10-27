@@ -3,7 +3,8 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 20;
+  /* Por encima de Leaflet (panes ~200–700 y controles del mapa ~1000). */
+  z-index: 5000;
   display: flex;
   align-items: center;
   justify-content: space-between;

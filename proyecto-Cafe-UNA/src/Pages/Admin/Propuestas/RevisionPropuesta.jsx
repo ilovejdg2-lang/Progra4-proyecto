@@ -5,6 +5,7 @@ import {
   adminBtnPrimary,
   adminBtnVoluntariadoCancel,
 } from "../../../Components/Admin/ui/AdminModal";
+import CampoUbicacionMapa from "../../../Components/Productores/CampoUbicacionMapa";
 import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { ST } from "../../../Components/T/ST";
 import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
@@ -53,6 +54,14 @@ function formDesde(propuesta) {
     distrito: propuesta.distrito || "",
     direccion: propuesta.senas || propuesta.direccion || "",
     enlaceUbicacion: propuesta.enlaceUbicacion || "",
+    latitud:
+      propuesta.latitud != null && Number.isFinite(Number(propuesta.latitud))
+        ? String(propuesta.latitud)
+        : "",
+    longitud:
+      propuesta.longitud != null && Number.isFinite(Number(propuesta.longitud))
+        ? String(propuesta.longitud)
+        : "",
     facebook: propuesta.facebook || "",
     instagram: propuesta.instagram || "",
     whatsapp: whatsappEditable(propuesta.whatsapp),
@@ -92,6 +101,10 @@ export function EditarPropuestaForm({ propuesta, onGuardado, onCancelar }) {
         siguiente.distrito = "";
       }
       if (campo === "canton") siguiente.distrito = "";
+      if (campo === "enlaceUbicacion") {
+        siguiente.latitud = "";
+        siguiente.longitud = "";
+      }
       return siguiente;
     });
     setErrores((actual) => ({ ...actual, [campo]: "" }));
@@ -207,6 +220,16 @@ export function EditarPropuestaForm({ propuesta, onGuardado, onCancelar }) {
           ancho: true,
           placeholder: "https://maps.app.goo.gl/...",
         })}
+        <div className="md:col-span-2">
+          <CampoUbicacionMapa
+            enlaceUbicacion={form.enlaceUbicacion}
+            latitud={form.latitud}
+            longitud={form.longitud}
+            onChangeCoords={({ latitud, longitud }) => {
+              setForm((actual) => ({ ...actual, latitud, longitud }));
+            }}
+          />
+        </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
