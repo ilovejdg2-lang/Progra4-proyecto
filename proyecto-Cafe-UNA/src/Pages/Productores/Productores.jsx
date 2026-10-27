@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { ArrowRight, ArrowUpRight, Globe, MapPin, Send, Sprout, X } from "lucide-react";
 
 import { FacebookIcon, InstagramIcon, WhatsAppIcon } from "../../Components/Footer/SocialIcons";
+import MapaProductores from "../../Components/Productores/MapaProductores";
 import PageLoading from "../../Components/PageLoading/PageLoading";
 import { ST } from "../../Components/T/ST";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
 import { urlImagenPublica } from "../../lib/propuestaProductor";
+import { resumenUbicacion } from "../../lib/ubicacionMaps";
 import { obtenerProductoresPublicos } from "../../services/propuestasProductoresService";
 import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
 import "./propuesta.css";
@@ -26,12 +28,7 @@ function enlacePublico(valor) {
 }
 
 function lugarCorto(item) {
-  const zona = String(item?.distrito || item?.canton || "").trim();
-  const provincia = String(item?.provincia || "").trim();
-  if (zona && provincia && zona.toLowerCase() !== provincia.toLowerCase()) {
-    return `${zona}, ${provincia}`;
-  }
-  return zona || provincia || String(item?.direccion || "").trim();
+  return resumenUbicacion(item);
 }
 
 function redesVisibles(item) {
@@ -123,13 +120,13 @@ function DetalleProductor({ productor, onClose }) {
 }
 
 export default function Productores() {
-  const navigate = useNavigate();
   const { ref, showLoading, showPrepaint, inert, loadingMessage } = usePaintPublicPage("productores");
   const [usuario, setUsuario] = useState(() => getActiveSessionUser());
   const [productores, setProductores] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [seleccionado, setSeleccionado] = useState(null);
+  const [mapaSeleccionadoId, setMapaSeleccionadoId] = useState(null);
   const disparadorRef = useRef(null);
 
   useEffect(() => {
@@ -150,7 +147,10 @@ export default function Productores() {
         setProductores(items);
         const pedido = new URLSearchParams(window.location.search).get("productor");
         const encontrado = pedido ? items.find((item) => String(item.id) === pedido) : null;
-        if (encontrado) setSeleccionado(encontrado);
+        if (encontrado) {
+          setSeleccionado(encontrado);
+          setMapaSeleccionadoId(encontrado.id);
+        }
       })
       .catch((err) => {
         if (activo) setError(err?.message || "No se pudieron cargar los productores.");
@@ -163,10 +163,19 @@ export default function Productores() {
     };
   }, []);
 
-
   const cerrarDetalle = useCallback(() => {
     setSeleccionado(null);
     disparadorRef.current?.focus();
+  }, []);
+
+  const elegirEnMapa = useCallback((item) => {
+    setMapaSeleccionadoId(item?.id ?? null);
+  }, []);
+
+  const abrirDetalle = useCallback((item, disparador) => {
+    if (disparador) disparadorRef.current = disparador;
+    setSeleccionado(item);
+    setMapaSeleccionadoId(item?.id ?? null);
   }, []);
 
   return (
@@ -193,6 +202,20 @@ export default function Productores() {
                 <span><ST>Enviar propuesta</ST></span>
               </Link>
             </div>
+          </div>
+
+          <MapaProductores
+            productores={productores}
+            cargando={cargando}
+            seleccionadoId={mapaSeleccionadoId}
+            onSeleccionar={elegirEnMapa}
+            onVerDetalles={(item) => abrirDetalle(item)}
+          />
+
+          <div className="productores-directorio__listado-encabezado">
+            <h2 className="productores-directorio__listado-titulo">
+              <ST>Conocé a los productores</ST>
+            </h2>
           </div>
 
           {cargando ? (
@@ -224,7 +247,17 @@ export default function Productores() {
                 const mapa = enlacePublico(item.enlaceUbicacion);
                 return (
                   <article key={item.id} className="productores-directorio__card">
-                    <img src={urlImagenPublica(item.imagenUrl)} alt={item.nombre || ""} />
+                    <img
+                      src={urlImagenPublica(item.imagenUrl)}
+                      alt={item.nombre || ""}
+                      onError={(event) => {
+                        event.currentTarget.src =
+                          "data:image/svg+xml," +
+                          encodeURIComponent(
+                            '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="220"><rect width="100%" height="100%" fill="#f5f5f4"/><text x="50%" y="52%" text-anchor="middle" fill="#a8a29e" font-size="16">Sin foto</text></svg>',
+                          );
+                      }}
+                    />
                     <div className="productores-directorio__cuerpo">
                       <h3>{item.nombre}</h3>
                       {lugar ? (
@@ -238,10 +271,7 @@ export default function Productores() {
                         <button
                           type="button"
                           className="productores-directorio__btn productores-directorio__btn--lleno"
-                          onClick={(event) => {
-                            disparadorRef.current = event.currentTarget;
-                            setSeleccionado(item);
-                          }}
+                          onClick={(event) => abrirDetalle(item, event.currentTarget)}
                         >
                           <ST>Ver detalles</ST>
                           <ArrowRight size={16} aria-hidden="true" />

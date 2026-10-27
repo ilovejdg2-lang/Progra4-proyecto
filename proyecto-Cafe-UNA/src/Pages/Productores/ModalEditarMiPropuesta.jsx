@@ -8,6 +8,7 @@ import {
   adminBtnPrimary,
   adminBtnVoluntariadoCancel,
 } from "../../Components/Admin/ui/AdminModal";
+import CampoUbicacionMapa from "../../Components/Productores/CampoUbicacionMapa";
 import { NumericInput } from "../../Components/NumericInput/NumericInput";
 import { ST } from "../../Components/T/ST";
 import { SelectFiltro } from "../../Components/ui/SelectFiltro";
@@ -52,6 +53,14 @@ function inicializarForm(propuesta) {
     distrito: propuesta?.distrito || "",
     direccion: propuesta?.direccion || propuesta?.senas || "",
     enlaceUbicacion: propuesta?.enlaceUbicacion || "",
+    latitud:
+      propuesta?.latitud != null && Number.isFinite(Number(propuesta.latitud))
+        ? String(propuesta.latitud)
+        : "",
+    longitud:
+      propuesta?.longitud != null && Number.isFinite(Number(propuesta.longitud))
+        ? String(propuesta.longitud)
+        : "",
     facebook: propuesta?.facebook || "",
     instagram: propuesta?.instagram || "",
     whatsapp: whatsappEditable(propuesta?.whatsapp),
@@ -122,6 +131,10 @@ export function ModalEditarMiPropuesta({
       }
       if (campo === "canton") {
         siguiente.distrito = "";
+      }
+      if (campo === "enlaceUbicacion") {
+        siguiente.latitud = "";
+        siguiente.longitud = "";
       }
       return siguiente;
     });
@@ -370,6 +383,14 @@ export function ModalEditarMiPropuesta({
               placeholder: "https://maps.app.goo.gl/...",
               requerido: true,
             })}
+            <CampoUbicacionMapa
+              enlaceUbicacion={form.enlaceUbicacion}
+              latitud={form.latitud}
+              longitud={form.longitud}
+              onChangeCoords={({ latitud, longitud }) => {
+                setForm((actual) => ({ ...actual, latitud, longitud }));
+              }}
+            />
           </section>
 
           <section className="space-y-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-4">

@@ -25,6 +25,7 @@ import {
   validarEnlaceUbicacion,
   validarFormularioPropuesta,
 } from "../../lib/propuestaProductor";
+import CampoUbicacionMapa from "../../Components/Productores/CampoUbicacionMapa";
 import { crearPropuestaProductor } from "../../services/propuestasProductoresService";
 import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
 import { rutaMisPropuestas } from "./MisPropuestas";
@@ -40,6 +41,8 @@ const INICIAL = {
   distrito: "",
   direccion: "",
   enlaceUbicacion: "",
+  latitud: "",
+  longitud: "",
   facebook: "",
   instagram: "",
   whatsapp: "",
@@ -128,6 +131,9 @@ export default function PropuestaProductor() {
     setForm((prev) => {
       if (campo === "provincia") return { ...prev, provincia: valor, canton: "", distrito: "" };
       if (campo === "canton") return { ...prev, canton: valor, distrito: "" };
+      if (campo === "enlaceUbicacion") {
+        return { ...prev, enlaceUbicacion: valor, latitud: "", longitud: "" };
+      }
       return { ...prev, [campo]: valor };
     });
     setErrores((prev) => {
@@ -179,6 +185,10 @@ export default function PropuestaProductor() {
     datos.append("distrito", form.distrito);
     datos.append("direccion", form.direccion.trim());
     datos.append("enlaceUbicacion", form.enlaceUbicacion.trim());
+    if (form.latitud && form.longitud) {
+      datos.append("latitud", String(form.latitud).trim());
+      datos.append("longitud", String(form.longitud).trim());
+    }
     datos.append("facebook", form.facebook.trim());
     datos.append("instagram", form.instagram.trim());
     datos.append("whatsapp", form.whatsapp.trim());
@@ -434,9 +444,18 @@ export default function PropuestaProductor() {
                   <input
                     id="enlaceUbicacion"
                     inputMode="url"
+                    placeholder="Enlace de un lugar en Costa Rica (Maps o Waze)"
                     value={form.enlaceUbicacion}
                     aria-invalid={Boolean(errores.enlaceUbicacion)}
                     onChange={(event) => cambiar("enlaceUbicacion", event.target.value)}
+                    onBlur={(event) => {
+                      const valor = event.target.value.trim();
+                      if (!valor) return;
+                      const errorEnlace = validarEnlaceUbicacion(valor);
+                      if (errorEnlace) {
+                        setErrores((prev) => ({ ...prev, enlaceUbicacion: errorEnlace }));
+                      }
+                    }}
                   />
                   {errores.enlaceUbicacion ? <span className="mensaje-error"><ST>{errores.enlaceUbicacion}</ST></span> : null}
                   {form.enlaceUbicacion && !validarEnlaceUbicacion(form.enlaceUbicacion) ? (
@@ -444,6 +463,14 @@ export default function PropuestaProductor() {
                       <MapPin size={16} aria-hidden="true" /> <ST>Abrir ubicación</ST>
                     </a>
                   ) : null}
+                  <CampoUbicacionMapa
+                    enlaceUbicacion={form.enlaceUbicacion}
+                    latitud={form.latitud}
+                    longitud={form.longitud}
+                    onChangeCoords={({ latitud, longitud }) => {
+                      setForm((prev) => ({ ...prev, latitud, longitud }));
+                    }}
+                  />
                 </div>
               </SectionCard>
 
