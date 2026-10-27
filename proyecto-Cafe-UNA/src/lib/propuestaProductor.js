@@ -3,6 +3,11 @@ import {
   distritosDeCanton,
   PROVINCIAS_CR,
 } from "./costaRicaDivisiones";
+import {
+  estaEnCostaRica,
+  esUrlMapasOWaze,
+  MENSAJE_SOLO_COSTA_RICA,
+} from "./ubicacionMaps";
 
 export const DESCRIPCION_MAX = 2000;
 export const NOMBRE_MAX = 100;
@@ -49,24 +54,29 @@ function urlSegura(valor) {
 export function validarEnlaceUbicacion(valor) {
   const raw = String(valor || "").trim();
   if (!raw) return "El enlace de ubicación es obligatorio.";
-  if (raw.length > URL_MAX) return `El enlace de ubicación admite como máximo ${URL_MAX} caracteres.`;
+  if (raw.length > URL_MAX) {
+    return `El enlace de ubicación admite como máximo ${URL_MAX} caracteres.`;
+  }
   const url = urlSegura(raw);
-  if (!url) return "El enlace de ubicación no es válido.";
-  if (url.protocol !== "https:") return "El enlace de ubicación debe usar HTTPS.";
-  const host = url.hostname.toLowerCase();
-  const path = url.pathname || "/";
-  const googleMaps =
-    (host === "google.com" || host === "www.google.com") &&
-    (path === "/maps" || path.startsWith("/maps/"));
-  const gooGl = host === "goo.gl" && (path === "/maps" || path.startsWith("/maps/"));
-  const permitido =
-    host === "maps.google.com" ||
-    host === "maps.app.goo.gl" ||
-    host === "waze.com" ||
-    host === "www.waze.com" ||
-    googleMaps ||
-    gooGl;
-  if (!permitido) return "El enlace debe ser de Google Maps o Waze.";
+  if (!url) {
+    return "Ese texto no es un enlace válido. Copiá la URL completa desde Google Maps o Waze.";
+  }
+  if (url.protocol !== "https:") return "El enlace debe empezar con https://";
+  if (!esUrlMapasOWaze(url)) {
+    return "Ese enlace no es de Google Maps ni de Waze. Abrí el lugar, tocá Compartir y pegá ese enlace aquí.";
+  }
+  return "";
+}
+
+export function validarCoordenadasUbicacion(latitud, longitud) {
+  const lat = Number(latitud);
+  const lng = Number(longitud);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return "Confirmá el punto en el mapa de Costa Rica antes de enviar. Si el enlace no marca el lugar exacto, tocá el mapa.";
+  }
+  if (!estaEnCostaRica(lat, lng)) {
+    return MENSAJE_SOLO_COSTA_RICA;
+  }
   return "";
 }
 
@@ -155,6 +165,10 @@ export function validarFormularioPropuesta(form, archivo) {
 
   const enlace = validarEnlaceUbicacion(form.enlaceUbicacion);
   if (enlace) errores.enlaceUbicacion = enlace;
+  else {
+    const coords = validarCoordenadasUbicacion(form.latitud, form.longitud);
+    if (coords) errores.enlaceUbicacion = coords;
+  }
   const facebook = validarRed(form.facebook, "Facebook", HOSTS_FACEBOOK);
   if (facebook) errores.facebook = facebook;
   const instagram = validarRed(form.instagram, "Instagram", HOSTS_INSTAGRAM);

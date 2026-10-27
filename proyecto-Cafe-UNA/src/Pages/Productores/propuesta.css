@@ -417,9 +417,15 @@ a.btn-enviar {
 }
 
 .productores-directorio__lista {
-  max-width: 1080px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 40px 24px 80px;
+}
+
+@media (max-width: 767px) {
+  .productores-directorio__lista {
+    padding: 28px 16px 64px;
+  }
 }
 
 .productores-directorio__header-top {
@@ -427,19 +433,20 @@ a.btn-enviar {
   align-items: flex-end;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 20px;
-  margin-bottom: 32px;
+  gap: 16px 20px;
+  margin-bottom: 28px;
   border-bottom: 1px solid #e7e5e4;
-  padding-bottom: 24px;
+  padding-bottom: 20px;
 }
 
 .productores-directorio__title {
   font-family: var(--font-serif, "Playfair Display", Georgia, serif);
-  font-size: clamp(2rem, 3.2vw, 2.5rem);
+  font-size: var(--text-title);
   font-weight: 800;
   letter-spacing: -0.025em;
   color: #1c1917;
-  margin: 0 0 8px;
+  margin: 0 0 6px;
+  line-height: 1.2;
 }
 
 .productores-directorio__header-actions {
@@ -501,6 +508,19 @@ a.btn-enviar {
   color: #78716c;
   font-size: 1.02rem;
   line-height: 1.5;
+}
+
+.productores-directorio__listado-encabezado {
+  margin: 0 0 1.25rem;
+}
+
+.productores-directorio__listado-titulo {
+  margin: 0;
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: var(--text-subtitle);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #1c1917;
 }
 
 .productores-directorio__vacio {
