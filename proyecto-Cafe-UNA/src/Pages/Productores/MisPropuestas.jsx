@@ -14,7 +14,7 @@ import { PerfilClienteLayout } from "../../Components/Perfil/PerfilClienteLayout
 import { ST } from "../../Components/T/ST";
 import { UiSelect } from "../../Components/ui/Select";
 import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
-import { formatearFechaPropuesta } from "../../lib/propuestaProductor";
+import { formatearFechaPropuesta, urlImagenPublica } from "../../lib/propuestaProductor";
 import { obtenerFooter } from "../../services/informacionService";
 import {
   cancelarSolicitudEdicionMiPropuesta,
@@ -44,10 +44,15 @@ function colorEstado(estado) {
   return "text-slate-700";
 }
 
-function ImagenPropuesta({ nombre, alt }) {
+function ImagenPropuesta({ nombre, imagenUrl, alt }) {
   const [src, setSrc] = useState("");
   const [abierta, setAbierta] = useState(false);
   useEffect(() => {
+    const directa = urlImagenPublica(imagenUrl);
+    if (/^https?:\/\//i.test(directa)) {
+      setSrc(directa);
+      return undefined;
+    }
     if (!nombre) return undefined;
     let activo = true;
     let objectUrl = "";
@@ -64,7 +69,7 @@ function ImagenPropuesta({ nombre, alt }) {
       activo = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [nombre]);
+  }, [nombre, imagenUrl]);
   if (!src) return null;
   return (
     <>
@@ -452,7 +457,7 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
 
             <DetallePropuestaSecciones
               propuesta={detalle}
-              imagen={<ImagenPropuesta nombre={detalle.imagenNombre} alt={detalle.nombre} />}
+                imagen={<ImagenPropuesta nombre={detalle.imagenNombre} imagenUrl={detalle.imagenUrl} alt={detalle.nombre} />}
             />
 
             <SeccionRevision propuesta={detalle}>

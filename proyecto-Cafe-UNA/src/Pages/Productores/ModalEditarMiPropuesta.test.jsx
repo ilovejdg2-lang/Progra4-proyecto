@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ModalEditarMiPropuesta } from "./ModalEditarMiPropuesta";
+import { urlImagenPublica } from "../../lib/propuestaProductor";
 import { editarMiPropuesta, solicitarEdicionMiPropuesta } from "../../services/propuestasProductoresService";
 
 vi.mock("../../hooks/useTraducir", () => ({ useTraducir: (text) => text }));
@@ -13,14 +14,30 @@ vi.mock("../../Components/Admin/ui/AdminModal", () => ({
   AdminModalHeader: ({ children }) => <h2>{children}</h2>,
   adminBtnPrimary: "", adminBtnVoluntariadoCancel: "",
 }));
+vi.mock("../../Components/Productores/CampoUbicacionMapa", () => ({
+  default: function CampoUbicacionMapaMock({ onChangeCoords, enlaceUbicacion }) {
+    const React = require("react");
+    const aplicado = React.useRef("");
+    React.useEffect(() => {
+      if (!enlaceUbicacion || typeof onChangeCoords !== "function") return;
+      if (aplicado.current === enlaceUbicacion) return;
+      aplicado.current = enlaceUbicacion;
+      onChangeCoords({ latitud: "9.9281", longitud: "-84.0907" });
+    }, [enlaceUbicacion, onChangeCoords]);
+    return null;
+  },
+}));
 vi.mock("../../services/propuestasProductoresService", () => ({ editarMiPropuesta: vi.fn(), solicitarEdicionMiPropuesta: vi.fn() }));
+vi.mock("../../services/sessionService", () => ({ getActiveSessionUser: () => null }));
 
 const proposal = {
   id: 7, nombre: "Café local", descripcion: "Café de especialidad", provincia: "San José",
   canton: "San José", distrito: "Carmen", direccion: "Frente al parque",
-  enlaceUbicacion: "https://maps.google.com/", correo: "cafe@example.com", telefono: "88888888",
+  enlaceUbicacion: "https://maps.google.com/", latitud: "9.9281", longitud: "-84.0907",
+  correo: "cafe@example.com", telefono: "88888888",
   imagenUrl: "/imagenes/current.png", estado: "Pendiente",
 };
+const currentPreview = urlImagenPublica(proposal.imagenUrl);
 const file = () => new File(["image"], "replacement.png", { type: "image/png" });
 const picker = () => screen.getByRole("button", { name: "Arrastra o selecciona una imagen" });
 
@@ -35,7 +52,7 @@ describe("producer edit image intake", () => {
   it("provides keyboard selection without replacing the current image until a file is selected", async () => {
     const user = userEvent.setup();
     render(<ModalEditarMiPropuesta open propuesta={proposal} onClose={vi.fn()} />);
-    expect(screen.getByAltText("Vista previa")).toHaveAttribute("src", proposal.imagenUrl);
+    expect(screen.getByAltText("Vista previa")).toHaveAttribute("src", currentPreview);
     const button = picker();
     const click = vi.spyOn(document.getElementById("edit-mi-imagen"), "click");
     button.focus();
@@ -77,7 +94,7 @@ describe("producer edit image intake", () => {
     expect(data).toBeInstanceOf(FormData);
     expect(data.has("imagen")).toBe(false);
     expect(data.has("imagenUrl")).toBe(false);
-    expect(screen.getByAltText("Vista previa")).toHaveAttribute("src", proposal.imagenUrl);
+    expect(screen.getByAltText("Vista previa")).toHaveAttribute("src", currentPreview);
     expect(picker()).toBeDisabled();
   });
 
@@ -90,14 +107,14 @@ describe("producer edit image intake", () => {
     fireEvent.change(input, { target: { files: [] } });
     expect(screen.getByAltText("Vista previa")).toHaveAttribute("src", "blob:replacement.png");
     fireEvent.click(screen.getByRole("button", { name: "Descartar nueva imagen" }));
-    expect(screen.getByAltText("Vista previa")).toHaveAttribute("src", proposal.imagenUrl);
+    expect(screen.getByAltText("Vista previa")).toHaveAttribute("src", currentPreview);
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:replacement.png");
     fireEvent.drop(picker(), { dataTransfer: { files: [file()] } });
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(onClose).toHaveBeenCalledOnce();
     rerender(<ModalEditarMiPropuesta open={false} propuesta={proposal} onClose={onClose} />);
     rerender(<ModalEditarMiPropuesta open propuesta={proposal} onClose={onClose} />);
-    expect(screen.getByAltText("Vista previa")).toHaveAttribute("src", proposal.imagenUrl);
+    expect(screen.getByAltText("Vista previa")).toHaveAttribute("src", currentPreview);
     fireEvent.drop(picker(), { dataTransfer: { files: [file()] } });
     unmount();
     expect(URL.revokeObjectURL).toHaveBeenCalledTimes(3);
@@ -109,7 +126,7 @@ describe("producer edit image intake", () => {
     const invalid = kind === "format" ? new File(["text"], "notes.txt", { type: "text/plain" }) : Object.defineProperty(file(), "size", { value: 5 * 1024 * 1024 + 1 });
     fireEvent.drop(picker(), { dataTransfer: { files: [invalid] } });
     expect(screen.getByRole("alert")).toHaveTextContent(kind === "format" ? "La imagen debe ser JPG, JPEG, PNG o WebP." : "La imagen no puede superar 5 MB.");
-    expect(screen.getByAltText("Vista previa")).toHaveAttribute("src", proposal.imagenUrl);
+    expect(screen.getByAltText("Vista previa")).toHaveAttribute("src", currentPreview);
     expect(editarMiPropuesta).not.toHaveBeenCalled();
   });
 

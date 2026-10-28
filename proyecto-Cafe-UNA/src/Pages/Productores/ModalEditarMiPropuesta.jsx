@@ -25,6 +25,8 @@ import {
   DIRECCION_MAX,
   NOMBRE_MAX,
   URL_MAX,
+  urlImagenPropuestaConSesion,
+  urlImagenPublica,
   validarEdicionPropuesta,
   validarImagenArchivo,
 } from "../../lib/propuestaProductor";
@@ -32,6 +34,13 @@ import {
   editarMiPropuesta,
   solicitarEdicionMiPropuesta,
 } from "../../services/propuestasProductoresService";
+import { getActiveSessionUser } from "../../services/sessionService";
+
+function previewDesdePropuesta(propuesta) {
+  const directa = urlImagenPublica(propuesta?.imagenUrl);
+  if (/^https?:\/\/[^/]*supabase\.co\//i.test(directa)) return directa;
+  return urlImagenPropuestaConSesion(directa || propuesta?.imagenUrl, getActiveSessionUser()?.token);
+}
 
 const inputCls =
   "min-h-[var(--control-height)] w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white";
@@ -107,7 +116,7 @@ export function ModalEditarMiPropuesta({
     if (propuesta) {
       setForm(inicializarForm(propuesta));
       setImagenFile(null);
-      setImagenPreview(propuesta.imagenUrl || "");
+      setImagenPreview(previewDesdePropuesta(propuesta));
       setErrores({});
       setErrorGeneral("");
     }
@@ -447,7 +456,7 @@ export function ModalEditarMiPropuesta({
                     className="text-sm font-semibold text-slate-700"
                     onClick={() => {
                       setImagenFile(null);
-                      setImagenPreview(propuesta.imagenUrl || "");
+                      setImagenPreview(previewDesdePropuesta(propuesta));
                       setErrores((prev) => ({ ...prev, imagen: "" }));
                     }}
                   >
