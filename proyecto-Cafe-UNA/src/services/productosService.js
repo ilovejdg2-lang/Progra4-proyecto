@@ -198,10 +198,24 @@ export function normalizarStockPorUbicacion(stock) {
   if (!validarCodigoUbicacion(locationCode)) return null;
   const rawStock = firstDefined(stock, ["stock", "Stock"]);
   const normalizedStock = rawStock === undefined || rawStock === null ? null : rawStock;
+  const rawReservedStock = firstDefined(stock, ["reservedStock", "ReservedStock", "stockReservado", "StockReservado"]);
+  const normalizedReservedStock = rawReservedStock === undefined || rawReservedStock === null
+    ? null
+    : rawReservedStock;
+  const reservedStock = validarStockPorUbicacion(normalizedReservedStock)
+    ? normalizedReservedStock
+    : null;
+  const normalizedOnHandStock = validarStockPorUbicacion(normalizedStock)
+    ? normalizedStock
+    : null;
   return {
     productId: String(productId),
     locationCode,
-    stock: validarStockPorUbicacion(normalizedStock) ? normalizedStock : null,
+    stock: normalizedOnHandStock,
+    reservedStock,
+    availableStock: normalizedOnHandStock !== null && reservedStock !== null
+      ? Math.max(0, normalizedOnHandStock - reservedStock)
+      : null,
     provisioned: toBoolean(firstDefined(stock, ["provisioned", "Provisioned"])),
   };
 }

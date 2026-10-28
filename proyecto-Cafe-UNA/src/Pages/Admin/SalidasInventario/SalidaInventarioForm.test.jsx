@@ -4,6 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 
 import { SalidaInventarioForm } from "./SalidaInventarioForm";
 
+vi.mock("../../../Components/ui/SelectFiltro", () => ({
+  SelectFiltro: ({ children, ...props }) => {
+    delete props.traducirOpciones;
+    return <select {...props}>{children}</select>;
+  },
+}));
+
 const productos = [
   { id: "101", nombre: "Café de altura", stockCentral: 8, estado: "Habilitado" },
   { id: "202", nombre: "Producto sin stock", stockCentral: 0, estado: "Habilitado" },
@@ -30,13 +37,18 @@ describe("SalidaInventarioForm", () => {
     expect(within(reasonSelect).getAllByRole("option").map((option) => option.textContent)).toEqual([
       "Seleccionar…",
       "Venta",
-      "Donación",
       "Traslado",
       "Ajuste por merma",
     ]);
   });
 
-  it.each(["Donación", "Traslado"])("requires a recipient for %s", async (reasonName) => {
+  it("does not offer donation as an immediate exit reason", () => {
+    render(<SalidaInventarioForm productos={productos} motivos={motivos} onSubmit={vi.fn()} />);
+
+    expect(screen.queryByRole("option", { name: "Donación" })).not.toBeInTheDocument();
+  });
+
+  it("requires a recipient for transfers", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
     render(<SalidaInventarioForm productos={productos} motivos={motivos} onSubmit={onSubmit} />);
@@ -44,7 +56,7 @@ describe("SalidaInventarioForm", () => {
     await user.selectOptions(screen.getByRole("combobox", { name: "Producto" }), "101");
     await user.selectOptions(
       screen.getByRole("combobox", { name: "Motivo de salida" }),
-      String(motivos.find((reason) => reason.nombre === reasonName).id),
+      String(motivos.find((reason) => reason.nombre === "Traslado").id),
     );
 
     const recipient = screen.getByRole("textbox", { name: "Destinatario" });
@@ -65,22 +77,20 @@ describe("SalidaInventarioForm", () => {
     expect(screen.queryByRole("textbox", { name: "Destinatario" })).not.toBeInTheDocument();
   });
 
-  it("submits a valid reason ID, quantity, and recipient", async () => {
+  it("submits a valid immediate-exit reason and quantity", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(<SalidaInventarioForm productos={productos} motivos={motivos} onSubmit={onSubmit} />);
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Producto" }), "101");
-    await user.selectOptions(screen.getByRole("combobox", { name: "Motivo de salida" }), "2");
-    await user.type(screen.getByRole("textbox", { name: "Destinatario" }), "Fundación Café UNA");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Motivo de salida" }), "1");
     await user.type(screen.getByRole("textbox", { name: "Cantidad" }), "3");
     await user.click(screen.getByRole("button", { name: "Registrar salida" }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({
       productoId: "101",
       cantidad: 3,
-      motivoSalidaId: 2,
-      destinatario: "Fundación Café UNA",
+      motivoSalidaId: 1,
     }));
   });
 
@@ -95,6 +105,26 @@ describe("SalidaInventarioForm", () => {
     await user.click(screen.getByRole("button", { name: "Registrar salida" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/stock disponible|máximo/i);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("prevents a quantity greater than stock remaining after reservations", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    const reservedProduct = {
+      id: productos[0].id,
+      nombre: productos[0].nombre,
+      estado: productos[0].estado,
+      centralStock: { confidence: "known", stock: 8, reserved: 5, available: 3 },
+    };
+    render(<SalidaInventarioForm productos={[reservedProduct]} motivos={motivos} onSubmit={onSubmit} />);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Producto" }), "101");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Motivo de salida" }), "1");
+    fireEvent.change(screen.getByRole("textbox", { name: "Cantidad" }), { target: { value: "4" } });
+    await user.click(screen.getByRole("button", { name: "Registrar salida" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("stock disponible (3)");
     expect(onSubmit).not.toHaveBeenCalled();
   });
 });
