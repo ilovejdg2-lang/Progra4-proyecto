@@ -28,3 +28,28 @@ export async function registrarSalidaInventario(payload) {
     data: payload,
   });
 }
+
+const SOLICITUDES_URL = `${BASE_URL}/salidas-solicitudes`;
+
+export async function crearSolicitudSalidaInventario(payload) {
+  return request(SOLICITUDES_URL, {
+    method: "POST",
+    data: payload,
+  });
+}
+
+export async function obtenerSolicitudesSalidaInventario(estado) {
+  const query = estado ? `?estado=${encodeURIComponent(estado)}` : "";
+  const data = await request(`${SOLICITUDES_URL}${query}`);
+  return Array.isArray(data) ? data : Array.isArray(data?.value) ? data.value : [];
+}
+
+export async function revisarSolicitudSalidaInventario(id, accion, comentario = "") {
+  if (!["aprobar", "rechazar", "cancelar"].includes(accion)) {
+    throw new Error("La acción de revisión no es válida.");
+  }
+  return request(`${SOLICITUDES_URL}/${encodeURIComponent(id)}/${accion}`, {
+    method: "POST",
+    data: { comentario },
+  });
+}
