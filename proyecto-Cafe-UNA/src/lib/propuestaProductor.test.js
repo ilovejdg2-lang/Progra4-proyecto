@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  urlImagenPropuestaConSesion,
+  urlImagenPublica,
   validarEnlaceUbicacion,
   validarFormularioPropuesta,
   validarWhatsapp,
@@ -42,5 +44,14 @@ describe("validación de propuesta de productor", () => {
     const errores = validarFormularioPropuesta({ ...formOk, nombre: "   " }, null);
     expect(errores.nombre).toBeTruthy();
     expect(errores.imagen).toBeTruthy();
+  });
+
+  it("resuelve URLs de imagen absolutas y conserva las de Supabase", () => {
+    const cdn =
+      "https://mtrbjaaujtvgpvsiwfdm.supabase.co/storage/v1/object/public/documentos/propuestas/a.png";
+    expect(urlImagenPublica(cdn)).toBe(cdn);
+    expect(urlImagenPublica("/api/productores/imagenes/a.png")).toMatch(/\/api\/productores\/imagenes\/a\.png$/);
+    expect(urlImagenPropuestaConSesion(cdn, "jwt-demo")).toBe(cdn);
+    expect(urlImagenPropuestaConSesion("/api/productores/imagenes/a.png", "jwt-demo")).toContain("token=jwt-demo");
   });
 });

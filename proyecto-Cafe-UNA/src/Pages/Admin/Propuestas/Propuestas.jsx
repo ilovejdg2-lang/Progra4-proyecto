@@ -28,6 +28,7 @@ import {
   SUGERENCIAS_MAX,
   esPropuestaAbierta,
   formatearFechaPropuesta,
+  urlImagenPublica,
 } from "../../../lib/propuestaProductor";
 import { DetallePropuestaSecciones, SeccionRevision } from "../../Productores/DetallePropuesta";
 import {
@@ -118,10 +119,15 @@ function BadgeEstado({ estado }) {
   );
 }
 
-function ImagenAdmin({ nombre, alt }) {
+function ImagenAdmin({ nombre, imagenUrl, alt }) {
   const [src, setSrc] = useState("");
   const [abierta, setAbierta] = useState(false);
   useEffect(() => {
+    const directa = urlImagenPublica(imagenUrl);
+    if (/^https?:\/\//i.test(directa)) {
+      setSrc(directa);
+      return undefined;
+    }
     if (!nombre) return undefined;
     let activo = true;
     let objectUrl = "";
@@ -138,7 +144,7 @@ function ImagenAdmin({ nombre, alt }) {
       activo = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [nombre]);
+  }, [nombre, imagenUrl]);
   if (!src) return null;
   return (
     <>
@@ -534,7 +540,7 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
               <>
                 <DetallePropuestaSecciones
                   propuesta={detalle}
-                  imagen={<ImagenAdmin nombre={detalle.imagenNombre} alt={detalle.nombre} />}
+                  imagen={<ImagenAdmin nombre={detalle.imagenNombre} imagenUrl={detalle.imagenUrl} alt={detalle.nombre} />}
                 />
 
                 {detalle.solicitudEdicion ? (

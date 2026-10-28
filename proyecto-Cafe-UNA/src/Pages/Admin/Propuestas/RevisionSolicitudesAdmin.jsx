@@ -9,12 +9,19 @@ import {
   adminBtnVoluntariadoCancel,
 } from "../../../Components/Admin/ui/AdminModal";
 import { ST } from "../../../Components/T/ST";
-import { formatearFechaPropuesta } from "../../../lib/propuestaProductor";
+import { formatearFechaPropuesta, urlImagenPropuestaConSesion, urlImagenPublica } from "../../../lib/propuestaProductor";
 import {
   eliminarPropuestaAdmin,
   resolverSolicitudEdicionAdmin,
   resolverSolicitudEliminacionAdmin,
 } from "../../../services/propuestasProductoresService";
+import { getActiveSessionUser } from "../../../services/sessionService";
+
+function srcImagenSolicitud(imagenUrl) {
+  const directa = urlImagenPublica(imagenUrl);
+  if (/^https?:\/\/[^/]*supabase\.co\//i.test(directa)) return directa;
+  return urlImagenPropuestaConSesion(directa || imagenUrl, getActiveSessionUser()?.token);
+}
 
 const ETIQUETAS_CAMPOS = {
   nombre: "Nombre del emprendimiento",
@@ -119,7 +126,7 @@ export function RevisionSolicitudEdicion({ propuesta, onResuelto }) {
         {sol.imagenUrl ? (
           <div className="mt-3 flex items-center gap-3 rounded-xl border border-sky-200 bg-white p-3">
             <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-200">
-              <img src={sol.imagenUrl} alt="Nueva imagen" className="h-full w-full object-cover" />
+              <img src={srcImagenSolicitud(sol.imagenUrl)} alt="Nueva imagen" className="h-full w-full object-cover" />
             </div>
             <div>
               <p className="text-xs font-bold text-slate-800">
