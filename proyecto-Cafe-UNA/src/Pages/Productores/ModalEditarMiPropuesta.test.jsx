@@ -14,13 +14,27 @@ vi.mock("../../Components/Admin/ui/AdminModal", () => ({
   AdminModalHeader: ({ children }) => <h2>{children}</h2>,
   adminBtnPrimary: "", adminBtnVoluntariadoCancel: "",
 }));
+vi.mock("../../Components/Productores/CampoUbicacionMapa", () => ({
+  default: function CampoUbicacionMapaMock({ onChangeCoords, enlaceUbicacion }) {
+    const React = require("react");
+    const aplicado = React.useRef("");
+    React.useEffect(() => {
+      if (!enlaceUbicacion || typeof onChangeCoords !== "function") return;
+      if (aplicado.current === enlaceUbicacion) return;
+      aplicado.current = enlaceUbicacion;
+      onChangeCoords({ latitud: "9.9281", longitud: "-84.0907" });
+    }, [enlaceUbicacion, onChangeCoords]);
+    return null;
+  },
+}));
 vi.mock("../../services/propuestasProductoresService", () => ({ editarMiPropuesta: vi.fn(), solicitarEdicionMiPropuesta: vi.fn() }));
 vi.mock("../../services/sessionService", () => ({ getActiveSessionUser: () => null }));
 
 const proposal = {
   id: 7, nombre: "Café local", descripcion: "Café de especialidad", provincia: "San José",
   canton: "San José", distrito: "Carmen", direccion: "Frente al parque",
-  enlaceUbicacion: "https://maps.google.com/", correo: "cafe@example.com", telefono: "88888888",
+  enlaceUbicacion: "https://maps.google.com/", latitud: "9.9281", longitud: "-84.0907",
+  correo: "cafe@example.com", telefono: "88888888",
   imagenUrl: "/imagenes/current.png", estado: "Pendiente",
 };
 const currentPreview = urlImagenPublica(proposal.imagenUrl);
