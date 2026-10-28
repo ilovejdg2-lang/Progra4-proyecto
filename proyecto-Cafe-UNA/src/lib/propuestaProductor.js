@@ -137,7 +137,30 @@ export function validarImagenArchivo(archivo) {
   return "";
 }
 
-export function validarFormularioPropuesta(form, archivo) {
+export const PASOS_PROPUESTA = [
+  {
+    id: "emprendimiento",
+    titulo: "Emprendimiento",
+    hint: "El nombre, qué ofrecen y una imagen representativa.",
+  },
+  {
+    id: "ubicacion",
+    titulo: "Ubicación",
+    hint: "Indique dónde se encuentra el emprendimiento.",
+  },
+  {
+    id: "contacto",
+    titulo: "Contacto",
+    hint: "Correo, teléfono y redes para dar a conocer el proyecto.",
+  },
+  {
+    id: "revision",
+    titulo: "Revisión",
+    hint: "Revisá los datos antes de enviar la propuesta.",
+  },
+];
+
+function validarEmprendimiento(form, archivo) {
   const errores = {};
   const nombre = String(form.nombre || "").trim();
   if (!nombre) errores.nombre = "El nombre del emprendimiento es obligatorio.";
@@ -149,6 +172,13 @@ export function validarFormularioPropuesta(form, archivo) {
     errores.descripcion = `La descripción admite como máximo ${DESCRIPCION_MAX} caracteres.`;
   }
 
+  const imagen = validarImagenArchivo(archivo);
+  if (imagen) errores.imagen = imagen;
+  return errores;
+}
+
+function validarUbicacion(form) {
+  const errores = {};
   if (!form.provincia || !PROVINCIAS_CR.includes(form.provincia)) {
     errores.provincia = "Seleccione la provincia";
   } else if (!form.canton || !cantonesDeProvincia(form.provincia).includes(form.canton)) {
@@ -169,6 +199,11 @@ export function validarFormularioPropuesta(form, archivo) {
     const coords = validarCoordenadasUbicacion(form.latitud, form.longitud);
     if (coords) errores.enlaceUbicacion = coords;
   }
+  return errores;
+}
+
+function validarContacto(form) {
+  const errores = {};
   const facebook = validarRed(form.facebook, "Facebook", HOSTS_FACEBOOK);
   if (facebook) errores.facebook = facebook;
   const instagram = validarRed(form.instagram, "Instagram", HOSTS_INSTAGRAM);
@@ -181,12 +216,32 @@ export function validarFormularioPropuesta(form, archivo) {
   if (correo) errores.correo = correo;
   const telefono = validarTelefonoContacto(form.telefono);
   if (telefono) errores.telefono = telefono;
-  const imagen = validarImagenArchivo(archivo);
-  if (imagen) errores.imagen = imagen;
+  return errores;
+}
+
+function validarRevision(form) {
+  const errores = {};
   if (!form.aceptaTerminos) {
     errores.aceptaTerminos = "Debés aceptar la autorización de publicación para enviar la propuesta.";
   }
   return errores;
+}
+
+export function validarPasoPropuesta(pasoIndex, form, archivo) {
+  if (pasoIndex === 0) return validarEmprendimiento(form, archivo);
+  if (pasoIndex === 1) return validarUbicacion(form);
+  if (pasoIndex === 2) return validarContacto(form);
+  if (pasoIndex === 3) return validarRevision(form);
+  return {};
+}
+
+export function validarFormularioPropuesta(form, archivo) {
+  return {
+    ...validarEmprendimiento(form, archivo),
+    ...validarUbicacion(form),
+    ...validarContacto(form),
+    ...validarRevision(form),
+  };
 }
 
 /** Mismas reglas del formulario público, sin imagen ni términos (edición del administrador). */
@@ -212,8 +267,26 @@ export function formatearFechaPropuesta(fecha) {
 }
 
 export function urlImagenPublica(ruta) {
-  if (!ruta) return "";
-  if (/^https?:\/\//i.test(ruta)) return ruta;
-  const base = String(import.meta.env.BACKEND_URL || "").replace(/\/api\/?$/, "");
-  return `${base}${ruta.startsWith("/") ? ruta : `/${ruta}`}`;
+  const raw = String(ruta || "").trim();
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const path = raw.startsWith("/") ? raw : `/${raw}`;
+  const backend = String(import.meta.env.BACKEND_URL || "").trim();
+  if (/^https?:\/\//i.test(backend)) {
+    const origen = backend.replace(/\/api\/?$/, "");
+    return `${origen}${path}`;
+  }
+  // Dev (proxy Vite) o Netlify (_redirects /api → backend)
+  return path;
+}
+
+/** Para <img> de propuestas privadas: añade el JWT si la ruta aún apunta al Nest. */
+export function urlImagenPropuestaConSesion(ruta, token) {
+  const base = urlImagenPublica(ruta);
+  if (!base) return "";
+  if (/^https?:\/\/[^/]*supabase\.co\//i.test(base)) return base;
+  const jwt = String(token || "").trim();
+  if (!jwt) return base;
+  const sep = base.includes("?") ? "&" : "?";
+  return `${base}${sep}token=${encodeURIComponent(jwt)}`;
 }
