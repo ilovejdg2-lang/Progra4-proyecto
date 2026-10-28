@@ -8,14 +8,19 @@ const claseCampo =
   "h-[var(--control-height)] w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
 const claseAyuda = "text-[length:var(--text-body)] text-slate-500";
 
-const MOTIVOS_CANONICOS = ["Venta", "Donación", "Traslado", "Ajuste por merma"];
-const MOTIVOS_CON_DESTINATARIO = new Set(["Donación", "Traslado"]);
+const MOTIVOS_CANONICOS = ["Venta", "Traslado", "Ajuste por merma"];
+const MOTIVOS_CON_DESTINATARIO = new Set(["Traslado"]);
 
 function stockCentralDe(producto) {
   if (typeof producto?.stockCentral === "number") return producto.stockCentral;
   if (producto?.centralStock) {
-    return producto.centralStock.confidence === "known"
-      ? producto.centralStock.stock
+    if (producto.centralStock.confidence !== "known") return null;
+    const available = Number(producto.centralStock.available);
+    if (Number.isInteger(available) && available >= 0) return available;
+    const stock = Number(producto.centralStock.stock);
+    const reserved = Number(producto.centralStock.reserved ?? 0);
+    return Number.isInteger(stock) && Number.isInteger(reserved)
+      ? Math.max(0, stock - reserved)
       : null;
   }
   return producto?.stock;

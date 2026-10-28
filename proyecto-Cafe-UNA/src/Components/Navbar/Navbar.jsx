@@ -32,6 +32,10 @@ import { textoIdioma } from '../../lib/idioma';
 import { useIdioma } from '../../lib/useIdioma';
 import { useTraducir } from '../../hooks/useTraducir';
 import { requestAdminStockProduct } from '../../lib/adminStockAlert';
+import {
+    partitionNotificationsByFeature,
+    resolveProposalNotificationDestination,
+} from '../../lib/notificationDestination';
 import SiteNavLink from '../SiteNavLink/SiteNavLink';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { normalizePathname } from '../../lib/paths';
@@ -261,6 +265,7 @@ const Navbar = () => {
     const labelVisitas = useTraducir('Visitas');
     const labelDonaciones = useTraducir('Donaciones');
     const labelProductores = useTraducir('Productores');
+    const labelSalidasInventario = useTraducir('Salidas de inventario');
     const labelVentasNotif = useTraducir('Ventas');
     const labelMisComprasNotif = useTraducir('Mis compras');
     const labelVentaAceptar = useTraducir('Pendiente de aceptar');
@@ -738,6 +743,8 @@ const Navbar = () => {
     const donacionesPendientesCount = donacionesPendientes.length;
     const visitasPendientes = solicitudesVisita.filter(isSolicitudPendiente);
     const visitasPendientesCount = visitasPendientes.length;
+    const { inventoryExits: salidasInventarioNotificaciones, producers: productoresNotificaciones } =
+        partitionNotificationsByFeature(propuestasNotificaciones);
     const alertasStockCount = alertasStock.length;
     const ventasNotificacionesCount = ventasNotificaciones.length;
     const propuestasNotificacionesCount = propuestasNotificaciones.length;
@@ -951,14 +958,8 @@ const Navbar = () => {
         } catch {
             /* el contador se actualiza en el próximo refresco */
         }
-        const enlace = String(item?.enlace || '');
-        const id = enlace.split('/').filter(Boolean).pop();
-        if (!id) return;
-        if (enlace.startsWith('/admin/propuestas/')) {
-            navigate({ to: '/admin/propuestas/$propuestaId', params: { propuestaId: id } });
-            return;
-        }
-        navigate({ to: '/perfil/propuestas/$propuestaId', params: { propuestaId: id } });
+        const destination = resolveProposalNotificationDestination(item?.enlace);
+        if (destination) navigate(destination);
     };
 
     const handleStockAlertOpen = (alerta) => {
@@ -1540,10 +1541,32 @@ const Navbar = () => {
                                             </section>
                                         ) : null}
 
-                                        {propuestasNotificacionesCount > 0 ? (
+                                        {salidasInventarioNotificaciones.length > 0 ? (
+                                            <section className="notifications-section" aria-label={labelSalidasInventario}>
+                                                <p className="notifications-section-label">{labelSalidasInventario}</p>
+                                                {salidasInventarioNotificaciones.map((item) => (
+                                                    <button
+                                                        key={`salida-inventario-${item.id}`}
+                                                        type="button"
+                                                        className="notification-item notification-item--propuesta"
+                                                        onClick={() => handlePropuestaNotificationOpen(item)}
+                                                    >
+                                                        <span className="notification-item__icon" aria-hidden="true">
+                                                            <Package size={16} />
+                                                        </span>
+                                                        <div className="notification-item__main">
+                                                            <strong>{item.titulo}</strong>
+                                                            <span>{item.mensaje}</span>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </section>
+                                        ) : null}
+
+                                        {productoresNotificaciones.length > 0 ? (
                                             <section className="notifications-section" aria-label={labelProductores}>
                                                 <p className="notifications-section-label">{labelProductores}</p>
-                                                {propuestasNotificaciones.map((item) => (
+                                                {productoresNotificaciones.map((item) => (
                                                     <button
                                                         key={`propuesta-${item.id}`}
                                                         type="button"

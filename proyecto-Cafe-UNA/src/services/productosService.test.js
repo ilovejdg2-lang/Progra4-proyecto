@@ -157,10 +157,27 @@ describe("productosService contract", () => {
 
   it("preserves absent and explicit zero stock states", () => {
     expect(normalizarStockPorUbicacion({ ProductId: "p-1", LocationCode: "POS_EDITORIAL", Stock: 0, Provisioned: false }))
-      .toEqual({ productId: "p-1", locationCode: "POS_EDITORIAL", stock: 0, provisioned: false });
+      .toEqual({ productId: "p-1", locationCode: "POS_EDITORIAL", stock: 0, reservedStock: null, availableStock: null, provisioned: false });
     expect(normalizarStockPorUbicacion({ id: "p-2", code: "POS_EDITORIAL" }))
-      .toEqual({ productId: "p-2", locationCode: "POS_EDITORIAL", stock: null, provisioned: false });
+      .toEqual({ productId: "p-2", locationCode: "POS_EDITORIAL", stock: null, reservedStock: null, availableStock: null, provisioned: false });
     expect(normalizarStockPorUbicacion({ id: "p-3", code: "bad code!", stock: 2 })).toBeNull();
+  });
+
+  it("normalizes reservation balances and computes stock available to consumers", () => {
+    expect(normalizarStockPorUbicacion({
+      productId: "p-4",
+      locationCode: "BODEGA_CENTRAL",
+      stock: 8,
+      reservedStock: 5,
+      provisioned: true,
+    })).toEqual({
+      productId: "p-4",
+      locationCode: "BODEGA_CENTRAL",
+      stock: 8,
+      reservedStock: 5,
+      availableStock: 3,
+      provisioned: true,
+    });
   });
 
   it("loads and caches locations without bypassing auth", async () => {
@@ -190,9 +207,9 @@ describe("productosService contract", () => {
     const editorial = await obtenerStockPorUbicacion("POS_EDITORIAL");
     const cachedEditorial = await obtenerStockPorUbicacion("POS_EDITORIAL");
     const funaUna = await obtenerStockPorUbicacion("POS_FUNA_UNA");
-    expect(editorial).toEqual([{ productId: "p-1", locationCode: "POS_EDITORIAL", stock: 7, provisioned: true }]);
+    expect(editorial).toEqual([{ productId: "p-1", locationCode: "POS_EDITORIAL", stock: 7, reservedStock: null, availableStock: null, provisioned: true }]);
     expect(cachedEditorial).toBe(editorial);
-    expect(funaUna).toEqual([{ productId: "p-1", locationCode: "POS_FUNA_UNA", stock: 11, provisioned: true }]);
+    expect(funaUna).toEqual([{ productId: "p-1", locationCode: "POS_FUNA_UNA", stock: 11, reservedStock: null, availableStock: null, provisioned: true }]);
     expect(apiRequestMock).toHaveBeenCalledTimes(2);
     expect(apiRequestMock.mock.calls[0][1]).not.toHaveProperty("skipAuth", true);
   });
