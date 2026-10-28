@@ -172,6 +172,20 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
     }
   };
 
+  const abrirEdicion = async (id, esSolicitud) => {
+    if (accionEnCurso) return;
+    setAccionEnCurso(`abrir-edicion-${id}`);
+    setError("");
+    try {
+      const completa = await obtenerMiPropuesta(id);
+      setModalEditar({ open: true, propuesta: completa, esSolicitud: Boolean(esSolicitud) });
+    } catch (err) {
+      setError(err?.message || "No se pudo cargar la propuesta para editar.");
+    } finally {
+      setAccionEnCurso("");
+    }
+  };
+
   const handleCancelarEdicion = async (id) => {
     if (accionEnCurso) return;
     setAccionEnCurso(`cancelar-edicion-${id}`);
@@ -307,8 +321,9 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
                   <>
                     <button
                       type="button"
-                      onClick={() => setModalEditar({ open: true, propuesta: item, esSolicitud: false })}
-                      className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-800 transition hover:bg-slate-50"
+                      disabled={Boolean(accionEnCurso)}
+                      onClick={() => abrirEdicion(item.id, false)}
+                      className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60"
                     >
                       <Pencil className="size-3.5" />
                       <ST>Editar</ST>
@@ -329,8 +344,9 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
                     {!item.solicitudEdicion ? (
                       <button
                         type="button"
-                        onClick={() => setModalEditar({ open: true, propuesta: item, esSolicitud: true })}
-                        className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3.5 text-xs font-semibold text-sky-800 transition hover:bg-sky-100"
+                        disabled={Boolean(accionEnCurso)}
+                        onClick={() => abrirEdicion(item.id, true)}
+                        className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3.5 text-xs font-semibold text-sky-800 transition hover:bg-sky-100 disabled:opacity-60"
                       >
                         <Pencil className="size-3.5" />
                         <ST>Solicitar edición</ST>
@@ -467,7 +483,7 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
                     <>
                       <button
                         type="button"
-                        onClick={() => setModalEditar({ open: true, propuesta: detalle, esSolicitud: false })}
+                        onClick={() => abrirEdicion(detalle.id, false)}
                         className={adminBtnPrimary}
                       >
                         <Pencil className="mr-1.5 size-4" />
@@ -489,7 +505,7 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
                       {!detalle.solicitudEdicion ? (
                         <button
                           type="button"
-                          onClick={() => setModalEditar({ open: true, propuesta: detalle, esSolicitud: true })}
+                          onClick={() => abrirEdicion(detalle.id, true)}
                           className={adminBtnPrimary}
                         >
                           <Pencil className="mr-1.5 size-4" />

@@ -54,13 +54,18 @@ function whatsappEditable(valor) {
 }
 
 function inicializarForm(propuesta) {
+  // Preferir "senas" (dirección real). En el detalle, "direccion" suele ser el texto combinado.
+  const direccion =
+    String(propuesta?.senas || "").trim() ||
+    String(propuesta?.direccion || "").trim() ||
+    "";
   return {
     nombre: propuesta?.nombre || "",
     descripcion: propuesta?.descripcion || "",
     provincia: propuesta?.provincia || "",
     canton: propuesta?.canton || "",
     distrito: propuesta?.distrito || "",
-    direccion: propuesta?.direccion || propuesta?.senas || "",
+    direccion,
     enlaceUbicacion: propuesta?.enlaceUbicacion || "",
     latitud:
       propuesta?.latitud != null && Number.isFinite(Number(propuesta.latitud))
