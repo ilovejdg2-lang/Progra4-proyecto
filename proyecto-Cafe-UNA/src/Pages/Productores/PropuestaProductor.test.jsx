@@ -18,9 +18,12 @@ vi.mock("../../Components/PageLoading/PageLoading", () => ({ default: () => null
 vi.mock("../../Components/Productores/CampoUbicacionMapa", () => ({
   default: function CampoUbicacionMapaMock({ onChangeCoords, enlaceUbicacion }) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { useEffect } = require("react");
-    useEffect(() => {
+    const React = require("react");
+    const aplicado = React.useRef("");
+    React.useEffect(() => {
       if (!enlaceUbicacion || typeof onChangeCoords !== "function") return;
+      if (aplicado.current === enlaceUbicacion) return;
+      aplicado.current = enlaceUbicacion;
       onChangeCoords({ latitud: "9.9281", longitud: "-84.0907" });
     }, [enlaceUbicacion, onChangeCoords]);
     return null;
