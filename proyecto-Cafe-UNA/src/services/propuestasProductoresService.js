@@ -42,6 +42,14 @@ export async function obtenerProductoresPublicos() {
   return Array.isArray(data) ? data : [];
 }
 
+export async function resolverUbicacionEnlace(enlaceUbicacion) {
+  return apiRequest(`${BASE}/resolver-ubicacion`, {
+    method: "POST",
+    body: JSON.stringify({ enlaceUbicacion }),
+    errorPrefix: "No se pudo resolver la ubicación del enlace",
+  });
+}
+
 export async function obtenerPropuestasAdmin(filtros = {}) {
   const params = new URLSearchParams();
   Object.entries(filtros).forEach(([clave, valor]) => {

@@ -15,6 +15,17 @@ vi.mock("../../Components/T/ST", () => ({ ST: ({ children }) => <>{children}</> 
 vi.mock("../../Components/IconoSitio/IconoSitio", () => ({ IconoSitio: () => null }));
 vi.mock("../../Components/BackToHomeLink/BackToHomeLink", () => ({ default: () => null }));
 vi.mock("../../Components/PageLoading/PageLoading", () => ({ default: () => null }));
+vi.mock("../../Components/Productores/CampoUbicacionMapa", () => ({
+  default: function CampoUbicacionMapaMock({ onChangeCoords, enlaceUbicacion }) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { useEffect } = require("react");
+    useEffect(() => {
+      if (!enlaceUbicacion || typeof onChangeCoords !== "function") return;
+      onChangeCoords({ latitud: "9.9281", longitud: "-84.0907" });
+    }, [enlaceUbicacion, onChangeCoords]);
+    return null;
+  },
+}));
 vi.mock("../../Components/ui/SelectFiltro", () => ({ SelectFiltro: ({ children, ...props }) => <select {...props}>{children}</select> }));
 vi.mock("../../services/sessionService", () => ({ getActiveSessionUser: () => ({ id: 1 }), SESSION_UPDATED_EVENT: "session-updated" }));
 vi.mock("../../services/propuestasProductoresService", () => ({ crearPropuestaProductor: vi.fn() }));

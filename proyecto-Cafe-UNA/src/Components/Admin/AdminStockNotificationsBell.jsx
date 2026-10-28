@@ -11,6 +11,10 @@ import { marcarNotificacionLeida, obtenerNotificacionesPropias } from "../../ser
 import { getActiveSessionUser } from "../../services/sessionService";
 import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
 import { requestAdminStockProduct } from "../../lib/adminStockAlert";
+import {
+  partitionNotificationsByFeature,
+  resolveProposalNotificationDestination,
+} from "../../lib/notificationDestination";
 import { useTraducir } from "../../hooks/useTraducir";
 import { ST } from "../T/ST";
 import "../Navbar/Navbar.css";
@@ -85,6 +89,7 @@ export function AdminStockNotificationsBell() {
   const labelDon = useTraducir("Donaciones");
   const labelVentas = useTraducir("Ventas");
   const labelProductores = useTraducir("Productores");
+  const labelSalidasInventario = useTraducir("Salidas de inventario");
   const labelVentaAceptar = useTraducir("Pendiente de aceptar");
   const labelVentaEntregar = useTraducir("Pendiente de entregar");
   const labelAbrirAdmin = useTraducir("Abrir en administración");
@@ -225,6 +230,8 @@ export function AdminStockNotificationsBell() {
   const voluntariadoCount = puedeVoluntariado ? solicitudesPendientes.length : 0;
   const donacionesCount = puedeDonaciones ? donacionesPendientes.length : 0;
   const ventasCount = puedeVentas ? ventas.length : 0;
+  const { inventoryExits: salidasInventarioNotificaciones, producers: notificacionesProductores } =
+    partitionNotificationsByFeature(propuestas);
   const propuestasCount = propuestas.length;
   const count = alertasCount + voluntariadoCount + donacionesCount + ventasCount + propuestasCount;
 
@@ -253,14 +260,8 @@ export function AdminStockNotificationsBell() {
     } catch {
       /* el contador se actualiza en el próximo refresco */
     }
-    const enlace = String(item?.enlace || "");
-    const id = enlace.split("/").filter(Boolean).pop();
-    if (!id) return;
-    if (enlace.startsWith("/admin/propuestas/")) {
-      navigate({ to: "/admin/propuestas/$propuestaId", params: { propuestaId: id } });
-      return;
-    }
-    navigate({ to: "/perfil/propuestas/$propuestaId", params: { propuestaId: id } });
+    const destination = resolveProposalNotificationDestination(item?.enlace);
+    if (destination) navigate(destination);
   };
 
   const openVenta = (venta) => {
@@ -418,10 +419,32 @@ export function AdminStockNotificationsBell() {
                   </section>
                 ) : null}
 
-                {propuestasCount > 0 ? (
+                {salidasInventarioNotificaciones.length > 0 ? (
+                  <section className="notifications-section" aria-label={labelSalidasInventario}>
+                    <p className="notifications-section-label">{labelSalidasInventario}</p>
+                    {salidasInventarioNotificaciones.map((item) => (
+                      <button
+                        key={`salida-inventario-${item.id}`}
+                        type="button"
+                        className="notification-item notification-item--propuesta"
+                        onClick={() => openPropuesta(item)}
+                      >
+                        <span className="notification-item__icon" aria-hidden="true">
+                          <Package size={16} />
+                        </span>
+                        <div className="notification-item__main">
+                          <strong>{item.titulo}</strong>
+                          <span>{item.mensaje}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </section>
+                ) : null}
+
+                {notificacionesProductores.length > 0 ? (
                   <section className="notifications-section" aria-label={labelProductores}>
                     <p className="notifications-section-label">{labelProductores}</p>
-                    {propuestas.map((item) => (
+                    {notificacionesProductores.map((item) => (
                       <button
                         key={`propuesta-${item.id}`}
                         type="button"

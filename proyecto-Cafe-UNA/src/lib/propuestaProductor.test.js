@@ -16,6 +16,8 @@ const formOk = {
   distrito: "San Miguel",
   direccion: "Frente al parque",
   enlaceUbicacion: "https://www.google.com/maps/place/Cafe",
+  latitud: "9.93",
+  longitud: "-84.08",
   facebook: "",
   instagram: "",
   whatsapp: "",
@@ -29,13 +31,37 @@ describe("validación de propuesta de productor", () => {
   it("acepta mapas y waze y rechaza un dominio fraudulento", () => {
     expect(validarEnlaceUbicacion("https://maps.app.goo.gl/abc")).toBe("");
     expect(validarEnlaceUbicacion("https://waze.com/ul/abc")).toBe("");
-    expect(validarEnlaceUbicacion("https://maps.google.com.ejemplo.com/maps")).toMatch(/Google Maps o Waze/);
+    expect(validarEnlaceUbicacion("https://maps.google.co.cr/?q=9.9,-84.1")).toBe("");
+    expect(validarEnlaceUbicacion("https://www.google.co.cr/maps/place/Cafe")).toBe("");
+    expect(validarEnlaceUbicacion("https://ul.waze.com/ul?ll=9.9,-84.1")).toBe("");
+    expect(validarEnlaceUbicacion("https://maps.google.com.ejemplo.com/maps")).toMatch(
+      /Google Maps ni de Waze|Google Maps o Waze/,
+    );
+    expect(validarEnlaceUbicacion("https://ejemplo.com/maps")).toMatch(/Google Maps/);
     expect(validarEnlaceUbicacion("javascript:alert(1)")).not.toBe("");
   });
 
-  it("no marca error en redes opcionales vacías", () => {
+  it("no marca error en redes opcionales vacías si hay pin confirmado", () => {
     const archivo = new File([new Uint8Array(12)], "cafe.jpg", { type: "image/jpeg" });
     expect(validarFormularioPropuesta(formOk, archivo)).toEqual({});
+  });
+
+  it("exige confirmar el punto en el mapa si el enlace no trae coordenadas", () => {
+    const archivo = new File([new Uint8Array(12)], "cafe.jpg", { type: "image/jpeg" });
+    const errores = validarFormularioPropuesta(
+      { ...formOk, latitud: "", longitud: "" },
+      archivo,
+    );
+    expect(errores.enlaceUbicacion).toMatch(/mapa|Costa Rica/);
+  });
+
+  it("rechaza coordenadas fuera de Costa Rica", () => {
+    const archivo = new File([new Uint8Array(12)], "cafe.jpg", { type: "image/jpeg" });
+    const errores = validarFormularioPropuesta(
+      { ...formOk, latitud: "40.7", longitud: "-74.0" },
+      archivo,
+    );
+    expect(errores.enlaceUbicacion).toMatch(/Costa Rica/);
   });
 
   it("exige código de país en WhatsApp y conserva el formulario si falta la imagen", () => {
