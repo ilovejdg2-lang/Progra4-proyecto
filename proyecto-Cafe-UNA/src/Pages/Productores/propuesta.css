@@ -39,7 +39,7 @@
 }
 
 .propuesta-breadcrumb a:hover {
-  color: var(--verde-finca, #286f54);
+  color: var(--negro-principal, #0f172a);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -123,8 +123,8 @@
 }
 
 .propuesta-wizard__step.is-active .propuesta-wizard__step-btn {
-  background: var(--verde-finca-fondo, #f0fbf6);
-  color: var(--verde-finca, #286f54);
+  background: #f1f5f9;
+  color: var(--negro-principal, #0f172a);
   font-weight: 700;
 }
 
@@ -149,14 +149,14 @@
 }
 
 .propuesta-wizard__step.is-active .propuesta-wizard__step-num {
-  background: var(--verde-finca, #286f54);
-  border-color: var(--verde-finca, #286f54);
+  background: var(--negro-principal, #0f172a);
+  border-color: var(--negro-principal, #0f172a);
   color: #fff;
 }
 
 .propuesta-wizard__step.is-done .propuesta-wizard__step-num {
-  background: var(--verde-finca, #286f54);
-  border-color: var(--verde-finca, #286f54);
+  background: var(--negro-principal, #0f172a);
+  border-color: var(--negro-principal, #0f172a);
   color: #fff;
 }
 
@@ -182,7 +182,7 @@
   font-size: var(--text-title);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--verde-finca, #286f54);
+  color: var(--negro-principal, #0f172a);
   line-height: 1.2;
 }
 
@@ -223,7 +223,7 @@
   padding: 0 var(--control-pad-x, 1rem);
   border: 0;
   background: transparent;
-  color: var(--verde-finca, #286f54);
+  color: var(--negro-principal, #0f172a);
   font: inherit;
   font-size: var(--text-body);
   font-weight: 700;
@@ -250,7 +250,7 @@
   padding: 0 28px;
   border: 0;
   border-radius: 12px;
-  background: var(--verde-finca, #286f54);
+  background: var(--negro-principal, #0f172a);
   color: #fff;
   font: inherit;
   font-size: var(--text-body);
@@ -260,7 +260,7 @@
 }
 
 .propuesta-wizard__btn-seguir:hover:not(:disabled) {
-  background: #1f5a44;
+  background: var(--negro-hover, #1e293b);
 }
 
 .propuesta-wizard__btn-seguir:active:not(:disabled) {
@@ -305,7 +305,7 @@
   padding: 0 12px;
   border: 0;
   background: transparent;
-  color: var(--verde-finca, #286f54);
+  color: var(--negro-principal, #0f172a);
   font: inherit;
   font-size: var(--text-body);
   font-weight: 700;
@@ -547,7 +547,7 @@ a.btn-enviar {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #286f54;
+  color: var(--negro-principal, #0f172a);
   font-weight: 700;
 }
 
