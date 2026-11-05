@@ -533,8 +533,9 @@ export async function obtenerDocumentosPublicos(filtros = {}) {
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
     if (tagsBuscados.length > 0) {
+      const tagsSet = new Set(tagsBuscados);
       filtrados = filtrados.filter((d) =>
-        (d.etiquetas || []).some((t) => tagsBuscados.includes(t.toLowerCase())),
+        (d.etiquetas || []).some((t) => tagsSet.has(t.toLowerCase())),
       );
     }
   }

@@ -100,8 +100,8 @@ function normalizarRol(rol) {
 export function tienePermiso(roles, codigo) {
   const permitidos = PERMISOS_POR_ROL[codigo];
   if (!permitidos) return false;
-  const propios = (Array.isArray(roles) ? roles : []).map(normalizarRol);
-  return permitidos.some((rol) => propios.includes(rol));
+  const propios = new Set((Array.isArray(roles) ? roles : []).map(normalizarRol));
+  return permitidos.some((rol) => propios.has(rol));
 }
 
 export function rolesDeUsuario(user) {
