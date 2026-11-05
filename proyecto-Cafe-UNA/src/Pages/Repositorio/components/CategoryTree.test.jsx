@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -49,7 +49,9 @@ describe("CategoryTree category row", () => {
     renderTree();
 
     const toggle = screen.getByRole("button", { name: "Expandir subcategorías" });
+    const select = screen.getByRole("button", { name: /Cafés/ });
     expect(toggle.parentElement.closest("button, [role='button']")).toBeNull();
-    fireEvent.click(toggle);
+    expect(select.parentElement.closest("button, [role='button']")).toBeNull();
+    expect(select.contains(toggle)).toBe(false);
   });
 });
