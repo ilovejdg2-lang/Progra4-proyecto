@@ -123,6 +123,13 @@ html.scroll-locked body.admin-route-active {
   pointer-events: auto;
   isolation: isolate;
   overscroll-behavior: none;
+  /* The dialog is the overlay: it carries the scrim the old backdrop element drew. */
+  background: rgb(15 23 42 / 0.55);
+  cursor: pointer;
+}
+
+.admin-modal-root > * {
+  cursor: auto;
 }
 
 .admin-modal-root.is-elevated {
@@ -134,16 +141,6 @@ html.scroll-locked body.admin-route-active {
     align-items: center;
     padding: 1rem;
   }
-}
-
-.admin-modal-backdrop {
-  position: absolute;
-  inset: 0;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: rgb(15 23 42 / 0.55);
-  cursor: pointer;
-  pointer-events: auto;
 }
 
 #root {

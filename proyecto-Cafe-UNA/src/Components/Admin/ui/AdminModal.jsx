@@ -1,7 +1,7 @@
-import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
+import { ModalDialog } from "../../ui/ModalDialog";
 import { useAdminModalLock } from "../../../hooks/useBodyScrollLock";
 import { useTraducir } from "../../../hooks/useTraducir";
 
@@ -20,51 +20,27 @@ export function AdminModal({
 }) {
   useAdminModalLock(open);
 
-  useEffect(() => {
-    if (!open || !onClose) {
-      return undefined;
-    }
-
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
-        event.stopImmediatePropagation();
-        onClose();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown, elevated);
-    return () => window.removeEventListener("keydown", handleKeyDown, elevated);
-  }, [open, onClose, elevated]);
-
   if (!open || typeof document === "undefined") {
     return null;
   }
 
   return createPortal(
-    <div className={cn("admin-modal-root", elevated && "is-elevated")}>
+    <ModalDialog
+      onClose={onClose}
+      labelledBy={labelledBy}
+      className={cn("admin-modal-root", elevated && "is-elevated")}
+    >
       <div
-        className="admin-modal-backdrop"
-        aria-hidden="true"
-        onClick={onClose}
-        onWheel={(event) => event.preventDefault()}
-        onTouchMove={(event) => event.preventDefault()}
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={labelledBy}
         className={cn(
           "relative z-10 flex max-h-[92dvh] w-full min-h-0 min-w-0 flex-col overflow-x-hidden overflow-hidden bg-white shadow-2xl",
           "rounded-t-2xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl",
           maxWidth,
           className,
         )}
-        onMouseDown={(event) => event.stopPropagation()}
-        onClick={(event) => event.stopPropagation()}
       >
         {children}
       </div>
-    </div>,
+    </ModalDialog>,
     document.body,
   );
 }

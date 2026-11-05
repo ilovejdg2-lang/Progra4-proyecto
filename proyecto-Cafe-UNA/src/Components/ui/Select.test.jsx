@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { UiSelect } from "./Select";
+import { ModalDialog } from "./ModalDialog";
 
 function renderWithLabel() {
   render(
@@ -61,5 +62,30 @@ describe("UiSelect open state", () => {
     await userEvent.click(screen.getByText("Color"));
 
     expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("renders its menu inside an enclosing modal dialog so it stays visible and clickable", async () => {
+    const onChange = vi.fn();
+    render(
+      <ModalDialog label="Filtros">
+        <UiSelect
+          ariaLabel="Color"
+          value="a"
+          onChange={onChange}
+          options={[
+            { value: "a", label: "Rojo" },
+            { value: "b", label: "Azul" },
+          ]}
+          traducirOpciones={false}
+        />
+      </ModalDialog>,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Color", hidden: true }));
+
+    const menu = document.querySelector(".ui-select__menu");
+    expect(menu.closest("dialog")).toBe(document.querySelector("dialog"));
+    fireEvent.pointerDown(screen.getByRole("option", { name: "Azul", hidden: true }));
+    expect(onChange).toHaveBeenCalledWith("b");
   });
 });

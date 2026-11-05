@@ -50,6 +50,7 @@ export function UiSelect({
   const [menuClaro, setMenuClaro] = useState(false);
   const [menuStyle, setMenuStyle] = useState(null);
   const [busqueda, setBusqueda] = useState("");
+  const [menuHost, setMenuHost] = useState(null);
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
@@ -153,6 +154,8 @@ export function UiSelect({
         className="ui-select__trigger"
         onClick={() => {
           setBusqueda("");
+          // A modal <dialog> sits in the top layer, so the menu must live inside it to stay visible.
+          setMenuHost(rootRef.current?.closest("dialog") ?? null);
           setMenuClaro(Boolean(rootRef.current?.closest(".voluntariado-page, .formulario-card, .campo")));
           setOpen((actualOpen) => !actualOpen);
         }}
@@ -219,7 +222,7 @@ export function UiSelect({
               </ul>
               {footer ? <div className="ui-select__footer">{footer}</div> : null}
             </div>,
-            document.body,
+            menuHost ?? document.body,
           )
         : null}
     </div>
