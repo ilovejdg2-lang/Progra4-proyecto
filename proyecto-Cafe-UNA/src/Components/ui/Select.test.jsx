@@ -88,4 +88,34 @@ describe("UiSelect open state", () => {
     fireEvent.pointerDown(screen.getByRole("option", { name: "Azul", hidden: true }));
     expect(onChange).toHaveBeenCalledWith("b");
   });
+
+  it("closes only the open menu on Escape inside a dialog; a second Escape closes the dialog", async () => {
+    const onClose = vi.fn();
+    render(
+      <ModalDialog label="Filtros" onClose={onClose}>
+        <UiSelect
+          ariaLabel="Color"
+          value="a"
+          onChange={() => {}}
+          options={[
+            { value: "a", label: "Rojo" },
+            { value: "b", label: "Azul" },
+          ]}
+          traducirOpciones={false}
+        />
+      </ModalDialog>,
+    );
+    const trigger = screen.getByRole("button", { name: "Color", hidden: true });
+
+    await userEvent.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.keyDown(screen.getByRole("option", { name: "Azul", hidden: true }), { key: "Escape" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(onClose).not.toHaveBeenCalled();
+    expect(trigger).toHaveFocus();
+
+    fireEvent.keyDown(trigger, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });

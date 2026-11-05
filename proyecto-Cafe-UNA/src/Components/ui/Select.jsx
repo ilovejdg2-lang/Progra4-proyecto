@@ -136,6 +136,15 @@ export function UiSelect({
     };
   }, [open]);
 
+  // While the menu is open, Escape belongs to the menu: close it, keep any enclosing modal open.
+  const cerrarMenuConEscape = (event) => {
+    if (event.key !== "Escape" || !open) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
+
   const elegir = (opcion) => {
     onChange?.(opcion.value);
     setOpen(false);
@@ -152,6 +161,7 @@ export function UiSelect({
         aria-expanded={open}
         aria-haspopup="listbox"
         className="ui-select__trigger"
+        onKeyDown={cerrarMenuConEscape}
         onClick={() => {
           setBusqueda("");
           // A modal <dialog> sits in the top layer, so the menu must live inside it to stay visible.
@@ -171,6 +181,7 @@ export function UiSelect({
               ref={menuRef}
               className={`ui-select__menu ui-select__menu--portal${menuClaro ? " ui-select__menu--claro" : ""}${className ? ` ${className}` : ""}`}
               style={menuStyle}
+              onKeyDown={cerrarMenuConEscape}
             >
               {buscable ? (
                 <div className="ui-select__search">
