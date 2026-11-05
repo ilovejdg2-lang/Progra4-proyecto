@@ -124,4 +124,38 @@ describe("ModalDialog", () => {
     fireEvent.click(dialog, { clientX: 20, clientY: 50 });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it("returns focus to the opener when closed, also under StrictMode double effects", async () => {
+    function Opener() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            open it
+          </button>
+          {open ? (
+            <ModalDialog label="Demo" onClose={() => setOpen(false)}>
+              <button type="button" autoFocus>
+                inner focus
+              </button>
+            </ModalDialog>
+          ) : null}
+        </>
+      );
+    }
+    render(
+      <StrictMode>
+        <Opener />
+      </StrictMode>,
+    );
+    const opener = screen.getByRole("button", { name: "open it" });
+    opener.focus();
+    fireEvent.click(opener);
+    screen.getByRole("button", { name: "inner focus", hidden: true }).focus();
+
+    fireEvent.keyDown(document.querySelector("dialog"), { key: "Escape" });
+
+    expect(document.querySelector("dialog")).toBeNull();
+    expect(opener).toHaveFocus();
+  });
 });

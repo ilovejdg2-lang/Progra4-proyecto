@@ -430,7 +430,7 @@
   margin-right: 0.15rem;
 }
 
-.navbar__cart-button,
+/* The cart button is a real click target (like the bell) so it receives focus and the cart drawer can return it. */
 .navbar__user-button {
   pointer-events: none;
 }

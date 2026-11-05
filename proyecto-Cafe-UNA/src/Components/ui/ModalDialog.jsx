@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import "./ModalDialog.css";
 
 /**
@@ -37,16 +37,41 @@ export function ModalDialog({
 }) {
   const ref = useRef(null);
   const pressedBackdrop = useRef(false);
+  const opener = useRef(null);
+  // Read during the first render, before children mount: an autoFocus child would otherwise
+  // already have taken focus by the time the layout effect runs.
+  const [focusedAtMount] = useState(() => (typeof document === "undefined" ? null : document.activeElement));
 
   useLayoutEffect(() => {
     const dialog = ref.current;
     if (!dialog) return undefined;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-    return () => {
-      if (dialog.open) dialog.close();
+
+    // Remember the opener ourselves: the native "previously focused element" is overwritten
+    // when StrictMode re-runs this effect while focus still sits inside the closed dialog.
+    const restoreFocus = () => {
+      const target = opener.current;
+      opener.current = null;
+      if (target?.isConnected && !dialog.contains(target)) target.focus({ preventScroll: true });
     };
-  }, [open]);
+
+    if (open && !dialog.open) {
+      const usable = (el) => el && el !== document.body && el.isConnected && !dialog.contains(el);
+      if (!opener.current) {
+        opener.current = [focusedAtMount, document.activeElement].find(usable) ?? null;
+      }
+      dialog.showModal();
+    }
+    if (!open && dialog.open) {
+      dialog.close();
+      restoreFocus();
+    }
+    return () => {
+      if (dialog.open) {
+        dialog.close();
+        restoreFocus();
+      }
+    };
+  }, [open, focusedAtMount]);
 
   return (
     <dialog
