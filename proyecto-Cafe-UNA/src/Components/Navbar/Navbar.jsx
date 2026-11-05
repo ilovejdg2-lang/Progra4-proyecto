@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import './Navbar.css';
 import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
@@ -495,7 +495,9 @@ const Navbar = () => {
     }, [user, loadSolicitudesUsuario]);
 
     const isMobileMenuOpenRef = useRef(false);
-    isMobileMenuOpenRef.current = isMobileMenuOpen;
+    useLayoutEffect(() => {
+        isMobileMenuOpenRef.current = isMobileMenuOpen;
+    });
 
     const syncScrolledState = useCallback(() => {
         if (isMobileMenuOpenRef.current) return;

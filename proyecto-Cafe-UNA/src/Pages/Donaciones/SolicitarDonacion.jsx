@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useRouterState } from "@tanstack/react-router";
 import {
   CalendarDays,
@@ -327,7 +327,9 @@ export default function SolicitarDonacion() {
   const consultaCedulaRef = useRef({ digitos: "", enCurso: false });
   const fileInputRef = useRef(null);
   const fotosRef = useRef([]);
-  fotosRef.current = fotos;
+  useLayoutEffect(() => {
+    fotosRef.current = fotos;
+  });
   const esPersona = formulario.tipoDonante === "persona";
   const tipoDocumento = formulario.tipoDocumento;
   const tPhIdentificacion = useTraducir(placeholderIdentificacion(tipoDocumento));
