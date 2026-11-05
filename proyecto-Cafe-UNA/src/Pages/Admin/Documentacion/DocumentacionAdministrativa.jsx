@@ -1063,9 +1063,9 @@ export default function DocumentacionAdministrativa() {
 
                 {/* Aviso de Privacidad fija para Documentación Administrativa */}
                 <div className="admin-form-group">
-                  <label className="admin-form-label">
+                  <span className="admin-form-label">
                     <ST>Nivel de privacidad y acceso</ST>
-                  </label>
+                  </span>
                   <div className="admin-form-radio-card is-selected cursor-default">
                     <Lock size={16} className="text-amber-600 mt-0.5 shrink-0" />
                     <div className="radio-content">
@@ -1083,12 +1083,13 @@ export default function DocumentacionAdministrativa() {
 
                 {/* Pregunta 7: Archivo Digital */}
                 <div className="admin-form-group">
-                  <label className="admin-form-label">
+                  <label htmlFor="documentacion-admin-archivo" className="admin-form-label">
                     <ST>¿Qué archivo digital desea adjuntar?</ST> {!documentoEditando ? <span className="campo-requerido">*</span> : null}
                   </label>
                   <p className="admin-form-helper"><ST>Formatos admitidos: PDF, Word, Excel, PPT, TXT, ZIP (máx. 30 MB).</ST></p>
 
                   <input
+                    id="documentacion-admin-archivo"
                     ref={fileInputRef}
                     type="file"
                     className="hidden"

@@ -1033,11 +1033,12 @@ export default function SolicitarDonacion() {
                       </div>
                       <div className="form-grid--4cols">
                         <div className="campo">
-                          <label>
+                          <label htmlFor="donacion-identificacion">
                             {etiquetaDocumento} <span className="req">*</span>
                           </label>
                           {esPasaporte ? (
                             <input
+                              id="donacion-identificacion"
                               type="text"
                               name="identificacion"
                               placeholder={tPhIdentificacion}
@@ -1048,6 +1049,7 @@ export default function SolicitarDonacion() {
                             />
                           ) : (
                             <NumericInput
+                              id="donacion-identificacion"
                               name="identificacion"
                               placeholder={tPhIdentificacion}
                               value={formulario.identificacion}
@@ -1062,10 +1064,11 @@ export default function SolicitarDonacion() {
                           ) : null}
                         </div>
                         <div className="campo">
-                          <label>
+                          <label htmlFor="donacion-nombre">
                             {tNombre} <span className="req">*</span>
                           </label>
                           <input
+                            id="donacion-nombre"
                             type="text"
                             name="nombre"
                             placeholder={consultandoCedula ? "Consultando..." : tPhNombre}
@@ -1076,10 +1079,11 @@ export default function SolicitarDonacion() {
                           {errores.nombre ? <span className="mensaje-error"><ST>{errores.nombre}</ST></span> : null}
                         </div>
                         <div className="campo">
-                          <label>
+                          <label htmlFor="donacion-primerApellido">
                             {tPrimerApellido} <span className="req">*</span>
                           </label>
                           <input
+                            id="donacion-primerApellido"
                             type="text"
                             name="primerApellido"
                             placeholder={consultandoCedula ? "Consultando..." : tPh1}
@@ -1092,8 +1096,9 @@ export default function SolicitarDonacion() {
                           ) : null}
                         </div>
                         <div className="campo">
-                          <label>{tSegundoApellido}</label>
+                          <label htmlFor="donacion-segundoApellido">{tSegundoApellido}</label>
                           <input
+                            id="donacion-segundoApellido"
                             type="text"
                             name="segundoApellido"
                             placeholder={consultandoCedula ? "Consultando..." : tPh2}
@@ -1115,10 +1120,11 @@ export default function SolicitarDonacion() {
                   ) : (
                     <>
                       <div className="campo">
-                        <label>
+                        <label htmlFor="donacion-nombre">
                           {tRazonSocial} <span className="req">*</span>
                         </label>
                         <input
+                          id="donacion-nombre"
                           type="text"
                           name="nombre"
                           placeholder={tRazonSocial}
@@ -1129,10 +1135,11 @@ export default function SolicitarDonacion() {
                         {errores.nombre ? <span className="mensaje-error"><ST>{errores.nombre}</ST></span> : null}
                       </div>
                       <div className="campo">
-                        <label>
+                        <label htmlFor="donacion-identificacion">
                           {tIdentificacion} <span className="req">*</span>
                         </label>
                         <input
+                          id="donacion-identificacion"
                           type="text"
                           name="identificacion"
                           placeholder={tPhId}
@@ -1150,10 +1157,11 @@ export default function SolicitarDonacion() {
 
                   <div className="form-grid">
                     <div className="campo">
-                      <label>
+                      <label htmlFor="donacion-correo">
                         {tCorreo} <span className="req">*</span>
                       </label>
                       <input
+                        id="donacion-correo"
                         type="email"
                         name="correo"
                         value={formulario.correo}
@@ -1163,12 +1171,13 @@ export default function SolicitarDonacion() {
                       {errores.correo ? <span className="mensaje-error"><ST>{errores.correo}</ST></span> : null}
                     </div>
                     <div className="campo">
-                      <label>
+                      <label htmlFor="donacion-telefono">
                         {tTelefono} <span className="req">*</span>
                       </label>
                       <div className="campo-con-icono">
                         <Phone size={16} className="campo-con-icono__icono" aria-hidden="true" />
                         <NumericInput
+                          id="donacion-telefono"
                           name="telefono"
                           placeholder="88888888"
                           maxLength={8}
@@ -1183,10 +1192,10 @@ export default function SolicitarDonacion() {
 
                 <SectionCard paso={2} lugar="donacion.detalles" title={tDetalles} hint={tDetallesHint}>
                   <div className="campo">
-                    <label>
+                    <label htmlFor="donacion-categoriaId">
                       {tCategoria} <span className="req">*</span>
                     </label>
-                    <SelectFiltro name="categoriaId" value={formulario.categoriaId} onChange={handleChange}>
+                    <SelectFiltro id="donacion-categoriaId" name="categoriaId" value={formulario.categoriaId} onChange={handleChange}>
                       <option value="">{tSeleccione}</option>
                       {necesidades.map((item) => (
                         <option key={item.id} value={String(item.id)}>
@@ -1197,10 +1206,11 @@ export default function SolicitarDonacion() {
                     {errores.categoriaId ? <span className="mensaje-error"><ST>{errores.categoriaId}</ST></span> : null}
                   </div>
                   <div className="campo">
-                    <label>
+                    <label htmlFor="donacion-materialId">
                       {tMaterial} <span className="req">*</span>
                     </label>
                     <SelectFiltro
+                      id="donacion-materialId"
                       name="materialId"
                       value={formulario.materialId}
                       onChange={handleChange}
@@ -1216,10 +1226,11 @@ export default function SolicitarDonacion() {
                     {errores.materialId ? <span className="mensaje-error"><ST>{errores.materialId}</ST></span> : null}
                   </div>
                   <div className="campo">
-                    <label>
+                    <label htmlFor="donacion-descripcion">
                       {tDescripcion} <span className="req">*</span>
                     </label>
                     <textarea
+                      id="donacion-descripcion"
                       name="descripcion"
                       rows={4}
                       value={formulario.descripcion}
@@ -1233,10 +1244,11 @@ export default function SolicitarDonacion() {
                   </div>
                   <div className="form-grid">
                     <div className="campo">
-                      <label>
+                      <label htmlFor="donacion-cantidadEstimada">
                         {tCantidad} <span className="req">*</span>
                       </label>
                       <input
+                        id="donacion-cantidadEstimada"
                         type="text"
                         name="cantidadEstimada"
                         value={formulario.cantidadEstimada}
@@ -1247,10 +1259,10 @@ export default function SolicitarDonacion() {
                       {errores.cantidadEstimada ? <span className="mensaje-error"><ST>{errores.cantidadEstimada}</ST></span> : null}
                     </div>
                     <div className="campo">
-                      <label>
+                      <label htmlFor="donacion-estadoArticulos">
                         {tEstado} <span className="req">*</span>
                       </label>
-                      <SelectFiltro name="estadoArticulos" value={formulario.estadoArticulos} onChange={handleChange}>
+                      <SelectFiltro id="donacion-estadoArticulos" name="estadoArticulos" value={formulario.estadoArticulos} onChange={handleChange}>
                         <option value="">{tSeleccione}</option>
                         {estadosArticulos.map((estado) => (
                           <option key={estado} value={estado}>
@@ -1262,12 +1274,13 @@ export default function SolicitarDonacion() {
                     </div>
                   </div>
                   <div className="campo">
-                    <label>
+                    <label htmlFor="donacion-valorEstimado">
                       {tValor} <span className="req">*</span>
                     </label>
                     <div className="campo-prefijo">
                       <span className="campo-prefijo__simbolo">₡</span>
                       <input
+                        id="donacion-valorEstimado"
                         type="text"
                         name="valorEstimado"
                         value={formulario.valorEstimado}
@@ -1279,7 +1292,7 @@ export default function SolicitarDonacion() {
                     {errores.valorEstimado ? <span className="mensaje-error"><ST>{errores.valorEstimado}</ST></span> : null}
                   </div>
                   <div className="campo">
-                    <label>
+                    <label htmlFor="donacion-fotos">
                       {tFotos} <span className="req">*</span>
                     </label>
                     <div
@@ -1306,6 +1319,7 @@ export default function SolicitarDonacion() {
                       <small>{tFotosHint}</small>
                     </div>
                     <input
+                      id="donacion-fotos"
                       ref={fileInputRef}
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
@@ -1350,10 +1364,10 @@ export default function SolicitarDonacion() {
                 <SectionCard paso={3} lugar="donacion.ubicacion" title={tUbicacion} hint={tUbicacionHint}>
                   <div className="form-grid">
                     <div className="campo">
-                      <label>
+                      <label htmlFor="donacion-provincia">
                         {tProvincia} <span className="req">*</span>
                       </label>
-                      <SelectFiltro name="provincia" value={formulario.provincia} onChange={handleChange}>
+                      <SelectFiltro id="donacion-provincia" name="provincia" value={formulario.provincia} onChange={handleChange}>
                         <option value="">{tSeleccione}</option>
                         {PROVINCIAS_CR.map((provincia) => (
                           <option key={provincia} value={provincia}>{provincia}</option>
@@ -1362,10 +1376,10 @@ export default function SolicitarDonacion() {
                       {errores.provincia ? <span className="mensaje-error"><ST>{errores.provincia}</ST></span> : null}
                     </div>
                     <div className="campo">
-                      <label>
+                      <label htmlFor="donacion-canton">
                         {tCanton} <span className="req">*</span>
                       </label>
-                      <SelectFiltro name="canton" value={formulario.canton} onChange={handleChange} disabled={!formulario.provincia}>
+                      <SelectFiltro id="donacion-canton" name="canton" value={formulario.canton} onChange={handleChange} disabled={!formulario.provincia}>
                         <option value="">{tSeleccione}</option>
                         {cantonesDisponibles.map((canton) => (
                           <option key={canton} value={canton}>{canton}</option>
@@ -1374,10 +1388,10 @@ export default function SolicitarDonacion() {
                       {errores.canton ? <span className="mensaje-error"><ST>{errores.canton}</ST></span> : null}
                     </div>
                     <div className="campo">
-                      <label>
+                      <label htmlFor="donacion-distrito">
                         {tDistrito} <span className="req">*</span>
                       </label>
-                      <SelectFiltro name="distrito" value={formulario.distrito} onChange={handleChange} disabled={!formulario.canton}>
+                      <SelectFiltro id="donacion-distrito" name="distrito" value={formulario.distrito} onChange={handleChange} disabled={!formulario.canton}>
                         <option value="">{tSeleccione}</option>
                         {distritosDisponibles.map((distrito) => (
                           <option key={distrito} value={distrito}>{distrito}</option>
@@ -1387,10 +1401,11 @@ export default function SolicitarDonacion() {
                     </div>
                   </div>
                   <div className="campo">
-                    <label>
+                    <label htmlFor="donacion-direccion">
                       {tSeñas} <span className="req">*</span>
                     </label>
                     <textarea
+                      id="donacion-direccion"
                       name="direccion"
                       rows={3}
                       value={formulario.direccion}
@@ -1460,10 +1475,10 @@ export default function SolicitarDonacion() {
                         </div>
                       ) : (
                         <div className="campo full flex flex-col items-center">
-                          <label className="self-start">
+                          <span id="donacion-dia-entrega" className="campo__label self-start">
                             {tDiaEntregaEntrega}{" "}
                             <span className="req">*</span>
-                          </label>
+                          </span>
                           {fechaEntregaSeleccionada ? (
                             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-900 bg-white px-5 py-2 shadow-xs">
                               <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -1582,8 +1597,9 @@ export default function SolicitarDonacion() {
 
                 <SectionCard paso={5} lugar="donacion.declaracion" title={tDeclaracion} hint={tDeclaracionHint}>
                   <div className="campo">
-                    <label>{tFecha}</label>
+                    <label htmlFor="donacion-fechaSolicitud">{tFecha}</label>
                     <input
+                      id="donacion-fechaSolicitud"
                       type="date"
                       name="fechaSolicitud"
                       value={formulario.fechaSolicitud}

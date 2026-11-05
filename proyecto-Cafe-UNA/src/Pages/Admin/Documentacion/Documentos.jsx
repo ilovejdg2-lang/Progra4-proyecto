@@ -1099,9 +1099,9 @@ export default function AdminDocumentos() {
 
                 {/* Pregunta 6: Visibilidad / Privacidad */}
                 <div className="admin-form-group">
-                  <label className="admin-form-label">
+                  <span className="admin-form-label">
                     <ST>¿Cuál es el nivel de visibilidad y acceso?</ST>
-                  </label>
+                  </span>
                   <p className="admin-form-helper"><ST>Defina si el archivo podrá descargarse libremente o requerirá autorización.</ST></p>
                   <div className="admin-form-privacy-options">
                     <label className={`admin-form-radio-card ${!formDoc.esPrivado ? "is-selected" : ""}`}>
@@ -1144,12 +1144,13 @@ export default function AdminDocumentos() {
 
                 {/* Pregunta 7: Archivo Digital */}
                 <div className="admin-form-group">
-                  <label className="admin-form-label">
+                  <label htmlFor="documento-admin-archivo" className="admin-form-label">
                     <ST>¿Qué archivo digital desea adjuntar?</ST> {!documentoEditando ? <span className="campo-requerido">*</span> : null}
                   </label>
                   <p className="admin-form-helper"><ST>Formatos admitidos: PDF, Word, Excel, PPT, TXT, ZIP (máx. 30 MB).</ST></p>
 
                   <input
+                    id="documento-admin-archivo"
                     ref={fileInputRef}
                     type="file"
                     className="hidden"

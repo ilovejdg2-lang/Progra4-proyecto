@@ -561,7 +561,7 @@ export default function AdminVentasPresenciales() {
           >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12 items-end">
               <div className="lg:col-span-6 space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                <label htmlFor="pos-punto-venta-select" className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
                   <Store className="size-3.5 text-neutral-900" />
                   <ST>Punto de Venta</ST>
                 </label>
@@ -576,10 +576,10 @@ export default function AdminVentasPresenciales() {
               </div>
 
               <div className="lg:col-span-6 space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
                   <User className="size-3.5 text-neutral-900" />
                   <ST>Vendedor</ST>
-                </label>
+                </span>
                 <div className="min-h-[var(--control-height)] flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-800">
                   <span className="truncate">{nombreVendedor}</span>
                 </div>
@@ -875,10 +875,11 @@ export default function AdminVentasPresenciales() {
 
                     {/* Cliente (opcional) */}
                     <div className="space-y-1">
-                      <label className="font-semibold text-slate-700">
+                      <label htmlFor="pos-cliente-nombre" className="font-semibold text-slate-700">
                         <ST>Cliente (opcional)</ST>
                       </label>
                       <input
+                        id="pos-cliente-nombre"
                         type="text"
                         value={clienteNombre}
                         onChange={(e) => setClienteNombre(e.target.value)}
@@ -889,13 +890,14 @@ export default function AdminVentasPresenciales() {
 
                     {/* Correo Electrónico (opcional) para envío de comprobante */}
                     <div className="space-y-1">
-                      <label className="font-semibold text-slate-700 flex items-center justify-between">
+                      <label htmlFor="pos-cliente-correo" className="font-semibold text-slate-700 flex items-center justify-between">
                         <span className="flex items-center gap-1">
                           <Mail className="size-3 text-neutral-900" />
                           <ST>Correo para comprobante (opcional)</ST>
                         </span>
                       </label>
                       <input
+                        id="pos-cliente-correo"
                         type="email"
                         value={clienteCorreo}
                         onChange={(e) => {
@@ -1100,6 +1102,7 @@ export default function AdminVentasPresenciales() {
                     <input
                       type="email"
                       value={correoResumenInput}
+                      aria-label={t("Correo del cliente")}
                       onChange={(e) => setCorreoResumenInput(limpiarCorreo(e.target.value))}
                       placeholder="cliente@correo.com"
                       className="h-11 w-full min-w-0 rounded-full border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-black sm:h-10 sm:flex-1 sm:text-xs"

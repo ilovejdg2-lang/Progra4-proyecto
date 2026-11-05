@@ -162,6 +162,7 @@ export default function AdminFacturas() {
             <input
               type="text"
               value={filtroBuscar}
+              aria-label="Buscar facturas"
               onChange={(e) => setFiltroBuscar(e.target.value)}
               placeholder="Buscar por N° factura, orden o cliente..."
               className="admin-facturas__search-input"

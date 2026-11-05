@@ -160,6 +160,7 @@ function SolicitarVoluntariado() {
   const tInfoResponsableHint = useTraducir("Datos personales y de contacto de la persona a cargo de la coordinación del grupo");
 
   const tTipoDocumento = useTraducir("Tipo de identificación");
+  const tTipoOtro = useTraducir("Otro tipo de voluntariado");
   const tCedula = useTraducir("Cédula");
   const tDimex = useTraducir("DIMEX");
   const tPasaporte = useTraducir("Pasaporte");
@@ -921,11 +922,12 @@ function SolicitarVoluntariado() {
 
                   <div className="form-grid--4cols">
                     <div className="campo">
-                      <label>
+                      <label htmlFor="voluntariado-identificacion">
                         {etiquetaDocumento} <span className="req">*</span>
                       </label>
                       {esPasaporte ? (
                         <input
+                          id="voluntariado-identificacion"
                           type="text"
                           name="identificacion"
                           placeholder={tPhIdentificacion}
@@ -936,6 +938,7 @@ function SolicitarVoluntariado() {
                         />
                       ) : (
                         <NumericInput
+                          id="voluntariado-identificacion"
                           name="identificacion"
                           placeholder={tPhIdentificacion}
                           value={formulario.identificacion}
@@ -948,10 +951,11 @@ function SolicitarVoluntariado() {
                     </div>
 
                     <div className="campo">
-                      <label>
+                      <label htmlFor="voluntariado-nombre">
                         {tNombre} <span className="req">*</span>
                       </label>
                       <input
+                        id="voluntariado-nombre"
                         type="text"
                         name="nombre"
                         placeholder={consultandoCedula ? "Consultando..." : tPhNombre}
@@ -962,10 +966,11 @@ function SolicitarVoluntariado() {
                     </div>
 
                     <div className="campo">
-                      <label>
+                      <label htmlFor="voluntariado-primerApellido">
                         {tPrimerApellido} <span className="req">*</span>
                       </label>
                       <input
+                        id="voluntariado-primerApellido"
                         type="text"
                         name="primerApellido"
                         placeholder={consultandoCedula ? "Consultando..." : tPh1}
@@ -976,8 +981,9 @@ function SolicitarVoluntariado() {
                     </div>
 
                     <div className="campo">
-                      <label>{tSegundoApellido}</label>
+                      <label htmlFor="voluntariado-segundoApellido">{tSegundoApellido}</label>
                       <input
+                        id="voluntariado-segundoApellido"
                         type="text"
                         name="segundoApellido"
                         placeholder={consultandoCedula ? "Consultando..." : tPh2}
@@ -1004,10 +1010,11 @@ function SolicitarVoluntariado() {
 
                   <div className="form-grid">
                     <div className="campo">
-                      <label>
+                      <label htmlFor="voluntariado-institucion">
                         {tInstitucion}<span className="req">*</span>
                       </label>
                       <input
+                        id="voluntariado-institucion"
                         type="text"
                         name="institucion"
                         placeholder={tPhInstitucion}
@@ -1021,10 +1028,11 @@ function SolicitarVoluntariado() {
                     </div>
 
                     <div className="campo">
-                      <label>
+                      <label htmlFor="voluntariado-pais">
                         {tPais}<span className="req">*</span>
                       </label>
                       <input
+                        id="voluntariado-pais"
                         type="text"
                         name="pais"
                         placeholder={tPhPais}
@@ -1044,10 +1052,11 @@ function SolicitarVoluntariado() {
                 >
                   <div className="form-grid">
                     <div className="campo">
-                      <label>
+                      <label htmlFor="voluntariado-correo">
                         {tCorreo}<span className="req">*</span>
                       </label>
                       <input
+                        id="voluntariado-correo"
                         type="email"
                         inputMode="email"
                         autoComplete="email"
@@ -1060,10 +1069,11 @@ function SolicitarVoluntariado() {
                     </div>
 
                     <div className="campo">
-                      <label>
+                      <label htmlFor="voluntariado-telefono">
                         {tTelefono}<span className="req">*</span>
                       </label>
                       <NumericInput
+                        id="voluntariado-telefono"
                         name="telefono"
                         placeholder="88888888"
                         maxLength={8}
@@ -1086,10 +1096,11 @@ function SolicitarVoluntariado() {
                   >
                     <div className="form-grid">
                       <div className="campo">
-                        <label>
+                        <label htmlFor="voluntariado-cantidadParticipantes">
                           {tCantParticipantes} <span className="req">*</span>
                         </label>
                         <NumericInput
+                          id="voluntariado-cantidadParticipantes"
                           name="cantidadParticipantes"
                           placeholder={tPhCantidad}
                           value={formulario.cantidadParticipantes}
@@ -1102,13 +1113,14 @@ function SolicitarVoluntariado() {
                     </div>
 
                     <div className="campo full mt-4">
-                      <label>
+                      <label htmlFor="voluntariado-documento-grupo">
                         {tDocIntegrantes} <span className="req">*</span>
                       </label>
                       <div className="documento-upload-wrapper">
                         {!documentoGrupo ? (
                           <label className="documento-upload-dropzone">
                             <input
+                              id="voluntariado-documento-grupo"
                               type="file"
                               accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
                               onChange={handleDocumentoChange}
@@ -1209,6 +1221,7 @@ function SolicitarVoluntariado() {
                       <input
                         type="text"
                         name="tipoOtro"
+                        aria-label={tTipoOtro}
                         placeholder="Describa el tipo de voluntariado en el que desea participar"
                         value={formulario.tipoOtro}
                         onChange={handleChange}
