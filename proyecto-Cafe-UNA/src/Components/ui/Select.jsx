@@ -119,6 +119,9 @@ export function UiSelect({
     const cerrar = (event) => {
       const target = event.target;
       if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      // A click on the trigger's own label re-clicks the trigger, which toggles it closed;
+      // closing here too would make that click reopen the menu.
+      if (target instanceof Element && target.closest("label")?.control === triggerRef.current) return;
       setOpen(false);
     };
     const onKey = (event) => {
