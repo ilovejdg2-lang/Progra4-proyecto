@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
+import { ModalDialog } from "../../../Components/ui/ModalDialog";
 import { createPortal } from "react-dom";
 import PageLoading from "../../../Components/PageLoading/PageLoading";
 import { UiSelect } from "../../../Components/ui/Select";
@@ -412,7 +413,11 @@ export default function SolicitudesDocumentacion() {
       {/* Modal de Resolución */}
       {solicitudSeleccionada ? (
         createPortal(
-        <div className="repositorio-modal-overlay" role="dialog" aria-labelledby={modalTitleId} aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) setSolicitudSeleccionada(null); }}>
+        <ModalDialog
+          className="repositorio-modal-overlay"
+          labelledBy={modalTitleId}
+          onClose={() => setSolicitudSeleccionada(null)}
+        >
           <div className="repositorio-modal-container max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="repositorio-modal-header">
               <h3 id={modalTitleId}>
@@ -507,7 +512,7 @@ export default function SolicitudesDocumentacion() {
               </div>
             </form>
           </div>
-        </div>,
+        </ModalDialog>,
         document.body,
         )
       ) : null}

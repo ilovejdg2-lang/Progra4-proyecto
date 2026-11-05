@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
+import { ModalDialog } from "../../../Components/ui/ModalDialog";
 import { createPortal } from "react-dom";
 import PageLoading from "../../../Components/PageLoading/PageLoading";
 import { UiSelect } from "../../../Components/ui/Select";
@@ -922,13 +923,10 @@ export default function AdminDocumentos() {
       ============================================================ */}
       {modalAbierto ? (
         createPortal(
-        <div
+        <ModalDialog
           className="admin-modal-overlay"
-          role="dialog" aria-labelledby={modalTitleId}
-          aria-modal="true"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) cerrarModal();
-          }}
+          labelledBy={modalTitleId}
+          onClose={cerrarModal}
         >
           <div
             className="admin-form-modal-container"
@@ -1249,7 +1247,7 @@ export default function AdminDocumentos() {
               </button>
             </div>
           </div>
-        </div>,
+        </ModalDialog>,
         document.body,
         )
       ) : null}
@@ -1257,13 +1255,10 @@ export default function AdminDocumentos() {
       {/* MODAL CREAR CATEGORÍA */}
       {modalCatAbierto ? (
         createPortal(
-        <div
+        <ModalDialog
           className="admin-modal-overlay"
-          role="dialog" aria-labelledby={categoriaModalTitleId}
-          aria-modal="true"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setModalCatAbierto(false);
-          }}
+          labelledBy={categoriaModalTitleId}
+          onClose={() => setModalCatAbierto(false)}
         >
           <div className="admin-form-modal-container max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="admin-form-modal-header">
@@ -1353,7 +1348,7 @@ export default function AdminDocumentos() {
               </button>
             </div>
           </div>
-        </div>,
+        </ModalDialog>,
         document.body,
         )
       ) : null}
