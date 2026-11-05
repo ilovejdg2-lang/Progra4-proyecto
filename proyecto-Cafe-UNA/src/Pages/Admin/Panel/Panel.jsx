@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ClipboardList,
@@ -27,6 +27,7 @@ import { QuickAccess } from "./components/QuickAccess";
 import { StockAlerts } from "./components/StockAlerts";
 import { RecentActivity } from "./components/RecentActivity";
 import { DashboardCalendar } from "./components/DashboardCalendar";
+import { LazyChart } from "./components/LazyChart";
 import {
   agruparIngresosPorDia,
   deltaPorcentaje,
@@ -42,15 +43,33 @@ import "./Panel.css";
 
 
 
-const MonthlyRevenueChart = lazy(() =>
-  import("./components/MonthlyRevenueChart").then((m) => ({ default: m.MonthlyRevenueChart })),
-);
-const UserStatusChart = lazy(() =>
-  import("./components/UserStatusChart").then((m) => ({ default: m.UserStatusChart })),
-);
+const cargarIngresos = () =>
+  import("./components/MonthlyRevenueChart").then((m) => ({ default: m.MonthlyRevenueChart }));
+const cargarUsuarios = () =>
+  import("./components/UserStatusChart").then((m) => ({ default: m.UserStatusChart }));
 
-function ChartFallback() {
-  return <div className="h-64 animate-pulse rounded-xl bg-slate-100" aria-hidden="true" />;
+const CARD_CLASS =
+  "rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 sm:p-5";
+const PULSE = "animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800";
+
+function IngresosFallback() {
+  return (
+    <section className={CARD_CLASS} aria-hidden="true">
+      <div className={`h-9 ${PULSE}`} />
+      <div className={`mt-3 h-6 ${PULSE}`} />
+      <div className={`mt-3 h-56 ${PULSE}`} />
+      <div className="mt-1 h-4" />
+    </section>
+  );
+}
+
+function UsuariosFallback() {
+  return (
+    <section className={CARD_CLASS} aria-hidden="true">
+      <div className={`h-5 ${PULSE}`} />
+      <div className="mt-6 h-40 animate-pulse rounded-full bg-slate-100 dark:bg-slate-800" />
+    </section>
+  );
 }
 
 function mesInputDeFecha(date) {
@@ -384,8 +403,9 @@ const AdminPanel = () => {
 
           <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.9fr)]">
             {puedeVentas ? (
-              <Suspense fallback={<ChartFallback />}>
-              <MonthlyRevenueChart
+              <LazyChart
+                load={cargarIngresos}
+                fallback={<IngresosFallback />}
                 titulo="Ingresos mensuales generales"
                 subtitulo="Suma de los 3 puntos de venta (FUNDA-UNA, Bodega Central y Editorial)."
                 mesValor={mesValor}
@@ -398,19 +418,18 @@ const AdminPanel = () => {
                 loading={cargandoVentas}
                 vacio={!cargandoVentas && !hayIngresosMes}
               />
-              </Suspense>
             ) : null}
             <div className="grid gap-4">
               {puedeUsuarios ? (
-                <Suspense fallback={<ChartFallback />}>
-                <UserStatusChart
+                <LazyChart
+                  load={cargarUsuarios}
+                  fallback={<UsuariosFallback />}
                   total={totalUsuarios}
                   activos={usuariosActivos}
                   inactivos={usuariosInactivos}
                   loading={cargandoUsuarios}
                   puedeVerTodos={puedeUsuarios}
                 />
-                </Suspense>
               ) : null}
               <QuickAccess items={accesos} gestionarTo={puedeAjustes ? "/admin/ajustes/permisos" : null} />
             </div>
