@@ -33,13 +33,14 @@ export function SidebarProvider({ defaultOpen = true, className, children, ...pr
 
   useBodyScrollLock(openMobile);
 
-  const setOpen = React.useCallback((value) => {
-    setOpenState((actual) => {
-      const next = typeof value === "function" ? value(actual) : value;
+  const setOpen = React.useCallback(
+    (value) => {
+      const next = typeof value === "function" ? value(open) : value;
+      setOpenState(next);
       localStorage.setItem(SIDEBAR_OPEN_KEY, String(next));
-      return next;
-    });
-  }, []);
+    },
+    [open],
+  );
 
   const toggleSidebar = React.useCallback(() => {
     if (window.matchMedia("(max-width: 767px)").matches) {

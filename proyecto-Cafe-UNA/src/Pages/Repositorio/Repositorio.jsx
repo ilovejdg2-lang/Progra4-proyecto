@@ -17,6 +17,7 @@ import {
 import { getActiveSessionUser } from "../../services/sessionService";
 import { SolicitarDocumentoModal } from "./SolicitarDocumentoModal";
 import { VisualizarDocumentoModal } from "./VisualizarDocumentoModal";
+import { usePersistedIdSet } from "../../hooks/usePersistedIdSet";
 import { usePublicPageLoadingGate } from "../../hooks/usePublicPageLoadingGate";
 import { ST } from "../../Components/T/ST";
 
@@ -108,50 +109,9 @@ export default function Repositorio() {
   const [documentoVisualizar, setDocumentoVisualizar] = useState(null);
 
   // Persistencia de favoritos, leer más tarde e historial
-  const [favoritosIds, setFavoritosIds] = useState(() => {
-    if (typeof window === "undefined") return new Set();
-    try {
-      const s = localStorage.getItem("biblio_favoritos_ids");
-      return s ? new Set(JSON.parse(s)) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
-
-  const [leerTardeIds, setLeerTardeIds] = useState(() => {
-    if (typeof window === "undefined") return new Set();
-    try {
-      const s = localStorage.getItem("biblio_leertarde_ids");
-      return s ? new Set(JSON.parse(s)) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
-
-  const handleToggleLeerTarde = useCallback((doc) => {
-    setLeerTardeIds((prev) => {
-      const next = new Set(prev);
-      const idStr = String(doc.id);
-      if (next.has(idStr)) next.delete(idStr);
-      else next.add(idStr);
-      try {
-        localStorage.setItem("biblio_leertarde_ids", JSON.stringify([...next]));
-      } catch (err) {
-        console.warn("No se pudo guardar en leer más tarde:", err);
-      }
-      return next;
-    });
-  }, []);
-
-  const [historialIds, setHistorialIds] = useState(() => {
-    if (typeof window === "undefined") return new Set();
-    try {
-      const s = localStorage.getItem("biblio_historial_ids");
-      return s ? new Set(JSON.parse(s)) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
+  const { ids: favoritosIds, toggle: toggleFavorito } = usePersistedIdSet("biblio_favoritos_ids");
+  const { ids: leerTardeIds, toggle: toggleLeerTarde } = usePersistedIdSet("biblio_leertarde_ids");
+  const { ids: historialIds, add: agregarHistorial } = usePersistedIdSet("biblio_historial_ids");
 
   // Actualizar URL cuando cambian los filtros (history replaceState sin recargar página ni alterar posición de scroll)
   const sincronizarUrl = useCallback((nuevosFiltros) => {
@@ -345,11 +305,9 @@ export default function Repositorio() {
 
   // Alternar colapso de sidebar en escritorio
   const handleToggleColapso = () => {
-    setSidebarColapsado((prev) => {
-      const nuevo = !prev;
-      localStorage.setItem("biblio_sidebar_collapsed", String(nuevo));
-      return nuevo;
-    });
+    const nuevo = !sidebarColapsado;
+    setSidebarColapsado(nuevo);
+    localStorage.setItem("biblio_sidebar_collapsed", String(nuevo));
   };
 
   // Descarga de archivo
@@ -388,16 +346,7 @@ export default function Repositorio() {
     setDocumentoVisualizar(doc);
     // Registrar vista en backend e historial local
     void registrarVistaDocumento(doc.id).catch(() => {});
-    setHistorialIds((prev) => {
-      const next = new Set(prev);
-      next.add(String(doc.id));
-      try {
-        localStorage.setItem("biblio_historial_ids", JSON.stringify([...next]));
-      } catch (err) {
-        console.warn("No se pudo guardar historial:", err);
-      }
-      return next;
-    });
+    agregarHistorial(doc.id);
     setDocumentos((prev) =>
       prev.map((item) =>
         item.id === doc.id
@@ -618,21 +567,8 @@ export default function Repositorio() {
               onVisualizar={handleVisualizar}
               onDescargar={handleDescargar}
               onVerDetalle={(doc) => setDocumentoVisualizar(doc)}
-              onToggleFavorito={(doc) => {
-                setFavoritosIds((prev) => {
-                  const next = new Set(prev);
-                  const idStr = String(doc.id);
-                  if (next.has(idStr)) next.delete(idStr);
-                  else next.add(idStr);
-                  try {
-                    localStorage.setItem("biblio_favoritos_ids", JSON.stringify([...next]));
-                  } catch (err) {
-                    console.warn("No se pudo guardar favorito:", err);
-                  }
-                  return next;
-                });
-              }}
-              onToggleLeerTarde={handleToggleLeerTarde}
+              onToggleFavorito={(doc) => toggleFavorito(doc.id)}
+              onToggleLeerTarde={(doc) => toggleLeerTarde(doc.id)}
               onFiltrarEtiqueta={(tag) => handleCambiarFiltro("etiquetas", tag)}
               onLimpiarFiltros={handleLimpiarTodos}
             />
@@ -647,21 +583,8 @@ export default function Repositorio() {
               onVisualizar={handleVisualizar}
               onDescargar={handleDescargar}
               onVerDetalle={(doc) => setDocumentoVisualizar(doc)}
-              onToggleFavorito={(doc) => {
-                setFavoritosIds((prev) => {
-                  const next = new Set(prev);
-                  const idStr = String(doc.id);
-                  if (next.has(idStr)) next.delete(idStr);
-                  else next.add(idStr);
-                  try {
-                    localStorage.setItem("biblio_favoritos_ids", JSON.stringify([...next]));
-                  } catch (err) {
-                    console.warn("No se pudo guardar favorito:", err);
-                  }
-                  return next;
-                });
-              }}
-              onToggleLeerTarde={handleToggleLeerTarde}
+              onToggleFavorito={(doc) => toggleFavorito(doc.id)}
+              onToggleLeerTarde={(doc) => toggleLeerTarde(doc.id)}
               onFiltrarEtiqueta={(tag) => handleCambiarFiltro("etiquetas", tag)}
               onLimpiarFiltros={handleLimpiarTodos}
             />
