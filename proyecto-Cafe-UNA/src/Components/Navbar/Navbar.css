@@ -766,6 +766,7 @@
   position: fixed;
   top: 0;
   right: 0;
+  left: auto;
   height: 100vh;
   height: 100dvh;
   width: min(476px, 100vw);

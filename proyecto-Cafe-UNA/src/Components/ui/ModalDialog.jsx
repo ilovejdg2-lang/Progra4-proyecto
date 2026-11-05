@@ -9,15 +9,29 @@ import "./ModalDialog.css";
  * focus trap, inert background and focus return on close. Open state stays controlled:
  * Escape and backdrop presses call onClose and the caller unmounts or sets open=false.
  *
+ * Pass `panel` when the dialog is itself the visible box (e.g. a side drawer) instead of a
+ * full-viewport overlay: only presses outside its bounds then count as backdrop presses.
+ *
  * Anything portaled to document.body from inside a modal would render behind it (top
  * layer), so portal into the nearest open dialog instead.
  */
+function pressedOutsideBox(event) {
+  const box = event.currentTarget.getBoundingClientRect();
+  return (
+    event.clientX < box.left ||
+    event.clientX > box.right ||
+    event.clientY < box.top ||
+    event.clientY > box.bottom
+  );
+}
+
 export function ModalDialog({
   open = true,
   onClose,
   labelledBy,
   label,
   className = "",
+  panel = false,
   children,
   ...rest
 }) {
@@ -55,13 +69,16 @@ export function ModalDialog({
         onClose?.();
       }}
       onPointerDown={(event) => {
-        pressedBackdrop.current = event.target === event.currentTarget;
+        pressedBackdrop.current =
+          event.target === event.currentTarget && (!panel || pressedOutsideBox(event));
         rest.onPointerDown?.(event);
       }}
       onClick={(event) => {
         const startedOnBackdrop = pressedBackdrop.current;
         pressedBackdrop.current = false;
-        if (startedOnBackdrop && event.target === event.currentTarget) onClose?.();
+        if (startedOnBackdrop && event.target === event.currentTarget && (!panel || pressedOutsideBox(event))) {
+          onClose?.();
+        }
         rest.onClick?.(event);
       }}
     >

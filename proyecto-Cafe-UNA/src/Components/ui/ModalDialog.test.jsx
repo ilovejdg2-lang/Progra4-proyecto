@@ -105,4 +105,23 @@ describe("ModalDialog", () => {
     expect(close).toHaveBeenCalled();
     close.mockRestore();
   });
+
+  it("in panel mode only presses outside the dialog box count as backdrop presses", () => {
+    const onClose = vi.fn();
+    render(
+      <ModalDialog panel label="Carrito" onClose={onClose}>
+        <p>contenido</p>
+      </ModalDialog>,
+    );
+    const dialog = document.querySelector("dialog");
+    dialog.getBoundingClientRect = () => ({ left: 100, right: 300, top: 0, bottom: 400, width: 200, height: 400 });
+
+    fireEvent.pointerDown(dialog, { clientX: 150, clientY: 50 });
+    fireEvent.click(dialog, { clientX: 150, clientY: 50 });
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.pointerDown(dialog, { clientX: 20, clientY: 50 });
+    fireEvent.click(dialog, { clientX: 20, clientY: 50 });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });
