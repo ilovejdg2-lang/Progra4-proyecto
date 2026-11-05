@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ModalDialog } from "../../Components/ui/ModalDialog";
+import { useMediaExit } from '../../hooks/useMediaExit';
 import { Link } from '@tanstack/react-router';
 import {
   Check,
@@ -82,6 +83,8 @@ const Products = () => {
   const [subcategoria, setSubcategoria] = useState('todas');
   const [busqueda, setBusqueda] = useState('');
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
+  // The filter drawer is display:none above this breakpoint (Products.css); close it so a hidden modal cannot keep the page inert.
+  useMediaExit('(max-width: 900px)', filtrosAbiertos, () => setFiltrosAbiertos(false));
   const [categoriasApi, setCategoriasApi] = useState([]);
   const [abiertas, setAbiertas] = useState({});
   const [stockPorPunto, setStockPorPunto] = useState({});
