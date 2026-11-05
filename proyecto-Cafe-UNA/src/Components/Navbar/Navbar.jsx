@@ -1,6 +1,6 @@
 import { ModalDialog } from "../ui/ModalDialog";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useEffectEvent, useLayoutEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import './Navbar.css';
 import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
@@ -657,6 +657,8 @@ const Navbar = () => {
         };
     }, [showCartDropdown]);
 
+    const dismissCartPanel = useEffectEvent(() => closeCartPanel());
+
     useEffect(() => {
         if (!showCartDropdown) {
             return;
@@ -664,13 +666,13 @@ const Navbar = () => {
 
         const handlePointerDown = (event) => {
             if (cartContainerRef.current && !cartContainerRef.current.contains(event.target)) {
-                closeCartPanel();
+                dismissCartPanel();
             }
         };
 
         const handleEscapeKey = (event) => {
             if (event.key === 'Escape') {
-                closeCartPanel();
+                dismissCartPanel();
             }
         };
 
@@ -681,7 +683,7 @@ const Navbar = () => {
             document.removeEventListener('mousedown', handlePointerDown);
             document.removeEventListener('keydown', handleEscapeKey);
         };
-    }, [showCartDropdown, closeCartPanel]);
+    }, [showCartDropdown]);
 
     useEffect(() => {
         if (!showNotifications) {
