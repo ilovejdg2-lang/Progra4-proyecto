@@ -1,9 +1,11 @@
+const FORMATO_PRECIO = new Intl.NumberFormat("es-CR", {
+  style: "currency",
+  currency: "CRC",
+  maximumFractionDigits: 0,
+});
+
 export function formatearPrecio(valor) {
-  return new Intl.NumberFormat("es-CR", {
-    style: "currency",
-    currency: "CRC",
-    maximumFractionDigits: 0,
-  }).format(valor || 0);
+  return FORMATO_PRECIO.format(valor || 0);
 }
 
 /** Etiqueta visible de estado: Activo | Inactivo | Agotado */

@@ -63,13 +63,15 @@ const CAMPOS_TEXTO_ACTIVO = [
   "descripcionProyecto",
 ];
 
-function formatCRC(value) {
-  return new Intl.NumberFormat("es-CR", {
+const FORMATO_CRC = new Intl.NumberFormat("es-CR", {
     style: "currency",
     currency: "CRC",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(Number(value) || 0);
+});
+
+function formatCRC(value) {
+  return FORMATO_CRC.format(Number(value) || 0);
 }
 
 function formatFecha(fecha) {

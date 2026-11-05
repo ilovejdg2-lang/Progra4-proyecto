@@ -27,12 +27,14 @@ import { ST } from "../../../Components/T/ST";
 import { t } from "../../../lib/t";
 import { useTraducir } from "../../../hooks/useTraducir";
 
-function formatCRC(value) {
-  return new Intl.NumberFormat("es-CR", {
+const FORMATO_CRC = new Intl.NumberFormat("es-CR", {
     style: "currency",
     currency: "CRC",
     maximumFractionDigits: 0,
-  }).format(Number(value) || 0);
+});
+
+function formatCRC(value) {
+  return FORMATO_CRC.format(Number(value) || 0);
 }
 
 function formatFecha(fecha) {
