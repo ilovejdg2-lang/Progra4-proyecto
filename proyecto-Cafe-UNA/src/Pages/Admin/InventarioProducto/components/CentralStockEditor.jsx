@@ -34,7 +34,8 @@ export function CentralStockEditor({
   const [validationError, setValidationError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const submitGuard = useRef(false);
-  const lastSyncedStock = useRef(initialValue(stockRecord));
+  const [initialSynced] = useState(() => initialValue(stockRecord));
+  const lastSyncedStock = useRef(initialSynced);
   const tTitulo = useTraducir("Stock de Bodega Central");
   const tGuardando = useTraducir("Guardando...");
   const tGuardarStock = useTraducir("Guardar stock");

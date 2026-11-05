@@ -162,6 +162,7 @@ export function PermisosMatriz({
               const meta = p.modulo || moduloDePermiso(p);
               if (!meta) return null;
               const Icon = meta.Icon;
+              const rolesActivos = new Set(matrizLocal[p.codigo] || []);
               return (
                 <article key={p.codigo} className="rounded-2xl border border-slate-200 p-4">
                   <div className="flex items-start gap-3">
@@ -175,7 +176,7 @@ export function PermisosMatriz({
                   </div>
                   <div className="mt-3 grid gap-2">
                     {(roles || []).map((rol) => {
-                      const activo = (matrizLocal[p.codigo] || []).includes(rol);
+                      const activo = rolesActivos.has(rol);
                       return (
                         <div key={`${p.codigo}-${rol}`} className="flex items-center justify-between gap-3">
                           <span className="text-[length:var(--text-body)] font-semibold text-slate-600">
@@ -216,6 +217,7 @@ export function PermisosMatriz({
                   const meta = p.modulo || moduloDePermiso(p);
                   if (!meta) return null;
                   const Icon = meta.Icon;
+                  const rolesActivos = new Set(matrizLocal[p.codigo] || []);
                   return (
                     <tr
                       key={p.codigo}
@@ -233,7 +235,7 @@ export function PermisosMatriz({
                         </div>
                       </td>
                       {(roles || []).map((rol) => {
-                        const activo = (matrizLocal[p.codigo] || []).includes(rol);
+                        const activo = rolesActivos.has(rol);
                         return (
                           <td
                             key={`${p.codigo}-${rol}`}

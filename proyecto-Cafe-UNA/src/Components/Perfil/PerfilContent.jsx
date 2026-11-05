@@ -235,7 +235,7 @@ export function PerfilContent({ variant = "standalone" }) {
     step: "view",
   });
   const [nombreError, setNombreError] = useState("");
-  const [clienteForm, setClienteForm] = useState(buildClienteFormFromPerfil(null));
+  const [clienteForm, setClienteForm] = useState(() => buildClienteFormFromPerfil(null));
   const [clienteError, setClienteError] = useState("");
   const { idioma } = useIdioma();
   const tElegiPais = useTraducir("Elegí un país");
@@ -294,14 +294,19 @@ export function PerfilContent({ variant = "standalone" }) {
     });
   }
 
+  const cargaRef = useRef(0);
+  const montadoRef = useRef(true);
+
   async function cargarPerfil() {
     if (!sessionUserId) return;
 
+    const carga = (cargaRef.current += 1);
     setCargando(true);
     setError("");
     clearPerfilCache();
     try {
       const data = await obtenerPerfil();
+      if (!montadoRef.current || carga !== cargaRef.current) return;
       setPerfil(data);
       setClienteForm(buildClienteFormFromPerfil(data));
       setForm({
@@ -314,9 +319,10 @@ export function PerfilContent({ variant = "standalone" }) {
       });
       applyPerfilToSession(data);
     } catch (err) {
+      if (!montadoRef.current || carga !== cargaRef.current) return;
       setError(sanitizeUserFacingError(err.message || "No se pudo cargar el perfil."));
     } finally {
-      setCargando(false);
+      if (carga === cargaRef.current) setCargando(false);
     }
   }
 
@@ -324,10 +330,15 @@ export function PerfilContent({ variant = "standalone" }) {
     if (!sessionUserId) {
       setCargando(false);
       setError("Inicie sesi\u00f3n para ver su perfil.");
-      return;
+      return undefined;
     }
 
+    montadoRef.current = true;
     cargarPerfil();
+    return () => {
+      montadoRef.current = false;
+      cargaRef.current += 1;
+    };
   }, [sessionUserId]);
 
   useEffect(() => {

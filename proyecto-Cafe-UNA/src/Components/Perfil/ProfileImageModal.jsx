@@ -43,6 +43,10 @@ export function ProfileImageModal({
   const generation = useRef(0);
   const initialIdentity = useRef(identity);
   const closeRef = useRef(onClose);
+  const urlInput = useRef(null);
+  useEffect(() => {
+    if (open) urlInput.current?.focus();
+  }, [open]);
   useEffect(() => { closeRef.current = onClose; }, [onClose]);
   const invalidate = () => {
     generation.current += 1;
@@ -83,10 +87,8 @@ export function ProfileImageModal({
     } catch {
       if (!controller.signal.aborted && current === generation.current) setError("No se pudo cargar la imagen. Intente nuevamente.");
     } finally {
-      if (current === generation.current) {
-        request.current = null;
-        setUploading(false);
-      }
+      if (current === generation.current) request.current = null;
+      setUploading(request.current !== null);
     }
   }
   function close() {
@@ -136,7 +138,7 @@ export function ProfileImageModal({
             disabled={uploading || saving}
             onChange={(e) => onChange(e.target.value)}
             placeholder="https://..."
-            autoFocus
+            ref={urlInput}
           />
         </label>
         <ImageFilePicker id="profile-image-file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hint="JPG, PNG o WEBP. Máximo 10 MB." onSelect={selectImage} disabled={uploading || saving || !identity} error={error} />

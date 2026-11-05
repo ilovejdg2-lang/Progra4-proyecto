@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -39,6 +39,7 @@ import {
   registrarVentaPresencial,
 } from "../../../services/ventasPresencialesService";
 import { PagoVentaPresencial } from "./PagoVentaPresencial";
+import { aplicarDeltaCarrito } from "./carritoVenta";
 
 function operaSoloPuntosAsignados(roles) {
   return !roles.some((rol) => {
@@ -126,6 +127,8 @@ export default function AdminVentasPresenciales() {
     };
   }, []);
 
+  const montadoRef = useRef(true);
+
   const loadBase = async () => {
     setLoadError("");
     try {
@@ -133,6 +136,7 @@ export default function AdminVentasPresenciales() {
         obtenerPuntosVentaPresencial(),
         obtenerCatalogoProductos(),
       ]);
+      if (!montadoRef.current) return;
       const puntosActivos = puntosData.filter((p) => p.activo !== false);
       setPuntos(puntosActivos);
       if (puntosActivos.length === 1) {
@@ -140,20 +144,25 @@ export default function AdminVentasPresenciales() {
       }
       setProductos(Array.isArray(catalogo) ? catalogo : catalogo?.data || []);
     } catch (err) {
+      if (!montadoRef.current) return;
       setPuntos([]);
       setProductos([]);
       setLoadError(err instanceof Error ? err.message : "No se pudo cargar la información del punto de venta.");
     } finally {
-      setReady(true);
+      if (montadoRef.current) setReady(true);
     }
   };
 
   useEffect(() => {
+    montadoRef.current = true;
     if (!puedeVer) {
       setReady(true);
-      return;
+      return undefined;
     }
     loadBase();
+    return () => {
+      montadoRef.current = false;
+    };
   }, [puedeVer]);
 
   // Cargar inventario del punto seleccionado
@@ -283,26 +292,8 @@ export default function AdminVentasPresenciales() {
   };
 
   const modificarCantidadCarrito = (productoId, delta) => {
-    setFormError("");
-    setCarrito((prev) => {
-      return prev
-        .map((item) => {
-          if (String(item.productoId) !== String(productoId)) return item;
-          const stockDisp = Number(stockMap.get(String(productoId)) ?? item.stockDisponible ?? 0);
-          const nuevaCant = item.cantidad + delta;
-          if (nuevaCant > stockDisp) {
-            setFormError(`Stock máximo alcanzado para "${item.productoNombre}". Disponible: ${stockDisp} unidades.`);
-            return item;
-          }
-          if (nuevaCant <= 0) return null;
-          return {
-            ...item,
-            cantidad: nuevaCant,
-            subtotal: Math.round(item.precioUnitario * nuevaCant),
-          };
-        })
-        .filter(Boolean);
-    });
+    setFormError(aplicarDeltaCarrito(carrito, productoId, delta, stockMap).error);
+    setCarrito((prev) => aplicarDeltaCarrito(prev, productoId, delta, stockMap).carrito);
   };
 
   const eliminarDelCarrito = (productoId) => {

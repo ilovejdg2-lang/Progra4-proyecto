@@ -20,12 +20,14 @@ import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sess
 
 import { RUTA_COMPRAS_ADMIN, RUTA_COMPRAS_CLIENTE } from "./rutasCompras";
 
-function formatCRC(value) {
-  return new Intl.NumberFormat("es-CR", {
+const FORMATO_CRC = new Intl.NumberFormat("es-CR", {
     style: "currency",
     currency: "CRC",
     maximumFractionDigits: 0,
-  }).format(Number(value) || 0);
+});
+
+function formatCRC(value) {
+  return FORMATO_CRC.format(Number(value) || 0);
 }
 
 function formatFecha(fecha) {

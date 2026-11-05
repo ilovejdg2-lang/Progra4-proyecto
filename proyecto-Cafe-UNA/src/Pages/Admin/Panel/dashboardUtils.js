@@ -11,12 +11,14 @@ export function esVentaIngreso(compra) {
   return ESTADOS_INGRESO.has(String(compra?.estado || "").trim());
 }
 
-export function formatCRC(value) {
-  return new Intl.NumberFormat("es-CR", {
+const FORMATO_CRC = new Intl.NumberFormat("es-CR", {
     style: "currency",
     currency: "CRC",
     maximumFractionDigits: 0,
-  }).format(Number(value) || 0);
+});
+
+export function formatCRC(value) {
+  return FORMATO_CRC.format(Number(value) || 0);
 }
 
 export function ymdLocal(date) {

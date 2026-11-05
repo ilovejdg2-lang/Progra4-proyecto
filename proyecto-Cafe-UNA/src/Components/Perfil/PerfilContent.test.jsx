@@ -58,6 +58,22 @@ describe("PerfilContent image integration", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cambiar foto de perfil" }));
     expect(screen.getByRole("textbox", { name: "URL de la imagen" })).toHaveValue(avatar);
   });
+  it("ignores a stale profile load and does not leave the spinner stuck", async () => {
+    let resolveStale;
+    obtenerPerfil.mockReturnValueOnce(new Promise((yes) => { resolveStale = yes; }));
+    obtenerPerfil.mockResolvedValueOnce({ ...profile, nombre: "Nueva Persona" });
+    const { rerender } = render(<PerfilContent />);
+    expect(screen.getByText("Cargando perfil...")).toBeInTheDocument();
+    session.user = { id: 2, token: "synthetic", name: "Nueva Persona" };
+    rerender(<PerfilContent variant="admin" />);
+    await screen.findByRole("heading", { name: "Nueva Persona" });
+    session.apply.mockClear();
+    await act(async () => resolveStale({ ...profile, nombre: "Persona Vieja" }));
+    expect(screen.getByRole("heading", { name: "Nueva Persona" })).toBeInTheDocument();
+    expect(screen.queryByText("Persona Vieja")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cargando perfil...")).not.toBeInTheDocument();
+    expect(session.apply).not.toHaveBeenCalled();
+  });
   it("does not apply a save response after logout", async () => {
     let resolve;
     actualizarPerfil.mockReturnValue(new Promise((yes) => { resolve = yes; }));

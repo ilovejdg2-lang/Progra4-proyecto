@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckCircle2,
   Eye,
@@ -431,6 +431,8 @@ export default function AdminSolicitudesCompra() {
   const [detalle, setDetalle] = useState(null);
   const [accionId, setAccionId] = useState("");
 
+  const montadoRef = useRef(true);
+
   const load = async () => {
     setStatus("loading");
     setLoadError("");
@@ -440,6 +442,7 @@ export default function AdminSolicitudesCompra() {
         obtenerProveedores({ incluirInactivos: false }),
         obtenerCatalogoProductos(),
       ]);
+      if (!montadoRef.current) return;
       setSolicitudes(lista);
       setProveedores(provs);
       setProductos(
@@ -447,6 +450,7 @@ export default function AdminSolicitudesCompra() {
       );
       setStatus("success");
     } catch (error) {
+      if (!montadoRef.current) return;
       setSolicitudes([]);
       setStatus("error");
       setLoadError(error instanceof Error ? error.message : "No se pudieron cargar las solicitudes.");
@@ -454,8 +458,12 @@ export default function AdminSolicitudesCompra() {
   };
 
   useEffect(() => {
+    montadoRef.current = true;
     if (puedeVer) load();
     else setStatus("success");
+    return () => {
+      montadoRef.current = false;
+    };
   }, [puedeVer]);
 
   const ready = !puedeVer || status !== "idle";

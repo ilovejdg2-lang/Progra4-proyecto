@@ -95,13 +95,13 @@ export default function PropuestaProductor() {
   const [confirmacion, setConfirmacion] = useState(null);
   const [paso, setPaso] = useState(0);
   const [listoBorrador, setListoBorrador] = useState(false);
-  const claveRef = useRef(nuevaClave());
-  const previewRef = useRef("");
+  const [claveInicial] = useState(nuevaClave);
+  const claveRef = useRef(claveInicial);
   const enviandoRef = useRef(false);
   const formRef = useRef(form);
   const archivoRef = useRef(archivo);
   const pasoRef = useRef(paso);
-  const usuarioIdRef = useRef(idUsuario(usuario));
+  const usuarioIdRef = useRef("");
 
   const usuarioId = idUsuario(usuario);
   useLayoutEffect(() => {
@@ -122,10 +122,14 @@ export default function PropuestaProductor() {
   }, []);
 
   useEffect(() => {
-    return () => {
-      if (previewRef.current) URL.revokeObjectURL(previewRef.current);
-    };
-  }, []);
+    if (!archivo) {
+      setPreview("");
+      return undefined;
+    }
+    const url = URL.createObjectURL(archivo);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [archivo]);
 
   useEffect(() => {
     let cancelado = false;
@@ -151,11 +155,7 @@ export default function PropuestaProductor() {
       if (draft.imagen?.dataUrl) {
         const file = await dataUrlAArchivo(draft.imagen);
         if (!cancelado && file) {
-          if (previewRef.current) URL.revokeObjectURL(previewRef.current);
-          const url = URL.createObjectURL(file);
-          previewRef.current = url;
           setArchivo(file);
-          setPreview(url);
         }
       }
       if (!cancelado) setListoBorrador(true);
@@ -235,10 +235,6 @@ export default function PropuestaProductor() {
 
   const elegirImagen = (file) => {
     setArchivo(file);
-    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
-    const url = file ? URL.createObjectURL(file) : "";
-    previewRef.current = url;
-    setPreview(url);
     setErrores((prev) => {
       if (!prev.imagen) return prev;
       const next = { ...prev };

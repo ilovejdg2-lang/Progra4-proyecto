@@ -850,6 +850,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
               <form.Field name="roles">
                 {(field) => {
                   const selectedRoles = Array.isArray(field.state.value) ? field.state.value : [];
+                  const rolesSeleccionados = new Set(selectedRoles);
                   const rolesVisibles = inicial
                     ? ROLES_DISPONIBLES
                     : ROLES_DISPONIBLES.filter((rol) => !esRolCliente(rol));
@@ -897,7 +898,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                     <div className="space-y-2" role="group" aria-labelledby="usuario-roles-label">
                       <div className="flex flex-wrap gap-2">
                         {rolesVisibles.map((rol) => {
-                          const seleccionado = selectedRoles.includes(rol);
+                          const seleccionado = rolesSeleccionados.has(rol);
                           const bloquearSuper =
                             esRolSuperAdmin(rol) && seleccionado && editandoPropioUsuario;
                           const bloquearCliente =

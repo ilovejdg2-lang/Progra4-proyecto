@@ -41,15 +41,24 @@ export function AsignacionesVendedor({ usuarioId, onChange }) {
       obtenerAsignacionesPunto(usuarioId),
       obtenerPuntosAsignables(),
     ]);
-    const lista = (Array.isArray(actuales) ? actuales : []).map(normalizarAsignacion);
+    return {
+      lista: (Array.isArray(actuales) ? actuales : []).map(normalizarAsignacion),
+      puntosElegibles: (Array.isArray(puntos) ? puntos : []).map(normalizarPunto),
+    };
+  };
+
+  const aplicar = ({ lista, puntosElegibles }) => {
     setAsignaciones(lista);
     onChange?.(lista);
-    setElegibles((Array.isArray(puntos) ? puntos : []).map(normalizarPunto));
+    setElegibles(puntosElegibles);
   };
 
   useEffect(() => {
     let activo = true;
     cargar()
+      .then((resultado) => {
+        if (activo) aplicar(resultado);
+      })
       .catch(() => {
         if (activo) setError("No se pudieron cargar las asignaciones.");
       });
@@ -63,7 +72,7 @@ export function AsignacionesVendedor({ usuarioId, onChange }) {
     setError("");
     try {
       await accion();
-      await cargar();
+      aplicar(await cargar());
     } catch (err) {
       setError(err?.message || "No se pudo actualizar la asignación.");
     } finally {
@@ -75,6 +84,7 @@ export function AsignacionesVendedor({ usuarioId, onChange }) {
     asignaciones.filter((item) => item.asignacionActiva).map((item) => item.ubicacionId),
   );
   const disponibles = elegibles.filter((punto) => !activos.has(punto.id));
+  const puntosSeleccionados = new Set(seleccion);
 
   return (
     <section className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -148,18 +158,18 @@ export function AsignacionesVendedor({ usuarioId, onChange }) {
           <p className="mb-1.5 text-[11px] font-medium text-slate-600"><ST>Agregar puntos</ST></p>
           <div className="flex flex-wrap gap-1.5">
             {disponibles.map((punto) => {
-              const marcado = seleccion.includes(punto.id);
+              const marcado = puntosSeleccionados.has(punto.id);
               return (
                 <button
                   key={punto.id}
                   type="button"
                   className={`max-w-full rounded-full border px-2.5 py-1 text-[11px] font-semibold ${marcado ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-white text-slate-700"}`}
                   onClick={() =>
-                    setSeleccion((actual) =>
-                      actual.includes(punto.id)
-                        ? actual.filter((id) => id !== punto.id)
-                        : [...actual, punto.id],
-                    )
+                    setSeleccion((actual) => {
+                      const siguiente = new Set(actual);
+                      if (!siguiente.delete(punto.id)) siguiente.add(punto.id);
+                      return [...siguiente];
+                    })
                   }
                 >
                   {punto.name}

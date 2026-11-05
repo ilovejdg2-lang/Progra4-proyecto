@@ -42,6 +42,8 @@ import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
 import { asegurarCamposEnEspanol, camposParaVistaAdmin } from "../../../lib/traducir";
 import { useIdioma } from "../../../lib/useIdioma";
+
+const EMPTY_ARRAY = [];
 const TEXTO_CAMPOS = ["eyebrow", "title", "description"];
 const FOTO_CAMPOS = ["title", "categoria"];
 const FOTO_CAMPOS_VISTA_EN = ["title"];
@@ -199,7 +201,7 @@ export function ModalTexto({ tipo, data, onCerrar, onGuardar, guardando }) {
   );
 }
 
-export function ModalFoto({ onCerrar, onGuardar, categorias = [], inicial = null, guardando = false }) {
+export function ModalFoto({ onCerrar, onGuardar, categorias = EMPTY_ARRAY, inicial = null, guardando = false }) {
   const esEdicion = Boolean(inicial);
   const [subiendoImagen, setSubiendoImagen] = useState(false);
   const tEditar = useTraducir("Editar");

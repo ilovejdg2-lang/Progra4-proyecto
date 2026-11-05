@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, Pencil, Plus, Power, RefreshCw, X } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
@@ -63,13 +63,15 @@ const CAMPOS_TEXTO_ACTIVO = [
   "descripcionProyecto",
 ];
 
-function formatCRC(value) {
-  return new Intl.NumberFormat("es-CR", {
+const FORMATO_CRC = new Intl.NumberFormat("es-CR", {
     style: "currency",
     currency: "CRC",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(Number(value) || 0);
+});
+
+function formatCRC(value) {
+  return FORMATO_CRC.format(Number(value) || 0);
 }
 
 function formatFecha(fecha) {
@@ -323,14 +325,18 @@ export default function AdminActivosFijos() {
   const [togglingId, setTogglingId] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  const montadoRef = useRef(true);
+
   const load = async () => {
     setStatus("loading");
     setLoadError("");
     try {
       const data = await obtenerActivosFijos({ incluirInactivos: true });
+      if (!montadoRef.current) return;
       setActivos(data);
       setStatus("success");
     } catch (error) {
+      if (!montadoRef.current) return;
       setActivos([]);
       setStatus("error");
       setLoadError(error instanceof Error ? error.message : "No se pudieron cargar los activos.");
@@ -338,8 +344,12 @@ export default function AdminActivosFijos() {
   };
 
   useEffect(() => {
+    montadoRef.current = true;
     if (puedeVer) load();
     else setStatus("success");
+    return () => {
+      montadoRef.current = false;
+    };
   }, [puedeVer]);
 
   const ready = !puedeVer || status !== "idle";

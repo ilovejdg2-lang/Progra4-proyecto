@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, CheckCircle2, Eye, Plus, Send, Store, X } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
@@ -129,6 +129,8 @@ export default function AdminDistribucion() {
     [puntosVenta, destinoCodigo],
   );
 
+  const montadoRef = useRef(true);
+
   const loadCatalogoYStock = async () => {
     setCatalogStatus("loading");
     setCatalogError("");
@@ -137,6 +139,7 @@ export default function AdminDistribucion() {
         obtenerCatalogoProductos(),
         obtenerStockPorUbicacion("BODEGA_CENTRAL"),
       ]);
+      if (!montadoRef.current) return;
       setProductos(
         (catalogo || []).filter((p) => String(p.estado || "") !== "Deshabilitado"),
       );
@@ -147,6 +150,7 @@ export default function AdminDistribucion() {
       setStockCentral(map);
       setCatalogStatus("success");
     } catch (error) {
+      if (!montadoRef.current) return;
       setProductos([]);
       setStockCentral(new Map());
       setCatalogStatus("error");
@@ -172,11 +176,13 @@ export default function AdminDistribucion() {
         page: pageOverride,
         pageSize,
       });
+      if (!montadoRef.current) return;
       setHistorial(data.items);
       setHistorialTotal(data.total);
       setPage(data.page);
       setHistStatus("success");
     } catch (error) {
+      if (!montadoRef.current) return;
       setHistorial([]);
       setHistorialTotal(0);
       setHistStatus("error");
@@ -187,9 +193,14 @@ export default function AdminDistribucion() {
   };
 
   useEffect(() => {
-    if (!puedeVer) return;
-    loadCatalogoYStock();
-    loadHistorial(1);
+    montadoRef.current = true;
+    if (puedeVer) {
+      loadCatalogoYStock();
+      loadHistorial(1);
+    }
+    return () => {
+      montadoRef.current = false;
+    };
   }, [puedeVer]);
 
   const ready =

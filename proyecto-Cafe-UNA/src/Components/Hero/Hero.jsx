@@ -5,6 +5,8 @@ import { isExternalHeroUrl, mapHero } from "../../lib/heroData";
 import { useTraducirObjeto } from "../../hooks/useTraducir";
 import "./Hero.css";
 
+const EMPTY_OBJECT = {};
+
 const CAMPOS_HERO = ["eyebrow", "title", "subtitle", "primaryButtonText", "buttonText"];
 
 function renderHeroTitle(title) {
@@ -47,7 +49,7 @@ function HeroActionLink({ href, className, children }) {
   );
 }
 
-const Hero = ({ data = {}, onBackgroundReady }) => {
+const Hero = ({ data = EMPTY_OBJECT, onBackgroundReady }) => {
   const heroBase = useMemo(() => mapHero(data), [data]);
   const hero = useTraducirObjeto(heroBase, CAMPOS_HERO);
   const backgroundUrl = normalizeImageUrl(hero.backgroundImage, { width: 1920 });

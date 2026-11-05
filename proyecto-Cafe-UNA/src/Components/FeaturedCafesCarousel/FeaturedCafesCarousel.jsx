@@ -8,6 +8,8 @@ import { useTraducir } from "../../hooks/useTraducir";
 import { ST } from "../T/ST";
 import "./FeaturedCafesCarousel.css";
 
+const EMPTY_ARRAY = [];
+
 function formatCRC(value) {
   return `\u20A1${(Number(value) || 0).toLocaleString("es-CR")}`;
 }
@@ -25,7 +27,7 @@ function CategoriaLabel({ texto }) {
   return useTraducir(texto);
 }
 
-export default function FeaturedCafesCarousel({ products = [] }) {
+export default function FeaturedCafesCarousel({ products = EMPTY_ARRAY }) {
   const [activo, setActivo] = useState(0);
   const lista = useMemo(() => products.filter(Boolean), [products]);
   const total = lista.length;

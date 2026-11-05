@@ -23,12 +23,11 @@ import { imagenPrincipalProducto } from "../../../lib/productoImagenes";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { DashboardStatCard } from "./components/DashboardStatCard";
-import { MonthlyRevenueChart } from "./components/MonthlyRevenueChart";
-import { UserStatusChart } from "./components/UserStatusChart";
 import { QuickAccess } from "./components/QuickAccess";
 import { StockAlerts } from "./components/StockAlerts";
 import { RecentActivity } from "./components/RecentActivity";
 import { DashboardCalendar } from "./components/DashboardCalendar";
+import { LazyChart } from "./components/LazyChart";
 import {
   agruparIngresosPorDia,
   deltaPorcentaje,
@@ -41,6 +40,37 @@ import {
 } from "./dashboardUtils";
 import { obtenerComprasRango } from "./dashboardData";
 import "./Panel.css";
+
+
+
+const cargarIngresos = () =>
+  import("./components/MonthlyRevenueChart").then((m) => ({ default: m.MonthlyRevenueChart }));
+const cargarUsuarios = () =>
+  import("./components/UserStatusChart").then((m) => ({ default: m.UserStatusChart }));
+
+const CARD_CLASS =
+  "rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 sm:p-5";
+const PULSE = "animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800";
+
+function IngresosFallback() {
+  return (
+    <section className={CARD_CLASS} aria-hidden="true">
+      <div className={`h-9 ${PULSE}`} />
+      <div className={`mt-3 h-6 ${PULSE}`} />
+      <div className={`mt-3 h-56 ${PULSE}`} />
+      <div className="mt-1 h-4" />
+    </section>
+  );
+}
+
+function UsuariosFallback() {
+  return (
+    <section className={CARD_CLASS} aria-hidden="true">
+      <div className={`h-5 ${PULSE}`} />
+      <div className="mt-6 h-40 animate-pulse rounded-full bg-slate-100 dark:bg-slate-800" />
+    </section>
+  );
+}
 
 function mesInputDeFecha(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -373,7 +403,9 @@ const AdminPanel = () => {
 
           <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.9fr)]">
             {puedeVentas ? (
-              <MonthlyRevenueChart
+              <LazyChart
+                load={cargarIngresos}
+                fallback={<IngresosFallback />}
                 titulo="Ingresos mensuales generales"
                 subtitulo="Suma de los 3 puntos de venta (FUNDA-UNA, Bodega Central y Editorial)."
                 mesValor={mesValor}
@@ -389,7 +421,9 @@ const AdminPanel = () => {
             ) : null}
             <div className="grid gap-4">
               {puedeUsuarios ? (
-                <UserStatusChart
+                <LazyChart
+                  load={cargarUsuarios}
+                  fallback={<UsuariosFallback />}
                   total={totalUsuarios}
                   activos={usuariosActivos}
                   inactivos={usuariosInactivos}

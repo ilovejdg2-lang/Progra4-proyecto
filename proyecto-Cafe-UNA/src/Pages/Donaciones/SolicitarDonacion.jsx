@@ -164,32 +164,32 @@ function nombreCompletoDonante(formulario) {
     .join(" ");
 }
 
-function comprimirFoto(file) {
+function leerComoDataUrl(file) {
   return new Promise((resolve, reject) => {
-    const objeto = URL.createObjectURL(file);
-    const imagen = new Image();
-    imagen.onload = () => {
-      const max = 720;
-      const escala = Math.min(1, max / Math.max(imagen.width, imagen.height));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(imagen.width * escala));
-      canvas.height = Math.max(1, Math.round(imagen.height * escala));
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        URL.revokeObjectURL(objeto);
-        reject(new Error("No se pudo procesar la imagen."));
-        return;
-      }
-      ctx.drawImage(imagen, 0, 0, canvas.width, canvas.height);
-      URL.revokeObjectURL(objeto);
-      resolve(canvas.toDataURL("image/jpeg", 0.72));
-    };
-    imagen.onerror = () => {
-      URL.revokeObjectURL(objeto);
-      reject(new Error("No se pudo leer la imagen."));
-    };
-    imagen.src = objeto;
+    const lector = new FileReader();
+    lector.onload = () => resolve(lector.result);
+    lector.onerror = () => reject(new Error("No se pudo leer la imagen."));
+    lector.readAsDataURL(file);
   });
+}
+
+async function comprimirFoto(file) {
+  const origen = await leerComoDataUrl(file);
+  const imagen = await new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("No se pudo leer la imagen."));
+    img.src = origen;
+  });
+  const max = 720;
+  const escala = Math.min(1, max / Math.max(imagen.width, imagen.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(imagen.width * escala));
+  canvas.height = Math.max(1, Math.round(imagen.height * escala));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("No se pudo procesar la imagen.");
+  ctx.drawImage(imagen, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.72);
 }
 
 function leerNecesidadDesdeUrl(params, search) {

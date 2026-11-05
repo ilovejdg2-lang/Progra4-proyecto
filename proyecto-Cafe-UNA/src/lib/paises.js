@@ -20,17 +20,22 @@ export const CODIGOS_PAIS_ISO = [
 
 const cache = new Map();
 
+function crearNombresRegion(locale) {
+  try {
+    return new Intl.DisplayNames([locale], { type: "region" });
+  } catch {
+    return null;
+  }
+}
+
+const NOMBRES_REGION = { es: crearNombresRegion("es"), en: crearNombresRegion("en") };
+
 /** Lista `{ value, label }` ordenada por nombre en el idioma pedido ("es" o "en"). */
 export function obtenerOpcionesPaises(idioma = "es") {
   const locale = idioma === "en" ? "en" : "es";
   if (cache.has(locale)) return cache.get(locale);
 
-  let nombres = null;
-  try {
-    nombres = new Intl.DisplayNames([locale], { type: "region" });
-  } catch {
-    nombres = null;
-  }
+  const nombres = NOMBRES_REGION[locale];
 
   const opciones = CODIGOS_PAIS_ISO
     .map((codigo) => ({ value: codigo, label: nombres?.of(codigo) || codigo }))

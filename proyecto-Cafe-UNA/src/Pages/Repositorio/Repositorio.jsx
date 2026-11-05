@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Download,
   Eye,
@@ -69,6 +69,11 @@ export default function Repositorio() {
 
   // Estado sincronizado con URL
   const [filtros, setFiltros] = useState(parseUrlFilters);
+  const filtrosRef = useRef(filtros);
+  const fijarFiltros = useCallback((siguientes) => {
+    filtrosRef.current = siguientes;
+    setFiltros(siguientes);
+  }, []);
 
   // Datos del catálogo
   const [documentos, setDocumentos] = useState([]);
@@ -142,12 +147,12 @@ export default function Repositorio() {
   useEffect(() => {
     const handlePopState = () => {
       const parsed = parseUrlFilters();
-      setFiltros(parsed);
+      fijarFiltros(parsed);
       setVistaCuadricula(parsed.vista !== "list");
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+  }, [fijarFiltros]);
 
   // Consultar catálogo en backend con cancelación de peticiones obsoletas
   useEffect(() => {
@@ -215,25 +220,21 @@ export default function Repositorio() {
   // Manejador genérico para cambiar un filtro
   const handleCambiarFiltro = useCallback(
     (clave, valor) => {
-      setFiltros((prev) => {
-        const next = { ...prev, [clave]: valor, pagina: 1 };
-        sincronizarUrl(next);
-        return next;
-      });
+      const next = { ...filtrosRef.current, [clave]: valor, pagina: 1 };
+      fijarFiltros(next);
+      sincronizarUrl(next);
     },
-    [sincronizarUrl],
+    [fijarFiltros, sincronizarUrl],
   );
 
   // Manejador para cambiar múltiples filtros atómicamente (ej. categoría y subcategoría a la vez)
   const handleCambiarFiltros = useCallback(
     (cambios) => {
-      setFiltros((prev) => {
-        const next = { ...prev, ...cambios, pagina: 1 };
-        sincronizarUrl(next);
-        return next;
-      });
+      const next = { ...filtrosRef.current, ...cambios, pagina: 1 };
+      fijarFiltros(next);
+      sincronizarUrl(next);
     },
-    [sincronizarUrl],
+    [fijarFiltros, sincronizarUrl],
   );
 
   // Manejador de búsqueda
@@ -247,11 +248,9 @@ export default function Repositorio() {
   // Manejador de cambio de página
   const handleCambiarPagina = useCallback(
     (nuevaPagina) => {
-      setFiltros((prev) => {
-        const next = { ...prev, pagina: nuevaPagina };
-        sincronizarUrl(next);
-        return next;
-      });
+      const next = { ...filtrosRef.current, pagina: nuevaPagina };
+      fijarFiltros(next);
+      sincronizarUrl(next);
       // Desplazamiento suave solo si el usuario se encuentra debajo de la barra de herramientas
       const toolbar = document.querySelector(".biblio-toolbar");
       if (toolbar) {
@@ -261,20 +260,18 @@ export default function Repositorio() {
         }
       }
     },
-    [sincronizarUrl],
+    [fijarFiltros, sincronizarUrl],
   );
 
   // Alternar vista cuadrícula / lista
   const handleToggleVista = useCallback(
     (cuadricula) => {
       setVistaCuadricula(cuadricula);
-      setFiltros((prev) => {
-        const next = { ...prev, vista: cuadricula ? "grid" : "list" };
-        sincronizarUrl(next);
-        return next;
-      });
+      const next = { ...filtrosRef.current, vista: cuadricula ? "grid" : "list" };
+      fijarFiltros(next);
+      sincronizarUrl(next);
     },
-    [sincronizarUrl],
+    [fijarFiltros, sincronizarUrl],
   );
 
   // Limpiar todos los filtros
@@ -295,9 +292,9 @@ export default function Repositorio() {
       vista: vistaCuadricula ? "grid" : "list",
       pagina: 1,
     };
-    setFiltros(limpios);
+    fijarFiltros(limpios);
     sincronizarUrl(limpios);
-  }, [sincronizarUrl, vistaCuadricula]);
+  }, [fijarFiltros, sincronizarUrl, vistaCuadricula]);
 
   // Alternar colapso de sidebar en escritorio
   const handleToggleColapso = () => setSidebarColapsado((prev) => !prev);
