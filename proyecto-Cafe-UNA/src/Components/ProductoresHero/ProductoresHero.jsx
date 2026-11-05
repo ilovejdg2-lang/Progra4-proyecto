@@ -6,7 +6,7 @@ import { useIdioma } from "../../lib/useIdioma";
 import { DEFAULT_PRODUCTORES_HERO, obtenerProductoresHero } from "../../services/informacionService";
 import { obtenerProductoresPublicos } from "../../services/propuestasProductoresService";
 import { useSessionUser } from "../../hooks/useSessionUser";
-import { rutaMisPropuestas } from "../../Pages/Productores/MisPropuestas";
+import { rutaMisPropuestas } from "../../lib/rutasPropuestas";
 import "./ProductoresHero.css";
 
 function AccionHeroBoton({ to, className, children, onClick }) {

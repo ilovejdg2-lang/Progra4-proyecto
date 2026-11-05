@@ -13,7 +13,6 @@ import { ImageLightbox } from "../../Components/ImageLightbox/ImageLightbox";
 import { PerfilClienteLayout } from "../../Components/Perfil/PerfilClienteLayout";
 import { ST } from "../../Components/T/ST";
 import { UiSelect } from "../../Components/ui/Select";
-import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
 import { formatearFechaPropuesta, urlImagenPublica } from "../../lib/propuestaProductor";
 import { obtenerFooter } from "../../services/informacionService";
 import {
@@ -27,12 +26,6 @@ import { useSessionUser } from "../../hooks/useSessionUser";
 import { DetallePropuestaSecciones, SeccionRevision } from "./DetallePropuesta";
 import { ModalEditarMiPropuesta } from "./ModalEditarMiPropuesta";
 import { ModalEliminarMiPropuesta } from "./ModalEliminarMiPropuesta";
-
-export function rutaMisPropuestas(user) {
-  const roles = rolesDeUsuario(user);
-  if (tienePermiso(roles, "ver_panel_administrativo")) return "/admin/mis-propuestas";
-  return "/perfil/propuestas";
-}
 
 function colorEstado(estado) {
   const valor = String(estado || "").toLowerCase();

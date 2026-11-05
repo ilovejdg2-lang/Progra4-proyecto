@@ -36,7 +36,7 @@ import {
 } from "../../lib/propuestaProductorDraft";
 import { crearPropuestaProductor } from "../../services/propuestasProductoresService";
 import { useSessionUser } from "../../hooks/useSessionUser";
-import { rutaMisPropuestas } from "./MisPropuestas";
+import { rutaMisPropuestas } from "../../lib/rutasPropuestas";
 import "../Donaciones/SolicitarDonacion.css";
 import "../Voluntariado/SolicitarVoluntariado.css";
 import "./propuesta.css";

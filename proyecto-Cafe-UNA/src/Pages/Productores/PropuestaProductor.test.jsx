@@ -32,7 +32,7 @@ vi.mock("../../Components/Productores/CampoUbicacionMapa", () => ({
 vi.mock("../../Components/ui/SelectFiltro", () => ({ SelectFiltro: ({ children, ...props }) => <select {...props}>{children}</select> }));
 vi.mock("../../services/sessionService", () => ({ getActiveSessionUser: () => ({ id: 1 }), SESSION_UPDATED_EVENT: "session-updated" }));
 vi.mock("../../services/propuestasProductoresService", () => ({ crearPropuestaProductor: vi.fn() }));
-vi.mock("./MisPropuestas", () => ({ rutaMisPropuestas: () => "/perfil/propuestas" }));
+vi.mock("../../lib/rutasPropuestas", () => ({ rutaMisPropuestas: () => "/perfil/propuestas" }));
 
 const image = (name = "cafe.png", type = "image/png") => new File(["image"], name, { type });
 const dropzone = () => screen.getByRole("button", { name: "Arrastra o selecciona una imagen" });

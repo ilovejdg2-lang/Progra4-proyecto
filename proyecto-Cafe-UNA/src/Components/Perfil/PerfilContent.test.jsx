@@ -12,8 +12,8 @@ vi.mock("../../lib/useIdioma", () => ({ useIdioma: () => ({ idioma: "es" }) }));
 vi.mock("../../lib/permisos", () => ({ rolesDeUsuario: () => [], tienePermiso: () => false }));
 vi.mock("@tanstack/react-router", () => ({ Link: ({ to, children }) => <a href={to}>{children}</a> }));
 vi.mock("../../Pages/HistorialCompras/rutasCompras", () => ({ rutaMisCompras: () => "/compras" }));
-vi.mock("../../Pages/HistorialSolicitudes/HistorialSolicitudesCliente", () => ({ rutaMisSolicitudes: () => "/solicitudes" }));
-vi.mock("../../Pages/Productores/MisPropuestas", () => ({ rutaMisPropuestas: () => "/propuestas" }));
+vi.mock("../../lib/rutasSolicitudes", () => ({ rutaMisSolicitudes: () => "/solicitudes" }));
+vi.mock("../../lib/rutasPropuestas", () => ({ rutaMisPropuestas: () => "/propuestas" }));
 vi.mock("../../hooks/useProfileImage", () => ({ useProfileImage: (source) => source?.startsWith("/api/perfil/imagenes/") ? `blob:${source.split("/").at(-1)}` : source }));
 
 const avatar = "/api/perfil/imagenes/00000000-0000-4000-8000-000000000000.webp";

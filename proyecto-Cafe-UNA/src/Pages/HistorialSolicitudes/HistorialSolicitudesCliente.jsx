@@ -16,13 +16,7 @@ import {
   obtenerMisSolicitudes,
 } from "../../services/solicitudesService";
 import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
-
-export const RUTA_SOLICITUDES_CLIENTE = "/perfil/solicitudes";
-export const RUTA_SOLICITUDES_ADMIN = "/admin/mis-solicitudes";
-
-export function rutaMisSolicitudes(user) {
-  return user?.role === "admin" ? RUTA_SOLICITUDES_ADMIN : RUTA_SOLICITUDES_CLIENTE;
-}
+import { RUTA_SOLICITUDES_ADMIN, RUTA_SOLICITUDES_CLIENTE } from "../../lib/rutasSolicitudes";
 
 function formatFecha(fecha) {
   if (!fecha) return null;
