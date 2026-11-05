@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useId } from "react";
 import {
   AlertCircle,
   Building2,
@@ -39,6 +39,7 @@ import "../../Voluntariado/SolicitarVoluntariado.css";
 import "./Documentos.css";
 
 export default function SolicitudesDocumentacion() {
+  const modalTitleId = useId();
   const [solicitudes, setSolicitudes] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -411,10 +412,10 @@ export default function SolicitudesDocumentacion() {
       {/* Modal de Resolución */}
       {solicitudSeleccionada ? (
         createPortal(
-        <div className="repositorio-modal-overlay" role="dialog" aria-labelledby="docs-solicitud-modal-1-title" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) setSolicitudSeleccionada(null); }}>
+        <div className="repositorio-modal-overlay" role="dialog" aria-labelledby={modalTitleId} aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) setSolicitudSeleccionada(null); }}>
           <div className="repositorio-modal-container max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="repositorio-modal-header">
-              <h3 id="docs-solicitud-modal-1-title">
+              <h3 id={modalTitleId}>
                 {tipoAccion === "aprobar" ? "Aprobar Solicitud de Acceso" : "Rechazar Solicitud de Acceso"}
               </h3>
               <button

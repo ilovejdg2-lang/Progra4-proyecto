@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useId } from "react";
 import {
   AlertCircle,
   Archive,
@@ -101,6 +101,8 @@ function formatearTamano(bytes = 0) {
 }
 
 export default function AdminDocumentos() {
+  const modalTitleId = useId();
+  const categoriaModalTitleId = useId();
   const actor = getActiveSessionUser();
   const roles = rolesDeUsuario(actor);
   const puedeVer =
@@ -922,7 +924,7 @@ export default function AdminDocumentos() {
         createPortal(
         <div
           className="admin-modal-overlay"
-          role="dialog" aria-labelledby="docs-modal-1-title"
+          role="dialog" aria-labelledby={modalTitleId}
           aria-modal="true"
           onClick={(e) => {
             if (e.target === e.currentTarget) cerrarModal();
@@ -938,7 +940,7 @@ export default function AdminDocumentos() {
                   <BookOpen size={14} />
                   <ST>{documentoEditando ? "Edición de Documento" : "Subida de Documento"}</ST>
                 </span>
-                <h3 id="docs-modal-1-title">
+                <h3 id={modalTitleId}>
                   <ST>{documentoEditando ? "Editar Metadatos del Documento" : "Subir Nuevo Documento al Repositorio"}</ST>
                 </h3>
               </div>
@@ -1257,7 +1259,7 @@ export default function AdminDocumentos() {
         createPortal(
         <div
           className="admin-modal-overlay"
-          role="dialog" aria-labelledby="docs-modal-2-title"
+          role="dialog" aria-labelledby={categoriaModalTitleId}
           aria-modal="true"
           onClick={(e) => {
             if (e.target === e.currentTarget) setModalCatAbierto(false);
@@ -1266,7 +1268,7 @@ export default function AdminDocumentos() {
           <div className="admin-form-modal-container max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="admin-form-modal-header">
               <div className="admin-form-modal-header__title">
-                <h3 id="docs-modal-2-title"><ST>Nueva Categoría de Documentos</ST></h3>
+                <h3 id={categoriaModalTitleId}><ST>Nueva Categoría de Documentos</ST></h3>
               </div>
               <button
                 type="button"

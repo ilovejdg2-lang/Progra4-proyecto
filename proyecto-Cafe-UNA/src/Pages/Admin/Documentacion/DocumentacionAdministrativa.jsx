@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useId } from "react";
 import {
   AlertCircle,
   Archive,
@@ -93,6 +93,8 @@ function formatearTamano(bytes = 0) {
 }
 
 export default function DocumentacionAdministrativa() {
+  const modalTitleId = useId();
+  const categoriaModalTitleId = useId();
   const actor = getActiveSessionUser();
   const roles = rolesDeUsuario(actor);
   const puedeCrear = tienePermiso(roles, "crear_documentacion");
@@ -886,7 +888,7 @@ export default function DocumentacionAdministrativa() {
         createPortal(
         <div
           className="admin-modal-overlay"
-          role="dialog" aria-labelledby="docs-admin-modal-1-title"
+          role="dialog" aria-labelledby={modalTitleId}
           aria-modal="true"
           onClick={(e) => {
             if (e.target === e.currentTarget) cerrarModal();
@@ -902,7 +904,7 @@ export default function DocumentacionAdministrativa() {
                   <ShieldCheck size={14} className="text-amber-600 inline mr-1" />
                   <ST>{documentoEditando ? "Edición Administrativa" : "Nuevo Documento Privado"}</ST>
                 </span>
-                <h3 id="docs-admin-modal-1-title">
+                <h3 id={modalTitleId}>
                   <ST>{documentoEditando ? "Editar Documento Administrativo" : "Subir Documento al Repositorio Administrativo"}</ST>
                 </h3>
               </div>
@@ -1196,7 +1198,7 @@ export default function DocumentacionAdministrativa() {
         createPortal(
         <div
           className="admin-modal-overlay"
-          role="dialog" aria-labelledby="docs-admin-modal-2-title"
+          role="dialog" aria-labelledby={categoriaModalTitleId}
           aria-modal="true"
           onClick={(e) => {
             if (e.target === e.currentTarget) setModalCatAbierto(false);
@@ -1205,7 +1207,7 @@ export default function DocumentacionAdministrativa() {
           <div className="admin-form-modal-container max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="admin-form-modal-header">
               <div className="admin-form-modal-header__title">
-                <h3 id="docs-admin-modal-2-title"><ST>Nueva Categoría Administrativa</ST></h3>
+                <h3 id={categoriaModalTitleId}><ST>Nueva Categoría Administrativa</ST></h3>
               </div>
               <button
                 type="button"
