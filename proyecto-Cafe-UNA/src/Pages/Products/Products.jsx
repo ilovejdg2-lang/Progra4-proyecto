@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ModalDialog } from "../../Components/ui/ModalDialog";
 import { Link } from '@tanstack/react-router';
 import {
   Check,
@@ -542,7 +543,7 @@ const Products = () => {
         </div>
 
         {filtrosAbiertos ? (
-          <div className="products-page__drawer" role="dialog" aria-modal="true" aria-label="Filtros">
+          <ModalDialog className="products-page__drawer" label="Filtros" onClose={() => setFiltrosAbiertos(false)}>
             <button
               type="button"
               className="products-page__drawer-backdrop"
@@ -569,7 +570,7 @@ const Products = () => {
                 {asideNav}
               </div>
             </div>
-          </div>
+          </ModalDialog>
         ) : null}
       </main>
     </PublicPageGate>

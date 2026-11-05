@@ -18,6 +18,7 @@ import {
   solicitarAccesoDocumento,
 } from "../../services/documentosService";
 import { getActiveSessionUser } from "../../services/sessionService";
+import { ModalDialog } from "../../Components/ui/ModalDialog";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../lib/correo";
 import { ST } from "../../Components/T/ST";
@@ -75,16 +76,6 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
   const [completado, setCompletado] = useState(false);
 
   useBodyScrollLock(true);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape" && onClose && !enviando) onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose, enviando]);
 
   useEffect(() => {
     obtenerCategoriasDocumentos()
@@ -219,14 +210,10 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
   };
 
   return createPortal(
-    <div
+    <ModalDialog
       className="admin-modal-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-solicitud-titulo"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && onClose && !enviando) onClose();
-      }}
+      labelledBy="modal-solicitud-titulo"
+      onClose={enviando ? undefined : onClose}
     >
       <div
         className="admin-form-modal-container max-w-2xl"
@@ -705,7 +692,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
           </form>
         )}
       </div>
-    </div>,
+    </ModalDialog>,
     document.body,
   );
 }

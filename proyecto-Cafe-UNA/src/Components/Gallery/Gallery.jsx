@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ModalDialog } from "../ui/ModalDialog";
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { categoriasUnicas, filtrarPorCategoria } from '../../lib/categorias';
 import { normalizeImageUrl } from '../../lib/imageUtils';
@@ -110,7 +111,6 @@ const Gallery = ({
     if (activeIndex === null) return undefined;
 
     const onKeyDown = (event) => {
-      if (event.key === 'Escape') closeLightbox();
       if (event.key === 'ArrowLeft') showPrevious();
       if (event.key === 'ArrowRight') showNext();
     };
@@ -218,12 +218,7 @@ const Gallery = ({
       ) : null}
 
       {activeItem && activeImageUrl ? (
-        <div
-          className="gallery-lightbox"
-          role="dialog"
-          aria-modal="true"
-          aria-label={activeItem.title || 'Vista ampliada de foto'}
-        >
+        <ModalDialog className="gallery-lightbox" label={activeItem.title || 'Vista ampliada de foto'} onClose={closeLightbox}>
           <button
             type="button"
             className="gallery-lightbox__backdrop"
@@ -273,7 +268,7 @@ const Gallery = ({
               </button>
             ) : null}
           </div>
-        </div>
+        </ModalDialog>
       ) : null}
     </section>
   );

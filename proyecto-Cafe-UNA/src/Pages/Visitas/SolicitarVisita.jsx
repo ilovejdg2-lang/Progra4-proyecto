@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ModalDialog } from "../../Components/ui/ModalDialog";
 import { useNavigate } from "@tanstack/react-router";
 import { format, isBefore, startOfDay } from "date-fns";
 import { enUS, es } from "date-fns/locale";
@@ -1116,12 +1117,10 @@ export default function SolicitarVisita() {
 
                 {/* Modal interactivo con recomendaciones completas */}
                 {modalRecomendacionesAbierto && (
-                  <div
+                  <ModalDialog
                     className="modal-overlay-recomendaciones"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="modal-recomendaciones-titulo"
-                    onClick={() => setModalRecomendacionesAbierto(false)}
+                    labelledBy="modal-recomendaciones-titulo"
+                    onClose={() => setModalRecomendacionesAbierto(false)}
                   >
                     <div
                       className="modal-content-recomendaciones"
@@ -1214,7 +1213,7 @@ export default function SolicitarVisita() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </ModalDialog>
                 )}
 
                 <Field label="Observaciones">
