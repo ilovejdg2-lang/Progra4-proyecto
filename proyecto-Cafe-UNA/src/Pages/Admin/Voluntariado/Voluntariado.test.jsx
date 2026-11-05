@@ -61,7 +61,7 @@ describe.each([
     expect(dialog).not.toBeNull();
     expect(dialog.querySelector("h2").textContent).toContain(heading);
 
-    fireEvent.keyDown(within(dialog).getByRole("button", { name: "Cerrar", hidden: true }), { key: "Escape" });
+    fireEvent.keyDown(within(dialog).getAllByRole("button", { name: "Cerrar", hidden: true })[0], { key: "Escape" });
     await waitFor(() => expect(document.querySelector("dialog")).toBeNull());
   });
 
