@@ -38,7 +38,7 @@ import {
   validateNombreUsuario,
   validatePassword,
 } from "../../../lib/formLimits";
-import { queueFocusFormError } from "../../../lib/formFocus";
+import { queueFocusFormError, topmostOpenDialog } from "../../../lib/formFocus";
 import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
 import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { ST } from "../../../Components/T/ST";
@@ -451,7 +451,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
         setErrorCorreo(payload.correo ? MENSAJE_CORREO_INVALIDO : "Ingrese el correo.");
         queueFocusFormError({
           errors: { correo: true },
-          root: document.querySelector('[role="dialog"]'),
+          root: topmostOpenDialog(),
           fieldMap: { correo: "correo" },
         });
         return;
@@ -461,7 +461,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
         setFieldErrors(nextErrors);
         queueFocusFormError({
           errors: nextErrors,
-          root: document.querySelector('[role="dialog"]'),
+          root: topmostOpenDialog(),
           fieldOrder: ["nombre", "passwordHash", "passwordActual", "formulario"],
         });
         return;
@@ -474,7 +474,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
             setFieldErrors({ ...nextErrors, passwordHash: passwordError });
             queueFocusFormError({
               errors: { ...nextErrors, passwordHash: passwordError },
-              root: document.querySelector('[role="dialog"]'),
+              root: topmostOpenDialog(),
               fieldOrder: ["nombre", "passwordHash"],
             });
             return;
@@ -528,7 +528,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
           setFieldErrors({ ...nextErrors, passwordHash: passwordError });
           queueFocusFormError({
             errors: { ...nextErrors, passwordHash: passwordError },
-            root: document.querySelector('[role="dialog"]'),
+            root: topmostOpenDialog(),
             fieldOrder: ["nombre", "passwordHash", "passwordActual"],
           });
           return;
@@ -537,7 +537,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
           setFieldErrors({ ...nextErrors, passwordActual: "Ingrese su contrase\u00f1a actual." });
           queueFocusFormError({
             errors: { passwordActual: true },
-            root: document.querySelector('[role="dialog"]'),
+            root: topmostOpenDialog(),
           });
           return;
         }

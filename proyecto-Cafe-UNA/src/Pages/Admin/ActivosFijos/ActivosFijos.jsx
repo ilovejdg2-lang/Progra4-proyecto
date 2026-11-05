@@ -24,7 +24,7 @@ import {
 } from "../../../services/activosFijosService";
 import { UiSelect } from "../../../Components/ui/Select";
 import { getActiveSessionUser } from "../../../services/sessionService";
-import { queueFocusFormError } from "../../../lib/formFocus";
+import { queueFocusFormError, topmostOpenDialog } from "../../../lib/formFocus";
 import { ContadorPalabras } from "../../../Components/Admin/ui/CampoLimitePalabras";
 import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import {
@@ -136,7 +136,7 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
       setValidationError("El código es obligatorio (máx. 50 caracteres).");
       queueFocusFormError({
         errors: { codigo: true },
-        root: document.querySelector('[role="dialog"]'),
+        root: topmostOpenDialog(),
       });
       return;
     }
@@ -144,7 +144,7 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
       setValidationError("El nombre debe tener entre 2 y 200 caracteres.");
       queueFocusFormError({
         errors: { nombre: true },
-        root: document.querySelector('[role="dialog"]'),
+        root: topmostOpenDialog(),
       });
       return;
     }
@@ -158,7 +158,7 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
       setValidationError("El valor en libro debe ser un número mayor o igual a 0.");
       queueFocusFormError({
         errors: { valorEnLibro: true },
-        root: document.querySelector('[role="dialog"]'),
+        root: topmostOpenDialog(),
       });
       return;
     }
