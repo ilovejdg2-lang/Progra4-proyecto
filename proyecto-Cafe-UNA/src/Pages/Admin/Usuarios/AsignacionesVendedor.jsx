@@ -41,15 +41,24 @@ export function AsignacionesVendedor({ usuarioId, onChange }) {
       obtenerAsignacionesPunto(usuarioId),
       obtenerPuntosAsignables(),
     ]);
-    const lista = (Array.isArray(actuales) ? actuales : []).map(normalizarAsignacion);
+    return {
+      lista: (Array.isArray(actuales) ? actuales : []).map(normalizarAsignacion),
+      puntosElegibles: (Array.isArray(puntos) ? puntos : []).map(normalizarPunto),
+    };
+  };
+
+  const aplicar = ({ lista, puntosElegibles }) => {
     setAsignaciones(lista);
     onChange?.(lista);
-    setElegibles((Array.isArray(puntos) ? puntos : []).map(normalizarPunto));
+    setElegibles(puntosElegibles);
   };
 
   useEffect(() => {
     let activo = true;
     cargar()
+      .then((resultado) => {
+        if (activo) aplicar(resultado);
+      })
       .catch(() => {
         if (activo) setError("No se pudieron cargar las asignaciones.");
       });
@@ -63,7 +72,7 @@ export function AsignacionesVendedor({ usuarioId, onChange }) {
     setError("");
     try {
       await accion();
-      await cargar();
+      aplicar(await cargar());
     } catch (err) {
       setError(err?.message || "No se pudo actualizar la asignación.");
     } finally {

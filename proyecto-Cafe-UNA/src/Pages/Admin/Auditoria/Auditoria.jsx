@@ -253,7 +253,7 @@ function AdminAuditoria() {
       desde: filtrosApi.desde,
       hasta: filtrosApi.hasta,
     });
-    setRegistros(Array.isArray(data) ? data.map(mapRegistro) : []);
+    return Array.isArray(data) ? data.map(mapRegistro) : [];
   };
 
   useEffect(() => {
@@ -268,6 +268,9 @@ function AdminAuditoria() {
     setError("");
 
     cargar()
+      .then((lista) => {
+        if (activo) setRegistros(lista);
+      })
       .catch((err) => {
         if (!activo) return;
         setError(err?.message || "No se pudo cargar la auditor\u00eda.");
@@ -319,7 +322,7 @@ function AdminAuditoria() {
     setRefrescando(true);
     setError("");
     try {
-      await cargar({ force: true });
+      setRegistros(await cargar({ force: true }));
     } catch (err) {
       setError(err?.message || "No se pudo actualizar la auditoría.");
     } finally {
