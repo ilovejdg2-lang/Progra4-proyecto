@@ -214,6 +214,10 @@
 
         var message = 'Cargando página...';
         var isAdmin = path.indexOf('/admin') === 0;
+        var preferClaroAdmin = false;
+        try {
+          preferClaroAdmin = isAdmin && localStorage.getItem('admin-color-theme') === 'dark';
+        } catch (ignoreTheme) {}
 
         if (isAdmin) {
           document.documentElement.classList.add('admin-boot-loading');
@@ -221,12 +225,10 @@
           message = 'Cargando panel administrativo...';
           var loaderEl = document.getElementById('site-initial-loader');
           if (loaderEl) loaderEl.classList.add('site-initial-loader--admin');
-          try {
-            if (localStorage.getItem('admin-color-theme') === 'dark') {
-              document.documentElement.classList.add('dark');
-              document.documentElement.classList.add('admin-theme-dark');
-            }
-          } catch (e) {}
+          if (preferClaroAdmin) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.classList.add('admin-theme-dark');
+          }
         } else {
           document.documentElement.classList.add('site-boot-loading');
           document.body.classList.add('site-boot-loading');
@@ -262,11 +264,7 @@
           img.onerror = function () {
             // En dark: si falla el logo de CMS, usar blanco/rojo estático.
             if (trimmed.indexOf('logoblancoyrojo') === -1) {
-              var preferClaroErr = false;
-              try {
-                preferClaroErr = isAdmin && localStorage.getItem('admin-color-theme') === 'dark';
-              } catch (ignoreErr) {}
-              if (preferClaroErr) {
+              if (preferClaroAdmin) {
                 img.onerror = function () {
                   mark.innerHTML = '<p class="site-initial-wordmark" id="site-boot-wordmark">Café UNA</p>';
                 };
@@ -283,18 +281,13 @@
         try {
           var raw = localStorage.getItem('cafe-una-brand-logos');
           var parsed = raw ? JSON.parse(raw) : {};
-          var preferClaro = false;
-          try {
-            preferClaro = isAdmin && localStorage.getItem('admin-color-theme') === 'dark';
-          } catch (ignoreDark) {}
-          var bootLogo = preferClaro
+          var bootLogo = preferClaroAdmin
             ? String((parsed && parsed.logoClaroUrl) || '').trim() || '/logoblancoyrojo.png'
             : String((parsed && (parsed.logoUrl || parsed.logoClaroUrl)) || '').trim() || '/logo.webp';
           paintBootLogo(bootLogo);
         } catch (e) {
           try {
-            var preferClaroFb = isAdmin && localStorage.getItem('admin-color-theme') === 'dark';
-            paintBootLogo(preferClaroFb ? '/logoblancoyrojo.png' : '/logo.webp');
+            paintBootLogo(preferClaroAdmin ? '/logoblancoyrojo.png' : '/logo.webp');
           } catch (ignoreFb) {}
         }
 
@@ -323,11 +316,7 @@
                   }),
                 );
               } catch (ignore3) {}
-              var preferClaroApi = false;
-              try {
-                preferClaroApi = isAdmin && localStorage.getItem('admin-color-theme') === 'dark';
-              } catch (ignore4) {}
-              var fromApi = preferClaroApi
+              var fromApi = preferClaroAdmin
                 ? logoClaroApi || '/logoblancoyrojo.png'
                 : logoUrlApi || logoClaroApi || '/logo.webp';
               if (fromApi) paintBootLogo(fromApi);
