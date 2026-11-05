@@ -8,6 +8,8 @@ import OptimizedImage from '../OptimizedImage/OptimizedImage';
 import { useTraducir } from '../../hooks/useTraducir';
 import './Gallery.css';
 
+const EMPTY_ARRAY = [];
+
 const DEFAULT_PAGE_SIZE = 10;
 
 function getGalleryItemClassName(index, count) {
@@ -51,7 +53,7 @@ function GalleryCaptionLightbox({ title }) {
 }
 
 const Gallery = ({
-  items = [],
+  items = EMPTY_ARRAY,
   pageSize = DEFAULT_PAGE_SIZE,
   title = 'Galer\u00eda de fotos',
   ariaLabel = 'Galer\u00eda de fotos',

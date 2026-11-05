@@ -22,6 +22,8 @@ import { useTraducir } from "../../../hooks/useTraducir";
 import { CategoryTree } from "./CategoryTree";
 import { FilterSection } from "./FilterSection";
 
+const EMPTY_OBJECT = {};
+
 function resolverIconoTipo(tipo = "") {
   const t = tipo.toLowerCase();
   if (t === "pdf") return { icon: FileText, colorClass: "icon--pdf" };
@@ -34,7 +36,7 @@ function resolverIconoTipo(tipo = "") {
 
 export function Sidebar({
   // Estado de filtros
-  filtros = {},
+  filtros = EMPTY_OBJECT,
   facetas = {},
   estadisticas = {},
   usuario = null,

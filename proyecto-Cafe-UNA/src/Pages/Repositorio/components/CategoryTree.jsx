@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Folder, FolderOpen, Layers } from "lucide-react";
 import { ST } from "../../../Components/T/ST";
 
+const EMPTY_ARRAY = [];
+
 function claveNormalizada(str = "") {
   return String(str || "")
     .trim()
@@ -12,7 +14,7 @@ function claveNormalizada(str = "") {
 
 export function CategoryTree({
   categorias = [],
-  subcategorias = [],
+  subcategorias = EMPTY_ARRAY,
   categoriaActiva = "todas",
   subcategoriaActiva = "",
   onSelectCategoria,

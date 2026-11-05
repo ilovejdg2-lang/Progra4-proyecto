@@ -7,6 +7,8 @@ import {
 } from "../../../services/inventarioSalidasService";
 import { SolicitudSalidaInventarioForm } from "./SolicitudSalidaInventarioForm";
 
+const EMPTY_ARRAY = [];
+
 function valor(record, ...keys) {
   for (const key of keys) {
     if (record?.[key] !== undefined && record?.[key] !== null) return record[key];
@@ -14,12 +16,14 @@ function valor(record, ...keys) {
   return "";
 }
 
+const FORMATO_FECHA_LARGA = new Intl.DateTimeFormat("es-CR", { dateStyle: "long" });
+
 function formatearFecha(value) {
   if (!value) return "Sin fecha";
   const parsed = new Date(`${String(value).slice(0, 10)}T12:00:00`);
   return Number.isNaN(parsed.getTime())
     ? String(value)
-    : new Intl.DateTimeFormat("es-CR", { dateStyle: "long" }).format(parsed);
+    : FORMATO_FECHA_LARGA.format(parsed);
 }
 
 function textoEstado(estado) {
@@ -31,7 +35,7 @@ function textoEstado(estado) {
   })[String(estado).toLowerCase()] ?? "Estado desconocido";
 }
 
-export function SolicitudesSalidaInventarioPanel({ productos = [], puedeSolicitar = false, esSuperAdmin = false, onInventoryChanged }) {
+export function SolicitudesSalidaInventarioPanel({ productos = EMPTY_ARRAY, puedeSolicitar = false, esSuperAdmin = false, onInventoryChanged }) {
   const [solicitudes, setSolicitudes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);

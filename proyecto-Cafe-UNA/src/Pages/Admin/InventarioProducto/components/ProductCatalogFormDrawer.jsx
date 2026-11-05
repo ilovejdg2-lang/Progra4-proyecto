@@ -45,6 +45,8 @@ import { camposParaVistaAdmin } from "../../../../lib/traducir";
 import { useCatalogo } from "../../../../hooks/useCatalogo";
 import { TIPOS_CATALOGO } from "../../../../services/catalogosService";
 
+const EMPTY_ARRAY = [];
+
 const MAX_PRODUCTOS_DESTACADOS = 3;
 const CAMPOS_TEXTO_PRODUCTO = ["nombre", "descripcion"];
 
@@ -119,7 +121,7 @@ export function ProductCatalogFormDrawer({
   open,
   initial,
   products = [],
-  categorias = [],
+  categorias = EMPTY_ARRAY,
   onCategoriaCreada,
   onSave,
   onClose,

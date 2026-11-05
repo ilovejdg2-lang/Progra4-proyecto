@@ -12,6 +12,8 @@ import {
 } from "../../lib/ubicacionMaps";
 import "./MapaProductores.css";
 
+const EMPTY_ARRAY = [];
+
 const HIT = 44;
 const PIN = 34;
 
@@ -83,7 +85,7 @@ function aplicarVistaCostaRica(mapa) {
 }
 
 export default function MapaProductores({
-  productores = [],
+  productores = EMPTY_ARRAY,
   cargando = false,
   seleccionadoId = null,
   onSeleccionar,

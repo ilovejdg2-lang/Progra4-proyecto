@@ -7,6 +7,8 @@ import { ST } from "../../T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
 
+const EMPTY_ARRAY = [];
+
 const inputCls =
   "w-full rounded-[var(--ui-radius)] border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
 
@@ -147,7 +149,7 @@ export function CategoriaCampo({
   tipo,
   value = "",
   onChange,
-  extras = [],
+  extras = EMPTY_ARRAY,
   label = "Categoría",
   permitirCrear = false,
   onCreada,
