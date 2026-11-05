@@ -126,6 +126,16 @@ describe("producer proposal image intake", () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:replacement.webp");
   });
 
+  it("does not revoke the preview URL while the file is still current", () => {
+    render(<PropuestaProductor />);
+    fireEvent.drop(dropzone(), { dataTransfer: { files: [image()] } });
+    fireEvent.change(document.getElementById("nombre"), { target: { value: "Otro nombre" } });
+    fireEvent.change(document.getElementById("descripcion"), { target: { value: "Otra descripción" } });
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    expect(screen.getByAltText("Vista previa de la imagen seleccionada")).toHaveAttribute("src", "blob:cafe.png");
+  });
+
   it.each([
     ["missing", null, "La imagen representativa es obligatoria."],
     ["format", image("notes.txt", "text/plain"), "La imagen debe ser JPG, JPEG, PNG o WebP."],
