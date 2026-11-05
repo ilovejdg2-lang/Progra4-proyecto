@@ -22,6 +22,28 @@ describe("usePersistedIdSet", () => {
     expect(renderIds().result.current.ids.size).toBe(0);
   });
 
+  it("treats corrupt or non-array stored data as empty and rewrites a clean value on mount", () => {
+    for (const corrupt of ["{not json", "123", '{"a":1}', '"text"', "null"]) {
+      localStorage.setItem(KEY, corrupt);
+
+      const { result, unmount } = renderIds();
+
+      expect(result.current.ids.size).toBe(0);
+      expect(localStorage.getItem(KEY)).toBe("[]");
+      unmount();
+    }
+  });
+
+  it("normalizes ids to strings", () => {
+    localStorage.setItem(KEY, JSON.stringify([1, "2"]));
+    const { result } = renderIds();
+
+    expect(result.current.ids.has("1")).toBe(true);
+    act(() => result.current.add(3));
+
+    expect(JSON.parse(localStorage.getItem(KEY))).toEqual(["1", "2", "3"]);
+  });
+
   it("toggles ids and persists each change exactly once", () => {
     const { result } = renderIds();
     const setItem = vi.spyOn(Storage.prototype, "setItem");

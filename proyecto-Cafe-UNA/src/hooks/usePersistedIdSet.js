@@ -4,14 +4,17 @@ function readIds(storageKey) {
   if (typeof window === "undefined") return new Set();
   try {
     const stored = localStorage.getItem(storageKey);
-    return stored ? new Set(JSON.parse(stored)) : new Set();
+    const parsed = stored ? JSON.parse(stored) : [];
+    return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
   } catch {
     return new Set();
   }
 }
 
 /**
- * A set of string ids mirrored to localStorage. State updaters stay pure;
+ * A set of ids mirrored to localStorage. Ids are normalized to strings (when read
+ * and when added or toggled). Corrupt or non-array stored data starts as an empty
+ * set, and the effect rewrites a clean value on mount. State updaters stay pure;
  * persistence runs in an effect after each committed change.
  */
 export function usePersistedIdSet(storageKey) {
