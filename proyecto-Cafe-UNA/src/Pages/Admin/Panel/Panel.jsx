@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ClipboardList,
@@ -23,8 +23,6 @@ import { imagenPrincipalProducto } from "../../../lib/productoImagenes";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { DashboardStatCard } from "./components/DashboardStatCard";
-import { MonthlyRevenueChart } from "./components/MonthlyRevenueChart";
-import { UserStatusChart } from "./components/UserStatusChart";
 import { QuickAccess } from "./components/QuickAccess";
 import { StockAlerts } from "./components/StockAlerts";
 import { RecentActivity } from "./components/RecentActivity";
@@ -41,6 +39,19 @@ import {
 } from "./dashboardUtils";
 import { obtenerComprasRango } from "./dashboardData";
 import "./Panel.css";
+
+
+
+const MonthlyRevenueChart = lazy(() =>
+  import("./components/MonthlyRevenueChart").then((m) => ({ default: m.MonthlyRevenueChart })),
+);
+const UserStatusChart = lazy(() =>
+  import("./components/UserStatusChart").then((m) => ({ default: m.UserStatusChart })),
+);
+
+function ChartFallback() {
+  return <div className="h-64 animate-pulse rounded-xl bg-slate-100" aria-hidden="true" />;
+}
 
 function mesInputDeFecha(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -373,6 +384,7 @@ const AdminPanel = () => {
 
           <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.9fr)]">
             {puedeVentas ? (
+              <Suspense fallback={<ChartFallback />}>
               <MonthlyRevenueChart
                 titulo="Ingresos mensuales generales"
                 subtitulo="Suma de los 3 puntos de venta (FUNDA-UNA, Bodega Central y Editorial)."
@@ -386,9 +398,11 @@ const AdminPanel = () => {
                 loading={cargandoVentas}
                 vacio={!cargandoVentas && !hayIngresosMes}
               />
+              </Suspense>
             ) : null}
             <div className="grid gap-4">
               {puedeUsuarios ? (
+                <Suspense fallback={<ChartFallback />}>
                 <UserStatusChart
                   total={totalUsuarios}
                   activos={usuariosActivos}
@@ -396,6 +410,7 @@ const AdminPanel = () => {
                   loading={cargandoUsuarios}
                   puedeVerTodos={puedeUsuarios}
                 />
+                </Suspense>
               ) : null}
               <QuickAccess items={accesos} gestionarTo={puedeAjustes ? "/admin/ajustes/permisos" : null} />
             </div>
