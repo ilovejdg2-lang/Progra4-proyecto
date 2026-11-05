@@ -54,7 +54,7 @@ export default function AvisoSedeFinca({ sede, contexto = "visita" }) {
             title={tMapa}
             src={embedUrl}
             loading="lazy"
-            sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+            sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
             referrerPolicy="no-referrer-when-downgrade"
             allowFullScreen
           />
