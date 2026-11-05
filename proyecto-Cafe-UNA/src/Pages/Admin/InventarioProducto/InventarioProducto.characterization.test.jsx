@@ -46,6 +46,11 @@ vi.mock('../layouts/AdminLayout', () => ({
 }))
 
 import AdminInventarioProducto from './InventarioProducto'
+import {
+  clearPendingStockProduct,
+  peekPendingStockProduct,
+  requestAdminStockProduct,
+} from '../../../lib/adminStockAlert'
 
 const products = [
   {
@@ -215,5 +220,15 @@ describe('InventarioProducto characterization', () => {
     await act(async () => {
       resolveCreate(products[0])
     })
+  })
+
+  it('does not leave a delayed cleanup timer behind when unmounted after opening a pending stock request', () => {
+    requestAdminStockProduct('1', { nombre: 'Café Premium' })
+    const { unmount } = renderPage()
+
+    unmount()
+
+    expect(peekPendingStockProduct()).toBeNull()
+    clearPendingStockProduct()
   })
 })

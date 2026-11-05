@@ -688,11 +688,11 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
 
         {/* Selector de Tipo de Voluntariado */}
         <div className="mt-6 pt-6 border-t border-slate-100">
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+          <span id="gestion-fechas-tipo-label" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
             <ST>Seleccione el tipo de voluntariado a configurar:</ST>
-          </label>
+          </span>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" role="group" aria-labelledby="gestion-fechas-tipo-label">
             {TIPOS_VOLUNTARIADO.map((tipo) => {
               const esActivo = tipo === tipoSeleccionado;
               const cantidad = getCantidadFechas(
@@ -914,9 +914,9 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
               {/* GESTIÓN DE HORARIOS / INTERVALOS DISPONIBLES */}
               <div className="space-y-3 pt-2 border-t border-slate-100">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-slate-800">
+                  <span className="block text-xs font-bold text-slate-800">
                     <ST>Horarios e intervalos disponibles para esta fecha:</ST>
-                  </label>
+                  </span>
                   <span className="text-[11px] text-slate-500">
                     {horarios.length} configurado(s)
                   </span>
@@ -989,6 +989,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                   >
                     <input
                       type="text"
+                      aria-label="Horario personalizado"
                       placeholder="Ej. 9:00 a. m. – 1:00 p. m."
                       value={nuevoHorarioPersonalizado}
                       onChange={(e) => setNuevoHorarioPersonalizado(e.target.value)}
@@ -1010,10 +1011,11 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
               {/* Cupo y Observaciones */}
               <div className="space-y-4 pt-2 border-t border-slate-100">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label htmlFor="gestion-fechas-cupo" className="block text-xs font-semibold text-slate-700 mb-1">
                     <ST>Cupo máximo de voluntarios (opcional):</ST>
                   </label>
                   <NumericInput
+                    id="gestion-fechas-cupo"
                     maxLength={3}
                     placeholder="Ej. 20"
                     value={cupoMaximo}
@@ -1027,10 +1029,11 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label htmlFor="gestion-fechas-observaciones" className="block text-xs font-semibold text-slate-700 mb-1">
                     <ST>Observaciones internas / Nota (opcional):</ST>
                   </label>
                   <textarea
+                    id="gestion-fechas-observaciones"
                     rows={2}
                     placeholder="Ej. Actividad especial de reforestación"
                     value={observaciones}
@@ -1316,7 +1319,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
 
               {/* Campo para ingresar orientación para los participantes */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-900">
+                <label htmlFor="gestion-fechas-orientacion" className="block text-xs font-bold text-slate-900">
                   <ST>Orientación y mensaje para los participantes:</ST>
                 </label>
                 <p className="text-xs text-slate-500">
@@ -1326,6 +1329,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                   </ST>
                 </p>
                 <textarea
+                  id="gestion-fechas-orientacion"
                   rows={3}
                   value={cancelacionConfig.orientacion}
                   onChange={(e) =>

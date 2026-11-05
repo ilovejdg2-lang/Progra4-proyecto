@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Check, MapPin, Store } from "lucide-react";
 
@@ -103,10 +103,13 @@ export default function PropuestaProductor() {
   const pasoRef = useRef(paso);
   const usuarioIdRef = useRef(idUsuario(usuario));
 
-  formRef.current = form;
-  archivoRef.current = archivo;
-  pasoRef.current = paso;
-  usuarioIdRef.current = idUsuario(usuario);
+  const usuarioId = idUsuario(usuario);
+  useLayoutEffect(() => {
+    formRef.current = form;
+    archivoRef.current = archivo;
+    pasoRef.current = paso;
+    usuarioIdRef.current = usuarioId;
+  });
 
   useEffect(() => {
     const sync = () => setUsuario(getActiveSessionUser());

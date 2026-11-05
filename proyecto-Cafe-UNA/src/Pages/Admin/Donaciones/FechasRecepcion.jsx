@@ -459,9 +459,9 @@ export default function AdminFechasRecepcionDonacion() {
 
                 <div className="space-y-3 pt-2 border-t border-slate-100">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-800">
+                    <span className="block text-xs font-bold text-slate-800">
                       <ST>Horarios de recepción para esta fecha:</ST>
-                    </label>
+                    </span>
                     <span className="text-[11px] text-slate-500">
                       {horarios.length} configurado(s)
                     </span>
@@ -482,6 +482,7 @@ export default function AdminFechasRecepcionDonacion() {
                           {puedeEditar && !esFechaPasada ? (
                             <button
                               type="button"
+                              aria-label={`Quitar horario ${h}`}
                               onClick={() => setHorarios((prev) => prev.filter((item) => item !== h))}
                               className="text-slate-400 hover:text-red-600 transition ml-0.5"
                             >
@@ -534,6 +535,7 @@ export default function AdminFechasRecepcionDonacion() {
                       >
                         <input
                           type="text"
+                          aria-label="Horario personalizado"
                           placeholder="Ej. 9:00 a. m. – 1:00 p. m."
                           value={nuevoHorarioPersonalizado}
                           onChange={(e) => setNuevoHorarioPersonalizado(e.target.value)}
@@ -555,10 +557,11 @@ export default function AdminFechasRecepcionDonacion() {
 
                 <div className="space-y-4 pt-2 border-t border-slate-100">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label htmlFor="fechas-recepcion-observaciones" className="block text-xs font-semibold text-slate-700 mb-1">
                       <ST>Observaciones internas (opcional):</ST>
                     </label>
                     <textarea
+                      id="fechas-recepcion-observaciones"
                       rows={2}
                       value={observaciones}
                       onChange={(e) => setObservaciones(e.target.value)}

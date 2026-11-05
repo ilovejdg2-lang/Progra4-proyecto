@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useId } from "react";
 import { createPortal } from "react-dom";
 import {
   Download,
@@ -48,6 +48,7 @@ function formatearTamano(bytes = 0) {
 }
 
 export function VisualizarDocumentoModal({ documento, onClose }) {
+  const modalTitleId = useId();
   const [pantallaCompleta, setPantallaCompleta] = useState(false);
   const [descargando, setDescargando] = useState(false);
   const [errorCarga, setErrorCarga] = useState(false);
@@ -93,7 +94,7 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
   return createPortal(
     <div
       className="repositorio-modal-overlay"
-      role="dialog"
+      role="dialog" aria-labelledby={modalTitleId}
       aria-modal="true"
       onClick={(e) => {
         if (e.target === e.currentTarget && onClose) onClose();
@@ -125,7 +126,7 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
                   v{documento.version || "1.0"}
                 </span>
               </div>
-              <h3 className="repositorio-viewer-title" title={documento.titulo}>
+              <h3 id={modalTitleId} className="repositorio-viewer-title" title={documento.titulo}>
                 {documento.titulo}
               </h3>
             </div>

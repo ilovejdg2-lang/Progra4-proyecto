@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
@@ -61,6 +61,7 @@ const AdminInventarioProducto = () => {
   const [modalCategorias, setModalCategorias] = useState(false);
   const [productoEditar, setProductoEditar] = useState(null);
   const [productoStockEditar, setProductoStockEditar] = useState(null);
+  const limpiarPendienteTimerRef = useRef(null);
   const [guardando, setGuardando] = useState(false);
   const [guardandoStock, setGuardandoStock] = useState(false);
   const [categoriasApi, setCategoriasApi] = useState([]);
@@ -110,13 +111,28 @@ const AdminInventarioProducto = () => {
     const pending = peekPendingStockProduct();
     if (!pending?.productId) return;
     if (abrirStockDeProducto(pending.productId, pending.nombre)) {
-      window.setTimeout(() => clearPendingStockProduct(), 500);
+      window.clearTimeout(limpiarPendienteTimerRef.current);
+      limpiarPendienteTimerRef.current = window.setTimeout(() => {
+        limpiarPendienteTimerRef.current = null;
+        clearPendingStockProduct();
+      }, 500);
     }
   };
 
   useEffect(() => {
     abrirStockPendiente();
   }, [puedeActualizarStock, productos]);
+
+  // Flush the delayed pending-request cleanup if the page unmounts before it fires.
+  useEffect(
+    () => () => {
+      if (limpiarPendienteTimerRef.current === null) return;
+      window.clearTimeout(limpiarPendienteTimerRef.current);
+      limpiarPendienteTimerRef.current = null;
+      clearPendingStockProduct();
+    },
+    [],
+  );
 
   useEffect(() => {
     const onOpenStock = () => {

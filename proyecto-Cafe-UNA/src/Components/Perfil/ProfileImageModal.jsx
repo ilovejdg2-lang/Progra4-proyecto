@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { useTraducir } from "../../hooks/useTraducir";
 import { normalizeImageUrl } from "../../lib/imageUtils";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, useId } from "react";
 import { useProfileImage } from "../../hooks/useProfileImage";
 import { subirImagenPerfil } from "../../services/perfilService";
 import { getStoredUser, isLoggingOut, isSessionExpired, SESSION_UPDATED_EVENT } from "../../services/sessionService";
@@ -34,6 +34,7 @@ export function ProfileImageModal({
   saving,
   uploader = subirImagenPerfil,
 }) {
+  const modalTitleId = useId();
   const identity = useSyncExternalStore(subscribeSession, sessionIdentity);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -117,11 +118,11 @@ export function ProfileImageModal({
     : (isAdmin ? tVistaPreviaBannerAdmin : tVistaPreviaBanner);
 
   return (
-    <div className="perfil-modal" role="dialog" aria-modal="true">
+    <div className="perfil-modal" role="dialog" aria-labelledby={modalTitleId} aria-modal="true">
       <button type="button" className="perfil-modal__backdrop" aria-label={tCerrar} onClick={close} disabled={saving} />
       <div className={`perfil-modal__card perfil-modal__card--image ${isAvatar ? "perfil-modal__card--avatar" : "perfil-modal__card--banner"}`}>
         <header className="perfil-modal__header">
-          <h3>{isAvatar ? tCambiarFoto : tCambiarBanner}</h3>
+          <h3 id={modalTitleId}>{isAvatar ? tCambiarFoto : tCambiarBanner}</h3>
           <button type="button" className="perfil-modal__close" onClick={close} aria-label={tCerrar} disabled={saving}>
             <X size={18} />
           </button>

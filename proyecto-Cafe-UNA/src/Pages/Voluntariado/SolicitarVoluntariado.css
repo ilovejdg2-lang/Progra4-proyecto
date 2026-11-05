@@ -316,7 +316,8 @@
   grid-column: 1 / -1;
 }
 
-.campo label {
+.campo label,
+.campo .campo__label {
   margin-bottom: 6px;
   font-size: 13px;
   font-weight: 500;

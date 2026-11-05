@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import './Navbar.css';
 import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
@@ -495,7 +495,9 @@ const Navbar = () => {
     }, [user, loadSolicitudesUsuario]);
 
     const isMobileMenuOpenRef = useRef(false);
-    isMobileMenuOpenRef.current = isMobileMenuOpen;
+    useLayoutEffect(() => {
+        isMobileMenuOpenRef.current = isMobileMenuOpen;
+    });
 
     const syncScrolledState = useCallback(() => {
         if (isMobileMenuOpenRef.current) return;
@@ -1209,7 +1211,7 @@ const Navbar = () => {
 
             <div className="navbar__actions">
                 <LanguageSwitcher compact className="navbar__lang" />
-                <div className="navbar__cart" ref={cartContainerRef} onClick={handleCartClick}>
+                <div className="navbar__cart" ref={cartContainerRef} role="presentation" onClick={handleCartClick}>
                     <button
                         type="button"
                         className="navbar__icon-button navbar__cart-button"
@@ -1315,6 +1317,7 @@ const Navbar = () => {
                     <div
                         className="navbar__notifications"
                         ref={notificationsRef}
+                        role="presentation"
                         onClick={handleNotificationsClick}
                     >
                         <button
@@ -1590,7 +1593,7 @@ const Navbar = () => {
                     </div>
                 ) : null}
 
-                <div className="navbar__user" ref={userMenuRef} onClick={handleIconClick}>
+                <div className="navbar__user" ref={userMenuRef} role="presentation" onClick={handleIconClick}>
                     <button
                         type="button"
                         className="navbar__icon-button navbar__user-button"

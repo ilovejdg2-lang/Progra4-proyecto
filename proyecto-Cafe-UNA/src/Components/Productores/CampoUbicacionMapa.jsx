@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Crosshair, MapPin } from "lucide-react";
 
 import { ST } from "../T/ST";
@@ -30,7 +30,9 @@ export default function CampoUbicacionMapa({
   const [esError, setEsError] = useState(false);
   const [resolviendo, setResolviendo] = useState(false);
 
-  onChangeRef.current = onChangeCoords;
+  useLayoutEffect(() => {
+    onChangeRef.current = onChangeCoords;
+  });
 
   const latNum = Number(latitud);
   const lngNum = Number(longitud);
@@ -111,25 +113,30 @@ export default function CampoUbicacionMapa({
     const punto = L.latLng(latNum, lngNum);
     if (!marcadorRef.current) {
       marcadorRef.current = L.marker(punto, { draggable: true }).addTo(mapa);
-      marcadorRef.current.on("dragend", () => {
-        const pos = marcadorRef.current.getLatLng();
-        if (!estaEnCostaRica(pos.lat, pos.lng)) {
-          setEsError(true);
-          setMensaje("El punto debe quedar dentro de Costa Rica.");
-          marcadorRef.current.setLatLng([latNum, lngNum]);
-          return;
-        }
-        onChangeRef.current?.({
-          latitud: String(pos.lat),
-          longitud: String(pos.lng),
-        });
-        setEsError(false);
-        setMensaje("Ubicación actualizada.");
-      });
     } else {
       marcadorRef.current.setLatLng(punto);
     }
+    const marcador = marcadorRef.current;
+    const alTerminarArrastre = () => {
+      const pos = marcador.getLatLng();
+      if (!estaEnCostaRica(pos.lat, pos.lng)) {
+        setEsError(true);
+        setMensaje("El punto debe quedar dentro de Costa Rica.");
+        marcador.setLatLng([latNum, lngNum]);
+        return;
+      }
+      onChangeRef.current?.({
+        latitud: String(pos.lat),
+        longitud: String(pos.lng),
+      });
+      setEsError(false);
+      setMensaje("Ubicación actualizada.");
+    };
+    marcador.on("dragend", alTerminarArrastre);
     mapa.setView(punto, Math.max(mapa.getZoom(), 11));
+    return () => {
+      marcador.off("dragend", alTerminarArrastre);
+    };
   }, [listo, latNum, lngNum, tienePin]);
 
   const aplicarCoords = (lat, lng, textoOk) => {
