@@ -93,7 +93,7 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
   return createPortal(
     <div
       className="repositorio-modal-overlay"
-      role="dialog"
+      role="dialog" aria-labelledby="visor-documento-modal-1-title"
       aria-modal="true"
       onClick={(e) => {
         if (e.target === e.currentTarget && onClose) onClose();
@@ -125,7 +125,7 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
                   v{documento.version || "1.0"}
                 </span>
               </div>
-              <h3 className="repositorio-viewer-title" title={documento.titulo}>
+              <h3 id="visor-documento-modal-1-title" className="repositorio-viewer-title" title={documento.titulo}>
                 {documento.titulo}
               </h3>
             </div>

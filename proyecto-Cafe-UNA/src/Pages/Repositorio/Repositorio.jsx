@@ -510,7 +510,6 @@ export default function Repositorio() {
           className={`biblio-main-content ${
             sidebarColapsado ? "biblio-main-content--expanded" : ""
           }`}
-          role="main"
           aria-hidden={mobileDrawerOpen}
           style={mobileDrawerOpen ? { pointerEvents: "none", userSelect: "none" } : undefined}
         >

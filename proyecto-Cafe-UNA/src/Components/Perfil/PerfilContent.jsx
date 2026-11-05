@@ -1,6 +1,6 @@
 import { ProfileImageModal } from "./ProfileImageModal";
 import { useProfileImage } from "../../hooks/useProfileImage";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Camera, ChevronRight, ClipboardList, Eye, EyeOff, IdCard, KeyRound, Mail, ShoppingBag, Sprout, UserRound } from "lucide-react";
 import {
@@ -123,14 +123,16 @@ function claseRolPerfil(rol) {
 
 function PerfilPasswordField({ label, value, onChange, visible, onToggle, autoFocus = false, error = "" }) {
   const Icon = visible ? Eye : EyeOff;
+  const inputId = useId();
   const tOcultar = useTraducir("Ocultar contraseña");
   const tMostrar = useTraducir("Mostrar contraseña");
 
   return (
-    <label className="perfil-field perfil-password-field">
-      <span><ST>{label}</ST></span>
+    <div className="perfil-field perfil-password-field">
+      <label htmlFor={inputId}><span><ST>{label}</ST></span></label>
       <div className="perfil-password-field__input-wrap">
         <input
+          id={inputId}
           type={visible ? "text" : "password"}
           value={value}
           onChange={onChange}
@@ -150,7 +152,7 @@ function PerfilPasswordField({ label, value, onChange, visible, onToggle, autoFo
         </button>
       </div>
       {error ? <p className="perfil-field-error"><ST>{error}</ST></p> : null}
-    </label>
+    </div>
   );
 }
 

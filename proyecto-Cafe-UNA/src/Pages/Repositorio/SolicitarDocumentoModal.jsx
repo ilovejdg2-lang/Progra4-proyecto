@@ -501,6 +501,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                     <input
                       type="radio"
                       name="privacidadDoc"
+                      aria-label="Documento privado"
                       checked={true}
                       readOnly
                     />

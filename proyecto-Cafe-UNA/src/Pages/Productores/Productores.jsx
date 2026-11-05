@@ -59,7 +59,7 @@ function DetalleProductor({ productor, onClose }) {
 
   return createPortal(
     <div className="productor-dialog">
-      <div className="productor-dialog__fondo" onClick={onClose} />
+      <div className="productor-dialog__fondo" onClick={onClose} aria-hidden="true" />
       <div
         className="productor-dialog__panel"
         role="dialog"

@@ -551,6 +551,7 @@ export default function AdminDocumentos() {
             <button
               type="button"
               className="ml-auto text-emerald-700 hover:text-emerald-900"
+              aria-label="Cerrar mensaje"
               onClick={() => setMensajeExito("")}
             >
               <X size={16} />
@@ -594,7 +595,7 @@ export default function AdminDocumentos() {
                   onChange={(e) => setFiltroBuscar(e.target.value)}
                 />
                 {filtroBuscar ? (
-                  <button type="button" onClick={() => setFiltroBuscar("")}>
+                  <button type="button" aria-label="Limpiar búsqueda" onClick={() => setFiltroBuscar("")}>
                     <X size={14} />
                   </button>
                 ) : null}
@@ -921,7 +922,7 @@ export default function AdminDocumentos() {
         createPortal(
         <div
           className="admin-modal-overlay"
-          role="dialog"
+          role="dialog" aria-labelledby="docs-modal-1-title"
           aria-modal="true"
           onClick={(e) => {
             if (e.target === e.currentTarget) cerrarModal();
@@ -937,7 +938,7 @@ export default function AdminDocumentos() {
                   <BookOpen size={14} />
                   <ST>{documentoEditando ? "Edición de Documento" : "Subida de Documento"}</ST>
                 </span>
-                <h3>
+                <h3 id="docs-modal-1-title">
                   <ST>{documentoEditando ? "Editar Metadatos del Documento" : "Subir Nuevo Documento al Repositorio"}</ST>
                 </h3>
               </div>
@@ -1174,7 +1175,15 @@ export default function AdminDocumentos() {
 
                   <div
                     className="dropzone-doc"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        fileInputRef.current?.click();
+                      }
+                    }}
                   >
                     <UploadCloud size={32} className="text-slate-400 mb-2" />
                     {archivoSeleccionado ? (
@@ -1248,7 +1257,7 @@ export default function AdminDocumentos() {
         createPortal(
         <div
           className="admin-modal-overlay"
-          role="dialog"
+          role="dialog" aria-labelledby="docs-modal-2-title"
           aria-modal="true"
           onClick={(e) => {
             if (e.target === e.currentTarget) setModalCatAbierto(false);
@@ -1257,7 +1266,7 @@ export default function AdminDocumentos() {
           <div className="admin-form-modal-container max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="admin-form-modal-header">
               <div className="admin-form-modal-header__title">
-                <h3><ST>Nueva Categoría de Documentos</ST></h3>
+                <h3 id="docs-modal-2-title"><ST>Nueva Categoría de Documentos</ST></h3>
               </div>
               <button
                 type="button"

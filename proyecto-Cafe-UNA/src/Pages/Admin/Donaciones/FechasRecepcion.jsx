@@ -482,6 +482,7 @@ export default function AdminFechasRecepcionDonacion() {
                           {puedeEditar && !esFechaPasada ? (
                             <button
                               type="button"
+                              aria-label={`Quitar horario ${h}`}
                               onClick={() => setHorarios((prev) => prev.filter((item) => item !== h))}
                               className="text-slate-400 hover:text-red-600 transition ml-0.5"
                             >

@@ -117,11 +117,11 @@ export function ProfileImageModal({
     : (isAdmin ? tVistaPreviaBannerAdmin : tVistaPreviaBanner);
 
   return (
-    <div className="perfil-modal" role="dialog" aria-modal="true">
+    <div className="perfil-modal" role="dialog" aria-labelledby="perfil-image-modal-1-title" aria-modal="true">
       <button type="button" className="perfil-modal__backdrop" aria-label={tCerrar} onClick={close} disabled={saving} />
       <div className={`perfil-modal__card perfil-modal__card--image ${isAvatar ? "perfil-modal__card--avatar" : "perfil-modal__card--banner"}`}>
         <header className="perfil-modal__header">
-          <h3>{isAvatar ? tCambiarFoto : tCambiarBanner}</h3>
+          <h3 id="perfil-image-modal-1-title">{isAvatar ? tCambiarFoto : tCambiarBanner}</h3>
           <button type="button" className="perfil-modal__close" onClick={close} aria-label={tCerrar} disabled={saving}>
             <X size={18} />
           </button>
