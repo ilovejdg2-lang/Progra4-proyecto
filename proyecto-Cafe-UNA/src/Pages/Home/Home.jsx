@@ -431,6 +431,7 @@ const Home = () => {
                   title={"Mapa de ubicaci\u00f3n"}
                   src={locationMapEmbedUrl}
                   loading="lazy"
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
                   referrerPolicy="no-referrer-when-downgrade"
                 />
               </div>
