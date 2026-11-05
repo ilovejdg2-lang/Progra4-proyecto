@@ -20,7 +20,12 @@
         const [uploading, setUploading] = useState(false);
         const subir = async (file) => {
           await new Promise((resolve) => setTimeout(resolve, 350));
-          return URL.createObjectURL(file);
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+          });
         };
         return React.createElement("section", { className: "grid gap-4" },
           React.createElement("h1", null, "Campo de imagen CMS: prueba local"),
