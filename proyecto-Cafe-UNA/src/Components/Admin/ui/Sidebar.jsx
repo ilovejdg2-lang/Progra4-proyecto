@@ -5,6 +5,7 @@ import { PanelLeft, X } from "lucide-react";
 import { Slot } from "@radix-ui/react-slot";
 
 import { useBodyScrollLock } from "../../../hooks/useBodyScrollLock";
+import { usePersistedBoolean } from "../../../hooks/usePersistedBoolean";
 
 const SidebarContext = React.createContext(null);
 const SIDEBAR_OPEN_KEY = "admin-sidebar-desktop-open";
@@ -24,23 +25,10 @@ function useSidebar() {
 }
 
 export function SidebarProvider({ defaultOpen = true, className, children, ...props }) {
-  const [open, setOpenState] = React.useState(() => {
-    if (typeof window === "undefined") return defaultOpen;
-    const saved = localStorage.getItem(SIDEBAR_OPEN_KEY);
-    return saved === null ? defaultOpen : saved === "true";
-  });
+  const [open, setOpen] = usePersistedBoolean(SIDEBAR_OPEN_KEY, defaultOpen);
   const [openMobile, setOpenMobile] = React.useState(false);
 
   useBodyScrollLock(openMobile);
-
-  const setOpen = React.useCallback(
-    (value) => {
-      const next = typeof value === "function" ? value(open) : value;
-      setOpenState(next);
-      localStorage.setItem(SIDEBAR_OPEN_KEY, String(next));
-    },
-    [open],
-  );
 
   const toggleSidebar = React.useCallback(() => {
     if (window.matchMedia("(max-width: 767px)").matches) {

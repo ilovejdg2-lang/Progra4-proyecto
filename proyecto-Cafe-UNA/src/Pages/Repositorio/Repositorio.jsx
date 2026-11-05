@@ -17,6 +17,7 @@ import {
 import { getActiveSessionUser } from "../../services/sessionService";
 import { SolicitarDocumentoModal } from "./SolicitarDocumentoModal";
 import { VisualizarDocumentoModal } from "./VisualizarDocumentoModal";
+import { usePersistedBoolean } from "../../hooks/usePersistedBoolean";
 import { usePersistedIdSet } from "../../hooks/usePersistedIdSet";
 import { usePublicPageLoadingGate } from "../../hooks/usePublicPageLoadingGate";
 import { ST } from "../../Components/T/ST";
@@ -97,12 +98,7 @@ export default function Repositorio() {
   // Estado del layout
   const [vistaCuadricula, setVistaCuadricula] = useState(() => filtros.vista !== "list");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [sidebarColapsado, setSidebarColapsado] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("biblio_sidebar_collapsed") === "true";
-    }
-    return false;
-  });
+  const [sidebarColapsado, setSidebarColapsado] = usePersistedBoolean("biblio_sidebar_collapsed", false);
 
   // Modales
   const [documentoSolicitar, setDocumentoSolicitar] = useState(null);
@@ -304,11 +300,7 @@ export default function Repositorio() {
   }, [sincronizarUrl, vistaCuadricula]);
 
   // Alternar colapso de sidebar en escritorio
-  const handleToggleColapso = () => {
-    const nuevo = !sidebarColapsado;
-    setSidebarColapsado(nuevo);
-    localStorage.setItem("biblio_sidebar_collapsed", String(nuevo));
-  };
+  const handleToggleColapso = () => setSidebarColapsado((prev) => !prev);
 
   // Descarga de archivo
   const handleDescargar = async (doc) => {

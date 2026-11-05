@@ -40,4 +40,35 @@ describe("SidebarProvider setOpen persistence", () => {
     act(() => result.current.setOpen(true));
     expect(localStorage.getItem(KEY)).toBe("true");
   });
+
+  it("applies two setOpen calls in the same tick on top of each other", () => {
+    const { result } = renderSidebar();
+
+    act(() => {
+      result.current.setOpen(false);
+      result.current.setOpen((value) => !value);
+    });
+
+    expect(result.current.open).toBe(true);
+  });
+
+  it("keeps setOpen identity stable across updates and survives failing storage writes", () => {
+    const { result } = renderSidebar();
+    const first = result.current.setOpen;
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("quota");
+    });
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    act(() => result.current.setOpen(false));
+
+    expect(result.current.open).toBe(false);
+    expect(result.current.setOpen).toBe(first);
+  });
+
+  it("does not write the key on mount", () => {
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+    renderSidebar();
+    expect(setItem).not.toHaveBeenCalled();
+  });
 });
