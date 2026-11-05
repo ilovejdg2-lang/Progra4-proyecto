@@ -925,6 +925,7 @@ function SolicitarVoluntariado() {
                       <label htmlFor="voluntariado-identificacion">
                         {etiquetaDocumento} <span className="req">*</span>
                       </label>
+                      {/* Both inputs share one id: only one of them renders at a time. */}
                       {esPasaporte ? (
                         <input
                           id="voluntariado-identificacion"

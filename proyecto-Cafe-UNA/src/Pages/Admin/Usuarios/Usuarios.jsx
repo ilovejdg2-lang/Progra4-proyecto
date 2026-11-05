@@ -740,7 +740,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
               onChange={(e) =>
                 setCodigoVerificacion(e.target.value.replace(/\D/g, "").slice(0, 5))
               }
-              aria-label={"C\u00f3digo de verificaci\u00f3n"}
+              aria-label={"Código de verificación"}
               placeholder={"C\u00f3digo de verificaci\u00f3n (5 d\u00edgitos)"}
               maxLength={5}
               inputMode="numeric"
@@ -761,7 +761,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
       </div>
       {!inicial && pasoCreacion === "codigo" ? (
         <div>
-          <label htmlFor="usuario-codigo-verificacion" className="mb-1 block text-xs font-medium text-slate-600">{"C\u00f3digo de verificaci\u00f3n"}</label>
+          <label htmlFor="usuario-codigo-verificacion" className="mb-1 block text-xs font-medium text-slate-600">{"Código de verificación"}</label>
           <input
             id="usuario-codigo-verificacion"
             className={inputCls}
@@ -783,7 +783,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
             <>
               <div>
                 <label htmlFor="usuario-password" className="mb-1 block text-xs font-medium text-slate-600">
-                  {"Contrase\u00f1a"} {inicial && <span className="text-slate-400">(opcional)</span>}
+                  {"Contraseña"} {inicial && <span className="text-slate-400">(opcional)</span>}
                 </label>
                 <form.Field name="passwordHash">
                   {(field) => (
@@ -813,7 +813,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
               </div>
               {inicial ? (
                 <div>
-                  <label htmlFor="usuario-password-actual" className="mb-1 block text-xs font-medium text-slate-600">{"Contrase\u00f1a actual"}</label>
+                  <label htmlFor="usuario-password-actual" className="mb-1 block text-xs font-medium text-slate-600">{"Contraseña actual"}</label>
                   <form.Field name="passwordActual">
                     {(field) => (
                       <>

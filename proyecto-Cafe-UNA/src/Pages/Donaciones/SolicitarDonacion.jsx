@@ -991,6 +991,7 @@ export default function SolicitarDonacion() {
                     </div>
                   </div>
 
+                  {/* Field ids (e.g. donacion-nombre, donacion-identificacion) repeat across the exclusive persona/empresa and cedula/pasaporte branches; only one renders at a time. */}
                   {esPersona ? (
                     <>
                       <div className="form-grid">
@@ -1491,7 +1492,7 @@ export default function SolicitarDonacion() {
                               </span>
                             </div>
                           ) : null}
-                          <div className="flex justify-center my-1 w-full">
+                          <div className="flex justify-center my-1 w-full" role="group" aria-labelledby="donacion-dia-entrega">
                             <Calendar
                               mode="single"
                               selected={fechaEntregaSeleccionada || undefined}
