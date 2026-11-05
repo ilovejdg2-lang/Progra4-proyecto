@@ -23,7 +23,7 @@ import {
   obtenerMiPropuesta,
   obtenerMisPropuestas,
 } from "../../services/propuestasProductoresService";
-import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
+import { useSessionUser } from "../../hooks/useSessionUser";
 import { DetallePropuestaSecciones, SeccionRevision } from "./DetallePropuesta";
 import { ModalEditarMiPropuesta } from "./ModalEditarMiPropuesta";
 import { ModalEliminarMiPropuesta } from "./ModalEliminarMiPropuesta";
@@ -90,7 +90,7 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
   const navigate = useNavigate();
   const esAdmin = variant === "admin";
   const perfilVolver = esAdmin ? "/admin/perfil" : "/perfil";
-  const [usuario, setUsuario] = useState(() => getActiveSessionUser());
+  const usuario = useSessionUser();
   const [lista, setLista] = useState([]);
   const [detalle, setDetalle] = useState(null);
   const [estado, setEstado] = useState("todos");
@@ -101,12 +101,6 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
   const [modalEditar, setModalEditar] = useState({ open: false, propuesta: null, esSolicitud: false });
   const [modalEliminar, setModalEliminar] = useState({ open: false, propuesta: null, esSolicitudBaja: false });
   const [accionEnCurso, setAccionEnCurso] = useState("");
-
-  useEffect(() => {
-    const sync = () => setUsuario(getActiveSessionUser());
-    window.addEventListener(SESSION_UPDATED_EVENT, sync);
-    return () => window.removeEventListener(SESSION_UPDATED_EVENT, sync);
-  }, []);
 
   useEffect(() => {
     if (!usuario) {

@@ -10,10 +10,10 @@ import { ST } from "../../Components/T/ST";
 import { ModalDialog } from "../../Components/ui/ModalDialog";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
+import { useSessionUser } from "../../hooks/useSessionUser";
 import { urlImagenPublica } from "../../lib/propuestaProductor";
 import { resumenUbicacion } from "../../lib/ubicacionMaps";
 import { obtenerProductoresPublicos } from "../../services/propuestasProductoresService";
-import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
 import "./propuesta.css";
 
 function enlacePublico(valor) {
@@ -112,23 +112,13 @@ function DetalleProductor({ productor, onClose }) {
 
 export default function Productores() {
   const { ref, showLoading, showPrepaint, inert, loadingMessage } = usePaintPublicPage("productores");
-  const [usuario, setUsuario] = useState(() => getActiveSessionUser());
+  const usuario = useSessionUser();
   const [productores, setProductores] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [seleccionado, setSeleccionado] = useState(null);
   const [mapaSeleccionadoId, setMapaSeleccionadoId] = useState(null);
   const disparadorRef = useRef(null);
-
-  useEffect(() => {
-    const sync = () => setUsuario(getActiveSessionUser());
-    window.addEventListener(SESSION_UPDATED_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(SESSION_UPDATED_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
 
   useEffect(() => {
     let activo = true;

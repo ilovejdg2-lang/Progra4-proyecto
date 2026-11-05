@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 
 import {
@@ -9,24 +9,26 @@ import {
   transitionAdminTheme,
 } from "../lib/adminTheme";
 
+function subscribe(onChange) {
+  window.addEventListener(ADMIN_THEME_CHANGED_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(ADMIN_THEME_CHANGED_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
 export function useAdminTheme() {
-  const [theme, setTheme] = useState(() => readAdminTheme());
+  const theme = useSyncExternalStore(subscribe, readAdminTheme, readAdminTheme);
 
   useEffect(() => {
     applyAdminDocumentTheme(true);
-    const sync = () => setTheme(readAdminTheme());
-    window.addEventListener(ADMIN_THEME_CHANGED_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(ADMIN_THEME_CHANGED_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
   }, []);
 
   const toggleTheme = useCallback((origin) => {
     transitionAdminTheme(() => {
       flushSync(() => {
-        setTheme(toggleStoredAdminTheme());
+        toggleStoredAdminTheme();
       });
     }, origin);
   }, []);

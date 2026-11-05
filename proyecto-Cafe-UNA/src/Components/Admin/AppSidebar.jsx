@@ -76,12 +76,9 @@ import {
   clearSession,
   getActiveSessionUser,
   getStoredUser,
-  SESSION_UPDATED_EVENT,
 } from "../../services/sessionService";
-import {
-  ADMIN_THEME_CHANGED_EVENT,
-  isAdminThemeDark,
-} from "../../lib/adminTheme";
+import { useSessionUser } from "../../hooks/useSessionUser";
+import { useAdminThemeDark } from "../../hooks/useAdminThemeDark";
 import { readBrandLogos, LOGO_CLARO_FALLBACK, LOGO_OSCURO_FALLBACK, cacheBrandLogos } from "../../lib/brandLogoCache";
 import { ST } from "../T/ST";
 import { textoUi } from "../../lib/textoVisible";
@@ -110,7 +107,7 @@ function claveBusqueda(texto) {
 }
 
 export function AppSidebar() {
-  const [user, setUser] = useState(() => getActiveSessionUser());
+  const user = useSessionUser();
   const { setOpenMobile } = useSidebar();
   const displayName = textoUi(user?.name || user?.username || "Usuario");
   const displayEmail = user?.email || user?.correo || "";
@@ -319,7 +316,7 @@ export function AppSidebar() {
   });
   const [logoUrl, setLogoUrl] = useState(() => readBrandLogos().logoUrl);
   const [logoClaroUrl, setLogoClaroUrl] = useState(() => readBrandLogos().logoClaroUrl);
-  const [temaOscuro, setTemaOscuro] = useState(() => isAdminThemeDark());
+  const temaOscuro = useAdminThemeDark();
   const logoActivo = temaOscuro
     ? (logoClaroUrl || LOGO_CLARO_FALLBACK)
     : (logoUrl || LOGO_OSCURO_FALLBACK || logoClaroUrl);
@@ -345,17 +342,6 @@ export function AppSidebar() {
   const updateMiCuentaOpen = (open) => deferSet(setMiCuentaOpen, MI_CUENTA_OPEN_KEY, open);
 
   useEffect(() => {
-    const syncUser = () => setUser(getActiveSessionUser());
-    syncUser();
-    window.addEventListener("storage", syncUser);
-    window.addEventListener(SESSION_UPDATED_EVENT, syncUser);
-    return () => {
-      window.removeEventListener("storage", syncUser);
-      window.removeEventListener(SESSION_UPDATED_EVENT, syncUser);
-    };
-  }, []);
-
-  useEffect(() => {
     const current = getActiveSessionUser();
     if (!current?.id) return undefined;
 
@@ -364,8 +350,7 @@ export function AppSidebar() {
       obtenerPerfil()
         .then((perfil) => {
           if (!activo || !perfil || !getStoredUser()) return;
-          const updated = applyPerfilToSession(perfil);
-          if (updated) setUser(updated);
+          applyPerfilToSession(perfil);
         })
         .catch(() => {});
     }, 400);
@@ -451,13 +436,6 @@ export function AppSidebar() {
     };
   }, []);
 
-  useEffect(() => {
-    const syncTema = () => setTemaOscuro(isAdminThemeDark());
-    syncTema();
-    window.addEventListener(ADMIN_THEME_CHANGED_EVENT, syncTema);
-    return () => window.removeEventListener(ADMIN_THEME_CHANGED_EVENT, syncTema);
-  }, []);
-
   const closeMobileSidebar = () => setOpenMobile(false);
 
   const clearSidebarState = () => {
@@ -479,7 +457,6 @@ export function AppSidebar() {
     await soltarCarritoAlCerrarSesion();
     clearSidebarState();
     clearPerfilCache();
-    setUser(null);
     clearSession();
     window.location.replace("/");
   };
