@@ -87,7 +87,7 @@ function SolicitudFormModal({
   const [fechaEstimadaEntrega, setFechaEstimadaEntrega] = useState("");
   const [notas, setNotas] = useState("");
   const [filas, setFilas] = useState([{ productoId: "", cantidad: "" }]);
-  const [pdf, setPdf] = useState(null);
+  const pdfRef = useRef(null);
   const [validationError, setValidationError] = useState("");
   const [nuevoProveedor, setNuevoProveedor] = useState("");
   const [creandoProveedor, setCreandoProveedor] = useState(false);
@@ -104,7 +104,7 @@ function SolicitudFormModal({
     setFechaEstimadaEntrega("");
     setNotas("");
     setFilas([{ productoId: "", cantidad: "" }]);
-    setPdf(null);
+    pdfRef.current = null;
     setValidationError("");
     setNuevoProveedor("");
   }, [open]);
@@ -146,6 +146,7 @@ function SolicitudFormModal({
       });
       return;
     }
+    const pdf = pdfRef.current;
     if (pdf) {
       if (pdf.type && pdf.type !== "application/pdf" && !pdf.name?.toLowerCase().endsWith(".pdf")) {
         setValidationError("La proforma debe ser un PDF.");
@@ -292,7 +293,7 @@ function SolicitudFormModal({
                 type="file"
                 accept="application/pdf,.pdf"
                 className="w-full text-[length:var(--text-body)] file:mr-3 file:rounded-full file:border-0 file:bg-slate-900 file:px-3 file:py-1 file:text-white"
-                onChange={(e) => setPdf(e.target.files?.[0] || null)}
+                onChange={(e) => { pdfRef.current = e.target.files?.[0] || null; }}
               />
             </span>
           </label>
