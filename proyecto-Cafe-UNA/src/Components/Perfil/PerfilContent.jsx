@@ -1,6 +1,6 @@
 import { ProfileImageModal } from "./ProfileImageModal";
 import { useProfileImage } from "../../hooks/useProfileImage";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Camera, ChevronRight, ClipboardList, Eye, EyeOff, IdCard, KeyRound, Mail, ShoppingBag, Sprout, UserRound } from "lucide-react";
 import {
@@ -326,6 +326,8 @@ export function PerfilContent({ variant = "standalone" }) {
     }
   }
 
+  const cargarPerfilAlCambiarSesion = useEffectEvent(() => cargarPerfil());
+
   useEffect(() => {
     if (!sessionUserId) {
       setCargando(false);
@@ -334,7 +336,7 @@ export function PerfilContent({ variant = "standalone" }) {
     }
 
     montadoRef.current = true;
-    cargarPerfil();
+    cargarPerfilAlCambiarSesion();
     return () => {
       montadoRef.current = false;
       cargaRef.current += 1;

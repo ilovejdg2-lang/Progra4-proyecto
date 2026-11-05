@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { AlertCircle, CheckCircle2, Eye, Plus, Send, Store, X } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
@@ -192,11 +192,15 @@ export default function AdminDistribucion() {
     }
   };
 
+  const cargarVistaInicial = useEffectEvent(() => {
+    loadCatalogoYStock();
+    loadHistorial(1);
+  });
+
   useEffect(() => {
     montadoRef.current = true;
     if (puedeVer) {
-      loadCatalogoYStock();
-      loadHistorial(1);
+      cargarVistaInicial();
     }
     return () => {
       montadoRef.current = false;

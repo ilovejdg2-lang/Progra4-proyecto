@@ -520,24 +520,26 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
 function ModalEditar({ solicitud, onGuardar, onCerrar }) {
   useAdminModalLock(true);
   const { idioma } = useIdioma();
-  const partesNombre = partirNombreCompleto(solicitud.nombre);
-  const formBase = () => ({
-    estado: normalizarEstado(solicitud.estado),
-    nombre: partesNombre.nombre,
-    primerApellido: partesNombre.primerApellido,
-    segundoApellido: partesNombre.segundoApellido,
-    email: solicitud.email || "",
-    telefono: solicitud.telefono || "",
-    tipoVoluntariado: solicitud.tipoVoluntariado || "",
-    identificacion: solicitud.identificacion || "",
-    institucion: solicitud.institucion || "",
-    pais: solicitud.pais || "",
-    horario: solicitud.horario || "",
-    fecha: extraerFecha(solicitud.dias),
-    modalidad: solicitud.modalidad || "individual",
-    cantidadParticipantes: solicitud.cantidadParticipantes || 1,
-    observacionesAdmin: solicitud.observacionesAdmin || "",
-  });
+  const formBase = useCallback(() => {
+    const partesNombre = partirNombreCompleto(solicitud.nombre);
+    return {
+      estado: normalizarEstado(solicitud.estado),
+      nombre: partesNombre.nombre,
+      primerApellido: partesNombre.primerApellido,
+      segundoApellido: partesNombre.segundoApellido,
+      email: solicitud.email || "",
+      telefono: solicitud.telefono || "",
+      tipoVoluntariado: solicitud.tipoVoluntariado || "",
+      identificacion: solicitud.identificacion || "",
+      institucion: solicitud.institucion || "",
+      pais: solicitud.pais || "",
+      horario: solicitud.horario || "",
+      fecha: extraerFecha(solicitud.dias),
+      modalidad: solicitud.modalidad || "individual",
+      cantidadParticipantes: solicitud.cantidadParticipantes || 1,
+      observacionesAdmin: solicitud.observacionesAdmin || "",
+    };
+  }, [solicitud]);
   const [form, setForm] = useState(formBase);
   const [guardando, setGuardando] = useState(false);
 
@@ -553,7 +555,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
     return () => {
       cancelado = true;
     };
-  }, [solicitud, idioma]);
+  }, [formBase, idioma]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;

@@ -62,7 +62,7 @@ export function usePreloadImages(urls) {
   const [ready, setReady] = useState(() => areAllImagesPreloaded(urls) || !urls.length);
 
   useEffect(() => {
-    const unique = [...new Set(urls.filter(Boolean))];
+    const unique = [...new Set(key.split('\0').filter(Boolean))];
 
     if (!unique.length) {
       setReady(true);
@@ -123,7 +123,7 @@ export function useHomeVisualReady(imageUrls, enabled) {
     return () => {
       cancelled = true;
     };
-  }, [enabled, imageUrls.join('\0')]);
+  }, [enabled]);
 
   if (!enabled) return false;
   return imagesReady && fontsReady;

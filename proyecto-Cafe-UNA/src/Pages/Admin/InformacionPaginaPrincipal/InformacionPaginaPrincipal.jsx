@@ -2117,6 +2117,7 @@ const AdminInformacionPaginaPrincipal = () => {
     resumenEnlacesNavbar,
     resumenEnlacesFooter,
     productoresHero,
+    faqInicio,
   ]);
 
   const {

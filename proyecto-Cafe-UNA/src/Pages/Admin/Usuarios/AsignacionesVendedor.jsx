@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { ST } from "../../../Components/T/ST";
 import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
 import {
@@ -53,11 +53,14 @@ export function AsignacionesVendedor({ usuarioId, onChange }) {
     setElegibles(puntosElegibles);
   };
 
+  const cargarYAplicar = useEffectEvent(() => cargar());
+  const aplicarResultado = useEffectEvent((resultado) => aplicar(resultado));
+
   useEffect(() => {
     let activo = true;
-    cargar()
+    cargarYAplicar()
       .then((resultado) => {
-        if (activo) aplicar(resultado);
+        if (activo) aplicarResultado(resultado);
       })
       .catch(() => {
         if (activo) setError("No se pudieron cargar las asignaciones.");
