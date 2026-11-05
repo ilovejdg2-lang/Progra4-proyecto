@@ -295,7 +295,7 @@ function AccionesSolicitud({
 function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
   useAdminModalLock(true);
   const { idioma } = useIdioma();
-  const [estado, setEstado] = useState(normalizarEstado(solicitud.estado));
+  const [estado, setEstado] = useState(() => normalizarEstado(solicitud.estado));
   const [observacionesAdmin, setObservacionesAdmin] = useState(solicitud.observacionesAdmin || "");
   const [guardando, setGuardando] = useState(false);
   const [descargandoDoc, setDescargandoDoc] = useState(false);

@@ -95,12 +95,14 @@ export default function PropuestaProductor() {
   const [confirmacion, setConfirmacion] = useState(null);
   const [paso, setPaso] = useState(0);
   const [listoBorrador, setListoBorrador] = useState(false);
-  const claveRef = useRef(nuevaClave());
+  const claveRef = useRef(null);
+  if (claveRef.current === null) claveRef.current = nuevaClave();
   const enviandoRef = useRef(false);
   const formRef = useRef(form);
   const archivoRef = useRef(archivo);
   const pasoRef = useRef(paso);
-  const usuarioIdRef = useRef(idUsuario(usuario));
+  const usuarioIdRef = useRef(null);
+  if (usuarioIdRef.current === null) usuarioIdRef.current = idUsuario(usuario);
 
   const usuarioId = idUsuario(usuario);
   useLayoutEffect(() => {

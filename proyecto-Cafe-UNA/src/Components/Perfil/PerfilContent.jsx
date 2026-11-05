@@ -235,7 +235,7 @@ export function PerfilContent({ variant = "standalone" }) {
     step: "view",
   });
   const [nombreError, setNombreError] = useState("");
-  const [clienteForm, setClienteForm] = useState(buildClienteFormFromPerfil(null));
+  const [clienteForm, setClienteForm] = useState(() => buildClienteFormFromPerfil(null));
   const [clienteError, setClienteError] = useState("");
   const { idioma } = useIdioma();
   const tElegiPais = useTraducir("Elegí un país");
