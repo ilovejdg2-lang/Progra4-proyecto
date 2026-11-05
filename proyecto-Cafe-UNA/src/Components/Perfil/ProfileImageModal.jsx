@@ -1,3 +1,4 @@
+import { ModalDialog } from "../ui/ModalDialog";
 import { X } from "lucide-react";
 import { useTraducir } from "../../hooks/useTraducir";
 import { normalizeImageUrl } from "../../lib/imageUtils";
@@ -118,7 +119,7 @@ export function ProfileImageModal({
     : (isAdmin ? tVistaPreviaBannerAdmin : tVistaPreviaBanner);
 
   return (
-    <div className="perfil-modal" role="dialog" aria-labelledby={modalTitleId} aria-modal="true">
+    <ModalDialog className="perfil-modal" labelledBy={modalTitleId} onClose={saving ? undefined : close}>
       <button type="button" className="perfil-modal__backdrop" aria-label={tCerrar} onClick={close} disabled={saving} />
       <div className={`perfil-modal__card perfil-modal__card--image ${isAvatar ? "perfil-modal__card--avatar" : "perfil-modal__card--banner"}`}>
         <header className="perfil-modal__header">
@@ -174,6 +175,6 @@ export function ProfileImageModal({
           </button>
         </div>
       </div>
-    </div>
+    </ModalDialog>
   );
 }

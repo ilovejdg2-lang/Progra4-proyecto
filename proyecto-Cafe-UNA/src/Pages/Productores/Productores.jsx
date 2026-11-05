@@ -7,6 +7,7 @@ import { FacebookIcon, InstagramIcon, WhatsAppIcon } from "../../Components/Foot
 import MapaProductores from "../../Components/Productores/MapaProductores";
 import PageLoading from "../../Components/PageLoading/PageLoading";
 import { ST } from "../../Components/T/ST";
+import { ModalDialog } from "../../Components/ui/ModalDialog";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
 import { urlImagenPublica } from "../../lib/propuestaProductor";
@@ -50,22 +51,12 @@ function DetalleProductor({ productor, onClose }) {
 
   useEffect(() => {
     cerrarRef.current?.focus();
-    const onKey = (event) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, []);
 
   return createPortal(
-    <div className="productor-dialog">
+    <ModalDialog className="productor-dialog" labelledBy={tituloId} onClose={onClose}>
       <div className="productor-dialog__fondo" onClick={onClose} aria-hidden="true" />
-      <div
-        className="productor-dialog__panel"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={tituloId}
-      >
+      <div className="productor-dialog__panel">
         <button
           ref={cerrarRef}
           type="button"
@@ -114,7 +105,7 @@ function DetalleProductor({ productor, onClose }) {
           ) : null}
         </div>
       </div>
-    </div>,
+    </ModalDialog>,
     document.body,
   );
 }

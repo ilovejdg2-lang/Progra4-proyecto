@@ -34,7 +34,7 @@ import {
   obtenerSolicitudesCompra,
 } from "../../../services/solicitudesCompraService";
 import { getActiveSessionUser } from "../../../services/sessionService";
-import { queueFocusFormError } from "../../../lib/formFocus";
+import { queueFocusFormError, topmostOpenDialog } from "../../../lib/formFocus";
 import { ContadorPalabras } from "../../../Components/Admin/ui/CampoLimitePalabras";
 import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { conLimitePalabras, MAX_PALABRAS_NOTAS } from "../../../lib/formLimits";
@@ -126,7 +126,7 @@ function SolicitudFormModal({
       setValidationError("Seleccioná un proveedor.");
       queueFocusFormError({
         errors: { proveedorId: true },
-        root: document.querySelector('[role="dialog"]'),
+        root: topmostOpenDialog(),
       });
       return;
     }
@@ -141,7 +141,7 @@ function SolicitudFormModal({
       setValidationError("Agregá al menos un producto con cantidad entera mayor a 0.");
       queueFocusFormError({
         errors: { productoId: true, cantidad: true },
-        root: document.querySelector('[role="dialog"]'),
+        root: topmostOpenDialog(),
         fieldOrder: ["productoId", "cantidad"],
       });
       return;
@@ -151,13 +151,13 @@ function SolicitudFormModal({
         setValidationError("La proforma debe ser un PDF.");
         queueFocusFormError({
           errors: { proforma: true },
-          root: document.querySelector('[role="dialog"]'),
+          root: topmostOpenDialog(),
         });
         return;
       }
       if (pdf.size > MAX_PDF_BYTES) {
         setValidationError("El PDF no puede superar 5 MB.");
-        queueFocusFormError({ root: document.querySelector('[role="dialog"]') });
+        queueFocusFormError({ root: topmostOpenDialog() });
         return;
       }
     }

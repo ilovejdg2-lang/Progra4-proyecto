@@ -1,3 +1,4 @@
+import { ModalDialog } from "../ui/ModalDialog";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
@@ -1222,11 +1223,11 @@ const Navbar = () => {
                     </button>
                     <span className="cart-badge">{cartUnits}</span>
                     {showCartDropdown ? (
-                        <aside
+                        <ModalDialog
+                            panel
                             className={`dropdown dropdown--cart dropdown--cart-panel ${isCartClosing ? 'is-closing' : 'is-open'}`}
-                            role="dialog"
-                            aria-modal="true"
-                            aria-label={tCartResumen}
+                            label={tCartResumen}
+                            onClose={closeCartPanel}
                             onClick={(event) => event.stopPropagation()}
                         >
                             <header className="cart-drawer-header">
@@ -1309,7 +1310,7 @@ const Navbar = () => {
                                     </div>
                                 </>
                             )}
-                        </aside>
+                        </ModalDialog>
                     ) : null}
                 </div>
 

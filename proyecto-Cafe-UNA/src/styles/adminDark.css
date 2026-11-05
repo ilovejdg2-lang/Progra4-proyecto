@@ -72,7 +72,7 @@ html.admin-theme-dark .page-loading--admin .brand-loader__spinner {
 html.admin-theme-dark body.admin-route-active .bg-white,
 html.admin-theme-dark body.admin-route-active .bg-\[\#fafafa\],
 html.admin-theme-dark body.admin-route-active .bg-\[\#fff\],
-html.admin-theme-dark body.admin-route-active .admin-modal-root [role="dialog"] {
+html.admin-theme-dark body.admin-route-active .admin-modal-root > * {
   background-color: #161b22 !important;
 }
 

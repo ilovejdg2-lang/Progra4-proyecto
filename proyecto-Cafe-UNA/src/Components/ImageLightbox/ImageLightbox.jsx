@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
+import { ModalDialog } from "../ui/ModalDialog";
 import "./ImageLightbox.css";
 
 export function ImageLightbox({ images, index, onClose, onIndexChange, alt = "" }) {
@@ -13,12 +14,6 @@ export function ImageLightbox({ images, index, onClose, onIndexChange, alt = "" 
     if (!abierto) return undefined;
 
     const onKey = (event) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopPropagation();
-        onClose?.();
-        return;
-      }
       if (!hayVarias) return;
       if (event.key === "ArrowLeft") {
         event.preventDefault();
@@ -37,7 +32,7 @@ export function ImageLightbox({ images, index, onClose, onIndexChange, alt = "" 
   if (!abierto || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="image-lightbox" role="dialog" aria-modal="true" aria-label="Vista ampliada">
+    <ModalDialog className="image-lightbox" label="Vista ampliada" onClose={onClose}>
       <button
         type="button"
         className="image-lightbox__backdrop"
@@ -72,7 +67,7 @@ export function ImageLightbox({ images, index, onClose, onIndexChange, alt = "" 
           </button>
         ) : null}
       </div>
-    </div>,
+    </ModalDialog>,
     document.body,
   );
 }

@@ -137,6 +137,16 @@ export function focusFormError({
   return false;
 }
 
+/**
+ * The modal <dialog> that currently contains the user's work: the last one opened
+ * (dialogs are appended to the body as they mount). Null when none is open.
+ */
+export function topmostOpenDialog() {
+  if (typeof document === "undefined") return null;
+  const open = document.querySelectorAll("dialog[open]");
+  return open[open.length - 1] ?? null;
+}
+
 /** Espera a que React pinte el mensaje de error y luego enfoca. */
 export function queueFocusFormError(options) {
   window.requestAnimationFrame(() => {

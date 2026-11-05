@@ -23,6 +23,7 @@ import {
 import { AdminLayout } from "../layouts/AdminLayout";
 import PageLoading from "../../../Components/PageLoading/PageLoading";
 import { ST } from "../../../Components/T/ST";
+import { ModalDialog } from "../../../Components/ui/ModalDialog";
 import { UiSelect } from "../../../Components/ui/Select";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import {
@@ -40,15 +41,6 @@ export default function AdminFacturas() {
   const [filtroBuscar, setFiltroBuscar] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
   const [facturaSeleccionada, setFacturaSeleccionada] = useState(null);
-
-  useEffect(() => {
-    if (!facturaSeleccionada) return undefined;
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") setFacturaSeleccionada(null);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [facturaSeleccionada]);
   const [descargandoId, setDescargandoId] = useState(null);
 
   const cargarDatos = useCallback(async () => {
@@ -316,19 +308,12 @@ export default function AdminFacturas() {
 
         {/* Modal Visualizador de Factura PDF */}
         {facturaSeleccionada && (
-          <div
+          <ModalDialog
             className="factura-modal-backdrop"
-            role="presentation"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setFacturaSeleccionada(null);
-            }}
+            labelledBy="factura-modal-title"
+            onClose={() => setFacturaSeleccionada(null)}
           >
-            <div
-              className="factura-modal-content"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="factura-modal-title"
-            >
+            <div className="factura-modal-content">
               <header className="factura-modal-header">
                 <div className="factura-modal-header__title">
                   <FileText size={20} className="modal-title-icon" />
@@ -365,7 +350,7 @@ export default function AdminFacturas() {
                 />
               </div>
             </div>
-          </div>
+          </ModalDialog>
         )}
       </div>
     </AdminLayout>

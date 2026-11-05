@@ -24,7 +24,7 @@ import {
   sanitizeUserFacingError,
   validateProductoForm,
 } from "../../../../lib/formLimits";
-import { queueFocusFormError } from "../../../../lib/formFocus";
+import { queueFocusFormError, topmostOpenDialog } from "../../../../lib/formFocus";
 import {
   parsearImagenesProducto,
   serializarImagenesProducto,
@@ -227,7 +227,7 @@ export function ProductCatalogFormDrawer({
   const focusFirstInvalidField = (errors) => {
     queueFocusFormError({
       errors,
-      root: document.querySelector('[role="dialog"]'),
+      root: topmostOpenDialog(),
     });
   };
 
