@@ -286,6 +286,18 @@ describe("SolicitarVisita", () => {
     });
   });
 
+  it("keeps known slots visible while live capacity is refreshing", async () => {
+    obtenerFranjasMock.mockReset().mockReturnValue(new Promise(() => {}));
+
+    render(<SolicitarVisita />);
+
+    await screen.findByRole("radio", { name: /09:00/i });
+    await waitFor(() => expect(obtenerFranjasMock).toHaveBeenCalled());
+
+    expect(screen.getByRole("radio", { name: /09:00/i })).toBeInTheDocument();
+    expect(screen.queryByText(/consultando bloques horarios/i)).not.toBeInTheDocument();
+  });
+
   it("displays remaining capacity per slot and disables exhausted slots", async () => {
     obtenerDisponibilidadMock.mockResolvedValueOnce([
       {

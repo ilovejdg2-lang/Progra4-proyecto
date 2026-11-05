@@ -243,6 +243,7 @@ export default function SolicitarVisita() {
     }
     const iso = format(fechaSeleccionada, "yyyy-MM-dd");
     let active = true;
+    setFranjasFecha([]);
     setCargandoFranjas(true);
 
     if (typeof obtenerFranjasHorariasPorFecha === "function") {
@@ -890,7 +891,7 @@ export default function SolicitarVisita() {
                             <ST>Al seleccionar un día habilitado, se consultarán y cargarán los turnos u horarios disponibles para esa fecha.</ST>
                           </p>
                         </div>
-                      ) : cargandoFranjas ? (
+                      ) : cargandoFranjas && slotsActuales.length === 0 ? (
                         <div className="voluntariado-aviso-bloque">
                           <div className="size-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mb-2" />
                           <p className="voluntariado-aviso-bloque__texto">
