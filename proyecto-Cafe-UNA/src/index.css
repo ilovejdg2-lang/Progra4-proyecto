@@ -182,22 +182,16 @@ body.admin-route-active #root {
   box-shadow: none !important;
 }
 
-/* Tablas admin: caben al 100%; scroll horizontal solo en pantallas chicas */
+/* Tablas admin: caben al 100%; scroll horizontal en todos los breakpoints */
 .admin-table-shell {
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  overflow-x: visible;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
   overflow-y: visible;
   font-size: var(--text-body);
-}
-
-@media (max-width: 767px) {
-  .admin-table-shell {
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-  }
 }
 
 .admin-table-shell table {
