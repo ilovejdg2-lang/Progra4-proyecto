@@ -391,8 +391,8 @@ function DetalleModal({ open, solicitud, onClose }) {
             <div>
               <p className="mb-2 font-semibold text-slate-900"><ST>Historial de estados</ST></p>
               <ul className="space-y-1 rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                {solicitud.historialEstados.map((h, i) => (
-                  <li key={`${h.estado}-${h.fecha || i}`}>
+                {solicitud.historialEstados.map((h) => (
+                  <li key={`${h.estado}-${h.fecha}`}>
                     <ST>{h.estado}</ST> · {formatFecha(h.fecha)}
                   </li>
                 ))}

@@ -66,7 +66,7 @@ describe("SolicitudesSalidaInventarioPanel", () => {
       ResponsableNombre: "Ana Solís",
       FechaSalida: "2026-10-27",
       Items: [{ ProductoId: "101", Cantidad: 2, Producto: { Nombre: "Café de altura" } }],
-      Historial: [{ Accion: "solicitada", ActorId: 9, CreadaEn: "2026-10-26T10:00:00Z" }],
+      Historial: [{ Id: "7", Accion: "solicitada", ActorId: 9, CreadaEn: "2026-10-26T10:00:00Z" }],
     }]);
     render(<SolicitudesSalidaInventarioPanel productos={[]} puedeSolicitar={false} esSuperAdmin onInventoryChanged={onInventoryChanged} />);
 

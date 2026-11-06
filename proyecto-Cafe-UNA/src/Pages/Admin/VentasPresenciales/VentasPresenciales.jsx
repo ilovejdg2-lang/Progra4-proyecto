@@ -1030,8 +1030,8 @@ export default function AdminVentasPresenciales() {
                         <span>Cant. / Detalle</span>
                         <span className="text-right">Subtotal</span>
                       </div>
-                      {resumenVenta.items.map((it, idx) => (
-                        <div key={idx} className="flex min-w-0 items-start justify-between gap-3 py-0.5 text-xs">
+                      {resumenVenta.items.map((it) => (
+                        <div key={it.productoId} className="flex min-w-0 items-start justify-between gap-3 py-0.5 text-xs">
                           <div className="min-w-0 flex-1">
                             <span className="font-bold text-slate-900 mr-1.5">{it.cantidad}×</span>
                             <span className="break-words font-medium text-slate-700"><ST>{it.productoNombre}</ST></span>
