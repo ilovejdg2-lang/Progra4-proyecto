@@ -998,47 +998,29 @@ button[class*="backdrop"],
 }
 
 /* Indicadores de foco visible para buscador admin y enlaces del sidebar */
-body.admin-route-active input[type="search"]:focus,
 body.admin-route-active input[type="search"]:focus-visible,
-body.admin-route-active aside input:focus,
 body.admin-route-active aside input:focus-visible,
-body.admin-route-active .admin-sidebar input:focus,
 body.admin-route-active .admin-sidebar input:focus-visible {
   outline: 2px solid #0f172a !important;
-  outline-color: #0f172a !important;
   outline-offset: 2px !important;
 }
 
-body.admin-route-active aside a:focus,
 body.admin-route-active aside a:focus-visible,
-body.admin-route-active .admin-sidebar a:focus,
-body.admin-route-active .admin-sidebar a:focus-visible,
-body.admin-route-active [data-sidebar] a:focus,
-body.admin-route-active [data-sidebar] a:focus-visible {
+body.admin-route-active .admin-sidebar a:focus-visible {
   outline: 2px solid #0f172a !important;
-  outline-color: #0f172a !important;
   outline-offset: 2px !important;
   border-radius: 0.375rem;
 }
 
-html.admin-theme-dark body.admin-route-active input[type="search"]:focus,
 html.admin-theme-dark body.admin-route-active input[type="search"]:focus-visible,
-html.admin-theme-dark body.admin-route-active aside input:focus,
 html.admin-theme-dark body.admin-route-active aside input:focus-visible,
-html.admin-theme-dark body.admin-route-active .admin-sidebar input:focus,
 html.admin-theme-dark body.admin-route-active .admin-sidebar input:focus-visible {
   outline: 2px solid #38bdf8 !important;
-  outline-color: #38bdf8 !important;
   outline-offset: 2px !important;
 }
 
-html.admin-theme-dark body.admin-route-active aside a:focus,
 html.admin-theme-dark body.admin-route-active aside a:focus-visible,
-html.admin-theme-dark body.admin-route-active .admin-sidebar a:focus,
-html.admin-theme-dark body.admin-route-active .admin-sidebar a:focus-visible,
-html.admin-theme-dark body.admin-route-active [data-sidebar] a:focus,
-html.admin-theme-dark body.admin-route-active [data-sidebar] a:focus-visible {
+html.admin-theme-dark body.admin-route-active .admin-sidebar a:focus-visible {
   outline: 2px solid #38bdf8 !important;
-  outline-color: #38bdf8 !important;
   outline-offset: 2px !important;
 }
