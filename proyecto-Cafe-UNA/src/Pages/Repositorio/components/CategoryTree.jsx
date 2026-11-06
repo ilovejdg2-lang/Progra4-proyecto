@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Folder, FolderOpen, Layers } from "lucide-react";
 import { ST } from "../../../Components/T/ST";
 
@@ -29,15 +29,17 @@ export function CategoryTree({
     return map;
   });
 
-  // Auto-expandir categoría cuando pasa a ser activa
-  useEffect(() => {
+  // Auto-expandir categoría cuando pasa a ser activa (ajuste durante el render)
+  const [categoriaPrevia, setCategoriaPrevia] = useState(categoriaActiva);
+  if (categoriaPrevia !== categoriaActiva) {
+    setCategoriaPrevia(categoriaActiva);
     if (categoriaActiva && categoriaActiva !== "todas") {
       setExpandidas((prev) => ({
         ...prev,
         [claveNormalizada(categoriaActiva)]: true,
       }));
     }
-  }, [categoriaActiva]);
+  }
 
   const toggleExpand = (catNombre, e) => {
     e.stopPropagation();
