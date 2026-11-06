@@ -4,15 +4,9 @@ import {
   IDIOMA_CHANGED_EVENT,
   obtenerIdioma,
 } from "./idioma";
+import { createWindowEventSubscribe } from "./windowEventStore";
 
-function subscribe(onChange) {
-  window.addEventListener(IDIOMA_CHANGED_EVENT, onChange);
-  window.addEventListener("storage", onChange);
-  return () => {
-    window.removeEventListener(IDIOMA_CHANGED_EVENT, onChange);
-    window.removeEventListener("storage", onChange);
-  };
-}
+const subscribe = createWindowEventSubscribe([IDIOMA_CHANGED_EVENT, "storage"]);
 
 /** Idioma actual; se actualiza al instante al cambiar ES/EN. */
 export function useIdioma() {

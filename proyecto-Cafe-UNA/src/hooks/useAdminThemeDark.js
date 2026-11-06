@@ -1,15 +1,9 @@
 import { useSyncExternalStore } from "react";
 
 import { ADMIN_THEME_CHANGED_EVENT, isAdminThemeDark } from "../lib/adminTheme";
+import { createWindowEventSubscribe } from "../lib/windowEventStore";
 
-function subscribe(onChange) {
-  window.addEventListener(ADMIN_THEME_CHANGED_EVENT, onChange);
-  window.addEventListener("storage", onChange);
-  return () => {
-    window.removeEventListener(ADMIN_THEME_CHANGED_EVENT, onChange);
-    window.removeEventListener("storage", onChange);
-  };
-}
+const subscribe = createWindowEventSubscribe([ADMIN_THEME_CHANGED_EVENT, "storage"]);
 
 /** true while the admin theme is dark; re-renders on theme changes. */
 export function useAdminThemeDark() {

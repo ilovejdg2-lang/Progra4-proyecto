@@ -8,15 +8,9 @@ import {
   toggleAdminTheme as toggleStoredAdminTheme,
   transitionAdminTheme,
 } from "../lib/adminTheme";
+import { createWindowEventSubscribe } from "../lib/windowEventStore";
 
-function subscribe(onChange) {
-  window.addEventListener(ADMIN_THEME_CHANGED_EVENT, onChange);
-  window.addEventListener("storage", onChange);
-  return () => {
-    window.removeEventListener(ADMIN_THEME_CHANGED_EVENT, onChange);
-    window.removeEventListener("storage", onChange);
-  };
-}
+const subscribe = createWindowEventSubscribe([ADMIN_THEME_CHANGED_EVENT, "storage"]);
 
 export function useAdminTheme() {
   const theme = useSyncExternalStore(subscribe, readAdminTheme, readAdminTheme);
