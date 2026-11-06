@@ -53,7 +53,8 @@ function buildUsers() {
     const user = {
       id: i + 3,
       nombre,
-      correo: `${NOMBRES[i % NOMBRES.length].toLowerCase()}.${i + 3}@mock.test`,
+      // Same length as real university addresses; `.example` is a reserved TLD.
+      correo: `${nombre.split(" ").slice(0, 2).join(".").toLowerCase()}.${i + 3}@est.una.example`,
       estado: i % 4 === 3 ? "Inactivo" : "Activo",
       roles,
     };
