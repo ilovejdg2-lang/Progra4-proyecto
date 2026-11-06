@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Check, MapPin, Store } from "lucide-react";
 
@@ -35,8 +35,8 @@ import {
   leerBorradorPropuesta,
 } from "../../lib/propuestaProductorDraft";
 import { crearPropuestaProductor } from "../../services/propuestasProductoresService";
-import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
-import { rutaMisPropuestas } from "./MisPropuestas";
+import { useSessionUser } from "../../hooks/useSessionUser";
+import { rutaMisPropuestas } from "../../lib/rutasPropuestas";
 import "../Donaciones/SolicitarDonacion.css";
 import "../Voluntariado/SolicitarVoluntariado.css";
 import "./propuesta.css";
@@ -85,7 +85,7 @@ export default function PropuestaProductor() {
   const tLoginBtn = useTraducir("Inicie sesión para enviar");
   const tContinuar = useTraducir("Continuar");
   const tAnterior = useTraducir("Anterior");
-  const [usuario, setUsuario] = useState(() => getActiveSessionUser());
+  const usuario = useSessionUser();
   const [form, setForm] = useState(INICIAL);
   const [archivo, setArchivo] = useState(null);
   const [preview, setPreview] = useState("");
@@ -95,34 +95,31 @@ export default function PropuestaProductor() {
   const [confirmacion, setConfirmacion] = useState(null);
   const [paso, setPaso] = useState(0);
   const [listoBorrador, setListoBorrador] = useState(false);
-  const claveRef = useRef(nuevaClave());
-  const previewRef = useRef("");
+  const [claveInicial] = useState(nuevaClave);
+  const claveRef = useRef(claveInicial);
   const enviandoRef = useRef(false);
   const formRef = useRef(form);
   const archivoRef = useRef(archivo);
   const pasoRef = useRef(paso);
-  const usuarioIdRef = useRef(idUsuario(usuario));
+  const usuarioIdRef = useRef("");
 
-  formRef.current = form;
-  archivoRef.current = archivo;
-  pasoRef.current = paso;
-  usuarioIdRef.current = idUsuario(usuario);
-
-  useEffect(() => {
-    const sync = () => setUsuario(getActiveSessionUser());
-    window.addEventListener(SESSION_UPDATED_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(SESSION_UPDATED_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
+  const usuarioId = idUsuario(usuario);
+  useLayoutEffect(() => {
+    formRef.current = form;
+    archivoRef.current = archivo;
+    pasoRef.current = paso;
+    usuarioIdRef.current = usuarioId;
+  });
 
   useEffect(() => {
-    return () => {
-      if (previewRef.current) URL.revokeObjectURL(previewRef.current);
-    };
-  }, []);
+    if (!archivo) {
+      setPreview("");
+      return undefined;
+    }
+    const url = URL.createObjectURL(archivo);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [archivo]);
 
   useEffect(() => {
     let cancelado = false;
@@ -148,11 +145,7 @@ export default function PropuestaProductor() {
       if (draft.imagen?.dataUrl) {
         const file = await dataUrlAArchivo(draft.imagen);
         if (!cancelado && file) {
-          if (previewRef.current) URL.revokeObjectURL(previewRef.current);
-          const url = URL.createObjectURL(file);
-          previewRef.current = url;
           setArchivo(file);
-          setPreview(url);
         }
       }
       if (!cancelado) setListoBorrador(true);
@@ -232,10 +225,6 @@ export default function PropuestaProductor() {
 
   const elegirImagen = (file) => {
     setArchivo(file);
-    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
-    const url = file ? URL.createObjectURL(file) : "";
-    previewRef.current = url;
-    setPreview(url);
     setErrores((prev) => {
       if (!prev.imagen) return prev;
       const next = { ...prev };

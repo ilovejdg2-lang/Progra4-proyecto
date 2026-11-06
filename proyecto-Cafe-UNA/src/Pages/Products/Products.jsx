@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ModalDialog } from "../../Components/ui/ModalDialog";
+import { useMediaExit } from '../../hooks/useMediaExit';
 import { Link } from '@tanstack/react-router';
 import {
   Check,
@@ -53,7 +55,7 @@ const Products = () => {
     reload,
     loadingMessage,
   } = useCachedPublicPage('products', fetchProductsPageData);
-  const products = data?.products ?? [];
+  const products = useMemo(() => data?.products ?? [], [data?.products]);
   const productosTrad = useTraducirLista(products, CAMPOS_PRODUCTO);
   const nombrePorId = useMemo(() => {
     const map = new Map();
@@ -81,6 +83,8 @@ const Products = () => {
   const [subcategoria, setSubcategoria] = useState('todas');
   const [busqueda, setBusqueda] = useState('');
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
+  // The filter drawer is display:none above this breakpoint (Products.css); close it so a hidden modal cannot keep the page inert.
+  useMediaExit('(max-width: 900px)', filtrosAbiertos, () => setFiltrosAbiertos(false));
   const [categoriasApi, setCategoriasApi] = useState([]);
   const [abiertas, setAbiertas] = useState({});
   const [stockPorPunto, setStockPorPunto] = useState({});
@@ -542,7 +546,7 @@ const Products = () => {
         </div>
 
         {filtrosAbiertos ? (
-          <div className="products-page__drawer" role="dialog" aria-modal="true" aria-label="Filtros">
+          <ModalDialog className="products-page__drawer" label="Filtros" onClose={() => setFiltrosAbiertos(false)}>
             <button
               type="button"
               className="products-page__drawer-backdrop"
@@ -569,7 +573,7 @@ const Products = () => {
                 {asideNav}
               </div>
             </div>
-          </div>
+          </ModalDialog>
         ) : null}
       </main>
     </PublicPageGate>

@@ -3,8 +3,23 @@ import { describe, expect, it } from "vitest";
 import {
   esImagenSubidaProducto,
   MAX_IMAGEN_PRODUCTO_BYTES,
+  parsearImagenesProducto,
   validarArchivoImagenProducto,
 } from "./productoImagenes";
+
+describe("parsearImagenesProducto", () => {
+  it("removes duplicated URLs keeping the first occurrence order", () => {
+    expect(parsearImagenesProducto({ imagenes: ["a.jpg", "b.jpg", "a.jpg"] })).toEqual([
+      "a.jpg",
+      "b.jpg",
+    ]);
+    expect(parsearImagenesProducto({ imagen: "a.jpg\nb.jpg\na.jpg" })).toEqual(["a.jpg", "b.jpg"]);
+    expect(parsearImagenesProducto({ imagen: '["a.jpg","a.jpg","b.jpg"]' })).toEqual([
+      "a.jpg",
+      "b.jpg",
+    ]);
+  });
+});
 
 describe("validarArchivoImagenProducto", () => {
   it("accepts jpg/png/webp within the size limit", () => {

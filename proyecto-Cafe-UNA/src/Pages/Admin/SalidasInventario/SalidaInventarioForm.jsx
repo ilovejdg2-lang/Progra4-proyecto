@@ -3,6 +3,8 @@ import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
 import { ST } from "../../../Components/T/ST";
 
+const EMPTY_ARRAY = [];
+
 const claseEtiqueta = "block text-[length:var(--text-body)] font-semibold text-slate-800 dark:text-slate-100";
 const claseCampo =
   "h-[var(--control-height)] w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
@@ -32,8 +34,8 @@ function productoElegible(producto) {
 }
 
 export function SalidaInventarioForm({
-  productos = [],
-  motivos = [],
+  productos = EMPTY_ARRAY,
+  motivos = EMPTY_ARRAY,
   onSubmit,
   isSubmitting = false,
 }) {

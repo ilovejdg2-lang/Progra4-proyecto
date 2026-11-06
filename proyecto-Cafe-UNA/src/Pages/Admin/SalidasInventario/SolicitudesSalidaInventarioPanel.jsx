@@ -7,6 +7,8 @@ import {
 } from "../../../services/inventarioSalidasService";
 import { SolicitudSalidaInventarioForm } from "./SolicitudSalidaInventarioForm";
 
+const EMPTY_ARRAY = [];
+
 function valor(record, ...keys) {
   for (const key of keys) {
     if (record?.[key] !== undefined && record?.[key] !== null) return record[key];
@@ -14,12 +16,14 @@ function valor(record, ...keys) {
   return "";
 }
 
+const FORMATO_FECHA_LARGA = new Intl.DateTimeFormat("es-CR", { dateStyle: "long" });
+
 function formatearFecha(value) {
   if (!value) return "Sin fecha";
   const parsed = new Date(`${String(value).slice(0, 10)}T12:00:00`);
   return Number.isNaN(parsed.getTime())
     ? String(value)
-    : new Intl.DateTimeFormat("es-CR", { dateStyle: "long" }).format(parsed);
+    : FORMATO_FECHA_LARGA.format(parsed);
 }
 
 function textoEstado(estado) {
@@ -31,7 +35,7 @@ function textoEstado(estado) {
   })[String(estado).toLowerCase()] ?? "Estado desconocido";
 }
 
-export function SolicitudesSalidaInventarioPanel({ productos = [], puedeSolicitar = false, esSuperAdmin = false, onInventoryChanged }) {
+export function SolicitudesSalidaInventarioPanel({ productos = EMPTY_ARRAY, puedeSolicitar = false, esSuperAdmin = false, onInventoryChanged }) {
   const [solicitudes, setSolicitudes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -170,8 +174,8 @@ export function SolicitudesSalidaInventarioPanel({ productos = [], puedeSolicita
                   <details className="mt-4 text-sm">
                     <summary className="cursor-pointer font-semibold text-slate-700 dark:text-slate-200">Trazabilidad ({historial.length} eventos)</summary>
                     <ol className="mt-2 space-y-2 border-l border-slate-300 pl-4 dark:border-slate-700">
-                      {historial.map((evento, index) => (
-                        <li key={String(valor(evento, "Id", "id") || `${id}-${index}`)} className="text-slate-600 dark:text-slate-300">
+                      {historial.map((evento) => (
+                        <li key={String(valor(evento, "Id", "id"))} className="text-slate-600 dark:text-slate-300">
                           {String(valor(evento, "Accion", "accion"))} · actor {String(valor(evento, "ActorId", "actorId"))} · {formatearFecha(valor(evento, "CreadaEn", "creadaEn"))}
                           {valor(evento, "Comentario", "comentario") ? ` · ${String(valor(evento, "Comentario", "comentario"))}` : ""}
                         </li>

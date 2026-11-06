@@ -80,6 +80,22 @@ export function touchSession() {
   return updated;
 }
 
+/**
+ * Side-effect free read of the active session: never writes storage, clears the
+ * session or dispatches events. Expired or logging-out sessions read as null.
+ * Safe to call during render.
+ */
+export function peekSessionUser() {
+  if (loggingOut) return null;
+  let user;
+  try {
+    user = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || 'null');
+  } catch {
+    return null;
+  }
+  return isSessionExpired(user) ? null : user;
+}
+
 export function getActiveSessionUser() {
   if (loggingOut) return null;
 

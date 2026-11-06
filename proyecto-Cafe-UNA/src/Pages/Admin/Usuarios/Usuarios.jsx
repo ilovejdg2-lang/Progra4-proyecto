@@ -15,6 +15,7 @@ import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
+import { useVerificacionCorreoUsuario } from "../../../hooks/useVerificacionCorreoUsuario";
 import {
   obtenerUsuarios,
   obtenerAsignacionesPunto,
@@ -38,7 +39,7 @@ import {
   validateNombreUsuario,
   validatePassword,
 } from "../../../lib/formLimits";
-import { queueFocusFormError } from "../../../lib/formFocus";
+import { queueFocusFormError, topmostOpenDialog } from "../../../lib/formFocus";
 import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
 import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { ST } from "../../../Components/T/ST";
@@ -304,13 +305,19 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 
   const [pasoCreacion, setPasoCreacion] = useState("datos");
   const [codigoVerificacion, setCodigoVerificacion] = useState("");
-  const [passwordCorreoUsuario, setPasswordCorreoUsuario] = useState("");
-  const [errorPasswordCorreo, setErrorPasswordCorreo] = useState("");
-  const [correoVerificado, setCorreoVerificado] = useState(true);
   const [mensajeCorreo, setMensajeCorreo] = useState("");
   const [errorCorreo, setErrorCorreo] = useState("");
   const [verificandoCorreo, setVerificandoCorreo] = useState(false);
   const [correoForm, setCorreoForm] = useState(inicial?.correo ?? "");
+  const correoCambio = Boolean(inicial) && correoForm.trim().toLowerCase() !== correoOriginal;
+  const {
+    correoVerificado,
+    setCorreoVerificado,
+    passwordCorreoUsuario,
+    setPasswordCorreoUsuario,
+    errorPasswordCorreo,
+    setErrorPasswordCorreo,
+  } = useVerificacionCorreoUsuario(inicial, correoCambio);
   const [fieldErrors, setFieldErrors] = useState({
     nombre: "",
     passwordHash: "",
@@ -451,7 +458,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
         setErrorCorreo(payload.correo ? MENSAJE_CORREO_INVALIDO : "Ingrese el correo.");
         queueFocusFormError({
           errors: { correo: true },
-          root: document.querySelector('[role="dialog"]'),
+          root: topmostOpenDialog(),
           fieldMap: { correo: "correo" },
         });
         return;
@@ -461,7 +468,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
         setFieldErrors(nextErrors);
         queueFocusFormError({
           errors: nextErrors,
-          root: document.querySelector('[role="dialog"]'),
+          root: topmostOpenDialog(),
           fieldOrder: ["nombre", "passwordHash", "passwordActual", "formulario"],
         });
         return;
@@ -474,7 +481,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
             setFieldErrors({ ...nextErrors, passwordHash: passwordError });
             queueFocusFormError({
               errors: { ...nextErrors, passwordHash: passwordError },
-              root: document.querySelector('[role="dialog"]'),
+              root: topmostOpenDialog(),
               fieldOrder: ["nombre", "passwordHash"],
             });
             return;
@@ -528,7 +535,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
           setFieldErrors({ ...nextErrors, passwordHash: passwordError });
           queueFocusFormError({
             errors: { ...nextErrors, passwordHash: passwordError },
-            root: document.querySelector('[role="dialog"]'),
+            root: topmostOpenDialog(),
             fieldOrder: ["nombre", "passwordHash", "passwordActual"],
           });
           return;
@@ -537,7 +544,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
           setFieldErrors({ ...nextErrors, passwordActual: "Ingrese su contrase\u00f1a actual." });
           queueFocusFormError({
             errors: { passwordActual: true },
-            root: document.querySelector('[role="dialog"]'),
+            root: topmostOpenDialog(),
           });
           return;
         }
@@ -567,20 +574,6 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
     e.stopPropagation();
     form.handleSubmit();
   }
-
-  const correoCambio = Boolean(inicial) && correoForm.trim().toLowerCase() !== correoOriginal;
-
-  useEffect(() => {
-    if (!inicial) {
-      setCorreoVerificado(false);
-      return;
-    }
-    setCorreoVerificado(!correoCambio);
-    if (!correoCambio) {
-      setPasswordCorreoUsuario("");
-      setErrorPasswordCorreo("");
-    }
-  }, [correoCambio, inicial]);
 
   async function handleSolicitarCodigoCorreo() {
     const correo = correoForm.trim().toLowerCase();
@@ -660,11 +653,12 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
   return (
     <form onSubmit={handleSubmit} className={`usuarios-form ${inicial ? "space-y-3" : "space-y-4"}`}>
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-600"><ST>Nombre</ST></label>
+        <label htmlFor="usuario-nombre" className="mb-1 block text-xs font-medium text-slate-600"><ST>Nombre</ST></label>
         <form.Field name="nombre">
           {(field) => (
             <>
               <input
+                id="usuario-nombre"
                 name="nombre"
                 className={`${inputCls} ${fieldErrors.nombre ? "border-red-500 focus:border-red-500" : ""}`}
                 value={field.state.value}
@@ -686,10 +680,11 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
         </form.Field>
       </div>
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-600"><ST>Correo</ST></label>
+        <label htmlFor="usuario-correo" className="mb-1 block text-xs font-medium text-slate-600"><ST>Correo</ST></label>
         <form.Field name="correo">
           {(field) => (
             <input
+              id="usuario-correo"
               name="correo"
               type="email"
               inputMode="email"
@@ -738,6 +733,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
               onChange={(e) =>
                 setCodigoVerificacion(e.target.value.replace(/\D/g, "").slice(0, 5))
               }
+              aria-label={"Código de verificación"}
               placeholder={"C\u00f3digo de verificaci\u00f3n (5 d\u00edgitos)"}
               maxLength={5}
               inputMode="numeric"
@@ -758,8 +754,9 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
       </div>
       {!inicial && pasoCreacion === "codigo" ? (
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">{"C\u00f3digo de verificaci\u00f3n"}</label>
+          <label htmlFor="usuario-codigo-verificacion" className="mb-1 block text-xs font-medium text-slate-600">{"Código de verificación"}</label>
           <input
+            id="usuario-codigo-verificacion"
             className={inputCls}
             value={codigoVerificacion}
             onChange={(e) =>
@@ -778,13 +775,14 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
           {!inicial || editandoPropioUsuario ? (
             <>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">
-                  {"Contrase\u00f1a"} {inicial && <span className="text-slate-400">(opcional)</span>}
+                <label htmlFor="usuario-password" className="mb-1 block text-xs font-medium text-slate-600">
+                  {"Contraseña"} {inicial && <span className="text-slate-400">(opcional)</span>}
                 </label>
                 <form.Field name="passwordHash">
                   {(field) => (
                     <>
                       <input
+                        id="usuario-password"
                         name="passwordHash"
                         type="password"
                         className={`${inputCls} ${fieldErrors.passwordHash ? "border-red-500 focus:border-red-500" : ""}`}
@@ -808,11 +806,12 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
               </div>
               {inicial ? (
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">{"Contrase\u00f1a actual"}</label>
+                  <label htmlFor="usuario-password-actual" className="mb-1 block text-xs font-medium text-slate-600">{"Contraseña actual"}</label>
                   <form.Field name="passwordActual">
                     {(field) => (
                       <>
                         <input
+                          id="usuario-password-actual"
                           name="passwordActual"
                           type="password"
                           className={`${inputCls} ${fieldErrors.passwordActual ? "border-red-500 focus:border-red-500" : ""}`}
@@ -839,11 +838,12 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
             <p className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-500"><ST>{"Solo puede cambiar su propia contrase\u00f1a."}</ST></p>
           )}
           <div>
-            <label className="mb-2 block text-xs font-medium text-slate-600"><ST>Roles</ST></label>
+            <span id="usuario-roles-label" className="mb-2 block text-xs font-medium text-slate-600"><ST>Roles</ST></span>
             {puedeEditarRoles ? (
               <form.Field name="roles">
                 {(field) => {
                   const selectedRoles = Array.isArray(field.state.value) ? field.state.value : [];
+                  const rolesSeleccionados = new Set(selectedRoles);
                   const rolesVisibles = inicial
                     ? ROLES_DISPONIBLES
                     : ROLES_DISPONIBLES.filter((rol) => !esRolCliente(rol));
@@ -888,10 +888,10 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                   };
 
                   return (
-                    <div className="space-y-2">
+                    <div className="space-y-2" role="group" aria-labelledby="usuario-roles-label">
                       <div className="flex flex-wrap gap-2">
                         {rolesVisibles.map((rol) => {
-                          const seleccionado = selectedRoles.includes(rol);
+                          const seleccionado = rolesSeleccionados.has(rol);
                           const bloquearSuper =
                             esRolSuperAdmin(rol) && seleccionado && editandoPropioUsuario;
                           const bloquearCliente =

@@ -147,3 +147,25 @@ describe("producer edit image intake", () => {
     expect(picker()).toBeEnabled();
   });
 });
+
+describe("producer edit form state", () => {
+  const campoNombre = () => screen.getByLabelText(/Nombre del emprendimiento/);
+
+  it("keeps in-progress edits when re-rendered with the same proposal", () => {
+    const { rerender } = render(<ModalEditarMiPropuesta open propuesta={proposal} onClose={vi.fn()} />);
+    fireEvent.change(campoNombre(), { target: { value: "Editado" } });
+
+    rerender(<ModalEditarMiPropuesta open propuesta={proposal} onClose={vi.fn()} />);
+
+    expect(campoNombre()).toHaveValue("Editado");
+  });
+
+  it("loads the new proposal data when the proposal changes, discarding stale edits", () => {
+    const { rerender } = render(<ModalEditarMiPropuesta open propuesta={proposal} onClose={vi.fn()} />);
+    fireEvent.change(campoNombre(), { target: { value: "Editado" } });
+
+    rerender(<ModalEditarMiPropuesta open propuesta={{ ...proposal, id: 8, nombre: "Otro café" }} onClose={vi.fn()} />);
+
+    expect(campoNombre()).toHaveValue("Otro café");
+  });
+});

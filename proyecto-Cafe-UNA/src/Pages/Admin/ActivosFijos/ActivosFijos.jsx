@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, Pencil, Plus, Power, RefreshCw, X } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
@@ -24,7 +24,7 @@ import {
 } from "../../../services/activosFijosService";
 import { UiSelect } from "../../../Components/ui/Select";
 import { getActiveSessionUser } from "../../../services/sessionService";
-import { queueFocusFormError } from "../../../lib/formFocus";
+import { queueFocusFormError, topmostOpenDialog } from "../../../lib/formFocus";
 import { ContadorPalabras } from "../../../Components/Admin/ui/CampoLimitePalabras";
 import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import {
@@ -63,13 +63,15 @@ const CAMPOS_TEXTO_ACTIVO = [
   "descripcionProyecto",
 ];
 
-function formatCRC(value) {
-  return new Intl.NumberFormat("es-CR", {
+const FORMATO_CRC = new Intl.NumberFormat("es-CR", {
     style: "currency",
     currency: "CRC",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(Number(value) || 0);
+});
+
+function formatCRC(value) {
+  return FORMATO_CRC.format(Number(value) || 0);
 }
 
 function formatFecha(fecha) {
@@ -136,7 +138,7 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
       setValidationError("El código es obligatorio (máx. 50 caracteres).");
       queueFocusFormError({
         errors: { codigo: true },
-        root: document.querySelector('[role="dialog"]'),
+        root: topmostOpenDialog(),
       });
       return;
     }
@@ -144,7 +146,7 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
       setValidationError("El nombre debe tener entre 2 y 200 caracteres.");
       queueFocusFormError({
         errors: { nombre: true },
-        root: document.querySelector('[role="dialog"]'),
+        root: topmostOpenDialog(),
       });
       return;
     }
@@ -158,7 +160,7 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
       setValidationError("El valor en libro debe ser un número mayor o igual a 0.");
       queueFocusFormError({
         errors: { valorEnLibro: true },
-        root: document.querySelector('[role="dialog"]'),
+        root: topmostOpenDialog(),
       });
       return;
     }
@@ -323,14 +325,18 @@ export default function AdminActivosFijos() {
   const [togglingId, setTogglingId] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  const montadoRef = useRef(true);
+
   const load = async () => {
     setStatus("loading");
     setLoadError("");
     try {
       const data = await obtenerActivosFijos({ incluirInactivos: true });
+      if (!montadoRef.current) return;
       setActivos(data);
       setStatus("success");
     } catch (error) {
+      if (!montadoRef.current) return;
       setActivos([]);
       setStatus("error");
       setLoadError(error instanceof Error ? error.message : "No se pudieron cargar los activos.");
@@ -338,8 +344,12 @@ export default function AdminActivosFijos() {
   };
 
   useEffect(() => {
+    montadoRef.current = true;
     if (puedeVer) load();
     else setStatus("success");
+    return () => {
+      montadoRef.current = false;
+    };
   }, [puedeVer]);
 
   const ready = !puedeVer || status !== "idle";

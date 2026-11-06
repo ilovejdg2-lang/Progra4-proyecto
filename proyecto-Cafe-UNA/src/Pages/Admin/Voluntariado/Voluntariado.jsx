@@ -24,6 +24,7 @@ import {
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminModalActions, adminBtnCancel } from "../../../Components/Admin/ui/AdminModal";
+import { ModalDialog } from "../../../Components/ui/ModalDialog";
 import { useAdminModalLock } from "../../../hooks/useBodyScrollLock";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
@@ -294,7 +295,7 @@ function AccionesSolicitud({
 function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
   useAdminModalLock(true);
   const { idioma } = useIdioma();
-  const [estado, setEstado] = useState(normalizarEstado(solicitud.estado));
+  const [estado, setEstado] = useState(() => normalizarEstado(solicitud.estado));
   const [observacionesAdmin, setObservacionesAdmin] = useState(solicitud.observacionesAdmin || "");
   const [guardando, setGuardando] = useState(false);
   const [descargandoDoc, setDescargandoDoc] = useState(false);
@@ -365,14 +366,7 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
   };
 
   return createPortal(
-    <div className="admin-modal-root">
-      <div
-        className="admin-modal-backdrop"
-        aria-hidden="true"
-        onClick={onCerrar}
-        onWheel={(event) => event.preventDefault()}
-        onTouchMove={(event) => event.preventDefault()}
-      />
+    <ModalDialog className="admin-modal-root" label={t("Ver solicitud")} onClose={onCerrar}>
       <div className="relative z-10 max-h-[92dvh] w-full max-w-xl overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <div>
@@ -518,7 +512,7 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
           </div>
         </div>
       </div>
-    </div>,
+    </ModalDialog>,
     document.body,
   );
 }
@@ -526,24 +520,26 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
 function ModalEditar({ solicitud, onGuardar, onCerrar }) {
   useAdminModalLock(true);
   const { idioma } = useIdioma();
-  const partesNombre = partirNombreCompleto(solicitud.nombre);
-  const formBase = () => ({
-    estado: normalizarEstado(solicitud.estado),
-    nombre: partesNombre.nombre,
-    primerApellido: partesNombre.primerApellido,
-    segundoApellido: partesNombre.segundoApellido,
-    email: solicitud.email || "",
-    telefono: solicitud.telefono || "",
-    tipoVoluntariado: solicitud.tipoVoluntariado || "",
-    identificacion: solicitud.identificacion || "",
-    institucion: solicitud.institucion || "",
-    pais: solicitud.pais || "",
-    horario: solicitud.horario || "",
-    fecha: extraerFecha(solicitud.dias),
-    modalidad: solicitud.modalidad || "individual",
-    cantidadParticipantes: solicitud.cantidadParticipantes || 1,
-    observacionesAdmin: solicitud.observacionesAdmin || "",
-  });
+  const formBase = useCallback(() => {
+    const partesNombre = partirNombreCompleto(solicitud.nombre);
+    return {
+      estado: normalizarEstado(solicitud.estado),
+      nombre: partesNombre.nombre,
+      primerApellido: partesNombre.primerApellido,
+      segundoApellido: partesNombre.segundoApellido,
+      email: solicitud.email || "",
+      telefono: solicitud.telefono || "",
+      tipoVoluntariado: solicitud.tipoVoluntariado || "",
+      identificacion: solicitud.identificacion || "",
+      institucion: solicitud.institucion || "",
+      pais: solicitud.pais || "",
+      horario: solicitud.horario || "",
+      fecha: extraerFecha(solicitud.dias),
+      modalidad: solicitud.modalidad || "individual",
+      cantidadParticipantes: solicitud.cantidadParticipantes || 1,
+      observacionesAdmin: solicitud.observacionesAdmin || "",
+    };
+  }, [solicitud]);
   const [form, setForm] = useState(formBase);
   const [guardando, setGuardando] = useState(false);
 
@@ -559,7 +555,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
     return () => {
       cancelado = true;
     };
-  }, [solicitud, idioma]);
+  }, [formBase, idioma]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -611,14 +607,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
   };
 
   return createPortal(
-    <div className="admin-modal-root">
-      <div
-        className="admin-modal-backdrop"
-        aria-hidden="true"
-        onClick={onCerrar}
-        onWheel={(event) => event.preventDefault()}
-        onTouchMove={(event) => event.preventDefault()}
-      />
+    <ModalDialog className="admin-modal-root" label={t("Editar solicitud")} onClose={onCerrar}>
       <form onSubmit={handleSubmit} className="relative z-10 max-h-[92dvh] w-full max-w-xl overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <div>
@@ -782,7 +771,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
           />
         </div>
       </form>
-    </div>,
+    </ModalDialog>,
     document.body,
   );
 }

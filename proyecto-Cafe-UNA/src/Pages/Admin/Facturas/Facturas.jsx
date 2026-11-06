@@ -23,6 +23,7 @@ import {
 import { AdminLayout } from "../layouts/AdminLayout";
 import PageLoading from "../../../Components/PageLoading/PageLoading";
 import { ST } from "../../../Components/T/ST";
+import { ModalDialog } from "../../../Components/ui/ModalDialog";
 import { UiSelect } from "../../../Components/ui/Select";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import {
@@ -162,6 +163,7 @@ export default function AdminFacturas() {
             <input
               type="text"
               value={filtroBuscar}
+              aria-label="Buscar facturas"
               onChange={(e) => setFiltroBuscar(e.target.value)}
               placeholder="Buscar por N° factura, orden o cliente..."
               className="admin-facturas__search-input"
@@ -306,13 +308,17 @@ export default function AdminFacturas() {
 
         {/* Modal Visualizador de Factura PDF */}
         {facturaSeleccionada && (
-          <div className="factura-modal-backdrop" onClick={() => setFacturaSeleccionada(null)}>
-            <div className="factura-modal-content" onClick={(e) => e.stopPropagation()}>
+          <ModalDialog
+            className="factura-modal-backdrop"
+            labelledBy="factura-modal-title"
+            onClose={() => setFacturaSeleccionada(null)}
+          >
+            <div className="factura-modal-content">
               <header className="factura-modal-header">
                 <div className="factura-modal-header__title">
                   <FileText size={20} className="modal-title-icon" />
                   <div>
-                    <h3>{facturaSeleccionada.consecutivo}</h3>
+                    <h3 id="factura-modal-title">{facturaSeleccionada.consecutivo}</h3>
                     <p>Orden #{facturaSeleccionada.compraNumero} · {facturaSeleccionada.clienteNombre}</p>
                   </div>
                 </div>
@@ -344,7 +350,7 @@ export default function AdminFacturas() {
                 />
               </div>
             </div>
-          </div>
+          </ModalDialog>
         )}
       </div>
     </AdminLayout>

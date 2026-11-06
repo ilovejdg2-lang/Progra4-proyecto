@@ -13,8 +13,10 @@ function abrirSelectorMes(event) {
   }
 }
 
+const FORMATO_EJE_Y = new Intl.NumberFormat("es-CR", { maximumFractionDigits: 0 });
+
 function formatoEjeY(valor) {
-  return `₡${new Intl.NumberFormat("es-CR", { maximumFractionDigits: 0 }).format(Number(valor) || 0)}`;
+  return `₡${FORMATO_EJE_Y.format(Number(valor) || 0)}`;
 }
 
 function TooltipIngresos({ active, payload, label }) {

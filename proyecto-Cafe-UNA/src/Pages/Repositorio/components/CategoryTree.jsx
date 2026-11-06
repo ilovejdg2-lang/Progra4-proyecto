@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Folder, FolderOpen, Layers } from "lucide-react";
 import { ST } from "../../../Components/T/ST";
+
+const EMPTY_ARRAY = [];
 
 function claveNormalizada(str = "") {
   return String(str || "")
@@ -12,7 +14,7 @@ function claveNormalizada(str = "") {
 
 export function CategoryTree({
   categorias = [],
-  subcategorias = [],
+  subcategorias = EMPTY_ARRAY,
   categoriaActiva = "todas",
   subcategoriaActiva = "",
   onSelectCategoria,
@@ -27,15 +29,17 @@ export function CategoryTree({
     return map;
   });
 
-  // Auto-expandir categoría cuando pasa a ser activa
-  useEffect(() => {
+  // Auto-expandir categoría cuando pasa a ser activa (ajuste durante el render)
+  const [categoriaPrevia, setCategoriaPrevia] = useState(categoriaActiva);
+  if (categoriaPrevia !== categoriaActiva) {
+    setCategoriaPrevia(categoriaActiva);
     if (categoriaActiva && categoriaActiva !== "todas") {
       setExpandidas((prev) => ({
         ...prev,
         [claveNormalizada(categoriaActiva)]: true,
       }));
     }
-  }, [categoriaActiva]);
+  }
 
   const toggleExpand = (catNombre, e) => {
     e.stopPropagation();
@@ -99,18 +103,6 @@ export function CategoryTree({
                 className={`biblio-cat-tree__item ${
                   esActiva ? "biblio-cat-tree__item--activo" : ""
                 }`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  onSelectCategoria(catNombre);
-                }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onSelectCategoria(catNombre);
-                  }
-                }}
               >
                 {tieneSubs ? (
                   <button
@@ -130,15 +122,24 @@ export function CategoryTree({
                   <span className="biblio-cat-tree__spacer" />
                 )}
 
-                <span className="biblio-cat-tree__icon-wrap">
-                  {estaExpandida ? <FolderOpen size={16} /> : <Folder size={16} />}
-                </span>
+                <button
+                  type="button"
+                  className="biblio-cat-tree__select"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onSelectCategoria(catNombre);
+                  }}
+                >
+                  <span className="biblio-cat-tree__icon-wrap">
+                    {estaExpandida ? <FolderOpen size={16} /> : <Folder size={16} />}
+                  </span>
 
-                <span className="biblio-cat-tree__name" title={catNombre}>
-                  <ST>{catNombre}</ST>
-                </span>
+                  <span className="biblio-cat-tree__name" title={catNombre}>
+                    <ST>{catNombre}</ST>
+                  </span>
 
-                <span className="biblio-cat-tree__badge">{docCount}</span>
+                  <span className="biblio-cat-tree__badge">{docCount}</span>
+                </button>
               </div>
 
               {/* Subcategorías desplegables */}

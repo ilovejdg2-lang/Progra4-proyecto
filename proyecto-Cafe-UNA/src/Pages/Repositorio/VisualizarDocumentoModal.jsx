@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useId } from "react";
 import { createPortal } from "react-dom";
 import {
   Download,
@@ -16,6 +16,7 @@ import {
   descargarArchivo,
   obtenerUrlVisualizarDocumento,
 } from "../../services/documentosService";
+import { ModalDialog } from "../../Components/ui/ModalDialog";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { ST } from "../../Components/T/ST";
 import "./Repositorio.css";
@@ -48,21 +49,13 @@ function formatearTamano(bytes = 0) {
 }
 
 export function VisualizarDocumentoModal({ documento, onClose }) {
+  const modalTitleId = useId();
   const [pantallaCompleta, setPantallaCompleta] = useState(false);
   const [descargando, setDescargando] = useState(false);
   const [errorCarga, setErrorCarga] = useState(false);
 
   useBodyScrollLock(Boolean(documento));
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape" && onClose) onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose]);
 
   if (!documento) return null;
 
@@ -91,13 +84,10 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
   };
 
   return createPortal(
-    <div
+    <ModalDialog
       className="repositorio-modal-overlay"
-      role="dialog"
-      aria-modal="true"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && onClose) onClose();
-      }}
+      labelledBy={modalTitleId}
+      onClose={onClose}
     >
       <div
         className={`repositorio-viewer-container ${pantallaCompleta ? "repositorio-viewer--fullscreen" : ""}`}
@@ -125,7 +115,7 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
                   v{documento.version || "1.0"}
                 </span>
               </div>
-              <h3 className="repositorio-viewer-title" title={documento.titulo}>
+              <h3 id={modalTitleId} className="repositorio-viewer-title" title={documento.titulo}>
                 {documento.titulo}
               </h3>
             </div>
@@ -256,7 +246,7 @@ export function VisualizarDocumentoModal({ documento, onClose }) {
           )}
         </div>
       </div>
-    </div>,
+    </ModalDialog>,
     document.body,
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useId } from "react";
 import {
   AlertCircle,
   Building2,
@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
+import { ModalDialog } from "../../../Components/ui/ModalDialog";
 import { createPortal } from "react-dom";
 import PageLoading from "../../../Components/PageLoading/PageLoading";
 import { UiSelect } from "../../../Components/ui/Select";
@@ -39,6 +40,7 @@ import "../../Voluntariado/SolicitarVoluntariado.css";
 import "./Documentos.css";
 
 export default function SolicitudesDocumentacion() {
+  const modalTitleId = useId();
   const [solicitudes, setSolicitudes] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -170,6 +172,7 @@ export default function SolicitudesDocumentacion() {
             <button
               type="button"
               className="ml-auto text-emerald-700 hover:text-emerald-900"
+              aria-label="Cerrar mensaje"
               onClick={() => setMensajeExito("")}
             >
               <X size={16} />
@@ -190,7 +193,7 @@ export default function SolicitudesDocumentacion() {
                 onChange={(e) => setFiltroBuscar(e.target.value)}
               />
               {filtroBuscar ? (
-                <button type="button" onClick={() => setFiltroBuscar("")}>
+                <button type="button" aria-label="Limpiar búsqueda" onClick={() => setFiltroBuscar("")}>
                   <X size={14} />
                 </button>
               ) : null}
@@ -410,15 +413,20 @@ export default function SolicitudesDocumentacion() {
       {/* Modal de Resolución */}
       {solicitudSeleccionada ? (
         createPortal(
-        <div className="repositorio-modal-overlay" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) setSolicitudSeleccionada(null); }}>
+        <ModalDialog
+          className="repositorio-modal-overlay"
+          labelledBy={modalTitleId}
+          onClose={() => setSolicitudSeleccionada(null)}
+        >
           <div className="repositorio-modal-container max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="repositorio-modal-header">
-              <h3>
+              <h3 id={modalTitleId}>
                 {tipoAccion === "aprobar" ? "Aprobar Solicitud de Acceso" : "Rechazar Solicitud de Acceso"}
               </h3>
               <button
                 type="button"
                 className="repositorio-modal-close"
+                aria-label="Cerrar"
                 onClick={() => setSolicitudSeleccionada(null)}
               >
                 <X size={20} />
@@ -504,7 +512,7 @@ export default function SolicitudesDocumentacion() {
               </div>
             </form>
           </div>
-        </div>,
+        </ModalDialog>,
         document.body,
         )
       ) : null}

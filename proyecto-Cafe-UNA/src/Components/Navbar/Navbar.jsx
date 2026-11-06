@@ -1,11 +1,13 @@
+import { ModalDialog } from "../ui/ModalDialog";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useEffectEvent, useLayoutEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import './Navbar.css';
 import { calcularPrecioConIVA, obtenerAlertasStock } from '../../services/productosService';
 import { Bell, ChevronDown, Gift, HandHeart, LayoutDashboard, LogOut, MapPin, Menu, Package, ShoppingBag, ShoppingCart, Sprout, User, X } from 'lucide-react';
 import { LanguageSwitcher } from '../LanguageSwitcher/LanguageSwitcher';
-import { CartLine, metaCarrito } from './CartLine';
+import { CartLine } from './CartLine';
+import { metaCarrito } from './metaCarrito';
 import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
 import { IconoSitio } from '../IconoSitio/IconoSitio';
 import { lugarIconoMenu } from '../../lib/iconosSitio';
@@ -40,7 +42,7 @@ import SiteNavLink from '../SiteNavLink/SiteNavLink';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { normalizePathname } from '../../lib/paths';
 import { rutaMisCompras } from '../../Pages/HistorialCompras/rutasCompras';
-import { rutaMisSolicitudes } from '../../Pages/HistorialSolicitudes/HistorialSolicitudesCliente';
+import { rutaMisSolicitudes } from '../../lib/rutasSolicitudes';
 
 import { clearCart as emptyCart, getStoredCart, saveCart } from '../../lib/cartStorage';
 import { soltarCarritoAlCerrarSesion } from '../../lib/cartSync';
@@ -495,7 +497,9 @@ const Navbar = () => {
     }, [user, loadSolicitudesUsuario]);
 
     const isMobileMenuOpenRef = useRef(false);
-    isMobileMenuOpenRef.current = isMobileMenuOpen;
+    useLayoutEffect(() => {
+        isMobileMenuOpenRef.current = isMobileMenuOpen;
+    });
 
     const syncScrolledState = useCallback(() => {
         if (isMobileMenuOpenRef.current) return;
@@ -654,6 +658,8 @@ const Navbar = () => {
         };
     }, [showCartDropdown]);
 
+    const dismissCartPanel = useEffectEvent(() => closeCartPanel());
+
     useEffect(() => {
         if (!showCartDropdown) {
             return;
@@ -661,13 +667,13 @@ const Navbar = () => {
 
         const handlePointerDown = (event) => {
             if (cartContainerRef.current && !cartContainerRef.current.contains(event.target)) {
-                closeCartPanel();
+                dismissCartPanel();
             }
         };
 
         const handleEscapeKey = (event) => {
             if (event.key === 'Escape') {
-                closeCartPanel();
+                dismissCartPanel();
             }
         };
 
@@ -678,7 +684,7 @@ const Navbar = () => {
             document.removeEventListener('mousedown', handlePointerDown);
             document.removeEventListener('keydown', handleEscapeKey);
         };
-    }, [showCartDropdown, closeCartPanel]);
+    }, [showCartDropdown]);
 
     useEffect(() => {
         if (!showNotifications) {
@@ -1209,7 +1215,7 @@ const Navbar = () => {
 
             <div className="navbar__actions">
                 <LanguageSwitcher compact className="navbar__lang" />
-                <div className="navbar__cart" ref={cartContainerRef} onClick={handleCartClick}>
+                <div className="navbar__cart" ref={cartContainerRef} role="presentation" onClick={handleCartClick}>
                     <button
                         type="button"
                         className="navbar__icon-button navbar__cart-button"
@@ -1220,11 +1226,11 @@ const Navbar = () => {
                     </button>
                     <span className="cart-badge">{cartUnits}</span>
                     {showCartDropdown ? (
-                        <aside
+                        <ModalDialog
+                            panel
                             className={`dropdown dropdown--cart dropdown--cart-panel ${isCartClosing ? 'is-closing' : 'is-open'}`}
-                            role="dialog"
-                            aria-modal="true"
-                            aria-label={tCartResumen}
+                            label={tCartResumen}
+                            onClose={closeCartPanel}
                             onClick={(event) => event.stopPropagation()}
                         >
                             <header className="cart-drawer-header">
@@ -1307,7 +1313,7 @@ const Navbar = () => {
                                     </div>
                                 </>
                             )}
-                        </aside>
+                        </ModalDialog>
                     ) : null}
                 </div>
 
@@ -1315,6 +1321,7 @@ const Navbar = () => {
                     <div
                         className="navbar__notifications"
                         ref={notificationsRef}
+                        role="presentation"
                         onClick={handleNotificationsClick}
                     >
                         <button
@@ -1590,7 +1597,7 @@ const Navbar = () => {
                     </div>
                 ) : null}
 
-                <div className="navbar__user" ref={userMenuRef} onClick={handleIconClick}>
+                <div className="navbar__user" ref={userMenuRef} role="presentation" onClick={handleIconClick}>
                     <button
                         type="button"
                         className="navbar__icon-button navbar__user-button"

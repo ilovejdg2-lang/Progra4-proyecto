@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useId } from "react";
 import {
   AlertCircle,
   Archive,
@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
+import { ModalDialog } from "../../../Components/ui/ModalDialog";
 import { createPortal } from "react-dom";
 import PageLoading from "../../../Components/PageLoading/PageLoading";
 import { UiSelect } from "../../../Components/ui/Select";
@@ -101,6 +102,8 @@ function formatearTamano(bytes = 0) {
 }
 
 export default function AdminDocumentos() {
+  const modalTitleId = useId();
+  const categoriaModalTitleId = useId();
   const actor = getActiveSessionUser();
   const roles = rolesDeUsuario(actor);
   const puedeVer =
@@ -551,6 +554,7 @@ export default function AdminDocumentos() {
             <button
               type="button"
               className="ml-auto text-emerald-700 hover:text-emerald-900"
+              aria-label="Cerrar mensaje"
               onClick={() => setMensajeExito("")}
             >
               <X size={16} />
@@ -594,7 +598,7 @@ export default function AdminDocumentos() {
                   onChange={(e) => setFiltroBuscar(e.target.value)}
                 />
                 {filtroBuscar ? (
-                  <button type="button" onClick={() => setFiltroBuscar("")}>
+                  <button type="button" aria-label="Limpiar búsqueda" onClick={() => setFiltroBuscar("")}>
                     <X size={14} />
                   </button>
                 ) : null}
@@ -919,13 +923,10 @@ export default function AdminDocumentos() {
       ============================================================ */}
       {modalAbierto ? (
         createPortal(
-        <div
+        <ModalDialog
           className="admin-modal-overlay"
-          role="dialog"
-          aria-modal="true"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) cerrarModal();
-          }}
+          labelledBy={modalTitleId}
+          onClose={cerrarModal}
         >
           <div
             className="admin-form-modal-container"
@@ -937,7 +938,7 @@ export default function AdminDocumentos() {
                   <BookOpen size={14} />
                   <ST>{documentoEditando ? "Edición de Documento" : "Subida de Documento"}</ST>
                 </span>
-                <h3>
+                <h3 id={modalTitleId}>
                   <ST>{documentoEditando ? "Editar Metadatos del Documento" : "Subir Nuevo Documento al Repositorio"}</ST>
                 </h3>
               </div>
@@ -1099,9 +1100,9 @@ export default function AdminDocumentos() {
 
                 {/* Pregunta 6: Visibilidad / Privacidad */}
                 <div className="admin-form-group">
-                  <label className="admin-form-label">
+                  <span className="admin-form-label">
                     <ST>¿Cuál es el nivel de visibilidad y acceso?</ST>
-                  </label>
+                  </span>
                   <p className="admin-form-helper"><ST>Defina si el archivo podrá descargarse libremente o requerirá autorización.</ST></p>
                   <div className="admin-form-privacy-options">
                     <label className={`admin-form-radio-card ${!formDoc.esPrivado ? "is-selected" : ""}`}>
@@ -1144,12 +1145,13 @@ export default function AdminDocumentos() {
 
                 {/* Pregunta 7: Archivo Digital */}
                 <div className="admin-form-group">
-                  <label className="admin-form-label">
+                  <label htmlFor="documento-admin-archivo" className="admin-form-label">
                     <ST>¿Qué archivo digital desea adjuntar?</ST> {!documentoEditando ? <span className="campo-requerido">*</span> : null}
                   </label>
                   <p className="admin-form-helper"><ST>Formatos admitidos: PDF, Word, Excel, PPT, TXT, ZIP (máx. 30 MB).</ST></p>
 
                   <input
+                    id="documento-admin-archivo"
                     ref={fileInputRef}
                     type="file"
                     className="hidden"
@@ -1173,7 +1175,15 @@ export default function AdminDocumentos() {
 
                   <div
                     className="dropzone-doc"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        fileInputRef.current?.click();
+                      }
+                    }}
                   >
                     <UploadCloud size={32} className="text-slate-400 mb-2" />
                     {archivoSeleccionado ? (
@@ -1237,7 +1247,7 @@ export default function AdminDocumentos() {
               </button>
             </div>
           </div>
-        </div>,
+        </ModalDialog>,
         document.body,
         )
       ) : null}
@@ -1245,18 +1255,15 @@ export default function AdminDocumentos() {
       {/* MODAL CREAR CATEGORÍA */}
       {modalCatAbierto ? (
         createPortal(
-        <div
+        <ModalDialog
           className="admin-modal-overlay"
-          role="dialog"
-          aria-modal="true"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setModalCatAbierto(false);
-          }}
+          labelledBy={categoriaModalTitleId}
+          onClose={() => setModalCatAbierto(false)}
         >
           <div className="admin-form-modal-container max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="admin-form-modal-header">
               <div className="admin-form-modal-header__title">
-                <h3><ST>Nueva Categoría de Documentos</ST></h3>
+                <h3 id={categoriaModalTitleId}><ST>Nueva Categoría de Documentos</ST></h3>
               </div>
               <button
                 type="button"
@@ -1341,7 +1348,7 @@ export default function AdminDocumentos() {
               </button>
             </div>
           </div>
-        </div>,
+        </ModalDialog>,
         document.body,
         )
       ) : null}

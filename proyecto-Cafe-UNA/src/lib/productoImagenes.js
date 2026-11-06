@@ -1,9 +1,13 @@
 const SEPARADOR = "\n";
 
+function sinDuplicados(urls) {
+  return [...new Set(urls)];
+}
+
 export function parsearImagenesProducto(producto) {
   const crudo = producto?.imagenes ?? producto?.imagen ?? "";
   if (Array.isArray(crudo)) {
-    return crudo.map((item) => String(item || "").trim()).filter(Boolean);
+    return sinDuplicados(crudo.map((item) => String(item || "").trim()).filter(Boolean));
   }
 
   const texto = String(crudo || "").trim();
@@ -13,17 +17,19 @@ export function parsearImagenesProducto(producto) {
     try {
       const parsed = JSON.parse(texto);
       if (Array.isArray(parsed)) {
-        return parsed.map((item) => String(item || "").trim()).filter(Boolean);
+        return sinDuplicados(parsed.map((item) => String(item || "").trim()).filter(Boolean));
       }
     } catch {
       /* URL simple que empieza raro */
     }
   }
 
-  return texto
-    .split(/\r?\n|,/)
-    .map((item) => item.trim())
-    .filter(Boolean);
+  return sinDuplicados(
+    texto
+      .split(/\r?\n|,/)
+      .map((item) => item.trim())
+      .filter(Boolean),
+  );
 }
 
 export function serializarImagenesProducto(urls) {

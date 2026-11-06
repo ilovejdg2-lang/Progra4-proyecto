@@ -241,10 +241,10 @@ const ProductDetail = () => {
                 ) : null}
               </div>
               {fotos.length > 0 ? (
-                <div className="product-detail-page__thumbs" role="list">
+                <div className="product-detail-page__thumbs">
                   {fotos.map((src, index) => (
                     <button
-                      key={`${src}-${index}`}
+                      key={src}
                       type="button"
                       className={`product-detail-page__thumb${index === fotoActiva ? ' is-active' : ''}`}
                       onClick={() => setFotoActiva(index)}

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   archivoADataUrl,
   claveBorradorPropuesta,
@@ -39,5 +39,17 @@ describe("borrador de propuesta de productor", () => {
     expect(recuperado).toBeInstanceOf(File);
     expect(recuperado.name).toBe("finca.png");
     expect(recuperado.type).toBe("image/png");
+  });
+
+  it("devuelve null si la lectura del data URL responde con error", async () => {
+    const blob = vi.fn(async () => new Blob(["x"], { type: "text/html" }));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, blob })));
+    try {
+      const recuperado = await dataUrlAArchivo({ dataUrl: "data:image/png;base64,AAAA", name: "a.png" });
+      expect(recuperado).toBeNull();
+      expect(blob).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

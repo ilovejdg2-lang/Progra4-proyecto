@@ -37,8 +37,8 @@ import {
   clearSession,
   getActiveSessionUser,
   getStoredUser,
-  SESSION_UPDATED_EVENT,
 } from "../../services/sessionService";
+import { useSessionUser } from "../../hooks/useSessionUser";
 import { readBrandLogos, cacheBrandLogos } from "../../lib/brandLogoCache";
 import { ST } from "../T/ST";
 import { textoUi } from "../../lib/textoVisible";
@@ -48,7 +48,7 @@ const linkActivo = {
 };
 
 export function ClienteSidebar() {
-  const [user, setUser] = useState(() => getActiveSessionUser());
+  const user = useSessionUser();
   const { setOpenMobile } = useSidebar();
   const displayName = textoUi(user?.name || user?.username || "Usuario");
   const displayEmail = user?.email || user?.correo || "";
@@ -83,17 +83,6 @@ export function ClienteSidebar() {
   }, [avatarUrl]);
 
   useEffect(() => {
-    const syncUser = () => setUser(getActiveSessionUser());
-    syncUser();
-    window.addEventListener("storage", syncUser);
-    window.addEventListener(SESSION_UPDATED_EVENT, syncUser);
-    return () => {
-      window.removeEventListener("storage", syncUser);
-      window.removeEventListener(SESSION_UPDATED_EVENT, syncUser);
-    };
-  }, []);
-
-  useEffect(() => {
     const current = getActiveSessionUser();
     if (!current?.id) return undefined;
 
@@ -102,8 +91,7 @@ export function ClienteSidebar() {
       obtenerPerfil()
         .then((perfil) => {
           if (!activo || !perfil || !getStoredUser()) return;
-          const updated = applyPerfilToSession(perfil);
-          if (updated) setUser(updated);
+          applyPerfilToSession(perfil);
         })
         .catch(() => {});
     }, 400);
@@ -142,7 +130,6 @@ export function ClienteSidebar() {
     cancelPendingSessionRefresh();
     await soltarCarritoAlCerrarSesion();
     clearPerfilCache();
-    setUser(null);
     clearSession();
     window.location.replace("/");
   };

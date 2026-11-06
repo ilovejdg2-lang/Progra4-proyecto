@@ -344,6 +344,7 @@ function PreviewHomeSectionLive({ clave, form, tarjetasInicio = [] }) {
                 title={"Mapa de ubicaci\u00f3n"}
                 src={locationMapEmbedUrl}
                 loading="lazy"
+                sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
                 referrerPolicy="no-referrer-when-downgrade"
               />
             </div>
@@ -426,8 +427,10 @@ function PreviewTextoInstitucionalLive({ form, tipo = "historia" }) {
   );
 }
 
-function PreviewGaleriaLive({ items = [] }) {
-  const galleryItems = items.filter((item) => item.image || item.title);
+const GALERIA_VACIA = [];
+
+function PreviewGaleriaLive({ items = GALERIA_VACIA }) {
+  const galleryItems = useMemo(() => items.filter((item) => item.image || item.title), [items]);
 
   if (!galleryItems.length) {
     return (
@@ -491,8 +494,8 @@ function PreviewNavbarLive({ form, enlaces = [] }) {
           </div>
 
           <div className="navbar__menu" aria-label="Vista previa de enlaces">
-            {links.length ? links.map((item, index) => (
-              <PreviewNavItem key={item.id ?? index} item={item} />
+            {links.length ? links.map((item) => (
+              <PreviewNavItem key={item.id} item={item} />
             )) : (
               <span style={{ opacity: 0.5 }}>{"Los enlaces aparecer\u00e1n aqu\u00ed."}</span>
             )}
@@ -531,8 +534,8 @@ function PreviewFooterLive({ form, enlaces = [], iconoDe }) {
           {explorar.length ? (
             <nav className="footer__column" aria-label="Explorar">
               <h2>Explorar</h2>
-              {explorar.map((item, index) => (
-                <PreviewNavItem key={item.id ?? index} item={item} />
+              {explorar.map((item) => (
+                <PreviewNavItem key={item.id} item={item} />
               ))}
             </nav>
           ) : null}

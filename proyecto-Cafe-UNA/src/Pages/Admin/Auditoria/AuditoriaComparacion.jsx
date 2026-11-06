@@ -32,6 +32,7 @@ function ValorVisible({ clave, valor }) {
 
 function PanelCampos({ titulo, datos, claves, cambiados, vacioTexto, marcarCambios = false }) {
   const hayDatos = datos && typeof datos === "object" && claves.length > 0;
+  const clavesCambiadas = new Set(cambiados);
   return (
     <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-3">
       <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">
@@ -40,7 +41,7 @@ function PanelCampos({ titulo, datos, claves, cambiados, vacioTexto, marcarCambi
       {hayDatos ? (
         <dl className="mt-3 grid max-h-80 gap-2 overflow-auto pr-1">
           {claves.map((clave) => {
-            const cambio = cambiados.includes(clave);
+            const cambio = clavesCambiadas.has(clave);
             return (
               <div
                 key={clave}

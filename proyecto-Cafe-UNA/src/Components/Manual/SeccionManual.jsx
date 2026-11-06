@@ -56,7 +56,7 @@ export function SeccionManual({ seccion, carpetaFotos }) {
       {seccion.pasos?.length ? (
         <ol className="mt-4 grid gap-3">
           {seccion.pasos.map(normalizarPaso).map((paso, i) => (
-            <li key={i} className="grid gap-2">
+            <li key={paso.texto} className="grid gap-2">
               <div className="flex gap-3 text-[length:var(--text-body)] leading-relaxed text-slate-800">
                 <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-slate-900 font-bold text-white">
                   {i + 1}
@@ -84,8 +84,8 @@ export function SeccionManual({ seccion, carpetaFotos }) {
             <ST>Consejos</ST>
           </p>
           <ul className="mt-2 grid list-disc gap-1 pl-5 text-[length:var(--text-body)] leading-relaxed text-amber-900">
-            {seccion.consejos.map((consejo, i) => (
-              <li key={i}>
+            {seccion.consejos.map((consejo) => (
+              <li key={consejo}>
                 <ST>{consejo}</ST>
               </li>
             ))}

@@ -1,7 +1,8 @@
+import { ModalDialog } from "../ui/ModalDialog";
 import { X } from "lucide-react";
 import { useTraducir } from "../../hooks/useTraducir";
 import { normalizeImageUrl } from "../../lib/imageUtils";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, useId } from "react";
 import { useProfileImage } from "../../hooks/useProfileImage";
 import { subirImagenPerfil } from "../../services/perfilService";
 import { getStoredUser, isLoggingOut, isSessionExpired, SESSION_UPDATED_EVENT } from "../../services/sessionService";
@@ -34,6 +35,7 @@ export function ProfileImageModal({
   saving,
   uploader = subirImagenPerfil,
 }) {
+  const modalTitleId = useId();
   const identity = useSyncExternalStore(subscribeSession, sessionIdentity);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -41,6 +43,10 @@ export function ProfileImageModal({
   const generation = useRef(0);
   const initialIdentity = useRef(identity);
   const closeRef = useRef(onClose);
+  const urlInput = useRef(null);
+  useEffect(() => {
+    if (open) urlInput.current?.focus();
+  }, [open]);
   useEffect(() => { closeRef.current = onClose; }, [onClose]);
   const invalidate = () => {
     generation.current += 1;
@@ -81,10 +87,8 @@ export function ProfileImageModal({
     } catch {
       if (!controller.signal.aborted && current === generation.current) setError("No se pudo cargar la imagen. Intente nuevamente.");
     } finally {
-      if (current === generation.current) {
-        request.current = null;
-        setUploading(false);
-      }
+      if (current === generation.current) request.current = null;
+      setUploading(request.current !== null);
     }
   }
   function close() {
@@ -117,11 +121,11 @@ export function ProfileImageModal({
     : (isAdmin ? tVistaPreviaBannerAdmin : tVistaPreviaBanner);
 
   return (
-    <div className="perfil-modal" role="dialog" aria-modal="true">
+    <ModalDialog className="perfil-modal" labelledBy={modalTitleId} onClose={saving ? undefined : close}>
       <button type="button" className="perfil-modal__backdrop" aria-label={tCerrar} onClick={close} disabled={saving} />
       <div className={`perfil-modal__card perfil-modal__card--image ${isAvatar ? "perfil-modal__card--avatar" : "perfil-modal__card--banner"}`}>
         <header className="perfil-modal__header">
-          <h3>{isAvatar ? tCambiarFoto : tCambiarBanner}</h3>
+          <h3 id={modalTitleId}>{isAvatar ? tCambiarFoto : tCambiarBanner}</h3>
           <button type="button" className="perfil-modal__close" onClick={close} aria-label={tCerrar} disabled={saving}>
             <X size={18} />
           </button>
@@ -134,7 +138,7 @@ export function ProfileImageModal({
             disabled={uploading || saving}
             onChange={(e) => onChange(e.target.value)}
             placeholder="https://..."
-            autoFocus
+            ref={urlInput}
           />
         </label>
         <ImageFilePicker id="profile-image-file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hint="JPG, PNG o WEBP. Máximo 10 MB." onSelect={selectImage} disabled={uploading || saving || !identity} error={error} />
@@ -173,6 +177,6 @@ export function ProfileImageModal({
           </button>
         </div>
       </div>
-    </div>
+    </ModalDialog>
   );
 }

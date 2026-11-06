@@ -50,6 +50,7 @@ export function UiSelect({
   const [menuClaro, setMenuClaro] = useState(false);
   const [menuStyle, setMenuStyle] = useState(null);
   const [busqueda, setBusqueda] = useState("");
+  const [menuHost, setMenuHost] = useState(null);
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
@@ -119,6 +120,9 @@ export function UiSelect({
     const cerrar = (event) => {
       const target = event.target;
       if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      // A click on the trigger's own label re-clicks the trigger, which toggles it closed;
+      // closing here too would make that click reopen the menu.
+      if (target instanceof Element && target.closest("label")?.control === triggerRef.current) return;
       setOpen(false);
     };
     const onKey = (event) => {
@@ -131,6 +135,15 @@ export function UiSelect({
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
+
+  // While the menu is open, Escape belongs to the menu: close it, keep any enclosing modal open.
+  const cerrarMenuConEscape = (event) => {
+    if (event.key !== "Escape" || !open) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
 
   const elegir = (opcion) => {
     onChange?.(opcion.value);
@@ -148,8 +161,11 @@ export function UiSelect({
         aria-expanded={open}
         aria-haspopup="listbox"
         className="ui-select__trigger"
+        onKeyDown={cerrarMenuConEscape}
         onClick={() => {
           setBusqueda("");
+          // A modal <dialog> sits in the top layer, so the menu must live inside it to stay visible.
+          setMenuHost(rootRef.current?.closest("dialog") ?? null);
           setMenuClaro(Boolean(rootRef.current?.closest(".voluntariado-page, .formulario-card, .campo")));
           setOpen((actualOpen) => !actualOpen);
         }}
@@ -165,6 +181,7 @@ export function UiSelect({
               ref={menuRef}
               className={`ui-select__menu ui-select__menu--portal${menuClaro ? " ui-select__menu--claro" : ""}${className ? ` ${className}` : ""}`}
               style={menuStyle}
+              onKeyDown={cerrarMenuConEscape}
             >
               {buscable ? (
                 <div className="ui-select__search">
@@ -216,7 +233,7 @@ export function UiSelect({
               </ul>
               {footer ? <div className="ui-select__footer">{footer}</div> : null}
             </div>,
-            document.body,
+            menuHost ?? document.body,
           )
         : null}
     </div>

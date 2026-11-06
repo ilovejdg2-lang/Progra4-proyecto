@@ -30,9 +30,9 @@ vi.mock("../../Components/Productores/CampoUbicacionMapa", () => ({
   },
 }));
 vi.mock("../../Components/ui/SelectFiltro", () => ({ SelectFiltro: ({ children, ...props }) => <select {...props}>{children}</select> }));
-vi.mock("../../services/sessionService", () => ({ getActiveSessionUser: () => ({ id: 1 }), SESSION_UPDATED_EVENT: "session-updated" }));
+vi.mock("../../services/sessionService", () => ({ getActiveSessionUser: () => ({ id: 1 }), peekSessionUser: () => ({ id: 1 }), SESSION_UPDATED_EVENT: "session-updated" }));
 vi.mock("../../services/propuestasProductoresService", () => ({ crearPropuestaProductor: vi.fn() }));
-vi.mock("./MisPropuestas", () => ({ rutaMisPropuestas: () => "/perfil/propuestas" }));
+vi.mock("../../lib/rutasPropuestas", () => ({ rutaMisPropuestas: () => "/perfil/propuestas" }));
 
 const image = (name = "cafe.png", type = "image/png") => new File(["image"], name, { type });
 const dropzone = () => screen.getByRole("button", { name: "Arrastra o selecciona una imagen" });
@@ -124,6 +124,16 @@ describe("producer proposal image intake", () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:cafe.png");
     unmount();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:replacement.webp");
+  });
+
+  it("does not revoke the preview URL while the file is still current", () => {
+    render(<PropuestaProductor />);
+    fireEvent.drop(dropzone(), { dataTransfer: { files: [image()] } });
+    fireEvent.change(document.getElementById("nombre"), { target: { value: "Otro nombre" } });
+    fireEvent.change(document.getElementById("descripcion"), { target: { value: "Otra descripción" } });
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    expect(screen.getByAltText("Vista previa de la imagen seleccionada")).toHaveAttribute("src", "blob:cafe.png");
   });
 
   it.each([

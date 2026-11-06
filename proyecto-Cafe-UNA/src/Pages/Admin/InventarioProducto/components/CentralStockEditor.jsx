@@ -34,25 +34,24 @@ export function CentralStockEditor({
   const [validationError, setValidationError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const submitGuard = useRef(false);
-  const lastSyncedStock = useRef(initialValue(stockRecord));
+  const [syncedStock, setSyncedStock] = useState(() => initialValue(stockRecord));
   const tTitulo = useTraducir("Stock de Bodega Central");
   const tGuardando = useTraducir("Guardando...");
   const tGuardarStock = useTraducir("Guardar stock");
   const tProducto = useTraducir("Producto");
 
+  // Re-sync with a new record while open (adjust state during render)
+  const nextStock = initialValue(stockRecord);
+  if (open && nextStock !== syncedStock) {
+    setSyncedStock(nextStock);
+    setValue(nextStock);
+    setValidationError("");
+    setSubmitError("");
+  }
+
   useEffect(() => {
-    if (!open) {
-      submitGuard.current = false;
-      return;
-    }
-    const next = initialValue(stockRecord);
-    if (next !== lastSyncedStock.current) {
-      lastSyncedStock.current = next;
-      setValue(next);
-      setValidationError("");
-      setSubmitError("");
-    }
-  }, [open, stockRecord]);
+    if (!open) submitGuard.current = false;
+  }, [open]);
 
   if (!open) return null;
 
@@ -75,7 +74,7 @@ export function CentralStockEditor({
 
     try {
       await onSave(stock);
-      lastSyncedStock.current = String(stock);
+      setSyncedStock(String(stock));
     } catch (saveError) {
       submitGuard.current = false;
       setSubmitError(sanitizeUserFacingError(saveError?.message || "No se pudo actualizar el stock central."));

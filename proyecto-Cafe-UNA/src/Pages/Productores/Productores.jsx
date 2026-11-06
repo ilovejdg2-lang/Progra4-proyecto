@@ -7,12 +7,13 @@ import { FacebookIcon, InstagramIcon, WhatsAppIcon } from "../../Components/Foot
 import MapaProductores from "../../Components/Productores/MapaProductores";
 import PageLoading from "../../Components/PageLoading/PageLoading";
 import { ST } from "../../Components/T/ST";
+import { ModalDialog } from "../../Components/ui/ModalDialog";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
+import { useSessionUser } from "../../hooks/useSessionUser";
 import { urlImagenPublica } from "../../lib/propuestaProductor";
 import { resumenUbicacion } from "../../lib/ubicacionMaps";
 import { obtenerProductoresPublicos } from "../../services/propuestasProductoresService";
-import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
 import "./propuesta.css";
 
 function enlacePublico(valor) {
@@ -50,22 +51,12 @@ function DetalleProductor({ productor, onClose }) {
 
   useEffect(() => {
     cerrarRef.current?.focus();
-    const onKey = (event) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, []);
 
   return createPortal(
-    <div className="productor-dialog">
-      <div className="productor-dialog__fondo" onClick={onClose} />
-      <div
-        className="productor-dialog__panel"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={tituloId}
-      >
+    <ModalDialog className="productor-dialog" labelledBy={tituloId} onClose={onClose}>
+      <div className="productor-dialog__fondo" onClick={onClose} aria-hidden="true" />
+      <div className="productor-dialog__panel">
         <button
           ref={cerrarRef}
           type="button"
@@ -114,30 +105,20 @@ function DetalleProductor({ productor, onClose }) {
           ) : null}
         </div>
       </div>
-    </div>,
+    </ModalDialog>,
     document.body,
   );
 }
 
 export default function Productores() {
   const { ref, showLoading, showPrepaint, inert, loadingMessage } = usePaintPublicPage("productores");
-  const [usuario, setUsuario] = useState(() => getActiveSessionUser());
+  const usuario = useSessionUser();
   const [productores, setProductores] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [seleccionado, setSeleccionado] = useState(null);
   const [mapaSeleccionadoId, setMapaSeleccionadoId] = useState(null);
   const disparadorRef = useRef(null);
-
-  useEffect(() => {
-    const sync = () => setUsuario(getActiveSessionUser());
-    window.addEventListener(SESSION_UPDATED_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(SESSION_UPDATED_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
 
   useEffect(() => {
     let activo = true;

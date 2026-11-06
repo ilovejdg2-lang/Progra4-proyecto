@@ -85,6 +85,7 @@ export function AdminListaToolbar({
                 {filtro.tipo === "fecha" ? (
                   <input
                     type="date"
+                    aria-label={filtro.label}
                     value={filtro.value}
                     onChange={(event) => filtro.onChange(event.target.value)}
                     className={inputFechaCls}

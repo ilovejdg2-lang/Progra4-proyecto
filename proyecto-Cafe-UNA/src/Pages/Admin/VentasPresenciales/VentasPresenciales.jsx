@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -39,6 +39,7 @@ import {
   registrarVentaPresencial,
 } from "../../../services/ventasPresencialesService";
 import { PagoVentaPresencial } from "./PagoVentaPresencial";
+import { aplicarDeltaCarrito } from "./carritoVenta";
 
 function operaSoloPuntosAsignados(roles) {
   return !roles.some((rol) => {
@@ -95,7 +96,6 @@ export default function AdminVentasPresenciales() {
   const [clienteNombre, setClienteNombre] = useState("");
   const [clienteCorreo, setClienteCorreo] = useState("");
   const [enviarCorreo, setEnviarCorreo] = useState(false);
-  const [notas, setNotas] = useState("");
 
   // Estados de proceso y UI
   const [isSaving, setIsSaving] = useState(false);
@@ -126,6 +126,8 @@ export default function AdminVentasPresenciales() {
     };
   }, []);
 
+  const montadoRef = useRef(true);
+
   const loadBase = async () => {
     setLoadError("");
     try {
@@ -133,6 +135,7 @@ export default function AdminVentasPresenciales() {
         obtenerPuntosVentaPresencial(),
         obtenerCatalogoProductos(),
       ]);
+      if (!montadoRef.current) return;
       const puntosActivos = puntosData.filter((p) => p.activo !== false);
       setPuntos(puntosActivos);
       if (puntosActivos.length === 1) {
@@ -140,20 +143,25 @@ export default function AdminVentasPresenciales() {
       }
       setProductos(Array.isArray(catalogo) ? catalogo : catalogo?.data || []);
     } catch (err) {
+      if (!montadoRef.current) return;
       setPuntos([]);
       setProductos([]);
       setLoadError(err instanceof Error ? err.message : "No se pudo cargar la información del punto de venta.");
     } finally {
-      setReady(true);
+      if (montadoRef.current) setReady(true);
     }
   };
 
   useEffect(() => {
+    montadoRef.current = true;
     if (!puedeVer) {
       setReady(true);
-      return;
+      return undefined;
     }
     loadBase();
+    return () => {
+      montadoRef.current = false;
+    };
   }, [puedeVer]);
 
   // Cargar inventario del punto seleccionado
@@ -283,26 +291,8 @@ export default function AdminVentasPresenciales() {
   };
 
   const modificarCantidadCarrito = (productoId, delta) => {
-    setFormError("");
-    setCarrito((prev) => {
-      return prev
-        .map((item) => {
-          if (String(item.productoId) !== String(productoId)) return item;
-          const stockDisp = Number(stockMap.get(String(productoId)) ?? item.stockDisponible ?? 0);
-          const nuevaCant = item.cantidad + delta;
-          if (nuevaCant > stockDisp) {
-            setFormError(`Stock máximo alcanzado para "${item.productoNombre}". Disponible: ${stockDisp} unidades.`);
-            return item;
-          }
-          if (nuevaCant <= 0) return null;
-          return {
-            ...item,
-            cantidad: nuevaCant,
-            subtotal: Math.round(item.precioUnitario * nuevaCant),
-          };
-        })
-        .filter(Boolean);
-    });
+    setFormError(aplicarDeltaCarrito(carrito, productoId, delta, stockMap).error);
+    setCarrito((prev) => aplicarDeltaCarrito(prev, productoId, delta, stockMap).carrito);
   };
 
   const eliminarDelCarrito = (productoId) => {
@@ -314,7 +304,6 @@ export default function AdminVentasPresenciales() {
     setClienteNombre("");
     setClienteCorreo("");
     setEnviarCorreo(false);
-    setNotas("");
     setMontoRecibido("");
     setFormError("");
   };
@@ -382,7 +371,6 @@ export default function AdminVentasPresenciales() {
         clienteNombre: clienteNombre.trim(),
         clienteCorreo: clienteCorreo.trim(),
         enviarCorreo: Boolean(enviarCorreo && clienteCorreo.trim()),
-        notas: notas.trim(),
         total: totalCarrito,
       };
 
@@ -412,7 +400,6 @@ export default function AdminVentasPresenciales() {
         total: Number.isFinite(Number(resultado?.total)) ? Number(resultado.total) : totalCarrito,
         montoRecibido: resultado?.montoRecibido ?? pago?.montoRecibido ?? null,
         vuelto: resultado?.vuelto ?? pago?.vuelto ?? null,
-        notas: notas.trim(),
         correoEnviado: Boolean(resultado?.correoEnviado),
       };
 
@@ -461,7 +448,6 @@ export default function AdminVentasPresenciales() {
         total: resumenVenta.total,
         montoRecibido: resumenVenta.montoRecibido,
         vuelto: resumenVenta.vuelto,
-        notas: resumenVenta.notas,
       });
 
       if (resp?.success !== false) {
@@ -561,7 +547,7 @@ export default function AdminVentasPresenciales() {
           >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12 items-end">
               <div className="lg:col-span-6 space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                <label htmlFor="pos-punto-venta-select" className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
                   <Store className="size-3.5 text-neutral-900" />
                   <ST>Punto de Venta</ST>
                 </label>
@@ -576,10 +562,10 @@ export default function AdminVentasPresenciales() {
               </div>
 
               <div className="lg:col-span-6 space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
                   <User className="size-3.5 text-neutral-900" />
                   <ST>Vendedor</ST>
-                </label>
+                </span>
                 <div className="min-h-[var(--control-height)] flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-800">
                   <span className="truncate">{nombreVendedor}</span>
                 </div>
@@ -875,10 +861,11 @@ export default function AdminVentasPresenciales() {
 
                     {/* Cliente (opcional) */}
                     <div className="space-y-1">
-                      <label className="font-semibold text-slate-700">
+                      <label htmlFor="pos-cliente-nombre" className="font-semibold text-slate-700">
                         <ST>Cliente (opcional)</ST>
                       </label>
                       <input
+                        id="pos-cliente-nombre"
                         type="text"
                         value={clienteNombre}
                         onChange={(e) => setClienteNombre(e.target.value)}
@@ -889,13 +876,14 @@ export default function AdminVentasPresenciales() {
 
                     {/* Correo Electrónico (opcional) para envío de comprobante */}
                     <div className="space-y-1">
-                      <label className="font-semibold text-slate-700 flex items-center justify-between">
+                      <label htmlFor="pos-cliente-correo" className="font-semibold text-slate-700 flex items-center justify-between">
                         <span className="flex items-center gap-1">
                           <Mail className="size-3 text-neutral-900" />
                           <ST>Correo para comprobante (opcional)</ST>
                         </span>
                       </label>
                       <input
+                        id="pos-cliente-correo"
                         type="email"
                         value={clienteCorreo}
                         onChange={(e) => {
@@ -1037,8 +1025,8 @@ export default function AdminVentasPresenciales() {
                         <span>Cant. / Detalle</span>
                         <span className="text-right">Subtotal</span>
                       </div>
-                      {resumenVenta.items.map((it, idx) => (
-                        <div key={idx} className="flex min-w-0 items-start justify-between gap-3 py-0.5 text-xs">
+                      {resumenVenta.items.map((it) => (
+                        <div key={it.productoId} className="flex min-w-0 items-start justify-between gap-3 py-0.5 text-xs">
                           <div className="min-w-0 flex-1">
                             <span className="font-bold text-slate-900 mr-1.5">{it.cantidad}×</span>
                             <span className="break-words font-medium text-slate-700"><ST>{it.productoNombre}</ST></span>
@@ -1100,6 +1088,7 @@ export default function AdminVentasPresenciales() {
                     <input
                       type="email"
                       value={correoResumenInput}
+                      aria-label={t("Correo del cliente")}
                       onChange={(e) => setCorreoResumenInput(limpiarCorreo(e.target.value))}
                       placeholder="cliente@correo.com"
                       className="h-11 w-full min-w-0 rounded-full border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-black sm:h-10 sm:flex-1 sm:text-xs"

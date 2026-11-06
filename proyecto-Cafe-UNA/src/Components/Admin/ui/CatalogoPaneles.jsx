@@ -108,7 +108,8 @@ function FilaEditable({
   onIcono,
 }) {
   const partes = presentacion ? separarPresentacion(item.nombre, unidades) : null;
-  const [nombre, setNombre] = useState(item.nombre);
+  const [borrador, setNombre] = useState(null);
+  const nombre = borrador ?? item.nombre;
   const [cantidad, setCantidad] = useState(partes?.cantidad ?? "");
   const [unidad, setUnidad] = useState(partes?.unidad ?? unidades[0] ?? "");
   const [ocupado, setOcupado] = useState(false);

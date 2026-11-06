@@ -18,6 +18,7 @@ import {
   solicitarAccesoDocumento,
 } from "../../services/documentosService";
 import { getActiveSessionUser } from "../../services/sessionService";
+import { ModalDialog } from "../../Components/ui/ModalDialog";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../lib/correo";
 import { ST } from "../../Components/T/ST";
@@ -75,16 +76,6 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
   const [completado, setCompletado] = useState(false);
 
   useBodyScrollLock(true);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape" && onClose && !enviando) onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose, enviando]);
 
   useEffect(() => {
     obtenerCategoriasDocumentos()
@@ -219,14 +210,10 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
   };
 
   return createPortal(
-    <div
+    <ModalDialog
       className="admin-modal-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-solicitud-titulo"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && onClose && !enviando) onClose();
-      }}
+      labelledBy="modal-solicitud-titulo"
+      onClose={enviando ? undefined : onClose}
     >
       <div
         className="admin-form-modal-container max-w-2xl"
@@ -490,9 +477,9 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
 
               {/* Pregunta 6: Visibilidad y Acceso (Por defecto Privado) */}
               <div className="admin-form-group">
-                <label className="admin-form-label">
+                <span className="admin-form-label">
                   <ST>Nivel de Visibilidad y Custodia Institucional</ST>
-                </label>
+                </span>
                 <p className="admin-form-helper">
                   <ST>Control de publicación y seguridad de la información.</ST>
                 </p>
@@ -501,6 +488,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                     <input
                       type="radio"
                       name="privacidadDoc"
+                      aria-label="Documento privado"
                       checked={true}
                       readOnly
                     />
@@ -521,7 +509,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
 
               {/* Pregunta 7: Archivo Digital a Enviar */}
               <div className="admin-form-group">
-                <label className="admin-form-label">
+                <label htmlFor="solicitud-documento-archivo" className="admin-form-label">
                   <ST>¿Qué archivo digital desea enviar?</ST>{" "}
                   {!esDocumentoEspecifico ? <span className="campo-requerido">*</span> : null}
                 </label>
@@ -530,6 +518,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                 </p>
 
                 <input
+                  id="solicitud-documento-archivo"
                   ref={fileInputRef}
                   type="file"
                   className="hidden"
@@ -590,10 +579,10 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
 
               {/* Pregunta 8: Datos de Contacto del Remitente */}
               <div className="admin-form-group">
-                <label className="admin-form-label">
+                <span className="admin-form-label">
                   <User size={14} className="inline mr-1 text-slate-500" />
                   <ST>Datos de Contacto del Remitente</ST>
-                </label>
+                </span>
                 <p className="admin-form-helper">
                   <ST>Información para el seguimiento y acreditación del archivo.</ST>
                 </p>
@@ -703,7 +692,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
           </form>
         )}
       </div>
-    </div>,
+    </ModalDialog>,
     document.body,
   );
 }

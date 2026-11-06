@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, Crosshair, Minus, Plus, X } from "lucide-react";
 
 import { ST } from "../T/ST";
@@ -11,6 +11,8 @@ import {
   resumenUbicacion,
 } from "../../lib/ubicacionMaps";
 import "./MapaProductores.css";
+
+const EMPTY_ARRAY = [];
 
 const HIT = 44;
 const PIN = 34;
@@ -83,7 +85,7 @@ function aplicarVistaCostaRica(mapa) {
 }
 
 export default function MapaProductores({
-  productores = [],
+  productores = EMPTY_ARRAY,
   cargando = false,
   seleccionadoId = null,
   onSeleccionar,
@@ -100,7 +102,9 @@ export default function MapaProductores({
   const [fallaMapa, setFallaMapa] = useState("");
   const [grupoCercano, setGrupoCercano] = useState([]);
 
-  onSeleccionarRef.current = onSeleccionar;
+  useLayoutEffect(() => {
+    onSeleccionarRef.current = onSeleccionar;
+  });
 
   const conCoordenadas = useMemo(
     () => productores.filter((item) => Boolean(coordenadasDeProductor(item))),
@@ -241,7 +245,7 @@ export default function MapaProductores({
   useEffect(() => {
     const L = leafletRef.current;
     const cluster = clusterRef.current;
-    if (!mapaListo || !L || !cluster) return;
+    if (!mapaListo || !L || !cluster) return undefined;
 
     cluster.clearLayers();
     marcadoresRef.current.clear();
@@ -257,14 +261,25 @@ export default function MapaProductores({
         riseOnHover: true,
         productor: item,
       });
-      marcador.on("click", (event) => {
-        L.DomEvent.stopPropagation(event);
-        setGrupoCercano([]);
-        onSeleccionarRef.current?.(item);
-      });
       cluster.addLayer(marcador);
       marcadoresRef.current.set(String(item.id), marcador);
     });
+
+    // Marker clicks propagate to the cluster group; the clicked marker is event.layer.
+    const alHacerClickEnMarcador = (event) => {
+      const item = event.layer?.options?.productor;
+      if (!item) return;
+      L.DomEvent.stopPropagation(event);
+      setGrupoCercano([]);
+      onSeleccionarRef.current?.(item);
+    };
+    cluster.on("click", alHacerClickEnMarcador);
+
+    return () => {
+      cluster.off("click", alHacerClickEnMarcador);
+      cluster.clearLayers();
+      marcadoresRef.current.clear();
+    };
   }, [conCoordenadas, mapaListo]);
 
   useEffect(() => {

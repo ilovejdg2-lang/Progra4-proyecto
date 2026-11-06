@@ -1,6 +1,6 @@
 import { ProfileImageModal } from "./ProfileImageModal";
 import { useProfileImage } from "../../hooks/useProfileImage";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Camera, ChevronRight, ClipboardList, Eye, EyeOff, IdCard, KeyRound, Mail, ShoppingBag, Sprout, UserRound } from "lucide-react";
 import {
@@ -14,8 +14,8 @@ import {
 } from "../../services/perfilService";
 import { applyPerfilToSession, getActiveSessionUser, getStoredUser, isLoggingOut, isSessionExpired } from "../../services/sessionService";
 import { rutaMisCompras } from "../../Pages/HistorialCompras/rutasCompras";
-import { rutaMisSolicitudes } from "../../Pages/HistorialSolicitudes/HistorialSolicitudesCliente";
-import { rutaMisPropuestas } from "../../Pages/Productores/MisPropuestas";
+import { rutaMisSolicitudes } from "../../lib/rutasSolicitudes";
+import { rutaMisPropuestas } from "../../lib/rutasPropuestas";
 import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../lib/correo";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { inicialDeNombre } from "../../lib/inicialDeNombre";
@@ -123,14 +123,16 @@ function claseRolPerfil(rol) {
 
 function PerfilPasswordField({ label, value, onChange, visible, onToggle, autoFocus = false, error = "" }) {
   const Icon = visible ? Eye : EyeOff;
+  const inputId = useId();
   const tOcultar = useTraducir("Ocultar contraseña");
   const tMostrar = useTraducir("Mostrar contraseña");
 
   return (
-    <label className="perfil-field perfil-password-field">
-      <span><ST>{label}</ST></span>
+    <div className="perfil-field perfil-password-field">
+      <label htmlFor={inputId}><span><ST>{label}</ST></span></label>
       <div className="perfil-password-field__input-wrap">
         <input
+          id={inputId}
           type={visible ? "text" : "password"}
           value={value}
           onChange={onChange}
@@ -150,7 +152,7 @@ function PerfilPasswordField({ label, value, onChange, visible, onToggle, autoFo
         </button>
       </div>
       {error ? <p className="perfil-field-error"><ST>{error}</ST></p> : null}
-    </label>
+    </div>
   );
 }
 
@@ -233,7 +235,7 @@ export function PerfilContent({ variant = "standalone" }) {
     step: "view",
   });
   const [nombreError, setNombreError] = useState("");
-  const [clienteForm, setClienteForm] = useState(buildClienteFormFromPerfil(null));
+  const [clienteForm, setClienteForm] = useState(() => buildClienteFormFromPerfil(null));
   const [clienteError, setClienteError] = useState("");
   const { idioma } = useIdioma();
   const tElegiPais = useTraducir("Elegí un país");
@@ -292,14 +294,19 @@ export function PerfilContent({ variant = "standalone" }) {
     });
   }
 
+  const cargaRef = useRef(0);
+  const montadoRef = useRef(true);
+
   async function cargarPerfil() {
     if (!sessionUserId) return;
 
+    const carga = (cargaRef.current += 1);
     setCargando(true);
     setError("");
     clearPerfilCache();
     try {
       const data = await obtenerPerfil();
+      if (!montadoRef.current || carga !== cargaRef.current) return;
       setPerfil(data);
       setClienteForm(buildClienteFormFromPerfil(data));
       setForm({
@@ -312,20 +319,28 @@ export function PerfilContent({ variant = "standalone" }) {
       });
       applyPerfilToSession(data);
     } catch (err) {
+      if (!montadoRef.current || carga !== cargaRef.current) return;
       setError(sanitizeUserFacingError(err.message || "No se pudo cargar el perfil."));
     } finally {
-      setCargando(false);
+      if (carga === cargaRef.current) setCargando(false);
     }
   }
+
+  const cargarPerfilAlCambiarSesion = useEffectEvent(() => cargarPerfil());
 
   useEffect(() => {
     if (!sessionUserId) {
       setCargando(false);
       setError("Inicie sesi\u00f3n para ver su perfil.");
-      return;
+      return undefined;
     }
 
-    cargarPerfil();
+    montadoRef.current = true;
+    cargarPerfilAlCambiarSesion();
+    return () => {
+      montadoRef.current = false;
+      cargaRef.current += 1;
+    };
   }, [sessionUserId]);
 
   useEffect(() => {

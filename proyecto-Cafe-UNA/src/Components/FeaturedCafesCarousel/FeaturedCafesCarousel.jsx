@@ -8,6 +8,8 @@ import { useTraducir } from "../../hooks/useTraducir";
 import { ST } from "../T/ST";
 import "./FeaturedCafesCarousel.css";
 
+const EMPTY_ARRAY = [];
+
 function formatCRC(value) {
   return `\u20A1${(Number(value) || 0).toLocaleString("es-CR")}`;
 }
@@ -25,7 +27,7 @@ function CategoriaLabel({ texto }) {
   return useTraducir(texto);
 }
 
-export default function FeaturedCafesCarousel({ products = [] }) {
+export default function FeaturedCafesCarousel({ products = EMPTY_ARRAY }) {
   const [activo, setActivo] = useState(0);
   const lista = useMemo(() => products.filter(Boolean), [products]);
   const total = lista.length;
@@ -85,7 +87,7 @@ export default function FeaturedCafesCarousel({ products = [] }) {
 
           return (
             <article
-              key={producto.id ?? producto.nombre ?? index}
+              key={producto.id}
               className={`featured-cafes__card featured-cafes__card--${posicion}`}
               aria-hidden={posicion === "hidden"}
             >
@@ -114,7 +116,7 @@ export default function FeaturedCafesCarousel({ products = [] }) {
           <div className="featured-cafes__dots" role="tablist" aria-label={ariaCafes}>
             {lista.map((producto, index) => (
               <button
-                key={producto.id ?? index}
+                key={producto.id}
                 type="button"
                 className={`featured-cafes__dot${index === activo ? " is-active" : ""}`}
                 onClick={() => setActivo(index)}

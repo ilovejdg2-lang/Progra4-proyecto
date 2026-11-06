@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ModalDialog } from "../../Components/ui/ModalDialog";
 import { useNavigate } from "@tanstack/react-router";
 import { format, isBefore, startOfDay } from "date-fns";
 import { enUS, es } from "date-fns/locale";
@@ -242,6 +243,7 @@ export default function SolicitarVisita() {
     }
     const iso = format(fechaSeleccionada, "yyyy-MM-dd");
     let active = true;
+    setFranjasFecha([]);
     setCargandoFranjas(true);
 
     if (typeof obtenerFranjasHorariasPorFecha === "function") {
@@ -889,7 +891,7 @@ export default function SolicitarVisita() {
                             <ST>Al seleccionar un día habilitado, se consultarán y cargarán los turnos u horarios disponibles para esa fecha.</ST>
                           </p>
                         </div>
-                      ) : cargandoFranjas ? (
+                      ) : cargandoFranjas && slotsActuales.length === 0 ? (
                         <div className="voluntariado-aviso-bloque">
                           <div className="size-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mb-2" />
                           <p className="voluntariado-aviso-bloque__texto">
@@ -1116,12 +1118,10 @@ export default function SolicitarVisita() {
 
                 {/* Modal interactivo con recomendaciones completas */}
                 {modalRecomendacionesAbierto && (
-                  <div
+                  <ModalDialog
                     className="modal-overlay-recomendaciones"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="modal-recomendaciones-titulo"
-                    onClick={() => setModalRecomendacionesAbierto(false)}
+                    labelledBy="modal-recomendaciones-titulo"
+                    onClose={() => setModalRecomendacionesAbierto(false)}
                   >
                     <div
                       className="modal-content-recomendaciones"
@@ -1214,7 +1214,7 @@ export default function SolicitarVisita() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </ModalDialog>
                 )}
 
                 <Field label="Observaciones">

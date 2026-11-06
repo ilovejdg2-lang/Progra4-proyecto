@@ -72,6 +72,8 @@ import { asegurarCamposEnEspanol, camposParaVistaAdmin, traducirListaObjetos } f
 import { useIdioma } from "../../../lib/useIdioma";
 import { CmsImageField } from "../../../Components/ui/CmsImageField";
 
+const EMPTY_ARRAY = [];
+
 const HERO_CAMPOS_TEXTO = ["eyebrow", "title", "subtitle", "primaryButtonText", "buttonText"];
 const SECCION_CAMPOS_TEXTO = ["eyebrow", "title", "description", "linkText"];
 const TARJETA_CAMPOS_TEXTO = ["etiqueta", "titulo", "descripcion", "textoBoton"];
@@ -464,7 +466,7 @@ export function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
   );
 }
 
-export function ModalSeccionInicio({ clave, config, data, tarjetasInicio = [], onCerrar, onGuardar, guardando }) {
+export function ModalSeccionInicio({ clave, config, data, tarjetasInicio = EMPTY_ARRAY, onCerrar, onGuardar, guardando }) {
   const [form, setForm] = useState(() => ({ ...seccionInicioVacia, ...data }));
   const [subiendoImagen, setSubiendoImagen] = useState(false);
   const tModalTitle = useTraducir(config.modalTitle || "");
@@ -617,7 +619,7 @@ function PreviewProductoresHeroLive({ form }) {
   return (
     <div className="relative h-[420px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-[#dce5df] flex items-center justify-center p-3">
       <div
-        className="absolute inset-0 bg-cover bg-center transition-all duration-300"
+        className="absolute inset-0 bg-cover bg-center transition-opacity duration-300"
         style={{ backgroundImage: `url("${previewImage}")` }}
       />
       <div className="absolute inset-0 bg-black/5 pointer-events-none" />
@@ -812,7 +814,7 @@ export function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
   );
 }
 
-function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
+export function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
   const mapTarjetas = (lista) =>
     (Array.isArray(lista) ? lista : []).map((tarjeta) => ({
       ...tarjetaInicioVacia,
@@ -899,7 +901,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
           >
 
           {form.map((tarjeta, index) => (
-            <div key={tarjeta.clave || index} className="space-y-4 rounded-2xl border border-slate-200 p-4 sm:p-5">
+            <div key={tarjeta.clave} className="space-y-4 rounded-2xl border border-slate-200 p-4 sm:p-5">
               <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500">
                 {TARJETAS_INICIO_LABELS[tarjeta.clave] || tarjeta.clave}
               </h3>
@@ -969,7 +971,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
   );
 }
 
-function ModalNavbar({ navbar, enlaces = [], onCerrar, onGuardar, guardando }) {
+function ModalNavbar({ navbar, enlaces = EMPTY_ARRAY, onCerrar, onGuardar, guardando }) {
   const [form, setForm] = useState(() => ({ ...navbarInicial, ...navbar }));
   const tGuardando = useTraducir("Guardando...");
   const tGuardarCambios = useTraducir("Guardar cambios");
@@ -1095,7 +1097,7 @@ function CampoConIcono({ lugar, iconos, children }) {
   );
 }
 
-function ModalFooter({ footer, enlaces = [], onCerrar, onGuardar, guardando, puedeEditarIconos = false }) {
+function ModalFooter({ footer, enlaces = EMPTY_ARRAY, onCerrar, onGuardar, guardando, puedeEditarIconos = false }) {
   const [form, setForm] = useState(() => ({ ...footerInicial, ...footer }));
   const { idioma } = useIdioma();
   const tGuardando = useTraducir("Guardando...");
@@ -2115,6 +2117,7 @@ const AdminInformacionPaginaPrincipal = () => {
     resumenEnlacesNavbar,
     resumenEnlacesFooter,
     productoresHero,
+    faqInicio,
   ]);
 
   const {

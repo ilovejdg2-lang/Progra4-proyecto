@@ -58,3 +58,36 @@ describe("CentralStockEditor", () => {
     await waitFor(() => expect(field).toHaveFocus());
   });
 });
+
+describe("CentralStockEditor record sync", () => {
+  const record = (stock) => ({ productId: "p-1", locationCode: "BODEGA_CENTRAL", stock, confidence: "known" });
+  const renderEditor = (stock) => (
+    <CentralStockEditor open product={product} stockRecord={record(stock)} onSave={vi.fn()} onClose={vi.fn()} />
+  );
+  const getField = () =>
+    within(screen.getByRole("dialog", { name: "Stock de Bodega Central" })).getByRole("textbox", {
+      name: /^Unidades disponibles/,
+    });
+
+  it("keeps in-progress edits when the same record is re-rendered", async () => {
+    const { rerender } = render(renderEditor(4));
+    fireEvent.change(getField(), { target: { value: "9" } });
+
+    rerender(renderEditor(4));
+
+    expect(getField()).toHaveValue("9");
+  });
+
+  it("loads a different record that arrives after mount and clears the validation error", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(renderEditor(null));
+    fireEvent.change(getField(), { target: { value: "2147483648" } });
+    await user.click(screen.getByRole("button", { name: "Guardar stock" }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+
+    rerender(renderEditor(7));
+
+    expect(getField()).toHaveValue("7");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+});

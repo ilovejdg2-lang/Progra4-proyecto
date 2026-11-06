@@ -12,8 +12,8 @@ vi.mock("../../lib/useIdioma", () => ({ useIdioma: () => ({ idioma: "es" }) }));
 vi.mock("../../lib/permisos", () => ({ rolesDeUsuario: () => [], tienePermiso: () => false }));
 vi.mock("@tanstack/react-router", () => ({ Link: ({ to, children }) => <a href={to}>{children}</a> }));
 vi.mock("../../Pages/HistorialCompras/rutasCompras", () => ({ rutaMisCompras: () => "/compras" }));
-vi.mock("../../Pages/HistorialSolicitudes/HistorialSolicitudesCliente", () => ({ rutaMisSolicitudes: () => "/solicitudes" }));
-vi.mock("../../Pages/Productores/MisPropuestas", () => ({ rutaMisPropuestas: () => "/propuestas" }));
+vi.mock("../../lib/rutasSolicitudes", () => ({ rutaMisSolicitudes: () => "/solicitudes" }));
+vi.mock("../../lib/rutasPropuestas", () => ({ rutaMisPropuestas: () => "/propuestas" }));
 vi.mock("../../hooks/useProfileImage", () => ({ useProfileImage: (source) => source?.startsWith("/api/perfil/imagenes/") ? `blob:${source.split("/").at(-1)}` : source }));
 
 const avatar = "/api/perfil/imagenes/00000000-0000-4000-8000-000000000000.webp";
@@ -57,6 +57,22 @@ describe("PerfilContent image integration", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     fireEvent.click(screen.getByRole("button", { name: "Cambiar foto de perfil" }));
     expect(screen.getByRole("textbox", { name: "URL de la imagen" })).toHaveValue(avatar);
+  });
+  it("ignores a stale profile load and does not leave the spinner stuck", async () => {
+    let resolveStale;
+    obtenerPerfil.mockReturnValueOnce(new Promise((yes) => { resolveStale = yes; }));
+    obtenerPerfil.mockResolvedValueOnce({ ...profile, nombre: "Nueva Persona" });
+    const { rerender } = render(<PerfilContent />);
+    expect(screen.getByText("Cargando perfil...")).toBeInTheDocument();
+    session.user = { id: 2, token: "synthetic", name: "Nueva Persona" };
+    rerender(<PerfilContent variant="admin" />);
+    await screen.findByRole("heading", { name: "Nueva Persona" });
+    session.apply.mockClear();
+    await act(async () => resolveStale({ ...profile, nombre: "Persona Vieja" }));
+    expect(screen.getByRole("heading", { name: "Nueva Persona" })).toBeInTheDocument();
+    expect(screen.queryByText("Persona Vieja")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cargando perfil...")).not.toBeInTheDocument();
+    expect(session.apply).not.toHaveBeenCalled();
   });
   it("does not apply a save response after logout", async () => {
     let resolve;

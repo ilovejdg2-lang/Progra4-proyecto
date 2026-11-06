@@ -62,6 +62,7 @@ export async function dataUrlAArchivo(meta) {
   if (!meta?.dataUrl) return null;
   try {
     const res = await fetch(meta.dataUrl);
+    if (!res.ok) return null;
     const blob = await res.blob();
     return new File([blob], meta.name || "imagen.jpg", {
       type: meta.type || blob.type || "application/octet-stream",
