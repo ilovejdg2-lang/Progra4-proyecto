@@ -87,7 +87,7 @@ export function touchSession() {
  */
 export function peekSessionUser() {
   if (loggingOut) return null;
-  let user = null;
+  let user;
   try {
     user = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || 'null');
   } catch {
