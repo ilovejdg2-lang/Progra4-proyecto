@@ -61,8 +61,14 @@ const Hero = ({ data = EMPTY_OBJECT, onBackgroundReady }) => {
     onBackgroundReady?.();
   }, [onBackgroundReady]);
 
-  useEffect(() => {
+  // Reiniciar bgReady cuando cambia la imagen (ajuste durante el render)
+  const [urlPrevia, setUrlPrevia] = useState(backgroundUrl);
+  if (urlPrevia !== backgroundUrl) {
+    setUrlPrevia(backgroundUrl);
     setBgReady(!backgroundUrl);
+  }
+
+  useEffect(() => {
     if (!backgroundUrl) {
       onBackgroundReady?.();
       return;
