@@ -21,7 +21,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  color: #9a8c82;
+  color: #716259;
   font-size: 0.78rem;
   font-weight: 600;
   white-space: nowrap;
@@ -37,7 +37,7 @@
 
 .admin-breadcrumb__sep {
   flex-shrink: 0;
-  color: #b7aaa2;
+  color: #8c7d74;
 }
 
 .admin-breadcrumb__link,
@@ -45,7 +45,7 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #9a8c82;
+  color: #716259;
   text-decoration: none;
 }
 

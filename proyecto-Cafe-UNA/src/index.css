@@ -182,22 +182,15 @@ body.admin-route-active #root {
   box-shadow: none !important;
 }
 
-/* Tablas admin: caben al 100%; scroll horizontal solo en pantallas chicas */
+/* Tablas admin: caben al 100%; scroll horizontal en todos los breakpoints */
 .admin-table-shell {
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  overflow-x: visible;
-  overflow-y: visible;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
   font-size: var(--text-body);
-}
-
-@media (max-width: 767px) {
-  .admin-table-shell {
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-  }
 }
 
 .admin-table-shell table {
@@ -356,15 +349,8 @@ body.admin-route-active #root {
 /* Solo catálogo de productos: alto acotado + scroll interno (si se usa) */
 .admin-table-shell--constrained {
   max-height: min(70vh, 640px);
-  overflow-x: visible;
   overflow-y: auto;
   overscroll-behavior: contain;
-}
-
-@media (max-width: 767px) {
-  .admin-table-shell--constrained {
-    overflow-x: auto;
-  }
 }
 
 .admin-table-shell--constrained thead th {
@@ -375,16 +361,6 @@ body.admin-route-active #root {
 }
 
 /* Catálogo de productos: columnas sin solaparse */
-.admin-table-shell--productos {
-  overflow-x: visible;
-}
-
-@media (max-width: 767px) {
-  .admin-table-shell--productos {
-    overflow-x: auto;
-  }
-}
-
 .admin-table-shell--productos table {
   table-layout: auto;
   width: 100%;
@@ -1001,4 +977,18 @@ button[class*="backdrop"],
 .propuesta-aviso__texto {
   margin-top: 0.35rem;
   color: #075985;
+}
+
+/* Foco visible del buscador admin y del sidebar. El menú de Select tiene su propio foco. */
+body.admin-route-active input[type="search"]:not(.ui-select__search-input):focus-visible,
+body.admin-route-active aside input:focus-visible,
+body.admin-route-active aside a:focus-visible {
+  outline: 2px solid #0f172a;
+  outline-offset: 2px;
+}
+
+html.admin-theme-dark body.admin-route-active input[type="search"]:not(.ui-select__search-input):focus-visible,
+html.admin-theme-dark body.admin-route-active aside input:focus-visible,
+html.admin-theme-dark body.admin-route-active aside a:focus-visible {
+  outline-color: #38bdf8;
 }
