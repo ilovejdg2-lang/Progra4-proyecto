@@ -471,6 +471,37 @@ body.admin-route-active #root {
   margin-inline: auto;
 }
 
+/* Gestión de usuarios: proporciones y tipografía compacta sin scroll forzado */
+.admin-table-shell--usuarios table {
+  table-layout: auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-table-shell--usuarios thead th {
+  padding: 0.75rem 0.75rem;
+}
+
+.admin-table-shell--usuarios thead th:first-child,
+.admin-table-shell--usuarios tbody td:first-child {
+  padding-left: 1rem;
+}
+
+.admin-table-shell--usuarios thead th:last-child,
+.admin-table-shell--usuarios tbody td:last-child {
+  padding-right: 1rem;
+}
+
+.admin-table-shell--usuarios tbody td {
+  padding: 0.75rem 0.75rem;
+}
+
+.admin-table-shell--usuarios tbody td .st-texto,
+.admin-table-shell--usuarios tbody td button,
+.admin-table-shell--usuarios tbody td [class*="rounded-full"] {
+  font-size: 12px !important;
+}
+
 .app-loading-screen,
 .page-loading {
   min-height: 100vh;

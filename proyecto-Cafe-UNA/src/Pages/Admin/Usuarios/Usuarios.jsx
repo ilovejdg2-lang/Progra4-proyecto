@@ -32,6 +32,7 @@ import { tienePermiso } from "../../../lib/permisos";
 import { AsignacionesVendedor } from "./AsignacionesVendedor";
 import { nombrePais, obtenerOpcionesPaises } from "../../../lib/paises";
 import { useIdioma } from "../../../lib/useIdioma";
+import { inicialDeNombre } from "../../../lib/inicialDeNombre";
 import {
   MAX_NOMBRE_USUARIO,
   MAX_PASSWORD,
@@ -255,13 +256,13 @@ function InfoClienteLectura({ usuario }) {
 }
 
 const colorRol = {
-  Superadministrador: "admin-role-chip bg-slate-100 text-yellow-500 dark:bg-slate-700 dark:text-yellow-400",
-  SuperAdmin:         "admin-role-chip bg-slate-100 text-yellow-500 dark:bg-slate-700 dark:text-yellow-400",
-  Administración:     "admin-role-chip bg-slate-100 text-green-600 dark:bg-slate-700 dark:text-green-400",
-  Admin:              "admin-role-chip bg-slate-100 text-green-600 dark:bg-slate-700 dark:text-green-400",
-  Vendedor:           "admin-role-chip bg-slate-100 text-[#5c3317] dark:bg-slate-700 dark:text-orange-300",
-  Cliente:            "admin-role-chip bg-slate-100 text-red-600 dark:bg-slate-700 dark:text-red-400",
-  Usuario:            "admin-role-chip bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100",
+  Superadministrador: "admin-role-chip bg-amber-50 text-amber-800 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60",
+  SuperAdmin:         "admin-role-chip bg-amber-50 text-amber-800 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60",
+  Administración:     "admin-role-chip bg-emerald-50 text-emerald-800 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60",
+  Admin:              "admin-role-chip bg-emerald-50 text-emerald-800 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60",
+  Vendedor:           "admin-role-chip bg-orange-50 text-orange-900 border border-orange-200/80 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800/60",
+  Cliente:            "admin-role-chip bg-rose-50 text-rose-800 border border-rose-200/80 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60",
+  Usuario:            "admin-role-chip bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700",
 };
 
 function claseRol(rol) {
@@ -271,12 +272,12 @@ function claseRol(rol) {
   if (clave === "vendedor") return colorRol.Vendedor;
   if (clave === "cliente") return colorRol.Cliente;
   if (clave === "usuario") return colorRol.Usuario;
-  return colorRol[rol] ?? "admin-role-chip bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-white";
+  return colorRol[rol] ?? "admin-role-chip bg-slate-100 text-slate-800 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700";
 }
 
 function BadgeRol({ rol }) {
   return (
-    <span className={`inline-block rounded-full px-3 py-0.5 text-[length:var(--text-body)] font-semibold ${claseRol(rol)}`}>
+    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${claseRol(rol)}`}>
       <ST>{rol}</ST>
     </span>
   );
@@ -1187,7 +1188,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 
 
 const accionBtnBase =
-  "inline-flex items-center justify-center gap-1 rounded-full border text-[11px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
+  "inline-flex items-center justify-center gap-1.5 rounded-full border text-[11px] font-semibold leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
 
 function mapUsuario(item) {
   const estado = String(item?.estado ?? item?.Estado ?? "").trim().toLowerCase();
@@ -1233,11 +1234,11 @@ function AccionesUsuario({
   const esInactivo = !esUsuarioActivo(usuario.estado);
   const esMovil = variant === "mobile";
 
-  const editarCls = `${accionBtnBase} border-slate-950 bg-slate-950 text-white hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 focus-visible:ring-slate-400`;
+  const editarCls = `${accionBtnBase} border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)] active:bg-[var(--admin-surface-hover)] focus-visible:ring-2 focus-visible:ring-[var(--admin-focus-ring)] shadow-xs`;
   const toggleCls = `${accionBtnBase} ${
     esInactivo
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300"
-      : "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300"
+      ? "border-emerald-300/80 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-700/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 focus-visible:ring-emerald-500"
+      : "border-rose-300/80 bg-rose-50 text-rose-800 hover:bg-rose-100 dark:border-rose-700/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 focus-visible:ring-rose-500"
   }`;
 
   const toggleLabel = toggleando === usuario.id
@@ -1249,7 +1250,7 @@ function AccionesUsuario({
   if (esMovil) {
     return (
       <div className="flex gap-1.5">
-        <button type="button" onClick={onEditar} className={`${editarCls} h-8 px-2.5`}>
+        <button type="button" onClick={onEditar} className={`${editarCls} h-8 px-3`}>
           <Pencil className="size-3 shrink-0" aria-hidden="true" />
           <span><ST>Editar</ST></span>
         </button>
@@ -1258,7 +1259,7 @@ function AccionesUsuario({
           onClick={onToggle}
           disabled={toggleando === usuario.id || !puedeCambiarEstado}
           title={!puedeCambiarEstado ? t("Solo SuperAdmin puede cambiar estado.") : ""}
-          className={`${toggleCls} h-8 px-2.5 disabled:cursor-not-allowed disabled:opacity-50`}
+          className={`${toggleCls} h-8 px-3 disabled:cursor-not-allowed disabled:opacity-50`}
         >
           <Power className="size-3 shrink-0" aria-hidden="true" />
           <span>{toggleLabel === "..." ? "..." : <ST>{toggleLabel}</ST>}</span>
@@ -1268,8 +1269,8 @@ function AccionesUsuario({
   }
 
   return (
-    <div className="flex gap-1">
-      <button type="button" onClick={onEditar} className={`${editarCls} h-7 px-2`}>
+    <div className="flex gap-1.5">
+      <button type="button" onClick={onEditar} className={`${editarCls} h-7 px-2.5`}>
         <Pencil className="size-3 shrink-0" aria-hidden="true" />
         <span><ST>Editar</ST></span>
       </button>
@@ -1278,7 +1279,7 @@ function AccionesUsuario({
         onClick={onToggle}
         disabled={toggleando === usuario.id || !puedeCambiarEstado}
         title={!puedeCambiarEstado ? t("Solo SuperAdmin puede cambiar estado.") : ""}
-        className={`${toggleCls} h-7 px-2 disabled:cursor-not-allowed disabled:opacity-50`}
+        className={`${toggleCls} h-7 px-2.5 disabled:cursor-not-allowed disabled:opacity-50`}
       >
         <Power className="size-3 shrink-0" aria-hidden="true" />
         <span>{toggleLabel === "..." ? "..." : <ST>{toggleLabel}</ST>}</span>
@@ -1489,18 +1490,37 @@ const AdminUsuarios = () => {
 
   const columns = useMemo(() => [
     {
+      id: "usuario",
       accessorKey: "nombre",
-      header: () => <ST>Nombre</ST>,
-      cell: ({ getValue }) => (
-        <span className="font-medium text-slate-800">{getValue()}</span>
-      ),
-    },
-    {
-      accessorKey: "correo",
-      header: () => <ST>Email</ST>,
-      cell: ({ getValue }) => (
-        <span className="text-slate-500">{getValue()}</span>
-      ),
+      header: () => <ST>Usuario</ST>,
+      cell: ({ row }) => {
+        const usuario = row.original;
+        const inicial = inicialDeNombre(usuario.nombre);
+        return (
+          <div className="flex items-center gap-3 min-w-0">
+            <span
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--admin-surface-hover)] text-xs font-bold text-[var(--admin-accent-coffee)] ring-1 ring-[var(--admin-border)]"
+              aria-hidden="true"
+            >
+              {inicial}
+            </span>
+            <div className="min-w-0 flex-1 max-w-[15rem] md:max-w-[18rem]">
+              <div
+                className="truncate font-medium text-[var(--admin-text-primary)]"
+                title={usuario.nombre}
+              >
+                {usuario.nombre}
+              </div>
+              <div
+                className="truncate text-xs text-[var(--admin-text-muted)]"
+                title={usuario.correo}
+              >
+                {usuario.correo}
+              </div>
+            </div>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "roles",
@@ -1514,7 +1534,7 @@ const AdminUsuarios = () => {
           <div className="flex flex-wrap gap-1">
             {roles.map((rol) => <BadgeRol key={rol} rol={rol} />)}
             {sinPunto ? (
-              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-900 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800">
                 <ST>Sin punto de venta</ST>
               </span>
             ) : null}
@@ -1527,11 +1547,22 @@ const AdminUsuarios = () => {
       header: () => <ST>Estado</ST>,
       cell: ({ getValue }) => {
         const estado = getValue();
+        const activo = esUsuarioActivo(estado);
         return (
-          <span className={`text-xs font-medium ${
-            esUsuarioActivo(estado) ? "text-green-700" : "text-red-600"
-          }`}>
-            <ST>{esUsuarioActivo(estado) ? "Habilitado" : "Deshabilitado"}</ST>
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+              activo
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300"
+                : "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300"
+            }`}
+          >
+            <span
+              className={`size-1.5 rounded-full ${
+                activo ? "bg-emerald-600 dark:bg-emerald-400" : "bg-rose-600 dark:bg-rose-400"
+              }`}
+              aria-hidden="true"
+            />
+            <ST>{activo ? "Habilitado" : "Deshabilitado"}</ST>
           </span>
         );
       },
@@ -1657,13 +1688,13 @@ const AdminUsuarios = () => {
           <AdminListaVacia onLimpiar={limpiar} />
         ) : (
           <>
-            <div className="admin-table-shell hidden md:block">
+            <div className="admin-table-shell admin-table-shell--usuarios hidden min-w-0 md:block">
               <table className="w-full text-left text-[length:var(--text-body)]">
                 <thead>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <tr key={headerGroup.id}>
                       {headerGroup.headers.map((header) => (
-                        <th key={header.id}>
+                        <th key={header.id} scope="col">
                           {header.column.getCanSort() ? (
                             <button
                               type="button"
@@ -1683,9 +1714,9 @@ const AdminUsuarios = () => {
                     </tr>
                   ))}
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                   {table.getRowModel().rows.map((row) => (
-                    <tr key={row.id} className="transition hover:bg-slate-50/60">
+                    <tr key={row.id} className="transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.04]">
                       {row.getVisibleCells().map((cell) => (
                         <td key={cell.id} className="px-6 py-3.5">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1697,22 +1728,33 @@ const AdminUsuarios = () => {
               </table>
             </div>
 
-            <div className="divide-y divide-slate-100 md:hidden">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800/60 md:hidden">
               {usuariosPagina.map((usuario) => {
                 const esMismoUsuario = actorId !== null && Number(usuario.id) === actorId;
                 const puedeCambiarEstado = esSuperAdmin && !esMismoUsuario;
+                const activo = esUsuarioActivo(usuario.estado);
 
                 return (
                   <article key={usuario.id} className="space-y-3 px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <h3 className="truncate font-semibold text-slate-900">{usuario.nombre}</h3>
-                        <p className="mt-0.5 truncate text-sm text-slate-500">{usuario.correo}</p>
+                        <h3 className="truncate font-semibold text-slate-900 dark:text-slate-100">{usuario.nombre}</h3>
+                        <p className="mt-0.5 truncate text-sm text-slate-500 dark:text-slate-400">{usuario.correo}</p>
                       </div>
-                      <span className={`shrink-0 text-xs font-medium ${
-                        esUsuarioActivo(usuario.estado) ? "text-green-700" : "text-red-600"
-                      }`}>
-                        {esUsuarioActivo(usuario.estado) ? "Habilitado" : "Deshabilitado"}
+                      <span
+                        className={`inline-flex items-center gap-1.5 shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+                          activo
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300"
+                            : "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300"
+                        }`}
+                      >
+                        <span
+                          className={`size-1.5 rounded-full ${
+                            activo ? "bg-emerald-600 dark:bg-emerald-400" : "bg-rose-600 dark:bg-rose-400"
+                          }`}
+                          aria-hidden="true"
+                        />
+                        <ST>{activo ? "Habilitado" : "Deshabilitado"}</ST>
                       </span>
                     </div>
 
@@ -1722,7 +1764,7 @@ const AdminUsuarios = () => {
                       ))}
                       {(usuario.roles || []).some((rol) => String(rol).toLowerCase() === "vendedor")
                         && Number(usuario.puntosVentaActivos) === 0 ? (
-                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-900 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800">
                           <ST>Sin punto de venta</ST>
                         </span>
                       ) : null}
