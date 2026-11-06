@@ -15,6 +15,7 @@ import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
+import { useVerificacionCorreoUsuario } from "../../../hooks/useVerificacionCorreoUsuario";
 import {
   obtenerUsuarios,
   obtenerAsignacionesPunto,
@@ -304,13 +305,19 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 
   const [pasoCreacion, setPasoCreacion] = useState("datos");
   const [codigoVerificacion, setCodigoVerificacion] = useState("");
-  const [passwordCorreoUsuario, setPasswordCorreoUsuario] = useState("");
-  const [errorPasswordCorreo, setErrorPasswordCorreo] = useState("");
-  const [correoVerificado, setCorreoVerificado] = useState(Boolean(inicial));
   const [mensajeCorreo, setMensajeCorreo] = useState("");
   const [errorCorreo, setErrorCorreo] = useState("");
   const [verificandoCorreo, setVerificandoCorreo] = useState(false);
   const [correoForm, setCorreoForm] = useState(inicial?.correo ?? "");
+  const correoCambio = Boolean(inicial) && correoForm.trim().toLowerCase() !== correoOriginal;
+  const {
+    correoVerificado,
+    setCorreoVerificado,
+    passwordCorreoUsuario,
+    setPasswordCorreoUsuario,
+    errorPasswordCorreo,
+    setErrorPasswordCorreo,
+  } = useVerificacionCorreoUsuario(inicial, correoCambio);
   const [fieldErrors, setFieldErrors] = useState({
     nombre: "",
     passwordHash: "",
@@ -566,20 +573,6 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
     e.preventDefault();
     e.stopPropagation();
     form.handleSubmit();
-  }
-
-  const correoCambio = Boolean(inicial) && correoForm.trim().toLowerCase() !== correoOriginal;
-
-  // Reset the email verification state when the edited user or the "email changed"
-  // status changes (adjust state during render, not in an effect).
-  const [estadoCorreoPrevio, setEstadoCorreoPrevio] = useState({ correoCambio, inicial });
-  if (estadoCorreoPrevio.correoCambio !== correoCambio || estadoCorreoPrevio.inicial !== inicial) {
-    setEstadoCorreoPrevio({ correoCambio, inicial });
-    setCorreoVerificado(Boolean(inicial) && !correoCambio);
-    if (inicial && !correoCambio) {
-      setPasswordCorreoUsuario("");
-      setErrorPasswordCorreo("");
-    }
   }
 
   async function handleSolicitarCodigoCorreo() {
