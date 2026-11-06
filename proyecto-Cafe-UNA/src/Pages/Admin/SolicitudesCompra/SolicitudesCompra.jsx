@@ -98,17 +98,6 @@ function SolicitudFormModal({
   const tAgregarProveedor = useTraducir("Agregar proveedor");
   const tCantidad = useTraducir("Cantidad");
 
-  useEffect(() => {
-    if (!open) return;
-    setProveedorId("");
-    setFechaEstimadaEntrega("");
-    setNotas("");
-    setFilas([{ productoId: "", cantidad: "" }]);
-    pdfRef.current = null;
-    setValidationError("");
-    setNuevoProveedor("");
-  }, [open]);
-
   if (!open) return null;
 
   const message = validationError || error;
@@ -696,8 +685,9 @@ export default function AdminSolicitudesCompra() {
           )}
         </div>
 
-        <SolicitudFormModal
-          open={formOpen}
+        {/* Mounted only while open so every opening starts from a blank form. */}
+        {formOpen ? <SolicitudFormModal
+          open
           onClose={() => setFormOpen(false)}
           onSave={handleCrear}
           isSaving={isSaving}
@@ -712,7 +702,7 @@ export default function AdminSolicitudesCompra() {
             setProveedores((current) => [...current, creado].sort((a, b) => a.nombre.localeCompare(b.nombre, "es")));
             return creado;
           }}
-        />
+        /> : null}
         <DetalleModal open={Boolean(detalle)} solicitud={detalle} onClose={() => setDetalle(null)} />
       </AdminLayout>
     </AdminPageGate>
