@@ -55,3 +55,36 @@ export function normalizarHistoriaCompleta(raw) {
 export async function fetchHistoriaCompletaPage() {
   return normalizarHistoriaCompleta(await obtenerHistoriaCompleta());
 }
+
+// Client-only row identity for the admin editor. It keeps React keys stable while rows
+// are edited, added, removed or reordered, and is stripped before anything is sent to the API.
+export function nuevoUid() {
+  return globalThis.crypto.randomUUID();
+}
+
+const conUid = (item) => (item.uid ? item : { ...item, uid: nuevoUid() });
+const sinUid = (item) => {
+  const copia = { ...item };
+  delete copia.uid;
+  return copia;
+};
+
+export function conUids(historia) {
+  return {
+    ...historia,
+    cifras: historia.cifras.map(conUid),
+    hitos: historia.hitos.map(conUid),
+    compost: historia.compost.map(conUid),
+    capitulos: historia.capitulos.map((c) => ({ ...conUid(c), bloques: c.bloques.map(conUid) })),
+  };
+}
+
+export function sinUids(historia) {
+  return {
+    ...historia,
+    cifras: historia.cifras.map(sinUid),
+    hitos: historia.hitos.map(sinUid),
+    compost: historia.compost.map(sinUid),
+    capitulos: historia.capitulos.map((c) => ({ ...sinUid(c), bloques: c.bloques.map(sinUid) })),
+  };
+}
