@@ -92,6 +92,25 @@ describe("AdminVisitas", () => {
     expect(await screen.findByText(/actualizada correctamente/i)).toBeInTheDocument();
   });
 
+  it("disables the row actions while its update is in flight", async () => {
+    let resolveUpdate;
+    actualizarMock.mockReturnValueOnce(new Promise((resolve) => { resolveUpdate = resolve; }));
+    render(<AdminVisitas />);
+
+    await screen.findAllByText("Ana López");
+    fireEvent.click(screen.getByLabelText("Ver solicitud 41"));
+    fireEvent.click(screen.getByRole("button", { name: "Aprobar" }));
+    await waitFor(() => expect(actualizarMock).toHaveBeenCalledTimes(1));
+
+    // Closing the modal must not re-enable the row while the request is pending
+    fireEvent.click(screen.getAllByRole("button", { name: "Cerrar" }).at(-1));
+    expect(screen.getByLabelText("Ver solicitud 41")).toBeDisabled();
+    expect(screen.getByLabelText("Editar solicitud 41")).toBeDisabled();
+
+    resolveUpdate({ ...request, estado: "Aprobada" });
+    await waitFor(() => expect(screen.getByLabelText("Ver solicitud 41")).toBeEnabled());
+  });
+
   it("soft-deletes a visit immediately without confirm dialog", async () => {
     eliminarMock.mockResolvedValueOnce({ message: "Solicitud inactivada" });
     const confirmSpy = vi.spyOn(window, "confirm");

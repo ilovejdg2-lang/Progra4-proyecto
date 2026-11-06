@@ -641,6 +641,13 @@ export default function DocumentacionAdministrativa() {
               ) : null}
             </div>
 
+            {error ? (
+              <div className="aviso-error-banner" role="alert">
+                <AlertCircle size={16} />
+                <span>{error}</span>
+              </div>
+            ) : null}
+
             {/* Tabla de Documentos */}
             {cargando ? (
               <div className="admin-docs-loading">

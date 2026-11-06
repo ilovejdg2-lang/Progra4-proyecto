@@ -811,6 +811,7 @@ export default function AdminVisitas() {
                                   <div className="flex items-center justify-end gap-1.5">
                                     <button
                                       type="button"
+                                      disabled={busyId === item.id}
                                       onClick={() => setViendo(item)}
                                       className={`${verCls} h-7 px-2.5`}
                                       title="Ver solicitud"
@@ -821,6 +822,7 @@ export default function AdminVisitas() {
                                     </button>
                                     <button
                                       type="button"
+                                      disabled={busyId === item.id}
                                       onClick={() => setEditando(item)}
                                       className={`${editarCls} h-7 px-2.5`}
                                       title="Editar solicitud"
@@ -860,7 +862,8 @@ export default function AdminVisitas() {
                           <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-slate-100">
                             <button
                               type="button"
-                              onClick={() => setViendo(item)}
+                              disabled={busyId === item.id}
+                                      onClick={() => setViendo(item)}
                               className={`${verCls} h-8 px-2.5`}
                               aria-label={`Ver solicitud ${item.id} móvil`}
                             >
@@ -869,7 +872,8 @@ export default function AdminVisitas() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setEditando(item)}
+                              disabled={busyId === item.id}
+                                      onClick={() => setEditando(item)}
                               className={`${editarCls} h-8 px-2.5`}
                               aria-label={`Editar solicitud ${item.id} móvil`}
                             >

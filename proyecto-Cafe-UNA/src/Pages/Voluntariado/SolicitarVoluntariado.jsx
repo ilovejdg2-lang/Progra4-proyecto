@@ -219,7 +219,6 @@ function SolicitarVoluntariado() {
   const [errorApi, setErrorApi] = useState(null);
   const [consultandoCedula, setConsultandoCedula] = useState(false);
   const [avisoCedula, setAvisoCedula] = useState(null);
-  const [nombreAutocargado, setNombreAutocargado] = useState(false);
   const [sedeFinca, setSedeFinca] = useState(() => sedeDesdeHomeLocation(null));
 
   const {
@@ -390,7 +389,6 @@ function SolicitarVoluntariado() {
 
       if (!nombre && !primerApellido) {
         consultaCedulaRef.current = { digitos: "", enCurso: false };
-        setNombreAutocargado(false);
         setFormulario((prev) => ({
           ...prev,
           nombre: "",
@@ -402,7 +400,6 @@ function SolicitarVoluntariado() {
       }
 
       consultaCedulaRef.current = { digitos, enCurso: false };
-      setNombreAutocargado(true);
       setFormulario((prev) => ({
         ...prev,
         identificacion: digitos,
@@ -421,7 +418,6 @@ function SolicitarVoluntariado() {
       });
     } catch (error) {
       consultaCedulaRef.current = { digitos: "", enCurso: false };
-      setNombreAutocargado(false);
       setFormulario((prev) => ({
         ...prev,
         nombre: "",
@@ -545,7 +541,6 @@ function SolicitarVoluntariado() {
       valor = limpiarIdentificacion(tipoDocumento, valor);
       if (!esPasaporte) {
         consultaCedulaRef.current = { digitos: "", enCurso: false };
-        setNombreAutocargado(false);
         setFormulario((prev) => ({
           ...prev,
           identificacion: valor,
@@ -592,7 +587,6 @@ function SolicitarVoluntariado() {
       pais: valor === "pasaporte" ? (prev.pais === "Costa Rica" ? "" : prev.pais) : "Costa Rica",
     }));
     setAvisoCedula(null);
-    setNombreAutocargado(false);
     limpiarError("identificacion");
     limpiarError("nacionalidad");
     limpiarError("pais");
@@ -712,7 +706,6 @@ function SolicitarVoluntariado() {
     setErrores({});
     setErrorApi(null);
     setAvisoCedula(null);
-    setNombreAutocargado(false);
   };
 
   const handleSubmit = async (e) => {

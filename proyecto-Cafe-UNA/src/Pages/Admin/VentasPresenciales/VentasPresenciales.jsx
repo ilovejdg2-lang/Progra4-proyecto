@@ -96,7 +96,6 @@ export default function AdminVentasPresenciales() {
   const [clienteNombre, setClienteNombre] = useState("");
   const [clienteCorreo, setClienteCorreo] = useState("");
   const [enviarCorreo, setEnviarCorreo] = useState(false);
-  const [notas, setNotas] = useState("");
 
   // Estados de proceso y UI
   const [isSaving, setIsSaving] = useState(false);
@@ -305,7 +304,6 @@ export default function AdminVentasPresenciales() {
     setClienteNombre("");
     setClienteCorreo("");
     setEnviarCorreo(false);
-    setNotas("");
     setMontoRecibido("");
     setFormError("");
   };
@@ -373,7 +371,6 @@ export default function AdminVentasPresenciales() {
         clienteNombre: clienteNombre.trim(),
         clienteCorreo: clienteCorreo.trim(),
         enviarCorreo: Boolean(enviarCorreo && clienteCorreo.trim()),
-        notas: notas.trim(),
         total: totalCarrito,
       };
 
@@ -403,7 +400,6 @@ export default function AdminVentasPresenciales() {
         total: Number.isFinite(Number(resultado?.total)) ? Number(resultado.total) : totalCarrito,
         montoRecibido: resultado?.montoRecibido ?? pago?.montoRecibido ?? null,
         vuelto: resultado?.vuelto ?? pago?.vuelto ?? null,
-        notas: notas.trim(),
         correoEnviado: Boolean(resultado?.correoEnviado),
       };
 
@@ -452,7 +448,6 @@ export default function AdminVentasPresenciales() {
         total: resumenVenta.total,
         montoRecibido: resumenVenta.montoRecibido,
         vuelto: resumenVenta.vuelto,
-        notas: resumenVenta.notas,
       });
 
       if (resp?.success !== false) {
