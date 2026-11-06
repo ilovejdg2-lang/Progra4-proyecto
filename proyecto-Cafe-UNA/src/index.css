@@ -102,8 +102,9 @@ body.admin-route-active {
 
   /* Typography / Text colors */
   --admin-text-primary: #0f172a;
-  --admin-text-muted: #64748b;
-  --admin-text-subtle: #94a3b8;
+  --admin-text-muted: #475569;
+  /* Decorative non-text only (placeholders, disabled/inactive icons, decorative indicators) */
+  --admin-text-decorative: #94a3b8;
 
   /* Brand accents */
   --admin-accent-coffee: #5c4038;
@@ -120,7 +121,7 @@ body.admin-route-active {
   --admin-status-success-bg: #dcfce7;
   --admin-status-success-text: #15803d;
   --admin-status-danger-bg: #fee2e2;
-  --admin-status-danger-text: #dc2626;
+  --admin-status-danger-text: #b91c1c;
   --admin-status-warning-bg: #fef3c7;
   --admin-status-warning-text: #b45309;
 
@@ -141,7 +142,8 @@ html.admin-theme-dark body.admin-route-active {
   /* Typography / Text colors */
   --admin-text-primary: #e2e8f0;
   --admin-text-muted: #94a3b8;
-  --admin-text-subtle: #64748b;
+  /* Decorative non-text only (placeholders, disabled/inactive icons, decorative indicators) */
+  --admin-text-decorative: #64748b;
 
   /* Brand accents: #b88376 reaches 5.39:1 on #161b22 and 5.90:1 on #0e1116 (passes WCAG 2.1 AA 4.5:1) */
   --admin-accent-coffee: #b88376;

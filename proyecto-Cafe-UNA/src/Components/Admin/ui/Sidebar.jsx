@@ -204,7 +204,7 @@ export function SidebarTrigger({ className, onClick, ...props }) {
     <button
       type="button"
       className={cn(
-        "inline-flex size-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-100 hover:text-slate-950 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white",
+        "inline-flex size-9 items-center justify-center rounded-[var(--admin-control-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-muted)] shadow-sm transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)]",
         className,
       )}
       aria-expanded={abierto}

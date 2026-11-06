@@ -368,21 +368,6 @@ html.admin-theme-dark .lang-switch--on-light .lang-switch__btn.is-active {
   color: #0f172a;
 }
 
-html.admin-theme-dark body.admin-route-active .admin-breadcrumb__list,
-html.admin-theme-dark body.admin-route-active .admin-breadcrumb__link,
-html.admin-theme-dark body.admin-route-active .admin-breadcrumb__text,
-html.admin-theme-dark body.admin-route-active .admin-breadcrumb__sep {
-  color: #8b9bb0;
-}
-
-html.admin-theme-dark body.admin-route-active .admin-breadcrumb__link:hover {
-  color: #f1f5f9;
-}
-
-html.admin-theme-dark body.admin-route-active .admin-breadcrumb__current {
-  color: #e7c9a8;
-}
-
 html.admin-theme-dark body.admin-route-active .navbar__icon-button {
   color: #e2e8f0;
   filter: none;
