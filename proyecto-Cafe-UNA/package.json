@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:mock": "node tools/design-mock/dev.mjs",
     "build": "node scripts/generate-redirects.mjs && vite build",
     "lint": "eslint .",
     "test": "vitest run",
