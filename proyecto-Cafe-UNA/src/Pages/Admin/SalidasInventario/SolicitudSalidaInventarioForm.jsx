@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { nuevoUid } from "../../../lib/clientUid";
+
 const inputClass = "h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
 const labelClass = "block text-sm font-semibold text-slate-800 dark:text-slate-100";
 
@@ -30,7 +32,7 @@ function stockDisponible(producto) {
 }
 
 function nuevoItem() {
-  return { productoId: "", cantidad: "" };
+  return { uid: nuevoUid(), productoId: "", cantidad: "" };
 }
 
 export function SolicitudSalidaInventarioForm({ productos = [], onSubmit, isSubmitting = false }) {
@@ -124,7 +126,7 @@ export function SolicitudSalidaInventarioForm({ productos = [], onSubmit, isSubm
         {items.map((item, index) => {
           const selectedIds = new Set(items.filter((_, itemIndex) => itemIndex !== index).map((entry) => entry.productoId));
           return (
-            <div key={index} role="group" aria-label={`Artículo ${index + 1}`} className="grid gap-3 rounded-xl border border-slate-200 p-3 sm:grid-cols-[minmax(0,1fr)_9rem_auto] dark:border-slate-700">
+            <div key={item.uid} role="group" aria-label={`Artículo ${index + 1}`} className="grid gap-3 rounded-xl border border-slate-200 p-3 sm:grid-cols-[minmax(0,1fr)_9rem_auto] dark:border-slate-700">
               <label className={labelClass}>
                 Producto
                 <select aria-label="Producto" value={item.productoId} onChange={(event) => updateItem(index, { productoId: event.target.value })} className={`${inputClass} mt-2`} required>

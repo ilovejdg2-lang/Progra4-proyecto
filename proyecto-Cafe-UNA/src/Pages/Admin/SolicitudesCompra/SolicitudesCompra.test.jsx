@@ -76,4 +76,20 @@ describe("SolicitudesCompra form", () => {
     await waitFor(() => expect(crearSolicitudMock).toHaveBeenCalledOnce());
     expect(crearSolicitudMock.mock.calls[0][0].proformaFile).toBeUndefined();
   });
+
+  it("keeps the remaining row's input node and typed value when another row is removed", async () => {
+    render(<AdminSolicitudesCompra />);
+    const dialog = await abrirFormulario();
+    fireEvent.click(within(dialog).getByRole("button", { name: /Agregar ítem/ }));
+    const [first, second] = within(dialog).getAllByPlaceholderText("Cantidad");
+    fireEvent.change(first, { target: { value: "3" } });
+    fireEvent.change(second, { target: { value: "7" } });
+
+    fireEvent.click(within(dialog).getAllByRole("button", { name: "Quitar fila" })[0]);
+
+    const restantes = within(dialog).getAllByPlaceholderText("Cantidad");
+    expect(restantes).toHaveLength(1);
+    expect(restantes[0]).toBe(second);
+    expect(restantes[0]).toHaveValue("7");
+  });
 });
