@@ -270,7 +270,7 @@ const AdminPuntosVenta = () => {
               <AdminListaToolbar
                 busqueda={filters.busqueda}
                 onBusquedaChange={filters.setBusqueda}
-                filtrosContenedorClassName="grid w-full min-w-0 grid-cols-1 gap-3 min-[480px]:grid-cols-2"
+                filtrosContenedorClassName="grid w-full min-w-0 grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:w-auto xl:flex-1"
                 placeholder="Buscar por nombre, descripción, categoría, estado o peso..."
                 total={filters.total}
                 visibles={filters.visibles}
