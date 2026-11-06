@@ -18,7 +18,7 @@ function fakeToken(user) {
     role: user.roles,
     exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60,
   };
-  return `${b64url({ alg: "none", typ: "JWT" })}.${b64url(payload)}.mock`;
+  return `${b64url({ alg: "HS256", typ: "JWT" })}.${b64url(payload)}.mock`;
 }
 
 const NOMBRES = [
