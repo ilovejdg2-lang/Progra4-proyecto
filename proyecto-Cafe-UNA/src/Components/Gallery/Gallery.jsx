@@ -104,10 +104,13 @@ const Gallery = ({
     });
   }, [pageItems.length]);
 
-  useEffect(() => {
+  // Reiniciar paginación y lightbox cuando cambian las fotos (ajuste durante el render)
+  const [itemsPrevios, setItemsPrevios] = useState(items);
+  if (itemsPrevios !== items) {
+    setItemsPrevios(items);
     setCurrentPage(1);
     setActiveIndex(null);
-  }, [categoria, items]);
+  }
 
   const handleLightboxKey = useEffectEvent((event) => {
     if (event.key === 'ArrowLeft') showPrevious();
@@ -130,7 +133,10 @@ const Gallery = ({
   };
 
   const cambiarCategoria = (valor) => {
+    if (valor === categoria) return;
     setCategoria(valor);
+    setCurrentPage(1);
+    setActiveIndex(null);
   };
 
   if (items.length === 0) return null;
