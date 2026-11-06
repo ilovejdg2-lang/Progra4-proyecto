@@ -17,7 +17,7 @@ export function AdminBreadcrumb() {
         {items.map((item, index) => {
           const esUltimo = index === items.length - 1;
           return (
-            <li key={`${item.label}-${index}`} className="admin-breadcrumb__item">
+            <li key={item.to ?? item.label} className="admin-breadcrumb__item">
               {index > 0 ? (
                 <span className="admin-breadcrumb__sep" aria-hidden="true">
                   /
