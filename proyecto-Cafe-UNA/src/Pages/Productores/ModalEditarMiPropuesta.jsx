@@ -106,13 +106,17 @@ export function ModalEditarMiPropuesta({
 }) {
   const [form, setForm] = useState(() => inicializarForm(propuesta));
   const [imagenFile, setImagenFile] = useState(null);
-  const [imagenPreview, setImagenPreview] = useState("");
+  const [imagenPreview, setImagenPreview] = useState(() => (propuesta ? previewDesdePropuesta(propuesta) : ""));
   const [errores, setErrores] = useState({});
   const [guardando, setGuardando] = useState(false);
   const [errorGeneral, setErrorGeneral] = useState("");
   const tSeleccione = useTraducir("Seleccione una opción");
 
-  useEffect(() => {
+  // Reload the form whenever the proposal changes or the modal is reopened
+  // (adjust state during render, not in an effect).
+  const [origen, setOrigen] = useState({ propuesta, open });
+  if (origen.propuesta !== propuesta || origen.open !== open) {
+    setOrigen({ propuesta, open });
     if (propuesta) {
       setForm(inicializarForm(propuesta));
       setImagenFile(null);
@@ -120,7 +124,7 @@ export function ModalEditarMiPropuesta({
       setErrores({});
       setErrorGeneral("");
     }
-  }, [propuesta, open]);
+  }
 
   useEffect(() => {
     if (!open || !imagenFile) return undefined;
