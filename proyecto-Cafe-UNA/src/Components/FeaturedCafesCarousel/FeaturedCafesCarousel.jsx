@@ -87,7 +87,7 @@ export default function FeaturedCafesCarousel({ products = EMPTY_ARRAY }) {
 
           return (
             <article
-              key={producto.id ?? producto.nombre ?? index}
+              key={producto.id}
               className={`featured-cafes__card featured-cafes__card--${posicion}`}
               aria-hidden={posicion === "hidden"}
             >
@@ -116,7 +116,7 @@ export default function FeaturedCafesCarousel({ products = EMPTY_ARRAY }) {
           <div className="featured-cafes__dots" role="tablist" aria-label={ariaCafes}>
             {lista.map((producto, index) => (
               <button
-                key={producto.id ?? index}
+                key={producto.id}
                 type="button"
                 className={`featured-cafes__dot${index === activo ? " is-active" : ""}`}
                 onClick={() => setActivo(index)}

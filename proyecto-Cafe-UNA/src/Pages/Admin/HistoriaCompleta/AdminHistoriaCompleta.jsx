@@ -11,9 +11,12 @@ import { useTraducir } from "../../../hooks/useTraducir";
 import {
   TIPOS_BLOQUE_HISTORIA,
   bloqueVacio,
+  conUids,
   historiaVacia,
   normalizarHistoriaCompleta,
+  sinUids,
 } from "../../../lib/historiaCompletaData";
+import { nuevoUid } from "../../../lib/clientUid";
 import { t } from "../../../lib/t";
 import {
   actualizarHistoriaCompleta,
@@ -112,6 +115,8 @@ function AccionesFila({ indice, total, onMover, onQuitar }) {
     </div>
   );
 }
+
+const bloqueNuevo = (tipo) => ({ ...bloqueVacio(tipo), uid: nuevoUid() });
 
 function mover(lista, indice, direccion) {
   const destino = indice + direccion;
@@ -230,7 +235,7 @@ function EditorCapitulo({ capitulo, indice, total, abierto, onToggle, onChange, 
           <Campo label="Título del capítulo" value={capitulo.titulo} onChange={(titulo) => onChange({ titulo })} maxLength={200} />
           {bloques.length === 0 ? <ListaVacia mensaje="Este capítulo todavía no tiene bloques." /> : null}
           {bloques.map((bloque, j) => (
-            <div key={j} className="grid gap-3 rounded-2xl bg-slate-50 p-4">
+            <div key={bloque.uid} className="grid gap-3 rounded-2xl bg-slate-50 p-4">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[length:var(--text-body)] font-semibold text-slate-600">
                   <ST>{`Bloque ${j + 1}`}</ST>
@@ -246,8 +251,8 @@ function EditorCapitulo({ capitulo, indice, total, abierto, onToggle, onChange, 
             </div>
           ))}
           <div className="flex flex-wrap gap-2">
-            <BotonAgregar label="Agregar bloque" onClick={() => cambiarBloques([...bloques, bloqueVacio()])} />
-            <BotonAgregar label="Agregar imagen" icono={ImagePlus} onClick={() => cambiarBloques([...bloques, bloqueVacio("foto")])} />
+            <BotonAgregar label="Agregar bloque" onClick={() => cambiarBloques([...bloques, bloqueNuevo()])} />
+            <BotonAgregar label="Agregar imagen" icono={ImagePlus} onClick={() => cambiarBloques([...bloques, bloqueNuevo("foto")])} />
           </div>
         </div>
       ) : null}
@@ -267,7 +272,7 @@ const AdminHistoriaCompleta = () => {
   const cargar = useCallback(async () => {
     setEstado("loading");
     try {
-      setHistoria(normalizarHistoriaCompleta(await obtenerHistoriaCompleta()));
+      setHistoria(conUids(normalizarHistoriaCompleta(await obtenerHistoriaCompleta())));
       setSinGuardar(false);
       setEstado("ready");
     } catch {
@@ -305,8 +310,8 @@ const AdminHistoriaCompleta = () => {
     }
     try {
       setGuardando(true);
-      const guardada = await actualizarHistoriaCompleta(historia);
-      setHistoria(normalizarHistoriaCompleta(guardada));
+      const guardada = await actualizarHistoriaCompleta(sinUids(historia));
+      setHistoria(conUids(normalizarHistoriaCompleta(guardada)));
       setSinGuardar(false);
       setMensaje("Cambios guardados.");
     } catch (err) {
@@ -384,11 +389,11 @@ const AdminHistoriaCompleta = () => {
               <Seccion
                 titulo="Cifras"
                 descripcion="Datos destacados que aparecen debajo de la portada."
-                accion={<BotonAgregar label="Agregar cifra" onClick={() => cambiarLista("cifras")([...cifras, { valor: "", texto: "" }])} />}
+                accion={<BotonAgregar label="Agregar cifra" onClick={() => cambiarLista("cifras")([...cifras, { uid: nuevoUid(), valor: "", texto: "" }])} />}
               >
                 {cifras.length === 0 ? <ListaVacia mensaje="No hay cifras." /> : null}
                 {cifras.map((cifra, i) => (
-                  <div key={i} className="grid items-end gap-3 md:grid-cols-[12rem_minmax(0,1fr)_auto]">
+                  <div key={cifra.uid} className="grid items-end gap-3 md:grid-cols-[12rem_minmax(0,1fr)_auto]">
                     <Campo label="Valor" value={cifra.valor} onChange={(valor) => cambiarLista("cifras")(reemplazar(cifras, i, { valor }))} maxLength={40} />
                     <Campo label="Descripción" value={cifra.texto} onChange={(texto) => cambiarLista("cifras")(reemplazar(cifras, i, { texto }))} maxLength={300} />
                     <AccionesFila
@@ -404,11 +409,11 @@ const AdminHistoriaCompleta = () => {
               <Seccion
                 titulo="Hitos del proyecto"
                 descripcion="Línea de tiempo por año."
-                accion={<BotonAgregar label="Agregar hito" onClick={() => cambiarLista("hitos")([...hitos, { anio: "", texto: "" }])} />}
+                accion={<BotonAgregar label="Agregar hito" onClick={() => cambiarLista("hitos")([...hitos, { uid: nuevoUid(), anio: "", texto: "" }])} />}
               >
                 {hitos.length === 0 ? <ListaVacia mensaje="No hay hitos." /> : null}
                 {hitos.map((hito, i) => (
-                  <div key={i} className="grid items-end gap-3 md:grid-cols-[8rem_minmax(0,1fr)_auto]">
+                  <div key={hito.uid} className="grid items-end gap-3 md:grid-cols-[8rem_minmax(0,1fr)_auto]">
                     <Campo label="Año" value={hito.anio} onChange={(anio) => cambiarLista("hitos")(reemplazar(hitos, i, { anio }))} numerico maxLength={4} />
                     <Campo label="Qué pasó" value={hito.texto} onChange={(texto) => cambiarLista("hitos")(reemplazar(hitos, i, { texto }))} maxLength={500} />
                     <AccionesFila
@@ -424,11 +429,11 @@ const AdminHistoriaCompleta = () => {
               <Seccion
                 titulo="Producción de compost"
                 descripcion="Datos del gráfico de compost (kilos por año)."
-                accion={<BotonAgregar label="Agregar año" onClick={() => cambiarLista("compost")([...compost, { anio: "", kg: 0 }])} />}
+                accion={<BotonAgregar label="Agregar año" onClick={() => cambiarLista("compost")([...compost, { uid: nuevoUid(), anio: "", kg: 0 }])} />}
               >
                 {compost.length === 0 ? <ListaVacia mensaje="No hay datos de compost." /> : null}
                 {compost.map((fila, i) => (
-                  <div key={i} className="grid items-end gap-3 sm:grid-cols-[8rem_12rem_auto]">
+                  <div key={fila.uid} className="grid items-end gap-3 sm:grid-cols-[8rem_12rem_auto]">
                     <label className={claseEtiqueta}>
                       <ST>Año</ST>
                       <NumericInput
@@ -464,7 +469,7 @@ const AdminHistoriaCompleta = () => {
                   <BotonAgregar
                     label="Agregar capítulo"
                     onClick={() => {
-                      cambiarLista("capitulos")([...capitulos, { id: "", titulo: "", bloques: [bloqueVacio()] }]);
+                      cambiarLista("capitulos")([...capitulos, { uid: nuevoUid(), id: "", titulo: "", bloques: [bloqueNuevo()] }]);
                       setAbierto(capitulos.length);
                     }}
                   />
@@ -473,7 +478,7 @@ const AdminHistoriaCompleta = () => {
                 {capitulos.length === 0 ? <ListaVacia mensaje="No hay capítulos." /> : null}
                 {capitulos.map((capitulo, i) => (
                   <EditorCapitulo
-                    key={i}
+                    key={capitulo.uid}
                     capitulo={capitulo}
                     indice={i}
                     total={capitulos.length}

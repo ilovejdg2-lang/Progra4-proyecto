@@ -814,7 +814,7 @@ export function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
   );
 }
 
-function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
+export function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
   const mapTarjetas = (lista) =>
     (Array.isArray(lista) ? lista : []).map((tarjeta) => ({
       ...tarjetaInicioVacia,
@@ -901,7 +901,7 @@ function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }) {
           >
 
           {form.map((tarjeta, index) => (
-            <div key={tarjeta.clave || index} className="space-y-4 rounded-2xl border border-slate-200 p-4 sm:p-5">
+            <div key={tarjeta.clave} className="space-y-4 rounded-2xl border border-slate-200 p-4 sm:p-5">
               <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500">
                 {TARJETAS_INICIO_LABELS[tarjeta.clave] || tarjeta.clave}
               </h3>

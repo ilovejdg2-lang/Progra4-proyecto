@@ -41,10 +41,13 @@ import { conLimitePalabras, MAX_PALABRAS_NOTAS } from "../../../lib/formLimits";
 import { ST } from "../../../Components/T/ST";
 import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
 import { useTraducir } from "../../../hooks/useTraducir";
+import { nuevoUid } from "../../../lib/clientUid";
 import { t } from "../../../lib/t";
 import { asegurarCamposEnEspanol } from "../../../lib/traducir";
 
 const MAX_PDF_BYTES = 5 * 1024 * 1024;
+
+const nuevaFila = () => ({ uid: nuevoUid(), productoId: "", cantidad: "" });
 const ESTADOS = [
   { value: "", label: "Todos" },
   { value: "pendiente", label: "Pendiente" },
@@ -86,7 +89,7 @@ function SolicitudFormModal({
   const [proveedorId, setProveedorId] = useState("");
   const [fechaEstimadaEntrega, setFechaEstimadaEntrega] = useState("");
   const [notas, setNotas] = useState("");
-  const [filas, setFilas] = useState([{ productoId: "", cantidad: "" }]);
+  const [filas, setFilas] = useState(() => [nuevaFila()]);
   const pdfRef = useRef(null);
   const [validationError, setValidationError] = useState("");
   const [nuevoProveedor, setNuevoProveedor] = useState("");
@@ -236,13 +239,13 @@ function SolicitudFormModal({
               <button
                 type="button"
                 className="inline-flex min-h-[var(--control-height)] items-center gap-1 rounded-full border border-slate-200 px-3 text-[length:var(--text-body)] font-semibold"
-                onClick={() => setFilas((c) => [...c, { productoId: "", cantidad: "" }])}
+                onClick={() => setFilas((c) => [...c, nuevaFila()])}
               >
                 <Plus className="size-4" /> <ST>Agregar ítem</ST>
               </button>
             </div>
             {filas.map((fila, index) => (
-              <div key={`fila-${index}`} className="grid gap-2 sm:grid-cols-[1fr_8rem_auto]">
+              <div key={fila.uid} className="grid gap-2 sm:grid-cols-[1fr_8rem_auto]">
                 <SelectFiltro
                   name={index === 0 ? "productoId" : undefined}
                   value={fila.productoId}
@@ -388,8 +391,8 @@ function DetalleModal({ open, solicitud, onClose }) {
             <div>
               <p className="mb-2 font-semibold text-slate-900"><ST>Historial de estados</ST></p>
               <ul className="space-y-1 rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                {solicitud.historialEstados.map((h, i) => (
-                  <li key={`${h.estado}-${h.fecha || i}`}>
+                {solicitud.historialEstados.map((h) => (
+                  <li key={`${h.estado}-${h.fecha}`}>
                     <ST>{h.estado}</ST> · {formatFecha(h.fecha)}
                   </li>
                 ))}

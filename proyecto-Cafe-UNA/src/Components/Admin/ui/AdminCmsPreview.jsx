@@ -494,8 +494,8 @@ function PreviewNavbarLive({ form, enlaces = [] }) {
           </div>
 
           <div className="navbar__menu" aria-label="Vista previa de enlaces">
-            {links.length ? links.map((item, index) => (
-              <PreviewNavItem key={item.id ?? index} item={item} />
+            {links.length ? links.map((item) => (
+              <PreviewNavItem key={item.id} item={item} />
             )) : (
               <span style={{ opacity: 0.5 }}>{"Los enlaces aparecer\u00e1n aqu\u00ed."}</span>
             )}
@@ -534,8 +534,8 @@ function PreviewFooterLive({ form, enlaces = [], iconoDe }) {
           {explorar.length ? (
             <nav className="footer__column" aria-label="Explorar">
               <h2>Explorar</h2>
-              {explorar.map((item, index) => (
-                <PreviewNavItem key={item.id ?? index} item={item} />
+              {explorar.map((item) => (
+                <PreviewNavItem key={item.id} item={item} />
               ))}
             </nav>
           ) : null}

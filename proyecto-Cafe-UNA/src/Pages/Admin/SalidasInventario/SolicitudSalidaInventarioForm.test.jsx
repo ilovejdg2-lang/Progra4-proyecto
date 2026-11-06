@@ -45,4 +45,20 @@ describe("SolicitudSalidaInventarioForm", () => {
       ],
     });
   });
+
+  it("keeps the remaining row's input node and typed value when another row is removed", async () => {
+    const user = userEvent.setup();
+    render(<SolicitudSalidaInventarioForm productos={[{ id: "101", nombre: "Café de altura", stock: 8 }]} />);
+    await user.click(screen.getByRole("button", { name: "Agregar artículo" }));
+    const [first, second] = screen.getAllByRole("spinbutton", { name: "Cantidad" });
+    await user.type(first, "3");
+    await user.type(second, "7");
+
+    await user.click(within(screen.getByRole("group", { name: "Artículo 1" })).getByRole("button", { name: "Quitar" }));
+
+    const [remaining] = screen.getAllByRole("spinbutton", { name: "Cantidad" });
+    expect(screen.getAllByRole("spinbutton", { name: "Cantidad" })).toHaveLength(1);
+    expect(remaining).toBe(second);
+    expect(remaining).toHaveValue(7);
+  });
 });
