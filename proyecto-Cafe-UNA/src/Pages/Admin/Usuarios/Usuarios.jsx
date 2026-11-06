@@ -1498,17 +1498,9 @@ const AdminUsuarios = () => {
     {
       accessorKey: "correo",
       header: () => <ST>Email</ST>,
-      cell: ({ getValue }) => {
-        const correo = getValue() ?? "";
-        return (
-          <span
-            className="block max-w-[9rem] truncate text-slate-500"
-            title={correo}
-          >
-            {correo}
-          </span>
-        );
-      },
+      cell: ({ getValue }) => (
+        <span className="text-slate-500">{getValue()}</span>
+      ),
     },
     {
       accessorKey: "roles",
