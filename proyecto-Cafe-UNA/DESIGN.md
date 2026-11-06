@@ -3,7 +3,7 @@ name: Café UNA Admin Design System
 description: Incumbent design system and component specifications for the Café UNA administrative backoffice
 colors:
   primary: "#020617"
-  primary-hover: "#334155"
+  primary-hover: "#404040"
   neutral-bg: "#fafafa"
   neutral-surface: "#ffffff"
   neutral-border: "#e2e8f0"
@@ -128,7 +128,7 @@ The typography is built on `@fontsource-variable/geist` (`Geist Variable`) acros
 
 - **General Depth**: Flat aesthetic with 1px border dividers (`border-slate-200` in light, `border-slate-800` in dark).
 - **Modals**: High elevation via `shadow-2xl` on `<ModalDialog>` and `.admin-modal-root`.
-- **Dropdowns & Popovers**: Subtle elevation using Radix Popover/Dropdown shadow defaults (`shadow-md`).
+- **Dropdowns & Popovers**: Subtle elevation using Radix DropdownMenu shadow defaults (`shadow-md`).
 - **Inconsistencies Observed**:
   - In light mode, surfaces rely on alternating background shades (`#fafafa` vs. `#ffffff` vs. `bg-slate-50`) rather than a structured elevation token system. In dark mode, `#161b22` is applied globally via CSS overrides without distinct elevation layer tokens.
 
