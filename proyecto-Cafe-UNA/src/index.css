@@ -93,6 +93,74 @@ body.admin-route-active {
   background: #fafafa !important;
   overflow-x: clip;
   overflow-y: visible;
+
+  /* Surfaces & canvas */
+  --admin-bg: #fafafa;
+  --admin-surface: #ffffff;
+  --admin-surface-subtle: #f8fafc;
+  --admin-surface-hover: #f1f5f9;
+
+  /* Typography / Text colors */
+  --admin-text-primary: #0f172a;
+  --admin-text-muted: #64748b;
+  --admin-text-subtle: #94a3b8;
+
+  /* Brand accents */
+  --admin-accent-coffee: #5c4038;
+  --admin-accent-coffee-hover: #452e27;
+
+  /* Borders: input borders reach >= 3:1 contrast against backgrounds (WCAG 1.4.11) */
+  --admin-border-input: #64748b;
+  --admin-border-input-focus: #0f172a;
+  /* Decorative separators and card borders (subtle dividers) */
+  --admin-border: #e2e8f0;
+  --admin-border-subtle: #f1f5f9;
+
+  /* Status semantic colors */
+  --admin-status-success-bg: #dcfce7;
+  --admin-status-success-text: #15803d;
+  --admin-status-danger-bg: #fee2e2;
+  --admin-status-danger-text: #dc2626;
+  --admin-status-warning-bg: #fef3c7;
+  --admin-status-warning-text: #b45309;
+
+  /* Shapes & radii: single source of truth for controls */
+  --admin-control-radius: 9999px;
+  --admin-radius-card: 1rem;
+  --admin-radius-dialog: 1rem;
+  --admin-radius-popover: 0.5rem;
+}
+
+html.admin-theme-dark body.admin-route-active {
+  /* Surfaces & canvas */
+  --admin-bg: #0e1116;
+  --admin-surface: #161b22;
+  --admin-surface-subtle: #12161c;
+  --admin-surface-hover: #21262d;
+
+  /* Typography / Text colors */
+  --admin-text-primary: #e2e8f0;
+  --admin-text-muted: #94a3b8;
+  --admin-text-subtle: #64748b;
+
+  /* Brand accents: #b88376 reaches 5.39:1 on #161b22 and 5.90:1 on #0e1116 (passes WCAG 2.1 AA 4.5:1) */
+  --admin-accent-coffee: #b88376;
+  --admin-accent-coffee-hover: #c48f82;
+
+  /* Borders: input borders reach >= 3.6:1 against #161b22 and #12161c (WCAG 1.4.11) */
+  --admin-border-input: #64748b;
+  --admin-border-input-focus: #cbd5e1;
+  /* Decorative separators and card borders */
+  --admin-border: #1e293b;
+  --admin-border-subtle: #161f2e;
+
+  /* Status semantic colors */
+  --admin-status-success-bg: rgba(6, 78, 59, 0.4);
+  --admin-status-success-text: #6ee7b7;
+  --admin-status-danger-bg: rgba(136, 19, 55, 0.4);
+  --admin-status-danger-text: #fda4af;
+  --admin-status-warning-bg: rgba(120, 53, 15, 0.35);
+  --admin-status-warning-text: #fcd34d;
 }
 
 html.admin-modal-open,
