@@ -14,9 +14,9 @@ import {
   conUids,
   historiaVacia,
   normalizarHistoriaCompleta,
-  nuevoUid,
   sinUids,
 } from "../../../lib/historiaCompletaData";
+import { nuevoUid } from "../../../lib/clientUid";
 import { t } from "../../../lib/t";
 import {
   actualizarHistoriaCompleta,

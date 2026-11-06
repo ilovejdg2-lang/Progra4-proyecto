@@ -1,4 +1,5 @@
 import { obtenerHistoriaCompleta } from '../services/informacionService';
+import { nuevoUid } from './clientUid';
 
 export const TIPOS_BLOQUE_HISTORIA = [
   { value: 'p', label: 'Párrafo' },
@@ -56,12 +57,8 @@ export async function fetchHistoriaCompletaPage() {
   return normalizarHistoriaCompleta(await obtenerHistoriaCompleta());
 }
 
-// Client-only row identity for the admin editor. It keeps React keys stable while rows
-// are edited, added, removed or reordered, and is stripped before anything is sent to the API.
-export function nuevoUid() {
-  return globalThis.crypto.randomUUID();
-}
-
+// Client-only row identity for the admin editor (see clientUid.js). It keeps React keys
+// stable while rows are edited, added, removed or reordered, and is stripped before saving.
 const conUid = (item) => (item.uid ? item : { ...item, uid: nuevoUid() });
 const sinUid = (item) => {
   const copia = { ...item };
