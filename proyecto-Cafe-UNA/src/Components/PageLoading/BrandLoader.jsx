@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  ADMIN_THEME_CHANGED_EVENT,
-  isAdminThemeDark,
-} from "../../lib/adminTheme";
+import { useAdminThemeDark } from "../../hooks/useAdminThemeDark";
 import {
   cacheBrandLogos,
   getLoaderLogoUrl,
@@ -94,14 +91,7 @@ export default function BrandLoader({
   showSpinner = true,
   children,
 }) {
-  const [temaOscuro, setTemaOscuro] = useState(() => isAdminThemeDark());
-
-  useEffect(() => {
-    const sync = () => setTemaOscuro(isAdminThemeDark());
-    sync();
-    window.addEventListener(ADMIN_THEME_CHANGED_EVENT, sync);
-    return () => window.removeEventListener(ADMIN_THEME_CHANGED_EVENT, sync);
-  }, []);
+  const temaOscuro = useAdminThemeDark();
 
   const preferDark = tone === "admin" && temaOscuro;
 

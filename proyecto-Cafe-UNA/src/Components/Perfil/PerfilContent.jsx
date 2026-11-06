@@ -1,6 +1,6 @@
 import { ProfileImageModal } from "./ProfileImageModal";
 import { useProfileImage } from "../../hooks/useProfileImage";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Camera, ChevronRight, ClipboardList, Eye, EyeOff, IdCard, KeyRound, Mail, ShoppingBag, Sprout, UserRound } from "lucide-react";
 import {
@@ -14,8 +14,8 @@ import {
 } from "../../services/perfilService";
 import { applyPerfilToSession, getActiveSessionUser, getStoredUser, isLoggingOut, isSessionExpired } from "../../services/sessionService";
 import { rutaMisCompras } from "../../Pages/HistorialCompras/rutasCompras";
-import { rutaMisSolicitudes } from "../../Pages/HistorialSolicitudes/HistorialSolicitudesCliente";
-import { rutaMisPropuestas } from "../../Pages/Productores/MisPropuestas";
+import { rutaMisSolicitudes } from "../../lib/rutasSolicitudes";
+import { rutaMisPropuestas } from "../../lib/rutasPropuestas";
 import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../lib/correo";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { inicialDeNombre } from "../../lib/inicialDeNombre";
@@ -326,6 +326,8 @@ export function PerfilContent({ variant = "standalone" }) {
     }
   }
 
+  const cargarPerfilAlCambiarSesion = useEffectEvent(() => cargarPerfil());
+
   useEffect(() => {
     if (!sessionUserId) {
       setCargando(false);
@@ -334,7 +336,7 @@ export function PerfilContent({ variant = "standalone" }) {
     }
 
     montadoRef.current = true;
-    cargarPerfil();
+    cargarPerfilAlCambiarSesion();
     return () => {
       montadoRef.current = false;
       cargaRef.current += 1;

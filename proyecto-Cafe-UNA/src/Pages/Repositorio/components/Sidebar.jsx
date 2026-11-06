@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   FileArchive,
@@ -105,16 +105,17 @@ export function Sidebar({
 
   // Accesibilidad: focus trap y cierre con tecla Escape en móvil
   const sidebarRef = useRef(null);
+  const closeMobileOnEscape = useEffectEvent(() => onCloseMobile());
   useEffect(() => {
     if (!mobileOpen) return;
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
-        onCloseMobile();
+        closeMobileOnEscape();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [mobileOpen, onCloseMobile]);
+  }, [mobileOpen]);
 
   // Preservar la posición de scroll del sidebar entre cambios de filtros sin interferir en el scroll manual
   const scrollContainerRef = useRef(null);

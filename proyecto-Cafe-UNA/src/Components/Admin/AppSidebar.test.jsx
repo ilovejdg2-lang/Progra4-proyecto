@@ -42,14 +42,18 @@ vi.mock("../../services/perfilService", () => ({
 vi.mock("../../services/apiClient", () => ({
   cancelPendingSessionRefresh: vi.fn(),
 }));
-vi.mock("../../services/sessionService", () => ({
+vi.mock("../../services/sessionService", () => {
+  const activeUser = vi.fn(() => ({ id: "1", name: "Admin" }));
+  return {
   applyPerfilToSession: vi.fn(),
   beginLogout: vi.fn(),
   clearSession: vi.fn(),
-  getActiveSessionUser: vi.fn(() => ({ id: "1", name: "Admin" })),
+  getActiveSessionUser: activeUser,
+  peekSessionUser: activeUser,
   getStoredUser: vi.fn(() => ({ id: "1" })),
   SESSION_UPDATED_EVENT: "session-updated",
-}));
+  };
+});
 
 import { AppSidebar } from "./AppSidebar";
 import { SidebarProvider } from "./ui/Sidebar";

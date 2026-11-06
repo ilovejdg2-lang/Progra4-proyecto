@@ -5,8 +5,8 @@ import { ST } from "../T/ST";
 import { useIdioma } from "../../lib/useIdioma";
 import { DEFAULT_PRODUCTORES_HERO, obtenerProductoresHero } from "../../services/informacionService";
 import { obtenerProductoresPublicos } from "../../services/propuestasProductoresService";
-import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
-import { rutaMisPropuestas } from "../../Pages/Productores/MisPropuestas";
+import { useSessionUser } from "../../hooks/useSessionUser";
+import { rutaMisPropuestas } from "../../lib/rutasPropuestas";
 import "./ProductoresHero.css";
 
 function AccionHeroBoton({ to, className, children, onClick }) {
@@ -49,20 +49,10 @@ function AccionHeroBoton({ to, className, children, onClick }) {
 export default function ProductoresHero({ className = "", customData = null }) {
   const navigate = useNavigate();
   const { esEn } = useIdioma();
-  const [usuario, setUsuario] = useState(() => getActiveSessionUser());
+  const usuario = useSessionUser();
   const [heroInfo, setHeroInfo] = useState(customData || DEFAULT_PRODUCTORES_HERO);
   const [productoresCount, setProductoresCount] = useState(0);
   const [mapZoom, setMapZoom] = useState(1);
-
-  useEffect(() => {
-    const sync = () => setUsuario(getActiveSessionUser());
-    window.addEventListener(SESSION_UPDATED_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(SESSION_UPDATED_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
 
   useEffect(() => {
     if (customData) {

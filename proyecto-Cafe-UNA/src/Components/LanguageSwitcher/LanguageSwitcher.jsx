@@ -1,9 +1,5 @@
-import { useEffect, useState } from "react";
-import {
-  guardarIdioma,
-  IDIOMA_CHANGED_EVENT,
-  obtenerIdioma,
-} from "../../lib/idioma";
+import { guardarIdioma } from "../../lib/idioma";
+import { useIdioma } from "../../lib/useIdioma";
 import { clearInformacionHttpCache } from "../../services/informacionService";
 import "./LanguageSwitcher.css";
 
@@ -11,17 +7,7 @@ import "./LanguageSwitcher.css";
  * Selector ES / EN. Compacto: transparente + blanco → activo blanco + negro.
  */
 export function LanguageSwitcher({ className = "", compact = false }) {
-  const [idioma, setIdioma] = useState(() => obtenerIdioma());
-
-  useEffect(() => {
-    const sync = () => setIdioma(obtenerIdioma());
-    window.addEventListener(IDIOMA_CHANGED_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(IDIOMA_CHANGED_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
+  const { idioma } = useIdioma();
 
   const elegir = (lang) => {
     try {
@@ -29,8 +15,7 @@ export function LanguageSwitcher({ className = "", compact = false }) {
     } catch {
       /* ignore */
     }
-    const next = guardarIdioma(lang);
-    setIdioma(next);
+    guardarIdioma(lang);
   };
 
   return (

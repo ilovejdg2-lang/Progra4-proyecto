@@ -35,8 +35,8 @@ import {
   leerBorradorPropuesta,
 } from "../../lib/propuestaProductorDraft";
 import { crearPropuestaProductor } from "../../services/propuestasProductoresService";
-import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
-import { rutaMisPropuestas } from "./MisPropuestas";
+import { useSessionUser } from "../../hooks/useSessionUser";
+import { rutaMisPropuestas } from "../../lib/rutasPropuestas";
 import "../Donaciones/SolicitarDonacion.css";
 import "../Voluntariado/SolicitarVoluntariado.css";
 import "./propuesta.css";
@@ -85,7 +85,7 @@ export default function PropuestaProductor() {
   const tLoginBtn = useTraducir("Inicie sesión para enviar");
   const tContinuar = useTraducir("Continuar");
   const tAnterior = useTraducir("Anterior");
-  const [usuario, setUsuario] = useState(() => getActiveSessionUser());
+  const usuario = useSessionUser();
   const [form, setForm] = useState(INICIAL);
   const [archivo, setArchivo] = useState(null);
   const [preview, setPreview] = useState("");
@@ -110,16 +110,6 @@ export default function PropuestaProductor() {
     pasoRef.current = paso;
     usuarioIdRef.current = usuarioId;
   });
-
-  useEffect(() => {
-    const sync = () => setUsuario(getActiveSessionUser());
-    window.addEventListener(SESSION_UPDATED_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(SESSION_UPDATED_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
 
   useEffect(() => {
     if (!archivo) {

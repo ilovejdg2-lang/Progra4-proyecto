@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { ModalDialog } from "../ui/ModalDialog";
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { categoriasUnicas, filtrarPorCategoria } from '../../lib/categorias';
@@ -109,17 +109,19 @@ const Gallery = ({
     setActiveIndex(null);
   }, [categoria, items]);
 
+  const handleLightboxKey = useEffectEvent((event) => {
+    if (event.key === 'ArrowLeft') showPrevious();
+    if (event.key === 'ArrowRight') showNext();
+  });
+
   useEffect(() => {
     if (activeIndex === null) return undefined;
 
-    const onKeyDown = (event) => {
-      if (event.key === 'ArrowLeft') showPrevious();
-      if (event.key === 'ArrowRight') showNext();
-    };
+    const onKeyDown = (event) => handleLightboxKey(event);
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [activeIndex, closeLightbox, showNext, showPrevious]);
+  }, [activeIndex]);
 
   const goToPage = (page) => {
     if (page < 1 || page > totalPages) return;

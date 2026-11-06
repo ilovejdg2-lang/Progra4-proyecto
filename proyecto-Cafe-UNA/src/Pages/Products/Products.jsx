@@ -55,7 +55,7 @@ const Products = () => {
     reload,
     loadingMessage,
   } = useCachedPublicPage('products', fetchProductsPageData);
-  const products = data?.products ?? [];
+  const products = useMemo(() => data?.products ?? [], [data?.products]);
   const productosTrad = useTraducirLista(products, CAMPOS_PRODUCTO);
   const nombrePorId = useMemo(() => {
     const map = new Map();

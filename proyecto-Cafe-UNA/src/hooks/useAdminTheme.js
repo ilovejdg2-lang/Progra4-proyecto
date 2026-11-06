@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 
 import {
@@ -8,25 +8,21 @@ import {
   toggleAdminTheme as toggleStoredAdminTheme,
   transitionAdminTheme,
 } from "../lib/adminTheme";
+import { createWindowEventSubscribe } from "../lib/windowEventStore";
+
+const subscribe = createWindowEventSubscribe([ADMIN_THEME_CHANGED_EVENT, "storage"]);
 
 export function useAdminTheme() {
-  const [theme, setTheme] = useState(() => readAdminTheme());
+  const theme = useSyncExternalStore(subscribe, readAdminTheme, readAdminTheme);
 
   useEffect(() => {
     applyAdminDocumentTheme(true);
-    const sync = () => setTheme(readAdminTheme());
-    window.addEventListener(ADMIN_THEME_CHANGED_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(ADMIN_THEME_CHANGED_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
   }, []);
 
   const toggleTheme = useCallback((origin) => {
     transitionAdminTheme(() => {
       flushSync(() => {
-        setTheme(toggleStoredAdminTheme());
+        toggleStoredAdminTheme();
       });
     }, origin);
   }, []);

@@ -13,7 +13,6 @@ import { ImageLightbox } from "../../Components/ImageLightbox/ImageLightbox";
 import { PerfilClienteLayout } from "../../Components/Perfil/PerfilClienteLayout";
 import { ST } from "../../Components/T/ST";
 import { UiSelect } from "../../Components/ui/Select";
-import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
 import { formatearFechaPropuesta, urlImagenPublica } from "../../lib/propuestaProductor";
 import { obtenerFooter } from "../../services/informacionService";
 import {
@@ -23,16 +22,10 @@ import {
   obtenerMiPropuesta,
   obtenerMisPropuestas,
 } from "../../services/propuestasProductoresService";
-import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
+import { useSessionUser } from "../../hooks/useSessionUser";
 import { DetallePropuestaSecciones, SeccionRevision } from "./DetallePropuesta";
 import { ModalEditarMiPropuesta } from "./ModalEditarMiPropuesta";
 import { ModalEliminarMiPropuesta } from "./ModalEliminarMiPropuesta";
-
-export function rutaMisPropuestas(user) {
-  const roles = rolesDeUsuario(user);
-  if (tienePermiso(roles, "ver_panel_administrativo")) return "/admin/mis-propuestas";
-  return "/perfil/propuestas";
-}
 
 function colorEstado(estado) {
   const valor = String(estado || "").toLowerCase();
@@ -90,7 +83,7 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
   const navigate = useNavigate();
   const esAdmin = variant === "admin";
   const perfilVolver = esAdmin ? "/admin/perfil" : "/perfil";
-  const [usuario, setUsuario] = useState(() => getActiveSessionUser());
+  const usuario = useSessionUser();
   const [lista, setLista] = useState([]);
   const [detalle, setDetalle] = useState(null);
   const [estado, setEstado] = useState("todos");
@@ -101,12 +94,6 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
   const [modalEditar, setModalEditar] = useState({ open: false, propuesta: null, esSolicitud: false });
   const [modalEliminar, setModalEliminar] = useState({ open: false, propuesta: null, esSolicitudBaja: false });
   const [accionEnCurso, setAccionEnCurso] = useState("");
-
-  useEffect(() => {
-    const sync = () => setUsuario(getActiveSessionUser());
-    window.addEventListener(SESSION_UPDATED_EVENT, sync);
-    return () => window.removeEventListener(SESSION_UPDATED_EVENT, sync);
-  }, []);
 
   useEffect(() => {
     if (!usuario) {

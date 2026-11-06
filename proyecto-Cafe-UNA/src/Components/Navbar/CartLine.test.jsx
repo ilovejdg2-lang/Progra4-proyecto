@@ -2,7 +2,8 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { CartLine, metaCarrito } from "./CartLine";
+import { CartLine } from "./CartLine";
+import { metaCarrito } from "./metaCarrito";
 
 describe("metaCarrito", () => {
   it("junta peso y tueste sin la cantidad", () => {

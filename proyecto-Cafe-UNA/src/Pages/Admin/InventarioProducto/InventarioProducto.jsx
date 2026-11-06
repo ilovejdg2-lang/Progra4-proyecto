@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
@@ -119,8 +119,10 @@ const AdminInventarioProducto = () => {
     }
   };
 
+  const abrirStockPendienteActual = useEffectEvent(() => abrirStockPendiente());
+
   useEffect(() => {
-    abrirStockPendiente();
+    abrirStockPendienteActual();
   }, [puedeActualizarStock, productos]);
 
   // Flush the delayed pending-request cleanup if the page unmounts before it fires.
@@ -136,7 +138,7 @@ const AdminInventarioProducto = () => {
 
   useEffect(() => {
     const onOpenStock = () => {
-      abrirStockPendiente();
+      abrirStockPendienteActual();
     };
 
     window.addEventListener(ADMIN_STOCK_PRODUCT_EVENT, onOpenStock);
