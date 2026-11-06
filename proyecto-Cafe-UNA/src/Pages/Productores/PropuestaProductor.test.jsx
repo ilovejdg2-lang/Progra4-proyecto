@@ -30,7 +30,7 @@ vi.mock("../../Components/Productores/CampoUbicacionMapa", () => ({
   },
 }));
 vi.mock("../../Components/ui/SelectFiltro", () => ({ SelectFiltro: ({ children, ...props }) => <select {...props}>{children}</select> }));
-vi.mock("../../services/sessionService", () => ({ getActiveSessionUser: () => ({ id: 1 }), SESSION_UPDATED_EVENT: "session-updated" }));
+vi.mock("../../services/sessionService", () => ({ getActiveSessionUser: () => ({ id: 1 }), peekSessionUser: () => ({ id: 1 }), SESSION_UPDATED_EVENT: "session-updated" }));
 vi.mock("../../services/propuestasProductoresService", () => ({ crearPropuestaProductor: vi.fn() }));
 vi.mock("../../lib/rutasPropuestas", () => ({ rutaMisPropuestas: () => "/perfil/propuestas" }));
 
