@@ -81,7 +81,7 @@ export function SidebarProvider({ defaultOpen = true, className, children, ...pr
   return (
     <SidebarContext.Provider value={value}>
       <div
-        className={cn("flex min-h-svh w-full bg-white text-slate-950 dark:bg-slate-950 dark:text-slate-50", className)}
+        className={cn("flex min-h-svh w-full bg-[var(--admin-bg)] text-[var(--admin-text-primary)]", className)}
         data-sidebar-state={open ? "expanded" : "collapsed"}
         {...props}
       >
@@ -110,7 +110,7 @@ export function Sidebar({
         data-collapsible={collapsible}
         style={{ borderRadius: 0, ...props.style }}
         className={cn(
-          "admin-sidebar group/sidebar fixed inset-y-0 z-30 hidden flex-col border-slate-200 bg-white text-slate-900 shadow-sm transition-[width,transform] duration-200 md:flex dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 !rounded-none",
+          "admin-sidebar group/sidebar fixed inset-y-0 z-30 hidden flex-col border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm transition-[width,transform] duration-200 md:flex !rounded-none",
           position,
           isIcon && (open ? "w-64" : "w-16"),
           isOffcanvas && "w-64",
@@ -158,7 +158,7 @@ export function Sidebar({
         <aside
           style={{ borderRadius: 0 }}
           className={cn(
-            "absolute inset-y-0 z-10 flex w-72 max-w-[85vw] flex-col border-slate-200 bg-white text-slate-900 shadow-xl transition-transform duration-300 ease-out dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 !rounded-none",
+            "absolute inset-y-0 z-10 flex w-72 max-w-[85vw] flex-col border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-xl transition-transform duration-300 ease-out !rounded-none",
             position,
             openMobile
               ? "translate-x-0"
@@ -171,7 +171,7 @@ export function Sidebar({
         >
           <button
             type="button"
-            className="absolute right-3 top-3 z-10 inline-flex size-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50"
+            className="absolute right-3 top-3 z-10 inline-flex size-8 items-center justify-center rounded-[var(--admin-control-radius)] text-[var(--admin-text-muted)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)]"
             onClick={() => setOpenMobile(false)}
           >
             <X className="size-4" />
@@ -226,7 +226,7 @@ export function SidebarHeader({ className, ...props }) {
   return (
     <div
       className={cn(
-        "border-b border-slate-200 p-4 transition-[padding] group-data-[state=collapsed]/sidebar:flex group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-2",
+        "border-b border-[var(--admin-border)] p-4 transition-[padding] group-data-[state=collapsed]/sidebar:flex group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-2",
         className,
       )}
       {...props}
@@ -272,7 +272,7 @@ export function SidebarFooter({ className, ...props }) {
   return (
     <div
       className={cn(
-        "border-t border-slate-200 p-2 group-data-[state=collapsed]/sidebar:px-1",
+        "border-t border-[var(--admin-border)] p-2 group-data-[state=collapsed]/sidebar:px-1",
         className,
       )}
       {...props}
@@ -291,7 +291,7 @@ export function SidebarGroupLabel({ asChild = false, className, onClick, ...prop
   return (
     <Comp
       className={cn(
-        "flex h-9 w-full items-center gap-2 px-2 text-sm font-medium text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950 dark:text-slate-300 dark:hover:text-white [&_svg]:size-4 [&_svg]:shrink-0 [&_span]:min-w-0 [&_span]:truncate",
+        "flex h-9 w-full items-center gap-2 rounded-[var(--admin-control-radius)] px-2 text-sm font-medium text-[var(--admin-text-muted)] transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0 [&_span]:min-w-0 [&_span]:truncate",
         "group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0 group-data-[state=collapsed]/sidebar:[&>span]:hidden group-data-[state=collapsed]/sidebar:[&>svg.ml-auto]:hidden",
         className,
       )}
@@ -329,7 +329,7 @@ export function SidebarMenuButton({ asChild = false, className, ...props }) {
   return (
     <Comp
       className={cn(
-        "flex h-9 w-full items-center gap-2 px-2 text-left text-sm text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none dark:text-slate-300 dark:hover:text-white [&_svg]:size-4 [&_svg]:shrink-0",
+        "flex h-9 w-full items-center gap-2 rounded-[var(--admin-control-radius)] px-2 text-left text-sm text-[var(--admin-text-muted)] transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none data-[status=active]:bg-[var(--admin-surface-hover)] data-[status=active]:text-[var(--admin-accent-coffee)] data-[status=active]:font-semibold [&_svg]:size-4 [&_svg]:shrink-0",
         "group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0 group-data-[state=collapsed]/sidebar:[&>span]:hidden group-data-[state=collapsed]/sidebar:[&_span]:hidden",
         className,
       )}
@@ -342,7 +342,7 @@ export function SidebarMenuSub({ className, ...props }) {
   return (
     <ul
       className={cn(
-        "ml-4 flex flex-col gap-1 border-l border-slate-200 py-1 pl-3 group-data-[state=collapsed]/sidebar:hidden",
+        "ml-4 flex flex-col gap-1 border-l border-[var(--admin-border)] py-1 pl-3 group-data-[state=collapsed]/sidebar:hidden",
         className,
       )}
       {...props}
@@ -360,7 +360,7 @@ export function SidebarMenuSubButton({ asChild = false, className, ...props }) {
   return (
     <Comp
       className={cn(
-        "flex h-8 w-full items-center gap-2 px-2 text-left text-sm text-slate-600 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none dark:text-slate-300 dark:hover:text-white [&_svg]:size-4 [&_svg]:shrink-0 [&_span]:min-w-0 [&_span]:truncate",
+        "flex h-8 w-full items-center gap-2 rounded-[var(--admin-control-radius)] px-2 text-left text-sm text-[var(--admin-text-muted)] transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none data-[status=active]:bg-[var(--admin-surface-hover)] data-[status=active]:text-[var(--admin-accent-coffee)] data-[status=active]:font-semibold [&_svg]:size-4 [&_svg]:shrink-0 [&_span]:min-w-0 [&_span]:truncate",
         className,
       )}
       {...props}
