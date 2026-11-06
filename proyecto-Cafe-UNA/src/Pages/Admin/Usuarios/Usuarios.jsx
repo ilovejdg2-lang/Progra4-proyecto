@@ -306,7 +306,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
   const [codigoVerificacion, setCodigoVerificacion] = useState("");
   const [passwordCorreoUsuario, setPasswordCorreoUsuario] = useState("");
   const [errorPasswordCorreo, setErrorPasswordCorreo] = useState("");
-  const [correoVerificado, setCorreoVerificado] = useState(true);
+  const [correoVerificado, setCorreoVerificado] = useState(Boolean(inicial));
   const [mensajeCorreo, setMensajeCorreo] = useState("");
   const [errorCorreo, setErrorCorreo] = useState("");
   const [verificandoCorreo, setVerificandoCorreo] = useState(false);
@@ -570,17 +570,17 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 
   const correoCambio = Boolean(inicial) && correoForm.trim().toLowerCase() !== correoOriginal;
 
-  useEffect(() => {
-    if (!inicial) {
-      setCorreoVerificado(false);
-      return;
-    }
-    setCorreoVerificado(!correoCambio);
-    if (!correoCambio) {
+  // Reset the email verification state when the edited user or the "email changed"
+  // status changes (adjust state during render, not in an effect).
+  const [estadoCorreoPrevio, setEstadoCorreoPrevio] = useState({ correoCambio, inicial });
+  if (estadoCorreoPrevio.correoCambio !== correoCambio || estadoCorreoPrevio.inicial !== inicial) {
+    setEstadoCorreoPrevio({ correoCambio, inicial });
+    setCorreoVerificado(Boolean(inicial) && !correoCambio);
+    if (inicial && !correoCambio) {
       setPasswordCorreoUsuario("");
       setErrorPasswordCorreo("");
     }
-  }, [correoCambio, inicial]);
+  }
 
   async function handleSolicitarCodigoCorreo() {
     const correo = correoForm.trim().toLowerCase();
