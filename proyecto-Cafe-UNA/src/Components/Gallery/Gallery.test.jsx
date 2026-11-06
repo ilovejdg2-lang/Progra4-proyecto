@@ -51,3 +51,27 @@ describe("Gallery lightbox", () => {
     expect(document.querySelector("dialog")).toBeNull();
   });
 });
+
+describe("Gallery state reset", () => {
+  it("closes the lightbox when the items prop changes", async () => {
+    const { rerender } = render(<Gallery items={items} title="" />);
+    await userEvent.click(screen.getByRole("button", { name: "Ver foto: Dos" }));
+    expect(document.querySelector("dialog")).not.toBeNull();
+
+    rerender(<Gallery items={[...items, { id: 4, title: "Cuatro", image: "/cuatro.jpg" }]} title="" />);
+
+    expect(document.querySelector("dialog")).toBeNull();
+    expect(screen.getByRole("button", { name: "Ver foto: Cuatro" })).toBeInTheDocument();
+  });
+
+  it("returns to the first page when the items prop changes", async () => {
+    const muchos = Array.from({ length: 30 }, (_, i) => ({ id: i + 1, title: `Foto ${i + 1}`, image: `/f${i + 1}.jpg` }));
+    const { rerender } = render(<Gallery items={muchos} title="" pageSize={5} />);
+    await userEvent.click(screen.getByRole("button", { name: "Página siguiente" }));
+    expect(screen.queryByRole("button", { name: "Ver foto: Foto 1" })).toBeNull();
+
+    rerender(<Gallery items={[...muchos]} title="" pageSize={5} />);
+
+    expect(screen.getByRole("button", { name: "Ver foto: Foto 1" })).toBeInTheDocument();
+  });
+});

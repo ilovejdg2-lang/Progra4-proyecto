@@ -55,3 +55,26 @@ describe("CategoryTree category row", () => {
     expect(select.contains(toggle)).toBe(false);
   });
 });
+
+describe("CategoryTree auto-expand", () => {
+  const base = {
+    categorias: [{ nombre: "Cafés", count: 3 }],
+    subcategorias: [{ nombre: "Molido", categoria: "Cafés", count: 2 }],
+    onSelectCategoria: vi.fn(),
+    onSelectSubcategoria: vi.fn(),
+  };
+
+  it("expands the category when it becomes active and respects a later manual collapse", async () => {
+    const { rerender } = render(<CategoryTree {...base} categoriaActiva="todas" />);
+    expect(screen.queryByText("Molido")).not.toBeInTheDocument();
+
+    rerender(<CategoryTree {...base} categoriaActiva="Cafés" />);
+    expect(screen.getByText("Molido")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Contraer subcategorías" }));
+    expect(screen.queryByText("Molido")).not.toBeInTheDocument();
+
+    rerender(<CategoryTree {...base} categoriaActiva="Cafés" subcategoriaActiva="" />);
+    expect(screen.queryByText("Molido")).not.toBeInTheDocument();
+  });
+});

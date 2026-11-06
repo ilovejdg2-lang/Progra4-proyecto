@@ -15,6 +15,7 @@ import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
 import { useAdminPaginacion } from "../../../hooks/useAdminPaginacion";
+import { useVerificacionCorreoUsuario } from "../../../hooks/useVerificacionCorreoUsuario";
 import {
   obtenerUsuarios,
   obtenerAsignacionesPunto,
@@ -304,13 +305,19 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 
   const [pasoCreacion, setPasoCreacion] = useState("datos");
   const [codigoVerificacion, setCodigoVerificacion] = useState("");
-  const [passwordCorreoUsuario, setPasswordCorreoUsuario] = useState("");
-  const [errorPasswordCorreo, setErrorPasswordCorreo] = useState("");
-  const [correoVerificado, setCorreoVerificado] = useState(true);
   const [mensajeCorreo, setMensajeCorreo] = useState("");
   const [errorCorreo, setErrorCorreo] = useState("");
   const [verificandoCorreo, setVerificandoCorreo] = useState(false);
   const [correoForm, setCorreoForm] = useState(inicial?.correo ?? "");
+  const correoCambio = Boolean(inicial) && correoForm.trim().toLowerCase() !== correoOriginal;
+  const {
+    correoVerificado,
+    setCorreoVerificado,
+    passwordCorreoUsuario,
+    setPasswordCorreoUsuario,
+    errorPasswordCorreo,
+    setErrorPasswordCorreo,
+  } = useVerificacionCorreoUsuario(inicial, correoCambio);
   const [fieldErrors, setFieldErrors] = useState({
     nombre: "",
     passwordHash: "",
@@ -567,20 +574,6 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
     e.stopPropagation();
     form.handleSubmit();
   }
-
-  const correoCambio = Boolean(inicial) && correoForm.trim().toLowerCase() !== correoOriginal;
-
-  useEffect(() => {
-    if (!inicial) {
-      setCorreoVerificado(false);
-      return;
-    }
-    setCorreoVerificado(!correoCambio);
-    if (!correoCambio) {
-      setPasswordCorreoUsuario("");
-      setErrorPasswordCorreo("");
-    }
-  }, [correoCambio, inicial]);
 
   async function handleSolicitarCodigoCorreo() {
     const correo = correoForm.trim().toLowerCase();

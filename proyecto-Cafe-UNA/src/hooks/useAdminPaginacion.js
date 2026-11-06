@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
 export const ADMIN_PAGE_SIZE = 10;
 
@@ -24,18 +24,16 @@ export function useAdminPaginacion(items = [], pageSize = ADMIN_PAGE_SIZE) {
   const total = Array.isArray(items) ? items.length : 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const firma = useMemo(() => firmaItems(items), [items]);
-  const metaAnterior = useRef({ firma, pageSize });
+  const [meta, setMeta] = useState({ firma, pageSize });
 
-  useEffect(() => {
-    const prev = metaAnterior.current;
-    if (prev.firma === firma && prev.pageSize === pageSize) return;
-    metaAnterior.current = { firma, pageSize };
+  // Ajuste durante el render (sin efectos): evita un render intermedio con la
+  // pagina anterior y que la correccion de rango pise el reinicio a la pagina 1.
+  if (meta.firma !== firma || meta.pageSize !== pageSize) {
+    setMeta({ firma, pageSize });
     setPage(1);
-  }, [firma, pageSize]);
-
-  useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
+  } else if (page > totalPages) {
+    setPage(totalPages);
+  }
 
   const pageItems = useMemo(() => {
     const start = (page - 1) * pageSize;
