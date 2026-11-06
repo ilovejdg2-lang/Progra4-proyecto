@@ -162,7 +162,7 @@ const Gallery = ({
 
           return (
             <figure
-              key={item.id ?? `${currentPage}-${index}`}
+              key={item.id}
               className={getGalleryItemClassName(index, pageItems.length)}
             >
               <button
