@@ -427,7 +427,9 @@ function PreviewTextoInstitucionalLive({ form, tipo = "historia" }) {
   );
 }
 
-function PreviewGaleriaLive({ items = [] }) {
+const GALERIA_VACIA = [];
+
+function PreviewGaleriaLive({ items = GALERIA_VACIA }) {
   const galleryItems = useMemo(() => items.filter((item) => item.image || item.title), [items]);
 
   if (!galleryItems.length) {
