@@ -120,7 +120,9 @@ body.admin-route-active {
 
   /* Borders: input borders reach >= 3:1 contrast against backgrounds (WCAG 1.4.11) */
   --admin-border-input: #64748b;
-  --admin-border-input-focus: #0f172a;
+  --admin-border-input-focus: var(--admin-focus-ring);
+  /* Focus ring: 2px, offset 0. #64748b reaches 4.8:1 on #ffffff and 4.4:1 on #f1f5f9 (WCAG 1.4.11 needs 3:1) */
+  --admin-focus-ring: #64748b;
   /* Decorative separators and card borders (subtle dividers) */
   --admin-border: #e2e8f0;
   --admin-border-subtle: #f1f5f9;
@@ -159,7 +161,9 @@ html.admin-theme-dark body.admin-route-active {
 
   /* Borders: input borders reach >= 3.6:1 against #161b22 and #12161c (WCAG 1.4.11) */
   --admin-border-input: #64748b;
-  --admin-border-input-focus: #cbd5e1;
+  --admin-border-input-focus: var(--admin-focus-ring);
+  /* Focus ring: #94a3b8 reaches 6.2:1 on #161b22 and 5.0:1 on #21262d */
+  --admin-focus-ring: #94a3b8;
   /* Decorative separators and card borders */
   --admin-border: #1e293b;
   --admin-border-subtle: #161f2e;
@@ -1178,12 +1182,12 @@ button[class*="backdrop"],
 body.admin-route-active input[type="search"]:not(.ui-select__search-input):focus-visible,
 body.admin-route-active aside input:focus-visible,
 body.admin-route-active aside a:focus-visible {
-  outline: 2px solid #0f172a;
-  outline-offset: 2px;
+  outline: 2px solid var(--admin-focus-ring);
+  outline-offset: 0;
 }
 
-html.admin-theme-dark body.admin-route-active input[type="search"]:not(.ui-select__search-input):focus-visible,
-html.admin-theme-dark body.admin-route-active aside input:focus-visible,
-html.admin-theme-dark body.admin-route-active aside a:focus-visible {
-  outline-color: #38bdf8;
+/* Inputs: the border takes the ring color so border and outline read as one indicator. */
+body.admin-route-active input[type="search"]:not(.ui-select__search-input):focus-visible,
+body.admin-route-active aside input:focus-visible {
+  border-color: var(--admin-focus-ring);
 }
