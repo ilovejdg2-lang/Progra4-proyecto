@@ -1199,7 +1199,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
 
 
 const accionBtnBase =
-  "inline-flex items-center justify-center gap-1.5 rounded-full border text-[11px] font-semibold leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
+  "inline-flex items-center justify-center gap-1.5 rounded-full border text-[11px] font-semibold leading-none transition-colors focus-visible:outline-none focus-visible:ring-2";
 
 function mapUsuario(item) {
   const estado = String(item?.estado ?? item?.Estado ?? "").trim().toLowerCase();
@@ -1245,11 +1245,11 @@ function AccionesUsuario({
   const esInactivo = !esUsuarioActivo(usuario.estado);
   const esMovil = variant === "mobile";
 
-  const editarCls = `${accionBtnBase} border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)] active:bg-[var(--admin-surface-hover)] focus-visible:ring-2 focus-visible:ring-[var(--admin-focus-ring)] shadow-xs`;
+  const editarCls = `${accionBtnBase} border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)] active:bg-[var(--admin-surface-hover)] focus-visible:ring-[color:var(--admin-focus-ring)] shadow-xs`;
   const toggleCls = `${accionBtnBase} ${
     esInactivo
-      ? "border-emerald-300/80 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-700/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 focus-visible:ring-emerald-500"
-      : "border-rose-300/80 bg-rose-50 text-rose-800 hover:bg-rose-100 dark:border-rose-700/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 focus-visible:ring-rose-500"
+      ? "border-emerald-300/80 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-700/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 focus-visible:ring-[color:var(--admin-focus-ring)]"
+      : "border-rose-300/80 bg-rose-50 text-rose-800 hover:bg-rose-100 dark:border-rose-700/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 focus-visible:ring-[color:var(--admin-focus-ring)]"
   }`;
 
   const toggleLabel = toggleando === usuario.id
