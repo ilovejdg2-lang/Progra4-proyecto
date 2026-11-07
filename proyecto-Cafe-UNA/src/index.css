@@ -193,17 +193,25 @@ body.admin-route-active .admin-table-shell thead th {
   letter-spacing: 0.05em !important;
   text-transform: uppercase !important;
   color: var(--admin-text-muted) !important;
+}
+
+/* Usuarios layout: left-aligned headers and fixed cell padding. Other tables keep their own alignment and padding. */
+body.admin-route-active .admin-table-shell--usuarios thead th {
   padding: 0.75rem 1rem !important;
   text-align: left !important;
 }
 
-body.admin-route-active .admin-table-shell thead th:first-child,
-body.admin-route-active .admin-table-shell tbody td:first-child {
+body.admin-route-active .admin-table-shell--usuarios tbody td {
+  padding: 0.75rem 1rem !important;
+}
+
+body.admin-route-active .admin-table-shell--usuarios thead th:first-child,
+body.admin-route-active .admin-table-shell--usuarios tbody td:first-child {
   padding-left: 1.5rem !important;
 }
 
-body.admin-route-active .admin-table-shell thead th:last-child,
-body.admin-route-active .admin-table-shell tbody td:last-child {
+body.admin-route-active .admin-table-shell--usuarios thead th:last-child,
+body.admin-route-active .admin-table-shell--usuarios tbody td:last-child {
   padding-right: 1.5rem !important;
 }
 
@@ -214,6 +222,10 @@ body.admin-route-active .admin-table-shell thead th button {
   letter-spacing: 0.05em !important;
   text-transform: uppercase !important;
   color: inherit !important;
+}
+
+body.admin-route-active .admin-table-shell--usuarios thead th .admin-th-sort,
+body.admin-route-active .admin-table-shell--usuarios thead th button {
   justify-content: flex-start !important;
   width: auto !important;
 }
@@ -234,10 +246,6 @@ body.admin-route-active .admin-table-shell thead th.text-right,
 body.admin-route-active .admin-table-shell thead th.text-right .admin-th-sort {
   text-align: right;
   justify-content: flex-end !important;
-}
-
-body.admin-route-active .admin-table-shell tbody td {
-  padding: 0.75rem 1rem !important;
 }
 
 body.admin-route-active .admin-table-shell tbody td,
