@@ -94,6 +94,13 @@ body.admin-route-active {
   overflow-x: clip;
   overflow-y: visible;
 
+  /* Executive Typography scale scoped to admin dashboard */
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: -0.011em;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+
   /* Surfaces & canvas */
   --admin-bg: #fafafa;
   --admin-surface: #ffffff;
@@ -163,6 +170,48 @@ html.admin-theme-dark body.admin-route-active {
   --admin-status-danger-text: #fda4af;
   --admin-status-warning-bg: rgba(120, 53, 15, 0.35);
   --admin-status-warning-text: #fcd34d;
+}
+
+/* Scoped Admin Typography Scale (Executive Dashboard Density) */
+body.admin-route-active h1,
+body.admin-route-active .text-2xl,
+body.admin-route-active .text-3xl {
+  font-size: 1.25rem;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  font-weight: 600;
+}
+
+body.admin-route-active .admin-table-shell thead th {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+  padding: 0.65rem 0.75rem;
+}
+
+body.admin-route-active .admin-table-shell tbody td,
+body.admin-route-active .admin-table-shell tbody td p,
+body.admin-route-active .admin-table-shell tbody td span,
+body.admin-route-active .admin-table-shell tbody td button,
+body.admin-route-active .admin-table-shell tbody td a,
+body.admin-route-active .admin-table-shell tbody td label,
+body.admin-route-active .admin-table-shell tbody td .st-texto {
+  font-size: 13px;
+  letter-spacing: -0.006em;
+  font-variant-numeric: tabular-nums;
+}
+
+body.admin-route-active .admin-table-shell tbody td button {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+body.admin-route-active input,
+body.admin-route-active select {
+  font-size: 13.5px;
+  letter-spacing: -0.008em;
 }
 
 html.admin-modal-open,
