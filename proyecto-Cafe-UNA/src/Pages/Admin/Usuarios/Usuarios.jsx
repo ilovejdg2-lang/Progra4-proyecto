@@ -1550,18 +1550,12 @@ const AdminUsuarios = () => {
         const activo = esUsuarioActivo(estado);
         return (
           <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+            className={`text-xs font-semibold ${
               activo
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300"
-                : "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300"
+                ? "text-emerald-800 dark:text-emerald-400"
+                : "text-red-700 dark:text-red-400"
             }`}
           >
-            <span
-              className={`size-1.5 rounded-full ${
-                activo ? "bg-emerald-600 dark:bg-emerald-400" : "bg-rose-600 dark:bg-rose-400"
-              }`}
-              aria-hidden="true"
-            />
             <ST>{activo ? "Habilitado" : "Deshabilitado"}</ST>
           </span>
         );
@@ -1742,18 +1736,12 @@ const AdminUsuarios = () => {
                         <p className="mt-0.5 truncate text-sm text-slate-500 dark:text-slate-400">{usuario.correo}</p>
                       </div>
                       <span
-                        className={`inline-flex items-center gap-1.5 shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+                        className={`shrink-0 text-xs font-semibold ${
                           activo
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300"
-                            : "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300"
+                            ? "text-emerald-800 dark:text-emerald-400"
+                            : "text-red-700 dark:text-red-400"
                         }`}
                       >
-                        <span
-                          className={`size-1.5 rounded-full ${
-                            activo ? "bg-emerald-600 dark:bg-emerald-400" : "bg-rose-600 dark:bg-rose-400"
-                          }`}
-                          aria-hidden="true"
-                        />
                         <ST>{activo ? "Habilitado" : "Deshabilitado"}</ST>
                       </span>
                     </div>
