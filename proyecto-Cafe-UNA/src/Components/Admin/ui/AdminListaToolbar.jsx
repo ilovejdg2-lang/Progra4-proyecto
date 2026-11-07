@@ -5,10 +5,10 @@ import { t } from "../../../lib/t";
 import { UiSelect } from "../../ui/Select";
 
 const inputCls =
-  "h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-slate-500 dark:focus:bg-slate-800";
+  "h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full rounded-[var(--admin-control-radius)] border border-[var(--admin-border-input)] bg-[var(--admin-surface)] py-2 pl-9 pr-3 text-[length:var(--text-body)] text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-muted)] outline-none transition-colors focus:border-[var(--admin-focus-ring)] focus:ring-2 focus:ring-[var(--admin-focus-ring)]/20";
 
 const inputFechaCls =
-  "h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-slate-500 dark:focus:bg-slate-800";
+  "h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full rounded-[var(--admin-control-radius)] border border-[var(--admin-border-input)] bg-[var(--admin-surface)] px-3 py-2 text-[length:var(--text-body)] text-[var(--admin-text-primary)] outline-none transition-colors focus:border-[var(--admin-focus-ring)] focus:ring-2 focus:ring-[var(--admin-focus-ring)]/20";
 
 export function AdminListaToolbar({
   busqueda,
@@ -43,14 +43,14 @@ export function AdminListaToolbar({
 
   return (
     <div
-      className={`relative min-w-0 space-y-4 overflow-visible border-b border-slate-100 bg-transparent ${
+      className={`relative min-w-0 space-y-4 overflow-visible border-b border-[var(--admin-border)] bg-transparent ${
         compacto ? "px-4 py-5 sm:px-6" : "px-4 py-5 sm:px-6"
       }`}
     >
       <div className={filaClassName || "mx-auto flex w-full max-w-6xl min-w-0 flex-col items-stretch gap-4 xl:flex-row xl:items-end xl:justify-center"}>
         {ocultarBusqueda ? null : (
         <div className="relative w-full min-w-0 xl:max-w-md xl:flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--admin-text-muted)]" aria-hidden="true" />
           <input
             type="search"
             value={busqueda}
@@ -78,7 +78,7 @@ export function AdminListaToolbar({
                         }`)
                 }`}
               >
-                <span className="inline-flex items-center gap-1 text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-neutral-500 dark:text-slate-400">
+                <span className="inline-flex items-center gap-1 text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-[var(--admin-text-muted)]">
                   <SlidersHorizontal className="size-3.5 shrink-0" aria-hidden="true" />
                   <ST>{filtro.label}</ST>
                 </span>
@@ -117,16 +117,16 @@ export function AdminListaToolbar({
         </div>
       ) : null}
 
-      <div className={`mx-auto flex w-full flex-wrap items-center justify-between gap-3 text-[length:var(--text-body)] text-slate-500 ${filaClassName ? "" : "max-w-6xl"}`}>
+      <div className={`mx-auto flex w-full flex-wrap items-center justify-between gap-3 text-[length:var(--text-body)] text-[var(--admin-text-muted)] ${filaClassName ? "" : "max-w-6xl"}`}>
         <p>
           {hayFiltrosActivos ? (
             <>
-              {tMostrando} <strong className="text-slate-700">{visibles}</strong> {tDe}{" "}
-              <strong className="text-slate-700">{total}</strong>
+              {tMostrando} <strong className="font-semibold text-[var(--admin-text-primary)]">{visibles}</strong> {tDe}{" "}
+              <strong className="font-semibold text-[var(--admin-text-primary)]">{total}</strong>
             </>
           ) : (
             <>
-              <strong className="text-slate-700">{total}</strong>{" "}
+              <strong className="font-semibold text-[var(--admin-text-primary)]">{total}</strong>{" "}
               {total === 1 ? tRegistro : tRegistros}
             </>
           )}
@@ -136,7 +136,7 @@ export function AdminListaToolbar({
           <button
             type="button"
             onClick={onLimpiar}
-            className="inline-flex h-[var(--control-height)] items-center gap-1 rounded-full border border-slate-200 bg-white px-3 text-[length:var(--text-body)] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            className="inline-flex h-[var(--control-height)] items-center gap-1.5 rounded-[var(--admin-control-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3.5 text-[length:var(--text-body)] font-semibold text-[var(--admin-text-primary)] transition-colors hover:bg-[var(--admin-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus-ring)] shadow-xs"
           >
             <X className="size-3.5" aria-hidden="true" />
             {tLimpiar}
@@ -150,12 +150,12 @@ export function AdminListaToolbar({
 export function AdminListaVacia({ mensaje = "No hay resultados con los filtros actuales.", onLimpiar }) {
   return (
     <div className="px-4 py-12 text-center sm:px-6">
-      <p className="text-[length:var(--text-body)] text-slate-500"><ST>{mensaje}</ST></p>
+      <p className="text-[length:var(--text-body)] text-[var(--admin-text-muted)]"><ST>{mensaje}</ST></p>
       {onLimpiar ? (
         <button
           type="button"
           onClick={onLimpiar}
-          className="mt-3 text-[length:var(--text-body)] font-semibold text-slate-800 underline-offset-2 hover:underline"
+          className="mt-3 inline-flex items-center text-[length:var(--text-body)] font-semibold text-[var(--admin-accent-coffee)] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus-ring)] rounded-xs"
         >
           <ST>Limpiar filtros</ST>
         </button>
