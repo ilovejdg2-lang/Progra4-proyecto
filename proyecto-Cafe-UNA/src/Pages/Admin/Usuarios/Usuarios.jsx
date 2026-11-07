@@ -1230,6 +1230,18 @@ function mapUsuario(item) {
   };
 }
 
+function EncabezadoOrdenable({ column, label }) {
+  const orden = column.getIsSorted();
+  return (
+    <button type="button" onClick={column.getToggleSortingHandler()} className="admin-th-sort">
+      <ST>{label}</ST>
+      <span className="admin-th-sort__icon" aria-hidden="true">
+        {orden === "asc" ? "▲" : orden === "desc" ? "▼" : "↕"}
+      </span>
+    </button>
+  );
+}
+
 function esUsuarioActivo(estado) {
   return String(estado ?? "").trim().toLowerCase() === "activo";
 }
@@ -1503,7 +1515,14 @@ const AdminUsuarios = () => {
     {
       id: "usuario",
       accessorKey: "nombre",
-      header: () => <ST>Usuario</ST>,
+      // The identity column shows name and email together, so its header carries two sort controls.
+      meta: { customSortHeader: true },
+      header: ({ table }) => (
+        <span className="inline-flex flex-wrap items-center gap-x-4 gap-y-1">
+          <EncabezadoOrdenable column={table.getColumn("usuario")} label="Usuario" />
+          <EncabezadoOrdenable column={table.getColumn("correo")} label="Correo" />
+        </span>
+      ),
       cell: ({ row }) => {
         const usuario = row.original;
         const inicial = inicialDeNombre(usuario.nombre);
@@ -1532,6 +1551,13 @@ const AdminUsuarios = () => {
           </div>
         );
       },
+    },
+    {
+      // Hidden: only exists so the identity column can also sort by email.
+      id: "correo",
+      accessorKey: "correo",
+      header: () => <ST>Correo</ST>,
+      cell: () => null,
     },
     {
       accessorKey: "roles",
@@ -1610,7 +1636,7 @@ const AdminUsuarios = () => {
   const table = useReactTable({
     data: usuariosPagina,
     columns,
-    state: { sorting },
+    state: { sorting, columnVisibility: { correo: false } },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -1711,7 +1737,7 @@ const AdminUsuarios = () => {
                     <tr key={headerGroup.id}>
                       {headerGroup.headers.map((header) => (
                         <th key={header.id} scope="col">
-                          {header.column.getCanSort() ? (
+                          {header.column.getCanSort() && !header.column.columnDef.meta?.customSortHeader ? (
                             <button
                               type="button"
                               onClick={header.column.getToggleSortingHandler()}
