@@ -78,8 +78,8 @@ export function AdminListaToolbar({
                         }`)
                 }`}
               >
-                <span className="inline-flex items-center gap-1 text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-[var(--admin-text-muted)]">
-                  <SlidersHorizontal className="size-3.5 shrink-0" aria-hidden="true" />
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-text-muted)]">
+                  <SlidersHorizontal className="size-3 shrink-0" aria-hidden="true" />
                   <ST>{filtro.label}</ST>
                 </span>
                 {filtro.tipo === "fecha" ? (
@@ -117,7 +117,7 @@ export function AdminListaToolbar({
         </div>
       ) : null}
 
-      <div className={`mx-auto flex w-full flex-wrap items-center justify-between gap-3 text-[length:var(--text-body)] text-[var(--admin-text-muted)] ${filaClassName ? "" : "max-w-6xl"}`}>
+      <div className={`mx-auto flex w-full flex-wrap items-center justify-between gap-3 text-xs text-[var(--admin-text-muted)] ${filaClassName ? "" : "max-w-6xl"}`}>
         <p>
           {hayFiltrosActivos ? (
             <>
@@ -136,7 +136,7 @@ export function AdminListaToolbar({
           <button
             type="button"
             onClick={onLimpiar}
-            className="inline-flex h-[var(--control-height)] items-center gap-1.5 rounded-[var(--admin-control-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3.5 text-[length:var(--text-body)] font-semibold text-[var(--admin-text-primary)] transition-colors hover:bg-[var(--admin-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus-ring)] shadow-xs"
+            className="inline-flex h-[var(--control-height)] items-center gap-1.5 rounded-[var(--admin-control-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3.5 text-xs font-semibold text-[var(--admin-text-primary)] transition-colors hover:bg-[var(--admin-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus-ring)] shadow-xs"
           >
             <X className="size-3.5" aria-hidden="true" />
             {tLimpiar}
