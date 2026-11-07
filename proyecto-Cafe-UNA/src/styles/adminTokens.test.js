@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 // Names set at runtime through style.setProperty (see src/lib/adminTheme.js).
 const RUNTIME_TOKENS = new Set(["--admin-theme-x", "--admin-theme-y", "--admin-theme-r"]);
 
-const srcDir = join(process.cwd(), "src");
+const srcDir = join(import.meta.dirname, "..");
 
 // Vitest strips CSS content from imports, so the sources are read from disk.
 const sources = readdirSync(srcDir, { recursive: true })
