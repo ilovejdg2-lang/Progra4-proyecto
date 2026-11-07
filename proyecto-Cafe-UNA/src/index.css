@@ -189,8 +189,18 @@ body.admin-route-active .admin-table-shell thead th {
   letter-spacing: 0.05em !important;
   text-transform: uppercase !important;
   color: var(--admin-text-muted) !important;
-  padding: 0.65rem 0.75rem !important;
-  text-align: left;
+  padding: 0.75rem 1rem !important;
+  text-align: left !important;
+}
+
+body.admin-route-active .admin-table-shell thead th:first-child,
+body.admin-route-active .admin-table-shell tbody td:first-child {
+  padding-left: 1.5rem !important;
+}
+
+body.admin-route-active .admin-table-shell thead th:last-child,
+body.admin-route-active .admin-table-shell tbody td:last-child {
+  padding-right: 1.5rem !important;
 }
 
 body.admin-route-active .admin-table-shell thead th .admin-th-sort,
@@ -210,10 +220,6 @@ body.admin-route-active .admin-table-shell thead th .admin-th-sort__icon {
   margin-left: 0.25rem;
 }
 
-body.admin-route-active .admin-table-shell thead th:last-child {
-  text-align: right;
-}
-
 body.admin-route-active .admin-table-shell thead th.text-center,
 body.admin-route-active .admin-table-shell thead th.text-center .admin-th-sort {
   text-align: center;
@@ -224,6 +230,10 @@ body.admin-route-active .admin-table-shell thead th.text-right,
 body.admin-route-active .admin-table-shell thead th.text-right .admin-th-sort {
   text-align: right;
   justify-content: flex-end !important;
+}
+
+body.admin-route-active .admin-table-shell tbody td {
+  padding: 0.75rem 1rem !important;
 }
 
 body.admin-route-active .admin-table-shell tbody td,
