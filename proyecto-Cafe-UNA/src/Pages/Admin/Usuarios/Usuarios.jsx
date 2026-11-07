@@ -276,8 +276,16 @@ function claseRol(rol) {
 }
 
 function BadgeRol({ rol }) {
+  const clave = String(rol ?? "").trim().toLowerCase();
+  const esSuper = clave === "superadmin" || clave === "superadministrador";
   return (
-    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${claseRol(rol)}`}>
+    <span
+      className={`text-xs ${
+        esSuper
+          ? "font-semibold text-amber-700 dark:text-amber-400"
+          : "font-medium text-slate-800 dark:text-slate-200"
+      }`}
+    >
       <ST>{rol}</ST>
     </span>
   );
@@ -946,9 +954,12 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
             ) : (
               <form.Field name="roles">
                 {(field) => (
-                  <div className="flex flex-wrap gap-2">
-                    {(Array.isArray(field.state.value) ? field.state.value : []).map((rol) => (
-                      <BadgeRol key={rol} rol={rol} />
+                  <div className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                    {(Array.isArray(field.state.value) ? field.state.value : []).map((rol, i) => (
+                      <span key={rol}>
+                        {i > 0 && <span className="font-normal text-slate-400 dark:text-slate-500">, </span>}
+                        <BadgeRol rol={rol} />
+                      </span>
                     ))}
                   </div>
                 )}
@@ -1531,10 +1542,21 @@ const AdminUsuarios = () => {
         const sinPunto = roles.some((rol) => String(rol).toLowerCase() === "vendedor")
           && Number(row.original.puntosVentaActivos) === 0;
         return (
-          <div className="flex flex-wrap gap-1">
-            {roles.map((rol) => <BadgeRol key={rol} rol={rol} />)}
+          <div className="flex flex-col gap-0.5">
+            <div className="text-xs font-medium text-slate-800 dark:text-slate-200">
+              {roles.length === 0 ? (
+                <span className="text-[var(--admin-text-muted)]">—</span>
+              ) : (
+                roles.map((rol, i) => (
+                  <span key={rol}>
+                    {i > 0 && <span className="font-normal text-slate-400 dark:text-slate-500">, </span>}
+                    <BadgeRol rol={rol} />
+                  </span>
+                ))
+              )}
+            </div>
             {sinPunto ? (
-              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-900 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800">
+              <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400">
                 <ST>Sin punto de venta</ST>
               </span>
             ) : null}
@@ -1746,13 +1768,22 @@ const AdminUsuarios = () => {
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap gap-1">
-                      {(Array.isArray(usuario.roles) ? usuario.roles : []).map((rol) => (
-                        <BadgeRol key={rol} rol={rol} />
-                      ))}
+                    <div className="flex flex-col gap-1">
+                      <div className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                        {(Array.isArray(usuario.roles) ? usuario.roles : []).length === 0 ? (
+                          <span className="text-[var(--admin-text-muted)]">—</span>
+                        ) : (
+                          (Array.isArray(usuario.roles) ? usuario.roles : []).map((rol, i) => (
+                            <span key={rol}>
+                              {i > 0 && <span className="font-normal text-slate-400 dark:text-slate-500">, </span>}
+                              <BadgeRol rol={rol} />
+                            </span>
+                          ))
+                        )}
+                      </div>
                       {(usuario.roles || []).some((rol) => String(rol).toLowerCase() === "vendedor")
                         && Number(usuario.puntosVentaActivos) === 0 ? (
-                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-900 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800">
+                        <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400">
                           <ST>Sin punto de venta</ST>
                         </span>
                       ) : null}
