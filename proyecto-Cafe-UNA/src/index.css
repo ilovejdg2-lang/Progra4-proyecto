@@ -964,6 +964,11 @@ textarea {
   border-radius: var(--ui-radius) !important;
 }
 
+/* Admin inputs follow the admin control radius instead of the public --ui-radius. */
+body.admin-route-active input:not([type="checkbox"]):not([type="radio"]) {
+  border-radius: var(--admin-control-radius) !important;
+}
+
 /* Sin azul nativo del SO en controles (Windows highlight, etc.) */
 select,
 input[type="checkbox"],

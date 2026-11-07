@@ -5,10 +5,10 @@ import { t } from "../../../lib/t";
 import { UiSelect } from "../../ui/Select";
 
 const inputCls =
-  "h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full rounded-[var(--admin-control-radius)] border border-[var(--admin-border-input)] bg-[var(--admin-surface)] py-2 pl-9 pr-3 text-[length:var(--text-body)] text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-muted)] outline-none transition-colors";
+  "h-[var(--control-height)] w-full min-w-0 max-w-full rounded-[var(--admin-control-radius)] border border-[var(--admin-border-input)] bg-[var(--admin-surface)] py-2 pl-9 pr-3 text-[length:var(--text-body)] text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-muted)] outline-none transition-colors";
 
 const inputFechaCls =
-  "h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full rounded-[var(--admin-control-radius)] border border-[var(--admin-border-input)] bg-[var(--admin-surface)] px-3 py-2 text-[length:var(--text-body)] text-[var(--admin-text-primary)] transition-colors focus-visible:border-[var(--admin-focus-ring)] focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]";
+  "h-[var(--control-height)] w-full min-w-0 max-w-full rounded-[var(--admin-control-radius)] border border-[var(--admin-border-input)] bg-[var(--admin-surface)] px-3 py-2 text-[length:var(--text-body)] text-[var(--admin-text-primary)] transition-colors focus-visible:border-[var(--admin-focus-ring)] focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]";
 
 export function AdminListaToolbar({
   busqueda,
