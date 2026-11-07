@@ -497,7 +497,7 @@ export function AppSidebar() {
             }}
             placeholder={tBuscarMenu}
             aria-label={tBuscarMenu}
-            className="h-[var(--control-height)] w-full rounded-[var(--admin-control-radius)] border border-[var(--admin-input-border)] bg-[var(--admin-surface)] pl-9 pr-10 text-[length:var(--text-body)] text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-muted)] focus:border-[var(--admin-input-focus)] focus-visible:outline-none"
+            className="h-[var(--control-height)] w-full rounded-[var(--admin-control-radius)] border border-[var(--admin-border-input)] bg-[var(--admin-surface)] pl-9 pr-10 text-[length:var(--text-body)] text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-muted)] focus:border-[var(--admin-border-input-focus)] focus-visible:outline-none"
           />
           {busqueda ? (
             <button
