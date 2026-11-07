@@ -1542,7 +1542,7 @@ const AdminUsuarios = () => {
                 {usuario.nombre}
               </div>
               <div
-                className="truncate text-xs text-[var(--admin-text-muted)]"
+                className="break-all text-xs text-[var(--admin-text-muted)]"
                 title={usuario.correo}
               >
                 {usuario.correo}

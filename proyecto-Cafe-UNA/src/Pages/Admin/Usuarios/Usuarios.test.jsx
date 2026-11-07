@@ -51,6 +51,42 @@ describe("Usuarios table", () => {
     await screen.findByRole("table");
   });
 
+  it("renders role and status as text, not only as color", () => {
+    const [superAdmin, vendedor] = filas();
+
+    expect(within(superAdmin).getByText("SuperAdmin")).toBeInTheDocument();
+    expect(within(superAdmin).getByText("Habilitado")).toBeInTheDocument();
+    expect(within(vendedor).getByText("Vendedor")).toBeInTheDocument();
+    expect(within(vendedor).getByText("Deshabilitado")).toBeInTheDocument();
+  });
+
+  it("flags a vendedor without active points of sale", () => {
+    const [superAdmin, vendedor] = filas();
+
+    expect(within(vendedor).getByText("Sin punto de venta")).toBeInTheDocument();
+    expect(within(superAdmin).queryByText("Sin punto de venta")).not.toBeInTheDocument();
+  });
+
+  it("shows a dash when a user has no roles", () => {
+    const sinRoles = filas()[2];
+
+    expect(within(sinRoles).getByText("—")).toBeInTheDocument();
+  });
+
+  it("keeps a long email readable: full text, wrapped instead of truncated", () => {
+    const correo = within(filas()[2]).getByText(CORREO_LARGO);
+
+    expect(correo.textContent).toBe(CORREO_LARGO);
+    expect(correo).toHaveClass("break-all");
+    expect(correo).not.toHaveClass("truncate");
+  });
+
+  it("offers an Editar action on every row", () => {
+    for (const fila of filas()) {
+      expect(within(fila).getByRole("button", { name: /Editar/ })).toBeInTheDocument();
+    }
+  });
+
   it("sorts by name from the Usuario header", async () => {
     await userEvent.click(screen.getByRole("button", { name: /Usuario/ }));
 
