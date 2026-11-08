@@ -71,6 +71,12 @@ describe("AdminListaToolbar", () => {
     expect(screen.getByRole("button", { name: "Filtros · 2" })).toBeInTheDocument();
   });
 
+  it("starts with the filters open when some are already active", () => {
+    renderToolbar({ filtros: filtrosBase({ estado: "activo" }) });
+
+    expect(screen.getByRole("button", { name: "Filtros · 1" })).toHaveAttribute("aria-expanded", "true");
+  });
+
   it("omits the disclosure when there are no filters", () => {
     renderToolbar({ filtros: [] });
 

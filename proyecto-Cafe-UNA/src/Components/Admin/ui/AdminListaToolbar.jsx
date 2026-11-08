@@ -14,7 +14,6 @@ const inputFechaCls =
 const VALORES_SIN_FILTRO = new Set(["", "todos", "todas"]);
 
 function filtroActivo(filtro) {
-  if (filtro.valorPorDefecto !== undefined) return filtro.value !== filtro.valorPorDefecto;
   return !VALORES_SIN_FILTRO.has(filtro.value ?? "");
 }
 
@@ -41,9 +40,10 @@ export function AdminListaToolbar({
   const tRegistros = useTraducir("registros");
   const tLimpiar = useTraducir("Limpiar filtros");
   const tFiltros = useTraducir("Filtros");
-  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
-  const panelFiltrosId = useId();
   const filtrosActivos = filtros.filter(filtroActivo).length;
+  // Start open on small screens when filters are already active, so they are not hidden on arrival.
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(() => filtrosActivos > 0);
+  const panelFiltrosId = useId();
 
   const indiceFooter = filtros.findIndex((filtro) => filtro.footer);
   const indiceAnchoCompleto =
