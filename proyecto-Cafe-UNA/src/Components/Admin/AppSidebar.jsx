@@ -1001,7 +1001,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <Collapsible.Trigger
                   type="button"
-                  className="flex h-8 w-full items-center gap-2 rounded-[var(--admin-control-radius)] px-2 text-left text-sm text-[var(--admin-text-muted)] transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="flex h-8 w-full items-center gap-2 rounded-[var(--admin-control-radius)] px-2 text-left text-sm text-[var(--admin-text-muted)] transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0 group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0 group-data-[state=collapsed]/sidebar:[&>span]:hidden group-data-[state=collapsed]/sidebar:[&>svg.ml-auto]:hidden"
                 >
                   <Wrench />
                   <span className="truncate"><ST>Ajustes del sistema</ST></span>
