@@ -221,14 +221,28 @@ body.admin-route-active .admin-table-shell--usuarios tbody td:last-child {
 }
 
 /* Aligned layout (inventory tables): header text follows the column cells. Left by default; add text-center / text-right on the th to match numeric or centered columns. */
+/* Unlayered rules beat Tailwind's layered utilities, so set the alignment here instead of relying on text-right/text-center winning. */
 body.admin-route-active .admin-table-shell--aligned thead th {
   text-align: left;
+}
+
+body.admin-route-active .admin-table-shell--aligned thead th.text-right {
+  text-align: right;
+}
+
+body.admin-route-active .admin-table-shell--aligned thead th.text-center {
+  text-align: center;
 }
 
 body.admin-route-active .admin-table-shell--aligned thead th .admin-th-sort,
 body.admin-route-active .admin-table-shell--aligned thead th button {
   justify-content: flex-start;
   width: auto;
+}
+
+body.admin-route-active .admin-table-shell--aligned thead th.text-right .admin-th-sort,
+body.admin-route-active .admin-table-shell--aligned thead th.text-right button {
+  justify-content: flex-end;
 }
 
 body.admin-route-active .admin-table-shell thead th .admin-th-sort,
