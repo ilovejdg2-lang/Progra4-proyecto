@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Package, X } from "lucide-react";
+import { Package } from "lucide-react";
 
-import { AdminModal, AdminModalActions, AdminModalBody, AdminModalHeader } from "../../../../Components/Admin/ui/AdminModal";
+import { AdminModal, AdminModalActions, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../../Components/Admin/ui/AdminModal";
 import { ContadorPalabras } from "../../../../Components/Admin/ui/CampoLimitePalabras";
 import { NumericInput } from "../../../../Components/NumericInput/NumericInput";
 import {
@@ -11,7 +11,6 @@ import {
 } from "../../../../lib/formLimits";
 import { ST } from "../../../../Components/T/ST";
 import { useTraducir } from "../../../../hooks/useTraducir";
-import { t } from "../../../../lib/t";
 import { asegurarCamposEnEspanol } from "../../../../lib/traducir";
 
 const MAX_STOCK = 2147483647;
@@ -48,31 +47,25 @@ export function PointOfSaleStockEditor({ open, location, product, stockRecord, o
 
   return (
     <AdminModal open onClose={onClose} maxWidth="max-w-xl" labelledBy="pos-stock-editor-title">
-      <AdminModalHeader>
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-            <Package className="size-5" aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <h2 id="pos-stock-editor-title" className="truncate text-[length:var(--text-subtitle)] font-semibold text-slate-950">
-              {tTitulo}
-            </h2>
-            <p className="break-words text-[length:var(--text-body)] text-slate-500">
-              <ST>{product.nombre}</ST> · <ST>{location?.name}</ST>
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-          aria-label={t("Cerrar editor de stock")}
-        >
-          <X className="size-5" aria-hidden="true" />
-        </button>
-      </AdminModalHeader>
-      <AdminModalBody>
-        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+      <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col" noValidate>
+        <AdminModalHeader
+          icon={Package}
+          title={tTitulo}
+          titleId="pos-stock-editor-title"
+          description={
+            <>
+              <ST>{product.nombre}</ST>
+              {location?.name ? (
+                <>
+                  {" · "}
+                  <ST>{location.name}</ST>
+                </>
+              ) : null}
+            </>
+          }
+          onClose={onClose}
+        />
+        <AdminModalBody className="space-y-5">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">
               <ST>Ubicación</ST>
@@ -122,16 +115,16 @@ export function PointOfSaleStockEditor({ open, location, product, stockRecord, o
               <ST>{message}</ST>
             </p>
           ) : null}
-          <div className="border-t border-slate-100 pt-4">
-            <AdminModalActions
-              className="w-full flex-col sm:flex-row sm:justify-start"
-              onCancel={onClose}
-              primaryLabel={isSaving ? "Guardando..." : "Guardar stock"}
-              primaryDisabled={isSaving}
-            />
-          </div>
-        </form>
-      </AdminModalBody>
+        </AdminModalBody>
+        <AdminModalFooter>
+          <AdminModalActions
+            variant="coffee"
+            onCancel={onClose}
+            primaryLabel={isSaving ? "Guardando..." : "Guardar stock"}
+            primaryDisabled={isSaving}
+          />
+        </AdminModalFooter>
+      </form>
     </AdminModal>
   );
 }

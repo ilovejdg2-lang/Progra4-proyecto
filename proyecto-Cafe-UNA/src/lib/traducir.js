@@ -1276,12 +1276,9 @@ const DICCIONARIO = {
   "Código (opcional)": "Code (optional)",
   "Si lo dejás vacío, se genera automáticamente a partir del nombre.":
     "If you leave it empty, it is generated automatically from the name.",
-  "Cerrar editor de punto de venta": "Close point of sale editor",
-  "Cerrar editor de stock": "Close stock editor",
   "Este ajuste modifica únicamente el stock de este punto de venta.":
     "This adjustment only changes the stock of this point of sale.",
   "Stock de Bodega Central": "Central warehouse stock",
-  "Cerrar editor de stock central": "Close central stock editor",
   "Este valor no modifica activos ni el stock de los puntos de venta.":
     "This value does not change fixed assets or point-of-sale stock.",
   "No se pudo confirmar el stock actual. Ingresa el valor correcto para continuar.":

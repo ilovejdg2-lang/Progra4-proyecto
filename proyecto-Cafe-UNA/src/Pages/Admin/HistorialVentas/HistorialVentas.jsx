@@ -541,14 +541,13 @@ export default function HistorialVentas({
 
         {detalle ? (
           <AdminModal open onClose={() => setDetalle(null)} maxWidth="max-w-xl" labelledBy="venta-detalle-title">
-            <AdminModalHeader>
-              <h2 id="venta-detalle-title" className="break-all text-[length:var(--text-subtitle)] font-semibold text-slate-900">
-                <ST>Compra</ST> {detalle.numero}
-              </h2>
-              <button type="button" onClick={() => setDetalle(null)} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100" aria-label={t("Cerrar")}>
-                <X className="size-5" />
-              </button>
-            </AdminModalHeader>
+            <AdminModalHeader
+              icon={Receipt}
+              title={<><ST>Compra</ST> {detalle.numero}</>}
+              titleId="venta-detalle-title"
+              wrapTitle
+              onClose={() => setDetalle(null)}
+            />
             <AdminModalBody>
               {actionError ? (
                 <p className="mb-3 text-[length:var(--text-body)] text-rose-700 no-underline" role="alert"><ST>{actionError}</ST></p>

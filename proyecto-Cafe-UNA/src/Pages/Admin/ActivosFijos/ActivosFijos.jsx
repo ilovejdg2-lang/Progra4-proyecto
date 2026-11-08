@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Pencil, Plus, Power, RefreshCw, X } from "lucide-react";
+import { CheckCircle2, Pencil, Plus, Power, RefreshCw, Wrench } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
@@ -8,6 +8,7 @@ import {
   AdminModal,
   AdminModalActions,
   AdminModalBody,
+  AdminModalFooter,
   AdminModalHeader,
 } from "../../../Components/Admin/ui/AdminModal";
 import { AdminLayout } from "../layouts/AdminLayout";
@@ -81,7 +82,7 @@ function formatFecha(fecha) {
   return valor.toLocaleDateString("es-CR");
 }
 
-function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
+export function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
   const [form, setForm] = useState(() => ({ ...EMPTY_FORM, ...inicial }));
   const [validationError, setValidationError] = useState("");
   const editando = Boolean(inicial?.id);
@@ -195,21 +196,14 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
 
   return (
     <AdminModal open onClose={onClose} maxWidth="max-w-xl" labelledBy="activo-fijo-modal-title">
-      <AdminModalHeader>
-        <h2 id="activo-fijo-modal-title" className="text-[length:var(--text-subtitle)] font-semibold text-slate-950">
-          {editando ? tEditar : tAgregar}
-        </h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100"
-          aria-label={t("Cerrar")}
-        >
-          <X className="size-5" />
-        </button>
-      </AdminModalHeader>
-      <AdminModalBody>
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col" noValidate>
+        <AdminModalHeader
+          icon={Wrench}
+          title={editando ? tEditar : tAgregar}
+          titleId="activo-fijo-modal-title"
+          onClose={onClose}
+        />
+        <AdminModalBody className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700">
               <ST>Código</ST>
@@ -295,15 +289,16 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
               <ST>{message}</ST>
             </p>
           ) : null}
-          <div className="border-t border-slate-100 pt-4">
-            <AdminModalActions
-              onCancel={onClose}
-              primaryLabel={isSaving ? "Guardando..." : editando ? "Guardar cambios" : "Crear activo"}
-              primaryDisabled={isSaving}
-            />
-          </div>
-        </form>
-      </AdminModalBody>
+        </AdminModalBody>
+        <AdminModalFooter>
+          <AdminModalActions
+            variant="coffee"
+            onCancel={onClose}
+            primaryLabel={isSaving ? "Guardando..." : editando ? "Guardar cambios" : "Crear activo"}
+            primaryDisabled={isSaving}
+          />
+        </AdminModalFooter>
+      </form>
     </AdminModal>
   );
 }
