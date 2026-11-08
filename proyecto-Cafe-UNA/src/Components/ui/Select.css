@@ -183,6 +183,14 @@ html.admin-theme-dark body.admin-route-active .ui-select__chevron {
   color: #94a3b8;
 }
 
+/* Admin keyboard focus: same ring as the other admin controls (2px, offset 0). */
+body.admin-route-active .ui-select__trigger:focus-visible,
+html.admin-theme-dark body.admin-route-active .ui-select__trigger:focus-visible {
+  outline: 2px solid var(--admin-focus-ring);
+  outline-offset: 0;
+  border-color: var(--admin-focus-ring);
+}
+
 html.admin-theme-dark body.admin-route-active .ui-select__menu:not(.ui-select__menu--claro) {
   border-color: #334155;
   background: #1e293b;

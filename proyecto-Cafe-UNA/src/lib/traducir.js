@@ -45,6 +45,8 @@ const DICCIONARIO = {
   "Donación": "Donation",
   "Visitas": "Visits",
   "Inicio": "Home",
+  "Navegación": "Navigation",
+  "Pie": "Footer",
   "Explorar": "Explore",
   "EXPLORE": "EXPLORE",
   "Contactos": "Contact",
@@ -1082,6 +1084,14 @@ const DICCIONARIO = {
   "Mini formularios": "Mini forms",
   "Mini formularios del inicio": "Home mini forms",
   "Barra de navegación": "Navigation bar",
+  "Página de inicio": "Home page",
+  "Sin contenido": "No content",
+  "Logos configurados": "Logos configured",
+  "Portada principal": "Main cover",
+  "Preguntas frecuentes": "Frequently asked questions",
+  "Preguntas y respuestas": "Questions and answers",
+  "Documentación del proyecto": "Project documentation",
+  "Portada y mapa de productores": "Producers cover and map",
   "Pie de página": "Footer",
   "Buscar por etiqueta o ruta...": "Search by label or path...",
   "No hay enlaces configurados. Agregue uno para mostrarlo en el sitio.":
@@ -1091,6 +1101,20 @@ const DICCIONARIO = {
   "Buscar secciones por nombre o contenido...": "Search sections by name or content...",
   "Sección": "Section",
   "Enlaces actuales": "Current links",
+  "Secciones de la página principal": "Home page sections",
+  "Textos": "Texts",
+  "Botones": "Buttons",
+  "Botón": "Button",
+  "Imagen de fondo": "Background image",
+  "Imagen de fondo del mapa": "Map background image",
+  "Logos": "Logos",
+  "Contacto": "Contact",
+  "Redes y ubicación": "Social links and location",
+  "Reemplazar": "Replace",
+  "Quitar": "Remove",
+  "Usar URL": "Use URL",
+  "Previsualizar": "Preview",
+  "Volver a edición": "Back to editing",
   "Se guarda en español; la vista pública traduce automático.":
     "Saved in Spanish; the public site translates automatically.",
   "Etiqueta": "Label",
@@ -1317,6 +1341,9 @@ const DICCIONARIO = {
     "You can paste a URL or upload an image from your device. JPG, PNG or WEBP. 10 MB max.",
   "Arrastrá o seleccioná una imagen": "Drag or select an image",
   "Subiendo imagen...": "Uploading image...",
+  "Subir archivo para": "Upload file for",
+  "Banner principal de la página de inicio.": "Main banner of the home page.",
+  "Ruta interna del sitio o URL externa.": "Internal site path or external URL.",
   "URL de la imagen": "Image URL",
   "Ver imagen completa": "View full image",
   "La imagen debe ser JPG, PNG o WEBP.": "The image must be JPG, PNG or WEBP.",
@@ -1729,6 +1756,16 @@ function delDiccionario(texto) {
   if (mProd) {
     const n = mProd[1];
     return Number(n) === 1 ? `${n} product` : `${n} products`;
+  }
+  const mEnl = key.match(/^(\d+)\s+enlaces?$/i);
+  if (mEnl) {
+    const n = mEnl[1];
+    return Number(n) === 1 ? `${n} link` : `${n} links`;
+  }
+  const mPreg = key.match(/^(\d+)\s+preguntas?$/i);
+  if (mPreg) {
+    const n = mPreg[1];
+    return Number(n) === 1 ? `${n} question` : `${n} questions`;
   }
   const mBod = key.match(/^(\d+)\s+unidades?\s+en\s+bodega$/i);
   if (mBod) {

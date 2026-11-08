@@ -96,7 +96,7 @@ const AJUSTES_OPEN_KEY = "admin-sidebar-ajustes-open";
 const DOCUMENTACION_OPEN_KEY = "admin-sidebar-documentacion-open";
 const MI_CUENTA_OPEN_KEY = "admin-sidebar-mi-cuenta-open";
 const linkActivo = {
-  className: "text-slate-950",
+  className: "bg-[var(--admin-surface-hover)] text-[var(--admin-accent-coffee)] font-semibold",
 };
 
 function claveBusqueda(texto) {
@@ -462,7 +462,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="bg-white dark:bg-slate-950 !rounded-none">
+    <Sidebar collapsible="icon" className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)] !rounded-none">
       <SidebarHeader>
         <Link
           to="/"
@@ -481,13 +481,13 @@ export function AppSidebar() {
               className="h-[52px] w-auto max-w-[10rem] object-contain group-data-[state=collapsed]/sidebar:h-8 group-data-[state=collapsed]/sidebar:max-w-10"
             />
           ) : (
-            <span className="text-[length:var(--text-subtitle)] font-bold text-slate-900 dark:text-slate-100 group-data-[state=collapsed]/sidebar:text-[length:var(--text-body)]">
+            <span className="text-[length:var(--text-subtitle)] font-bold text-[var(--admin-text-primary)] group-data-[state=collapsed]/sidebar:text-[length:var(--text-body)]">
               {"Caf\u00e9 UNA"}
             </span>
           )}
         </Link>
         <label className="relative mt-3 block group-data-[state=collapsed]/sidebar:hidden">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden />
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--admin-text-muted)]" aria-hidden />
           <input
             type="text"
             value={busqueda}
@@ -497,7 +497,7 @@ export function AppSidebar() {
             }}
             placeholder={tBuscarMenu}
             aria-label={tBuscarMenu}
-            className="h-[var(--control-height)] w-full rounded-full border border-slate-200 bg-white pl-9 pr-10 text-[length:var(--text-body)] text-slate-900 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="h-[var(--control-height)] w-full rounded-[var(--admin-control-radius)] border border-[var(--admin-border-input)] bg-[var(--admin-surface)] pl-9 pr-10 text-[length:var(--text-body)] text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-muted)] focus:border-[var(--admin-border-input-focus)] focus-visible:outline-none"
           />
           {busqueda ? (
             <button
@@ -505,7 +505,7 @@ export function AppSidebar() {
               onClick={() => setBusqueda("")}
               aria-label={tLimpiarBusqueda}
               title={tLimpiarBusqueda}
-              className="absolute right-2 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800"
+              className="absolute right-2 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-[var(--admin-control-radius)] text-[var(--admin-text-muted)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)]"
             >
               <X className="size-4" aria-hidden />
             </button>
@@ -541,7 +541,7 @@ export function AppSidebar() {
                 })}
               </SidebarMenu>
             ) : (
-              <p className="px-2 py-3 text-[length:var(--text-body)] text-slate-500">
+              <p className="px-2 py-3 text-[length:var(--text-body)] text-[var(--admin-text-muted)]">
                 <ST>No hay opciones con esa búsqueda.</ST>
               </p>
             )}
@@ -584,7 +584,7 @@ export function AppSidebar() {
                     >
                       <Collapsible.Trigger
                         type="button"
-                        className="flex h-8 w-full items-center gap-2 px-2 text-left text-sm text-slate-600 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none dark:text-slate-300 dark:hover:text-white [&_svg]:size-4 [&_svg]:shrink-0"
+                        className="flex h-8 w-full items-center gap-2 rounded-[var(--admin-control-radius)] px-2 text-left text-sm text-[var(--admin-text-muted)] transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0"
                       >
                         <BookOpenText />
                         <span><ST>Sobre nosotros</ST></span>
@@ -1001,7 +1001,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <Collapsible.Trigger
                   type="button"
-                  className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 transition-colors hover:bg-transparent hover:text-slate-950 focus-visible:outline-none dark:text-slate-300 dark:hover:text-white [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="flex h-8 w-full items-center gap-2 rounded-[var(--admin-control-radius)] px-2 text-left text-sm text-[var(--admin-text-muted)] transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
                   <Wrench />
                   <span className="truncate"><ST>Ajustes del sistema</ST></span>
@@ -1135,7 +1135,7 @@ export function AppSidebar() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex w-full items-center gap-2 px-2 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-transparent hover:text-slate-950 dark:text-slate-200 dark:hover:text-white group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0"
+              className="flex w-full items-center gap-2 rounded-[var(--admin-control-radius)] px-2 py-2 text-sm font-medium text-[var(--admin-text-muted)] transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0"
             >
               {avatarUrl && !avatarRoto ? (
                 <img
@@ -1148,23 +1148,31 @@ export function AppSidebar() {
                 />
               ) : (
                 <span
-                  className="inline-flex size-8 items-center justify-center rounded-full bg-amber-900 text-[length:var(--text-body)] font-bold text-white"
+                  className="inline-flex size-8 items-center justify-center rounded-full bg-[var(--admin-accent-coffee)] text-[length:var(--text-body)] font-bold text-white"
                   aria-hidden="true"
                 >
                   {inicialAvatar}
                 </span>
               )}
               <span className="min-w-0 flex-1 text-left group-data-[state=collapsed]/sidebar:hidden">
-                <span className="block truncate">{displayName}</span>
-                {displayEmail ? <span className="block truncate text-xs font-normal text-slate-500">{displayEmail}</span> : null}
+                <span className="block truncate text-[var(--admin-text-primary)]">{displayName}</span>
+                {displayEmail ? <span className="block truncate text-xs font-normal text-[var(--admin-text-muted)]">{displayEmail}</span> : null}
               </span>
-              <ChevronDown className="size-4 shrink-0 group-data-[state=collapsed]/sidebar:hidden" />
+              <ChevronDown className="size-4 shrink-0 text-[var(--admin-text-muted)] group-data-[state=collapsed]/sidebar:hidden" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="end" className="z-[100] w-56">
+          <DropdownMenuContent
+            side="top"
+            align="end"
+            className="z-[100] w-56 rounded-[var(--admin-control-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)] p-1 text-[var(--admin-text-primary)] shadow-lg"
+          >
             {puedePerfil ? (
               <DropdownMenuItem asChild>
-                <Link to="/admin/perfil" className="cursor-pointer" activeProps={linkActivo}>
+                <Link
+                  to="/admin/perfil"
+                  className="cursor-pointer rounded-[var(--admin-control-radius)] text-[var(--admin-text-muted)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] data-[highlighted]:bg-[var(--admin-surface-hover)] data-[highlighted]:text-[var(--admin-text-primary)]"
+                  activeProps={linkActivo}
+                >
                   <UserRound className="size-4" />
                   <span><ST>Mi perfil</ST></span>
                 </Link>
@@ -1172,7 +1180,11 @@ export function AppSidebar() {
             ) : null}
             {puedeMisCompras ? (
               <DropdownMenuItem asChild>
-                <Link to="/admin/mis-compras" className="cursor-pointer" activeProps={linkActivo}>
+                <Link
+                  to="/admin/mis-compras"
+                  className="cursor-pointer rounded-[var(--admin-control-radius)] text-[var(--admin-text-muted)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] data-[highlighted]:bg-[var(--admin-surface-hover)] data-[highlighted]:text-[var(--admin-text-primary)]"
+                  activeProps={linkActivo}
+                >
                   <ShoppingBag className="size-4" />
                   <span><ST>Mis compras</ST></span>
                 </Link>
@@ -1180,7 +1192,11 @@ export function AppSidebar() {
             ) : null}
             {puedeMisSolicitudes ? (
               <DropdownMenuItem asChild>
-                <Link to="/admin/mis-solicitudes" className="cursor-pointer" activeProps={linkActivo}>
+                <Link
+                  to="/admin/mis-solicitudes"
+                  className="cursor-pointer rounded-[var(--admin-control-radius)] text-[var(--admin-text-muted)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] data-[highlighted]:bg-[var(--admin-surface-hover)] data-[highlighted]:text-[var(--admin-text-primary)]"
+                  activeProps={linkActivo}
+                >
                   <ClipboardList className="size-4" />
                   <span><ST>Mis solicitudes</ST></span>
                 </Link>
@@ -1188,14 +1204,18 @@ export function AppSidebar() {
             ) : null}
             {puedeMisPropuestas ? (
               <DropdownMenuItem asChild>
-                <Link to="/admin/mis-propuestas" className="cursor-pointer" activeProps={linkActivo}>
+                <Link
+                  to="/admin/mis-propuestas"
+                  className="cursor-pointer rounded-[var(--admin-control-radius)] text-[var(--admin-text-muted)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] data-[highlighted]:bg-[var(--admin-surface-hover)] data-[highlighted]:text-[var(--admin-text-primary)]"
+                  activeProps={linkActivo}
+                >
                   <Sprout className="size-4" />
                   <span><ST>Mis propuestas</ST></span>
                 </Link>
               </DropdownMenuItem>
             ) : null}
             <DropdownMenuItem
-              className="cursor-pointer text-red-600 hover:text-red-600 focus:text-red-700 data-[highlighted]:text-red-600"
+              className="cursor-pointer rounded-[var(--admin-control-radius)] text-[var(--admin-status-danger-text)] hover:bg-[var(--admin-status-danger-bg)] hover:text-[var(--admin-status-danger-text)] focus:text-[var(--admin-status-danger-text)] data-[highlighted]:bg-[var(--admin-status-danger-bg)] data-[highlighted]:text-[var(--admin-status-danger-text)]"
               onSelect={(event) => {
                 event.preventDefault();
                 handleLogout();

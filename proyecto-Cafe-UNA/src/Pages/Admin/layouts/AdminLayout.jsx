@@ -37,11 +37,11 @@ function AdminMain({ children }) {
 
   return (
     <main
-      className={`min-h-svh min-w-0 flex-1 bg-[#fafafa] dark:bg-slate-950 ${bloquearMain ? "pointer-events-none" : ""}`}
+      className={`min-h-svh min-w-0 flex-1 bg-[var(--admin-bg)] text-[var(--admin-text-primary)] ${bloquearMain ? "pointer-events-none" : ""}`}
       inert={bloquearMain || undefined}
       aria-hidden={bloquearMain || undefined}
     >
-      <div className="sticky top-0 z-[80] flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950">
+      <header className="sticky top-0 z-[80] flex h-14 items-center gap-3 border-b border-[var(--admin-border)] bg-[var(--admin-surface)] px-4">
         <SidebarTrigger />
         <AdminBreadcrumb />
         <div className="ml-auto flex items-center gap-2">
@@ -50,14 +50,14 @@ function AdminMain({ children }) {
             to="/admin/ajustes/manual"
             aria-label={tManual}
             title={tManual}
-            className="inline-flex size-9 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            className="inline-flex size-9 items-center justify-center rounded-[var(--admin-control-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-muted)] shadow-sm transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)]"
           >
             <LifeBuoy className="size-5" aria-hidden />
           </Link>
           <AdminThemeToggle />
           <AdminStockNotificationsBell />
         </div>
-      </div>
+      </header>
       <div ref={contenido} className="min-w-0 max-w-full overflow-x-clip p-4 pb-10 md:p-6 md:pb-12">{children}</div>
     </main>
   );

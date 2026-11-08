@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-07T00:00:00Z",
+  "title": "Design System: Café UNA Admin",
+  "extensions": {
+    "colorMeta": {
+      "coffee": { "role": "primary", "displayName": "Roasted Coffee", "canonical": "#5c4038" },
+      "dark-coffee": { "role": "primary", "displayName": "Latte Foam (dark theme)", "canonical": "#b88376" },
+      "surface": { "role": "neutral", "displayName": "Paper White", "canonical": "#ffffff" },
+      "bg": { "role": "neutral", "displayName": "Canvas", "canonical": "#fafafa" }
+    },
+    "typographyMeta": {
+      "body": { "displayName": "Body", "purpose": "14px admin body; root is 18px by design, admin stays small." },
+      "field-label": { "displayName": "Field label", "purpose": "13px sentence-case labels above controls." }
+    },
+    "shadows": [
+      { "name": "dialog", "value": "shadow-2xl on dialog panel; scrim rgb(15 23 42 / 0.55)", "purpose": "Only modals lift." },
+      { "name": "segment-active", "value": "shadow-sm", "purpose": "Raise the active segment above the track." }
+    ],
+    "motion": [
+      { "name": "color-transition", "value": "transition-colors", "purpose": "Hover and focus color changes only." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Coffee Primary Button",
+      "kind": "button",
+      "refersTo": "button-coffee",
+      "description": "Single save action in modal footers.",
+      "html": "<button class=\"ds-btn-coffee\">Guardar cambios</button>",
+      "css": ".ds-btn-coffee{min-height:44px;padding:0 1.25rem;border-radius:9999px;border:1px solid #5c4038;background:#5c4038;color:#fff;font-size:14px;font-weight:700;transition:background .15s,border-color .15s}.ds-btn-coffee:hover{background:#452e27;border-color:#452e27}.ds-btn-coffee:focus-visible{outline:2px solid #64748b;outline-offset:2px}"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Secondary action: Reemplazar, Quitar, Previsualizar.",
+      "html": "<button class=\"ds-btn-quiet\">Reemplazar</button>",
+      "css": ".ds-btn-quiet{min-height:44px;padding:0 1rem;border-radius:9999px;border:1px solid #64748b;background:transparent;color:#475569;font-size:14px;font-weight:600}.ds-btn-quiet:hover{border-color:#5c4038;color:#5c4038}.ds-btn-quiet:focus-visible{outline:2px solid #64748b;outline-offset:2px}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "field-input",
+      "description": "44px pill input with 13px sentence-case label.",
+      "html": "<label class=\"ds-label\">Título</label><input class=\"ds-input\" value=\"Hola\">",
+      "css": ".ds-label{display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569}.ds-input{height:44px;width:100%;padding:0 1rem;border-radius:9999px;border:1px solid #64748b;background:#fff;color:#0f172a;font-size:14px;outline:none}.ds-input:focus-visible{border-color:#64748b;outline:2px solid #64748b;outline-offset:0}"
+    },
+    {
+      "name": "Segmented Tabs",
+      "kind": "nav",
+      "refersTo": "segment-track",
+      "description": "Pill track with raised active segment.",
+      "html": "<div class=\"ds-seg\"><button class=\"ds-seg-on\">Inicio 6</button><button class=\"ds-seg-off\">Navegación 2</button></div>",
+      "css": ".ds-seg{display:inline-flex;gap:4px;padding:4px;border-radius:9999px;border:1px solid #e2e8f0;background:#f1f5f9}.ds-seg button{min-height:44px;padding:0 1rem;border-radius:9999px;font-size:14px}.ds-seg-on{border:1px solid #e2e8f0;background:#fff;color:#0f172a;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.05)}.ds-seg-off{border:1px solid transparent;background:transparent;color:#475569;font-weight:500}.ds-seg-off:hover{color:#0f172a}"
+    },
+    {
+      "name": "Editorial List Row",
+      "kind": "custom",
+      "refersTo": "list-row",
+      "description": "Number, icon chip, name + preview, quiet Editar pill; whole row is one button.",
+      "html": "<button class=\"ds-row\"><span class=\"ds-n\">1</span><span class=\"ds-chip\">&#9679;</span><span class=\"ds-txt\"><b>Portada principal</b><i>Banner principal</i></span><span class=\"ds-pill\">Editar</span></button>",
+      "css": ".ds-row{display:flex;width:100%;min-height:44px;align-items:center;gap:16px;padding:12px 24px;background:#fff;border:0;text-align:left;font-size:14px}.ds-row:hover{background:#f1f5f9}.ds-row:focus-visible{outline:2px solid #64748b;outline-offset:-2px}.ds-n{width:20px;text-align:right;font-size:12px;color:#475569}.ds-chip{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:rgba(92,64,56,.1);color:#5c4038}.ds-txt{flex:1;display:flex;flex-direction:column}.ds-txt b{font-weight:600;color:#0f172a}.ds-txt i{font-style:normal;font-size:12px;color:#475569}.ds-pill{padding:4px 12px;border-radius:9999px;border:1px solid #e2e8f0;font-size:12px;font-weight:500;color:#475569}.ds-row:hover .ds-pill{border-color:#5c4038;color:#5c4038}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Quiet Workbench",
+    "overview": "Calm surfaces, one warm coffee accent, small type, pill controls. One row is one action.",
+    "keyCharacteristics": ["14px admin body inside an 18px-root app", "Pill controls, 1rem containers", "Coffee accent with theme-aware on-accent text", "Flat with 1px borders; only dialogs lift"],
+    "rules": [
+      { "name": "One Row, One Action", "body": "A list row is a single button; no filled button per row.", "section": "components" },
+      { "name": "Tokens Not Literals", "body": "Colors come from var(--admin-*) so both themes work.", "section": "colors" }
+    ],
+    "dos": ["Do use segmented tabs for small fixed indexes.", "Do use sentence-case 13px labels.", "Do use the coffee variant for the single save action."],
+    "donts": ["Don't repeat filled black buttons per row.", "Don't use all-caps letter-spaced labels in new work.", "Don't use centered card grids for lists or pagination for small fixed indexes."]
+  }
+}
