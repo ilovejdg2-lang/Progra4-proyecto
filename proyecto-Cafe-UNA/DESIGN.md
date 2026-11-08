@@ -182,7 +182,7 @@ Black (`slate-950`) used to do four jobs (page primary, row action, selection, s
 | Quiet | `admin-role-quiet` | 1px `--admin-border-input`, transparent, primary text, coffee border on hover | 17.9:1 | 14.0:1 | Row actions (Editar, Stock) and secondary actions (Categorías, Historial de ventas) |
 | Destructive | `admin-role-danger` | `--admin-status-danger-text` text and 1px border, transparent; hover tints with `--admin-status-danger-bg` | 6.5:1 | 9.2:1 | Desactivar, Inactivar, Rechazar, Eliminar |
 | Positive | `admin-role-positive` | `--admin-status-success-text` text and border, transparent | 5.0:1 | 11.4:1 | Activar, Aprobar |
-| Selected | `admin-role-selected` (unselected: `admin-role-surface`) | `--admin-accent-coffee-soft` fill, 1px `--admin-accent-coffee` border, primary text | 15.7:1 | 13.2:1 | Selected card or chip (Puntos de venta card, "Todos los productos") |
+| Selected | `admin-role-selected` (unselected: `admin-role-surface`) | `--admin-accent-coffee-soft` fill, 1px `--admin-accent-coffee` border, primary text | 15.7:1 | 13.2:1 | Selected card or chip ("Todos los productos"); Puntos de venta now uses the segmented pills instead |
 | Switch on | `body.admin-route-active .ui-switch__track.is-on` | Coffee track, `--admin-on-accent-coffee` thumb. Off: `--admin-border-input` track (4.8:1 light, 3.6:1 dark), `--admin-surface` thumb. Ratios are track vs surface, WCAG 1.4.11 needs 3:1 | 9.35:1 | 5.39:1 | Destacado toggle |
 | Status text | `admin-status-success`, `admin-status-danger`, `admin-status-neutral` | Status token text on its tinted background; always paired with a word | 4.6:1 minimum | 9.1:1 minimum | Activo/Inactivo, Entregado/Rechazado |
 
@@ -283,6 +283,28 @@ Code: `SegmentoSeccion` and the `role="tablist"` block in `InformacionPaginaPrin
 - **Use for:** small fixed indexes (about 2 to 6 groups). **Don't:** use pagination for these.
 - Rounded corners need `rounded-full!` (important) because of the global button rule.
 
+### Location selector: pills up to 6, combobox above (master-detail)
+
+Code: `src/Pages/Admin/PuntosVenta/components/PointOfSaleLocationSelector.jsx` (threshold constant `LOCATION_PILLS_MAX = 6`), used by `/admin/puntos-venta`. Use it for any "pick one record, then work on its detail" screen whose list can grow.
+
+- **Few (1 to 6): segmented pills.** Same look as the segmented control tabs (track, `--admin-segment-active` raised pill, `shadow-sm`, no coffee fill, no colored borders). Each pill is name plus a 8px status dot (`StatusDot`: success text color when active, `--admin-border-input` gray when inactive). The dot is decorative; the accessible name carries the status (`aria-label="FUNDA-UNA, activo"`). Inactive pills use muted text. Below `sm` (and whenever the pills do not fit) the track scrolls horizontally with `snap-x`; the scrollbar is hidden (`.pv-pills`). ARIA: `tablist` / `tab` with `aria-selected`, roving `tabIndex`, Arrow/Home/End (wrapping, selecting on focus), tabs `aria-controls` the detail region, which is the `tabpanel` labelled by the active tab.
+- **Many (more than 6): searchable combobox.** A 44px pill trigger "Punto de venta: {name} (dot)" (`aria-haspopup="listbox"`) opens a popover with a search field (`role="combobox"`, `aria-controls`, `aria-activedescendant`, accent-insensitive match on name and code) and a `listbox` of options (dot, name, code, check on the current one; option accessible name includes the status). Keyboard: ArrowUp/Down and Home/End move the active option, Enter selects, Escape closes and returns focus to the trigger, Tab and outside press close. The detail region is a labelled `region`, not a `tabpanel`.
+- **One panel, no boxes in boxes.** Selector, selected-record header, toolbar and table share one bordered `rounded-2xl` panel separated by 1px `--admin-border` dividers. The panel must not use `overflow-hidden` (it would clip the popovers); only the detail body clips its own rounded bottom corners.
+- **Container queries, not viewport breakpoints.** The admin sidebar eats about 290px at 768 to 1279, so the panel is `@container` and its internals switch at container widths: table from `@xl` (576px), toolbar in one row from `@2xl`, header actions inline from `@lg`.
+
+### Overflow menu and destructive confirmation
+
+Code: `src/Components/Admin/ui/AdminOverflowMenu.jsx`, used by `PointOfSaleLocationHeader.jsx`.
+
+- Icon-only 44px ghost "..." trigger (`aria-label` names the record, `aria-haspopup="menu"`, `aria-expanded`). Items are `role="menuitem"` buttons or router links (`to`/`params`), 44px high, primary text. Opening focuses the first visible item (items hidden by responsive classes are skipped); ArrowUp/Down wrap, Home/End, Escape closes and returns focus to the trigger, selecting an item closes and returns focus, outside press and Tab close.
+- **Destructive text lives only inside the menu** (danger text color, no border, no fill). The visible page never shows a red or green button; the one coffee primary stays in the page header.
+- **Inactivate asks first:** the menu item opens `AdminModal` (max-w-md) with an icon header ("Inactivar {name}"), a plain consequence line, Cancelar on the left and a filled danger primary "Inactivar" on the right (the only filled danger in the flow, inside the modal). Activar is non-destructive and runs immediately.
+- Secondary actions collapse: at container width below `@lg` "Historial de ventas" moves from a quiet text link into the menu.
+
+### Stock table rows (Puntos de venta)
+
+Code: `PointOfSaleStockTable.jsx`. Identity column first (40px thumb plus name), Peso, Estado as a dot plus neutral muted word (never green or red text), Stock right-aligned, bold, `tabular-nums`. Low stock (existing `POCAS_UNIDADES_MAX` rule in `productoDisponibilidad.js`) adds an amber dot and the word "Bajo" (or "Agotado" at zero); amber is used for nothing else on the screen. The only per-row control is an icon-only ghost pencil (`aria-label="Editar stock de {producto}"`, 44px); the whole row also opens the same editor, and the pencil stops propagation so one click never fires twice. Below `@xl` rows become compact list items (thumb, name over "peso · estado", stock, pencil).
+
 ### Toolbar
 
 Code: toolbar block in `InformacionPaginaPrincipal.jsx` (search with clear button); `AdminListaToolbar.jsx` is the shared list toolbar used elsewhere.
@@ -378,6 +400,7 @@ Code: `src/Pages/Admin/Usuarios/Usuarios.jsx`, shell `.admin-table-shell--usuari
 | `adminBtnVoluntariado*`, `AdminEditorConPreview` default variant | **Legacy, to migrate** | Black buttons and "Edición" eyebrow |
 | Uppercase tracked table headers (`.admin-table-shell thead th`: 11px, `0.05em`, uppercase) | **Legacy, to migrate** | Contradicts sentence-case rule; not copied into new components |
 | Color roles (`admin-role-*`, `admin-status-*`, switch) on the 10 inventory pages, Usuarios, Voluntariado, Visitas, Donaciones, Equipo, Propuestas, Panel StockAlerts | **Migrated (PR 4)** | Black fills replaced by roles |
+| Puntos de venta master-detail (`PointOfSaleLocationSelector`, `AdminOverflowMenu`, one-panel layout, dot statuses) | **Implemented (user-approved design)** | Replaces the card grid; `PointOfSaleCards` removed. Toolbar is `PointOfSaleToolbar` (count line only while filters are active) |
 | `AdminSeccionCard`, `AdminModal` black defaults, `InformacionPaginaPrincipal` image badge, Sidebar scrim | **Left on purpose** | Shared defaults or non-control surfaces |
 | Remaining hardcoded Tailwind color utilities and `adminDark.css` `!important` overrides | **Legacy, to migrate** | Move to `--admin-*` tokens |
 | Other admin pages (toolbars, `AdminPaginacion`, old cards) | **Not yet reviewed** | Follow this file when touched |
