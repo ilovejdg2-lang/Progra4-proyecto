@@ -1,3 +1,4 @@
+import { useId, useState } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { ST } from "../../T/ST";
@@ -9,6 +10,12 @@ const inputCls =
 
 const inputFechaCls =
   "h-[var(--control-height)] w-full min-w-0 max-w-full rounded-[var(--admin-control-radius)] border border-[var(--admin-border-input)] bg-[var(--admin-surface)] px-3 py-2 text-[length:var(--text-body)] text-[var(--admin-text-primary)] transition-colors focus-visible:border-[var(--admin-focus-ring)] focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]";
+
+const VALORES_SIN_FILTRO = new Set(["", "todos", "todas"]);
+
+function filtroActivo(filtro) {
+  return !VALORES_SIN_FILTRO.has(filtro.value ?? "");
+}
 
 export function AdminListaToolbar({
   busqueda,
@@ -32,6 +39,11 @@ export function AdminListaToolbar({
   const tRegistro = useTraducir("registro");
   const tRegistros = useTraducir("registros");
   const tLimpiar = useTraducir("Limpiar filtros");
+  const tFiltros = useTraducir("Filtros");
+  const filtrosActivos = filtros.filter(filtroActivo).length;
+  // Start open on small screens when filters are already active, so they are not hidden on arrival.
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(() => filtrosActivos > 0);
+  const panelFiltrosId = useId();
 
   const indiceFooter = filtros.findIndex((filtro) => filtro.footer);
   const indiceAnchoCompleto =
@@ -47,23 +59,40 @@ export function AdminListaToolbar({
         compacto ? "px-4 py-5 sm:px-6" : "px-4 py-5 sm:px-6"
       }`}
     >
-      <div className={filaClassName || "mx-auto flex w-full max-w-6xl min-w-0 flex-col items-stretch gap-4 xl:flex-row xl:items-end xl:justify-center"}>
-        {ocultarBusqueda ? null : (
-        <div className="relative w-full min-w-0 xl:max-w-md xl:flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--admin-text-muted)]" aria-hidden="true" />
-          <input
-            type="search"
-            value={busqueda}
-            onChange={(event) => onBusquedaChange(event.target.value)}
-            placeholder={tPlaceholder}
-            className={inputCls}
-            aria-label={tBuscar}
-          />
+      <div className={filaClassName || "mx-auto flex w-full max-w-6xl min-w-0 flex-col items-stretch gap-4 xl:flex-row xl:flex-wrap xl:items-end"}>
+        {ocultarBusqueda && filtros.length === 0 ? null : (
+        <div className="flex w-full min-w-0 items-center gap-2 xl:w-auto xl:min-w-[16rem] xl:max-w-md xl:flex-1">
+          {ocultarBusqueda ? null : (
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--admin-text-muted)]" aria-hidden="true" />
+            <input
+              type="search"
+              value={busqueda}
+              onChange={(event) => onBusquedaChange(event.target.value)}
+              placeholder={tPlaceholder}
+              className={inputCls}
+              aria-label={tBuscar}
+            />
+          </div>
+          )}
+          {filtros.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setFiltrosAbiertos((abierto) => !abierto)}
+              aria-expanded={filtrosAbiertos}
+              aria-controls={panelFiltrosId}
+              className="inline-flex h-[var(--control-height)] shrink-0 items-center gap-1.5 rounded-full! border border-[var(--admin-border-input)] bg-[var(--admin-surface)] px-4 text-[length:var(--text-body)] font-semibold text-[var(--admin-text-muted)] transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] focus-visible:border-[var(--admin-focus-ring)] focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)] lg:hidden"
+            >
+              <SlidersHorizontal className="size-4 shrink-0" aria-hidden="true" />
+              <span className="tabular-nums">{filtrosActivos > 0 ? `${tFiltros} · ${filtrosActivos}` : tFiltros}</span>
+            </button>
+          ) : null}
         </div>
         )}
 
         {filtros.length > 0 ? (
-          <div className={filtrosContenedorClassName || "grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-3 sm:flex sm:w-auto sm:flex-row sm:flex-wrap sm:items-end sm:justify-center sm:gap-4 xl:w-auto"}>
+          <div id={panelFiltrosId} className={`${filtrosAbiertos ? "" : "hidden"} min-w-0 ${extra ? "lg:block xl:order-last xl:basis-full" : "lg:contents"}`}>
+          <div className={filtrosContenedorClassName || "grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-3 sm:flex sm:w-auto sm:flex-row sm:flex-wrap sm:items-end sm:gap-4 xl:w-auto"}>
             {filtros.map((filtro, indice) => {
               const ocupaDos = filtros.length === 1 || indice === indiceAnchoCompleto;
               return (
@@ -78,8 +107,7 @@ export function AdminListaToolbar({
                         }`)
                 }`}
               >
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-text-muted)]">
-                  <SlidersHorizontal className="size-3 shrink-0" aria-hidden="true" />
+                <span className="text-[13px] font-semibold text-[var(--admin-text-muted)]">
                   <ST>{filtro.label}</ST>
                 </span>
                 {filtro.tipo === "fecha" ? (
@@ -108,16 +136,17 @@ export function AdminListaToolbar({
               );
             })}
           </div>
+          </div>
+        ) : null}
+
+        {extra ? (
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end xl:ml-auto">
+            {extra}
+          </div>
         ) : null}
       </div>
 
-      {extra ? (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 sm:flex-row sm:items-end">
-          {extra}
-        </div>
-      ) : null}
-
-      <div className={`mx-auto flex w-full flex-wrap items-center justify-between gap-3 text-xs text-[var(--admin-text-muted)] ${filaClassName ? "" : "max-w-6xl"}`}>
+      <div className={`mx-auto flex w-full flex-wrap items-center justify-between gap-3 text-xs tabular-nums text-[var(--admin-text-muted)] ${filaClassName ? "" : "max-w-6xl"}`}>
         <p>
           {hayFiltrosActivos ? (
             <>

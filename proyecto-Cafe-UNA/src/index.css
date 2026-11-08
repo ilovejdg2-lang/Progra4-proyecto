@@ -193,10 +193,10 @@ body.admin-route-active h1:not(.admin-cms-preview h1) {
 }
 
 body.admin-route-active .admin-table-shell thead th {
-  font-size: 11px !important;
+  font-size: 13px !important;
   font-weight: 600 !important;
-  letter-spacing: 0.05em !important;
-  text-transform: uppercase !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
   color: var(--admin-text-muted) !important;
 }
 
@@ -222,10 +222,10 @@ body.admin-route-active .admin-table-shell--usuarios tbody td:last-child {
 
 body.admin-route-active .admin-table-shell thead th .admin-th-sort,
 body.admin-route-active .admin-table-shell thead th button {
-  font-size: 11px !important;
+  font-size: 13px !important;
   font-weight: 600 !important;
-  letter-spacing: 0.05em !important;
-  text-transform: uppercase !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
   color: inherit !important;
 }
 
