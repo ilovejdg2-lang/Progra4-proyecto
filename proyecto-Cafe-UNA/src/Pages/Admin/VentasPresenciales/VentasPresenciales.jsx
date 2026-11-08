@@ -9,6 +9,7 @@ import {
   Printer,
   RefreshCw,
   Search,
+  ShoppingBag,
   ShoppingCart,
   Store,
   Trash2,
@@ -19,7 +20,10 @@ import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import {
   AdminModal,
   AdminModalBody,
+  AdminModalFooter,
   AdminModalHeader,
+  adminBtnCoffeePrimary,
+  adminBtnQuiet,
 } from "../../../Components/Admin/ui/AdminModal";
 import { UiSelect } from "../../../Components/ui/Select";
 import { AdminLayout } from "../layouts/AdminLayout";
@@ -971,16 +975,12 @@ export default function AdminVentasPresenciales() {
             maxWidth="max-w-lg"
             labelledBy="resumen-compra-title"
           >
-            <AdminModalHeader onClose={() => setModalResumenOpen(false)}>
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                  <CheckCircle2 className="size-5" />
-                </div>
-                <h2 id="resumen-compra-title" className="min-w-0 text-base font-bold text-slate-950 sm:text-lg">
-                  <ST>Resumen de Compra</ST>
-                </h2>
-              </div>
-            </AdminModalHeader>
+            <AdminModalHeader
+              icon={ShoppingBag}
+              title={<ST>Resumen de Compra</ST>}
+              titleId="resumen-compra-title"
+              onClose={() => setModalResumenOpen(false)}
+            />
 
             <AdminModalBody>
               <div className="space-y-4">
@@ -1125,28 +1125,23 @@ export default function AdminVentasPresenciales() {
                     </div>
                   ) : null}
                 </div>
-
-                {/* Botones de acción del Modal (Botones Negros) */}
-                <div className="flex flex-col gap-2 pt-2 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={imprimirTicket}
-                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-normal rounded-full border-2 border-black bg-white px-4 py-2.5 text-center text-sm font-bold text-black transition hover:bg-black hover:text-white sm:min-h-10 sm:flex-1 sm:text-xs"
-                  >
-                    <Printer className="size-4 shrink-0" />
-                    <span><ST>Imprimir comprobante</ST></span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setModalResumenOpen(false)}
-                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-normal rounded-full bg-black px-4 py-2.5 text-center text-sm font-bold text-white transition hover:bg-neutral-900 sm:min-h-10 sm:flex-1 sm:text-xs"
-                  >
-                    <ST>Nueva venta</ST>
-                  </button>
-                </div>
               </div>
             </AdminModalBody>
+            <AdminModalFooter>
+              <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <button type="button" onClick={imprimirTicket} className={`${adminBtnQuiet} w-full sm:w-auto`}>
+                  <Printer className="size-4 shrink-0" aria-hidden="true" />
+                  <span><ST>Imprimir comprobante</ST></span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalResumenOpen(false)}
+                  className={adminBtnCoffeePrimary}
+                >
+                  <ST>Nueva venta</ST>
+                </button>
+              </div>
+            </AdminModalFooter>
           </AdminModal>
         ) : null}
       </AdminLayout>

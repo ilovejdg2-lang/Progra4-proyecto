@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { expectApprovedModalAnatomy } from "../../../../test/modalAnatomy";
 import { ProductCatalogFormDrawer } from "./ProductCatalogFormDrawer";
 
 function setCampo(dialog, nameRegex, value) {
@@ -15,6 +16,14 @@ function setCampo(dialog, nameRegex, value) {
 describe("ProductCatalogFormDrawer", () => {
   beforeEach(() => {
     localStorage.setItem("cafe-una-idioma", "es");
+  });
+
+  it("follows the approved modal anatomy (header close, Cancelar then coffee primary)", async () => {
+    const onClose = vi.fn();
+    render(<ProductCatalogFormDrawer open onClose={onClose} onSave={vi.fn()} />);
+
+    const dialog = screen.getByRole("dialog", { name: "Nuevo producto" });
+    await expectApprovedModalAnatomy(dialog, { onClose, primaryName: "Crear producto" });
   });
 
   it("announces required errors and focuses the first invalid field", async () => {
