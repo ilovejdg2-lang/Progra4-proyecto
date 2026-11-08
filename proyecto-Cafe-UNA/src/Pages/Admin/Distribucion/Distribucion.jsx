@@ -332,7 +332,7 @@ export default function AdminDistribucion() {
                 <button
                   type="button"
                   onClick={() => { setFormError(""); setFormOpen(true); }}
-                  className="inline-flex h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-4 text-[length:var(--text-body)] font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
+                  className="inline-flex h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full px-4 text-[length:var(--text-body)] font-semibold transition sm:w-auto admin-role-primary"
                 >
                   <Plus className="size-4" /> <ST>Nueva distribución</ST>
                 </button>
@@ -476,7 +476,7 @@ export default function AdminDistribucion() {
                         </td>
                         <td className="px-6 py-4 font-medium text-slate-700">{row.responsableNombre || "—"}</td>
                         <td className="px-6 py-4 text-slate-600">
-                          {row.notas ? <ST>{row.notas}</ST> : <span className="text-slate-400">—</span>}
+                          {row.notas ? <ST>{row.notas}</ST> : <span className="text-[color:var(--admin-text-muted)]">—</span>}
                         </td>
                         <td className="px-6 py-4">
                           <button

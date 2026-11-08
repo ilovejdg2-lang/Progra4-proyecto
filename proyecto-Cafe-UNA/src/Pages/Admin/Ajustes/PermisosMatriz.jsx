@@ -13,7 +13,7 @@ import { useIdioma } from "../../../lib/useIdioma";
 import { moduloDePermiso } from "./permisosModulos";
 
 const btnPrimario =
-  "inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full bg-slate-900 px-4 text-[length:var(--text-body)] font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full px-4 text-[length:var(--text-body)] font-semibold disabled:cursor-not-allowed disabled:opacity-50 admin-role-primary";
 
 function TogglePermiso({ activo, onClick, label }) {
   return (

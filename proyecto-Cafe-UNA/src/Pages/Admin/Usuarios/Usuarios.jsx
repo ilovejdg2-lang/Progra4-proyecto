@@ -292,7 +292,7 @@ function BadgeRol({ rol }) {
 }
 
 const btnNegro =
-  "w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
+  "w-full rounded-full border px-5 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto admin-role-primary";
 
 const btnCancelarGris =
   "w-full rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 sm:w-auto";
@@ -984,7 +984,7 @@ function FormUsuario({ inicial, onCreado, onActualizado, onCancelar, cargando, s
                     }}
                     className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                       clienteForm.tipo === op.id
-                        ? "bg-slate-900 text-white"
+                        ? "admin-role-selected"
                         : "border border-slate-200 bg-white text-slate-600"
                     }`}
                   >
@@ -1260,8 +1260,8 @@ function AccionesUsuario({
   const editarCls = `${accionBtnBase} border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)] active:bg-[var(--admin-surface-hover)] focus-visible:ring-[color:var(--admin-focus-ring)] shadow-xs`;
   const toggleCls = `${accionBtnBase} ${
     esInactivo
-      ? "border-emerald-300/80 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-700/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 focus-visible:ring-[color:var(--admin-focus-ring)]"
-      : "border-rose-300/80 bg-rose-50 text-rose-800 hover:bg-rose-100 dark:border-rose-700/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 focus-visible:ring-[color:var(--admin-focus-ring)]"
+      ? "focus-visible:ring-[color:var(--admin-focus-ring)] admin-role-positive"
+      : "focus-visible:ring-[color:var(--admin-focus-ring)] admin-role-danger"
   }`;
 
   const toggleLabel = toggleando === usuario.id
@@ -1673,7 +1673,7 @@ const AdminUsuarios = () => {
           {esSuperAdmin ? (
           <button
             onClick={() => setModalCrear(true)}
-            className="w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2 text-sm font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 sm:w-auto"
+            className="w-full rounded-full border px-5 py-2 text-sm font-semibold transition sm:w-auto admin-role-primary"
           >
             <ST>Nuevo usuario +</ST>
           </button>

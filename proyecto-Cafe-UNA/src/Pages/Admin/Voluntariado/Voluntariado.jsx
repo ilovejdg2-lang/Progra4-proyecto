@@ -74,7 +74,7 @@ const accionBtnBase =
   "inline-flex items-center justify-center gap-1.5 rounded-full border text-[11px] font-semibold leading-none whitespace-nowrap transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
 
 const btnNegro =
-  "inline-flex items-center justify-center rounded-full border border-slate-950 bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center rounded-full border px-5 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60 admin-role-primary";
 
 const btnCancelarGris =
   "inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60";
@@ -229,8 +229,8 @@ function AccionesSolicitud({
 }) {
   const esMovil = variant === "mobile";
   const verCls = `${accionBtnBase} border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-300`;
-  const editarCls = `${accionBtnBase} border-slate-950 bg-slate-950 text-white hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 focus-visible:ring-slate-400`;
-  const eliminarCls = `${accionBtnBase} border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300`;
+  const editarCls = `${accionBtnBase} admin-role-primary`;
+  const eliminarCls = `${accionBtnBase} admin-role-danger`;
 
   if (esMovil) {
     return (
@@ -340,8 +340,8 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
 
   const btnEstadoBase = `${accionBtnBase} px-3 py-2 disabled:cursor-not-allowed disabled:opacity-50`;
   const btnRevision = `${btnEstadoBase} border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-300`;
-  const btnAprobar = `${btnEstadoBase} border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300`;
-  const btnRechazar = `${btnEstadoBase} border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300`;
+  const btnAprobar = `${btnEstadoBase} admin-role-positive`;
+  const btnRechazar = `${btnEstadoBase} admin-role-danger`;
 
   const guardarCambios = async (nuevoEstado = estado) => {
     setGuardando(true);
@@ -1043,7 +1043,7 @@ const AdminVoluntariado = () => {
               <button
                 type="button"
                 onClick={cargarSolicitudes}
-                className={`${accionBtnBase} mt-4 border-rose-200 bg-rose-50 px-4 py-2 text-rose-700 hover:bg-rose-100`}
+                className={`border ${accionBtnBase} mt-4 px-4 py-2 admin-role-danger`}
               >
                 <ST>Reintentar</ST>
               </button>

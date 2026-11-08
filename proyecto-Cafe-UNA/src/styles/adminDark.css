@@ -491,7 +491,9 @@ html.admin-theme-dark body.admin-route-active .bg-green-100 {
 
 html.admin-theme-dark body.admin-route-active .text-green-600,
 html.admin-theme-dark body.admin-route-active .text-green-700,
-html.admin-theme-dark body.admin-route-active .text-green-800 {
+html.admin-theme-dark body.admin-route-active .text-green-800,
+html.admin-theme-dark body.admin-route-active .text-emerald-600,
+html.admin-theme-dark body.admin-route-active .text-emerald-700 {
   color: #6ee7b7 !important;
 }
 

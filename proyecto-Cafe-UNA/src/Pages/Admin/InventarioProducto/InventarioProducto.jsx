@@ -383,7 +383,7 @@ const AdminInventarioProducto = () => {
                 <button
                   type="button"
                   onClick={() => setModalCrear(true)}
-                  className="w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2 text-sm font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700 sm:w-auto"
+                  className="w-full rounded-full border px-5 py-2 text-sm font-semibold transition sm:w-auto admin-role-primary"
                 >
                   <ST>+ Nuevo producto</ST>
                 </button>

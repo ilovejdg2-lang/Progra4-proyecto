@@ -610,7 +610,7 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
                   <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3.5 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
+                      className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition disabled:opacity-60 admin-role-danger"
                       disabled={Boolean(accion)}
                       onClick={() => setModalEliminarAdmin(true)}
                     >

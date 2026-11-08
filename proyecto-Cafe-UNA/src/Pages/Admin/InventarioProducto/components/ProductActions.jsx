@@ -25,13 +25,13 @@ export function ProductActions({
     ? "h-[var(--control-height)] px-2.5"
     : "h-8 px-2";
 
-  const editarClassName = `${actionButtonBase} ${sizeClass} border-slate-950 bg-slate-950 text-white hover:border-neutral-700 hover:bg-neutral-700 focus-visible:ring-slate-400`;
+  const editarClassName = `${actionButtonBase} ${sizeClass} admin-role-quiet`;
   const toggleClassName = `${actionButtonBase} ${sizeClass} ${
     esDeshabilitado
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300"
-      : "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300"
+      ? "admin-role-positive"
+      : "admin-role-danger"
   }`;
-  const stockClassName = `${actionButtonBase} ${sizeClass} border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100 focus-visible:ring-slate-400`;
+  const stockClassName = `${actionButtonBase} ${sizeClass} admin-role-quiet`;
 
   return (
     <div
@@ -57,7 +57,7 @@ export function ProductActions({
           onClick={onToggleEstado}
           disabled={bloquearInhabilitar}
           title={bloquearInhabilitar ? t("Quita el destacado antes de desactivarlo") : undefined}
-          className={`${toggleClassName} disabled:cursor-not-allowed disabled:opacity-50 ${filaSuperior && !esMovil ? "col-span-2" : ""}`}
+          className={`${toggleClassName} disabled:cursor-not-allowed disabled:opacity-60 ${filaSuperior && !esMovil ? "col-span-2" : ""}`}
         >
           <Power className="size-3 shrink-0" aria-hidden="true" />
           <span><ST>{etiquetaToggle}</ST></span>

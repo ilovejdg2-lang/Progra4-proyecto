@@ -220,7 +220,7 @@ export function CatalogosSistema({ onMessage, onError }) {
             }}
             className={`min-h-[var(--control-height)] rounded-full border px-4 text-[length:var(--text-body)] font-semibold ${
               pestana === p.id
-                ? "border-slate-900 bg-slate-900 text-white"
+                ? "admin-role-selected"
                 : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
             }`}
           >
