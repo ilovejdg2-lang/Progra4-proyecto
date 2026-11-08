@@ -21,7 +21,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  color: #716259;
+  color: var(--admin-text-muted);
   font-size: 0.78rem;
   font-weight: 600;
   white-space: nowrap;
@@ -37,7 +37,7 @@
 
 .admin-breadcrumb__sep {
   flex-shrink: 0;
-  color: #8c7d74;
+  color: var(--admin-text-muted);
 }
 
 .admin-breadcrumb__link,
@@ -45,19 +45,20 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #716259;
+  color: var(--admin-text-muted);
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
 .admin-breadcrumb__link:hover {
-  color: #2c211c;
+  color: var(--admin-text-primary);
 }
 
 .admin-breadcrumb__current {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #6d432c;
+  color: var(--admin-accent-coffee);
   font-weight: 800;
   text-transform: uppercase;
 }

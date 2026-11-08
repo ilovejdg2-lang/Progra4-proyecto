@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CmsImageField } from "./CmsImageField";
 
@@ -7,6 +7,8 @@ const imageFile = (name = "cafe.png", type = "image/png", size = 4) =>
   new File([new Uint8Array(size)], name, { type });
 
 describe("CmsImageField", () => {
+  afterEach(() => localStorage.removeItem("cafe-una-idioma"));
+
   it("preserves explicit native URL input constraints", () => {
     render(<CmsImageField label="Imagen" name="image" required maxLength={1000} value="" onChange={vi.fn()} />);
     const input = screen.getByRole("textbox", { name: "Imagen" });
@@ -136,5 +138,24 @@ describe("CmsImageField", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent("máximo 10 MB");
     expect(subir).not.toHaveBeenCalled();
+  });
+
+  it.each([undefined, "bloque"])("translates the dropzone copy and file input label to English (variant %s)", (variant) => {
+    localStorage.setItem("cafe-una-idioma", "en");
+    render(<CmsImageField label="Imagen" variant={variant} value="" onChange={vi.fn()} subir={vi.fn()} />);
+
+    expect(screen.getByText("Drag or select an image")).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Upload file for /)).toBeInTheDocument();
+    expect(screen.queryByText("Arrastrá o seleccioná una imagen")).not.toBeInTheDocument();
+  });
+
+  it("translates the uploading state to English", async () => {
+    localStorage.setItem("cafe-una-idioma", "en");
+    const subir = vi.fn(() => new Promise(() => {}));
+    render(<CmsImageField label="Imagen" variant="bloque" value="" onChange={vi.fn()} subir={subir} />);
+
+    fireEvent.change(screen.getByLabelText(/^Upload file for /), { target: { files: [imageFile()] } });
+
+    expect(await screen.findByText("Uploading image...")).toBeInTheDocument();
   });
 });

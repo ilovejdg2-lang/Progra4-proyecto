@@ -1,8 +1,11 @@
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { UploadCloud } from "lucide-react";
 
+import { useTraducir } from "../../hooks/useTraducir";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { subirImagenInformacion } from "../../services/informacionService";
+import { adminBtnQuiet } from "../Admin/ui/AdminModal";
+import { adminCampoInputCls } from "../Admin/ui/adminCampoStyles";
 
 const TIPOS_PERMITIDOS = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAXIMO_BYTES = 10 * 1024 * 1024;
@@ -25,8 +28,18 @@ export function CmsImageField({
   onUploadingChange,
   disabled = false,
   hint = "JPG, PNG o WEBP. Máximo 10 MB.",
+  variant,
 }) {
   const fileRef = useRef(null);
+  const urlId = useId();
+  const tReemplazar = useTraducir("Reemplazar");
+  const tQuitar = useTraducir("Quitar");
+  const tUsarUrl = useTraducir("Usar URL");
+  const tHint = useTraducir(hint || "");
+  const tSubiendo = useTraducir("Subiendo imagen...");
+  const tCta = useTraducir("Arrastrá o seleccioná una imagen");
+  const tSubirPara = useTraducir("Subir archivo para");
+  const tLabel = useTraducir(label || "");
   const uploadingRef = useRef(false);
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -59,6 +72,93 @@ export function CmsImageField({
       if (fileRef.current) fileRef.current.value = "";
     }
   };
+
+  if (variant === "bloque") {
+    // One block: preview + Reemplazar/Quitar when there is an image, the dropzone otherwise;
+    // the raw URL input sits behind a "Usar URL" disclosure.
+    return (
+      <div className="grid min-w-0 gap-3">
+        {previewUrl ? (
+          <div className="grid gap-2">
+            <img
+              src={previewUrl}
+              alt=""
+              className="aspect-[16/7] w-full rounded-2xl border border-[var(--admin-border)] object-cover"
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" disabled={isDisabled} onClick={() => fileRef.current?.click()} className={adminBtnQuiet}>
+                {uploading ? "Subiendo imagen..." : tReemplazar}
+              </button>
+              <button type="button" disabled={isDisabled} onClick={() => onChange("")} className={adminBtnQuiet}>
+                {tQuitar}
+              </button>
+            </div>
+            {hint ? <p className="text-xs text-[var(--admin-text-muted)]">{tHint}</p> : null}
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={isDisabled}
+            onClick={() => fileRef.current?.click()}
+            onDragOver={(event) => {
+              event.preventDefault();
+              if (!isDisabled) setDragActive(true);
+            }}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragActive(false);
+              selectFile(event.dataTransfer.files);
+            }}
+            className={`flex min-h-28 w-full flex-col items-center justify-center gap-1 rounded-2xl border border-dashed px-3 py-4 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--admin-focus-ring)] disabled:cursor-not-allowed disabled:opacity-60 ${dragActive ? "border-[var(--admin-accent-coffee)] bg-[var(--admin-surface-hover)]" : "border-[var(--admin-border-input)] bg-[var(--admin-surface-subtle)] hover:border-[var(--admin-accent-coffee)]"}`}
+          >
+            <UploadCloud className="size-6 text-[var(--admin-text-muted)]" aria-hidden="true" />
+            <span className="text-[length:var(--text-body)] font-semibold text-[var(--admin-text-primary)]">
+              {uploading ? tSubiendo : tCta}
+            </span>
+            <span className="text-xs font-normal text-[var(--admin-text-muted)]">{tHint}</span>
+          </button>
+        )}
+
+        <details className="group">
+          <summary className="inline-flex min-h-8 cursor-pointer list-none items-center rounded-full px-1 text-xs font-semibold text-[var(--admin-text-muted)] underline-offset-2 hover:text-[var(--admin-accent-coffee)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--admin-focus-ring)] [&::-webkit-details-marker]:hidden">
+            {tUsarUrl}
+          </summary>
+          <div className="mt-2 grid gap-1.5">
+            <label htmlFor={urlId} className="text-[13px] font-semibold text-[var(--admin-text-muted)]">
+              {label}
+            </label>
+            <input
+              id={urlId}
+              type="text"
+              name={name}
+              required={required}
+              maxLength={maxLength}
+              value={value}
+              disabled={isDisabled}
+              onChange={(event) => {
+                setError("");
+                onChange(event.target.value);
+              }}
+              placeholder="https://..."
+              className={adminCampoInputCls}
+            />
+          </div>
+        </details>
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+          className="hidden"
+          disabled={isDisabled}
+          aria-label={`${tSubirPara} ${tLabel}`}
+          onChange={(event) => selectFile(event.target.files)}
+        />
+        {error ? <span className="text-xs font-medium text-[var(--admin-status-danger-text)]" role="alert">{error}</span> : null}
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-2">
@@ -99,8 +199,8 @@ export function CmsImageField({
         className={`flex min-h-28 w-full flex-col items-center justify-center gap-1 rounded-2xl border border-dashed px-3 py-4 text-center transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-600 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:outline-slate-300 ${dragActive ? "border-slate-400 bg-slate-100 dark:border-slate-500 dark:bg-slate-800" : "border-slate-300 bg-slate-50 hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800/80 dark:hover:border-slate-500"}`}
       >
         <UploadCloud className="size-6 text-slate-400" aria-hidden="true" />
-        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{uploading ? "Subiendo imagen..." : "Arrastrá o seleccioná una imagen"}</span>
-        <span className="text-xs font-normal text-slate-500 dark:text-slate-300">{hint}</span>
+        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{uploading ? tSubiendo : tCta}</span>
+        <span className="text-xs font-normal text-slate-500 dark:text-slate-300">{tHint}</span>
       </button>
       <input
         ref={fileRef}
@@ -108,7 +208,7 @@ export function CmsImageField({
         accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
         className="hidden"
         disabled={isDisabled}
-        aria-label={`Subir archivo para ${label}`}
+        aria-label={`${tSubirPara} ${tLabel}`}
         onChange={(event) => selectFile(event.target.files)}
       />
       {error ? <span className="text-xs font-medium text-red-600 dark:text-red-400" role="alert">{error}</span> : null}

@@ -141,6 +141,12 @@
   transform: scale(calc(100cqw / var(--cms-preview-canvas)));
   transform-origin: top left;
   background: var(--color-fondo, #fafafa);
+
+  /* Reset admin body typography so the preview renders the public site as-is */
+  font-size: 16px;
+  line-height: normal;
+  letter-spacing: normal;
+  font-feature-settings: normal;
 }
 
 .admin-cms-preview-viewport.admin-cms-preview--navbar > .admin-cms-preview.site-canvas {

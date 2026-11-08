@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { CircleHelp, Coffee, ClipboardList, FileText, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Search, Send, Sparkles, Sprout, Trash2, Users, X } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
 import { AdminLayout } from "../layouts/AdminLayout";
-import { AdminModal, AdminModalActions, AdminModalBody, AdminModalFooter, AdminModalHeader } from "../../../Components/Admin/ui/AdminModal";
+import { AdminModal, AdminModalActions, AdminModalBody, AdminModalFooter, AdminModalHeader, adminBtnQuiet } from "../../../Components/Admin/ui/AdminModal";
+import { AdminCampo, AdminFieldset, ContadorCampo } from "../../../Components/Admin/ui/AdminModalCampos";
+import { adminCampoAreaCls, adminCampoInputCls } from "../../../Components/Admin/ui/adminCampoStyles";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import {
   AdminEditorConPreview,
@@ -15,7 +17,7 @@ import {
   PreviewNavbarLive,
   PreviewTarjetasInicioLive,
 } from "../../../Components/Admin/ui/AdminCmsPreview";
-import { AdminSeccionCard } from "../../../Components/Admin/ui/AdminSeccionCard";
+import { AdminSeccionFila } from "../../../Components/Admin/ui/AdminSeccionFila";
 import { SelectorIcono } from "../../../Components/Admin/ui/SelectorIcono";
 import { iconoDePreguntaFaq, iconoPorClave } from "../../../lib/iconosCatalogo";
 import { iconoOriginalSitio } from "../../../lib/iconosSitio";
@@ -55,13 +57,13 @@ import {
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { tienePermiso } from "../../../lib/permisos";
 import { esCorreoValido, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
-import { CampoLimitePalabras } from "../../../Components/Admin/ui/CampoLimitePalabras";
 import {
   MAX_PALABRAS_BOTON,
   MAX_PALABRAS_ETIQUETA,
   MAX_PALABRAS_TEXTO,
   MAX_PALABRAS_TEXTO_BREVE,
   MAX_PALABRAS_TITULO,
+  conLimitePalabras,
   etiquetaContadorPalabras,
   limitarPalabras,
 } from "../../../lib/formLimits";
@@ -73,6 +75,9 @@ import { useIdioma } from "../../../lib/useIdioma";
 import { CmsImageField } from "../../../Components/ui/CmsImageField";
 
 const EMPTY_ARRAY = [];
+
+// Short segment labels for narrow screens; the full title remains the accessible name.
+const TABS_CORTOS = { inicio: "Inicio", navbar: "Navegación", footer: "Pie" };
 
 const HERO_CAMPOS_TEXTO = ["eyebrow", "title", "subtitle", "primaryButtonText", "buttonText"];
 const SECCION_CAMPOS_TEXTO = ["eyebrow", "title", "description", "linkText"];
@@ -235,6 +240,20 @@ const CONFIG_ENLACES = {
   },
 };
 
+function useLegendas() {
+  return {
+    tTextos: useTraducir("Textos"),
+    tBotones: useTraducir("Botones"),
+    tBoton: useTraducir("Botón"),
+    tImagen: useTraducir("Imagen"),
+    tImagenFondo: useTraducir("Imagen de fondo"),
+    tImagenMapa: useTraducir("Imagen de fondo del mapa"),
+    tLogos: useTraducir("Logos"),
+    tContacto: useTraducir("Contacto"),
+    tRedes: useTraducir("Redes y ubicación"),
+  };
+}
+
 function CampoTexto({
   label,
   name,
@@ -249,79 +268,136 @@ function CampoTexto({
   soloNumeros = false,
   maxLength,
 }) {
+  const id = useId();
   const tLabel = useTraducir(label || "");
   const tPlaceholder = useTraducir(placeholder || "");
   const tHint = useTraducir(hint || "");
   // URLs, teléfonos, correos y rutas no llevan tope de palabras.
-  if (soloNumeros) {
-    return (
-      <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-        {tLabel}
-        <NumericInput
-          name={name}
-          value={value}
-          onChange={onChange}
-          placeholder={tPlaceholder || undefined}
-          required={required}
-          maxLength={maxLength}
-          className="h-[var(--control-height)] w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-[length:var(--text-body)] font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
-        />
-        {hint ? (
-          <span className="text-xs font-medium normal-case tracking-normal text-slate-400">{tHint}</span>
-        ) : null}
-      </label>
-    );
-  }
+  const limitado = !(soloNumeros || sinLimite || type === "url" || type === "email" || type === "tel");
+  const hintId = `${id}-hint`;
+  const contadorId = `${id}-count`;
+  const describedBy = [hint ? hintId : "", limitado ? contadorId : ""].filter(Boolean).join(" ") || undefined;
 
-  if (sinLimite || type === "url" || type === "email" || type === "tel") {
-    return (
-      <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-        {tLabel}
-        <input
-          name={name}
-          type={type === "url" ? "text" : type}
-          inputMode={type === "email" ? "email" : undefined}
-          value={value}
-          onChange={onChange}
-          placeholder={tPlaceholder || undefined}
-          required={required}
-          className="h-[var(--control-height)] w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-[length:var(--text-body)] font-normal normal-case tracking-normal text-slate-950 shadow-none outline-none transition focus:border-slate-400 focus:bg-white focus:shadow-none focus:ring-0 focus:outline-none"
-        />
-        {hint ? (
-          <span className="text-xs font-medium normal-case tracking-normal text-slate-400">{tHint}</span>
-        ) : null}
-      </label>
+  let control;
+  if (soloNumeros) {
+    control = (
+      <NumericInput
+        id={id}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={tPlaceholder || undefined}
+        required={required}
+        maxLength={maxLength}
+        aria-describedby={describedBy}
+        className={adminCampoInputCls}
+      />
+    );
+  } else if (!limitado) {
+    control = (
+      <input
+        id={id}
+        name={name}
+        type={type === "url" ? "text" : type}
+        inputMode={type === "email" ? "email" : undefined}
+        value={value}
+        onChange={onChange}
+        placeholder={tPlaceholder || undefined}
+        required={required}
+        aria-describedby={describedBy}
+        className={adminCampoInputCls}
+      />
+    );
+  } else {
+    control = (
+      <input
+        id={id}
+        name={name}
+        type={type}
+        value={value}
+        onChange={conLimitePalabras(onChange, maxPalabras)}
+        placeholder={tPlaceholder || undefined}
+        required={required}
+        aria-describedby={describedBy}
+        className={adminCampoInputCls}
+      />
     );
   }
 
   return (
-    <CampoLimitePalabras
-      label={label}
-      name={name}
-      value={value}
-      onChange={onChange}
-      maxPalabras={maxPalabras}
-      type={type}
-      placeholder={placeholder}
-      hint={hint}
-      required={required}
-    />
+    <AdminCampo
+      id={id}
+      label={tLabel}
+      hint={hint ? tHint : ""}
+      hintId={hintId}
+      contador={limitado ? <ContadorCampo id={contadorId} value={value} maxPalabras={maxPalabras} /> : null}
+    >
+      {control}
+    </AdminCampo>
   );
 }
 
-function CampoArea({ label, name, value, onChange, rows = 4, required, maxPalabras = MAX_PALABRAS_TEXTO, hint }) {
+function CampoArea({ label, name, value, onChange, rows = 3, required, maxPalabras = MAX_PALABRAS_TEXTO, hint }) {
+  const id = useId();
+  const tLabel = useTraducir(label || "");
+  const tHint = useTraducir(hint || "");
+  const hintId = `${id}-hint`;
+  const contadorId = `${id}-count`;
+
   return (
-    <CampoLimitePalabras
-      label={label}
-      name={name}
-      value={value}
-      onChange={onChange}
-      maxPalabras={maxPalabras}
-      multiline
-      rows={rows}
-      required={required}
-      hint={hint}
-    />
+    <AdminCampo
+      id={id}
+      label={tLabel}
+      hint={hint ? tHint : ""}
+      hintId={hintId}
+      contador={<ContadorCampo id={contadorId} value={value} maxPalabras={maxPalabras} />}
+    >
+      <textarea
+        id={id}
+        name={name}
+        value={value}
+        onChange={conLimitePalabras(onChange, maxPalabras)}
+        rows={rows}
+        required={required}
+        aria-describedby={[hint ? hintId : "", contadorId].filter(Boolean).join(" ")}
+        className={adminCampoAreaCls}
+      />
+    </AdminCampo>
+  );
+}
+
+/**
+ * One segment of the section switcher. `corto` is the label shown below sm; the
+ * full title stays the accessible name on every width. Rounded corners are
+ * forced with `!` because index.css sets `button { border-radius: ... !important }`.
+ */
+function SegmentoSeccion({ grupo, corto, activa, deshabilitada = false, onSeleccionar, onTecla, registrarRef, tabId, panelId }) {
+  const tTitulo = useTraducir(grupo.titulo);
+  return (
+    <button
+      ref={registrarRef}
+      type="button"
+      role="tab"
+      id={tabId}
+      aria-label={`${tTitulo} (${grupo.filas.length})`}
+      aria-selected={activa}
+      aria-disabled={deshabilitada ? "true" : undefined}
+      aria-controls={panelId}
+      tabIndex={activa ? 0 : -1}
+      onClick={deshabilitada ? undefined : onSeleccionar}
+      onKeyDown={onTecla}
+      className={`inline-flex min-h-[var(--control-height)] min-w-0 items-center justify-center gap-2 rounded-full! border px-2 text-[length:var(--text-body)] transition-colors sm:px-4 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)] ${
+        activa
+          ? "border-[var(--admin-border)] bg-[var(--admin-segment-active)] font-semibold text-[var(--admin-text-primary)] shadow-sm"
+          : deshabilitada
+          ? "cursor-not-allowed border-transparent font-medium text-[var(--admin-text-muted)] opacity-50"
+          : "border-transparent font-medium text-[var(--admin-text-muted)] hover:text-[var(--admin-text-primary)]"
+      }`}
+    >
+      <span className="lg:hidden"><ST>{corto}</ST></span>
+      <span className="hidden lg:inline"><ST>{grupo.titulo}</ST></span>
+      <span aria-hidden="true" className="hidden text-xs font-medium tabular-nums text-[var(--admin-text-muted)] sm:inline">{grupo.filas.length}</span>
+    </button>
   );
 }
 
@@ -331,6 +407,8 @@ export function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
   const { idioma } = useIdioma();
   const tGuardando = useTraducir("Guardando...");
   const tGuardarCambios = useTraducir("Guardar cambios");
+  const { tTextos, tBotones, tImagenFondo } = useLegendas();
+  const tPortada = useTraducir("Portada principal");
 
   useEffect(() => {
     let cancelado = false;
@@ -359,103 +437,99 @@ export function ModalHero({ hero, onCerrar, onGuardar, guardando }) {
   return (
     <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-hero-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
-        <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-2.5">
-            <Image className="size-6 shrink-0 text-amber-700" strokeWidth={1.75} aria-hidden="true" />
-            <h2 id="admin-hero-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">Hero section</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-            aria-label={t("Cerrar")}
-          >
-            <X className="size-5" />
-          </button>
-        </AdminModalHeader>
+        <AdminModalHeader
+          icon={Image}
+          title={tPortada}
+          titleId="admin-hero-modal-title"
+          description={"Banner principal de la p\u00e1gina de inicio."}
+          onClose={onCerrar}
+        />
 
         <AdminModalBody cms>
           <AdminEditorConPreview
+            variant="modal"
             preview={<PreviewHeroLive form={form} />}
-            ayuda={"Banner principal de la p\u00e1gina de inicio."}
           >
-          <CampoTexto
-            label="Etiqueta superior"
-            name="eyebrow"
-            value={form.eyebrow}
-            onChange={cambiarCampo}
-            hint={"Texto peque\u00f1o que aparece sobre el t\u00edtulo principal."}
-            maxPalabras={MAX_PALABRAS_ETIQUETA}
-          />
-
-          <CampoTexto
-            label={"T\u00edtulo principal"}
-            name="title"
-            value={form.title}
-            onChange={cambiarCampo}
-            required
-            hint={"Puedes usar Enter para forzar un salto de l\u00ednea en el t\u00edtulo."}
-            maxPalabras={MAX_PALABRAS_TITULO}
-          />
-
-          <CampoArea
-            label={"Subt\u00edtulo"}
-            name="subtitle"
-            value={form.subtitle}
-            onChange={cambiarCampo}
-            rows={4}
-            required
-            maxPalabras={MAX_PALABRAS_TEXTO}
-          />
-
-          <div className="grid gap-4 md:grid-cols-2">
+          <AdminFieldset legend={tTextos}>
             <CampoTexto
-              label={"Texto bot\u00f3n principal"}
+              label="Etiqueta superior"
+              name="eyebrow"
+              value={form.eyebrow}
+              onChange={cambiarCampo}
+              hint={"Texto pequeño que aparece sobre el título principal."}
+              maxPalabras={MAX_PALABRAS_ETIQUETA}
+            />
+            <CampoTexto
+              label={"Título principal"}
+              name="title"
+              value={form.title}
+              onChange={cambiarCampo}
+              required
+              hint={"Puedes usar Enter para forzar un salto de línea en el título."}
+              maxPalabras={MAX_PALABRAS_TITULO}
+            />
+            <CampoArea
+              label={"Subtítulo"}
+              name="subtitle"
+              value={form.subtitle}
+              onChange={cambiarCampo}
+              rows={3}
+              required
+              maxPalabras={MAX_PALABRAS_TEXTO}
+            />
+          </AdminFieldset>
+
+          <AdminFieldset legend={tBotones} className="items-start sm:grid-cols-2">
+            <CampoTexto
+              label={"Texto botón principal"}
               name="primaryButtonText"
               value={form.primaryButtonText}
               onChange={cambiarCampo}
               maxPalabras={MAX_PALABRAS_BOTON}
             />
             <CampoTexto
-              label={"Enlace bot\u00f3n principal"}
+              label={"Enlace botón principal"}
               name="primaryButtonUrl"
-            sinLimite
+              sinLimite
               value={form.primaryButtonUrl}
               onChange={cambiarCampo}
               placeholder="/productos o https://..."
               hint="Ruta interna del sitio o URL externa."
             />
             <CampoTexto
-              label={"Texto bot\u00f3n secundario"}
+              label={"Texto botón secundario"}
               name="buttonText"
               value={form.buttonText}
               onChange={cambiarCampo}
               maxPalabras={MAX_PALABRAS_BOTON}
             />
             <CampoTexto
-              label={"Enlace bot\u00f3n secundario"}
+              label={"Enlace botón secundario"}
               name="buttonUrl"
-            sinLimite
+              sinLimite
               value={form.buttonUrl}
               onChange={cambiarCampo}
               placeholder="/AboutUs o https://..."
               hint="Ruta interna del sitio o URL externa."
             />
-          </div>
+          </AdminFieldset>
 
-          <CmsImageField
-            label="Imagen de fondo URL"
-            value={form.backgroundImage}
-            onChange={(backgroundImage) => setForm((actual) => ({ ...actual, backgroundImage }))}
-            onUploadingChange={setSubiendoImagen}
-            disabled={guardando}
-          />
+          <AdminFieldset legend={tImagenFondo}>
+            <CmsImageField
+              variant="bloque"
+              label="Imagen de fondo URL"
+              value={form.backgroundImage}
+              onChange={(backgroundImage) => setForm((actual) => ({ ...actual, backgroundImage }))}
+              onUploadingChange={setSubiendoImagen}
+              disabled={guardando}
+            />
+          </AdminFieldset>
           </AdminEditorConPreview>
         </AdminModalBody>
 
         <AdminModalFooter>
           <AdminModalActions
-            buttonStyle="voluntariado"
+            variant="coffee"
             onCancel={onCerrar}
             primaryLabel={guardando ? tGuardando : tGuardarCambios}
             primaryDisabled={guardando || subiendoImagen}
@@ -472,6 +546,8 @@ export function ModalSeccionInicio({ clave, config, data, tarjetasInicio = EMPTY
   const tModalTitle = useTraducir(config.modalTitle || "");
   const tGuardando = useTraducir("Guardando...");
   const tGuardarCambios = useTraducir("Guardar cambios");
+  const { tTextos, tBoton, tImagen } = useLegendas();
+  const hayMasGrupos = Boolean(config.showLinkText || config.showLinkUrl || config.showImage);
   const { idioma } = useIdioma();
 
   useEffect(() => {
@@ -501,25 +577,17 @@ export function ModalSeccionInicio({ clave, config, data, tarjetasInicio = EMPTY
   return (
     <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-seccion-inicio-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
-        <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-2.5">
-            <config.icon className="size-6 shrink-0 text-amber-700" strokeWidth={1.75} aria-hidden="true" />
-            <h2 id="admin-seccion-inicio-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">
-              {tModalTitle}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-            aria-label={t("Cerrar")}
-          >
-            <X className="size-5" />
-          </button>
-        </AdminModalHeader>
+        <AdminModalHeader
+          icon={config.icon}
+          title={tModalTitle}
+          titleId="admin-seccion-inicio-modal-title"
+          description={config.ayuda}
+          onClose={onCerrar}
+        />
 
         <AdminModalBody cms>
           <AdminEditorConPreview
+            variant="modal"
             preview={(
               <PreviewHomeSectionLive
                 clave={clave}
@@ -527,83 +595,91 @@ export function ModalSeccionInicio({ clave, config, data, tarjetasInicio = EMPTY
                 tarjetasInicio={tarjetasInicio}
               />
             )}
-            ayuda={config.ayuda}
           >
-          {config.showEyebrow ? (
+          <AdminFieldset legend={hayMasGrupos ? tTextos : undefined}>
+            {config.showEyebrow ? (
+              <CampoTexto
+                label={config.eyebrowLabel || "Etiqueta superior"}
+                name="eyebrow"
+                value={form.eyebrow}
+                onChange={cambiarCampo}
+                maxPalabras={MAX_PALABRAS_ETIQUETA}
+              />
+            ) : null}
             <CampoTexto
-              label={config.eyebrowLabel || "Etiqueta superior"}
-              name="eyebrow"
-              value={form.eyebrow}
+              label={config.titleLabel || "Título"}
+              name="title"
+              value={form.title}
               onChange={cambiarCampo}
-              maxPalabras={MAX_PALABRAS_ETIQUETA}
+              required
+              maxPalabras={MAX_PALABRAS_TITULO}
             />
-          ) : null}
-          <CampoTexto
-            label={config.titleLabel || "T\u00edtulo"}
-            name="title"
-            value={form.title}
-            onChange={cambiarCampo}
-            required
-            maxPalabras={MAX_PALABRAS_TITULO}
-          />
-          <CampoArea
-            label={config.descriptionLabel || "Descripci\u00f3n"}
-            name="description"
-            value={form.description}
-            onChange={cambiarCampo}
-            rows={4}
-            required
-            maxPalabras={MAX_PALABRAS_TEXTO}
-          />
-          {config.showLinkText ? (
-            <CampoTexto
-              label={config.linkTextLabel || "Texto del bot\u00f3n"}
-              name="linkText"
-              value={form.linkText}
+            <CampoArea
+              label={config.descriptionLabel || "Descripción"}
+              name="description"
+              value={form.description}
               onChange={cambiarCampo}
-              maxPalabras={MAX_PALABRAS_BOTON}
+              rows={3}
+              required
+              maxPalabras={MAX_PALABRAS_TEXTO}
             />
+          </AdminFieldset>
+
+          {config.showLinkText || config.showLinkUrl ? (
+            <AdminFieldset legend={tBoton} className="items-start sm:grid-cols-2">
+              {config.showLinkText ? (
+                <CampoTexto
+                  label={config.linkTextLabel || "Texto del botón"}
+                  name="linkText"
+                  value={form.linkText}
+                  onChange={cambiarCampo}
+                  maxPalabras={MAX_PALABRAS_BOTON}
+                />
+              ) : null}
+              {config.showLinkUrl ? (
+                <CampoTexto
+                  label={config.linkUrlLabel || "Enlace"}
+                  name="linkUrl"
+                  sinLimite
+                  value={form.linkUrl}
+                  onChange={cambiarCampo}
+                  placeholder="/productos o https://..."
+                />
+              ) : null}
+            </AdminFieldset>
           ) : null}
 
-          {config.showImage && clave === "homeLocation" ? (
-            <CmsImageField
-              label="Imagen URL"
-              value={form.image}
-              onChange={(image) => setForm((actual) => ({ ...actual, image }))}
-              onUploadingChange={setSubiendoImagen}
-              disabled={guardando}
-              hint="Imagen propia del bloque. JPG, PNG o WEBP. Máximo 10 MB."
-            />
-          ) : null}
-
-          {config.showImage && clave !== "homeLocation" ? (
-            <CampoTexto
-              label="Imagen URL"
-              name="image"
-            sinLimite
-              value={form.image}
-              onChange={cambiarCampo}
-              placeholder="https://..."
-              hint={"Imagen propia del bloque. No se toma de la galer\u00eda."}
-            />
-          ) : null}
-
-          {config.showLinkUrl ? (
-            <CampoTexto
-              label={config.linkUrlLabel || "Enlace"}
-              name="linkUrl"
-            sinLimite
-              value={form.linkUrl}
-              onChange={cambiarCampo}
-              placeholder="/productos o https://..."
-            />
+          {config.showImage ? (
+            <AdminFieldset legend={tImagen}>
+              {clave === "homeLocation" ? (
+                <CmsImageField
+                  variant="bloque"
+                  label="Imagen URL"
+                  value={form.image}
+                  onChange={(image) => setForm((actual) => ({ ...actual, image }))}
+                  onUploadingChange={setSubiendoImagen}
+                  disabled={guardando}
+                  hint="Imagen propia del bloque. JPG, PNG o WEBP. Máximo 10 MB."
+                />
+              ) : (
+                <CampoTexto
+                  label="Imagen URL"
+                  name="image"
+                  sinLimite
+                  value={form.image}
+                  onChange={cambiarCampo}
+                  placeholder="https://..."
+                  hint={"Imagen propia del bloque. No se toma de la galería."}
+                />
+              )}
+            </AdminFieldset>
           ) : null}
           </AdminEditorConPreview>
         </AdminModalBody>
 
         <AdminModalFooter>
           <AdminModalActions
-            buttonStyle="voluntariado"
+            variant="coffee"
             onCancel={onCerrar}
             primaryLabel={guardando ? tGuardando : tGuardarCambios}
             primaryDisabled={guardando || subiendoImagen}
@@ -670,6 +746,7 @@ export function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
   const tModalTitle = useTraducir("Productores (inicio)");
   const tGuardando = useTraducir("Guardando...");
   const tGuardarCambios = useTraducir("Guardar cambios");
+  const { tTextos, tBotones, tImagenMapa } = useLegendas();
 
   useEffect(() => {
     let cancelado = false;
@@ -698,28 +775,20 @@ export function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
   return (
     <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-productores-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
-        <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-2.5">
-            <Sprout className="size-6 shrink-0 text-amber-700" strokeWidth={1.75} aria-hidden="true" />
-            <h2 id="admin-productores-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">
-              {tModalTitle}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-            aria-label={t("Cerrar")}
-          >
-            <X className="size-5" />
-          </button>
-        </AdminModalHeader>
+        <AdminModalHeader
+          icon={Sprout}
+          title={tModalTitle}
+          titleId="admin-productores-modal-title"
+          description="Sección interactiva con el mapa y presentación de productores locales en el inicio."
+          onClose={onCerrar}
+        />
 
         <AdminModalBody cms>
           <AdminEditorConPreview
+            variant="modal"
             preview={<PreviewProductoresHeroLive form={form} />}
-            ayuda="Sección interactiva con el mapa y presentación de productores locales en el inicio."
           >
+          <AdminFieldset legend={tTextos}>
             <CampoTexto
               label="Etiqueta superior"
               name="eyebrow"
@@ -728,7 +797,6 @@ export function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
               maxPalabras={MAX_PALABRAS_ETIQUETA}
               hint="Texto en la insignia sobre el título."
             />
-
             <CampoTexto
               label="Título principal"
               name="title"
@@ -737,7 +805,6 @@ export function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
               required
               maxPalabras={MAX_PALABRAS_TITULO}
             />
-
             <CampoArea
               label="Descripción"
               name="description"
@@ -747,40 +814,6 @@ export function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
               required
               maxPalabras={MAX_PALABRAS_TEXTO}
             />
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <CampoTexto
-                label="Texto botón principal"
-                name="linkText"
-                value={form.linkText}
-                onChange={cambiarCampo}
-                maxPalabras={MAX_PALABRAS_BOTON}
-              />
-              <CampoTexto
-                label="Enlace botón principal"
-                name="linkUrl"
-                sinLimite
-                value={form.linkUrl}
-                onChange={cambiarCampo}
-                placeholder="/productores/propuesta"
-              />
-              <CampoTexto
-                label="Texto botón secundario"
-                name="secondaryButtonText"
-                value={form.secondaryButtonText}
-                onChange={cambiarCampo}
-                maxPalabras={MAX_PALABRAS_BOTON}
-              />
-              <CampoTexto
-                label="Enlace botón secundario"
-                name="secondaryButtonUrl"
-                sinLimite
-                value={form.secondaryButtonUrl}
-                onChange={cambiarCampo}
-                placeholder="/productores"
-              />
-            </div>
-
             <CampoTexto
               label="Texto inferior (ubicaciones)"
               name="footerText"
@@ -789,8 +822,44 @@ export function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
               maxPalabras={MAX_PALABRAS_ETIQUETA}
               hint="Ejemplo: +30 Ubicaciones activas"
             />
+          </AdminFieldset>
 
+          <AdminFieldset legend={tBotones} className="items-start sm:grid-cols-2">
+            <CampoTexto
+              label="Texto botón principal"
+              name="linkText"
+              value={form.linkText}
+              onChange={cambiarCampo}
+              maxPalabras={MAX_PALABRAS_BOTON}
+            />
+            <CampoTexto
+              label="Enlace botón principal"
+              name="linkUrl"
+              sinLimite
+              value={form.linkUrl}
+              onChange={cambiarCampo}
+              placeholder="/productores/propuesta"
+            />
+            <CampoTexto
+              label="Texto botón secundario"
+              name="secondaryButtonText"
+              value={form.secondaryButtonText}
+              onChange={cambiarCampo}
+              maxPalabras={MAX_PALABRAS_BOTON}
+            />
+            <CampoTexto
+              label="Enlace botón secundario"
+              name="secondaryButtonUrl"
+              sinLimite
+              value={form.secondaryButtonUrl}
+              onChange={cambiarCampo}
+              placeholder="/productores"
+            />
+          </AdminFieldset>
+
+          <AdminFieldset legend={tImagenMapa}>
             <CmsImageField
+              variant="bloque"
               label="Imagen de fondo del mapa (URL)"
               value={form.image}
               onChange={(image) => setForm((actual) => ({ ...actual, image }))}
@@ -798,12 +867,13 @@ export function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
               disabled={guardando}
               hint="URL de la imagen del mapa ilustrado o JPG, PNG o WEBP de máximo 10 MB."
             />
+          </AdminFieldset>
           </AdminEditorConPreview>
         </AdminModalBody>
 
         <AdminModalFooter>
           <AdminModalActions
-            buttonStyle="voluntariado"
+            variant="coffee"
             onCancel={onCerrar}
             primaryLabel={guardando ? tGuardando : tGuardarCambios}
             primaryDisabled={guardando || subiendoImagen}
@@ -877,55 +947,42 @@ export function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }
   return (
     <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-tarjetas-inicio-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
-        <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-2.5">
-            <ClipboardList className="size-6 shrink-0 text-emerald-700" strokeWidth={1.75} aria-hidden="true" />
-            <h2 id="admin-tarjetas-inicio-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">
-              {tTituloMini}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-            aria-label={t("Cerrar")}
-          >
-            <X className="size-5" />
-          </button>
-        </AdminModalHeader>
+        <AdminModalHeader
+          icon={ClipboardList}
+          title={tTituloMini}
+          titleId="admin-tarjetas-inicio-modal-title"
+          description={"Edit\u00e1 las tres tarjetas de donaciones, visitas y voluntariado que aparecen en el inicio."}
+          onClose={onCerrar}
+        />
 
         <AdminModalBody cms>
           <AdminEditorConPreview
+            variant="modal"
             preview={<PreviewTarjetasInicioLive tarjetas={form} />}
-            ayuda={"Edit\u00e1 las tres tarjetas de donaciones, visitas y voluntariado que aparecen en el inicio."}
           >
-
           {form.map((tarjeta, index) => (
-            <div key={tarjeta.clave} className="space-y-4 rounded-2xl border border-slate-200 p-4 sm:p-5">
-              <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500">
-                {TARJETAS_INICIO_LABELS[tarjeta.clave] || tarjeta.clave}
-              </h3>
-
-              <CampoTexto
-                label="Etiqueta"
-                name={`etiqueta-${index}`}
-                value={tarjeta.etiqueta}
-                onChange={(event) => cambiarCampo(index, "etiqueta", event.target.value)}
-                required
-                maxPalabras={MAX_PALABRAS_ETIQUETA}
-              />
-
-              <CampoTexto
-                label={"T\u00edtulo"}
-                name={`titulo-${index}`}
-                value={tarjeta.titulo}
-                onChange={(event) => cambiarCampo(index, "titulo", event.target.value)}
-                required
-                maxPalabras={MAX_PALABRAS_TITULO}
-              />
+            <AdminFieldset key={tarjeta.clave} legend={TARJETAS_INICIO_LABELS[tarjeta.clave] || tarjeta.clave}>
+              <div className="grid items-start gap-4 sm:grid-cols-2">
+                <CampoTexto
+                  label="Etiqueta"
+                  name={`etiqueta-${index}`}
+                  value={tarjeta.etiqueta}
+                  onChange={(event) => cambiarCampo(index, "etiqueta", event.target.value)}
+                  required
+                  maxPalabras={MAX_PALABRAS_ETIQUETA}
+                />
+                <CampoTexto
+                  label={"Título"}
+                  name={`titulo-${index}`}
+                  value={tarjeta.titulo}
+                  onChange={(event) => cambiarCampo(index, "titulo", event.target.value)}
+                  required
+                  maxPalabras={MAX_PALABRAS_TITULO}
+                />
+              </div>
 
               <CampoArea
-                label={"Descripci\u00f3n"}
+                label={"Descripción"}
                 name={`descripcion-${index}`}
                 value={tarjeta.descripcion}
                 onChange={(event) => cambiarCampo(index, "descripcion", event.target.value)}
@@ -934,33 +991,34 @@ export function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }
                 maxPalabras={MAX_PALABRAS_TEXTO_BREVE}
               />
 
-              {tarjeta.clave === "voluntariado" || tarjeta.clave === "donaciones" ? (
+              <div className="grid items-start gap-4 sm:grid-cols-2">
                 <CampoTexto
-                  label="Ruta del formulario"
-                  name={`ruta-${index}`}
-                  value={tarjeta.ruta}
-                  onChange={(event) => cambiarCampo(index, "ruta", event.target.value)}
-                  placeholder={tarjeta.clave === "donaciones" ? "/donaciones/solicitar" : "/voluntariado/solicitar"}
-                  hint={"Ruta interna del bot\u00f3n."}
-                  sinLimite
+                  label={"Texto del botón"}
+                  name={`textoBoton-${index}`}
+                  value={tarjeta.textoBoton}
+                  onChange={(event) => cambiarCampo(index, "textoBoton", event.target.value)}
+                  maxPalabras={MAX_PALABRAS_BOTON}
                 />
-              ) : null}
-
-              <CampoTexto
-                label={"Texto del bot\u00f3n"}
-                name={`textoBoton-${index}`}
-                value={tarjeta.textoBoton}
-                onChange={(event) => cambiarCampo(index, "textoBoton", event.target.value)}
-                maxPalabras={MAX_PALABRAS_BOTON}
-              />
-            </div>
+                {tarjeta.clave === "voluntariado" || tarjeta.clave === "donaciones" ? (
+                  <CampoTexto
+                    label="Ruta del formulario"
+                    name={`ruta-${index}`}
+                    value={tarjeta.ruta}
+                    onChange={(event) => cambiarCampo(index, "ruta", event.target.value)}
+                    placeholder={tarjeta.clave === "donaciones" ? "/donaciones/solicitar" : "/voluntariado/solicitar"}
+                    hint={"Ruta interna del botón."}
+                    sinLimite
+                  />
+                ) : null}
+              </div>
+            </AdminFieldset>
           ))}
           </AdminEditorConPreview>
         </AdminModalBody>
 
         <AdminModalFooter>
           <AdminModalActions
-            buttonStyle="voluntariado"
+            variant="coffee"
             onCancel={onCerrar}
             primaryLabel={guardando ? tGuardando : tGuardarCambios}
             primaryDisabled={guardando}
@@ -975,6 +1033,7 @@ function ModalNavbar({ navbar, enlaces = EMPTY_ARRAY, onCerrar, onGuardar, guard
   const [form, setForm] = useState(() => ({ ...navbarInicial, ...navbar }));
   const tGuardando = useTraducir("Guardando...");
   const tGuardarCambios = useTraducir("Guardar cambios");
+  const { tLogos } = useLegendas();
 
   const cambiarCampo = (event) => {
     const { name, value } = event.target;
@@ -989,50 +1048,45 @@ function ModalNavbar({ navbar, enlaces = EMPTY_ARRAY, onCerrar, onGuardar, guard
   return (
     <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-navbar-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
-        <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-2.5">
-            <LayoutTemplate className="size-6 shrink-0 text-amber-700" strokeWidth={1.75} aria-hidden="true" />
-            <h2 id="admin-navbar-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">Navbar</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-            aria-label={t("Cerrar")}
-          >
-            <X className="size-5" />
-          </button>
-        </AdminModalHeader>
+        <AdminModalHeader
+          icon={LayoutTemplate}
+          title="Navbar"
+          titleId="admin-navbar-modal-title"
+          description={"Logos que aparecen en la barra de navegaci\u00f3n del sitio."}
+          onClose={onCerrar}
+        />
 
         <AdminModalBody cms>
           <AdminEditorConPreview
+            variant="modal"
             preview={<PreviewNavbarLive form={form} enlaces={enlaces} />}
-            ayuda={"Logos que aparecen en la barra de navegaci\u00f3n del sitio."}
           >
-          <CampoTexto
-            label="Logo URL"
-            name="logoUrl"
-            sinLimite
-            value={form.logoUrl}
-            onChange={cambiarCampo}
-            placeholder="https://..."
-            hint="Logo para fondos claros (al hacer scroll)."
-          />
-          <CampoTexto
-            label="Logo claro URL"
-            name="logoClaroUrl"
-            sinLimite
-            value={form.logoClaroUrl}
-            onChange={cambiarCampo}
-            placeholder="https://..."
-            hint="Logo para fondos oscuros (inicio, sin scroll)."
-          />
+          <AdminFieldset legend={tLogos}>
+            <CampoTexto
+              label="Logo URL"
+              name="logoUrl"
+              sinLimite
+              value={form.logoUrl}
+              onChange={cambiarCampo}
+              placeholder="https://..."
+              hint="Logo para fondos claros (al hacer scroll)."
+            />
+            <CampoTexto
+              label="Logo claro URL"
+              name="logoClaroUrl"
+              sinLimite
+              value={form.logoClaroUrl}
+              onChange={cambiarCampo}
+              placeholder="https://..."
+              hint="Logo para fondos oscuros (inicio, sin scroll)."
+            />
+          </AdminFieldset>
           </AdminEditorConPreview>
         </AdminModalBody>
 
         <AdminModalFooter>
           <AdminModalActions
-            buttonStyle="voluntariado"
+            variant="coffee"
             onCancel={onCerrar}
             primaryLabel={guardando ? tGuardando : tGuardarCambios}
             primaryDisabled={guardando}
@@ -1102,6 +1156,7 @@ function ModalFooter({ footer, enlaces = EMPTY_ARRAY, onCerrar, onGuardar, guard
   const { idioma } = useIdioma();
   const tGuardando = useTraducir("Guardando...");
   const tGuardarCambios = useTraducir("Guardar cambios");
+  const { tLogos, tTextos, tContacto, tRedes } = useLegendas();
   const iconos = useIconosSitioEditables(puedeEditarIconos);
 
   useEffect(() => {
@@ -1139,23 +1194,17 @@ function ModalFooter({ footer, enlaces = EMPTY_ARRAY, onCerrar, onGuardar, guard
   return (
     <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-footer-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
-        <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-2.5">
-            <PanelBottom className="size-6 shrink-0 text-amber-700" strokeWidth={1.75} aria-hidden="true" />
-            <h2 id="admin-footer-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">Footer</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-            aria-label={t("Cerrar")}
-          >
-            <X className="size-5" />
-          </button>
-        </AdminModalHeader>
+        <AdminModalHeader
+          icon={PanelBottom}
+          title="Footer"
+          titleId="admin-footer-modal-title"
+          description={"Informaci\u00f3n de contacto y pie de p\u00e1gina del sitio."}
+          onClose={onCerrar}
+        />
 
         <AdminModalBody cms>
           <AdminEditorConPreview
+            variant="modal"
             preview={
               <PreviewFooterLive
                 form={form}
@@ -1163,13 +1212,12 @@ function ModalFooter({ footer, enlaces = EMPTY_ARRAY, onCerrar, onGuardar, guard
                 iconoDe={iconos ? (lugar) => iconoPorClave(iconos.valor(lugar)) || iconoOriginalSitio(lugar) : undefined}
               />
             }
-            ayuda={"Informaci\u00f3n de contacto y pie de p\u00e1gina del sitio."}
           >
-          <div className="grid gap-4 md:grid-cols-2">
+          <AdminFieldset legend={tLogos} className="items-start sm:grid-cols-2">
             <CampoTexto
               label="Logo URL"
               name="logoUrl"
-            sinLimite
+              sinLimite
               value={form.logoUrl}
               onChange={cambiarCampo}
               placeholder="https://..."
@@ -1177,26 +1225,36 @@ function ModalFooter({ footer, enlaces = EMPTY_ARRAY, onCerrar, onGuardar, guard
             <CampoTexto
               label="Logo claro URL"
               name="logoClaroUrl"
-            sinLimite
+              sinLimite
               value={form.logoClaroUrl}
               onChange={cambiarCampo}
               placeholder="https://..."
             />
-          </div>
+          </AdminFieldset>
 
-          <CampoTexto
-            label="Frase de marca"
-            name="fraseMarca"
-            value={form.fraseMarca}
-            onChange={cambiarCampo}
-            placeholder="Ej. Cultivando futuro desde la UNA"
-            maxPalabras={MAX_PALABRAS_TEXTO_BREVE}
-          />
+          <AdminFieldset legend={tTextos}>
+            <CampoTexto
+              label="Frase de marca"
+              name="fraseMarca"
+              value={form.fraseMarca}
+              onChange={cambiarCampo}
+              placeholder="Ej. Cultivando futuro desde la UNA"
+              maxPalabras={MAX_PALABRAS_TEXTO_BREVE}
+            />
+            <CampoTexto
+              label="Texto de copyright"
+              name="textoCopyright"
+              value={form.textoCopyright}
+              onChange={cambiarCampo}
+              placeholder="Ej. © 2026 Nombre del sitio. Todos los derechos reservados."
+              maxPalabras={MAX_PALABRAS_TEXTO_BREVE}
+            />
+          </AdminFieldset>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <AdminFieldset legend={tContacto} className="items-start sm:grid-cols-2">
             <CampoConIcono lugar="footer.telefono" iconos={iconos}>
               <CampoTexto
-                label={"Tel\u00e9fono"}
+                label={"Teléfono"}
                 name="telefono"
                 value={form.telefono}
                 onChange={cambiarCampo}
@@ -1216,61 +1274,53 @@ function ModalFooter({ footer, enlaces = EMPTY_ARRAY, onCerrar, onGuardar, guard
                 placeholder="correo@ejemplo.com"
               />
             </CampoConIcono>
-          </div>
+          </AdminFieldset>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <CampoConIcono lugar="redes.facebook" iconos={iconos}>
+          <AdminFieldset legend={tRedes}>
+            <div className="grid items-start gap-4 sm:grid-cols-2">
+              <CampoConIcono lugar="redes.facebook" iconos={iconos}>
+                <CampoTexto
+                  label="Facebook URL"
+                  name="facebookUrl"
+                  sinLimite
+                  value={form.facebookUrl}
+                  onChange={cambiarCampo}
+                  placeholder="https://facebook.com/..."
+                />
+              </CampoConIcono>
+              <CampoConIcono lugar="redes.instagram" iconos={iconos}>
+                <CampoTexto
+                  label="Instagram URL"
+                  name="instagramUrl"
+                  sinLimite
+                  value={form.instagramUrl}
+                  onChange={cambiarCampo}
+                  placeholder="https://instagram.com/..."
+                />
+              </CampoConIcono>
+            </div>
+            <CampoConIcono lugar="footer.ubicacion" iconos={iconos}>
               <CampoTexto
-                label="Facebook URL"
-                name="facebookUrl"
+                label="Google Maps URL"
+                name="mapsUrl"
                 sinLimite
-                value={form.facebookUrl}
+                value={form.mapsUrl}
                 onChange={cambiarCampo}
-                placeholder="https://facebook.com/..."
+                placeholder="https://maps.google.com/..."
               />
             </CampoConIcono>
-            <CampoConIcono lugar="redes.instagram" iconos={iconos}>
-              <CampoTexto
-                label="Instagram URL"
-                name="instagramUrl"
-                sinLimite
-                value={form.instagramUrl}
-                onChange={cambiarCampo}
-                placeholder="https://instagram.com/..."
-              />
-            </CampoConIcono>
-          </div>
-
-          <CampoConIcono lugar="footer.ubicacion" iconos={iconos}>
-            <CampoTexto
-              label="Google Maps URL"
-              name="mapsUrl"
-              sinLimite
-              value={form.mapsUrl}
-              onChange={cambiarCampo}
-              placeholder="https://maps.google.com/..."
-            />
-          </CampoConIcono>
-          {iconos ? (
-            <p className="text-[length:var(--text-body)] text-slate-500">
-              <ST>El botón redondo junto a cada campo cambia el ícono que se ve en el pie de página.</ST>
-            </p>
-          ) : null}
-
-          <CampoTexto
-            label="Texto de copyright"
-            name="textoCopyright"
-            value={form.textoCopyright}
-            onChange={cambiarCampo}
-            placeholder="Ej. © 2026 Nombre del sitio. Todos los derechos reservados."
-            maxPalabras={MAX_PALABRAS_TEXTO_BREVE}
-          />
+            {iconos ? (
+              <p className="text-xs text-[var(--admin-text-muted)]">
+                <ST>El botón redondo junto a cada campo cambia el ícono que se ve en el pie de página.</ST>
+              </p>
+            ) : null}
+          </AdminFieldset>
           </AdminEditorConPreview>
         </AdminModalBody>
 
         <AdminModalFooter>
           <AdminModalActions
-            buttonStyle="voluntariado"
+            variant="coffee"
             onCancel={onCerrar}
             primaryLabel={guardando ? tGuardando : tGuardarCambios}
             primaryDisabled={guardando}
@@ -1349,25 +1399,17 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
   return (
     <AdminModal open onClose={onCerrar} maxWidth="max-w-xl" labelledBy="admin-enlaces-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
-        <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-2.5">
-            <Link2 className="size-6 shrink-0 text-amber-700" strokeWidth={1.75} aria-hidden="true" />
-            <h2 id="admin-enlaces-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">
-              {tTitulo}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-            aria-label={t("Cerrar")}
-          >
-            <X className="size-5" />
-          </button>
-        </AdminModalHeader>
+        <AdminModalHeader
+          icon={Link2}
+          title={tTitulo}
+          titleId="admin-enlaces-modal-title"
+          description={`Gestion\u00e1 los enlaces de ${config.titulo.toLowerCase()}.`}
+          onClose={onCerrar}
+        />
 
         <AdminModalBody cms className="space-y-5">
           <AdminEditorConPreview
+            variant="modal"
             preview={(
               <PreviewEnlaces
                 items={items}
@@ -1376,16 +1418,15 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
                 footer={footer}
               />
             )}
-            ayuda={`Gestion\u00e1 los enlaces de ${config.titulo.toLowerCase()}.`}
           >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500"><ST>Enlaces actuales</ST></p>
+            <h3 className="text-[length:var(--text-body)] font-bold text-[var(--admin-text-primary)]"><ST>Enlaces actuales</ST></h3>
             <button
               type="button"
               onClick={agregarItem}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 py-2 text-sm font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 sm:w-auto"
+              className={`${adminBtnQuiet} w-full sm:w-auto`}
             >
-              <Plus className="size-4" />
+              <Plus size={14} aria-hidden="true" />
               <ST>Agregar enlace</ST>
             </button>
           </div>
@@ -1412,7 +1453,7 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
               {itemsFiltrados.map((item, index) => (
                 <div key={item.id} className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-[1fr_auto]">
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                    <label className="grid gap-1.5 text-[13px] font-semibold text-[var(--admin-text-muted)]">
                       <ST>Etiqueta</ST>
                       <input
                         value={item.etiqueta ?? ""}
@@ -1425,7 +1466,7 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
                         {etiquetaContadorPalabras(item.etiqueta ?? "", MAX_PALABRAS_BOTON)}
                       </span>
                     </label>
-                    <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                    <label className="grid gap-1.5 text-[13px] font-semibold text-[var(--admin-text-muted)]">
                       <ST>Ruta</ST>
                       <input
                         value={item.ruta ?? ""}
@@ -1435,7 +1476,7 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
                         required
                       />
                     </label>
-                    <label className="grid gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                    <label className="grid gap-1.5 text-[13px] font-semibold text-[var(--admin-text-muted)]">
                       <ST>Orden</ST>
                       <NumericInput
                         value={item.orden ?? index + 1}
@@ -1475,7 +1516,7 @@ function ModalEnlaces({ config, enlaces, navbar, footer, onCerrar, onGuardar, gu
 
         <AdminModalFooter>
           <AdminModalActions
-            buttonStyle="voluntariado"
+            variant="coffee"
             onCancel={onCerrar}
             primaryLabel={guardando ? tGuardando : tGuardarCambios}
             primaryDisabled={guardando}
@@ -1550,37 +1591,28 @@ function ModalFaqInicio({ items, seccion, onCerrar, onGuardar, guardando, puedeE
   return (
     <AdminModal open onClose={onCerrar} maxWidth="max-w-3xl" labelledBy="admin-faq-inicio-modal-title">
       <form onSubmit={enviar} className="flex min-h-0 flex-1 flex-col">
-        <AdminModalHeader>
-          <div className="flex min-w-0 items-center gap-2.5">
-            <CircleHelp className="size-6 shrink-0 text-amber-700" strokeWidth={1.75} aria-hidden="true" />
-            <h2 id="admin-faq-inicio-modal-title" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">
-              {tTitulo}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-            aria-label={t("Cerrar")}
-          >
-            <X className="size-5" />
-          </button>
-        </AdminModalHeader>
+        <AdminModalHeader
+          icon={CircleHelp}
+          title={tTitulo}
+          titleId="admin-faq-inicio-modal-title"
+          description="Agregá, editá u ordená las preguntas del inicio. El título de la sección se edita en la tarjeta Preguntas frecuentes."
+          onClose={onCerrar}
+        />
 
         <AdminModalBody cms className="space-y-5">
           <AdminEditorConPreview
+            variant="modal"
             preview={<PreviewFaqInicioLive items={lista} seccion={seccion} />}
-            ayuda="Agregá, editá u ordená las preguntas del inicio. El título de la sección se edita en la tarjeta Preguntas frecuentes."
           >
             <div className="space-y-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500"><ST>Preguntas actuales</ST></p>
+                <h3 className="text-[length:var(--text-body)] font-bold text-[var(--admin-text-primary)]"><ST>Preguntas actuales</ST></h3>
                 <button
                   type="button"
                   onClick={agregarItem}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 py-2 text-sm font-bold text-white transition hover:border-neutral-700 hover:bg-neutral-700 sm:w-auto"
+                  className={`${adminBtnQuiet} w-full sm:w-auto`}
                 >
-                  <Plus className="size-4" />
+                  <Plus size={14} aria-hidden="true" />
                   <ST>Agregar pregunta</ST>
                 </button>
               </div>
@@ -1666,6 +1698,7 @@ function ModalFaqInicio({ items, seccion, onCerrar, onGuardar, guardando, puedeE
 
         <AdminModalFooter>
           <AdminModalActions
+            variant="coffee"
             onCancel={onCerrar}
             primaryDisabled={guardando}
             primaryLabel={guardando ? tGuardando : tGuardarCambios}
@@ -1697,16 +1730,9 @@ function mapSeccionInicio(data) {
   };
 }
 
-function tituloVisibleSeccion(data, config) {
-  const titulo = typeof data?.title === "string" ? data.title.trim() : "";
-  const etiqueta = typeof data?.eyebrow === "string" ? data.eyebrow.trim() : "";
-  return titulo || etiqueta || config.tituloTarjeta;
-}
-
-function resumenSeccionInicio(data, config) {
-  if (data.title) return data.title;
-  if (data.description) return data.description;
-  return `Sin contenido guardado para "${config.tituloTarjeta}".`;
+/** Saved content only (no placeholder text), used to build the search blob. */
+function contenidoSeccionInicio(data) {
+  return data.title || data.description || "";
 }
 
 function mapTarjetaInicio(item) {
@@ -2068,12 +2094,12 @@ const AdminInformacionPaginaPrincipal = () => {
       busqueda: [
         config.etiqueta,
         config.tituloTarjeta,
-        resumenSeccionInicio(seccionesInicio[clave], config),
+        contenidoSeccionInicio(seccionesInicio[clave]),
       ],
     }));
 
     return [
-      { id: "hero", grupo: "inicio", busqueda: ["Hero section", hero.title, hero.subtitle] },
+      { id: "hero", grupo: "inicio", busqueda: ["Portada principal", "Hero", hero.title, hero.subtitle] },
       ...seccionesInicioItems,
       { id: "tarjetas-inicio", grupo: "inicio", busqueda: ["Mini formularios", "Inicio", resumenTarjetasInicio] },
       { id: "faq-inicio", grupo: "inicio", busqueda: ["Preguntas frecuentes", "FAQ", "Inicio", faqInicio.map((i) => i.pregunta).join(" ")] },
@@ -2116,29 +2142,145 @@ const AdminInformacionPaginaPrincipal = () => {
     resumenFooter,
     resumenEnlacesNavbar,
     resumenEnlacesFooter,
-    productoresHero,
     faqInicio,
   ]);
 
   const {
     busqueda,
     setBusqueda,
-    valoresFiltro,
-    setValorFiltro,
     filtrados: seccionesFiltradas,
     limpiar: limpiarFiltros,
     hayFiltrosActivos,
-    total: totalSecciones,
-    visibles: seccionesVisibles,
   } = useAdminListaFiltros(seccionesPaginaPrincipal, {
     buscarEn: (seccion) => seccion.busqueda,
-    filtrosConfig: [{ id: "grupo", obtenerValor: (seccion) => seccion.grupo }],
   });
+
+  const tTabsEtiqueta = useTraducir("Secciones de la página principal");
+  const tBuscar = useTraducir("Buscar");
+  const tBuscarSecciones = useTraducir("Buscar secciones por nombre o contenido...");
+  const tLimpiarFiltros = useTraducir("Limpiar filtros");
+  const [tabActiva, setTabActiva] = useState("inicio");
+  const tabRefs = useRef({});
+  const tabsBaseId = useId();
 
   const idsVisibles = useMemo(
     () => new Set(seccionesFiltradas.map((seccion) => seccion.id)),
     [seccionesFiltradas],
   );
+
+  const filaSeccionInicio = (clave) => {
+    const config = CONFIG_SECCIONES_INICIO[clave];
+    const data = seccionesInicio[clave];
+    return {
+      id: clave,
+      nombre: config.tituloTarjeta,
+      icono: config.icon,
+      resumen: data?.title || data?.description || "",
+      imagen: data?.image || "",
+    };
+  };
+
+  // Order follows the public homepage render order (src/Pages/Home/Home.jsx).
+  const gruposFilas = [
+    {
+      id: "inicio",
+      titulo: "Página de inicio",
+      filas: [
+        { id: "hero", nombre: "Portada principal", icono: Image, resumen: hero.title || hero.subtitle, imagen: hero.backgroundImage },
+        filaSeccionInicio("homeSpotlight"),
+        filaSeccionInicio("homeFeatured"),
+        filaSeccionInicio("homeIniciativas"),
+        {
+          id: "tarjetas-inicio",
+          nombre: "Mini formularios",
+          icono: ClipboardList,
+          resumen: tarjetasInicio.length ? resumenTarjetasInicio : "",
+        },
+        filaSeccionInicio("homeDocumentacion"),
+        {
+          id: "productores-hero",
+          nombre: "Portada y mapa de productores",
+          icono: Sprout,
+          resumen: productoresHero.title,
+          imagen: productoresHero.image,
+        },
+        filaSeccionInicio("homeLocation"),
+        filaSeccionInicio("homeFaq"),
+        {
+          id: "faq-inicio",
+          nombre: "Preguntas y respuestas",
+          icono: CircleHelp,
+          resumen: faqInicio.length ? `${faqInicio.length} pregunta${faqInicio.length === 1 ? "" : "s"}` : "",
+        },
+      ].map((fila, indice) => ({ ...fila, numero: indice + 1 })),
+    },
+    {
+      id: "navbar",
+      titulo: "Barra de navegación",
+      filas: [
+        {
+          id: "navbar",
+          nombre: "Barra de navegación",
+          icono: LayoutTemplate,
+          resumen: navbar.logoUrl || navbar.logoClaroUrl ? "Logos configurados" : "",
+        },
+        {
+          id: "enlaces-navbar",
+          nombre: CONFIG_ENLACES["enlaces-navbar"].titulo,
+          icono: Link2,
+          resumen: enlacesNavbar.length ? `${enlacesNavbar.length} enlace${enlacesNavbar.length === 1 ? "" : "s"}` : "",
+        },
+      ],
+    },
+    {
+      id: "footer",
+      titulo: "Pie de página",
+      filas: [
+        {
+          id: "footer",
+          nombre: "Pie de página",
+          icono: PanelBottom,
+          resumen: footer.fraseMarca || footer.correo || footer.telefono,
+        },
+        {
+          id: "enlaces-footer",
+          nombre: CONFIG_ENLACES["enlaces-footer"].titulo,
+          icono: Link2,
+          resumen: enlacesFooter.length ? `${enlacesFooter.length} enlace${enlacesFooter.length === 1 ? "" : "s"}` : "",
+        },
+      ],
+    },
+  ].map((grupo) => ({ ...grupo, filas: grupo.filas.filter((fila) => idsVisibles.has(fila.id)) }));
+
+  // While searching, jump to the first tab with matches if the chosen one has none.
+  const grupoActivo = (() => {
+    const elegido = gruposFilas.find((grupo) => grupo.id === tabActiva) || gruposFilas[0];
+    if (!busqueda.trim() || elegido.filas.length > 0) return elegido;
+    return gruposFilas.find((grupo) => grupo.filas.length > 0) || elegido;
+  })();
+
+  // While searching, tabs without matches cannot be activated.
+  const tabHabilitada = (grupo) => !busqueda.trim() || grupo.filas.length > 0;
+
+  const seleccionarTab = (id, enfocar = false) => {
+    setTabActiva(id);
+    if (enfocar) tabRefs.current[id]?.focus();
+  };
+
+  const teclaTab = (event, indice) => {
+    const habilitados = gruposFilas.map((grupo, i) => (tabHabilitada(grupo) ? i : -1)).filter((i) => i >= 0);
+    if (!habilitados.length) return;
+    const pos = habilitados.indexOf(indice);
+    const destinos = {
+      ArrowRight: habilitados[(pos + 1) % habilitados.length],
+      ArrowLeft: habilitados[(pos - 1 + habilitados.length) % habilitados.length],
+      Home: habilitados[0],
+      End: habilitados[habilitados.length - 1],
+    };
+    if (!(event.key in destinos)) return;
+    event.preventDefault();
+    seleccionarTab(gruposFilas[destinos[event.key]].id, true);
+  };
 
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
@@ -2165,119 +2307,78 @@ const AdminInformacionPaginaPrincipal = () => {
           </div>
         ) : (
           <>
-            <AdminListaToolbar
-              busqueda={busqueda}
-              onBusquedaChange={setBusqueda}
-              placeholder="Buscar secciones por nombre o contenido..."
-              total={totalSecciones}
-              visibles={seccionesVisibles}
-              hayFiltrosActivos={hayFiltrosActivos}
-              onLimpiar={limpiarFiltros}
-              filtros={[
-                {
-                  id: "grupo",
-                  label: "Sección",
-                  value: valoresFiltro.grupo || "todos",
-                  onChange: (valor) => setValorFiltro("grupo", valor),
-                  opciones: [
-                    { value: "todos", label: "Todas" },
-                    { value: "inicio", label: "Inicio" },
-                    { value: "navbar", label: "Navbar" },
-                    { value: "footer", label: "Footer" },
-                  ],
-                },
-              ]}
-            />
-
-            {seccionesFiltradas.length === 0 ? (
-              <AdminListaVacia onLimpiar={limpiarFiltros} />
-            ) : (
-              <div className="grid min-w-0 grid-cols-1 gap-4 overflow-x-hidden p-4 sm:grid-cols-2 sm:px-6 sm:pb-6 xl:grid-cols-3">
-            {idsVisibles.has("hero") ? (
-            <AdminSeccionCard
-              etiqueta="Hero section"
-              titulo={hero.title || "Hero section"}
-              icono={Image}
-              onEditar={() => setEditando("hero")}
-            />
-            ) : null}
-
-            {Object.entries(CONFIG_SECCIONES_INICIO).map(([clave, config]) =>
-              idsVisibles.has(clave) ? (
-              <AdminSeccionCard
-                key={clave}
-                etiqueta={config.etiqueta}
-                titulo={tituloVisibleSeccion(seccionesInicio[clave], config)}
-                icono={config.icon}
-                onEditar={() => setEditando(clave)}
-              />
-              ) : null
-            )}
-
-            {idsVisibles.has("productores-hero") ? (
-            <AdminSeccionCard
-              etiqueta="Inicio"
-              titulo="Portada y mapa de productores"
-              icono={Sprout}
-              onEditar={() => setEditando("productores-hero")}
-            />
-            ) : null}
-
-            {idsVisibles.has("tarjetas-inicio") ? (
-            <AdminSeccionCard
-              etiqueta="Inicio"
-              titulo="Mini formularios"
-              icono={ClipboardList}
-              onEditar={() => setEditando("tarjetas-inicio")}
-            />
-            ) : null}
-
-            {idsVisibles.has("faq-inicio") ? (
-            <AdminSeccionCard
-              etiqueta="Inicio"
-              titulo="Preguntas y respuestas"
-              icono={CircleHelp}
-              onEditar={() => setEditando("faq-inicio")}
-            />
-            ) : null}
-
-            {idsVisibles.has("navbar") ? (
-            <AdminSeccionCard
-              etiqueta="Navbar"
-              titulo={"Barra de navegaci\u00f3n"}
-              icono={LayoutTemplate}
-              onEditar={() => setEditando("navbar")}
-            />
-            ) : null}
-
-            {idsVisibles.has("footer") ? (
-            <AdminSeccionCard
-              etiqueta="Footer"
-              titulo={"Pie de p\u00e1gina"}
-              icono={PanelBottom}
-              onEditar={() => setEditando("footer")}
-            />
-            ) : null}
-
-            {idsVisibles.has("enlaces-navbar") ? (
-            <AdminSeccionCard
-              etiqueta={CONFIG_ENLACES["enlaces-navbar"].etiqueta}
-              titulo={CONFIG_ENLACES["enlaces-navbar"].titulo}
-              icono={Link2}
-              onEditar={() => setEditando("enlaces-navbar")}
-            />
-            ) : null}
-
-            {idsVisibles.has("enlaces-footer") ? (
-            <AdminSeccionCard
-              etiqueta={CONFIG_ENLACES["enlaces-footer"].etiqueta}
-              titulo={CONFIG_ENLACES["enlaces-footer"].titulo}
-              icono={Link2}
-              onEditar={() => setEditando("enlaces-footer")}
-            />
-            ) : null}
+            <div className="flex min-w-0 flex-col-reverse gap-3 border-b border-[var(--admin-border)] px-4 py-4 sm:px-6 xl:flex-row xl:items-center xl:justify-between xl:gap-6">
+              <div
+                role="tablist"
+                aria-label={tTabsEtiqueta}
+                className="grid min-w-0 grid-cols-3 gap-1 rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-hover)] p-1 xl:flex xl:w-fit xl:shrink-0"
+              >
+                {gruposFilas.map((grupo, indice) => (
+                  <SegmentoSeccion
+                    key={grupo.id}
+                    grupo={grupo}
+                    corto={TABS_CORTOS[grupo.id]}
+                    activa={grupo.id === grupoActivo.id}
+                    deshabilitada={!tabHabilitada(grupo)}
+                    onSeleccionar={() => seleccionarTab(grupo.id)}
+                    onTecla={(event) => teclaTab(event, indice)}
+                    registrarRef={(nodo) => {
+                      tabRefs.current[grupo.id] = nodo;
+                    }}
+                    tabId={`${tabsBaseId}-tab-${grupo.id}`}
+                    panelId={`${tabsBaseId}-panel`}
+                  />
+                ))}
               </div>
-            )}
+
+              <div className="relative w-full min-w-0 xl:max-w-[22rem]">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--admin-text-muted)]" aria-hidden="true" />
+                <input
+                  type="search"
+                  value={busqueda}
+                  onChange={(event) => setBusqueda(event.target.value)}
+                  placeholder={tBuscarSecciones}
+                  aria-label={tBuscar}
+                  className="h-[var(--control-height)] w-full min-w-0 rounded-[var(--admin-control-radius)] border border-[var(--admin-border-input)] bg-[var(--admin-surface)] py-2 pl-9 pr-11 text-[length:var(--text-body)] text-[var(--admin-text-primary)] outline-none transition-colors placeholder:text-[var(--admin-text-muted)] [&::-webkit-search-cancel-button]:appearance-none"
+                />
+                {hayFiltrosActivos ? (
+                  <button
+                    type="button"
+                    onClick={limpiarFiltros}
+                    aria-label={tLimpiarFiltros}
+                    className="absolute right-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full! text-[var(--admin-text-muted)] transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]"
+                  >
+                    <X className="size-4" aria-hidden="true" />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            <div
+              role="tabpanel"
+              id={`${tabsBaseId}-panel`}
+              aria-labelledby={`${tabsBaseId}-tab-${grupoActivo.id}`}
+              className="min-w-0 pb-4"
+            >
+              {grupoActivo.filas.length === 0 ? (
+                <AdminListaVacia onLimpiar={limpiarFiltros} />
+              ) : (
+                <ul className="divide-y divide-[var(--admin-border)] border-b border-[var(--admin-border)]">
+                  {grupoActivo.filas.map((fila) => (
+                    <li key={fila.id}>
+                      <AdminSeccionFila
+                        numero={fila.numero}
+                        nombre={fila.nombre}
+                        resumen={fila.resumen}
+                        icono={fila.icono}
+                        imagen={fila.imagen}
+                        onEditar={() => setEditando(fila.id)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </>
         )}
       </section>
