@@ -47,14 +47,14 @@ export function PointOfSaleStockTable({ products, stockByProductId, stockLoading
 
   return (
     <>
-      <div className="admin-table-shell hidden md:block">
+      <div className="admin-table-shell admin-table-shell--aligned hidden md:block">
         <table className="w-full text-left text-[length:var(--text-body)]">
           <thead>
             <tr>
               <th><ST>Producto</ST></th>
               <th><ST>Peso</ST></th>
               <th><ST>Estado</ST></th>
-              <th><ST>Stock POS</ST></th>
+              <th className="text-right"><ST>Stock POS</ST></th>
               {canEdit ? <th><ST>Acciones</ST></th> : null}
             </tr>
           </thead>
@@ -68,7 +68,7 @@ export function PointOfSaleStockTable({ products, stockByProductId, stockLoading
                   </td>
                   <td className="px-6 py-4 text-slate-600">{product.peso || "—"}</td>
                   <td className="px-6 py-4"><span className={`text-[length:var(--text-body)] font-semibold ${product.estado === "Habilitado" ? "text-green-700" : "text-red-600"}`}><ST>{product.estado}</ST></span></td>
-                  <td className="px-6 py-4"><StockCell stockRecord={stockRecord} loading={stockLoading} /></td>
+                  <td className="px-6 py-4 text-right"><StockCell stockRecord={stockRecord} loading={stockLoading} /></td>
                   {canEdit ? <td className="px-6 py-4"><EditButton product={product} onEdit={onEdit} /></td> : null}
                 </tr>
               );

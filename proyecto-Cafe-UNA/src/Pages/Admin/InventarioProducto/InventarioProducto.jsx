@@ -31,6 +31,8 @@ import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
 import { contactSupportMessage } from "../../../lib/formLimits";
 import { ADMIN_STOCK_PRODUCT_EVENT, clearPendingStockProduct, peekPendingStockProduct } from "../../../lib/adminStockAlert";
 import { ST } from "../../../Components/T/ST";
+import { AdminPageHeader } from "../../../Components/Admin/ui/AdminPageHeader";
+import { AdminStatLine } from "../../../Components/Admin/ui/AdminStatLine";
 import {
   productoPuedeDestacarse,
   productoPuedeDeshabilitarse,
@@ -356,6 +358,40 @@ const AdminInventarioProducto = () => {
         ayuda="Renombrá categorías y subcategorías y elegí el ícono que aparece en la tienda. Al renombrar, los productos que la usan se actualizan solos."
       />
 
+      <div className="min-w-0 space-y-6">
+      <AdminPageHeader
+        title={<ST>Productos</ST>}
+        description={<ST>{"Administración de inventario"}</ST>}
+        meta={
+          <AdminStatLine
+            items={[{ label: <ST>Destacados en inicio</ST>, value: `${destacadosEnUso}/${MAX_PRODUCTOS_DESTACADOS}` }]}
+          />
+        }
+        actions={
+          cargando || error ? null : (
+            <>
+              {puedeEditar ? (
+                <button
+                  type="button"
+                  onClick={() => setModalCategorias(true)}
+                  className="w-full rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
+                >
+                  <ST>Categorías</ST>
+                </button>
+              ) : null}
+              {puedeCrear ? (
+                <button
+                  type="button"
+                  onClick={() => setModalCrear(true)}
+                  className="w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2 text-sm font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700 sm:w-auto"
+                >
+                  <ST>+ Nuevo producto</ST>
+                </button>
+              ) : null}
+            </>
+          )
+        }
+      />
       <section className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
         {cargando ? (
           <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 px-4 py-14 text-center sm:px-6">
@@ -388,37 +424,6 @@ const AdminInventarioProducto = () => {
             </button>
           </div>
         ) : null}
-        <div className="flex flex-col gap-4 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-          <div>
-            <h1 className="text-xl font-semibold text-slate-950 sm:text-2xl"><ST>Productos</ST></h1>
-            <p className="mt-1 text-sm text-slate-500"><ST>{"Administraci\u00f3n de inventario"}</ST></p>
-            <p className="mt-1 text-xs text-slate-400">
-              <ST>Destacados en inicio</ST>: {destacadosEnUso}/{MAX_PRODUCTOS_DESTACADOS}
-            </p>
-          </div>
-
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            {puedeEditar ? (
-            <button
-              type="button"
-              onClick={() => setModalCategorias(true)}
-              className="w-full rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
-            >
-              <ST>Categorías</ST>
-            </button>
-            ) : null}
-            {puedeCrear ? (
-            <button
-              type="button"
-              onClick={() => setModalCrear(true)}
-              className="w-full rounded-full border border-slate-950 bg-slate-950 px-5 py-2 text-sm font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700 sm:w-auto"
-            >
-              <ST>+ Nuevo producto</ST>
-            </button>
-            ) : null}
-          </div>
-        </div>
-
         {!cargando && !error ? (
           <AdminListaToolbar
             busqueda={busqueda}
@@ -561,6 +566,7 @@ const AdminInventarioProducto = () => {
           </>
         )}
       </section>
+      </div>
     </AdminLayout>
     </AdminPageGate>
     </>

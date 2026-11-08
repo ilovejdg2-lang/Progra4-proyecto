@@ -33,6 +33,7 @@ import { listarCatalogo, TIPOS_CATALOGO } from "../../../services/catalogosServi
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
 import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
 import { ST } from "../../../Components/T/ST";
+import { AdminPageHeader } from "../../../Components/Admin/ui/AdminPageHeader";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
 import { obtenerCatalogoProductos, obtenerStockPorUbicacion } from "../../../services/productosService";
@@ -525,14 +526,10 @@ export default function AdminVentasPresenciales() {
       <AdminLayout>
         <div className="space-y-6 pb-12">
           {/* Encabezado principal */}
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950">
-              <ST>Registrar Venta Física</ST>
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              <ST>Punto de venta para vendedores · Descuento automático de inventario</ST>
-            </p>
-          </div>
+          <AdminPageHeader
+            title={<ST>Registrar Venta Física</ST>}
+            description={<ST>Punto de venta para vendedores · Descuento automático de inventario</ST>}
+          />
 
           {loadError ? (
             <div
