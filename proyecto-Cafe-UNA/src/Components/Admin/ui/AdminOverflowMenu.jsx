@@ -7,11 +7,11 @@ import { ST } from "../../T/ST";
 const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]";
 
-const itemBase = `flex min-h-[var(--control-height)] w-full items-center gap-2.5 rounded-md! px-3 text-left text-[length:var(--text-body)] font-medium no-underline transition-colors hover:bg-[var(--admin-surface-hover)] focus-visible:bg-[var(--admin-surface-hover)] ${focusRing} -outline-offset-2`;
+const itemBase = `flex min-h-[var(--control-height)] w-full items-center gap-2.5 rounded-md! px-3 text-left text-[length:var(--text-body)] font-medium no-underline transition-colors hover:bg-[var(--admin-surface-hover)] focus-visible:bg-[var(--admin-surface-hover)] ${focusRing} -outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent`;
 
 /**
  * Overflow ("...") menu for secondary and destructive actions.
- * items: [{ key, label, icon?, onSelect?, to?, params?, tone?: "danger", className? }]
+ * items: [{ key, label, icon?, onSelect?, to?, params?, tone?: "danger", className?, disabled? }]
  * Items with `to` render as router links. Escape, outside click, Tab and selecting an
  * item close the menu; Escape and selection return focus to the trigger.
  */
@@ -29,7 +29,7 @@ export function AdminOverflowMenu({ label, items, className = "", align = "right
 
   // Items hidden by responsive classes (display: none) cannot take focus, so navigation skips them.
   const visibleItems = () =>
-    itemRefs.current.filter((node) => node && getComputedStyle(node).display !== "none");
+    itemRefs.current.filter((node) => node && !node.disabled && getComputedStyle(node).display !== "none");
 
   useEffect(() => {
     if (open) visibleItems()[0]?.focus();
@@ -87,8 +87,17 @@ export function AdminOverflowMenu({ label, items, className = "", align = "right
     item.onSelect?.();
   };
 
+  // Escape must work wherever focus is while open (trigger included); the menu handler stops its own events.
+  const onRootKeyDown = (event) => {
+    if (open && event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      close();
+    }
+  };
+
   return (
-    <div ref={rootRef} className={`relative ${className}`}>
+    <div ref={rootRef} className={`relative ${className}`} onKeyDown={onRootKeyDown}>
       <button
         ref={triggerRef}
         type="button"
@@ -137,7 +146,7 @@ export function AdminOverflowMenu({ label, items, className = "", align = "right
                 role="menuitem"
                 tabIndex={-1}
                 className={cls}
-                onClick={() => setOpen(false)}
+                onClick={() => close()}
               >
                 {content}
               </Link>
@@ -148,6 +157,7 @@ export function AdminOverflowMenu({ label, items, className = "", align = "right
                 type="button"
                 role="menuitem"
                 tabIndex={-1}
+                disabled={item.disabled}
                 className={cls}
                 onClick={() => select(item)}
               >

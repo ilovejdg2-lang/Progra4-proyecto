@@ -4,7 +4,7 @@ import { Check, ChevronDown, Search } from "lucide-react";
 import { ST } from "../../../../Components/T/ST";
 import { useTraducir } from "../../../../hooks/useTraducir";
 import { StatusDot } from "./StatusDot";
-import { LOCATION_PILLS_MAX, locationTabId } from "./locationSelectorConfig";
+import { LOCATION_PILLS_MAX, locationTabId, safeIdPart } from "./locationSelectorConfig";
 
 const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]";
@@ -120,7 +120,7 @@ function ComboOption({ id, location, selected, highlighted, onChoose, onHover })
     >
       <StatusDot tone={activo ? "success" : "neutral"} />
       <span className="min-w-0 flex-1">
-        <span className={`block truncate ${selected ? "font-semibold" : "font-medium"}`}>{location.name}</span>
+        <span className={`block truncate ${selected ? "font-semibold" : "font-medium"}`}><ST>{location.name}</ST></span>
         <span className="block truncate text-xs text-[color:var(--admin-text-muted)]">{location.code}</span>
       </span>
       {selected ? <Check className="size-4 shrink-0 text-[color:var(--admin-text-primary)]" aria-hidden="true" /> : null}
@@ -226,7 +226,7 @@ function LocationCombobox({ locations, selectedCode, onSelect, baseId }) {
     }
   };
 
-  const activeOptionId = filtered[activeIndex] ? `${baseId}-opt-${filtered[activeIndex].code}` : undefined;
+  const activeOptionId = filtered[activeIndex] ? `${baseId}-opt-${safeIdPart(filtered[activeIndex].code)}` : undefined;
 
   return (
     <div ref={rootRef} className="relative w-full sm:w-96">
@@ -248,7 +248,7 @@ function LocationCombobox({ locations, selectedCode, onSelect, baseId }) {
       >
         <span className="shrink-0 text-[color:var(--admin-text-muted)]"><ST>Punto de venta</ST></span>
         <span className="flex min-w-0 flex-1 items-center gap-2 font-semibold">
-          <span className="truncate">{selected.name}</span>
+          <span className="truncate"><ST>{selected.name}</ST></span>
           <StatusDot tone={isActive(selected) ? "success" : "neutral"} />
         </span>
         <ChevronDown className="size-4 shrink-0 text-[color:var(--admin-text-muted)]" aria-hidden="true" />
@@ -280,7 +280,7 @@ function LocationCombobox({ locations, selectedCode, onSelect, baseId }) {
             {filtered.map((location, index) => (
               <ComboOption
                 key={location.code}
-                id={`${baseId}-opt-${location.code}`}
+                id={`${baseId}-opt-${safeIdPart(location.code)}`}
                 location={location}
                 selected={location.code === selectedCode}
                 highlighted={index === activeIndex}
@@ -289,9 +289,13 @@ function LocationCombobox({ locations, selectedCode, onSelect, baseId }) {
               />
             ))}
           </ul>
-          {filtered.length === 0 ? (
-            <p className="px-3 py-4 text-center text-[length:var(--text-body)] text-[color:var(--admin-text-muted)]">{tNoResults}</p>
-          ) : null}
+          <p
+            role="status"
+            aria-live="polite"
+            className={filtered.length === 0 ? "px-3 py-4 text-center text-[length:var(--text-body)] text-[color:var(--admin-text-muted)]" : "sr-only"}
+          >
+            {filtered.length === 0 ? tNoResults : ""}
+          </p>
         </div>
       ) : null}
     </div>

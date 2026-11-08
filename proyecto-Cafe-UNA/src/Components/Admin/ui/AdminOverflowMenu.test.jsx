@@ -47,6 +47,24 @@ describe("AdminOverflowMenu", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("closes with Escape even when focus is back on the trigger", async () => {
+    const { user, trigger } = setup([{ key: "a", label: "Editar", onSelect: vi.fn() }]);
+    await user.click(trigger);
+    trigger.focus();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it("renders disabled items as disabled and does not run them", async () => {
+    const onSelect = vi.fn();
+    const { user, trigger } = setup([{ key: "a", label: "Inactivar", onSelect, disabled: true }]);
+    await user.click(trigger);
+    expect(screen.getByRole("menuitem", { name: "Inactivar" })).toBeDisabled();
+    await user.click(screen.getByRole("menuitem", { name: "Inactivar" }));
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
   it("moves with arrows, wraps and supports Home/End", async () => {
     const { user, trigger } = setup([
       { key: "a", label: "Uno", onSelect: vi.fn() },

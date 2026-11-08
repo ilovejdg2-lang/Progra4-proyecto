@@ -4,6 +4,7 @@ import { indicadorStockCantidad } from "../../../../lib/productoDisponibilidad";
 import { ST } from "../../../../Components/T/ST";
 import { FotoMini } from "../../../../Components/FotoMini";
 import { t } from "../../../../lib/t";
+import { useTraducir } from "../../../../hooks/useTraducir";
 import { StatusDot } from "./StatusDot";
 
 const muted = "text-[color:var(--admin-text-muted)]";
@@ -43,7 +44,7 @@ function ProductStatus({ estado }) {
 function StockCell({ stockRecord, loading }) {
   const indicador = indicadorStockCantidad(loading ? undefined : stockRecord?.stock, loading);
   if (loading || stockRecord?.stock === null || stockRecord?.stock === undefined) {
-    return <span className={muted}>{indicador.etiqueta}</span>;
+    return <span className={muted}><ST>{indicador.etiqueta}</ST></span>;
   }
   const low = indicador.codigo === "pocas" || indicador.codigo === "agotado";
   return (
@@ -60,6 +61,7 @@ function StockCell({ stockRecord, loading }) {
 }
 
 function EditPencil({ product, onEdit }) {
+  const tEditar = useTraducir("Editar stock de");
   return (
     <button
       type="button"
@@ -67,7 +69,7 @@ function EditPencil({ product, onEdit }) {
         event.stopPropagation();
         onEdit(product);
       }}
-      aria-label={`${t("Editar stock de")} ${product.nombre}`}
+      aria-label={`${tEditar} ${product.nombre}`}
       className={`inline-flex size-[var(--control-height)] shrink-0 items-center justify-center rounded-full! ${muted} transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[color:var(--admin-text-primary)] focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]`}
     >
       <Pencil className="size-4" aria-hidden="true" />

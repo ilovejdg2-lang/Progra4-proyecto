@@ -31,7 +31,7 @@ describe("PointOfSaleLocationHeader", () => {
   it("shows the name and a meta line with code, status and computed totals", () => {
     setup();
     expect(screen.getByRole("heading", { level: 2, name: "Editorial" })).toBeInTheDocument();
-    expect(screen.getByText("POS_EDITORIAL · Activo · 5 productos · 118 unidades")).toBeInTheDocument();
+    expect(screen.getByText("POS_EDITORIAL · Activo · 5 productos en stock · 118 unidades")).toBeInTheDocument();
   });
 
   it("omits totals that are not available instead of inventing them", () => {
@@ -41,7 +41,7 @@ describe("PointOfSaleLocationHeader", () => {
 
   it("uses singular forms", () => {
     setup({ productCount: 1, unitCount: 1 });
-    expect(screen.getByText("POS_EDITORIAL · Activo · 1 producto · 1 unidad")).toBeInTheDocument();
+    expect(screen.getByText("POS_EDITORIAL · Activo · 1 producto en stock · 1 unidad")).toBeInTheDocument();
   });
 
   it("shows Inactivo for inactive locations", () => {

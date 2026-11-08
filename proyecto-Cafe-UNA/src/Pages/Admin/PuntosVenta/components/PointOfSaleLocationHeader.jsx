@@ -5,6 +5,7 @@ import { History, Pencil, Power, PowerOff } from "lucide-react";
 import { ST } from "../../../../Components/T/ST";
 import { useTraducir } from "../../../../hooks/useTraducir";
 import { AdminOverflowMenu } from "../../../../Components/Admin/ui/AdminOverflowMenu";
+import { safeIdPart } from "./locationSelectorConfig";
 import {
   AdminModal,
   AdminModalActions,
@@ -21,8 +22,8 @@ const dangerPrimaryCls =
 function useMetaLine(location, productCount, unitCount) {
   const tActivo = useTraducir("Activo");
   const tInactivo = useTraducir("Inactivo");
-  const tProducto = useTraducir("producto");
-  const tProductos = useTraducir("productos");
+  const tProducto = useTraducir("producto en stock");
+  const tProductos = useTraducir("productos en stock");
   const tUnidad = useTraducir("unidad");
   const tUnidades = useTraducir("unidades");
   const parts = [location.code, location.activo === false ? tInactivo : tActivo];
@@ -33,7 +34,7 @@ function useMetaLine(location, productCount, unitCount) {
 
 function DeactivateConfirm({ location, busy, onCancel, onConfirm }) {
   const tTitulo = useTraducir("Inactivar");
-  const titleId = `pv-deactivate-${location.code}`;
+  const titleId = `pv-deactivate-${safeIdPart(location.code)}`;
   return (
     <AdminModal open onClose={busy ? undefined : onCancel} labelledBy={titleId} maxWidth="max-w-md">
       <AdminModalHeader
@@ -72,6 +73,7 @@ export function PointOfSaleLocationHeader({
   onEdit,
   onToggleActivo,
   toggling = false,
+  headingRef = null,
 }) {
   const [confirming, setConfirming] = useState(false);
   const activo = location.activo !== false;
@@ -90,14 +92,14 @@ export function PointOfSaleLocationHeader({
     { key: "history", label: "Historial de ventas", icon: History, to: SALES_ROUTE, params: { locationCode: location.code }, className: "@lg:hidden" },
     { key: "edit", label: "Editar", icon: Pencil, onSelect: () => onEdit?.(location) },
     activo
-      ? { key: "deactivate", label: "Inactivar", icon: PowerOff, tone: "danger", onSelect: () => setConfirming(true) }
-      : { key: "activate", label: "Activar", icon: Power, onSelect: () => onToggleActivo?.(location) },
+      ? { key: "deactivate", label: "Inactivar", icon: PowerOff, tone: "danger", disabled: toggling, onSelect: () => setConfirming(true) }
+      : { key: "activate", label: "Activar", icon: Power, disabled: toggling, onSelect: () => onToggleActivo?.(location) },
   ];
 
   return (
     <div className="flex min-w-0 items-start justify-between gap-3 px-4 py-4 sm:px-6">
       <div className="min-w-0">
-        <h2 className="break-words text-[length:var(--text-subtitle)] font-bold leading-tight text-[color:var(--admin-text-primary)]!">
+        <h2 ref={headingRef} tabIndex={-1} className="break-words focus:outline-none text-[length:var(--text-subtitle)] font-bold leading-tight text-[color:var(--admin-text-primary)]!">
           <ST>{location.name}</ST>
         </h2>
         <p className="mt-1! break-words text-xs text-[color:var(--admin-text-muted)]!">{meta}</p>

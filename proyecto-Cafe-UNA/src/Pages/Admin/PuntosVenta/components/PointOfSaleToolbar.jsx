@@ -75,7 +75,7 @@ export function PointOfSaleToolbar({
           <button
             type="button"
             onClick={onLimpiar}
-            className="inline-flex min-h-8 items-center gap-1 rounded-full! px-2 font-semibold text-[color:var(--admin-accent-coffee)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]"
+            className="inline-flex min-h-[var(--control-height)] items-center gap-1 rounded-full! px-2 font-semibold text-[color:var(--admin-accent-coffee)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]"
           >
             <X className="size-3.5" aria-hidden="true" />
             {tLimpiar}

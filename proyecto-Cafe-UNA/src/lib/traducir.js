@@ -214,6 +214,8 @@ const DICCIONARIO = {
   "Todas": "All",
   "productos": "products",
   "producto": "product",
+  "producto en stock": "product in stock",
+  "productos en stock": "products in stock",
   "unidades en bodega": "units in stock",
   "unidad en bodega": "unit in stock",
   "Camisa": "Shirt",

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { CheckCircle2, Plus, PowerOff, RefreshCw } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
@@ -60,6 +60,8 @@ const AdminPuntosVenta = () => {
   const [isSavingLocation, setIsSavingLocation] = useState(false);
   const [togglingCode, setTogglingCode] = useState("");
   const tabsBaseId = useId();
+  const headingRef = useRef(null);
+  const [focusCheck, setFocusCheck] = useState(0);
   const panelId = `${tabsBaseId}-panel`;
 
   const effectiveSelectedCode = locationsState.data.some((location) => location.code === selectedCode)
@@ -75,15 +77,18 @@ const AdminPuntosVenta = () => {
     ...product,
     stockRecord: stockState.data.find((stock) => String(stock.productId) === String(product.id)),
   })), [catalogState.data, stockState.data]);
-  // Totals only come from records the location actually has; nothing is derived while loading or on error.
+  // Totals count catalog products with stock above zero; nothing is derived while loading or on error.
   const locationTotals = useMemo(() => {
     if (stockState.status !== "success") return { productCount: null, unitCount: null };
-    const tracked = stockState.data.filter((record) => record.stock !== null && record.stock !== undefined && Number.isFinite(Number(record.stock)));
+    const catalogIds = new Set(catalogState.data.map((product) => String(product.id)));
+    const tracked = stockState.data.filter(
+      (record) => catalogIds.has(String(record.productId)) && record.stock !== null && record.stock !== undefined && Number(record.stock) > 0,
+    );
     return {
       productCount: tracked.length,
       unitCount: tracked.reduce((sum, record) => sum + Number(record.stock), 0),
     };
-  }, [stockState.data, stockState.status]);
+  }, [catalogState.data, stockState.data, stockState.status]);
   const stockByProductId = useMemo(() => new Map(products.map((product) => [String(product.id), product.stockRecord])), [products]);
   const categoriasProducto = useMemo(() => categoriasUnicas(products), [products]);
   const buscarEn = useCallback((product) => [product.nombre, product.descripcion, product.estado, product.peso, product.categoria], []);
@@ -114,6 +119,16 @@ const AdminPuntosVenta = () => {
       clearTimeout(clear);
     };
   }, [successMessage, successToken]);
+
+  // After a refetch the control that opened a flow may be gone; keep keyboard focus inside the panel.
+  useEffect(() => {
+    if (!focusCheck) return undefined;
+    const timer = setTimeout(() => {
+      const active = document.activeElement;
+      if (!active || active === document.body || !active.isConnected) headingRef.current?.focus();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [focusCheck]);
 
   const ready = !puedeVer || (locationsState.status !== "idle" && catalogState.status !== "idle");
   const { showLoading, loadingMessage } = useAdminPageGate("/admin/puntos-venta", ready);
@@ -162,6 +177,7 @@ const AdminPuntosVenta = () => {
       setLocationError(error instanceof Error ? error.message : "No se pudo guardar el punto de venta.");
     } finally {
       setIsSavingLocation(false);
+      setFocusCheck((token) => token + 1);
     }
   };
 
@@ -185,6 +201,7 @@ const AdminPuntosVenta = () => {
       setLocationError(error instanceof Error ? error.message : "No se pudo cambiar el estado.");
     } finally {
       setTogglingCode("");
+      setFocusCheck((token) => token + 1);
     }
   };
 
@@ -339,6 +356,7 @@ const AdminPuntosVenta = () => {
             }}
             onToggleActivo={handleToggleActivo}
             toggling={togglingCode === selectedLocation.code}
+            headingRef={headingRef}
           />
           <div className="overflow-hidden rounded-b-[calc(1rem-1px)] border-t border-[var(--admin-border)]">{detailBody}</div>
         </div>
