@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Plus, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { CheckCircle2, Plus, PowerOff, RefreshCw } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
-import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { categoriasUnicas, filtrarPorCategoria } from "../../../lib/categorias";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
@@ -19,10 +19,19 @@ import { getActiveSessionUser } from "../../../services/sessionService";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
 import { ST } from "../../../Components/T/ST";
 import { AdminPageHeader } from "../../../Components/Admin/ui/AdminPageHeader";
-import { PointOfSaleCards } from "./components/PointOfSaleCards";
 import { PointOfSaleLocationEditor } from "./components/PointOfSaleLocationEditor";
+import { PointOfSaleLocationHeader } from "./components/PointOfSaleLocationHeader";
+import { PointOfSaleLocationSelector } from "./components/PointOfSaleLocationSelector";
+import { LOCATION_PILLS_MAX, locationTabId } from "./components/locationSelectorConfig";
 import { PointOfSaleStockEditor } from "./components/PointOfSaleStockEditor";
 import { PointOfSaleStockTable } from "./components/PointOfSaleStockTable";
+import { PointOfSaleToolbar } from "./components/PointOfSaleToolbar";
+
+// No overflow-hidden here: the selector popover and the overflow menu must be able to extend past a short panel.
+const panelCls = "@container min-w-0 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)]";
+const mutedText = "text-[length:var(--text-body)] text-[color:var(--admin-text-muted)]";
+const quietBtnCls =
+  "admin-role-quiet inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-[length:var(--text-body)] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus-ring)]";
 
 const AdminPuntosVenta = () => {
   const actor = getActiveSessionUser();
@@ -50,6 +59,8 @@ const AdminPuntosVenta = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingLocation, setIsSavingLocation] = useState(false);
   const [togglingCode, setTogglingCode] = useState("");
+  const tabsBaseId = useId();
+  const panelId = `${tabsBaseId}-panel`;
 
   const effectiveSelectedCode = locationsState.data.some((location) => location.code === selectedCode)
     ? selectedCode
@@ -64,6 +75,15 @@ const AdminPuntosVenta = () => {
     ...product,
     stockRecord: stockState.data.find((stock) => String(stock.productId) === String(product.id)),
   })), [catalogState.data, stockState.data]);
+  // Totals only come from records the location actually has; nothing is derived while loading or on error.
+  const locationTotals = useMemo(() => {
+    if (stockState.status !== "success") return { productCount: null, unitCount: null };
+    const tracked = stockState.data.filter((record) => record.stock !== null && record.stock !== undefined && Number.isFinite(Number(record.stock)));
+    return {
+      productCount: tracked.length,
+      unitCount: tracked.reduce((sum, record) => sum + Number(record.stock), 0),
+    };
+  }, [stockState.data, stockState.status]);
   const stockByProductId = useMemo(() => new Map(products.map((product) => [String(product.id), product.stockRecord])), [products]);
   const categoriasProducto = useMemo(() => categoriasUnicas(products), [products]);
   const buscarEn = useCallback((product) => [product.nombre, product.descripcion, product.estado, product.peso, product.categoria], []);
@@ -168,141 +188,159 @@ const AdminPuntosVenta = () => {
     }
   };
 
+  const openCreate = () => {
+    setLocationError("");
+    setLocationEditor({ mode: "create" });
+  };
+
+  const sinUbicaciones = locationsState.data.length === 0;
+  const usesPills = locationsState.data.length <= LOCATION_PILLS_MAX;
   const mostrarAgregar =
     puedeVer &&
     puedeEditar &&
     !locationsState.loading &&
     !catalogState.loading &&
     !locationsState.error &&
-    !(locationsState.data.length === 0 && soloAsignados);
+    !(sinUbicaciones && soloAsignados);
+
+  const messagePanel = (children) => (
+    <section className={`${panelCls} px-5 py-14 text-center`}>{children}</section>
+  );
+
+  const detailBody = !selectedLocation ? null : !selectedIsActive ? (
+    <div className="flex items-start gap-3 bg-[var(--admin-surface-subtle)] px-4 py-6 sm:px-6">
+      <PowerOff className="mt-0.5 size-5 shrink-0 text-[color:var(--admin-text-muted)]" aria-hidden="true" />
+      <div className="min-w-0">
+        <p className="font-semibold text-[color:var(--admin-text-primary)]"><ST>Este punto está inactivo</ST></p>
+        <p className={`mt-0.5 ${mutedText}`}>
+          {puedeEditar ? <ST>Activalo desde el menú para consultar o ajustar su stock.</ST> : <ST>No se opera inventario en puntos inactivos.</ST>}
+        </p>
+      </div>
+    </div>
+  ) : catalogState.error ? (
+    <div className="px-5 py-10 text-center">
+      <p className="text-[length:var(--text-body)] font-semibold text-[color:var(--admin-status-danger-text)]"><ST>{catalogState.error.message}</ST></p>
+      <button type="button" onClick={catalogState.retry} className={`${quietBtnCls} mt-3`}>
+        <RefreshCw className="size-4" aria-hidden="true" />
+        <ST>Reintentar catálogo</ST>
+      </button>
+    </div>
+  ) : stockState.error ? (
+    <div className="px-5 py-10 text-center">
+      <p className="text-[length:var(--text-body)] font-semibold text-[color:var(--admin-status-danger-text)]"><ST>{stockState.error.message}</ST></p>
+      <button type="button" onClick={stockState.retry} className={`${quietBtnCls} mt-3`}>
+        <RefreshCw className="size-4" aria-hidden="true" />
+        <ST>Reintentar stock</ST>
+      </button>
+    </div>
+  ) : catalogState.data.length === 0 ? (
+    <div className="px-5 py-12 text-center">
+      <p className={mutedText}><ST>Todavía no hay productos en el catálogo.</ST></p>
+    </div>
+  ) : (
+    <>
+      <PointOfSaleToolbar
+        busqueda={filters.busqueda}
+        onBusquedaChange={filters.setBusqueda}
+        categoria={filters.valoresFiltro.categoria || "todos"}
+        onCategoriaChange={(valor) => filters.setValorFiltro("categoria", valor)}
+        categorias={categoriasProducto}
+        estado={filters.valoresFiltro.estado || "todos"}
+        onEstadoChange={(valor) => filters.setValorFiltro("estado", valor)}
+        hayFiltrosActivos={filters.hayFiltrosActivos}
+        total={filters.total}
+        visibles={filters.visibles}
+        onLimpiar={filters.limpiar}
+      />
+      <div className="border-t border-[var(--admin-border)]">
+        {filters.filtrados.length === 0 ? (
+          <AdminListaVacia onLimpiar={filters.limpiar} />
+        ) : (
+          <PointOfSaleStockTable
+            products={filters.filtrados}
+            stockByProductId={stockByProductId}
+            stockLoading={stockState.loading}
+            canEdit={puedeEditar}
+            onEdit={setSelectedProduct}
+          />
+        )}
+      </div>
+    </>
+  );
 
   const content = !puedeVer ? (
-    <section className="rounded-2xl border border-slate-200 bg-white px-5 py-14 text-center shadow-sm">
-      <h1 className="text-xl font-semibold text-slate-950"><ST>Acceso restringido</ST></h1>
-      <p className="mx-auto mt-2 max-w-md text-sm text-slate-500"><ST>No tienes permiso para consultar el inventario de puntos de venta.</ST></p>
-    </section>
+    messagePanel(
+      <>
+        <h1 className="text-xl font-semibold text-[color:var(--admin-text-primary)]!"><ST>Acceso restringido</ST></h1>
+        <p className={`mx-auto mt-2 max-w-md ${mutedText}`}><ST>No tienes permiso para consultar el inventario de puntos de venta.</ST></p>
+      </>,
+    )
   ) : locationsState.loading || catalogState.loading ? (
-    <section className="flex min-h-[360px] flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <section className={`${panelCls} flex min-h-[360px] flex-col items-center justify-center gap-3`}>
       <span className="admin-route-loading__spinner" aria-hidden="true" />
-      <p className="text-sm font-semibold text-slate-600"><ST>Cargando puntos de venta...</ST></p>
+      <p className={`font-semibold ${mutedText}`}><ST>Cargando puntos de venta...</ST></p>
     </section>
   ) : locationsState.error ? (
-    <section className="flex min-h-[360px] flex-col items-center justify-center gap-3 rounded-2xl border border-amber-200 bg-white px-5 text-center">
-      <p className="text-sm font-semibold text-red-700"><ST>{locationsState.error.message}</ST></p>
-      <button type="button" onClick={locationsState.retry} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-amber-800 bg-amber-800 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+    <section className={`${panelCls} flex min-h-[360px] flex-col items-center justify-center gap-3 px-5 text-center`}>
+      <p className="text-[length:var(--text-body)] font-semibold text-[color:var(--admin-status-danger-text)]"><ST>{locationsState.error.message}</ST></p>
+      <button type="button" onClick={locationsState.retry} className={quietBtnCls}>
         <RefreshCw className="size-4" aria-hidden="true" />
         <ST>Reintentar</ST>
       </button>
     </section>
-  ) : locationsState.data.length === 0 && soloAsignados ? (
-    <section className="rounded-2xl border border-slate-200 bg-white px-5 py-14 text-center shadow-sm">
-      <p className="text-sm text-slate-600"><ST>No tienes puntos de venta asignados. Contacta a un administrador.</ST></p>
-    </section>
-  ) : locationsState.data.length === 0 && !puedeEditar ? (
-    <section className="rounded-2xl border border-slate-200 bg-white px-5 py-14 text-center shadow-sm">
-      <p className="text-sm text-slate-500"><ST>No hay puntos de venta configurados.</ST></p>
-    </section>
+  ) : sinUbicaciones && soloAsignados ? (
+    messagePanel(<p className={mutedText}><ST>No tienes puntos de venta asignados. Contacta a un administrador.</ST></p>)
+  ) : sinUbicaciones && !puedeEditar ? (
+    messagePanel(<p className={mutedText}><ST>No hay puntos de venta configurados.</ST></p>)
+  ) : sinUbicaciones ? (
+    messagePanel(
+      <>
+        <p className={`mx-auto mb-5 max-w-md ${mutedText}`}><ST>Todavía no hay puntos de venta. Agregá el primero para operar stock por ubicación.</ST></p>
+        <button
+          type="button"
+          onClick={openCreate}
+          className="admin-role-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2"
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          <ST>Agregar punto de venta</ST>
+        </button>
+      </>,
+    )
   ) : (
-    <section className="space-y-5">
-      {locationsState.data.length === 0 ? (
-        <section className="rounded-2xl border border-slate-200 bg-white px-5 py-14 text-center shadow-sm">
-          <p className="text-sm text-slate-500"><ST>Todavía no hay puntos de venta. Agregá el primero para operar stock por ubicación.</ST></p>
-        </section>
-      ) : (
-        <PointOfSaleCards
-          locations={locationsState.data}
-          selectedCode={effectiveSelectedCode}
-          onSelect={(code) => {
-            setSelectedCode(code);
-            setSuccessMessage("");
-            setLocationError("");
-            setSelectedProduct(null);
-          }}
-          canManage={puedeEditar}
-          onEdit={(location) => {
-            setLocationError("");
-            setLocationEditor(location);
-          }}
-          onToggleActivo={handleToggleActivo}
-          togglingCode={togglingCode}
-        />
-      )}
+    <section className={panelCls}>
+      <PointOfSaleLocationSelector
+        locations={locationsState.data}
+        selectedCode={effectiveSelectedCode}
+        tabsBaseId={tabsBaseId}
+        panelId={panelId}
+        onSelect={(code) => {
+          setSelectedCode(code);
+          setSuccessMessage("");
+          setLocationError("");
+          setSelectedProduct(null);
+        }}
+      />
       {selectedLocation ? (
-        <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex min-w-0 flex-col gap-3 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-            <div className="min-w-0">
-              <h2 className="break-words text-lg font-semibold text-slate-950"><ST>{selectedLocation.name}</ST></h2>
-              <p className="mt-1 text-sm text-slate-500">
-                {selectedIsActive
-                  ? <ST>Stock independiente de Bodega Central.</ST>
-                  : <ST>Este punto está inhabilitado. Activalo para consultar o ajustar stock.</ST>}
-              </p>
-            </div>
-            {selectedIsActive && stockState.error ? (
-              <button type="button" onClick={stockState.retry} className="inline-flex min-h-11 w-full items-center justify-center gap-2 self-start rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 sm:w-auto">
-                <RefreshCw className="size-4" aria-hidden="true" />
-                <ST>Reintentar stock</ST>
-              </button>
-            ) : null}
-          </div>
-          {!selectedIsActive ? (
-            <div className="px-5 py-10 text-center">
-              <p className="text-sm text-slate-500"><ST>No se opera inventario en puntos inactivos.</ST></p>
-            </div>
-          ) : catalogState.error ? (
-            <div className="px-5 py-8 text-center">
-              <p className="text-sm font-semibold text-red-600"><ST>{catalogState.error.message}</ST></p>
-              <button type="button" onClick={catalogState.retry} className="mt-3 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"><ST>Reintentar catálogo</ST></button>
-            </div>
-          ) : stockState.error ? (
-            <div className="px-5 py-8 text-center">
-              <p className="text-sm font-semibold text-red-600"><ST>{stockState.error.message}</ST></p>
-            </div>
-          ) : (
-            <>
-              <AdminListaToolbar
-                busqueda={filters.busqueda}
-                onBusquedaChange={filters.setBusqueda}
-                filtrosContenedorClassName="grid w-full min-w-0 grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:w-auto xl:flex-1"
-                placeholder="Buscar por nombre, descripción, categoría, estado o peso..."
-                total={filters.total}
-                visibles={filters.visibles}
-                hayFiltrosActivos={filters.hayFiltrosActivos}
-                onLimpiar={filters.limpiar}
-                filtros={[
-                  {
-                    id: "categoria",
-                    label: "Categoría",
-                    value: filters.valoresFiltro.categoria || "todos",
-                    onChange: (valor) => filters.setValorFiltro("categoria", valor),
-                    opciones: [{ value: "todos", label: "Todas" }, ...categoriasProducto.map((categoria) => ({ value: categoria, label: categoria }))],
-                  },
-                  {
-                    id: "estado",
-                    label: "Estado",
-                    value: filters.valoresFiltro.estado || "todos",
-                    onChange: (valor) => filters.setValorFiltro("estado", valor),
-                    opciones: [
-                      { value: "todos", label: "Todos" },
-                      { value: "Habilitado", label: "Habilitado" },
-                      { value: "Deshabilitado", label: "Deshabilitado" },
-                    ],
-                  },
-                ]}
-              />
-              {filters.filtrados.length === 0 ? (
-                <AdminListaVacia onLimpiar={filters.limpiar} />
-              ) : (
-                <PointOfSaleStockTable
-                  products={filters.filtrados}
-                  stockByProductId={stockByProductId}
-                  stockLoading={stockState.loading}
-                  canEdit={puedeEditar}
-                  onEdit={setSelectedProduct}
-                />
-              )}
-            </>
-          )}
+        <div
+          id={panelId}
+          role={usesPills ? "tabpanel" : "region"}
+          aria-labelledby={usesPills ? locationTabId(tabsBaseId, effectiveSelectedCode) : undefined}
+          aria-label={usesPills ? undefined : selectedLocation.name}
+          className="min-w-0 border-t border-[var(--admin-border)]"
+        >
+          <PointOfSaleLocationHeader
+            location={selectedLocation}
+            productCount={selectedIsActive ? locationTotals.productCount : null}
+            unitCount={selectedIsActive ? locationTotals.unitCount : null}
+            canManage={puedeEditar}
+            onEdit={(location) => {
+              setLocationError("");
+              setLocationEditor(location);
+            }}
+            onToggleActivo={handleToggleActivo}
+            toggling={togglingCode === selectedLocation.code}
+          />
+          <div className="overflow-hidden rounded-b-[calc(1rem-1px)] border-t border-[var(--admin-border)]">{detailBody}</div>
         </div>
       ) : null}
     </section>
@@ -318,18 +356,15 @@ const AdminPuntosVenta = () => {
               <ST>
                 {soloAsignados
                   ? "Consultá el stock y el historial de los puntos de venta que tenés asignados."
-                  : "Administrá ubicaciones y actualizá el stock de cada punto sin mezclarlo con Bodega Central."}
+                  : "Administrá ubicaciones y el stock de cada punto."}
               </ST>
             }
             actions={
-              mostrarAgregar ? (
+              mostrarAgregar && !sinUbicaciones ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    setLocationError("");
-                    setLocationEditor({ mode: "create" });
-                  }}
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 sm:w-auto admin-role-primary"
+                  onClick={openCreate}
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 sm:w-auto sm:shrink-0 admin-role-primary"
                 >
                   <Plus className="size-4" aria-hidden="true" />
                   <ST>Agregar punto de venta</ST>
@@ -346,15 +381,15 @@ const AdminPuntosVenta = () => {
               aria-live="polite"
             >
               <div className="overflow-hidden">
-                <div className="flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                <div className="flex items-start gap-2 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-4 py-3 text-[length:var(--text-body)] font-medium text-[color:var(--admin-text-primary)]">
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[color:var(--admin-status-success-text)]" aria-hidden="true" />
                   <ST>{successMessage}</ST>
                 </div>
               </div>
             </div>
           ) : null}
           {locationError && !locationEditor ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700" role="alert">
+            <div className="rounded-2xl border border-[var(--admin-status-danger-text)] bg-[var(--admin-surface)] px-4 py-3 text-[length:var(--text-body)] font-medium text-[color:var(--admin-status-danger-text)]" role="alert">
               <ST>{locationError}</ST>
             </div>
           ) : null}

@@ -285,6 +285,15 @@ body.admin-route-active .admin-status-neutral {
   color: var(--admin-text-muted);
 }
 
+/* Segmented pills that scroll horizontally on narrow screens: keep the scroll, hide the bar. */
+body.admin-route-active .pv-pills {
+  scrollbar-width: none;
+}
+
+body.admin-route-active .pv-pills::-webkit-scrollbar {
+  display: none;
+}
+
 /* Scoped Admin Typography Scale (Executive Dashboard Density) */
 body.admin-route-active h1:not(.admin-cms-preview h1) {
   font-size: 1.25rem;
