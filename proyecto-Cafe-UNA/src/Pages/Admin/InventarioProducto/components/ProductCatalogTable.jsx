@@ -56,7 +56,7 @@ export function ProductCatalogTable({
   };
 
   return (
-    <div className="admin-table-shell admin-table-shell--productos hidden min-w-0 md:block">
+    <div className="admin-table-shell admin-table-shell--aligned admin-table-shell--productos hidden min-w-0 md:block">
       <table className="w-full text-[length:var(--text-body)]">
         <colgroup>
           <col style={{ width: "4.5rem" }} />
@@ -70,7 +70,7 @@ export function ProductCatalogTable({
         </colgroup>
         <thead>
           <tr>
-            <th scope="col"><ST>Img</ST></th>
+            <th scope="col" className="text-center"><ST>Img</ST></th>
             <th scope="col">
               <SortHeader
                 label="Nombre"
@@ -87,7 +87,7 @@ export function ProductCatalogTable({
                 onClick={() => toggleSort("categoria")}
               />
             </th>
-            <th scope="col">
+            <th scope="col" className="text-right">
               <SortHeader
                 label="Precio"
                 active={sort.key === "precio"}
@@ -95,7 +95,7 @@ export function ProductCatalogTable({
                 onClick={() => toggleSort("precio")}
               />
             </th>
-            <th scope="col">
+            <th scope="col" className="text-right">
               <SortHeader
                 label="Stock"
                 active={sort.key === "stock"}
@@ -103,9 +103,9 @@ export function ProductCatalogTable({
                 onClick={() => toggleSort("stock")}
               />
             </th>
-            <th scope="col"><ST>Estado</ST></th>
-            <th scope="col"><ST>Destacado</ST></th>
-            <th scope="col"><ST>Acciones</ST></th>
+            <th scope="col" className="text-center"><ST>Estado</ST></th>
+            <th scope="col" className="text-center"><ST>Destacado</ST></th>
+            <th scope="col" className="text-center"><ST>Acciones</ST></th>
           </tr>
         </thead>
         <tbody>

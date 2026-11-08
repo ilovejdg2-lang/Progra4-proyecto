@@ -12,6 +12,7 @@ import {
 } from "../../../services/productosService";
 import { obtenerMotivosSalida, registrarSalidaInventario } from "../../../services/inventarioSalidasService";
 import { getActiveSessionUser } from "../../../services/sessionService";
+import { AdminPageHeader } from "../../../Components/Admin/ui/AdminPageHeader";
 import { SalidaInventarioForm } from "./SalidaInventarioForm";
 import { SolicitudesSalidaInventarioPanel } from "./SolicitudesSalidaInventarioPanel";
 
@@ -120,14 +121,11 @@ export default function AdminSalidasInventario() {
       allowed={puedeVerSolicitudes}
     >
       <AdminLayout>
-        <main className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-          <header className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Manejo de inventario</p>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">Registrar salida de bodega</h1>
-            <p className="max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-              Registrá salidas operativas y gestioná solicitudes de donación o regalía con trazabilidad y revisión de SuperAdmin.
-            </p>
-          </header>
+        <div className="min-w-0 space-y-6">
+          <AdminPageHeader
+            title="Registrar salida de bodega"
+            description="Registrá salidas operativas y gestioná solicitudes de donación o regalía con trazabilidad y revisión de SuperAdmin."
+          />
 
           {puedeRegistrarSalida ? <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950">
             <div className="mb-5 border-b border-slate-100 pb-4 dark:border-slate-800">
@@ -175,7 +173,7 @@ export default function AdminSalidasInventario() {
             esSuperAdmin={esSuperAdmin}
             onInventoryChanged={refrescarInventario}
           />
-        </main>
+        </div>
       </AdminLayout>
     </AdminPageGate>
   );

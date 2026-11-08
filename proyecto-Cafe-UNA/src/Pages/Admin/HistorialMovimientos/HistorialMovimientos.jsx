@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, FileSpreadsheet, History } from "lucide-react";
+import { Download, FileSpreadsheet } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
@@ -18,6 +18,7 @@ import {
 } from "../../../lib/exportarHistorialMovimientos";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { ST } from "../../../Components/T/ST";
+import { AdminPageHeader } from "../../../Components/Admin/ui/AdminPageHeader";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
 
@@ -249,16 +250,11 @@ export default function AdminHistorialMovimientos() {
 
   return (
     <AdminLayout>
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-6">
-          <h1 className="inline-flex items-center gap-2 text-[length:var(--text-title)] font-semibold text-slate-900">
-            <History className="size-5" aria-hidden="true" />
-            <ST>Historial de movimientos</ST>
-          </h1>
-          <p className="mt-1 text-[length:var(--text-body)] text-slate-500">
-            <ST>Consulta de entradas, transferencias y ventas. Solo lectura.</ST>
-          </p>
-        </header>
+      <div className="min-w-0 space-y-6">
+        <AdminPageHeader
+          title={<ST>Historial de movimientos</ST>}
+          description={<ST>Consulta de entradas, transferencias y ventas. Solo lectura.</ST>}
+        />
 
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
           <AdminListaToolbar
@@ -354,7 +350,7 @@ export default function AdminHistorialMovimientos() {
           ) : items.length === 0 ? (
             <AdminListaVacia onLimpiar={limpiarFiltros} />
           ) : (
-            <div className="admin-table-shell">
+            <div className="admin-table-shell admin-table-shell--aligned">
               <table className="w-full text-left text-[length:var(--text-body)]">
                 <thead>
                   <tr>

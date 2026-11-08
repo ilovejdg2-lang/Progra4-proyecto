@@ -846,6 +846,8 @@ const DICCIONARIO = {
   "Enviado": "Shipped",
   "Entregado": "Delivered",
   "Pedidos": "Orders",
+  "Transferencias": "Transfers",
+  "Unidades distribuidas": "Units distributed",
   "Ganado (enviados en esta página)": "Earned (shipped on this page)",
   "Ganado": "Earned",
   "Recibo": "Receipt",

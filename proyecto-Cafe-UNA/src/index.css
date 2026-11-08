@@ -220,6 +220,31 @@ body.admin-route-active .admin-table-shell--usuarios tbody td:last-child {
   padding-right: 1.5rem !important;
 }
 
+/* Aligned layout (inventory tables): header text follows the column cells. Left by default; add text-center / text-right on the th to match numeric or centered columns. */
+/* Unlayered rules beat Tailwind's layered utilities, so set the alignment here instead of relying on text-right/text-center winning. */
+body.admin-route-active .admin-table-shell--aligned thead th {
+  text-align: left;
+}
+
+body.admin-route-active .admin-table-shell--aligned thead th.text-right {
+  text-align: right;
+}
+
+body.admin-route-active .admin-table-shell--aligned thead th.text-center {
+  text-align: center;
+}
+
+body.admin-route-active .admin-table-shell--aligned thead th .admin-th-sort,
+body.admin-route-active .admin-table-shell--aligned thead th button {
+  justify-content: flex-start;
+  width: auto;
+}
+
+body.admin-route-active .admin-table-shell--aligned thead th.text-right .admin-th-sort,
+body.admin-route-active .admin-table-shell--aligned thead th.text-right button {
+  justify-content: flex-end;
+}
+
 body.admin-route-active .admin-table-shell thead th .admin-th-sort,
 body.admin-route-active .admin-table-shell thead th button {
   font-size: 13px !important;
@@ -572,6 +597,12 @@ body.admin-route-active #root {
 .admin-table-shell--productos tbody td:nth-child(2),
 .admin-table-shell--productos tbody td:nth-child(3) {
   text-align: left;
+}
+
+/* Precio y Stock: numéricos, alineados a la derecha como su encabezado */
+.admin-table-shell--productos tbody td:nth-child(4),
+.admin-table-shell--productos tbody td:nth-child(5) {
+  text-align: right;
 }
 
 .admin-table-shell--productos .ui-switch {

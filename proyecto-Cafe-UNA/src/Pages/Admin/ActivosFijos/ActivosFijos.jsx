@@ -35,6 +35,8 @@ import {
 } from "../../../lib/formLimits";
 
 import { ST } from "../../../Components/T/ST";
+import { AdminPageHeader } from "../../../Components/Admin/ui/AdminPageHeader";
+import { AdminStatLine } from "../../../Components/Admin/ui/AdminStatLine";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
@@ -436,31 +438,36 @@ export default function AdminActivosFijos() {
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage} allowed={puedeVer}>
       <AdminLayout>
-        <div className="mx-auto max-w-7xl space-y-6">
-          <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-[0.16em] text-amber-800">
-                <ST>Inventario</ST>
-              </p>
-              <h1 className="mt-1 text-[length:var(--text-title)] font-semibold text-slate-950"><ST>Activos fijos</ST></h1>
-              <p className="mt-2 max-w-2xl text-[length:var(--text-body)] text-slate-500">
-                <ST>Equipo y mobiliario en un solo inventario, sin ubicaciones de punto de venta.</ST>
-              </p>
-            </div>
-            {puedeCrear ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setFormError("");
-                  setEditor({ mode: "create" });
-                }}
-                className="inline-flex min-h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 text-[length:var(--text-body)] font-semibold text-white hover:bg-neutral-800"
-              >
-                <Plus className="size-4" aria-hidden="true" />
-                <ST>Agregar activo</ST>
-              </button>
-            ) : null}
-          </header>
+        <div className="min-w-0 space-y-6">
+          <AdminPageHeader
+            title={<ST>Activos fijos</ST>}
+            description={<ST>Equipo y mobiliario en un solo inventario, sin ubicaciones de punto de venta.</ST>}
+            meta={
+              puedeVer && status !== "loading" && status !== "error" ? (
+                <AdminStatLine
+                  items={[
+                    { label: <ST>Total en libro (filtro actual)</ST>, value: formatCRC(totalValor) },
+                    { label: <ST>Activos visibles</ST>, value: filters.visibles },
+                  ]}
+                />
+              ) : null
+            }
+            actions={
+              puedeCrear ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormError("");
+                    setEditor({ mode: "create" });
+                  }}
+                  className="inline-flex min-h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 text-[length:var(--text-body)] font-semibold text-white hover:bg-neutral-800 sm:w-auto"
+                >
+                  <Plus className="size-4" aria-hidden="true" />
+                  <ST>Agregar activo</ST>
+                </button>
+              ) : null
+            }
+          />
 
           {successMessage ? (
             <div
@@ -498,18 +505,6 @@ export default function AdminActivosFijos() {
             </section>
           ) : (
             <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <div>
-                  <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">
-                    <ST>Total en libro (filtro actual)</ST>
-                  </p>
-                  <p className="mt-1 text-[length:var(--text-subtitle)] font-semibold text-slate-950">
-                    {formatCRC(totalValor)}
-                  </p>
-                </div>
-                <p className="text-[length:var(--text-body)] text-slate-500">{filters.visibles} <ST>activos visibles</ST></p>
-              </div>
-
               <AdminListaToolbar
                 busqueda={filters.busqueda}
                 onBusquedaChange={filters.setBusqueda}
@@ -548,7 +543,7 @@ export default function AdminActivosFijos() {
                 <AdminListaVacia onLimpiar={filters.limpiar} />
               ) : (
                 <>
-                <div className="admin-table-shell">
+                <div className="admin-table-shell admin-table-shell--aligned">
                   <table className="min-w-full text-left text-[length:var(--text-body)]">
                     <thead>
                       <tr>
@@ -556,7 +551,7 @@ export default function AdminActivosFijos() {
                         <th><ST>Nombre</ST></th>
                         <th className="hidden md:table-cell"><ST>Origen</ST></th>
                         <th className="hidden md:table-cell"><ST>Compra</ST></th>
-                        <th><ST>Valor</ST></th>
+                        <th className="text-right"><ST>Valor</ST></th>
                         <th><ST>Estado</ST></th>
                         <th><ST>Acciones</ST></th>
                       </tr>
@@ -578,7 +573,7 @@ export default function AdminActivosFijos() {
                             {activo.origenFondo ? <ST>{activo.origenFondo}</ST> : <span className="text-slate-400">—</span>}
                           </td>
                           <td className="hidden px-4 py-3 text-slate-600 md:table-cell">{formatFecha(activo.fechaCompra)}</td>
-                          <td className="px-4 py-3 font-medium text-slate-900">{formatCRC(activo.valorEnLibro)}</td>
+                          <td className="px-4 py-3 text-right font-medium tabular-nums text-slate-900">{formatCRC(activo.valorEnLibro)}</td>
                           <td className="px-4 py-3">
                             <span
                               className={`admin-chip-estado inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
