@@ -387,7 +387,7 @@ function SegmentoSeccion({ grupo, corto, activa, onSeleccionar, onTecla, registr
       onKeyDown={onTecla}
       className={`inline-flex min-h-[var(--control-height)] min-w-0 items-center justify-center gap-2 rounded-full! border px-2 text-[length:var(--text-body)] transition-colors sm:px-4 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)] ${
         activa
-          ? "border-[var(--admin-border)] bg-[var(--admin-surface)] font-semibold text-[var(--admin-text-primary)] shadow-sm"
+          ? "border-[var(--admin-border)] bg-[var(--admin-segment-active)] font-semibold text-[var(--admin-text-primary)] shadow-sm"
           : "border-transparent font-medium text-[var(--admin-text-muted)] hover:text-[var(--admin-text-primary)]"
       }`}
     >
@@ -2149,7 +2149,7 @@ const AdminInformacionPaginaPrincipal = () => {
     setBusqueda,
     filtrados: seccionesFiltradas,
     limpiar: limpiarFiltros,
-    hayFiltrosActivos,
+    hayFiltrosActivos,
   } = useAdminListaFiltros(seccionesPaginaPrincipal, {
     buscarEn: (seccion) => seccion.busqueda,
   });

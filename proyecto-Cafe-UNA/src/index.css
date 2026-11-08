@@ -107,6 +107,8 @@ body.admin-route-active {
   --admin-surface: #ffffff;
   --admin-surface-subtle: #f8fafc;
   --admin-surface-hover: #f1f5f9;
+  /* Active segment of a segmented control: must read raised above the --admin-surface-hover track */
+  --admin-segment-active: #ffffff;
 
   /* Typography / Text colors */
   --admin-text-primary: #0f172a;
@@ -150,6 +152,7 @@ html.admin-theme-dark body.admin-route-active {
   --admin-surface: #161b22;
   --admin-surface-subtle: #12161c;
   --admin-surface-hover: #21262d;
+  --admin-segment-active: #343b45;
 
   /* Typography / Text colors */
   --admin-text-primary: #e2e8f0;
