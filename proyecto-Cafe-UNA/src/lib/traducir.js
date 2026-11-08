@@ -1099,6 +1099,7 @@ const DICCIONARIO = {
   "Buscar secciones por nombre o contenido...": "Search sections by name or content...",
   "Sección": "Section",
   "Enlaces actuales": "Current links",
+  "Secciones de la página principal": "Home page sections",
   "Se guarda en español; la vista pública traduce automático.":
     "Saved in Spanish; the public site translates automatically.",
   "Etiqueta": "Label",

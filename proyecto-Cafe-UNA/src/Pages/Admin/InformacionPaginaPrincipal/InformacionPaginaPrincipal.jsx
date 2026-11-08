@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { CircleHelp, Coffee, ClipboardList, FileText, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Search, Send, Sparkles, Sprout, Trash2, Users, X } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -2117,8 +2117,6 @@ const AdminInformacionPaginaPrincipal = () => {
   const {
     busqueda,
     setBusqueda,
-    valoresFiltro,
-    setValorFiltro,
     filtrados: seccionesFiltradas,
     limpiar: limpiarFiltros,
     hayFiltrosActivos,
@@ -2126,8 +2124,12 @@ const AdminInformacionPaginaPrincipal = () => {
     visibles: seccionesVisibles,
   } = useAdminListaFiltros(seccionesPaginaPrincipal, {
     buscarEn: (seccion) => seccion.busqueda,
-    filtrosConfig: [{ id: "grupo", obtenerValor: (seccion) => seccion.grupo }],
   });
+
+  const tTabsEtiqueta = useTraducir("Secciones de la página principal");
+  const [tabActiva, setTabActiva] = useState("inicio");
+  const tabRefs = useRef({});
+  const tabsBaseId = useId();
 
   const idsVisibles = useMemo(
     () => new Set(seccionesFiltradas.map((seccion) => seccion.id)),
@@ -2216,9 +2218,32 @@ const AdminInformacionPaginaPrincipal = () => {
         },
       ],
     },
-  ]
-    .map((grupo) => ({ ...grupo, filas: grupo.filas.filter((fila) => idsVisibles.has(fila.id)) }))
-    .filter((grupo) => grupo.filas.length > 0);
+  ].map((grupo) => ({ ...grupo, filas: grupo.filas.filter((fila) => idsVisibles.has(fila.id)) }));
+
+  // While searching, jump to the first tab with matches if the chosen one has none.
+  const grupoActivo = (() => {
+    const elegido = gruposFilas.find((grupo) => grupo.id === tabActiva) || gruposFilas[0];
+    if (!busqueda.trim() || elegido.filas.length > 0) return elegido;
+    return gruposFilas.find((grupo) => grupo.filas.length > 0) || elegido;
+  })();
+
+  const seleccionarTab = (id, enfocar = false) => {
+    setTabActiva(id);
+    if (enfocar) tabRefs.current[id]?.focus();
+  };
+
+  const teclaTab = (event, indice) => {
+    const ultimo = gruposFilas.length - 1;
+    const destinos = {
+      ArrowRight: indice === ultimo ? 0 : indice + 1,
+      ArrowLeft: indice === 0 ? ultimo : indice - 1,
+      Home: 0,
+      End: ultimo,
+    };
+    if (!(event.key in destinos)) return;
+    event.preventDefault();
+    seleccionarTab(gruposFilas[destinos[event.key]].id, true);
+  };
 
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
@@ -2253,52 +2278,67 @@ const AdminInformacionPaginaPrincipal = () => {
               visibles={seccionesVisibles}
               hayFiltrosActivos={hayFiltrosActivos}
               onLimpiar={limpiarFiltros}
-              filtros={[
-                {
-                  id: "grupo",
-                  label: "Sección",
-                  value: valoresFiltro.grupo || "todos",
-                  onChange: (valor) => setValorFiltro("grupo", valor),
-                  opciones: [
-                    { value: "todos", label: "Todas" },
-                    { value: "inicio", label: "Inicio" },
-                    { value: "navbar", label: "Navbar" },
-                    { value: "footer", label: "Footer" },
-                  ],
-                },
-              ]}
             />
 
-            {seccionesFiltradas.length === 0 ? (
-              <AdminListaVacia onLimpiar={limpiarFiltros} />
-            ) : (
-              <div className="min-w-0 pb-4">
-                {gruposFilas.map((grupo) => (
-                  <section key={grupo.id} aria-labelledby={`grupo-${grupo.id}`} className="min-w-0">
-                    <h2
-                      id={`grupo-${grupo.id}`}
-                      className="px-4 pb-2 pt-5 text-[length:var(--text-body)] font-semibold text-[var(--admin-text-muted)] sm:px-6"
-                    >
-                      <ST>{grupo.titulo}</ST>
-                    </h2>
-                    <ul className="divide-y divide-[var(--admin-border)] border-y border-[var(--admin-border)]">
-                      {grupo.filas.map((fila) => (
-                        <li key={fila.id}>
-                          <AdminSeccionFila
-                            numero={fila.numero}
-                            nombre={fila.nombre}
-                            resumen={fila.resumen}
-                            icono={fila.icono}
-                            imagen={fila.imagen}
-                            onEditar={() => setEditando(fila.id)}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                ))}
-              </div>
-            )}
+            <div
+              role="tablist"
+              aria-label={tTabsEtiqueta}
+              className="flex min-w-0 gap-6 overflow-x-auto border-b border-[var(--admin-border)] px-4 sm:px-6"
+            >
+              {gruposFilas.map((grupo, indice) => {
+                const activa = grupo.id === grupoActivo.id;
+                return (
+                  <button
+                    key={grupo.id}
+                    ref={(nodo) => {
+                      tabRefs.current[grupo.id] = nodo;
+                    }}
+                    type="button"
+                    role="tab"
+                    id={`${tabsBaseId}-tab-${grupo.id}`}
+                    aria-selected={activa}
+                    aria-controls={`${tabsBaseId}-panel`}
+                    tabIndex={activa ? 0 : -1}
+                    onClick={() => seleccionarTab(grupo.id)}
+                    onKeyDown={(event) => teclaTab(event, indice)}
+                    className={`-mb-px inline-flex min-h-[var(--control-height)] shrink-0 items-center gap-2 whitespace-nowrap border-b-2 text-[length:var(--text-body)] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[color:var(--admin-focus-ring)] ${
+                      activa
+                        ? "border-[var(--admin-accent-coffee)] text-[var(--admin-text-primary)]"
+                        : "border-transparent text-[var(--admin-text-muted)] hover:text-[var(--admin-text-primary)]"
+                    }`}
+                  >
+                    <ST>{grupo.titulo}</ST>
+                    <span className="text-xs font-medium tabular-nums text-[var(--admin-text-muted)]">{grupo.filas.length}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div
+              role="tabpanel"
+              id={`${tabsBaseId}-panel`}
+              aria-labelledby={`${tabsBaseId}-tab-${grupoActivo.id}`}
+              className="min-w-0 pb-4"
+            >
+              {grupoActivo.filas.length === 0 ? (
+                <AdminListaVacia onLimpiar={limpiarFiltros} />
+              ) : (
+                <ul className="divide-y divide-[var(--admin-border)] border-b border-[var(--admin-border)]">
+                  {grupoActivo.filas.map((fila) => (
+                    <li key={fila.id}>
+                      <AdminSeccionFila
+                        numero={fila.numero}
+                        nombre={fila.nombre}
+                        resumen={fila.resumen}
+                        icono={fila.icono}
+                        imagen={fila.imagen}
+                        onEditar={() => setEditando(fila.id)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </>
         )}
       </section>

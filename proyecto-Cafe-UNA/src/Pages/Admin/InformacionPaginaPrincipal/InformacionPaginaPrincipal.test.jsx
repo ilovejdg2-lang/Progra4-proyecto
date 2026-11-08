@@ -89,21 +89,28 @@ describe("CMS home image integration", () => {
   });
 });
 
+
 describe("Homepage info sections list", () => {
   beforeEach(() => {
     localStorage.setItem("cafe-una-idioma", "es");
     obtenerProductoresHero.mockResolvedValue(null);
   });
 
-  it("groups rows under headings and numbers homepage rows in public render order", () => {
+  const nombresFilas = (panel) => within(panel).getAllByRole("button").map((b) => b.getAttribute("aria-label"));
+
+  it("shows tabs with counts and numbers homepage rows in public render order", () => {
     render(<AdminInformacionPaginaPrincipal />);
 
-    const titulos = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
-    expect(titulos).toEqual(["Página de inicio", "Barra de navegación", "Pie de página"]);
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["Página de inicio10", "Barra de navegación2", "Pie de página2"]);
+    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+    expect(tabs[1]).toHaveAttribute("aria-selected", "false");
+    expect(tabs.map((tab) => tab.tabIndex)).toEqual([0, -1, -1]);
 
-    const inicio = screen.getByRole("heading", { name: "Página de inicio" }).closest("section");
-    const nombres = within(inicio).getAllByRole("button").map((b) => b.getAttribute("aria-label"));
-    expect(nombres).toEqual([
+    const panel = screen.getByRole("tabpanel");
+    expect(panel).toHaveAttribute("aria-labelledby", tabs[0].id);
+    expect(tabs[0]).toHaveAttribute("aria-controls", panel.id);
+    expect(nombresFilas(panel)).toEqual([
       "Editar Portada principal",
       "Editar Sobre nosotros (inicio)",
       "Editar Productos destacados",
@@ -117,14 +124,42 @@ describe("Homepage info sections list", () => {
     ]);
   });
 
+  it("switches the visible rows when another tab is selected", async () => {
+    const user = userEvent.setup();
+    render(<AdminInformacionPaginaPrincipal />);
+
+    await user.click(screen.getByRole("tab", { name: /Barra de navegación/ }));
+
+    expect(screen.getByRole("tab", { name: /Barra de navegación/ })).toHaveAttribute("aria-selected", "true");
+    expect(nombresFilas(screen.getByRole("tabpanel"))).toEqual(["Editar Barra de navegación", "Editar Menú de navegación"]);
+    expect(screen.queryByRole("button", { name: "Editar Portada principal" })).not.toBeInTheDocument();
+  });
+
+  it("moves between tabs with the arrow, Home and End keys", async () => {
+    const user = userEvent.setup();
+    render(<AdminInformacionPaginaPrincipal />);
+
+    screen.getAllByRole("tab")[0].focus();
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getAllByRole("tab")[1]).toHaveFocus();
+    expect(screen.getAllByRole("tab")[1]).toHaveAttribute("aria-selected", "true");
+    await user.keyboard("{End}");
+    expect(screen.getAllByRole("tab")[2]).toHaveFocus();
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getAllByRole("tab")[0]).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(screen.getAllByRole("tab")[2]).toHaveFocus();
+    await user.keyboard("{Home}");
+    expect(screen.getAllByRole("tab")[0]).toHaveFocus();
+    expect(screen.getAllByRole("tab")[0]).toHaveAttribute("aria-selected", "true");
+  });
+
   it("shows saved content previews and the empty hint", () => {
     render(<AdminInformacionPaginaPrincipal />);
 
     expect(screen.getByText("Cafe UNA")).toBeInTheDocument();
     expect(screen.getByText("Conozca nuestra historia")).toBeInTheDocument();
     expect(screen.getByText("2 preguntas")).toBeInTheDocument();
-    expect(screen.getByText("3 enlaces")).toBeInTheDocument();
-    expect(screen.getByText("Cafe con proposito")).toBeInTheDocument();
     expect(screen.getAllByText("Sin contenido").length).toBeGreaterThan(0);
   });
 
@@ -136,15 +171,26 @@ describe("Homepage info sections list", () => {
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 
-  it("filters rows with the search box and hides empty groups", async () => {
+  it("filters rows with the search box, updates tab counts and jumps to the first tab with matches", async () => {
     const user = userEvent.setup();
     render(<AdminInformacionPaginaPrincipal />);
 
     await user.type(screen.getByRole("searchbox"), "Menú de navegación");
 
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["Página de inicio0", "Barra de navegación1", "Pie de página0"]);
+    expect(tabs[1]).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("button", { name: "Editar Menú de navegación" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Editar Portada principal" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Página de inicio" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Pie de página" })).not.toBeInTheDocument();
+  });
+
+  it("restores the full counts when the search is cleared", async () => {
+    const user = userEvent.setup();
+    render(<AdminInformacionPaginaPrincipal />);
+
+    await user.type(screen.getByRole("searchbox"), "Menú de navegación");
+    await user.click(screen.getByRole("button", { name: "Limpiar filtros" }));
+
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Página de inicio10", "Barra de navegación2", "Pie de página2"]);
   });
 });
