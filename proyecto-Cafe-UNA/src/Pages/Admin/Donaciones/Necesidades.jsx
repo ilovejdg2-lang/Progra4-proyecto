@@ -265,7 +265,7 @@ export default function AdminNecesidadesDonacion() {
             <button
               type="button"
               onClick={abrirNueva}
-              className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full bg-slate-900 px-4 text-[length:var(--text-body)] font-semibold text-white"
+              className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full px-4 text-[length:var(--text-body)] font-semibold admin-role-primary"
             >
               <Plus className="size-4" />
               <ST>Nueva necesidad</ST>
@@ -356,7 +356,7 @@ export default function AdminNecesidadesDonacion() {
                                 <button
                                   type="button"
                                   onClick={() => abrirEditar(row)}
-                                  className="inline-flex h-8 min-w-0 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border border-slate-950 bg-slate-950 px-3 text-[length:var(--text-body)] font-semibold leading-none text-white transition hover:border-neutral-700 hover:bg-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1"
+                                  className="inline-flex h-8 min-w-0 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border px-3 text-[length:var(--text-body)] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 admin-role-quiet"
                                 >
                                   <Pencil className="size-3 shrink-0" aria-hidden="true" />
                                   <span><ST>Editar</ST></span>
@@ -366,8 +366,8 @@ export default function AdminNecesidadesDonacion() {
                                   onClick={() => toggleEstado(row)}
                                   className={`inline-flex h-8 min-w-0 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border px-3 text-[length:var(--text-body)] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
                                     row.estado === "ACTIVA"
-                                      ? "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300"
-                                      : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300"
+                                      ? "admin-role-danger"
+                                      : "admin-role-positive"
                                   }`}
                                 >
                                   <Power className="size-3 shrink-0" aria-hidden="true" />
@@ -496,7 +496,7 @@ export default function AdminNecesidadesDonacion() {
                       type="button"
                       onClick={guardarMaterial}
                       disabled={savingMaterial}
-                      className="inline-flex h-9 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white"
+                      className="border inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-semibold admin-role-quiet"
                     >
                       <ST>{savingMaterial ? "Guardando..." : editMaterialId ? "Actualizar material" : "Agregar material"}</ST>
                     </button>

@@ -59,7 +59,7 @@ export function AdminListaToolbar({
         compacto ? "px-4 py-5 sm:px-6" : "px-4 py-5 sm:px-6"
       }`}
     >
-      <div className={filaClassName || "mx-auto flex w-full max-w-6xl min-w-0 flex-col items-stretch gap-4 xl:flex-row xl:flex-wrap xl:items-end"}>
+      <div className={filaClassName || "flex w-full max-w-6xl min-w-0 flex-col items-stretch gap-4 xl:flex-row xl:flex-wrap xl:items-end"}>
         {ocultarBusqueda && filtros.length === 0 ? null : (
         <div className="flex w-full min-w-0 items-center gap-2 xl:w-auto xl:min-w-[16rem] xl:max-w-md xl:flex-1">
           {ocultarBusqueda ? null : (

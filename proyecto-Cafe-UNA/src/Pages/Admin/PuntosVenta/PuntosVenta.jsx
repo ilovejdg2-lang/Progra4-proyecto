@@ -329,7 +329,7 @@ const AdminPuntosVenta = () => {
                     setLocationError("");
                     setLocationEditor({ mode: "create" });
                   }}
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 sm:w-auto"
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 sm:w-auto admin-role-primary"
                 >
                   <Plus className="size-4" aria-hidden="true" />
                   <ST>Agregar punto de venta</ST>

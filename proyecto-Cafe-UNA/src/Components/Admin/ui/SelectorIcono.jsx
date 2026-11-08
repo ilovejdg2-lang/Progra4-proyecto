@@ -65,7 +65,7 @@ export function SelectorIcono({ valor, IconoActual, onElegir, disabled, etiqueta
                 title={t(etiqueta)}
                 aria-label={t(etiqueta)}
                 className={`inline-flex aspect-square items-center justify-center rounded-xl border ${
-                  valor === clave ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                  valor === clave ? "admin-role-selected" : "border-slate-200 text-slate-700 hover:bg-slate-50"
                 }`}
                 onMouseEnter={() => setResaltado(clave)}
                 onFocus={() => setResaltado(clave)}

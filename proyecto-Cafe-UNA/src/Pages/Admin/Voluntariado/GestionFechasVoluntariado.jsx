@@ -708,7 +708,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                   onClick={() => handleCambiarTipo(tipo)}
                   className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition border ${
                     esActivo
-                      ? "border-slate-950 bg-slate-950 text-white shadow-sm"
+                      ? "admin-role-selected"
                       : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                   }`}
                 >
@@ -859,7 +859,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
               <div
                 className={`rounded-xl border p-4 flex items-center justify-between ${
                   estaHabilitadaSeleccionada
-                    ? "border-slate-950 bg-slate-950 text-white"
+                    ? "admin-role-selected"
                     : "border-slate-200 bg-slate-50 text-slate-700"
                 }`}
               >
@@ -894,7 +894,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                   className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition ${
                     estaHabilitadaSeleccionada
                       ? "bg-white text-slate-950 hover:bg-slate-100"
-                      : "bg-slate-950 text-white hover:bg-slate-800"
+                      : "admin-role-primary"
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {guardando
@@ -999,7 +999,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                     <button
                       type="submit"
                       disabled={!nuevoHorarioPersonalizado.trim() || guardando}
-                      className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition"
+                      className="border inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold disabled:opacity-50 transition admin-role-quiet"
                     >
                       <Plus className="size-3.5" />
                       <span><ST>Agregar</ST></span>
@@ -1050,7 +1050,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                   type="button"
                   onClick={handleGuardarCambios}
                   disabled={guardando || esFechaPasada}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm font-bold transition disabled:opacity-50 disabled:cursor-not-allowed admin-role-primary"
                 >
                   <Save className="size-4" />
                   <span>
@@ -1063,7 +1063,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                     type="button"
                     onClick={() => handleEliminarFecha(isoSeleccionada)}
                     disabled={guardando}
-                    className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition disabled:opacity-50"
+                    className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border px-3 py-2 text-xs font-semibold transition disabled:opacity-50 admin-role-danger"
                   >
                     <Trash2 className="size-3.5" />
                     <span><ST>Eliminar configuración de esta fecha</ST></span>

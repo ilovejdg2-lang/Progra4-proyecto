@@ -205,8 +205,8 @@ function ModalDetalle({ solicitud, puedeResolver, onResolver, onDescargarFicha, 
     .filter(Boolean);
 
   const btnEstadoBase = `${accionBtnBase} px-3 py-2 disabled:cursor-not-allowed disabled:opacity-50`;
-  const btnAprobar = `${btnEstadoBase} border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300`;
-  const btnRechazar = `${btnEstadoBase} border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300`;
+  const btnAprobar = `${btnEstadoBase} admin-role-positive`;
+  const btnRechazar = `${btnEstadoBase} admin-role-danger`;
 
   async function cambiarEstado(estado) {
     setGuardando(true);
@@ -917,7 +917,7 @@ export default function AdminSolicitudesDonacion() {
             <button
               type="button"
               onClick={recargar}
-              className={`${accionBtnBase} mt-4 border-rose-200 bg-rose-50 px-4 py-2 text-rose-700 hover:bg-rose-100`}
+              className={`border ${accionBtnBase} mt-4 px-4 py-2 admin-role-danger`}
             >
               <ST>Reintentar</ST>
             </button>

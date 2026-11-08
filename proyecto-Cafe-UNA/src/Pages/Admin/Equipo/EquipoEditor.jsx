@@ -258,7 +258,7 @@ function Acciones({ indice, total, guardando, puedeEliminar, onMover, onEditar, 
         type="button"
         onClick={onEditar}
         disabled={guardando}
-        className="inline-flex h-8 items-center justify-center gap-1 rounded-full border border-slate-950 bg-slate-950 px-2.5 text-[length:var(--text-body)] font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700 disabled:opacity-60"
+        className="inline-flex h-8 items-center justify-center gap-1 rounded-full border px-2.5 text-[length:var(--text-body)] font-semibold transition disabled:opacity-60 admin-role-quiet"
       >
         <Pencil className="size-3 shrink-0" aria-hidden="true" />
         <span><ST>Editar</ST></span>
@@ -268,7 +268,7 @@ function Acciones({ indice, total, guardando, puedeEliminar, onMover, onEditar, 
           type="button"
           onClick={onEliminar}
           disabled={guardando}
-          className="inline-flex h-8 items-center justify-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2.5 text-[length:var(--text-body)] font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
+          className="inline-flex h-8 items-center justify-center gap-1 rounded-full border px-2.5 text-[length:var(--text-body)] font-semibold transition disabled:opacity-60 admin-role-danger"
         >
           <Trash2 className="size-3 shrink-0" aria-hidden="true" />
           <span><ST>Eliminar</ST></span>
@@ -353,7 +353,7 @@ export function EquipoEditor({ puedeEliminar }) {
           type="button"
           disabled={guardando || estado !== "ready"}
           onClick={() => setModal({ ...MIEMBRO_VACIO })}
-          className="inline-flex h-[var(--control-height)] w-full shrink-0 items-center justify-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 text-[length:var(--text-body)] font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700 disabled:opacity-60 sm:w-auto"
+          className="inline-flex h-[var(--control-height)] w-full shrink-0 items-center justify-center gap-2 rounded-full border px-4 text-[length:var(--text-body)] font-semibold transition disabled:opacity-60 sm:w-auto admin-role-primary"
         >
           <UserPlus className="size-4" aria-hidden="true" />
           <ST>Agregar persona</ST>

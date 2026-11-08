@@ -91,7 +91,7 @@ export function StockAlerts({
                 </div>
                 <Link
                   to="/admin/producto"
-                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full bg-slate-900 px-3 text-xs font-semibold text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900"
+                  className="border inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold admin-role-quiet"
                   onClick={() => requestAdminStockProduct(item.id, { nombre: item.nombre })}
                 >
                   {tReponer}

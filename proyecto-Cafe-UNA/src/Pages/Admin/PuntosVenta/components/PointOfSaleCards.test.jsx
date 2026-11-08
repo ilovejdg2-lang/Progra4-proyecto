@@ -48,3 +48,26 @@ describe("PointOfSaleCards", () => {
     expect(onToggleActivo).toHaveBeenCalledWith(locations[0]);
   });
 });
+
+describe("PointOfSaleCards color roles", () => {
+  it("marks the selected card with coffee soft background and coffee border, not black", () => {
+    const { container } = render(
+      <PointOfSaleCards locations={locations} selectedCode="POS_FUNA_UNA" onSelect={vi.fn()} canManage onEdit={vi.fn()} onToggleActivo={vi.fn()} />,
+    );
+    const [selected, other] = container.querySelectorAll("article");
+    expect(selected.className).toContain("admin-role-selected");
+    expect(selected.className).not.toMatch(/slate-950|text-white/);
+    expect(other.className).toContain("admin-role-surface");
+  });
+
+  it("keeps row actions quiet and the destructive action transparent with danger text", () => {
+    render(<PointOfSaleCards locations={locations} selectedCode="POS_FUNA_UNA" onSelect={vi.fn()} canManage onEdit={vi.fn()} onToggleActivo={vi.fn()} />);
+    const editar = screen.getAllByRole("button", { name: /Editar/i })[0];
+    expect(editar.className).toContain("admin-role-quiet");
+    expect(editar.className).not.toMatch(/slate-950|bg-white |text-white/);
+    const inactivar = screen.getByRole("button", { name: /Inactivar/i });
+    expect(inactivar.className).toContain("admin-role-danger");
+    const activar = screen.getByRole("button", { name: /^Activar/i });
+    expect(activar.className).toContain("admin-role-positive");
+  });
+});

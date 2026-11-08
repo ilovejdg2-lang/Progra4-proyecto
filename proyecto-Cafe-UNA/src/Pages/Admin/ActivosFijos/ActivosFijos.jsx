@@ -460,7 +460,7 @@ export default function AdminActivosFijos() {
                     setFormError("");
                     setEditor({ mode: "create" });
                   }}
-                  className="inline-flex min-h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 text-[length:var(--text-body)] font-semibold text-white hover:bg-neutral-800 sm:w-auto"
+                  className="inline-flex min-h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full border px-4 text-[length:var(--text-body)] font-semibold sm:w-auto admin-role-primary"
                 >
                   <Plus className="size-4" aria-hidden="true" />
                   <ST>Agregar activo</ST>
@@ -570,14 +570,14 @@ export default function AdminActivosFijos() {
                             ) : null}
                           </td>
                           <td className="hidden px-4 py-3 text-slate-600 md:table-cell">
-                            {activo.origenFondo ? <ST>{activo.origenFondo}</ST> : <span className="text-slate-400">—</span>}
+                            {activo.origenFondo ? <ST>{activo.origenFondo}</ST> : <span className="text-[color:var(--admin-text-muted)]">—</span>}
                           </td>
                           <td className="hidden px-4 py-3 text-slate-600 md:table-cell">{formatFecha(activo.fechaCompra)}</td>
                           <td className="px-4 py-3 text-right font-medium tabular-nums text-slate-900">{formatCRC(activo.valorEnLibro)}</td>
                           <td className="px-4 py-3">
                             <span
                               className={`admin-chip-estado inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                                activo.activo ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"
+                                activo.activo ? "admin-status-success" : "admin-status-neutral"
                               }`}
                               style={{ textDecoration: "none", textDecorationLine: "none" }}
                               spellCheck={false}
@@ -594,7 +594,7 @@ export default function AdminActivosFijos() {
                                     setFormError("");
                                     setEditor(activo);
                                   }}
-                                  className="inline-flex h-7 items-center justify-center gap-1 rounded-full border border-slate-950 bg-slate-950 px-2 text-[11px] font-semibold leading-none text-white transition hover:border-neutral-700 hover:bg-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1"
+                                  className="inline-flex h-7 items-center justify-center gap-1 rounded-full border px-2 text-[11px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 admin-role-quiet"
                                 >
                                   <Pencil className="size-3 shrink-0" aria-hidden="true" />
                                   <span><ST>Editar</ST></span>
@@ -607,8 +607,8 @@ export default function AdminActivosFijos() {
                                   onClick={() => handleToggle(activo)}
                                   className={`inline-flex h-7 items-center justify-center gap-1 rounded-full border px-2 text-[11px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${
                                     activo.activo
-                                      ? "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300"
-                                      : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300"
+                                      ? "admin-role-danger"
+                                      : "admin-role-positive"
                                   }`}
                                 >
                                   <Power className="size-3 shrink-0" aria-hidden="true" />

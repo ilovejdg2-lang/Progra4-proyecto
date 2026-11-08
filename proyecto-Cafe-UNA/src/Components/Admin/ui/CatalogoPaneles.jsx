@@ -26,7 +26,7 @@ import {
 } from "../../../services/catalogosService";
 
 const btnPrimario =
-  "inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full bg-slate-900 px-4 text-[length:var(--text-body)] font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full px-4 text-[length:var(--text-body)] font-semibold disabled:cursor-not-allowed disabled:opacity-50 admin-role-primary";
 
 const btnIcono =
   "inline-flex size-[var(--control-height)] shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40";
@@ -358,7 +358,7 @@ export function PanelCategorias({ onMessage, onError }) {
                 onClick={() => setPadreNueva(raiz.nombre)}
                 className={`min-h-[var(--control-height)] rounded-full border px-4 text-[length:var(--text-body)] ${
                   padreNueva === raiz.nombre
-                    ? "border-slate-900 bg-slate-900 text-white"
+                    ? "admin-role-selected"
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
               >

@@ -91,3 +91,12 @@ describe("AdminListaToolbar", () => {
     expect(onLimpiar).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("AdminListaToolbar alignment", () => {
+  it("keeps the default row left-aligned (no auto margins that center it on wide screens)", () => {
+    const { container } = renderToolbar();
+    const row = container.querySelector("input[type='search']").closest("div.flex.w-full.max-w-6xl");
+    expect(row).not.toBeNull();
+    expect(row.className.split(" ")).not.toContain("mx-auto");
+  });
+});

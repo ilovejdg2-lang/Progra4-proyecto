@@ -183,7 +183,7 @@ export function AsignacionesVendedor({ usuarioId, onChange }) {
           <button
             type="button"
             disabled={ocupado || seleccion.length === 0}
-            className="mt-2 w-full rounded-full bg-slate-950 px-3 py-1.5 text-[11px] font-semibold text-white disabled:opacity-50 sm:w-auto"
+            className="border mt-2 w-full rounded-full px-3 py-1.5 text-[11px] font-semibold disabled:opacity-50 sm:w-auto admin-role-quiet"
             onClick={() =>
               ejecutar(async () => {
                 await asignarPuntosVendedor(usuarioId, seleccion);

@@ -193,7 +193,7 @@ export default function AdminDiasSinRetiro() {
               <button
                 type="submit"
                 disabled={guardando}
-                className="h-11 w-full rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white disabled:opacity-60 lg:w-auto dark:bg-white dark:text-slate-950"
+                className="h-11 w-full rounded-xl px-4 text-sm font-semibold disabled:opacity-60 lg:w-auto admin-role-primary"
               >
                 <ST>Agregar fecha</ST>
               </button>
