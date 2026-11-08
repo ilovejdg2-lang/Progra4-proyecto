@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { CircleHelp, Coffee, ClipboardList, FileText, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Search, Send, Sparkles, Sprout, Trash2, Users } from "lucide-react";
+import { CircleHelp, Coffee, ClipboardList, FileText, Image, LayoutTemplate, Link2, MapPin, PanelBottom, Plus, Search, Send, Sparkles, Sprout, Trash2, Users, X } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
 import { AdminLayout } from "../layouts/AdminLayout";
@@ -75,6 +75,9 @@ import { useIdioma } from "../../../lib/useIdioma";
 import { CmsImageField } from "../../../Components/ui/CmsImageField";
 
 const EMPTY_ARRAY = [];
+
+// Short segment labels for narrow screens; the full title remains the accessible name.
+const TABS_CORTOS = { inicio: "Inicio", navbar: "Navegación", footer: "Pie" };
 
 const HERO_CAMPOS_TEXTO = ["eyebrow", "title", "subtitle", "primaryButtonText", "buttonText"];
 const SECCION_CAMPOS_TEXTO = ["eyebrow", "title", "description", "linkText"];
@@ -360,6 +363,38 @@ function CampoArea({ label, name, value, onChange, rows = 3, required, maxPalabr
         className={adminCampoAreaCls}
       />
     </AdminCampo>
+  );
+}
+
+/**
+ * One segment of the section switcher. `corto` is the label shown below sm; the
+ * full title stays the accessible name on every width. Rounded corners are
+ * forced with `!` because index.css sets `button { border-radius: ... !important }`.
+ */
+function SegmentoSeccion({ grupo, corto, activa, onSeleccionar, onTecla, registrarRef, tabId, panelId }) {
+  const tTitulo = useTraducir(grupo.titulo);
+  return (
+    <button
+      ref={registrarRef}
+      type="button"
+      role="tab"
+      id={tabId}
+      aria-label={`${tTitulo} (${grupo.filas.length})`}
+      aria-selected={activa}
+      aria-controls={panelId}
+      tabIndex={activa ? 0 : -1}
+      onClick={onSeleccionar}
+      onKeyDown={onTecla}
+      className={`inline-flex min-h-[var(--control-height)] min-w-0 items-center justify-center gap-2 rounded-full! border px-2 text-[length:var(--text-body)] transition-colors sm:px-4 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)] ${
+        activa
+          ? "border-[var(--admin-border)] bg-[var(--admin-surface)] font-semibold text-[var(--admin-text-primary)] shadow-sm"
+          : "border-transparent font-medium text-[var(--admin-text-muted)] hover:text-[var(--admin-text-primary)]"
+      }`}
+    >
+      <span className="lg:hidden"><ST>{corto}</ST></span>
+      <span className="hidden lg:inline"><ST>{grupo.titulo}</ST></span>
+      <span aria-hidden="true" className="hidden text-xs font-medium tabular-nums text-[var(--admin-text-muted)] sm:inline">{grupo.filas.length}</span>
+    </button>
   );
 }
 
@@ -2114,14 +2149,15 @@ const AdminInformacionPaginaPrincipal = () => {
     setBusqueda,
     filtrados: seccionesFiltradas,
     limpiar: limpiarFiltros,
-    hayFiltrosActivos,
-    total: totalSecciones,
-    visibles: seccionesVisibles,
+    hayFiltrosActivos,
   } = useAdminListaFiltros(seccionesPaginaPrincipal, {
     buscarEn: (seccion) => seccion.busqueda,
   });
 
   const tTabsEtiqueta = useTraducir("Secciones de la página principal");
+  const tBuscar = useTraducir("Buscar");
+  const tBuscarSecciones = useTraducir("Buscar secciones por nombre o contenido...");
+  const tLimpiarFiltros = useTraducir("Limpiar filtros");
   const [tabActiva, setTabActiva] = useState("inicio");
   const tabRefs = useRef({});
   const tabsBaseId = useId();
@@ -2265,48 +2301,50 @@ const AdminInformacionPaginaPrincipal = () => {
           </div>
         ) : (
           <>
-            <AdminListaToolbar
-              busqueda={busqueda}
-              onBusquedaChange={setBusqueda}
-              placeholder="Buscar secciones por nombre o contenido..."
-              total={totalSecciones}
-              visibles={seccionesVisibles}
-              hayFiltrosActivos={hayFiltrosActivos}
-              onLimpiar={limpiarFiltros}
-            />
-
-            <div
-              role="tablist"
-              aria-label={tTabsEtiqueta}
-              className="flex min-w-0 gap-6 overflow-x-auto border-b border-[var(--admin-border)] px-4 sm:px-6"
-            >
-              {gruposFilas.map((grupo, indice) => {
-                const activa = grupo.id === grupoActivo.id;
-                return (
-                  <button
+            <div className="flex min-w-0 flex-col-reverse gap-3 border-b border-[var(--admin-border)] px-4 py-4 sm:px-6 xl:flex-row xl:items-center xl:justify-between xl:gap-6">
+              <div
+                role="tablist"
+                aria-label={tTabsEtiqueta}
+                className="grid min-w-0 grid-cols-3 gap-1 rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-hover)] p-1 xl:flex xl:w-fit xl:shrink-0"
+              >
+                {gruposFilas.map((grupo, indice) => (
+                  <SegmentoSeccion
                     key={grupo.id}
-                    ref={(nodo) => {
+                    grupo={grupo}
+                    corto={TABS_CORTOS[grupo.id]}
+                    activa={grupo.id === grupoActivo.id}
+                    onSeleccionar={() => seleccionarTab(grupo.id)}
+                    onTecla={(event) => teclaTab(event, indice)}
+                    registrarRef={(nodo) => {
                       tabRefs.current[grupo.id] = nodo;
                     }}
+                    tabId={`${tabsBaseId}-tab-${grupo.id}`}
+                    panelId={`${tabsBaseId}-panel`}
+                  />
+                ))}
+              </div>
+
+              <div className="relative w-full min-w-0 xl:max-w-[22rem]">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--admin-text-muted)]" aria-hidden="true" />
+                <input
+                  type="search"
+                  value={busqueda}
+                  onChange={(event) => setBusqueda(event.target.value)}
+                  placeholder={tBuscarSecciones}
+                  aria-label={tBuscar}
+                  className="h-[var(--control-height)] w-full min-w-0 rounded-[var(--admin-control-radius)] border border-[var(--admin-border-input)] bg-[var(--admin-surface)] py-2 pl-9 pr-11 text-[length:var(--text-body)] text-[var(--admin-text-primary)] outline-none transition-colors placeholder:text-[var(--admin-text-muted)] [&::-webkit-search-cancel-button]:appearance-none"
+                />
+                {hayFiltrosActivos ? (
+                  <button
                     type="button"
-                    role="tab"
-                    id={`${tabsBaseId}-tab-${grupo.id}`}
-                    aria-selected={activa}
-                    aria-controls={`${tabsBaseId}-panel`}
-                    tabIndex={activa ? 0 : -1}
-                    onClick={() => seleccionarTab(grupo.id)}
-                    onKeyDown={(event) => teclaTab(event, indice)}
-                    className={`-mb-px inline-flex min-h-[var(--control-height)] shrink-0 items-center gap-2 whitespace-nowrap border-b-2 text-[length:var(--text-body)] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[color:var(--admin-focus-ring)] ${
-                      activa
-                        ? "border-[var(--admin-accent-coffee)] text-[var(--admin-text-primary)]"
-                        : "border-transparent text-[var(--admin-text-muted)] hover:text-[var(--admin-text-primary)]"
-                    }`}
+                    onClick={limpiarFiltros}
+                    aria-label={tLimpiarFiltros}
+                    className="absolute right-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full! text-[var(--admin-text-muted)] transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]"
                   >
-                    <ST>{grupo.titulo}</ST>
-                    <span className="text-xs font-medium tabular-nums text-[var(--admin-text-muted)]">{grupo.filas.length}</span>
+                    <X className="size-4" aria-hidden="true" />
                   </button>
-                );
-              })}
+                ) : null}
+              </div>
             </div>
 
             <div

@@ -102,7 +102,7 @@ describe("Homepage info sections list", () => {
     render(<AdminInformacionPaginaPrincipal />);
 
     const tabs = screen.getAllByRole("tab");
-    expect(tabs.map((tab) => tab.textContent)).toEqual(["Página de inicio10", "Barra de navegación2", "Pie de página2"]);
+    expect(tabs.map((tab) => tab.getAttribute("aria-label"))).toEqual(["Página de inicio (10)", "Barra de navegación (2)", "Pie de página (2)"]);
     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
     expect(tabs[1]).toHaveAttribute("aria-selected", "false");
     expect(tabs.map((tab) => tab.tabIndex)).toEqual([0, -1, -1]);
@@ -124,13 +124,22 @@ describe("Homepage info sections list", () => {
     ]);
   });
 
+  it("exposes short mobile labels while keeping the full name accessible", () => {
+    render(<AdminInformacionPaginaPrincipal />);
+
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs.map((tab) => tab.firstElementChild.textContent)).toEqual(["Inicio", "Navegación", "Pie"]);
+    expect(tabs.map((tab) => tab.getAttribute("aria-label"))).toEqual(["Página de inicio (10)", "Barra de navegación (2)", "Pie de página (2)"]);
+    expect(screen.getByRole("tablist")).toHaveClass("grid-cols-3");
+  });
+
   it("switches the visible rows when another tab is selected", async () => {
     const user = userEvent.setup();
     render(<AdminInformacionPaginaPrincipal />);
 
-    await user.click(screen.getByRole("tab", { name: /Barra de navegación/ }));
+    await user.click(screen.getByRole("tab", { name: "Barra de navegación (2)" }));
 
-    expect(screen.getByRole("tab", { name: /Barra de navegación/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Barra de navegación (2)" })).toHaveAttribute("aria-selected", "true");
     expect(nombresFilas(screen.getByRole("tabpanel"))).toEqual(["Editar Barra de navegación", "Editar Menú de navegación"]);
     expect(screen.queryByRole("button", { name: "Editar Portada principal" })).not.toBeInTheDocument();
   });
@@ -178,7 +187,7 @@ describe("Homepage info sections list", () => {
     await user.type(screen.getByRole("searchbox"), "Menú de navegación");
 
     const tabs = screen.getAllByRole("tab");
-    expect(tabs.map((tab) => tab.textContent)).toEqual(["Página de inicio0", "Barra de navegación1", "Pie de página0"]);
+    expect(tabs.map((tab) => tab.getAttribute("aria-label"))).toEqual(["Página de inicio (0)", "Barra de navegación (1)", "Pie de página (0)"]);
     expect(tabs[1]).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("button", { name: "Editar Menú de navegación" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Editar Portada principal" })).not.toBeInTheDocument();
@@ -191,7 +200,7 @@ describe("Homepage info sections list", () => {
     await user.type(screen.getByRole("searchbox"), "Menú de navegación");
     await user.click(screen.getByRole("button", { name: "Limpiar filtros" }));
 
-    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Página de inicio10", "Barra de navegación2", "Pie de página2"]);
+    expect(screen.getAllByRole("tab").map((tab) => tab.getAttribute("aria-label"))).toEqual(["Página de inicio (10)", "Barra de navegación (2)", "Pie de página (2)"]);
   });
 });
 

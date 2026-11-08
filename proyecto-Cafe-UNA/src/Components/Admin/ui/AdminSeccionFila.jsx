@@ -31,7 +31,7 @@ export function AdminSeccionFila({ numero, nombre, resumen, icono: Icon, imagen,
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[length:var(--text-body)] font-semibold text-[var(--admin-text-primary)]">
+        <span className="block line-clamp-2 text-[length:var(--text-body)] font-semibold leading-5 text-[var(--admin-text-primary)]">
           <ST>{nombre}</ST>
         </span>
         <span className="mt-0.5 block truncate text-xs text-[var(--admin-text-muted)]">
@@ -39,21 +39,24 @@ export function AdminSeccionFila({ numero, nombre, resumen, icono: Icon, imagen,
         </span>
       </span>
 
+      {/* The hide/show lives on a wrapper: the global unlayered `img { display: block }` in index.css beats Tailwind's layered `hidden` on the <img> itself. */}
       {imagen ? (
-        <img
-          src={imagen}
-          alt=""
-          loading="lazy"
-          className="hidden size-10 shrink-0 rounded-md border border-[var(--admin-border)] object-cover sm:block"
-        />
+        <span aria-hidden="true" className="hidden shrink-0 sm:block">
+          <img
+            src={imagen}
+            alt=""
+            loading="lazy"
+            className="size-9 rounded-md border border-[var(--admin-border)] object-cover"
+          />
+        </span>
       ) : null}
 
       <span
         aria-hidden="true"
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--admin-border)] px-3 py-1 text-xs font-medium text-[var(--admin-text-muted)] transition-colors group-hover:border-[var(--admin-accent-coffee)] group-hover:text-[var(--admin-accent-coffee)] group-focus-visible:border-[var(--admin-accent-coffee)] group-focus-visible:text-[var(--admin-accent-coffee)]"
+        className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border border-[var(--admin-border)] px-2 py-1 text-xs max-sm:size-8 max-sm:p-0 sm:px-3 font-medium text-[var(--admin-text-muted)] transition-colors group-hover:border-[var(--admin-accent-coffee)] group-hover:text-[var(--admin-accent-coffee)] group-focus-visible:border-[var(--admin-accent-coffee)] group-focus-visible:text-[var(--admin-accent-coffee)]"
       >
         <Pencil className="size-3.5" />
-        <ST>Editar</ST>
+        <span className="hidden sm:inline"><ST>Editar</ST></span>
       </span>
     </button>
   );

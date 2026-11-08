@@ -41,6 +41,8 @@ describe("AdminSeccionFila", () => {
     const img = container.querySelector("img");
     expect(img).toHaveAttribute("alt", "");
     expect(img).toHaveAttribute("loading", "lazy");
+    // Hidden below sm through a wrapper, not on the <img> (global img display rule wins over Tailwind).
+    expect(img.parentElement).toHaveClass("hidden", "sm:block");
 
     rerender(<AdminSeccionFila nombre="Hero" resumen="Titulo" icono={Coffee} onEditar={vi.fn()} />);
     expect(container.querySelector("img")).toBeNull();

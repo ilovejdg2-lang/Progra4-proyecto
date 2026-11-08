@@ -45,6 +45,8 @@ const DICCIONARIO = {
   "Donación": "Donation",
   "Visitas": "Visits",
   "Inicio": "Home",
+  "Navegación": "Navigation",
+  "Pie": "Footer",
   "Explorar": "Explore",
   "EXPLORE": "EXPLORE",
   "Contactos": "Contact",
