@@ -22,3 +22,25 @@ describe("getAdminBreadcrumbItems", () => {
     }
   });
 });
+
+describe("inventory breadcrumbs", () => {
+  const inventario = [
+    ["/admin/producto", "Producto"],
+    ["/admin/puntos-venta", "Puntos de venta"],
+    ["/admin/puntos-venta/dias-sin-retiro", "Días sin retiro"],
+    ["/admin/activos-fijos", "Activos fijos"],
+    ["/admin/distribucion", "Distribución"],
+    ["/admin/salidas-inventario", "Salidas de bodega"],
+    ["/admin/historial-movimientos", "Historial de movimientos"],
+    ["/admin/ventas-presenciales", "Ventas presenciales"],
+    ["/admin/ventas-pendientes", "Ventas pendientes"],
+    ["/admin/historial-ventas", "Historial de ventas"],
+  ];
+
+  it.each(inventario)("%s sits under Manejo de inventario", (ruta, etiqueta) => {
+    const labels = getAdminBreadcrumbItems(ruta, null).map((item) => item.label);
+    expect(labels[0]).toBe("Admin");
+    expect(labels[1]).toBe("Manejo de inventario");
+    expect(labels[labels.length - 1]).toBe(etiqueta);
+  });
+});

@@ -54,6 +54,7 @@ export function getAdminBreadcrumbItems(pathname, search) {
     ],
     "/admin/activos-fijos": [admin, inventario, crumb("Activos fijos")],
     "/admin/distribucion": [admin, inventario, crumb("Distribución")],
+    "/admin/salidas-inventario": [admin, inventario, crumb("Salidas de bodega")],
     "/admin/historial-movimientos": [admin, inventario, crumb("Historial de movimientos")],
     "/admin/ventas-presenciales": [admin, inventario, crumb("Ventas presenciales")],
     "/admin/ventas-pendientes": [admin, inventario, crumb("Ventas pendientes")],
