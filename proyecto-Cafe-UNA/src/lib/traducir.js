@@ -1082,6 +1082,14 @@ const DICCIONARIO = {
   "Mini formularios": "Mini forms",
   "Mini formularios del inicio": "Home mini forms",
   "Barra de navegación": "Navigation bar",
+  "Página de inicio": "Home page",
+  "Sin contenido": "No content",
+  "Logos configurados": "Logos configured",
+  "Portada principal": "Main cover",
+  "Preguntas frecuentes": "Frequently asked questions",
+  "Preguntas y respuestas": "Questions and answers",
+  "Documentación del proyecto": "Project documentation",
+  "Portada y mapa de productores": "Producers cover and map",
   "Pie de página": "Footer",
   "Buscar por etiqueta o ruta...": "Search by label or path...",
   "No hay enlaces configurados. Agregue uno para mostrarlo en el sitio.":
@@ -1729,6 +1737,16 @@ function delDiccionario(texto) {
   if (mProd) {
     const n = mProd[1];
     return Number(n) === 1 ? `${n} product` : `${n} products`;
+  }
+  const mEnl = key.match(/^(d+)s+enlaces?$/i);
+  if (mEnl) {
+    const n = mEnl[1];
+    return Number(n) === 1 ? `${n} link` : `${n} links`;
+  }
+  const mPreg = key.match(/^(d+)s+preguntas?$/i);
+  if (mPreg) {
+    const n = mPreg[1];
+    return Number(n) === 1 ? `${n} question` : `${n} questions`;
   }
   const mBod = key.match(/^(\d+)\s+unidades?\s+en\s+bodega$/i);
   if (mBod) {

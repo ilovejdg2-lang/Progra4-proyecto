@@ -15,7 +15,7 @@ import {
   PreviewNavbarLive,
   PreviewTarjetasInicioLive,
 } from "../../../Components/Admin/ui/AdminCmsPreview";
-import { AdminSeccionCard } from "../../../Components/Admin/ui/AdminSeccionCard";
+import { AdminSeccionFila } from "../../../Components/Admin/ui/AdminSeccionFila";
 import { SelectorIcono } from "../../../Components/Admin/ui/SelectorIcono";
 import { iconoDePreguntaFaq, iconoPorClave } from "../../../lib/iconosCatalogo";
 import { iconoOriginalSitio } from "../../../lib/iconosSitio";
@@ -1697,12 +1697,6 @@ function mapSeccionInicio(data) {
   };
 }
 
-function tituloVisibleSeccion(data, config) {
-  const titulo = typeof data?.title === "string" ? data.title.trim() : "";
-  const etiqueta = typeof data?.eyebrow === "string" ? data.eyebrow.trim() : "";
-  return titulo || etiqueta || config.tituloTarjeta;
-}
-
 function resumenSeccionInicio(data, config) {
   if (data.title) return data.title;
   if (data.description) return data.description;
@@ -2073,7 +2067,7 @@ const AdminInformacionPaginaPrincipal = () => {
     }));
 
     return [
-      { id: "hero", grupo: "inicio", busqueda: ["Hero section", hero.title, hero.subtitle] },
+      { id: "hero", grupo: "inicio", busqueda: ["Portada principal", "Hero", hero.title, hero.subtitle] },
       ...seccionesInicioItems,
       { id: "tarjetas-inicio", grupo: "inicio", busqueda: ["Mini formularios", "Inicio", resumenTarjetasInicio] },
       { id: "faq-inicio", grupo: "inicio", busqueda: ["Preguntas frecuentes", "FAQ", "Inicio", faqInicio.map((i) => i.pregunta).join(" ")] },
@@ -2140,6 +2134,92 @@ const AdminInformacionPaginaPrincipal = () => {
     [seccionesFiltradas],
   );
 
+  const filaSeccionInicio = (clave) => {
+    const config = CONFIG_SECCIONES_INICIO[clave];
+    const data = seccionesInicio[clave];
+    return {
+      id: clave,
+      nombre: config.tituloTarjeta,
+      icono: config.icon,
+      resumen: data?.title || data?.description || "",
+      imagen: data?.image || "",
+    };
+  };
+
+  // Order follows the public homepage render order (src/Pages/Home/Home.jsx).
+  const gruposFilas = [
+    {
+      id: "inicio",
+      titulo: "Página de inicio",
+      filas: [
+        { id: "hero", nombre: "Portada principal", icono: Image, resumen: hero.title || hero.subtitle, imagen: hero.backgroundImage },
+        filaSeccionInicio("homeSpotlight"),
+        filaSeccionInicio("homeFeatured"),
+        filaSeccionInicio("homeIniciativas"),
+        {
+          id: "tarjetas-inicio",
+          nombre: "Mini formularios",
+          icono: ClipboardList,
+          resumen: tarjetasInicio.length ? resumenTarjetasInicio : "",
+        },
+        filaSeccionInicio("homeDocumentacion"),
+        {
+          id: "productores-hero",
+          nombre: "Portada y mapa de productores",
+          icono: Sprout,
+          resumen: productoresHero.title,
+          imagen: productoresHero.image,
+        },
+        filaSeccionInicio("homeLocation"),
+        filaSeccionInicio("homeFaq"),
+        {
+          id: "faq-inicio",
+          nombre: "Preguntas y respuestas",
+          icono: CircleHelp,
+          resumen: faqInicio.length ? `${faqInicio.length} pregunta${faqInicio.length === 1 ? "" : "s"}` : "",
+        },
+      ].map((fila, indice) => ({ ...fila, numero: indice + 1 })),
+    },
+    {
+      id: "navbar",
+      titulo: "Barra de navegación",
+      filas: [
+        {
+          id: "navbar",
+          nombre: "Barra de navegación",
+          icono: LayoutTemplate,
+          resumen: navbar.logoUrl || navbar.logoClaroUrl ? "Logos configurados" : "",
+        },
+        {
+          id: "enlaces-navbar",
+          nombre: CONFIG_ENLACES["enlaces-navbar"].titulo,
+          icono: Link2,
+          resumen: enlacesNavbar.length ? `${enlacesNavbar.length} enlace${enlacesNavbar.length === 1 ? "" : "s"}` : "",
+        },
+      ],
+    },
+    {
+      id: "footer",
+      titulo: "Pie de página",
+      filas: [
+        {
+          id: "footer",
+          nombre: "Pie de página",
+          icono: PanelBottom,
+          resumen: footer.fraseMarca || footer.correo || footer.telefono,
+        },
+        {
+          id: "enlaces-footer",
+          nombre: CONFIG_ENLACES["enlaces-footer"].titulo,
+          icono: Link2,
+          resumen: enlacesFooter.length ? `${enlacesFooter.length} enlace${enlacesFooter.length === 1 ? "" : "s"}` : "",
+        },
+      ],
+    },
+  ]
+    .map((grupo) => ({ ...grupo, filas: grupo.filas.filter((fila) => idsVisibles.has(fila.id)) }))
+    .filter((grupo) => grupo.filas.length > 0);
+
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
     <AdminLayout>
@@ -2192,90 +2272,31 @@ const AdminInformacionPaginaPrincipal = () => {
             {seccionesFiltradas.length === 0 ? (
               <AdminListaVacia onLimpiar={limpiarFiltros} />
             ) : (
-              <div className="grid min-w-0 grid-cols-1 gap-4 overflow-x-hidden p-4 sm:grid-cols-2 sm:px-6 sm:pb-6 xl:grid-cols-3">
-            {idsVisibles.has("hero") ? (
-            <AdminSeccionCard
-              etiqueta="Hero section"
-              titulo={hero.title || "Hero section"}
-              icono={Image}
-              onEditar={() => setEditando("hero")}
-            />
-            ) : null}
-
-            {Object.entries(CONFIG_SECCIONES_INICIO).map(([clave, config]) =>
-              idsVisibles.has(clave) ? (
-              <AdminSeccionCard
-                key={clave}
-                etiqueta={config.etiqueta}
-                titulo={tituloVisibleSeccion(seccionesInicio[clave], config)}
-                icono={config.icon}
-                onEditar={() => setEditando(clave)}
-              />
-              ) : null
-            )}
-
-            {idsVisibles.has("productores-hero") ? (
-            <AdminSeccionCard
-              etiqueta="Inicio"
-              titulo="Portada y mapa de productores"
-              icono={Sprout}
-              onEditar={() => setEditando("productores-hero")}
-            />
-            ) : null}
-
-            {idsVisibles.has("tarjetas-inicio") ? (
-            <AdminSeccionCard
-              etiqueta="Inicio"
-              titulo="Mini formularios"
-              icono={ClipboardList}
-              onEditar={() => setEditando("tarjetas-inicio")}
-            />
-            ) : null}
-
-            {idsVisibles.has("faq-inicio") ? (
-            <AdminSeccionCard
-              etiqueta="Inicio"
-              titulo="Preguntas y respuestas"
-              icono={CircleHelp}
-              onEditar={() => setEditando("faq-inicio")}
-            />
-            ) : null}
-
-            {idsVisibles.has("navbar") ? (
-            <AdminSeccionCard
-              etiqueta="Navbar"
-              titulo={"Barra de navegaci\u00f3n"}
-              icono={LayoutTemplate}
-              onEditar={() => setEditando("navbar")}
-            />
-            ) : null}
-
-            {idsVisibles.has("footer") ? (
-            <AdminSeccionCard
-              etiqueta="Footer"
-              titulo={"Pie de p\u00e1gina"}
-              icono={PanelBottom}
-              onEditar={() => setEditando("footer")}
-            />
-            ) : null}
-
-            {idsVisibles.has("enlaces-navbar") ? (
-            <AdminSeccionCard
-              etiqueta={CONFIG_ENLACES["enlaces-navbar"].etiqueta}
-              titulo={CONFIG_ENLACES["enlaces-navbar"].titulo}
-              icono={Link2}
-              onEditar={() => setEditando("enlaces-navbar")}
-            />
-            ) : null}
-
-            {idsVisibles.has("enlaces-footer") ? (
-            <AdminSeccionCard
-              etiqueta={CONFIG_ENLACES["enlaces-footer"].etiqueta}
-              titulo={CONFIG_ENLACES["enlaces-footer"].titulo}
-              icono={Link2}
-              onEditar={() => setEditando("enlaces-footer")}
-            />
-            ) : null}
+              <div className="min-w-0 pb-4">
+                {gruposFilas.map((grupo) => (
+                  <section key={grupo.id} aria-labelledby={`grupo-${grupo.id}`} className="min-w-0">
+                    <h2
+                      id={`grupo-${grupo.id}`}
+                      className="px-4 pb-2 pt-5 text-[length:var(--text-body)] font-semibold text-[var(--admin-text-muted)] sm:px-6"
+                    >
+                      <ST>{grupo.titulo}</ST>
+                    </h2>
+                    <ul className="divide-y divide-[var(--admin-border)] border-y border-[var(--admin-border)]">
+                      {grupo.filas.map((fila) => (
+                        <li key={fila.id}>
+                          <AdminSeccionFila
+                            numero={fila.numero}
+                            nombre={fila.nombre}
+                            resumen={fila.resumen}
+                            icono={fila.icono}
+                            imagen={fila.imagen}
+                            onEditar={() => setEditando(fila.id)}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
               </div>
             )}
           </>
