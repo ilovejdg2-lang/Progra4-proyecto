@@ -894,7 +894,7 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                   className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition ${
                     estaHabilitadaSeleccionada
                       ? "bg-white text-slate-950 hover:bg-slate-100"
-                      : "admin-role-selected"
+                      : "admin-role-primary"
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {guardando

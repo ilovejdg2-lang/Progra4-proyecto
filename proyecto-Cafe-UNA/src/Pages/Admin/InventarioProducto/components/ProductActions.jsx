@@ -57,7 +57,7 @@ export function ProductActions({
           onClick={onToggleEstado}
           disabled={bloquearInhabilitar}
           title={bloquearInhabilitar ? t("Quita el destacado antes de desactivarlo") : undefined}
-          className={`${toggleClassName} disabled:cursor-not-allowed disabled:opacity-60 ${filaSuperior && !esMovil ? "col-span-2" : ""}`}
+          className={`${toggleClassName} disabled:cursor-not-allowed disabled:opacity-50 ${filaSuperior && !esMovil ? "col-span-2" : ""}`}
         >
           <Power className="size-3 shrink-0" aria-hidden="true" />
           <span><ST>{etiquetaToggle}</ST></span>
