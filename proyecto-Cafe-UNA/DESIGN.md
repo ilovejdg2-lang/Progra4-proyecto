@@ -12,6 +12,7 @@ colors:
   text-decorative: "#94a3b8"
   coffee: "#5c4038"
   coffee-hover: "#452e27"
+  coffee-soft: "#f6efec"
   on-coffee: "#ffffff"
   border: "#e2e8f0"
   border-subtle: "#f1f5f9"
@@ -33,6 +34,7 @@ colors:
   dark-text-decorative: "#64748b"
   dark-coffee: "#b88376"
   dark-coffee-hover: "#c48f82"
+  dark-coffee-soft: "#2a1d19"
   dark-on-coffee: "#1a0f0c"
   dark-border: "#1e293b"
   dark-border-subtle: "#161f2e"
@@ -165,9 +167,26 @@ Every token below exists in both themes (enforced by `src/styles/adminTokens.tes
 |---|---|---|---|
 | `--admin-accent-coffee` | `#5c4038` | `#b88376` | Dark: 5.39:1 on `#161b22`, 5.90:1 on `#0e1116` |
 | `--admin-accent-coffee-hover` | `#452e27` | `#c48f82` | n/a |
+| `--admin-accent-coffee-soft` | `#f6efec` | `#2a1d19` | Selected-state fill. Light: `#0f172a` 15.7:1, `#475569` 6.7:1. Dark: `#e2e8f0` 13.2:1, `#94a3b8` 6.4:1 |
 | `--admin-on-accent-coffee` | `#ffffff` | `#1a0f0c` | Light: 9.35:1 on `#5c4038`, 12.55:1 on `#452e27`. Dark: 5.86:1 on `#b88376`, 6.8:1 on `#c48f82` (white would fail) |
 
 Text on a coffee fill always uses `--admin-on-accent-coffee`, never literal white.
+
+### Color roles (one role, one color)
+
+Black (`slate-950`) used to do four jobs (page primary, row action, selection, switch on) and disappeared on `#0e1116`. Each job now has its own role, defined as classes in `src/index.css` (scoped to `body.admin-route-active`, colors only, so each page keeps its own size and shape utilities). Never use `slate-950`, `bg-black` or literal `text-white` on an admin control.
+
+| Role | Class / selector | Look | Light | Dark | Use |
+|---|---|---|---|---|---|
+| Primary | `admin-role-primary` | Coffee fill, `--admin-on-accent-coffee` text, hover = coffee hover | 9.35:1 | 5.86:1 | One per screen ("+ Nuevo producto", "Agregar fecha", "Registrar salida") |
+| Quiet | `admin-role-quiet` | 1px `--admin-border-input`, transparent, primary text, coffee border on hover | 17.9:1 | 14.0:1 | Row actions (Editar, Stock) and secondary actions (Categorías, Historial de ventas) |
+| Destructive | `admin-role-danger` | `--admin-status-danger-text` text and 1px border, transparent; hover tints with `--admin-status-danger-bg` | 6.5:1 | 9.2:1 | Desactivar, Inactivar, Rechazar, Eliminar |
+| Positive | `admin-role-positive` | `--admin-status-success-text` text and border, transparent | 5.0:1 | 11.4:1 | Activar, Aprobar |
+| Selected | `admin-role-selected` (unselected: `admin-role-surface`) | `--admin-accent-coffee-soft` fill, 1px `--admin-accent-coffee` border, primary text | 15.7:1 | 13.2:1 | Selected card or chip (Puntos de venta card, "Todos los productos") |
+| Switch on | `body.admin-route-active .ui-switch__track.is-on` | Coffee track, `--admin-on-accent-coffee` thumb. Off: `--admin-border-input` track (4.8:1 light, 3.6:1 dark), `--admin-surface` thumb. Ratios are track vs surface, WCAG 1.4.11 needs 3:1 | 9.35:1 | 5.39:1 | Destacado toggle |
+| Status text | `admin-status-success`, `admin-status-danger`, `admin-status-neutral` | Status token text on its tinted background; always paired with a word | 4.6:1 minimum | 9.1:1 minimum | Activo/Inactivo, Entregado/Rechazado |
+
+Rules: tinted pink/green pills with translucent fills are retired (they washed out in dark mode); destructive and positive actions are text plus border. A selected card never turns black or white, it keeps its text colors. Headings need an important text utility (`text-[color:var(--admin-text-primary)]!`) because the unlayered global `h1/h2` color beats Tailwind layers.
 
 ### Borders and focus
 
@@ -293,7 +312,8 @@ Dialogs are native `<dialog>` (`src/Components/ui/ModalDialog.jsx`), so focus tr
 | Coffee primary | `adminBtnCoffeePrimary` | Coffee fill, `--admin-on-accent-coffee` text, bold, 44px pill | Reference |
 | Coffee cancel | `adminBtnCoffeeCancel` | Transparent, `--admin-border-input` outline, muted text | Reference |
 | Quiet | `adminBtnQuiet` | Outline, muted text, coffee border and text on hover | Reference |
-| Black primary / cancel | `adminBtnPrimary`, `adminBtnCancel` | `slate-950` fill, default of `AdminModalActions` | Legacy default (kept for unmigrated pages) |
+| Page primary / quiet / danger / positive | `admin-role-*` classes (see Color roles) | Coffee, outline, danger and success text with border | Reference (page-level buttons) |
+| Black primary / cancel | `adminBtnPrimary`, `adminBtnCancel` | `slate-950` fill, default of `AdminModalActions` (also used by public /perfil pages) | Legacy default (kept; opt into `variant="coffee"`) |
 | Voluntariado | `adminBtnVoluntariadoPrimary`, `adminBtnVoluntariadoCancel` | Black variant for CMS editors | Legacy |
 
 New looks are opt-in variants (`variant="coffee"`); shared defaults stay unchanged.
@@ -357,5 +377,7 @@ Code: `src/Pages/Admin/Usuarios/Usuarios.jsx`, shell `.admin-table-shell--usuari
 | Black `adminBtnPrimary` default in `AdminModalActions` | **Legacy, to migrate** | Pages opt into `variant="coffee"` as they are redesigned |
 | `adminBtnVoluntariado*`, `AdminEditorConPreview` default variant | **Legacy, to migrate** | Black buttons and "Edición" eyebrow |
 | Uppercase tracked table headers (`.admin-table-shell thead th`: 11px, `0.05em`, uppercase) | **Legacy, to migrate** | Contradicts sentence-case rule; not copied into new components |
-| Hardcoded Tailwind color utilities and `adminDark.css` `!important` overrides | **Legacy, to migrate** | Move to `--admin-*` tokens |
+| Color roles (`admin-role-*`, `admin-status-*`, switch) on the 10 inventory pages, Usuarios, Voluntariado, Visitas, Donaciones, Equipo, Propuestas, Panel StockAlerts | **Migrated (PR 4)** | Black fills replaced by roles |
+| `AdminSeccionCard`, `AdminModal` black defaults, `InformacionPaginaPrincipal` image badge, Sidebar scrim | **Left on purpose** | Shared defaults or non-control surfaces |
+| Remaining hardcoded Tailwind color utilities and `adminDark.css` `!important` overrides | **Legacy, to migrate** | Move to `--admin-*` tokens |
 | Other admin pages (toolbars, `AdminPaginacion`, old cards) | **Not yet reviewed** | Follow this file when touched |
