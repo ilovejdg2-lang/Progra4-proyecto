@@ -194,3 +194,68 @@ describe("Homepage info sections list", () => {
     expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Página de inicio10", "Barra de navegación2", "Pie de página2"]);
   });
 });
+
+describe("Homepage info edit modals", () => {
+  beforeEach(() => {
+    localStorage.setItem("cafe-una-idioma", "es");
+    obtenerProductoresHero.mockResolvedValue(null);
+  });
+
+  it("renders the close button in the header and closes the modal", async () => {
+    const user = userEvent.setup();
+    render(<AdminInformacionPaginaPrincipal />);
+
+    await user.click(screen.getByRole("button", { name: "Editar Portada principal" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("heading", { level: 2, name: "Portada principal" })).toBeInTheDocument();
+
+    const header = dialog.querySelector("header");
+    const cerrar = within(dialog).getByRole("button", { name: "Cerrar" });
+    expect(header).toContainElement(cerrar);
+    expect(header.querySelector("h2")).not.toContainElement(cerrar);
+
+    await user.click(cerrar);
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("puts Cancelar before Guardar cambios in the footer", async () => {
+    const user = userEvent.setup();
+    render(<AdminInformacionPaginaPrincipal />);
+
+    await user.click(screen.getByRole("button", { name: "Editar Portada principal" }));
+    const dialog = await screen.findByRole("dialog");
+    const cancelar = within(dialog).getByRole("button", { name: "Cancelar" });
+    const guardar = within(dialog).getByRole("button", { name: "Guardar cambios" });
+
+    expect(cancelar.compareDocumentPosition(guardar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("keeps the image URL input behind the Usar URL disclosure", async () => {
+    const user = userEvent.setup();
+    render(<AdminInformacionPaginaPrincipal />);
+
+    await user.click(screen.getByRole("button", { name: "Editar Portada principal" }));
+    const dialog = await screen.findByRole("dialog");
+
+    const resumen = within(dialog).getByText("Usar URL");
+    expect(resumen.closest("details")).not.toHaveAttribute("open");
+    await user.click(resumen);
+    expect(within(dialog).getByRole("textbox", { name: "Imagen de fondo URL" })).toHaveValue("https://example.test/hero.png");
+    expect(within(dialog).getByRole("button", { name: "Reemplazar" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Quitar" })).toBeInTheDocument();
+  });
+
+  it("flags the word counter near and at the limit", async () => {
+    const user = userEvent.setup();
+    render(<ModalHero hero={{ title: "" }} onCerrar={vi.fn()} onGuardar={vi.fn()} guardando={false} />);
+    const titulo = screen.getByRole("textbox", { name: "Título principal" });
+
+    expect(screen.getAllByText("0/15 palabras")).toHaveLength(1);
+    await user.type(titulo, "a b c d e f g h i j k l m");
+    expect(screen.getByText("13/15 palabras")).toHaveAttribute("data-estado", "normal");
+    await user.type(titulo, " n");
+    expect(screen.getByText("14/15 palabras")).toHaveAttribute("data-estado", "cerca");
+    await user.type(titulo, " o");
+    expect(screen.getByText("15/15 palabras")).toHaveAttribute("data-estado", "limite");
+  });
+});

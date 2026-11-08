@@ -45,8 +45,14 @@ export function AdminModal({
   );
 }
 
-export function AdminModalHeader({ children, className, onClose }) {
+/**
+ * Header row. Pass `title` (with optional `icon`, `titleId`, `description`) for the
+ * structured layout: icon + title + muted subtitle on the left, close button on the right.
+ * Without `title`, `children` render as before.
+ */
+export function AdminModalHeader({ children, className, onClose, icon: Icon, title, titleId, description }) {
   const tCerrar = useTraducir("Cerrar");
+  const tDescription = useTraducir(description || "");
   return (
     <header
       className={cn(
@@ -54,13 +60,29 @@ export function AdminModalHeader({ children, className, onClose }) {
         className,
       )}
     >
-      <div className="min-w-0 flex-1 text-[length:var(--text-subtitle)] font-bold">{children}</div>
+      {title ? (
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          {Icon ? (
+            <Icon size={20} strokeWidth={1.75} className="shrink-0 text-[var(--admin-accent-coffee)]" aria-hidden="true" />
+          ) : null}
+          <div className="min-w-0 flex-1">
+            <h2 id={titleId} className="truncate text-[length:var(--text-subtitle)] font-bold leading-tight text-slate-950">
+              {title}
+            </h2>
+            {description ? (
+              <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-[var(--admin-text-muted)]">{tDescription}</p>
+            ) : null}
+          </div>
+        </div>
+      ) : (
+        <div className="min-w-0 flex-1 text-[length:var(--text-subtitle)] font-bold">{children}</div>
+      )}
       {onClose ? (
         <button
           type="button"
           onClick={onClose}
           aria-label={tCerrar}
-          className="inline-flex size-[var(--control-height)] shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100"
+          className="inline-flex size-[var(--control-height)] shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]"
         >
           <X size={20} strokeWidth={2.4} aria-hidden="true" />
         </button>
@@ -97,6 +119,17 @@ export const adminBtnVoluntariadoPrimary =
 export const adminBtnVoluntariadoCancel =
   "inline-flex min-h-[var(--control-height)] items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-[length:var(--text-body)] font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60";
 
+// Coffee-branded modal actions, opt-in through AdminModalActions variant="coffee".
+const focusRingCls =
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--admin-focus-ring)]";
+
+export const adminBtnCoffeePrimary = `inline-flex min-h-[var(--control-height)] w-full items-center justify-center rounded-full border border-[var(--admin-accent-coffee)] bg-[var(--admin-accent-coffee)] px-5 text-[length:var(--text-body)] font-bold text-[color:var(--admin-on-accent-coffee)] transition-colors hover:border-[var(--admin-accent-coffee-hover)] hover:bg-[var(--admin-accent-coffee-hover)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${focusRingCls}`;
+
+export const adminBtnCoffeeCancel = `inline-flex min-h-[var(--control-height)] w-full items-center justify-center rounded-full border border-[var(--admin-border-input)] bg-transparent px-5 text-[length:var(--text-body)] font-semibold text-[var(--admin-text-muted)] transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${focusRingCls}`;
+
+// Quiet secondary action (outline, muted text, coffee on hover).
+export const adminBtnQuiet = `inline-flex min-h-[var(--control-height)] items-center justify-center gap-1.5 rounded-full border border-[var(--admin-border-input)] bg-transparent px-4 text-[length:var(--text-body)] font-semibold text-[var(--admin-text-muted)] transition-colors hover:border-[var(--admin-accent-coffee)] hover:text-[var(--admin-accent-coffee)] disabled:cursor-not-allowed disabled:opacity-60 ${focusRingCls}`;
+
 export function AdminModalFooter({ children, className }) {
   return (
     <footer
@@ -120,11 +153,31 @@ export function AdminModalActions({
   primaryClassName,
   cancelClassName,
   buttonStyle,
+  variant,
   className,
 }) {
   const usesVoluntariadoStyle = buttonStyle === "voluntariado";
   const tCancel = useTraducir(cancelLabel);
   const tPrimary = useTraducir(primaryLabel || "");
+
+  if (variant === "coffee") {
+    // DOM order is Cancelar then primary: left/right on desktop, primary on top when stacked on mobile.
+    return (
+      <div className={cn("flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3", className)}>
+        <button type="button" onClick={onCancel} className={cancelClassName || adminBtnCoffeeCancel}>
+          {tCancel}
+        </button>
+        <button
+          type={primaryType}
+          disabled={primaryDisabled}
+          onClick={onPrimary}
+          className={primaryClassName || adminBtnCoffeePrimary}
+        >
+          {tPrimary}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("flex flex-row flex-wrap justify-end gap-3 sm:gap-4", className)}>

@@ -1,6 +1,6 @@
 import { createElement, useEffect, useMemo, useState } from "react";
-import { ArrowRight, ExternalLink, ShoppingCart, User } from "lucide-react";
-import { adminBtnVoluntariadoCancel, adminBtnVoluntariadoPrimary } from "./AdminModal";
+import { ArrowRight, ExternalLink, Eye, ShoppingCart, User } from "lucide-react";
+import { adminBtnQuiet, adminBtnVoluntariadoCancel, adminBtnVoluntariadoPrimary } from "./AdminModal";
 
 import Hero from "../../Hero/Hero";
 import Gallery from "../../Gallery/Gallery";
@@ -600,12 +600,40 @@ function PreviewEnlaces({ items = [], variante = "navbar", navbar, footer }) {
   return <PreviewNavbarLive form={navbar ?? {}} enlaces={items} />;
 }
 
-export function AdminEditorConPreview({ preview, children, ayuda }) {
+/**
+ * `variant="modal"` is the compact layout used by the redesigned CMS modals: no "Edición"
+ * eyebrow, no help box (the help text lives in the modal header), and a quiet "Previsualizar".
+ */
+export function AdminEditorConPreview({ preview, children, ayuda, variant }) {
   const [mostrandoVistaPrevia, setMostrandoVistaPrevia] = useState(false);
   const tVolver = useTraducir("Volver a edición");
   const tEdicion = useTraducir("Edición");
   const tPrevisualizar = useTraducir("Previsualizar");
   const tAyuda = useTraducir(ayuda || "");
+
+  if (variant === "modal") {
+    return (
+      <div className="grid min-w-0 gap-5">
+        {mostrandoVistaPrevia ? (
+          <section className="admin-cms-editor__preview-section">
+            <PreviewShell>{preview}</PreviewShell>
+            <button type="button" onClick={() => setMostrandoVistaPrevia(false)} className={adminBtnQuiet}>
+              {tVolver}
+            </button>
+          </section>
+        ) : null}
+        {mostrandoVistaPrevia ? null : (
+          <div className="flex justify-end">
+            <button type="button" onClick={() => setMostrandoVistaPrevia(true)} className={adminBtnQuiet}>
+              <Eye size={14} aria-hidden="true" />
+              {tPrevisualizar}
+            </button>
+          </div>
+        )}
+        <div className="grid min-w-0 gap-5">{children}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-cms-editor">
