@@ -614,6 +614,7 @@ export default function AdminDistribucion() {
             title={<ST>Confirmar distribución</ST>}
             titleId="confirm-dist-title"
             onClose={() => !isSaving && setConfirmOpen(false)}
+            closeDisabled={isSaving}
           />
           <AdminModalBody>
             <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-[length:var(--text-body)]">
@@ -660,6 +661,7 @@ export default function AdminDistribucion() {
               icon={Truck}
               title={<><ST>Transferencia</ST> #{detalle.id}</>}
               titleId="distribucion-detalle-title"
+              wrapTitle
               onClose={() => setDetalle(null)}
             />
             <AdminModalBody>

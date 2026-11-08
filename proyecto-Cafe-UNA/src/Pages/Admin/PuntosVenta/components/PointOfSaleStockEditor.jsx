@@ -52,7 +52,17 @@ export function PointOfSaleStockEditor({ open, location, product, stockRecord, o
           icon={Package}
           title={tTitulo}
           titleId="pos-stock-editor-title"
-          description={`${product.nombre} · ${location?.name}`}
+          description={
+            <>
+              <ST>{product.nombre}</ST>
+              {location?.name ? (
+                <>
+                  {" · "}
+                  <ST>{location.name}</ST>
+                </>
+              ) : null}
+            </>
+          }
           onClose={onClose}
         />
         <AdminModalBody className="space-y-5">

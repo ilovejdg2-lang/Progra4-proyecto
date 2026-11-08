@@ -50,9 +50,20 @@ export function AdminModal({
  * structured layout: icon + title + muted subtitle on the left, close button on the right.
  * Without `title`, `children` render as before.
  */
-export function AdminModalHeader({ children, className, onClose, icon: Icon, title, titleId, description }) {
+export function AdminModalHeader({
+  children,
+  className,
+  onClose,
+  icon: Icon,
+  title,
+  titleId,
+  description,
+  closeDisabled = false,
+  wrapTitle = false,
+}) {
   const tCerrar = useTraducir("Cerrar");
-  const tDescription = useTraducir(description || "");
+  const descriptionIsText = typeof description === "string";
+  const tDescription = useTraducir(descriptionIsText ? description : "");
   return (
     <header
       className={cn(
@@ -66,11 +77,17 @@ export function AdminModalHeader({ children, className, onClose, icon: Icon, tit
             <Icon size={20} strokeWidth={1.75} className="shrink-0 text-[var(--admin-accent-coffee)]" aria-hidden="true" />
           ) : null}
           <div className="min-w-0 flex-1">
-            <h2 id={titleId} className="truncate text-[length:var(--text-subtitle)] font-bold leading-tight text-slate-950">
+            <h2
+              id={titleId}
+              className={cn(
+                "text-[length:var(--text-subtitle)] font-bold leading-tight text-slate-950",
+                wrapTitle ? "break-all" : "truncate",
+              )}
+            >
               {title}
             </h2>
             {description ? (
-              <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-[var(--admin-text-muted)]">{tDescription}</p>
+              <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-[var(--admin-text-muted)]">{descriptionIsText ? tDescription : description}</p>
             ) : null}
           </div>
         </div>
@@ -81,8 +98,10 @@ export function AdminModalHeader({ children, className, onClose, icon: Icon, tit
         <button
           type="button"
           onClick={onClose}
+          disabled={closeDisabled}
+          aria-disabled={closeDisabled ? "true" : undefined}
           aria-label={tCerrar}
-          className="inline-flex size-[var(--control-height)] shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]"
+          className="inline-flex size-[var(--control-height)] shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]"
         >
           <X size={20} strokeWidth={2.4} aria-hidden="true" />
         </button>

@@ -57,7 +57,9 @@ describe("AdminDistribucion creation modal", () => {
     await user.click(await screen.findByRole("button", { name: /Nueva distribución/i }));
     const dialog = await screen.findByRole("dialog", { name: "Nueva distribución" });
     // Closing is internal state: the helper clicks the header X, then we assert the dialog is gone.
-    await expectApprovedModalAnatomy(dialog, { primaryName: "Confirmar distribución" });
-    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Nueva distribución" })).toBeNull());
+    await expectApprovedModalAnatomy(dialog, {
+      primaryName: "Confirmar distribución",
+      afterClose: () => waitFor(() => expect(screen.queryByRole("dialog", { name: "Nueva distribución" })).toBeNull()),
+    });
   });
 });

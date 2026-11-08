@@ -9,6 +9,7 @@ vi.mock("../../../../services/productosService", () => ({
   }),
 }));
 
+import { expectApprovedModalAnatomy } from "../../../../test/modalAnatomy";
 import { CentralStockEditor } from "./CentralStockEditor";
 
 const product = { id: "p-1", nombre: "Café Premium" };
@@ -89,5 +90,23 @@ describe("CentralStockEditor record sync", () => {
 
     expect(getField()).toHaveValue("7");
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
+describe("CentralStockEditor anatomy", () => {
+  it("follows the approved modal anatomy", async () => {
+    const onClose = vi.fn();
+    render(
+      <CentralStockEditor
+        open
+        product={product}
+        stockRecord={{ productId: "p-1", locationCode: "BODEGA_CENTRAL", stock: 4, confidence: "known" }}
+        onSave={vi.fn()}
+        onClose={onClose}
+      />,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Stock de Bodega Central" });
+    await expectApprovedModalAnatomy(dialog, { onClose, primaryName: "Guardar stock" });
   });
 });

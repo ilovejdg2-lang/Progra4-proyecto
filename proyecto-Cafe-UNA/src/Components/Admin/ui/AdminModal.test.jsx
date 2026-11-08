@@ -84,3 +84,39 @@ describe("AdminModal", () => {
     expect(outer).not.toHaveBeenCalled();
   });
 });
+
+describe("AdminModalHeader", () => {
+  it("renders a node description without undefined and keeps string descriptions", () => {
+    const { rerender } = render(
+      <AdminModalHeader title="Editar" titleId="h-title" onClose={vi.fn()} description={<>Café{null}</>} />,
+    );
+    expect(screen.getByText("Café")).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("undefined");
+
+    rerender(<AdminModalHeader title="Editar" titleId="h-title" onClose={vi.fn()} description="Detalle plano" />);
+    expect(screen.getByText("Detalle plano")).toBeInTheDocument();
+  });
+
+  it("disables the close button only when closeDisabled is set", () => {
+    const onClose = vi.fn();
+    const { rerender } = render(<AdminModalHeader title="Editar" onClose={onClose} />);
+    expect(screen.getByRole("button", { name: "Cerrar" })).toBeEnabled();
+
+    rerender(<AdminModalHeader title="Editar" onClose={onClose} closeDisabled />);
+    const close = screen.getByRole("button", { name: "Cerrar" });
+    expect(close).toBeDisabled();
+    expect(close).toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(close);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("lets the title wrap only when wrapTitle is set", () => {
+    const { rerender } = render(<AdminModalHeader title="Compra 123" />);
+    expect(screen.getByRole("heading", { level: 2 })).toHaveClass("truncate");
+
+    rerender(<AdminModalHeader title="Compra 123" wrapTitle />);
+    const heading = screen.getByRole("heading", { level: 2 });
+    expect(heading).not.toHaveClass("truncate");
+    expect(heading).toHaveClass("break-all");
+  });
+});

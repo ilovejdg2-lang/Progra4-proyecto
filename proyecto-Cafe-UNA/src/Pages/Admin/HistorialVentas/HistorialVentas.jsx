@@ -545,6 +545,7 @@ export default function HistorialVentas({
               icon={Receipt}
               title={<><ST>Compra</ST> {detalle.numero}</>}
               titleId="venta-detalle-title"
+              wrapTitle
               onClose={() => setDetalle(null)}
             />
             <AdminModalBody>
