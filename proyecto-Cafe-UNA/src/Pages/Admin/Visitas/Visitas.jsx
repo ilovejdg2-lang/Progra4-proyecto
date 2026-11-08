@@ -112,7 +112,7 @@ function DetailField({ icon: Icon, label, value, className = "", traducirValor =
 const accionBtnBase =
   "inline-flex items-center justify-center gap-1.5 rounded-full border text-xs font-semibold transition focus-visible:outline-hidden focus-visible:ring-2";
 const verCls = `${accionBtnBase} border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-300`;
-const editarCls = `${accionBtnBase} admin-role-primary`;
+const editarCls = `${accionBtnBase} admin-role-quiet`;
 const btnEstadoBase = `${accionBtnBase} px-3 py-2 disabled:cursor-not-allowed disabled:opacity-50`;
 const btnRevision = `${btnEstadoBase} border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-300`;
 const btnAprobar = `${btnEstadoBase} admin-role-positive`;

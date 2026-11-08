@@ -229,7 +229,7 @@ function AccionesSolicitud({
 }) {
   const esMovil = variant === "mobile";
   const verCls = `${accionBtnBase} border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-300`;
-  const editarCls = `${accionBtnBase} admin-role-primary`;
+  const editarCls = `${accionBtnBase} admin-role-quiet`;
   const eliminarCls = `${accionBtnBase} admin-role-danger`;
 
   if (esMovil) {
