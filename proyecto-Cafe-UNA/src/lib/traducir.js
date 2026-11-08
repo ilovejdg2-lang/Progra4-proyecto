@@ -1341,6 +1341,9 @@ const DICCIONARIO = {
     "You can paste a URL or upload an image from your device. JPG, PNG or WEBP. 10 MB max.",
   "Arrastrá o seleccioná una imagen": "Drag or select an image",
   "Subiendo imagen...": "Uploading image...",
+  "Subir archivo para": "Upload file for",
+  "Banner principal de la página de inicio.": "Main banner of the home page.",
+  "Ruta interna del sitio o URL externa.": "Internal site path or external URL.",
   "URL de la imagen": "Image URL",
   "Ver imagen completa": "View full image",
   "La imagen debe ser JPG, PNG o WEBP.": "The image must be JPG, PNG or WEBP.",
@@ -1754,12 +1757,12 @@ function delDiccionario(texto) {
     const n = mProd[1];
     return Number(n) === 1 ? `${n} product` : `${n} products`;
   }
-  const mEnl = key.match(/^(d+)s+enlaces?$/i);
+  const mEnl = key.match(/^(\d+)\s+enlaces?$/i);
   if (mEnl) {
     const n = mEnl[1];
     return Number(n) === 1 ? `${n} link` : `${n} links`;
   }
-  const mPreg = key.match(/^(d+)s+preguntas?$/i);
+  const mPreg = key.match(/^(\d+)\s+preguntas?$/i);
   if (mPreg) {
     const n = mPreg[1];
     return Number(n) === 1 ? `${n} question` : `${n} questions`;

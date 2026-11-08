@@ -185,9 +185,7 @@ html.admin-theme-dark body.admin-route-active {
 }
 
 /* Scoped Admin Typography Scale (Executive Dashboard Density) */
-body.admin-route-active h1,
-body.admin-route-active .text-2xl,
-body.admin-route-active .text-3xl {
+body.admin-route-active h1:not(.admin-cms-preview h1) {
   font-size: 1.25rem;
   line-height: 1.3;
   letter-spacing: -0.025em;

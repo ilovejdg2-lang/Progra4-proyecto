@@ -193,6 +193,56 @@ describe("Homepage info sections list", () => {
     expect(screen.queryByRole("button", { name: "Editar Portada principal" })).not.toBeInTheDocument();
   });
 
+  it("disables tabs without matches while searching: not clickable and skipped by keyboard navigation", async () => {
+    const user = userEvent.setup();
+    render(<AdminInformacionPaginaPrincipal />);
+
+    // "Pie de página" and "Menú de navegación" live in different tabs; "Navbar" -> navbar tab only.
+    await user.type(screen.getByRole("searchbox"), "Menú de navegación");
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs.map((tab) => tab.getAttribute("aria-disabled"))).toEqual(["true", null, "true"]);
+
+    await user.click(tabs[0]);
+    expect(tabs[0]).toHaveAttribute("aria-selected", "false");
+    expect(tabs[1]).toHaveAttribute("aria-selected", "true");
+
+    tabs[1].focus();
+    for (const key of ["{ArrowRight}", "{ArrowLeft}", "{Home}", "{End}"]) {
+      await user.keyboard(key);
+      expect(tabs[1]).toHaveFocus();
+      expect(tabs[1]).toHaveAttribute("aria-selected", "true");
+    }
+  });
+
+  it("keeps End on the last enabled tab while searching", async () => {
+    const user = userEvent.setup();
+    render(<AdminInformacionPaginaPrincipal />);
+
+    await user.type(screen.getByRole("searchbox"), "navegación");
+    const tabs = screen.getAllByRole("tab");
+    const enabled = tabs.filter((tab) => tab.getAttribute("aria-disabled") !== "true");
+    expect(enabled.length).toBeGreaterThanOrEqual(1);
+    expect(tabs.some((tab) => tab.getAttribute("aria-disabled") === "true")).toBe(true);
+
+    enabled[0].focus();
+    await user.keyboard("{End}");
+    expect(enabled[enabled.length - 1]).toHaveFocus();
+  });
+
+  it("does not match the empty-section placeholder text when searching", async () => {
+    const user = userEvent.setup();
+    render(<AdminInformacionPaginaPrincipal />);
+
+    await user.type(screen.getByRole("searchbox"), "guardado");
+
+    expect(screen.getAllByRole("tab").map((tab) => tab.getAttribute("aria-label"))).toEqual(["Página de inicio (0)", "Barra de navegación (0)", "Pie de página (0)"]);
+  });
+
+  it("leaves every tab enabled when the search is empty", () => {
+    render(<AdminInformacionPaginaPrincipal />);
+    screen.getAllByRole("tab").forEach((tab) => expect(tab).not.toHaveAttribute("aria-disabled", "true"));
+  });
+
   it("restores the full counts when the search is cleared", async () => {
     const user = userEvent.setup();
     render(<AdminInformacionPaginaPrincipal />);

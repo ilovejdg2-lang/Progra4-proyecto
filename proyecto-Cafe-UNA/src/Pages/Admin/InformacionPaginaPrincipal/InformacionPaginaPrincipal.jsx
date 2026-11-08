@@ -371,7 +371,7 @@ function CampoArea({ label, name, value, onChange, rows = 3, required, maxPalabr
  * full title stays the accessible name on every width. Rounded corners are
  * forced with `!` because index.css sets `button { border-radius: ... !important }`.
  */
-function SegmentoSeccion({ grupo, corto, activa, onSeleccionar, onTecla, registrarRef, tabId, panelId }) {
+function SegmentoSeccion({ grupo, corto, activa, deshabilitada = false, onSeleccionar, onTecla, registrarRef, tabId, panelId }) {
   const tTitulo = useTraducir(grupo.titulo);
   return (
     <button
@@ -381,13 +381,16 @@ function SegmentoSeccion({ grupo, corto, activa, onSeleccionar, onTecla, registr
       id={tabId}
       aria-label={`${tTitulo} (${grupo.filas.length})`}
       aria-selected={activa}
+      aria-disabled={deshabilitada ? "true" : undefined}
       aria-controls={panelId}
       tabIndex={activa ? 0 : -1}
-      onClick={onSeleccionar}
+      onClick={deshabilitada ? undefined : onSeleccionar}
       onKeyDown={onTecla}
       className={`inline-flex min-h-[var(--control-height)] min-w-0 items-center justify-center gap-2 rounded-full! border px-2 text-[length:var(--text-body)] transition-colors sm:px-4 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)] ${
         activa
           ? "border-[var(--admin-border)] bg-[var(--admin-segment-active)] font-semibold text-[var(--admin-text-primary)] shadow-sm"
+          : deshabilitada
+          ? "cursor-not-allowed border-transparent font-medium text-[var(--admin-text-muted)] opacity-50"
           : "border-transparent font-medium text-[var(--admin-text-muted)] hover:text-[var(--admin-text-primary)]"
       }`}
     >
@@ -1727,10 +1730,9 @@ function mapSeccionInicio(data) {
   };
 }
 
-function resumenSeccionInicio(data, config) {
-  if (data.title) return data.title;
-  if (data.description) return data.description;
-  return `Sin contenido guardado para "${config.tituloTarjeta}".`;
+/** Saved content only (no placeholder text), used to build the search blob. */
+function contenidoSeccionInicio(data) {
+  return data.title || data.description || "";
 }
 
 function mapTarjetaInicio(item) {
@@ -2092,7 +2094,7 @@ const AdminInformacionPaginaPrincipal = () => {
       busqueda: [
         config.etiqueta,
         config.tituloTarjeta,
-        resumenSeccionInicio(seccionesInicio[clave], config),
+        contenidoSeccionInicio(seccionesInicio[clave]),
       ],
     }));
 
@@ -2140,7 +2142,6 @@ const AdminInformacionPaginaPrincipal = () => {
     resumenFooter,
     resumenEnlacesNavbar,
     resumenEnlacesFooter,
-    productoresHero,
     faqInicio,
   ]);
 
@@ -2258,18 +2259,23 @@ const AdminInformacionPaginaPrincipal = () => {
     return gruposFilas.find((grupo) => grupo.filas.length > 0) || elegido;
   })();
 
+  // While searching, tabs without matches cannot be activated.
+  const tabHabilitada = (grupo) => !busqueda.trim() || grupo.filas.length > 0;
+
   const seleccionarTab = (id, enfocar = false) => {
     setTabActiva(id);
     if (enfocar) tabRefs.current[id]?.focus();
   };
 
   const teclaTab = (event, indice) => {
-    const ultimo = gruposFilas.length - 1;
+    const habilitados = gruposFilas.map((grupo, i) => (tabHabilitada(grupo) ? i : -1)).filter((i) => i >= 0);
+    if (!habilitados.length) return;
+    const pos = habilitados.indexOf(indice);
     const destinos = {
-      ArrowRight: indice === ultimo ? 0 : indice + 1,
-      ArrowLeft: indice === 0 ? ultimo : indice - 1,
-      Home: 0,
-      End: ultimo,
+      ArrowRight: habilitados[(pos + 1) % habilitados.length],
+      ArrowLeft: habilitados[(pos - 1 + habilitados.length) % habilitados.length],
+      Home: habilitados[0],
+      End: habilitados[habilitados.length - 1],
     };
     if (!(event.key in destinos)) return;
     event.preventDefault();
@@ -2313,6 +2319,7 @@ const AdminInformacionPaginaPrincipal = () => {
                     grupo={grupo}
                     corto={TABS_CORTOS[grupo.id]}
                     activa={grupo.id === grupoActivo.id}
+                    deshabilitada={!tabHabilitada(grupo)}
                     onSeleccionar={() => seleccionarTab(grupo.id)}
                     onTecla={(event) => teclaTab(event, indice)}
                     registrarRef={(nodo) => {
