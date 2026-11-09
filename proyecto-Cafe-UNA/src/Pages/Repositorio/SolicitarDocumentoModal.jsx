@@ -282,7 +282,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
             </p>
             <p className="text-xs text-slate-400 max-w-md mx-auto mb-6">
               <ST>
-                No será visible en la página principal ni en el catálogo público hasta contar con la debida aprobación institucional.
+                Si se aprueba, se publicará en el catálogo público del repositorio.
               </ST>
             </p>
             <button
@@ -495,11 +495,11 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                     <div className="radio-content">
                       <span className="radio-title text-amber-800">
                         <Lock size={14} className="text-amber-600 inline mr-1.5" />
-                        <ST>Documento Privado / Bajo Revisión (Por Defecto)</ST>
+                        <ST>Privado durante la revisión, público al aprobarse</ST>
                       </span>
                       <span className="radio-desc text-slate-600">
                         <ST>
-                          Por políticas del repositorio, los archivos se resguardan de forma privada por defecto y NO aparecen en la página principal hasta su validación y autorización administrativa.
+                          El archivo permanece privado mientras el equipo administrativo lo revisa. Si se aprueba, se publicará en el catálogo público del repositorio.
                         </ST>
                       </span>
                     </div>
