@@ -238,7 +238,7 @@ export function GestionFechasVisitas({ esSuperAdmin = false }) {
             <button
               type="button"
               onClick={abrirNuevoSlot}
-              className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition admin-role-primary"
             >
               <Plus className="size-4" />
               Nuevo horario
@@ -362,7 +362,7 @@ export function GestionFechasVisitas({ esSuperAdmin = false }) {
                 <button
                   type="button"
                   onClick={abrirNuevoSlot}
-                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800"
+                  className="border mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold admin-role-quiet"
                 >
                   <Plus className="size-3.5" />
                   Crear primer horario para este día
@@ -410,7 +410,7 @@ export function GestionFechasVisitas({ esSuperAdmin = false }) {
                           className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
                             slot.habilitada
                               ? "border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100"
-                              : "border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                              : "border admin-role-positive"
                           } disabled:opacity-50`}
                           title={slot.habilitada ? "Deshabilitar turno" : "Habilitar turno"}
                         >

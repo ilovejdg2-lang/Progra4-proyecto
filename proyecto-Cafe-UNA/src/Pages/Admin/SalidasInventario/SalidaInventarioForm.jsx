@@ -193,7 +193,7 @@ export function SalidaInventarioForm({
         <button
           type="submit"
           disabled={isSubmitting || productosElegibles.length === 0 || motivosDisponibles.length === 0}
-          className="inline-flex h-[var(--control-height)] items-center justify-center rounded-full bg-slate-950 px-5 text-[length:var(--text-body)] font-semibold text-white transition hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+          className="inline-flex h-[var(--control-height)] items-center justify-center rounded-full px-5 text-[length:var(--text-body)] font-semibold transition focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60 admin-role-primary"
         >
           <ST>{isSubmitting ? "Registrando…" : "Registrar salida"}</ST>
         </button>

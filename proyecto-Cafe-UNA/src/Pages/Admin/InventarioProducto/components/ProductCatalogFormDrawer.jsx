@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
-import { X } from "lucide-react";
+import { Box } from "lucide-react";
 
 import {
   AdminModal,
   AdminModalActions,
   AdminModalBody,
+  AdminModalFooter,
   AdminModalHeader,
-  adminBtnCancel,
-  adminBtnPrimary,
 } from "../../../../Components/Admin/ui/AdminModal";
 import { ST } from "../../../../Components/T/ST";
 import { useTraducir } from "../../../../hooks/useTraducir";
@@ -285,21 +284,14 @@ export function ProductCatalogFormDrawer({
 
   return (
     <AdminModal open onClose={onClose} maxWidth="max-w-xl" labelledBy="admin-product-catalog-form-title">
-      <AdminModalHeader>
-        <h2 id="admin-product-catalog-form-title" className="text-lg font-semibold text-slate-950">
-          {isEditing ? tTituloEditar : tTituloNuevo}
-        </h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-          aria-label={t("Cerrar")}
-        >
-          <X className="size-5" />
-        </button>
-      </AdminModalHeader>
-      <AdminModalBody>
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col" noValidate>
+        <AdminModalHeader
+          icon={Box}
+          title={isEditing ? tTituloEditar : tTituloNuevo}
+          titleId="admin-product-catalog-form-title"
+          onClose={onClose}
+        />
+        <AdminModalBody className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
               <ST>Nombre</ST>
@@ -499,18 +491,16 @@ export function ProductCatalogFormDrawer({
             </p>
           </div>
           {submitError ? <p className={fieldErrorClassName} role="alert" aria-live="assertive"><ST>{submitError}</ST></p> : null}
-          <div className="flex justify-center border-t border-slate-100 pt-4 sm:justify-end">
-            <AdminModalActions
-              className="w-full justify-center sm:w-auto sm:justify-end"
-              primaryClassName={`${adminBtnPrimary.replace("w-full ", "w-auto min-w-[10.5rem] ")}`}
-              cancelClassName={`${adminBtnCancel.replace("w-full ", "w-auto min-w-[10.5rem] ")}`}
-              onCancel={onClose}
-              primaryLabel={isSaving ? tGuardando : isEditing ? tGuardarCambios : tCrearProducto}
-              primaryDisabled={isSaving}
-            />
-          </div>
-        </form>
-      </AdminModalBody>
+        </AdminModalBody>
+        <AdminModalFooter>
+          <AdminModalActions
+            variant="coffee"
+            onCancel={onClose}
+            primaryLabel={isSaving ? tGuardando : isEditing ? tGuardarCambios : tCrearProducto}
+            primaryDisabled={isSaving}
+          />
+        </AdminModalFooter>
+      </form>
     </AdminModal>
   );
 }

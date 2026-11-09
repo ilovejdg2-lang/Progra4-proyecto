@@ -24,6 +24,8 @@ import { obtenerVentas } from "../../../lib/ventasStorage";
 import { tienePermiso, rolesDeUsuario } from "../../../lib/permisos";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { ST } from "../../../Components/T/ST";
+import { AdminPageHeader } from "../../../Components/Admin/ui/AdminPageHeader";
+import { AdminStatLine } from "../../../Components/Admin/ui/AdminStatLine";
 import { t } from "../../../lib/t";
 import { useTraducir } from "../../../hooks/useTraducir";
 
@@ -311,58 +313,49 @@ export default function HistorialVentas({
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
       <AdminLayout>
-        <div className="space-y-4">
+        <div className="space-y-6">
+          <AdminPageHeader
+            title={
+              <ST>
+                {esPendientes
+                  ? "Ventas pendientes de confirmar"
+                  : locationCode
+                    ? `Historial de ventas · ${nombrePunto}`
+                    : esAdmin
+                      ? "Historial de ventas (Todos los vendedores)"
+                      : "Historial de tus puntos de venta"}
+              </ST>
+            }
+            description={
+              <ST>
+                {esPendientes
+                  ? "Revisá cada solicitud web, el cliente que la envió y el comprobante de pago antes de aceptar o rechazar."
+                  : locationCode
+                    ? "Ventas asociadas a este punto de venta, incluyendo compras web y presenciales."
+                    : esAdmin
+                      ? "Supervisión y control de ventas realizadas por todos los vendedores en puntos físicos y web."
+                      : "Ventas de tus puntos asignados y las que registraste personalmente."}
+              </ST>
+            }
+            meta={
+              <AdminStatLine
+                items={[
+                  { label: <ST>Pedidos</ST>, value: total },
+                  { label: <ST>Ganado (enviados en esta página)</ST>, value: formatCRC(ganadoTotal) },
+                ]}
+              />
+            }
+            actions={
+              !esAdmin ? (
+                <span className="inline-flex max-w-full items-center gap-1.5 self-start rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
+                  <span className="break-all">{user?.nombre || user?.correo || "Vendedor"}</span>
+                </span>
+              ) : null
+            }
+          />
+          {error ? <p className="text-[length:var(--text-body)] text-amber-700 no-underline"><ST>{error}</ST></p> : null}
+
           <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div>
-                  <h1 className="text-[length:var(--text-title)] font-semibold text-slate-900">
-                    <ST>
-                      {esPendientes
-                        ? "Ventas pendientes de confirmar"
-                        : locationCode
-                          ? `Historial de ventas · ${nombrePunto}`
-                          : esAdmin
-                            ? "Historial de ventas (Todos los vendedores)"
-                            : "Historial de tus puntos de venta"}
-                    </ST>
-                  </h1>
-                  <p className="mt-1 text-[length:var(--text-body)] text-slate-500">
-                    <ST>
-                      {esPendientes
-                        ? "Revisá cada solicitud web, el cliente que la envió y el comprobante de pago antes de aceptar o rechazar."
-                        : locationCode
-                          ? "Ventas asociadas a este punto de venta, incluyendo compras web y presenciales."
-                          : esAdmin
-                            ? "Supervisión y control de ventas realizadas por todos los vendedores en puntos físicos y web."
-                            : "Ventas de tus puntos asignados y las que registraste personalmente."}
-                    </ST>
-                  </p>
-                </div>
-                {!esAdmin ? (
-                  <span className="inline-flex max-w-full items-center gap-1.5 self-start rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
-                    <span className="break-all">{user?.nombre || user?.correo || "Vendedor"}</span>
-                  </span>
-                ) : null}
-              </div>
-              {error ? <p className="mt-2 text-[length:var(--text-body)] text-amber-700 no-underline"><ST>{error}</ST></p> : null}
-            </div>
-
-            <div className="grid gap-3 border-b border-slate-100 px-4 py-4 sm:grid-cols-3 sm:px-6">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="break-words text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500"><ST>Pedidos</ST></p>
-                <p className="mt-1 text-[length:var(--text-subtitle)] font-semibold text-slate-950">{total}</p>
-              </div>
-              <div className="rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 sm:col-span-2">
-                <p className="break-words text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-700">
-                  <ST>Ganado (enviados en esta página)</ST>
-                </p>
-                <p className="mt-1 text-[length:var(--text-subtitle)] font-semibold text-slate-900">
-                  {formatCRC(ganadoTotal)}
-                </p>
-              </div>
-            </div>
-
             <AdminListaToolbar
               busqueda={filtros.busqueda}
               onBusquedaChange={(valor) => {
@@ -472,15 +465,15 @@ export default function HistorialVentas({
                   </li>
                 ))}
               </ul>
-              <div className="admin-table-shell hidden md:block">
+              <div className="admin-table-shell admin-table-shell--aligned hidden md:block">
                 <table className="w-full text-left text-[length:var(--text-body)]">
                   <thead>
                     <tr>
                       <th><ST>Recibo</ST></th>
                       <th><ST>Fecha</ST></th>
                       <th><ST>Cliente</ST></th>
-                      <th><ST>Productos</ST></th>
-                      <th><ST>Total</ST></th>
+                      <th className="text-right"><ST>Productos</ST></th>
+                      <th className="text-right"><ST>Total</ST></th>
                       <th><ST>Estado</ST></th>
                       <th><ST>Acciones</ST></th>
                     </tr>
@@ -505,8 +498,8 @@ export default function HistorialVentas({
                             </p>
                           ) : null}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-slate-700">{compra.cantidadProductos}</td>
-                        <td className="whitespace-nowrap px-4 py-3 text-slate-800">{formatCRC(compra.total)}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-slate-700">{compra.cantidadProductos}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-slate-800">{formatCRC(compra.total)}</td>
                         <td className="whitespace-nowrap px-4 py-3">
                           <BadgeEstadoCompra estado={compra.estado} />
                         </td>
@@ -541,14 +534,13 @@ export default function HistorialVentas({
 
         {detalle ? (
           <AdminModal open onClose={() => setDetalle(null)} maxWidth="max-w-xl" labelledBy="venta-detalle-title">
-            <AdminModalHeader>
-              <h2 id="venta-detalle-title" className="break-all text-[length:var(--text-subtitle)] font-semibold text-slate-900">
-                <ST>Compra</ST> {detalle.numero}
-              </h2>
-              <button type="button" onClick={() => setDetalle(null)} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100" aria-label={t("Cerrar")}>
-                <X className="size-5" />
-              </button>
-            </AdminModalHeader>
+            <AdminModalHeader
+              icon={Receipt}
+              title={<><ST>Compra</ST> {detalle.numero}</>}
+              titleId="venta-detalle-title"
+              wrapTitle
+              onClose={() => setDetalle(null)}
+            />
             <AdminModalBody>
               {actionError ? (
                 <p className="mb-3 text-[length:var(--text-body)] text-rose-700 no-underline" role="alert"><ST>{actionError}</ST></p>

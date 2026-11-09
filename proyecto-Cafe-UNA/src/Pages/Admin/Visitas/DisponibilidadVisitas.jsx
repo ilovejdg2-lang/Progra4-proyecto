@@ -129,7 +129,7 @@ export function DisponibilidadVisitas() {
             <h2 className="text-xl font-bold text-slate-950">Fechas y horarios disponibles</h2>
             <p className="mt-1 text-sm text-slate-600">Publicá los únicos horarios que podrán elegir los grupos.</p>
           </div>
-          <button className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-slate-950 px-4 font-semibold text-white" onClick={openNew} type="button">
+          <button className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full px-4 font-semibold admin-role-primary" onClick={openNew} type="button">
             <Plus size={16} aria-hidden="true" /> Nuevo horario
           </button>
         </header>
@@ -154,7 +154,7 @@ export function DisponibilidadVisitas() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex justify-center gap-2">
-                        <button aria-label={`Editar horario ${slot.id}`} className="inline-flex min-h-9 items-center gap-1 rounded-full bg-slate-950 px-3 font-semibold text-white" onClick={() => openEdit(slot)} type="button">
+                        <button aria-label={`Editar horario ${slot.id}`} className="border inline-flex min-h-9 items-center gap-1 rounded-full px-3 font-semibold admin-role-quiet" onClick={() => openEdit(slot)} type="button">
                           <Pencil size={14} aria-hidden="true" /> Editar
                         </button>
                         <button aria-label={`${slot.habilitada ? "Inactivar" : "Activar"} horario ${slot.id}`} className="inline-flex min-h-9 items-center gap-1 rounded-full border border-slate-300 px-3 font-semibold text-slate-700 disabled:opacity-60" disabled={busyId === slot.id} onClick={() => toggle(slot)} type="button">

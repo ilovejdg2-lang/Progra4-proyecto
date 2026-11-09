@@ -112,13 +112,13 @@ function DetailField({ icon: Icon, label, value, className = "", traducirValor =
 const accionBtnBase =
   "inline-flex items-center justify-center gap-1.5 rounded-full border text-xs font-semibold transition focus-visible:outline-hidden focus-visible:ring-2";
 const verCls = `${accionBtnBase} border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-300`;
-const editarCls = `${accionBtnBase} border-slate-950 bg-slate-950 text-white hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 focus-visible:ring-slate-400`;
+const editarCls = `${accionBtnBase} admin-role-quiet`;
 const btnEstadoBase = `${accionBtnBase} px-3 py-2 disabled:cursor-not-allowed disabled:opacity-50`;
 const btnRevision = `${btnEstadoBase} border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-300`;
-const btnAprobar = `${btnEstadoBase} border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300`;
-const btnRechazar = `${btnEstadoBase} border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300`;
+const btnAprobar = `${btnEstadoBase} admin-role-positive`;
+const btnRechazar = `${btnEstadoBase} admin-role-danger`;
 const btnInactivar = `${btnEstadoBase} border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus-visible:ring-slate-300`;
-const btnNegro = `${accionBtnBase} px-4 py-2 border-slate-950 bg-slate-950 text-white hover:border-neutral-700 hover:bg-neutral-700 active:border-neutral-700 active:bg-neutral-700 focus-visible:ring-slate-400 disabled:opacity-50`;
+const btnNegro = `${accionBtnBase} px-4 py-2 disabled:opacity-50 admin-role-primary`;
 const btnCancelarGris = `${accionBtnBase} px-4 py-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-300`;
 
 function ModalDetalleVisita({ solicitud, onGuardar, onInactivar, onCerrar }) {

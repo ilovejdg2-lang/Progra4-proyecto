@@ -9,6 +9,7 @@ import {
   Printer,
   RefreshCw,
   Search,
+  ShoppingBag,
   ShoppingCart,
   Store,
   Trash2,
@@ -19,7 +20,10 @@ import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import {
   AdminModal,
   AdminModalBody,
+  AdminModalFooter,
   AdminModalHeader,
+  adminBtnCoffeePrimary,
+  adminBtnQuiet,
 } from "../../../Components/Admin/ui/AdminModal";
 import { UiSelect } from "../../../Components/ui/Select";
 import { AdminLayout } from "../layouts/AdminLayout";
@@ -29,6 +33,7 @@ import { listarCatalogo, TIPOS_CATALOGO } from "../../../services/catalogosServi
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
 import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
 import { ST } from "../../../Components/T/ST";
+import { AdminPageHeader } from "../../../Components/Admin/ui/AdminPageHeader";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
 import { obtenerCatalogoProductos, obtenerStockPorUbicacion } from "../../../services/productosService";
@@ -521,14 +526,10 @@ export default function AdminVentasPresenciales() {
       <AdminLayout>
         <div className="space-y-6 pb-12">
           {/* Encabezado principal */}
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950">
-              <ST>Registrar Venta Física</ST>
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              <ST>Punto de venta para vendedores · Descuento automático de inventario</ST>
-            </p>
-          </div>
+          <AdminPageHeader
+            title={<ST>Registrar Venta Física</ST>}
+            description={<ST>Punto de venta para vendedores · Descuento automático de inventario</ST>}
+          />
 
           {loadError ? (
             <div
@@ -612,7 +613,7 @@ export default function AdminVentasPresenciales() {
                           onClick={() => setCategoriaSeleccionada(cat)}
                           className={`rounded-full px-4 py-2 font-bold transition whitespace-nowrap ${
                             activa
-                              ? "bg-black text-white shadow-xs hover:bg-neutral-900 border border-black"
+                              ? "border admin-role-selected"
                               : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-transparent"
                           }`}
                         >
@@ -738,42 +739,33 @@ export default function AdminVentasPresenciales() {
             <div className="lg:col-span-5 xl:col-span-4">
               <div
                 style={{ borderRadius: "16px" }}
-                className="sticky top-4 overflow-hidden border border-slate-200/90 bg-white shadow-sm"
+                className="admin-role-surface sticky top-4 overflow-hidden border shadow-sm"
               >
-                {/* Cabecera del Carrito en Color Negro con Tipografía Nítida */}
+                {/* Cabecera del Carrito: superficie quieta con tokens (sin negro) */}
                 <div
-                  style={{ backgroundColor: "#000000", color: "#ffffff" }}
-                  className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800 px-4 py-4 sm:px-5"
+                  className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--admin-border)] bg-[var(--admin-surface-hover)] px-4 py-4 text-[color:var(--admin-text-primary)] sm:px-5"
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      style={{ backgroundColor: "rgba(255, 255, 255, 0.12)", color: "#ffffff" }}
-                      className="flex size-9 items-center justify-center rounded-xl shadow-inner"
+                      className="admin-role-selected flex size-9 items-center justify-center rounded-xl border"
                     >
-                      <ShoppingCart className="size-5" style={{ color: "#ffffff" }} aria-hidden="true" />
+                      <ShoppingCart className="size-5" aria-hidden="true" />
                     </div>
                     <div>
                       <h2
-                        style={{ color: "#ffffff" }}
-                        className="text-[18px] font-extrabold tracking-tight font-sans leading-none m-0"
+                        className="text-[color:var(--admin-text-primary)]! text-[18px] font-extrabold tracking-tight font-sans leading-none m-0"
                       >
                         <ST>Carrito</ST>
                       </h2>
                       <p
-                        style={{ color: "#9ca3af" }}
-                        className="text-[11px] font-medium leading-none mt-1"
+                        className="text-[11px] font-medium leading-none mt-1 text-[color:var(--admin-text-muted)]"
                       >
                         <ST>Resumen de venta</ST>
                       </p>
                     </div>
                   </div>
                   <span
-                    style={{
-                      backgroundColor: "rgba(255, 255, 255, 0.15)",
-                      color: "#ffffff",
-                      borderColor: "rgba(255, 255, 255, 0.25)",
-                    }}
-                    className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold tracking-normal border"
+                    className="admin-role-surface inline-flex items-center rounded-full px-3 py-1 text-xs font-bold tracking-normal border"
                   >
                     {totalItemsCount} {t("ítem(s)")}
                   </span>
@@ -782,12 +774,12 @@ export default function AdminVentasPresenciales() {
                 {/* Lista de productos en Carrito */}
                 <div className="p-4 sm:p-5 space-y-4">
                   {carrito.length === 0 ? (
-                    <div className="py-10 text-center text-slate-400 space-y-2">
+                    <div className="py-10 text-center text-[color:var(--admin-text-muted)] space-y-2">
                       <ShoppingCart className="mx-auto size-10 opacity-30 stroke-1" />
                       <p className="text-xs font-medium text-slate-500">
                         <ST>El carrito está vacío</ST>
                       </p>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-[color:var(--admin-text-muted)]">
                         <ST>Haz clic en los productos para agregarlos a la venta</ST>
                       </p>
                     </div>
@@ -812,7 +804,7 @@ export default function AdminVentasPresenciales() {
                               <button
                                 type="button"
                                 onClick={() => modificarCantidadCarrito(item.productoId, -1)}
-                                className="size-9 rounded-full flex items-center justify-center text-slate-700 hover:bg-black hover:text-white transition active:scale-95"
+                                className="size-9 rounded-full flex items-center justify-center text-slate-700 hover:bg-[var(--admin-surface-hover)] hover:text-[color:var(--admin-text-primary)] transition active:scale-95"
                                 title={t("Disminuir")}
                                 aria-label={t("Disminuir")}
                               >
@@ -824,7 +816,7 @@ export default function AdminVentasPresenciales() {
                               <button
                                 type="button"
                                 onClick={() => modificarCantidadCarrito(item.productoId, 1)}
-                                className="size-9 rounded-full flex items-center justify-center text-slate-700 hover:bg-black hover:text-white transition active:scale-95"
+                                className="size-9 rounded-full flex items-center justify-center text-slate-700 hover:bg-[var(--admin-surface-hover)] hover:text-[color:var(--admin-text-primary)] transition active:scale-95"
                                 title={t("Aumentar")}
                                 aria-label={t("Aumentar")}
                               >
@@ -903,7 +895,7 @@ export default function AdminVentasPresenciales() {
                             type="checkbox"
                             checked={enviarCorreo}
                             onChange={(e) => setEnviarCorreo(e.target.checked)}
-                            className="mt-0.5 rounded text-black focus:ring-black size-3.5 shrink-0"
+                            className="mt-0.5 rounded accent-[var(--admin-accent-coffee)] focus:ring-[var(--admin-focus-ring)] size-3.5 shrink-0"
                           />
                           <span className="text-[11px] font-medium leading-snug text-slate-600">
                             <ST>Enviar comprobante automáticamente al registrar</ST>
@@ -917,7 +909,7 @@ export default function AdminVentasPresenciales() {
                       <span className="text-sm font-semibold text-slate-700">
                         <ST>Total</ST>
                       </span>
-                      <span className="text-2xl font-black text-black">
+                      <span className="text-2xl font-black text-[color:var(--admin-text-primary)]">
                         {formatearColones(totalCarrito)}
                       </span>
                     </div>
@@ -934,7 +926,7 @@ export default function AdminVentasPresenciales() {
                         (esEfectivo(metodoPago) && !calcularVuelto(totalCarrito, montoRecibido).suficiente)
                       }
                       onClick={registrarVenta}
-                      className="w-full mt-2 rounded-2xl bg-black py-3.5 text-sm font-bold text-white shadow-sm hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-40 transition active:scale-[0.99] flex items-center justify-center gap-2"
+                      className="w-full mt-2 rounded-2xl py-3.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40 transition active:scale-[0.99] flex items-center justify-center gap-2 admin-role-primary"
                     >
                       {isSaving ? (
                         <>
@@ -971,16 +963,12 @@ export default function AdminVentasPresenciales() {
             maxWidth="max-w-lg"
             labelledBy="resumen-compra-title"
           >
-            <AdminModalHeader onClose={() => setModalResumenOpen(false)}>
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                  <CheckCircle2 className="size-5" />
-                </div>
-                <h2 id="resumen-compra-title" className="min-w-0 text-base font-bold text-slate-950 sm:text-lg">
-                  <ST>Resumen de Compra</ST>
-                </h2>
-              </div>
-            </AdminModalHeader>
+            <AdminModalHeader
+              icon={ShoppingBag}
+              title={<ST>Resumen de Compra</ST>}
+              titleId="resumen-compra-title"
+              onClose={() => setModalResumenOpen(false)}
+            />
 
             <AdminModalBody>
               <div className="space-y-4">
@@ -1021,7 +1009,7 @@ export default function AdminVentasPresenciales() {
 
                     {/* Tabla de ítems */}
                     <div className="space-y-2 border-b border-dashed border-slate-200 pb-3">
-                      <div className="flex justify-between gap-3 font-bold text-slate-400 text-[10px] uppercase tracking-wider">
+                      <div className="flex justify-between gap-3 font-bold text-[color:var(--admin-text-muted)] text-[10px] uppercase tracking-wider">
                         <span>Cant. / Detalle</span>
                         <span className="text-right">Subtotal</span>
                       </div>
@@ -1030,7 +1018,7 @@ export default function AdminVentasPresenciales() {
                           <div className="min-w-0 flex-1">
                             <span className="font-bold text-slate-900 mr-1.5">{it.cantidad}×</span>
                             <span className="break-words font-medium text-slate-700"><ST>{it.productoNombre}</ST></span>
-                            <div className="text-[10px] text-slate-400">
+                            <div className="text-[10px] text-[color:var(--admin-text-muted)]">
                               {formatearColones(it.precioUnitario)} c/u
                             </div>
                           </div>
@@ -1054,17 +1042,17 @@ export default function AdminVentasPresenciales() {
                     </div>
 
                     {/* Total destacado */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-black px-4 py-3 text-white shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl px-4 py-3 admin-role-primary">
                       <div className="min-w-0">
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-neutral-400 block">Total Pagado</span>
-                        <span className="text-[10px] text-neutral-400">CRC - Colones</span>
+                        <span className="text-[10px] uppercase font-bold tracking-widest block opacity-80">Total Pagado</span>
+                        <span className="text-[10px] opacity-80">CRC - Colones</span>
                       </div>
-                      <span className="text-lg font-extrabold tracking-tight text-white font-mono sm:text-xl">
+                      <span className="text-lg font-extrabold tracking-tight font-mono sm:text-xl">
                         {formatearColones(resumenVenta.total)}
                       </span>
                     </div>
 
-                    <div className="text-center pt-1 text-[10px] text-slate-400">
+                    <div className="text-center pt-1 text-[10px] text-[color:var(--admin-text-muted)]">
                       <p>¡Gracias por apoyar el café universitario!</p>
                       <p className="font-mono tracking-widest text-[9px] text-slate-300 mt-1">|||| | ||| || |||||| | |||</p>
                     </div>
@@ -1077,7 +1065,7 @@ export default function AdminVentasPresenciales() {
                   className="min-w-0 space-y-2 border border-slate-200 bg-slate-50 p-3 text-xs sm:p-4"
                 >
                   <div className="flex items-start gap-1.5 font-bold text-slate-950">
-                    <Mail className="mt-0.5 size-4 shrink-0 text-black" />
+                    <Mail className="mt-0.5 size-4 shrink-0 text-[color:var(--admin-text-primary)]" />
                     <ST>Enviar comprobante por correo al cliente</ST>
                   </div>
                   <p className="text-[11px] leading-snug text-slate-600">
@@ -1097,7 +1085,7 @@ export default function AdminVentasPresenciales() {
                       type="button"
                       disabled={isEnviandoCorreoModal || !correoResumenInput}
                       onClick={handleEnviarCorreoModal}
-                      className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-full bg-black px-4 text-sm font-bold text-white transition hover:bg-neutral-900 disabled:opacity-50 sm:h-10 sm:w-auto sm:shrink-0 sm:text-xs"
+                      className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-bold transition disabled:opacity-50 sm:h-10 sm:w-auto sm:shrink-0 sm:text-xs admin-role-primary"
                     >
                       {isEnviandoCorreoModal ? (
                         <RefreshCw className="size-3.5 animate-spin" />
@@ -1112,8 +1100,8 @@ export default function AdminVentasPresenciales() {
                     <div
                       className={`text-[11px] font-medium rounded-lg px-2.5 py-1.5 flex items-center gap-1.5 ${
                         mensajeCorreoModal.tipo === "success"
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-red-100 text-red-800"
+                          ? "admin-status-success"
+                          : "admin-status-danger"
                       }`}
                     >
                       {mensajeCorreoModal.tipo === "success" ? (
@@ -1125,28 +1113,23 @@ export default function AdminVentasPresenciales() {
                     </div>
                   ) : null}
                 </div>
-
-                {/* Botones de acción del Modal (Botones Negros) */}
-                <div className="flex flex-col gap-2 pt-2 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={imprimirTicket}
-                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-normal rounded-full border-2 border-black bg-white px-4 py-2.5 text-center text-sm font-bold text-black transition hover:bg-black hover:text-white sm:min-h-10 sm:flex-1 sm:text-xs"
-                  >
-                    <Printer className="size-4 shrink-0" />
-                    <span><ST>Imprimir comprobante</ST></span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setModalResumenOpen(false)}
-                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-normal rounded-full bg-black px-4 py-2.5 text-center text-sm font-bold text-white transition hover:bg-neutral-900 sm:min-h-10 sm:flex-1 sm:text-xs"
-                  >
-                    <ST>Nueva venta</ST>
-                  </button>
-                </div>
               </div>
             </AdminModalBody>
+            <AdminModalFooter>
+              <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <button type="button" onClick={imprimirTicket} className={`${adminBtnQuiet} w-full sm:w-auto`}>
+                  <Printer className="size-4 shrink-0" aria-hidden="true" />
+                  <span><ST>Imprimir comprobante</ST></span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalResumenOpen(false)}
+                  className={adminBtnCoffeePrimary}
+                >
+                  <ST>Nueva venta</ST>
+                </button>
+              </div>
+            </AdminModalFooter>
           </AdminModal>
         ) : null}
       </AdminLayout>

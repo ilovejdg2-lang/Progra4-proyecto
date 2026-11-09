@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
-import { Store, X } from "lucide-react";
+import { Store } from "lucide-react";
 
 import {
   AdminModal,
   AdminModalActions,
   AdminModalBody,
+  AdminModalFooter,
   AdminModalHeader,
 } from "../../../../Components/Admin/ui/AdminModal";
 import { ST } from "../../../../Components/T/ST";
 import { useTraducir } from "../../../../hooks/useTraducir";
-import { t } from "../../../../lib/t";
 import { useIdioma } from "../../../../lib/useIdioma";
 import {
   mensajeDireccionPunto,
@@ -38,7 +38,6 @@ export function PointOfSaleLocationEditor({
   const { idioma } = useIdioma();
   const tEditar = useTraducir("Editar punto de venta");
   const tAgregar = useTraducir("Agregar punto de venta");
-  const tHint = useTraducir("Bodega Central no se modifica desde aquí.");
   const [nombre, setNombre] = useState("");
   const [codigo, setCodigo] = useState("");
   const [direccion, setDireccion] = useState("");
@@ -144,31 +143,15 @@ export function PointOfSaleLocationEditor({
 
   return (
     <AdminModal open onClose={onClose} maxWidth="max-w-2xl" labelledBy="pos-location-editor-title">
-      <AdminModalHeader>
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-            <Store className="size-5" aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <h2 id="pos-location-editor-title" className="truncate text-lg font-semibold text-slate-950">
-              {isEdit ? tEditar : tAgregar}
-            </h2>
-            <p className="break-all text-sm text-slate-500">
-              {isEdit ? location.code : tHint}
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-          aria-label={t("Cerrar editor de punto de venta")}
-        >
-          <X className="size-5" aria-hidden="true" />
-        </button>
-      </AdminModalHeader>
-      <AdminModalBody>
-        <form onSubmit={handleSubmit} className="min-w-0 space-y-5" noValidate>
+      <form onSubmit={handleSubmit} className="flex min-h-0 min-w-0 flex-1 flex-col" noValidate>
+        <AdminModalHeader
+          icon={Store}
+          title={isEdit ? tEditar : tAgregar}
+          titleId="pos-location-editor-title"
+          description={isEdit ? location.code : "Bodega Central no se modifica desde aquí."}
+          onClose={onClose}
+        />
+        <AdminModalBody className="min-w-0 space-y-5">
           <label className="grid gap-2 text-sm font-medium text-slate-700">
             <ST>Nombre</ST>
             <input
@@ -329,16 +312,16 @@ export function PointOfSaleLocationEditor({
               <ST>{message}</ST>
             </p>
           ) : null}
-          <div className="border-t border-slate-100 pt-4">
-            <AdminModalActions
-              className="flex-col sm:flex-row"
-              onCancel={onClose}
-              primaryLabel={isSaving ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear punto"}
-              primaryDisabled={isSaving}
-            />
-          </div>
-        </form>
-      </AdminModalBody>
+        </AdminModalBody>
+        <AdminModalFooter>
+          <AdminModalActions
+            variant="coffee"
+            onCancel={onClose}
+            primaryLabel={isSaving ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear punto"}
+            primaryDisabled={isSaving}
+          />
+        </AdminModalFooter>
+      </form>
     </AdminModal>
   );
 }

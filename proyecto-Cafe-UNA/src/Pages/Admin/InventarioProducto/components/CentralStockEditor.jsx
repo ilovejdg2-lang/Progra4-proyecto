@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Package, X } from "lucide-react";
+import { Package } from "lucide-react";
 
 import {
   AdminModal,
   AdminModalActions,
   AdminModalBody,
+  AdminModalFooter,
   AdminModalHeader,
 } from "../../../../Components/Admin/ui/AdminModal";
 import { NumericInput } from "../../../../Components/NumericInput/NumericInput";
@@ -13,7 +14,6 @@ import { sanitizeUserFacingError } from "../../../../lib/formLimits";
 import { ProductLocationStockPanel } from "./ProductLocationStockPanel";
 import { ST } from "../../../../Components/T/ST";
 import { useTraducir } from "../../../../hooks/useTraducir";
-import { t } from "../../../../lib/t";
 
 const MAX_STOCK = 2147483647;
 
@@ -83,30 +83,16 @@ export function CentralStockEditor({
 
   return (
     <AdminModal open onClose={onClose} maxWidth="max-w-xl" labelledBy="central-stock-editor-title">
-      <AdminModalHeader>
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-            <Package className="size-5" aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <h2 id="central-stock-editor-title" className="truncate text-lg font-semibold text-slate-950">
-              {tTitulo}
-            </h2>
-            <p className="truncate text-sm text-slate-500">{product?.nombre || tProducto}</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-          aria-label={t("Cerrar editor de stock central")}
-        >
-          <X className="size-5" aria-hidden="true" />
-        </button>
-      </AdminModalHeader>
+      <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col" noValidate>
+        <AdminModalHeader
+          icon={Package}
+          title={tTitulo}
+          titleId="central-stock-editor-title"
+          description={product?.nombre || tProducto}
+          onClose={onClose}
+        />
 
-      <AdminModalBody>
-        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        <AdminModalBody className="space-y-5">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500"><ST>Ubicación</ST></p>
             <p className="mt-1 text-sm font-semibold text-slate-900"><ST>Bodega Central</ST></p>
@@ -151,16 +137,16 @@ export function CentralStockEditor({
             refreshKey={product?.id || ""}
           />
 
-          <div className="border-t border-slate-100 pt-4">
-            <AdminModalActions
-              className="w-full justify-start"
-              onCancel={onClose}
-              primaryLabel={isSaving ? tGuardando : tGuardarStock}
-              primaryDisabled={isSaving}
-            />
-          </div>
-        </form>
-      </AdminModalBody>
+        </AdminModalBody>
+        <AdminModalFooter>
+          <AdminModalActions
+            variant="coffee"
+            onCancel={onClose}
+            primaryLabel={isSaving ? tGuardando : tGuardarStock}
+            primaryDisabled={isSaving}
+          />
+        </AdminModalFooter>
+      </form>
     </AdminModal>
   );
 }

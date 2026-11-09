@@ -50,9 +50,20 @@ export function AdminModal({
  * structured layout: icon + title + muted subtitle on the left, close button on the right.
  * Without `title`, `children` render as before.
  */
-export function AdminModalHeader({ children, className, onClose, icon: Icon, title, titleId, description }) {
+export function AdminModalHeader({
+  children,
+  className,
+  onClose,
+  icon: Icon,
+  title,
+  titleId,
+  description,
+  closeDisabled = false,
+  wrapTitle = false,
+}) {
   const tCerrar = useTraducir("Cerrar");
-  const tDescription = useTraducir(description || "");
+  const descriptionIsText = typeof description === "string";
+  const tDescription = useTraducir(descriptionIsText ? description : "");
   return (
     <header
       className={cn(
@@ -66,11 +77,17 @@ export function AdminModalHeader({ children, className, onClose, icon: Icon, tit
             <Icon size={20} strokeWidth={1.75} className="shrink-0 text-[var(--admin-accent-coffee)]" aria-hidden="true" />
           ) : null}
           <div className="min-w-0 flex-1">
-            <h2 id={titleId} className="truncate text-[length:var(--text-subtitle)] font-bold leading-tight text-slate-950">
+            <h2
+              id={titleId}
+              className={cn(
+                "text-[length:var(--text-subtitle)] font-bold leading-tight text-slate-950",
+                wrapTitle ? "break-all" : "truncate",
+              )}
+            >
               {title}
             </h2>
             {description ? (
-              <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-[var(--admin-text-muted)]">{tDescription}</p>
+              <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-[var(--admin-text-muted)]">{descriptionIsText ? tDescription : description}</p>
             ) : null}
           </div>
         </div>
@@ -81,8 +98,10 @@ export function AdminModalHeader({ children, className, onClose, icon: Icon, tit
         <button
           type="button"
           onClick={onClose}
+          disabled={closeDisabled}
+          aria-disabled={closeDisabled ? "true" : undefined}
           aria-label={tCerrar}
-          className="inline-flex size-[var(--control-height)] shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]"
+          className="inline-flex size-[var(--control-height)] shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]"
         >
           <X size={20} strokeWidth={2.4} aria-hidden="true" />
         </button>
@@ -127,6 +146,9 @@ export const adminBtnCoffeePrimary = `inline-flex min-h-[var(--control-height)] 
 
 export const adminBtnCoffeeCancel = `inline-flex min-h-[var(--control-height)] w-full items-center justify-center rounded-full border border-[var(--admin-border-input)] bg-transparent px-5 text-[length:var(--text-body)] font-semibold text-[var(--admin-text-muted)] transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${focusRingCls}`;
 
+// Filled danger is reserved for the confirmation of a destructive action inside a modal.
+export const adminBtnDangerPrimary = `inline-flex min-h-[var(--control-height)] w-full items-center justify-center rounded-full border border-[var(--admin-status-danger-text)] bg-[var(--admin-status-danger-text)] px-5 text-[length:var(--text-body)] font-bold text-[color:var(--admin-surface)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${focusRingCls}`;
+
 // Quiet secondary action (outline, muted text, coffee on hover).
 export const adminBtnQuiet = `inline-flex min-h-[var(--control-height)] items-center justify-center gap-1.5 rounded-full border border-[var(--admin-border-input)] bg-transparent px-4 text-[length:var(--text-body)] font-semibold text-[var(--admin-text-muted)] transition-colors hover:border-[var(--admin-accent-coffee)] hover:text-[var(--admin-accent-coffee)] disabled:cursor-not-allowed disabled:opacity-60 ${focusRingCls}`;
 
@@ -148,6 +170,7 @@ export function AdminModalActions({
   cancelLabel = "Cancelar",
   primaryLabel,
   primaryDisabled = false,
+  cancelDisabled = false,
   primaryType = "submit",
   onPrimary,
   primaryClassName,
@@ -164,7 +187,12 @@ export function AdminModalActions({
     // DOM order is Cancelar then primary: left/right on desktop, primary on top when stacked on mobile.
     return (
       <div className={cn("flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3", className)}>
-        <button type="button" onClick={onCancel} className={cancelClassName || adminBtnCoffeeCancel}>
+        <button
+          type="button"
+          disabled={cancelDisabled}
+          onClick={onCancel}
+          className={cancelClassName || adminBtnCoffeeCancel}
+        >
           {tCancel}
         </button>
         <button

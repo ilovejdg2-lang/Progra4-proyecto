@@ -109,7 +109,9 @@ html.admin-theme-dark body.admin-route-active .bg-blue-50 {
 
 html.admin-theme-dark body.admin-route-active .bg-emerald-50,
 html.admin-theme-dark body.admin-route-active .bg-emerald-100,
-html.admin-theme-dark body.admin-route-active .bg-green-50 {
+html.admin-theme-dark body.admin-route-active .bg-green-50,
+html.admin-theme-dark body.admin-route-active .hover\:bg-emerald-50:hover,
+html.admin-theme-dark body.admin-route-active .hover\:bg-emerald-100:hover {
   background-color: rgba(6, 78, 59, 0.4) !important;
 }
 
@@ -491,7 +493,9 @@ html.admin-theme-dark body.admin-route-active .bg-green-100 {
 
 html.admin-theme-dark body.admin-route-active .text-green-600,
 html.admin-theme-dark body.admin-route-active .text-green-700,
-html.admin-theme-dark body.admin-route-active .text-green-800 {
+html.admin-theme-dark body.admin-route-active .text-green-800,
+html.admin-theme-dark body.admin-route-active .text-emerald-600,
+html.admin-theme-dark body.admin-route-active .text-emerald-700 {
   color: #6ee7b7 !important;
 }
 

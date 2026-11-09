@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, FileSpreadsheet, History } from "lucide-react";
+import { Download, FileSpreadsheet } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
@@ -18,6 +18,7 @@ import {
 } from "../../../lib/exportarHistorialMovimientos";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { ST } from "../../../Components/T/ST";
+import { AdminPageHeader } from "../../../Components/Admin/ui/AdminPageHeader";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
 
@@ -249,16 +250,11 @@ export default function AdminHistorialMovimientos() {
 
   return (
     <AdminLayout>
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-6">
-          <h1 className="inline-flex items-center gap-2 text-[length:var(--text-title)] font-semibold text-slate-900">
-            <History className="size-5" aria-hidden="true" />
-            <ST>Historial de movimientos</ST>
-          </h1>
-          <p className="mt-1 text-[length:var(--text-body)] text-slate-500">
-            <ST>Consulta de entradas, transferencias y ventas. Solo lectura.</ST>
-          </p>
-        </header>
+      <div className="min-w-0 space-y-6">
+        <AdminPageHeader
+          title={<ST>Historial de movimientos</ST>}
+          description={<ST>Consulta de entradas, transferencias y ventas. Solo lectura.</ST>}
+        />
 
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
           <AdminListaToolbar
@@ -277,7 +273,7 @@ export default function AdminHistorialMovimientos() {
                   type="button"
                   disabled={Boolean(exportando)}
                   onClick={() => exportar("csv")}
-                  className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                  className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full! border border-[var(--admin-border-input)] bg-[var(--admin-surface)] px-4 text-[length:var(--text-body)] font-semibold text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] disabled:opacity-50"
                 >
                   <FileSpreadsheet className="size-4" aria-hidden="true" />
                   <ST>{exportando === "csv" ? "Generando archivo..." : "Exportar CSV"}</ST>
@@ -286,7 +282,7 @@ export default function AdminHistorialMovimientos() {
                   type="button"
                   disabled={Boolean(exportando)}
                   onClick={() => exportar("pdf")}
-                  className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-[length:var(--text-body)] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                  className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full! border border-[var(--admin-border-input)] bg-[var(--admin-surface)] px-4 text-[length:var(--text-body)] font-semibold text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] disabled:opacity-50"
                 >
                   <Download className="size-4" aria-hidden="true" />
                   <ST>{exportando === "pdf" ? "Generando archivo..." : "Exportar PDF"}</ST>
@@ -354,18 +350,18 @@ export default function AdminHistorialMovimientos() {
           ) : items.length === 0 ? (
             <AdminListaVacia onLimpiar={limpiarFiltros} />
           ) : (
-            <div className="admin-table-shell">
+            <div className="admin-table-shell admin-table-shell--aligned">
               <table className="w-full text-left text-[length:var(--text-body)]">
                 <thead>
                   <tr>
-                    <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Fecha</ST></th>
-                    <th className="px-3.5 py-2.5 text-center text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Tipo de movimiento</ST></th>
-                    <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Producto</ST></th>
-                    <th className="px-3.5 py-2.5 text-right text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Cantidad</ST></th>
-                    <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Origen</ST></th>
-                    <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Destino</ST></th>
-                    <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Destinatario</ST></th>
-                    <th className="px-3.5 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-600"><ST>Responsable</ST></th>
+                    <th className="px-3.5 py-2.5 text-left text-[13px] font-semibold text-[var(--admin-text-muted)]"><ST>Fecha</ST></th>
+                    <th className="px-3.5 py-2.5 text-center text-[13px] font-semibold text-[var(--admin-text-muted)]"><ST>Tipo de movimiento</ST></th>
+                    <th className="px-3.5 py-2.5 text-left text-[13px] font-semibold text-[var(--admin-text-muted)]"><ST>Producto</ST></th>
+                    <th className="px-3.5 py-2.5 text-right text-[13px] font-semibold text-[var(--admin-text-muted)]"><ST>Cantidad</ST></th>
+                    <th className="px-3.5 py-2.5 text-left text-[13px] font-semibold text-[var(--admin-text-muted)]"><ST>Origen</ST></th>
+                    <th className="px-3.5 py-2.5 text-left text-[13px] font-semibold text-[var(--admin-text-muted)]"><ST>Destino</ST></th>
+                    <th className="px-3.5 py-2.5 text-left text-[13px] font-semibold text-[var(--admin-text-muted)]"><ST>Destinatario</ST></th>
+                    <th className="px-3.5 py-2.5 text-left text-[13px] font-semibold text-[var(--admin-text-muted)]"><ST>Responsable</ST></th>
                   </tr>
                 </thead>
                 <tbody>

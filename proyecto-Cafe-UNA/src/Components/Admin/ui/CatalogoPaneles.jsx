@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ListChecks, Plus, Save, Trash2, X } from "lucide-react";
+import { ListChecks, Plus, Save, Trash2 } from "lucide-react";
 
-import { AdminModal, AdminModalBody, AdminModalFooter, AdminModalHeader, adminBtnCancel } from "./AdminModal";
+import { AdminModal, AdminModalBody, AdminModalFooter, AdminModalHeader, adminBtnCoffeeCancel } from "./AdminModal";
 import { SelectorIcono } from "./SelectorIcono";
 import { NumericInput } from "../../NumericInput/NumericInput";
 import { SelectFiltro } from "../../ui/SelectFiltro";
@@ -26,7 +26,7 @@ import {
 } from "../../../services/catalogosService";
 
 const btnPrimario =
-  "inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full bg-slate-900 px-4 text-[length:var(--text-body)] font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full px-4 text-[length:var(--text-body)] font-semibold disabled:cursor-not-allowed disabled:opacity-50 admin-role-primary";
 
 const btnIcono =
   "inline-flex size-[var(--control-height)] shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40";
@@ -358,7 +358,7 @@ export function PanelCategorias({ onMessage, onError }) {
                 onClick={() => setPadreNueva(raiz.nombre)}
                 className={`min-h-[var(--control-height)] rounded-full border px-4 text-[length:var(--text-body)] ${
                   padreNueva === raiz.nombre
-                    ? "border-slate-900 bg-slate-900 text-white"
+                    ? "admin-role-selected"
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
               >
@@ -499,22 +499,7 @@ export function ModalCatalogo({ open, onClose, titulo, ayuda, tipo, placeholder,
 
   return (
     <AdminModal open onClose={onClose} maxWidth="max-w-3xl" labelledBy="modal-catalogo-titulo">
-      <AdminModalHeader>
-        <div className="flex min-w-0 items-center gap-2.5">
-          <ListChecks className="size-6 shrink-0 text-slate-700" strokeWidth={1.75} aria-hidden="true" />
-          <h2 id="modal-catalogo-titulo" className="truncate text-[length:var(--text-subtitle)] font-bold text-slate-950">
-            {tTitulo}
-          </h2>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-          aria-label={tCerrar}
-        >
-          <X className="size-5" />
-        </button>
-      </AdminModalHeader>
+      <AdminModalHeader icon={ListChecks} title={tTitulo} titleId="modal-catalogo-titulo" onClose={onClose} />
       <AdminModalBody className="space-y-4">
         {ayuda ? <p className="text-[length:var(--text-body)] text-slate-500">{tAyuda}</p> : null}
         {mensaje ? (
@@ -537,7 +522,7 @@ export function ModalCatalogo({ open, onClose, titulo, ayuda, tipo, placeholder,
         )}
       </AdminModalBody>
       <AdminModalFooter>
-        <button type="button" onClick={onClose} className={adminBtnCancel}>
+        <button type="button" onClick={onClose} className={adminBtnCoffeeCancel}>
           {tCerrar}
         </button>
       </AdminModalFooter>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Pencil, Plus, Power, RefreshCw, X } from "lucide-react";
+import { CheckCircle2, Pencil, Plus, Power, RefreshCw, Wrench } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
@@ -8,6 +8,7 @@ import {
   AdminModal,
   AdminModalActions,
   AdminModalBody,
+  AdminModalFooter,
   AdminModalHeader,
 } from "../../../Components/Admin/ui/AdminModal";
 import { AdminLayout } from "../layouts/AdminLayout";
@@ -34,6 +35,8 @@ import {
 } from "../../../lib/formLimits";
 
 import { ST } from "../../../Components/T/ST";
+import { AdminPageHeader } from "../../../Components/Admin/ui/AdminPageHeader";
+import { AdminStatLine } from "../../../Components/Admin/ui/AdminStatLine";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
@@ -81,7 +84,7 @@ function formatFecha(fecha) {
   return valor.toLocaleDateString("es-CR");
 }
 
-function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
+export function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
   const [form, setForm] = useState(() => ({ ...EMPTY_FORM, ...inicial }));
   const [validationError, setValidationError] = useState("");
   const editando = Boolean(inicial?.id);
@@ -195,21 +198,14 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
 
   return (
     <AdminModal open onClose={onClose} maxWidth="max-w-xl" labelledBy="activo-fijo-modal-title">
-      <AdminModalHeader>
-        <h2 id="activo-fijo-modal-title" className="text-[length:var(--text-subtitle)] font-semibold text-slate-950">
-          {editando ? tEditar : tAgregar}
-        </h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100"
-          aria-label={t("Cerrar")}
-        >
-          <X className="size-5" />
-        </button>
-      </AdminModalHeader>
-      <AdminModalBody>
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col" noValidate>
+        <AdminModalHeader
+          icon={Wrench}
+          title={editando ? tEditar : tAgregar}
+          titleId="activo-fijo-modal-title"
+          onClose={onClose}
+        />
+        <AdminModalBody className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700">
               <ST>Código</ST>
@@ -295,15 +291,16 @@ function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, error }) {
               <ST>{message}</ST>
             </p>
           ) : null}
-          <div className="border-t border-slate-100 pt-4">
-            <AdminModalActions
-              onCancel={onClose}
-              primaryLabel={isSaving ? "Guardando..." : editando ? "Guardar cambios" : "Crear activo"}
-              primaryDisabled={isSaving}
-            />
-          </div>
-        </form>
-      </AdminModalBody>
+        </AdminModalBody>
+        <AdminModalFooter>
+          <AdminModalActions
+            variant="coffee"
+            onCancel={onClose}
+            primaryLabel={isSaving ? "Guardando..." : editando ? "Guardar cambios" : "Crear activo"}
+            primaryDisabled={isSaving}
+          />
+        </AdminModalFooter>
+      </form>
     </AdminModal>
   );
 }
@@ -441,31 +438,36 @@ export default function AdminActivosFijos() {
   return (
     <AdminPageGate showLoading={showLoading} message={loadingMessage} allowed={puedeVer}>
       <AdminLayout>
-        <div className="mx-auto max-w-7xl space-y-6">
-          <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-[0.16em] text-amber-800">
-                <ST>Inventario</ST>
-              </p>
-              <h1 className="mt-1 text-[length:var(--text-title)] font-semibold text-slate-950"><ST>Activos fijos</ST></h1>
-              <p className="mt-2 max-w-2xl text-[length:var(--text-body)] text-slate-500">
-                <ST>Equipo y mobiliario en un solo inventario, sin ubicaciones de punto de venta.</ST>
-              </p>
-            </div>
-            {puedeCrear ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setFormError("");
-                  setEditor({ mode: "create" });
-                }}
-                className="inline-flex min-h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 text-[length:var(--text-body)] font-semibold text-white hover:bg-neutral-800"
-              >
-                <Plus className="size-4" aria-hidden="true" />
-                <ST>Agregar activo</ST>
-              </button>
-            ) : null}
-          </header>
+        <div className="min-w-0 space-y-6">
+          <AdminPageHeader
+            title={<ST>Activos fijos</ST>}
+            description={<ST>Equipo y mobiliario en un solo inventario, sin ubicaciones de punto de venta.</ST>}
+            meta={
+              puedeVer && status !== "loading" && status !== "error" ? (
+                <AdminStatLine
+                  items={[
+                    { label: <ST>Total en libro (filtro actual)</ST>, value: formatCRC(totalValor) },
+                    { label: <ST>Activos visibles</ST>, value: filters.visibles },
+                  ]}
+                />
+              ) : null
+            }
+            actions={
+              puedeCrear ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormError("");
+                    setEditor({ mode: "create" });
+                  }}
+                  className="inline-flex min-h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full border px-4 text-[length:var(--text-body)] font-semibold sm:w-auto admin-role-primary"
+                >
+                  <Plus className="size-4" aria-hidden="true" />
+                  <ST>Agregar activo</ST>
+                </button>
+              ) : null
+            }
+          />
 
           {successMessage ? (
             <div
@@ -503,18 +505,6 @@ export default function AdminActivosFijos() {
             </section>
           ) : (
             <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <div>
-                  <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">
-                    <ST>Total en libro (filtro actual)</ST>
-                  </p>
-                  <p className="mt-1 text-[length:var(--text-subtitle)] font-semibold text-slate-950">
-                    {formatCRC(totalValor)}
-                  </p>
-                </div>
-                <p className="text-[length:var(--text-body)] text-slate-500">{filters.visibles} <ST>activos visibles</ST></p>
-              </div>
-
               <AdminListaToolbar
                 busqueda={filters.busqueda}
                 onBusquedaChange={filters.setBusqueda}
@@ -553,7 +543,7 @@ export default function AdminActivosFijos() {
                 <AdminListaVacia onLimpiar={filters.limpiar} />
               ) : (
                 <>
-                <div className="admin-table-shell">
+                <div className="admin-table-shell admin-table-shell--aligned">
                   <table className="min-w-full text-left text-[length:var(--text-body)]">
                     <thead>
                       <tr>
@@ -561,7 +551,7 @@ export default function AdminActivosFijos() {
                         <th><ST>Nombre</ST></th>
                         <th className="hidden md:table-cell"><ST>Origen</ST></th>
                         <th className="hidden md:table-cell"><ST>Compra</ST></th>
-                        <th><ST>Valor</ST></th>
+                        <th className="text-right"><ST>Valor</ST></th>
                         <th><ST>Estado</ST></th>
                         <th><ST>Acciones</ST></th>
                       </tr>
@@ -580,14 +570,14 @@ export default function AdminActivosFijos() {
                             ) : null}
                           </td>
                           <td className="hidden px-4 py-3 text-slate-600 md:table-cell">
-                            {activo.origenFondo ? <ST>{activo.origenFondo}</ST> : <span className="text-slate-400">—</span>}
+                            {activo.origenFondo ? <ST>{activo.origenFondo}</ST> : <span className="text-[color:var(--admin-text-muted)]">—</span>}
                           </td>
                           <td className="hidden px-4 py-3 text-slate-600 md:table-cell">{formatFecha(activo.fechaCompra)}</td>
-                          <td className="px-4 py-3 font-medium text-slate-900">{formatCRC(activo.valorEnLibro)}</td>
+                          <td className="px-4 py-3 text-right font-medium tabular-nums text-slate-900">{formatCRC(activo.valorEnLibro)}</td>
                           <td className="px-4 py-3">
                             <span
                               className={`admin-chip-estado inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                                activo.activo ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"
+                                activo.activo ? "admin-status-success" : "admin-status-neutral"
                               }`}
                               style={{ textDecoration: "none", textDecorationLine: "none" }}
                               spellCheck={false}
@@ -604,7 +594,7 @@ export default function AdminActivosFijos() {
                                     setFormError("");
                                     setEditor(activo);
                                   }}
-                                  className="inline-flex h-7 items-center justify-center gap-1 rounded-full border border-slate-950 bg-slate-950 px-2 text-[11px] font-semibold leading-none text-white transition hover:border-neutral-700 hover:bg-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1"
+                                  className="inline-flex h-7 items-center justify-center gap-1 rounded-full border px-2 text-[11px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 admin-role-quiet"
                                 >
                                   <Pencil className="size-3 shrink-0" aria-hidden="true" />
                                   <span><ST>Editar</ST></span>
@@ -617,8 +607,8 @@ export default function AdminActivosFijos() {
                                   onClick={() => handleToggle(activo)}
                                   className={`inline-flex h-7 items-center justify-center gap-1 rounded-full border px-2 text-[11px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${
                                     activo.activo
-                                      ? "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-300"
-                                      : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-300"
+                                      ? "admin-role-danger"
+                                      : "admin-role-positive"
                                   }`}
                                 >
                                   <Power className="size-3 shrink-0" aria-hidden="true" />

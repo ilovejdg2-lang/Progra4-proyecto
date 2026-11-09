@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import { expectApprovedModalAnatomy } from "../../../../test/modalAnatomy";
 import { PointOfSaleStockEditor } from "./PointOfSaleStockEditor";
 
 const props = {
@@ -40,5 +41,31 @@ describe("PointOfSaleStockEditor", () => {
     await user.click(screen.getByRole("button", { name: /Guardar stock/i }));
 
     expect(onSave).toHaveBeenCalledWith(7, "Conteo inicial");
+  });
+});
+
+describe("PointOfSaleStockEditor anatomy", () => {
+  it("follows the approved modal anatomy", async () => {
+    const onClose = vi.fn();
+    render(<PointOfSaleStockEditor {...props} onClose={onClose} />);
+
+    const dialog = screen.getByRole("dialog", { name: "Editar stock del punto" });
+    await expectApprovedModalAnatomy(dialog, { onClose, primaryName: "Guardar stock" });
+  });
+
+  it("renders the subtitle without undefined when the location is missing", () => {
+    render(<PointOfSaleStockEditor {...props} location={null} />);
+
+    const dialog = screen.getByRole("dialog", { name: "Editar stock del punto" });
+    expect(dialog.querySelector("header")).toHaveTextContent("Café Editorial");
+    expect(dialog.querySelector("header")).not.toHaveTextContent(/undefined|·/);
+  });
+
+  it("shows product and location in the subtitle", () => {
+    render(<PointOfSaleStockEditor {...props} />);
+
+    expect(screen.getByRole("dialog", { name: "Editar stock del punto" }).querySelector("header")).toHaveTextContent(
+      "Café Editorial · Editorial",
+    );
   });
 });

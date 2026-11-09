@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
-import { AlertCircle, CheckCircle2, Eye, Plus, Send, Store, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye, Plus, Store, Truck } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
@@ -7,6 +7,7 @@ import {
   AdminModal,
   AdminModalActions,
   AdminModalBody,
+  AdminModalFooter,
   AdminModalHeader,
 } from "../../../Components/Admin/ui/AdminModal";
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
@@ -35,6 +36,8 @@ import {
   MAX_PALABRAS_NOTAS,
 } from "../../../lib/formLimits";
 import { ST } from "../../../Components/T/ST";
+import { AdminPageHeader } from "../../../Components/Admin/ui/AdminPageHeader";
+import { AdminStatLine } from "../../../Components/Admin/ui/AdminStatLine";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
 import { asegurarCamposEnEspanol } from "../../../lib/traducir";
@@ -312,71 +315,52 @@ export default function AdminDistribucion() {
   return (
     <AdminPageGate showLoading={showLoading} loadingMessage={loadingMessage} allowed={puedeVer}>
       <AdminLayout>
-        <div className="space-y-4">
+        <div className="space-y-6">
+          <AdminPageHeader
+            title={<ST>Distribución a puntos de venta</ST>}
+            description={<ST>Trasladá unidades desde Bodega Central hacia los puntos de venta, con historial de transferencias.</ST>}
+            meta={
+              <AdminStatLine
+                items={[
+                  { label: <ST>Transferencias</ST>, value: historialTotal },
+                  { label: <ST>Unidades distribuidas</ST>, value: totalUnidadesPagina },
+                ]}
+              />
+            }
+            actions={
+              puedeTransferir ? (
+                <button
+                  type="button"
+                  onClick={() => { setFormError(""); setFormOpen(true); }}
+                  className="inline-flex h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full px-4 text-[length:var(--text-body)] font-semibold transition sm:w-auto admin-role-primary"
+                >
+                  <Plus className="size-4" /> <ST>Nueva distribución</ST>
+                </button>
+              ) : null
+            }
+          />
+
+          {successMessage ? (
+            <div
+              className="flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[length:var(--text-body)] font-medium text-emerald-800"
+              role="status"
+            >
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <ST>{successMessage}</ST>
+            </div>
+          ) : null}
+
+          {catalogError ? (
+            <div
+              className="flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[length:var(--text-body)] font-medium text-red-700"
+              role="alert"
+            >
+              <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <ST>{catalogError}</ST>
+            </div>
+          ) : null}
+
           <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h1 className="text-[length:var(--text-title)] font-semibold text-slate-900">
-                    <ST>Distribución a puntos de venta</ST>
-                  </h1>
-                  <p className="mt-1 text-[length:var(--text-body)] text-slate-500">
-                    <ST>Trasladá unidades desde Bodega Central hacia los puntos de venta, con historial de transferencias.</ST>
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {puedeTransferir ? (
-                    <button
-                      type="button"
-                      onClick={() => { setFormError(""); setFormOpen(true); }}
-                      className="inline-flex h-[var(--control-height)] items-center gap-2 rounded-full bg-slate-900 px-4 text-[length:var(--text-body)] font-semibold text-white transition hover:bg-slate-800"
-                    >
-                      <Plus className="size-4" /> <ST>Nueva distribución</ST>
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-
-              {successMessage ? (
-                <div
-                  className="mt-3 flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[length:var(--text-body)] font-medium text-emerald-800"
-                  role="status"
-                >
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                  <ST>{successMessage}</ST>
-                </div>
-              ) : null}
-
-              {catalogError ? (
-                <div
-                  className="mt-3 flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[length:var(--text-body)] font-medium text-red-700"
-                  role="alert"
-                >
-                  <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                  <ST>{catalogError}</ST>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="grid gap-3 border-b border-slate-100 px-4 py-4 sm:grid-cols-3 sm:px-6">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-500">
-                  <ST>Transferencias</ST>
-                </p>
-                <p className="mt-1 text-[length:var(--text-subtitle)] font-semibold text-slate-950">
-                  {historialTotal}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 sm:col-span-2">
-                <p className="text-[length:var(--text-body)] font-semibold uppercase tracking-wide text-slate-700">
-                  <ST>Unidades distribuidas</ST>
-                </p>
-                <p className="mt-1 text-[length:var(--text-subtitle)] font-semibold text-slate-900">
-                  {totalUnidadesPagina}
-                </p>
-              </div>
-            </div>
-
             <AdminListaToolbar
               busqueda={busqueda}
               onBusquedaChange={(valor) => setBusqueda(valor)}
@@ -459,13 +443,13 @@ export default function AdminDistribucion() {
                 }}
               />
             ) : (
-              <div className="admin-table-shell">
+              <div className="admin-table-shell admin-table-shell--aligned">
                 <table className="w-full text-left text-[length:var(--text-body)]">
                   <thead>
                     <tr>
                       <th><ST>Fecha</ST></th>
                       <th><ST>Producto</ST></th>
-                      <th><ST>Cantidad</ST></th>
+                      <th className="text-right"><ST>Cantidad</ST></th>
                       <th><ST>Destino</ST></th>
                       <th><ST>Responsable</ST></th>
                       <th><ST>Notas</ST></th>
@@ -479,7 +463,7 @@ export default function AdminDistribucion() {
                         <td className="px-6 py-4 font-medium text-slate-900">
                           {row.productoNombre ? <ST>{row.productoNombre}</ST> : row.productoId}
                         </td>
-                        <td className="px-6 py-4 font-semibold text-slate-900">
+                        <td className="px-6 py-4 text-right font-semibold tabular-nums text-slate-900">
                           <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-800">
                             {row.cantidad} {t("unid.")}
                           </span>
@@ -492,7 +476,7 @@ export default function AdminDistribucion() {
                         </td>
                         <td className="px-6 py-4 font-medium text-slate-700">{row.responsableNombre || "—"}</td>
                         <td className="px-6 py-4 text-slate-600">
-                          {row.notas ? <ST>{row.notas}</ST> : <span className="text-slate-400">—</span>}
+                          {row.notas ? <ST>{row.notas}</ST> : <span className="text-[color:var(--admin-text-muted)]">—</span>}
                         </td>
                         <td className="px-6 py-4">
                           <button
@@ -527,21 +511,14 @@ export default function AdminDistribucion() {
 
         {/* Modal: Formulario Nueva Distribución */}
         <AdminModal open={formOpen} onClose={() => setFormOpen(false)} maxWidth="max-w-xl" labelledBy="distribucion-form-title">
-          <AdminModalHeader>
-            <h2 id="distribucion-form-title" className="text-[length:var(--text-subtitle)] font-semibold text-slate-950">
-              <ST>Nueva distribución</ST>
-            </h2>
-            <button
-              type="button"
-              onClick={() => setFormOpen(false)}
-              className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100"
-              aria-label={t("Cerrar")}
-            >
-              <X className="size-5" />
-            </button>
-          </AdminModalHeader>
-          <AdminModalBody>
-            <form onSubmit={abrirConfirmacion} className="space-y-4" noValidate>
+          <form onSubmit={abrirConfirmacion} className="flex min-h-0 flex-1 flex-col" noValidate>
+            <AdminModalHeader
+              icon={Truck}
+              title={<ST>Nueva distribución</ST>}
+              titleId="distribucion-form-title"
+              onClose={() => setFormOpen(false)}
+            />
+            <AdminModalBody className="space-y-4">
               <div className="grid gap-2 text-[length:var(--text-body)] font-medium text-slate-700">
                 <ST>Producto</ST>
                 <input type="hidden" name="productoId" value={productoId} />
@@ -601,36 +578,27 @@ export default function AdminDistribucion() {
                 </div>
               ) : null}
 
-              <div className="flex justify-end border-t border-slate-100 pt-3">
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full bg-slate-950 px-6 text-[length:var(--text-body)] font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Send className="size-4" aria-hidden="true" />
-                  <ST>Confirmar distribución</ST>
-                </button>
-              </div>
-            </form>
-          </AdminModalBody>
+            </AdminModalBody>
+            <AdminModalFooter>
+              <AdminModalActions
+                variant="coffee"
+                onCancel={() => setFormOpen(false)}
+                primaryLabel="Confirmar distribución"
+                primaryDisabled={isSaving}
+              />
+            </AdminModalFooter>
+          </form>
         </AdminModal>
 
         {/* Modal: Confirmación de Distribución */}
         <AdminModal open={confirmOpen} onClose={() => !isSaving && setConfirmOpen(false)} maxWidth="max-w-xl" labelledBy="confirm-dist-title">
-          <AdminModalHeader>
-            <h2 id="confirm-dist-title" className="text-[length:var(--text-subtitle)] font-semibold text-slate-950">
-              <ST>Confirmar distribución</ST>
-            </h2>
-            <button
-              type="button"
-              disabled={isSaving}
-              onClick={() => setConfirmOpen(false)}
-              className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100"
-              aria-label={t("Cerrar")}
-            >
-              <X className="size-5" />
-            </button>
-          </AdminModalHeader>
+          <AdminModalHeader
+            icon={Truck}
+            title={<ST>Confirmar distribución</ST>}
+            titleId="confirm-dist-title"
+            onClose={() => !isSaving && setConfirmOpen(false)}
+            closeDisabled={isSaving}
+          />
           <AdminModalBody>
             <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-[length:var(--text-body)]">
               <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
@@ -656,34 +624,29 @@ export default function AdminDistribucion() {
                 </div>
               ) : null}
             </div>
-            <div className="mt-4 border-t border-slate-100 pt-4">
-              <AdminModalActions
-                onCancel={() => setConfirmOpen(false)}
-                primaryType="button"
-                onPrimary={ejecutarTransferencia}
-                primaryLabel={isSaving ? t("Procesando…") : t("Confirmar")}
-                primaryDisabled={isSaving}
-              />
-            </div>
           </AdminModalBody>
+          <AdminModalFooter>
+            <AdminModalActions
+              variant="coffee"
+              onCancel={() => setConfirmOpen(false)}
+              primaryType="button"
+              onPrimary={ejecutarTransferencia}
+              primaryLabel={isSaving ? t("Procesando…") : t("Confirmar")}
+              primaryDisabled={isSaving}
+            />
+          </AdminModalFooter>
         </AdminModal>
 
         {/* Modal: Detalle de Transferencia */}
         {detalle ? (
           <AdminModal open onClose={() => setDetalle(null)} maxWidth="max-w-xl" labelledBy="distribucion-detalle-title">
-            <AdminModalHeader>
-              <h2 id="distribucion-detalle-title" className="text-[length:var(--text-subtitle)] font-semibold text-slate-900">
-                <ST>Transferencia</ST> #{detalle.id}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setDetalle(null)}
-                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100"
-                aria-label={t("Cerrar")}
-              >
-                <X className="size-5" />
-              </button>
-            </AdminModalHeader>
+            <AdminModalHeader
+              icon={Truck}
+              title={<><ST>Transferencia</ST> #{detalle.id}</>}
+              titleId="distribucion-detalle-title"
+              wrapTitle
+              onClose={() => setDetalle(null)}
+            />
             <AdminModalBody>
               <dl className="grid gap-2 text-[length:var(--text-body)]">
                 <div className="flex justify-between gap-3 border-b border-slate-100 py-2">

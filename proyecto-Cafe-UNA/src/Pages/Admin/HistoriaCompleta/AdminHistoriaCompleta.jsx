@@ -91,7 +91,7 @@ function BotonIcono({ label, onClick, disabled, peligro = false, children }) {
       title={tLabel}
       className={`grid size-8 shrink-0 place-items-center rounded-full border transition disabled:opacity-40 ${
         peligro
-          ? "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+          ? "admin-role-danger"
           : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
       }`}
     >
@@ -344,7 +344,7 @@ const AdminHistoriaCompleta = () => {
                   type="button"
                   onClick={guardar}
                   disabled={guardando || estado !== "ready" || !sinGuardar}
-                  className="inline-flex h-[var(--control-height)] items-center justify-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-4 text-[length:var(--text-body)] font-semibold text-white transition hover:border-neutral-700 hover:bg-neutral-700 disabled:opacity-60"
+                  className="inline-flex h-[var(--control-height)] items-center justify-center gap-2 rounded-full border px-4 text-[length:var(--text-body)] font-semibold transition disabled:opacity-60 admin-role-primary"
                 >
                   <Save className="size-4" aria-hidden="true" />
                   <ST>{guardando ? "Guardando..." : "Guardar cambios"}</ST>

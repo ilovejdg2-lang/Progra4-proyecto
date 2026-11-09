@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarX2, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { ST } from "../../../Components/T/ST";
+import { AdminPageHeader } from "../../../Components/Admin/ui/AdminPageHeader";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
 import {
@@ -145,20 +146,14 @@ export default function AdminDiasSinRetiro() {
   return (
     <AdminLayout>
       <AdminPageGate showLoading={showLoading} loadingMessage={loadingMessage} allowed={puede}>
-        <div className="mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-4">
-          <header className="flex min-w-0 items-start gap-3">
-            <CalendarX2 className="mt-0.5 shrink-0 text-slate-500" size={22} aria-hidden="true" />
-            <div className="min-w-0">
-              <h1 className="break-words text-xl font-bold text-slate-950 sm:text-2xl dark:text-white">
-                <ST>Días sin retiro</ST>
-              </h1>
-              <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                <ST>Registrá feriados u otras fechas en las que no se recogerán pedidos. Si no hay fechas, el checkout no muestra este aviso.</ST>
-              </p>
-            </div>
-          </header>
+        <div className="flex w-full min-w-0 flex-col gap-4">
+          <AdminPageHeader
+            title={<ST>Días sin retiro</ST>}
+            description={<ST>Registrá feriados u otras fechas en las que no se recogerán pedidos. Si no hay fechas, el checkout no muestra este aviso.</ST>}
+          />
 
-          <form onSubmit={agregar} className="grid min-w-0 grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 lg:grid-cols-2 dark:border-slate-700 dark:bg-slate-900">
+          <form onSubmit={agregar} className="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 dark:border-slate-700 dark:bg-slate-900">
+          <div className="grid max-w-3xl grid-cols-1 gap-3 lg:grid-cols-2">
             <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">
               <ST>Fecha</ST>
               <input
@@ -198,11 +193,12 @@ export default function AdminDiasSinRetiro() {
               <button
                 type="submit"
                 disabled={guardando}
-                className="h-11 w-full rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white disabled:opacity-60 lg:w-auto dark:bg-white dark:text-slate-950"
+                className="h-11 w-full rounded-xl px-4 text-sm font-semibold disabled:opacity-60 lg:w-auto admin-role-primary"
               >
                 <ST>Agregar fecha</ST>
               </button>
             </div>
+          </div>
           </form>
 
           {error ? <p className="break-words text-sm text-red-700 dark:text-red-300" role="alert"><ST>{error}</ST></p> : null}

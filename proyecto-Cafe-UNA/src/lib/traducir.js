@@ -214,6 +214,8 @@ const DICCIONARIO = {
   "Todas": "All",
   "productos": "products",
   "producto": "product",
+  "producto en stock": "product in stock",
+  "productos en stock": "products in stock",
   "unidades en bodega": "units in stock",
   "unidad en bodega": "unit in stock",
   "Camisa": "Shirt",
@@ -846,6 +848,8 @@ const DICCIONARIO = {
   "Enviado": "Shipped",
   "Entregado": "Delivered",
   "Pedidos": "Orders",
+  "Transferencias": "Transfers",
+  "Unidades distribuidas": "Units distributed",
   "Ganado (enviados en esta página)": "Earned (shipped on this page)",
   "Ganado": "Earned",
   "Recibo": "Receipt",
@@ -1276,12 +1280,9 @@ const DICCIONARIO = {
   "Código (opcional)": "Code (optional)",
   "Si lo dejás vacío, se genera automáticamente a partir del nombre.":
     "If you leave it empty, it is generated automatically from the name.",
-  "Cerrar editor de punto de venta": "Close point of sale editor",
-  "Cerrar editor de stock": "Close stock editor",
   "Este ajuste modifica únicamente el stock de este punto de venta.":
     "This adjustment only changes the stock of this point of sale.",
   "Stock de Bodega Central": "Central warehouse stock",
-  "Cerrar editor de stock central": "Close central stock editor",
   "Este valor no modifica activos ni el stock de los puntos de venta.":
     "This value does not change fixed assets or point-of-sale stock.",
   "No se pudo confirmar el stock actual. Ingresa el valor correcto para continuar.":
@@ -1496,6 +1497,35 @@ const DICCIONARIO = {
   "No se pudo cambiar el estado.": "Could not change the status.",
   "No se pudo cargar el historial.": "Could not load the history.",
   "No se pudieron cargar las solicitudes.": "Could not load the requests.",
+
+  // Admin: Puntos de venta (master-detail)
+  "Administrá ubicaciones y el stock de cada punto.": "Manage locations and the stock of each point.",
+  "Buscar punto de venta": "Search point of sale",
+  "Buscar punto de venta...": "Search point of sale...",
+  "Sin resultados": "No results",
+  "Más acciones de": "More actions for",
+  "Mientras esté inactivo no se podrá consultar ni ajustar su stock. Podés volver a activarlo cuando quieras.":
+    "While inactive, its stock cannot be viewed or adjusted. You can reactivate it at any time.",
+  "Inactivando...": "Deactivating...",
+  "Este punto está inactivo": "This point is inactive",
+  "Activalo desde el menú para consultar o ajustar su stock.": "Activate it from the menu to view or adjust its stock.",
+  "Editar stock de": "Edit stock for",
+  "Bajo": "Low",
+  "Todavía no hay productos en el catálogo.": "There are no products in the catalog yet.",
+  "Destacar": "Feature",
+  "en inicio": "on the home page",
+  "de destacados": "from featured",
+  "Máximo 3 destacados": "Maximum 3 featured",
+  "No puedes destacar un producto deshabilitado": "You cannot feature a disabled product",
+  "No puedes destacar un producto sin stock": "You cannot feature a product without stock",
+  "Ajustar stock": "Adjust stock",
+  "Ajustar stock de": "Adjust stock for",
+  "Desactivando...": "Deactivating...",
+  "Dejará de estar disponible en la tienda. Podés volver a activarlo cuando quieras.":
+    "It will no longer be available in the store. You can reactivate it at any time.",
+  "Solo destacados": "Featured only",
+  "No destacados": "Not featured",
+  "Buscar por nombre, descripción o categoría...": "Search by name, description or category...",
 };
 
 function normalizarClave(texto) {

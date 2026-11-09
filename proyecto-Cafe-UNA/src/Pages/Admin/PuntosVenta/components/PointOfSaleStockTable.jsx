@@ -1,75 +1,81 @@
-import { Edit3, Package } from "lucide-react";
-import { imagenPrincipalProducto } from "../../../../lib/productoImagenes";
-import { indicadorStockCantidad } from "../../../../lib/productoDisponibilidad";
+import { Pencil } from "lucide-react";
 import { ST } from "../../../../Components/T/ST";
-import { FotoMini } from "../../../../Components/FotoMini";
-import { t } from "../../../../lib/t";
+import { useTraducir } from "../../../../hooks/useTraducir";
+import { ProductThumb } from "../../../../Components/Admin/ui/ProductThumb";
+import { StatusDot } from "../../../../Components/Admin/ui/StatusDot";
+import { StockCell } from "../../../../Components/Admin/ui/StockCell";
 
-function ProductImage({ product }) {
-  const foto = imagenPrincipalProducto(product);
-  return (
-    <FotoMini
-      src={foto}
-      alt={product.nombre}
-      className="size-12 rounded-xl object-cover ring-1 ring-slate-200"
-      fallback={
-        <span className="flex size-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400" aria-label={t("Producto sin imagen")}>
-          <Package className="size-5" aria-hidden="true" />
-        </span>
-      }
-    />
-  );
-}
+const muted = "text-[color:var(--admin-text-muted)]";
+const primary = "text-[color:var(--admin-text-primary)]";
 
-function StockCell({ stockRecord, loading }) {
-  const indicador = indicadorStockCantidad(
-    loading ? undefined : stockRecord?.stock,
-    loading,
-  );
-  if (loading) {
-    return <span className={indicador.clase}>{indicador.etiqueta}</span>;
-  }
-  if (stockRecord?.stock === null || stockRecord?.stock === undefined) {
-    return <span className={indicador.clase}>{indicador.etiqueta}</span>;
-  }
+function ProductStatus({ estado }) {
+  const habilitado = estado === "Habilitado";
   return (
-    <span className={`inline-flex items-center gap-2 font-semibold ${indicador.clase}`}>
-      <span className={`size-2.5 rounded-full ${indicador.punto}`} aria-hidden="true" />
-      {indicador.etiqueta}
+    <span className={`inline-flex items-center gap-2 ${muted}`}>
+      <StatusDot tone={habilitado ? "success" : "neutral"} />
+      <ST>{estado}</ST>
     </span>
   );
 }
 
+function EditPencil({ product, onEdit }) {
+  const tEditar = useTraducir("Editar stock de");
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onEdit(product);
+      }}
+      aria-label={`${tEditar} ${product.nombre}`}
+      className={`inline-flex size-[var(--control-height)] shrink-0 items-center justify-center rounded-full! ${muted} transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[color:var(--admin-text-primary)] focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[color:var(--admin-focus-ring)]`}
+    >
+      <Pencil className="size-4" aria-hidden="true" />
+    </button>
+  );
+}
+
+const rowInteractive = "cursor-pointer transition-colors hover:bg-[var(--admin-surface-hover)]";
+
 export function PointOfSaleStockTable({ products, stockByProductId, stockLoading = false, canEdit = false, onEdit }) {
   if (products.length === 0) {
-    return <div className="px-4 py-12 text-center text-sm text-slate-500 sm:px-6"><ST>No hay productos que coincidan con la búsqueda.</ST></div>;
+    return (
+      <div className={`px-4 py-12 text-center text-[length:var(--text-body)] sm:px-6 ${muted}`}>
+        <ST>No hay productos que coincidan con la búsqueda.</ST>
+      </div>
+    );
   }
+
+  const openRow = canEdit ? onEdit : undefined;
 
   return (
     <>
-      <div className="admin-table-shell hidden md:block">
+      <div className="admin-table-shell admin-table-shell--aligned hidden @xl:block">
         <table className="w-full text-left text-[length:var(--text-body)]">
           <thead>
-            <tr>
-              <th><ST>Producto</ST></th>
-              <th><ST>Peso</ST></th>
-              <th><ST>Estado</ST></th>
-              <th><ST>Stock POS</ST></th>
-              {canEdit ? <th><ST>Acciones</ST></th> : null}
+            <tr className="border-b border-[var(--admin-border)]">
+              <th className="px-6 py-3 font-semibold"><ST>Producto</ST></th>
+              <th className="px-4 py-3 font-semibold"><ST>Peso</ST></th>
+              <th className="px-4 py-3 font-semibold"><ST>Estado</ST></th>
+              <th className="px-4 py-3 text-right font-semibold"><ST>Stock</ST></th>
+              <th className="w-20 px-4 py-3 pr-6"><span className="sr-only"><ST>Acciones</ST></span></th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[var(--admin-border)]">
             {products.map((product) => {
               const stockRecord = stockByProductId.get(String(product.id));
               return (
-                <tr key={product.id} className="border-b border-slate-100 last:border-b-0">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3"><ProductImage product={product} /><span className="font-semibold text-slate-900"><ST>{product.nombre}</ST></span></div>
+                <tr key={product.id} onClick={openRow ? () => openRow(product) : undefined} className={canEdit ? rowInteractive : ""}>
+                  <td className="px-6 py-2">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <ProductThumb product={product} />
+                      <span className={`min-w-0 font-semibold ${primary}`}><ST>{product.nombre}</ST></span>
+                    </div>
                   </td>
-                  <td className="px-6 py-4 text-slate-600">{product.peso || "—"}</td>
-                  <td className="px-6 py-4"><span className={`text-[length:var(--text-body)] font-semibold ${product.estado === "Habilitado" ? "text-green-700" : "text-red-600"}`}><ST>{product.estado}</ST></span></td>
-                  <td className="px-6 py-4"><StockCell stockRecord={stockRecord} loading={stockLoading} /></td>
-                  {canEdit ? <td className="px-6 py-4"><EditButton product={product} onEdit={onEdit} /></td> : null}
+                  <td className={`whitespace-nowrap px-4 py-2 ${muted}`}>{product.peso || "—"}</td>
+                  <td className="whitespace-nowrap px-4 py-2"><ProductStatus estado={product.estado} /></td>
+                  <td className="px-4 py-2 text-right"><StockCell stock={stockRecord?.stock} loading={stockLoading} /></td>
+                  <td className="px-4 py-2 pr-6 text-right">{canEdit ? <EditPencil product={product} onEdit={onEdit} /> : null}</td>
                 </tr>
               );
             })}
@@ -77,51 +83,32 @@ export function PointOfSaleStockTable({ products, stockByProductId, stockLoading
         </table>
       </div>
 
-      <div className="divide-y divide-slate-100 md:hidden">
+      <ul className="divide-y divide-[var(--admin-border)] @xl:hidden">
         {products.map((product) => {
           const stockRecord = stockByProductId.get(String(product.id));
           return (
-            <article key={product.id} className="min-w-0 space-y-3 px-4 py-4">
-              <div className="flex min-w-0 items-start gap-3">
-                <ProductImage product={product} />
-                <div className="min-w-0 flex-1">
-                  <h3 className="break-words font-semibold text-slate-900"><ST>{product.nombre}</ST></h3>
-                  <p className="mt-1 break-words text-xs text-slate-500">{product.descripcion ? <ST>{product.descripcion}</ST> : <ST>Sin descripción</ST>}</p>
-                </div>
+            <li
+              key={product.id}
+              onClick={openRow ? () => openRow(product) : undefined}
+              className={`flex min-w-0 items-center gap-3 px-4 py-2 ${canEdit ? rowInteractive : ""}`}
+            >
+              <ProductThumb product={product} />
+              <div className="min-w-0 flex-1">
+                <p className={`break-words font-semibold leading-snug ${primary}`}><ST>{product.nombre}</ST></p>
+                <p className={`mt-0.5 flex flex-wrap items-center gap-x-2 text-xs ${muted}`}>
+                  <span>{product.peso || "—"}</span>
+                  <span aria-hidden="true">·</span>
+                  <ProductStatus estado={product.estado} />
+                </p>
               </div>
-              <dl className="grid grid-cols-1 gap-3 text-sm min-[420px]:grid-cols-3">
-                <div className="min-w-0">
-                  <dt className="text-xs text-slate-500"><ST>Peso</ST></dt>
-                  <dd className="mt-1 break-words text-slate-700">{product.peso || "—"}</dd>
-                </div>
-                <div className="min-w-0">
-                  <dt className="text-xs text-slate-500"><ST>Estado</ST></dt>
-                  <dd className={`mt-1 break-words text-xs font-semibold ${product.estado === "Habilitado" ? "text-green-700" : "text-red-600"}`}><ST>{product.estado}</ST></dd>
-                </div>
-                <div className="min-w-0">
-                  <dt className="text-xs text-slate-500"><ST>Stock POS</ST></dt>
-                  <dd className="mt-1"><StockCell stockRecord={stockRecord} loading={stockLoading} /></dd>
-                </div>
-              </dl>
-              {canEdit ? <EditButton product={product} onEdit={onEdit} fullWidth /> : null}
-            </article>
+              <div className="shrink-0 text-right text-[length:var(--text-body)]">
+                <StockCell stock={stockRecord?.stock} loading={stockLoading} />
+              </div>
+              {canEdit ? <EditPencil product={product} onEdit={onEdit} /> : null}
+            </li>
           );
         })}
-      </div>
+      </ul>
     </>
-  );
-}
-
-function EditButton({ product, onEdit, fullWidth = false }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onEdit(product)}
-      aria-label={`${t("Editar stock")} ${product.nombre}`}
-      className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 ${fullWidth ? "w-full" : ""}`}
-    >
-      <Edit3 className="size-4" aria-hidden="true" />
-      <ST>Editar stock</ST>
-    </button>
   );
 }

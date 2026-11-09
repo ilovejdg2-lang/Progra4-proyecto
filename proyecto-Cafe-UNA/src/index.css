@@ -119,6 +119,8 @@ body.admin-route-active {
   /* Brand accents */
   --admin-accent-coffee: #5c4038;
   --admin-accent-coffee-hover: #452e27;
+  /* Soft coffee fill for the selected state (card, chip): #0f172a is 15.7:1 and #475569 is 6.7:1 on it */
+  --admin-accent-coffee-soft: #f6efec;
   /* Text on a solid coffee fill: #ffffff is 9.35:1 on #5c4038 and 12.55:1 on #452e27 */
   --admin-on-accent-coffee: #ffffff;
 
@@ -163,6 +165,8 @@ html.admin-theme-dark body.admin-route-active {
   /* Brand accents: #b88376 reaches 5.39:1 on #161b22 and 5.90:1 on #0e1116 (passes WCAG 2.1 AA 4.5:1) */
   --admin-accent-coffee: #b88376;
   --admin-accent-coffee-hover: #c48f82;
+  /* Soft coffee fill for the selected state: #e2e8f0 is 13.2:1 and #94a3b8 is 6.4:1 on it */
+  --admin-accent-coffee-soft: #2a1d19;
   /* Text on a solid coffee fill: #ffffff would fail here; #1a0f0c is 5.86:1 on #b88376 and 6.8:1 on #c48f82 */
   --admin-on-accent-coffee: #1a0f0c;
 
@@ -184,6 +188,112 @@ html.admin-theme-dark body.admin-route-active {
   --admin-status-warning-text: #fcd34d;
 }
 
+/* Admin switch: "on" is coffee (never black), the thumb always contrasts with its track */
+body.admin-route-active .ui-switch__track {
+  background: var(--admin-border-input);
+}
+
+body.admin-route-active .ui-switch__track.is-on {
+  background: var(--admin-accent-coffee);
+}
+
+body.admin-route-active .ui-switch__thumb {
+  background: var(--admin-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+body.admin-route-active .ui-switch__track.is-on .ui-switch__thumb {
+  background: var(--admin-on-accent-coffee);
+}
+
+body.admin-route-active .ui-switch__label {
+  color: var(--admin-text-muted);
+}
+
+/* Admin color roles: one role, one color. Colors only (size and shape stay in the
+   page's utilities). Everything resolves through --admin-* tokens, so both themes work.
+   primary = coffee solid (one per screen) | quiet = outline (row/secondary actions)
+   danger / positive = status text + border on a transparent fill
+   selected = coffee soft fill + coffee border | surface = unselected counterpart */
+body.admin-route-active .admin-role-primary {
+  border-color: var(--admin-accent-coffee);
+  background-color: var(--admin-accent-coffee);
+  color: var(--admin-on-accent-coffee);
+}
+
+body.admin-route-active .admin-role-primary:hover:not(:disabled) {
+  border-color: var(--admin-accent-coffee-hover);
+  background-color: var(--admin-accent-coffee-hover);
+}
+
+body.admin-route-active .admin-role-quiet {
+  border-color: var(--admin-border-input);
+  background-color: transparent;
+  color: var(--admin-text-primary);
+}
+
+body.admin-route-active .admin-role-quiet:hover:not(:disabled) {
+  border-color: var(--admin-accent-coffee);
+  background-color: var(--admin-surface-hover);
+}
+
+body.admin-route-active .admin-role-danger {
+  border-color: var(--admin-status-danger-text);
+  background-color: transparent;
+  color: var(--admin-status-danger-text);
+}
+
+body.admin-route-active .admin-role-danger:hover:not(:disabled) {
+  background-color: var(--admin-status-danger-bg);
+}
+
+body.admin-route-active .admin-role-positive {
+  border-color: var(--admin-status-success-text);
+  background-color: transparent;
+  color: var(--admin-status-success-text);
+}
+
+body.admin-route-active .admin-role-positive:hover:not(:disabled) {
+  background-color: var(--admin-status-success-bg);
+}
+
+body.admin-route-active .admin-role-selected {
+  border-color: var(--admin-accent-coffee);
+  background-color: var(--admin-accent-coffee-soft);
+  color: var(--admin-text-primary);
+}
+
+body.admin-route-active .admin-role-surface {
+  border-color: var(--admin-border);
+  background-color: var(--admin-surface);
+  color: var(--admin-text-primary);
+}
+
+/* Status chips (always paired with a word) */
+body.admin-route-active .admin-status-success {
+  background-color: var(--admin-status-success-bg);
+  color: var(--admin-status-success-text);
+}
+
+body.admin-route-active .admin-status-danger {
+  background-color: var(--admin-status-danger-bg);
+  color: var(--admin-status-danger-text);
+}
+
+body.admin-route-active .admin-status-neutral {
+  background-color: var(--admin-surface-hover);
+  color: var(--admin-text-muted);
+}
+
+/* Segmented pills that scroll horizontally on narrow screens: keep the scroll, hide the bar. */
+body.admin-route-active .pv-pills {
+  scrollbar-width: none;
+}
+
+body.admin-route-active .pv-pills::-webkit-scrollbar {
+  display: none;
+}
+
 /* Scoped Admin Typography Scale (Executive Dashboard Density) */
 body.admin-route-active h1:not(.admin-cms-preview h1) {
   font-size: 1.25rem;
@@ -193,10 +303,10 @@ body.admin-route-active h1:not(.admin-cms-preview h1) {
 }
 
 body.admin-route-active .admin-table-shell thead th {
-  font-size: 11px !important;
+  font-size: 13px !important;
   font-weight: 600 !important;
-  letter-spacing: 0.05em !important;
-  text-transform: uppercase !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
   color: var(--admin-text-muted) !important;
 }
 
@@ -220,12 +330,37 @@ body.admin-route-active .admin-table-shell--usuarios tbody td:last-child {
   padding-right: 1.5rem !important;
 }
 
+/* Aligned layout (inventory tables): header text follows the column cells. Left by default; add text-center / text-right on the th to match numeric or centered columns. */
+/* Unlayered rules beat Tailwind's layered utilities, so set the alignment here instead of relying on text-right/text-center winning. */
+body.admin-route-active .admin-table-shell--aligned thead th {
+  text-align: left;
+}
+
+body.admin-route-active .admin-table-shell--aligned thead th.text-right {
+  text-align: right;
+}
+
+body.admin-route-active .admin-table-shell--aligned thead th.text-center {
+  text-align: center;
+}
+
+body.admin-route-active .admin-table-shell--aligned thead th .admin-th-sort,
+body.admin-route-active .admin-table-shell--aligned thead th button {
+  justify-content: flex-start;
+  width: auto;
+}
+
+body.admin-route-active .admin-table-shell--aligned thead th.text-right .admin-th-sort,
+body.admin-route-active .admin-table-shell--aligned thead th.text-right button {
+  justify-content: flex-end;
+}
+
 body.admin-route-active .admin-table-shell thead th .admin-th-sort,
 body.admin-route-active .admin-table-shell thead th button {
-  font-size: 11px !important;
+  font-size: 13px !important;
   font-weight: 600 !important;
-  letter-spacing: 0.05em !important;
-  text-transform: uppercase !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
   color: inherit !important;
 }
 
@@ -539,47 +674,6 @@ body.admin-route-active #root {
   top: 0;
   z-index: 1;
   background: #f8fafc;
-}
-
-/* Catálogo de productos: columnas sin solaparse */
-.admin-table-shell--productos table {
-  table-layout: auto;
-  width: 100%;
-  min-width: 0;
-}
-
-.admin-table-shell--productos thead th {
-  padding: 0.65rem 0.45rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.admin-table-shell--productos thead th:first-child,
-.admin-table-shell--productos tbody td:first-child {
-  padding-left: 0.85rem;
-}
-
-.admin-table-shell--productos thead th:last-child,
-.admin-table-shell--productos tbody td:last-child {
-  padding-right: 0.85rem;
-}
-
-.admin-table-shell--productos tbody td {
-  text-align: center;
-}
-
-.admin-table-shell--productos tbody td:nth-child(2),
-.admin-table-shell--productos tbody td:nth-child(3) {
-  text-align: left;
-}
-
-.admin-table-shell--productos .ui-switch {
-  justify-content: center;
-}
-
-.admin-table-shell--productos .product-actions {
-  margin-inline: auto;
 }
 
 /* Gestión de usuarios: proporciones y tipografía compacta sin scroll forzado */
