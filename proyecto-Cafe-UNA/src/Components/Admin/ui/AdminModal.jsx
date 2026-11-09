@@ -146,6 +146,9 @@ export const adminBtnCoffeePrimary = `inline-flex min-h-[var(--control-height)] 
 
 export const adminBtnCoffeeCancel = `inline-flex min-h-[var(--control-height)] w-full items-center justify-center rounded-full border border-[var(--admin-border-input)] bg-transparent px-5 text-[length:var(--text-body)] font-semibold text-[var(--admin-text-muted)] transition-colors hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${focusRingCls}`;
 
+// Filled danger is reserved for the confirmation of a destructive action inside a modal.
+export const adminBtnDangerPrimary = `inline-flex min-h-[var(--control-height)] w-full items-center justify-center rounded-full border border-[var(--admin-status-danger-text)] bg-[var(--admin-status-danger-text)] px-5 text-[length:var(--text-body)] font-bold text-[color:var(--admin-surface)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${focusRingCls}`;
+
 // Quiet secondary action (outline, muted text, coffee on hover).
 export const adminBtnQuiet = `inline-flex min-h-[var(--control-height)] items-center justify-center gap-1.5 rounded-full border border-[var(--admin-border-input)] bg-transparent px-4 text-[length:var(--text-body)] font-semibold text-[var(--admin-text-muted)] transition-colors hover:border-[var(--admin-accent-coffee)] hover:text-[var(--admin-accent-coffee)] disabled:cursor-not-allowed disabled:opacity-60 ${focusRingCls}`;
 
@@ -167,6 +170,7 @@ export function AdminModalActions({
   cancelLabel = "Cancelar",
   primaryLabel,
   primaryDisabled = false,
+  cancelDisabled = false,
   primaryType = "submit",
   onPrimary,
   primaryClassName,
@@ -183,7 +187,12 @@ export function AdminModalActions({
     // DOM order is Cancelar then primary: left/right on desktop, primary on top when stacked on mobile.
     return (
       <div className={cn("flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3", className)}>
-        <button type="button" onClick={onCancel} className={cancelClassName || adminBtnCoffeeCancel}>
+        <button
+          type="button"
+          disabled={cancelDisabled}
+          onClick={onCancel}
+          className={cancelClassName || adminBtnCoffeeCancel}
+        >
           {tCancel}
         </button>
         <button

@@ -3,7 +3,7 @@ import { Check, ChevronDown, Search } from "lucide-react";
 
 import { ST } from "../../../../Components/T/ST";
 import { useTraducir } from "../../../../hooks/useTraducir";
-import { StatusDot } from "./StatusDot";
+import { StatusDot } from "../../../../Components/Admin/ui/StatusDot";
 import { LOCATION_PILLS_MAX, locationTabId, safeIdPart } from "./locationSelectorConfig";
 
 const focusRing =

@@ -1512,6 +1512,20 @@ const DICCIONARIO = {
   "Editar stock de": "Edit stock for",
   "Bajo": "Low",
   "Todavía no hay productos en el catálogo.": "There are no products in the catalog yet.",
+  "Destacar": "Feature",
+  "en inicio": "on the home page",
+  "de destacados": "from featured",
+  "Máximo 3 destacados": "Maximum 3 featured",
+  "No puedes destacar un producto deshabilitado": "You cannot feature a disabled product",
+  "No puedes destacar un producto sin stock": "You cannot feature a product without stock",
+  "Ajustar stock": "Adjust stock",
+  "Ajustar stock de": "Adjust stock for",
+  "Desactivando...": "Deactivating...",
+  "Dejará de estar disponible en la tienda. Podés volver a activarlo cuando quieras.":
+    "It will no longer be available in the store. You can reactivate it at any time.",
+  "Solo destacados": "Featured only",
+  "No destacados": "Not featured",
+  "Buscar por nombre, descripción o categoría...": "Search by name, description or category...",
 };
 
 function normalizarClave(texto) {

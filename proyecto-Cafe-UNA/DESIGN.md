@@ -183,7 +183,7 @@ Black (`slate-950`) used to do four jobs (page primary, row action, selection, s
 | Destructive | `admin-role-danger` | `--admin-status-danger-text` text and 1px border, transparent; hover tints with `--admin-status-danger-bg` | 6.5:1 | 9.2:1 | Desactivar, Inactivar, Rechazar, Eliminar |
 | Positive | `admin-role-positive` | `--admin-status-success-text` text and border, transparent | 5.0:1 | 11.4:1 | Activar, Aprobar |
 | Selected | `admin-role-selected` (unselected: `admin-role-surface`) | `--admin-accent-coffee-soft` fill, 1px `--admin-accent-coffee` border, primary text | 15.7:1 | 13.2:1 | Selected card or chip ("Todos los productos"); Puntos de venta now uses the segmented pills instead |
-| Switch on | `body.admin-route-active .ui-switch__track.is-on` | Coffee track, `--admin-on-accent-coffee` thumb. Off: `--admin-border-input` track (4.8:1 light, 3.6:1 dark), `--admin-surface` thumb. Ratios are track vs surface, WCAG 1.4.11 needs 3:1 | 9.35:1 | 5.39:1 | Destacado toggle |
+| Switch on | `body.admin-route-active .ui-switch__track.is-on` | Coffee track, `--admin-on-accent-coffee` thumb. Off: `--admin-border-input` track (4.8:1 light, 3.6:1 dark), `--admin-surface` thumb. Ratios are track vs surface, WCAG 1.4.11 needs 3:1 | 9.35:1 | 5.39:1 | Boolean settings (the product Destacado switch became the star toggle) |
 | Status text | `admin-status-success`, `admin-status-danger`, `admin-status-neutral` | Status token text on its tinted background; always paired with a word | 4.6:1 minimum | 9.1:1 minimum | Activo/Inactivo, Entregado/Rechazado |
 
 Rules: tinted pink/green pills with translucent fills are retired (they washed out in dark mode); destructive and positive actions are text plus border. A selected card never turns black or white, it keeps its text colors. Headings need an important text utility (`text-[color:var(--admin-text-primary)]!`) because the unlayered global `h1/h2` color beats Tailwind layers.
@@ -305,9 +305,20 @@ Code: `src/Components/Admin/ui/AdminOverflowMenu.jsx`, used by `PointOfSaleLocat
 
 Code: `PointOfSaleStockTable.jsx`. Identity column first (40px thumb plus name), Peso, Estado as a dot plus neutral muted word (never green or red text), Stock right-aligned, bold, `tabular-nums`. Low stock (existing `POCAS_UNIDADES_MAX` rule in `productoDisponibilidad.js`) adds an amber dot and the word "Bajo" (or "Agotado" at zero); amber is used for nothing else on the screen. The only per-row control is an icon-only ghost pencil (`aria-label="Editar stock de {producto}"`, 44px); the whole row also opens the same editor, and the pencil stops propagation so one click never fires twice. Below `@xl` rows become compact list items (thumb, name over "peso · estado", stock, pencil).
 
+### Product rows and the star toggle (Productos)
+
+Code: `src/Pages/Admin/InventarioProducto/components/` (`ProductCatalogTable`, `ProductFeaturedStar`, `ProductRowActions`, `ProductDeactivateConfirm`). Shared pieces reused from Puntos de venta: `Components/Admin/ui/StatusDot`, `StockCell`, `ProductThumb`, `AdminOverflowMenu`, `AdminFilterToolbar`.
+
+- **Columns:** Producto (40px thumb, name semibold, category muted on a second line), Precio (right, tabular), Stock (right, `StockCell`: amber dot plus "Bajo" or "Agotado" via the existing threshold), Estado (`StatusDot` plus neutral muted word "Activo" or "Inactivo"), Destacado (star), actions. There is no Img column and no colored status words. Sort lives on the Producto, Precio and Stock headers (lucide chevrons, never unicode arrows).
+- **Row controls: at most three.** Star, quiet ghost **Ajustar stock** (icon plus text from `@4xl`, icon-only below with `aria-label` and `title`; it is the most frequent action) and the `AdminOverflowMenu` with Editar and Desactivar/Activar. Danger text exists only inside the menu. The whole row opens Editar; the star, Ajustar stock and the menu stop propagation, and they are the keyboard path.
+- **Star toggle:** a 44px ghost button. Featured = filled coffee star, not featured = outline muted star, `aria-pressed`, name "Destacar {producto} en inicio" or "Quitar {producto} de destacados". Coffee is used for the star and the one page primary, nothing else on the row. When it cannot be turned on (3 featured already, product inactive or out of stock) it is `disabled` and the reason is both `title` and an `sr-only` description linked with `aria-describedby` ("Máximo 3 destacados"). A featured product can always be un-featured.
+- **Overflow items with a reason:** `AdminOverflowMenu` items accept `hint`; a disabled item (Desactivar on a featured product) shows the hint under it at full contrast and links it with `aria-describedby`.
+- **Desactivar asks first** (`AdminModal` max-w-md, filled danger confirm via `adminBtnDangerPrimary`, the only filled danger in the flow); Activar runs immediately.
+- **Responsive (container queries):** table from `@xl`; below it compact rows: thumb, name over "Categoría, dot, estado", price over stock on the right, star, menu. Ajustar stock moves into the menu there. Toolbar: with three selects the search takes its own row until `@4xl`; selects use their unset label as the trigger text ("Estado", "Destacado") so they fit two per row at 375.
+
 ### Toolbar
 
-Code: toolbar block in `InformacionPaginaPrincipal.jsx` (search with clear button); `AdminListaToolbar.jsx` is the shared list toolbar used elsewhere.
+Code: toolbar block in `InformacionPaginaPrincipal.jsx` (search with clear button); `AdminFilterToolbar.jsx` is the compact container-query toolbar (search plus selects, count line only while filters are active) used by Puntos de venta and Productos; `AdminListaToolbar.jsx` is the older labelled toolbar still used elsewhere.
 
 - One row at xl (tabs left, search right, `xl:max-w-[22rem]`); stacked below, tabs under the search (`flex-col-reverse`).
 - Search: 44px pill, `--admin-border-input`, leading search icon, clear button (`size-9`, `aria-label`) appears only with an active query. Empty result uses `AdminListaVacia` with a "clear filters" action.
@@ -401,6 +412,7 @@ Code: `src/Pages/Admin/Usuarios/Usuarios.jsx`, shell `.admin-table-shell--usuari
 | Uppercase tracked table headers (`.admin-table-shell thead th`: 11px, `0.05em`, uppercase) | **Legacy, to migrate** | Contradicts sentence-case rule; not copied into new components |
 | Color roles (`admin-role-*`, `admin-status-*`, switch) on the 10 inventory pages, Usuarios, Voluntariado, Visitas, Donaciones, Equipo, Propuestas, Panel StockAlerts | **Migrated (PR 4)** | Black fills replaced by roles |
 | Puntos de venta master-detail (`PointOfSaleLocationSelector`, `AdminOverflowMenu`, one-panel layout, dot statuses) | **Implemented (user-approved design)** | Replaces the card grid; `PointOfSaleCards` removed. Toolbar is `PointOfSaleToolbar` (count line only while filters are active) |
+| Productos list (`ProductCatalogTable` identity rows, star toggle, overflow menu, deactivate confirmation, `AdminFilterToolbar`) | **Implemented (user-approved design)** | Replaces the four-button rows and the Destacado switch; `ProductActions`, `ProductCatalogMobileList` and `ProductCatalogFeaturedToggle` removed |
 | `AdminSeccionCard`, `AdminModal` black defaults, `InformacionPaginaPrincipal` image badge, Sidebar scrim | **Left on purpose** | Shared defaults or non-control surfaces |
 | Remaining hardcoded Tailwind color utilities and `adminDark.css` `!important` overrides | **Legacy, to migrate** | Move to `--admin-*` tokens |
 | Other admin pages (toolbars, `AdminPaginacion`, old cards) | **Not yet reviewed** | Follow this file when touched |

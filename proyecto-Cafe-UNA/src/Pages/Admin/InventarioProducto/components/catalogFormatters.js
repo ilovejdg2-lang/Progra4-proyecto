@@ -29,3 +29,20 @@ export function etiquetaEstadoProducto(producto) {
 export function destacadoDeshabilitado(producto, destacadosEnUso, maxDestacados, puedeDestacarse) {
   return !producto.esDestacado && (destacadosEnUso >= maxDestacados || !puedeDestacarse(producto));
 }
+
+/** Why the featured star cannot be turned on (null when it can, or when it is already on). */
+export function motivoDestacadoBloqueado(producto, destacadosEnUso, maxDestacados, puedeDestacarse) {
+  if (producto.esDestacado) return null;
+  if (destacadosEnUso >= maxDestacados) return `Máximo ${maxDestacados} destacados`;
+  if (puedeDestacarse(producto)) return null;
+  return producto.estado === "Deshabilitado"
+    ? "No puedes destacar un producto deshabilitado"
+    : "No puedes destacar un producto sin stock";
+}
+
+/** Row status: Activo | Inactivo. Stock (including Agotado) is conveyed by the stock column. */
+export function estadoFilaProducto(producto) {
+  return producto?.estado === "Deshabilitado"
+    ? { texto: "Inactivo", tono: "neutral" }
+    : { texto: "Activo", tono: "success" };
+}

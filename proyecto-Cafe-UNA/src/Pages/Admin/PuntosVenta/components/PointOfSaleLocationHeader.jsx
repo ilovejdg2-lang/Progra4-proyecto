@@ -11,13 +11,10 @@ import {
   AdminModalActions,
   AdminModalFooter,
   AdminModalHeader,
+  adminBtnDangerPrimary,
 } from "../../../../Components/Admin/ui/AdminModal";
 
 const SALES_ROUTE = "/admin/puntos-venta/$locationCode/ventas";
-
-// Filled danger is reserved for the confirmation of a destructive action inside the modal.
-const dangerPrimaryCls =
-  "inline-flex min-h-[var(--control-height)] w-full items-center justify-center rounded-full border border-[var(--admin-status-danger-text)] bg-[var(--admin-status-danger-text)] px-5 text-[length:var(--text-body)] font-bold text-[color:var(--admin-surface)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--admin-focus-ring)]";
 
 function useMetaLine(location, productCount, unitCount) {
   const tActivo = useTraducir("Activo");
@@ -53,7 +50,7 @@ function DeactivateConfirm({ location, busy, onCancel, onConfirm }) {
           primaryType="button"
           primaryDisabled={busy}
           onPrimary={onConfirm}
-          primaryClassName={dangerPrimaryCls}
+          primaryClassName={adminBtnDangerPrimary}
         />
       </AdminModalFooter>
     </AdminModal>

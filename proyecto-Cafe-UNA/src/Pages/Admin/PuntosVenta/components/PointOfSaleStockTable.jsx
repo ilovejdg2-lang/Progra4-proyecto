@@ -1,34 +1,12 @@
-import { Package, Pencil } from "lucide-react";
-import { imagenPrincipalProducto } from "../../../../lib/productoImagenes";
-import { indicadorStockCantidad } from "../../../../lib/productoDisponibilidad";
+import { Pencil } from "lucide-react";
 import { ST } from "../../../../Components/T/ST";
-import { FotoMini } from "../../../../Components/FotoMini";
-import { t } from "../../../../lib/t";
 import { useTraducir } from "../../../../hooks/useTraducir";
-import { StatusDot } from "./StatusDot";
+import { ProductThumb } from "../../../../Components/Admin/ui/ProductThumb";
+import { StatusDot } from "../../../../Components/Admin/ui/StatusDot";
+import { StockCell } from "../../../../Components/Admin/ui/StockCell";
 
 const muted = "text-[color:var(--admin-text-muted)]";
 const primary = "text-[color:var(--admin-text-primary)]";
-
-function ProductImage({ product }) {
-  const foto = imagenPrincipalProducto(product);
-  return (
-    <FotoMini
-      src={foto}
-      alt=""
-      className="size-10 shrink-0 rounded-md object-cover ring-1 ring-[var(--admin-border)]"
-      fallback={
-        <span
-          className={`flex size-10 shrink-0 items-center justify-center rounded-md bg-[var(--admin-surface-hover)] ${muted}`}
-          role="img"
-          aria-label={t("Producto sin imagen")}
-        >
-          <Package className="size-4" aria-hidden="true" />
-        </span>
-      }
-    />
-  );
-}
 
 function ProductStatus({ estado }) {
   const habilitado = estado === "Habilitado";
@@ -36,26 +14,6 @@ function ProductStatus({ estado }) {
     <span className={`inline-flex items-center gap-2 ${muted}`}>
       <StatusDot tone={habilitado ? "success" : "neutral"} />
       <ST>{estado}</ST>
-    </span>
-  );
-}
-
-/** Number first, tabular. Amber dot plus a word marks low stock; everything else stays neutral. */
-function StockCell({ stockRecord, loading }) {
-  const indicador = indicadorStockCantidad(loading ? undefined : stockRecord?.stock, loading);
-  if (loading || stockRecord?.stock === null || stockRecord?.stock === undefined) {
-    return <span className={muted}><ST>{indicador.etiqueta}</ST></span>;
-  }
-  const low = indicador.codigo === "pocas" || indicador.codigo === "agotado";
-  return (
-    <span className="inline-flex items-center justify-end gap-2">
-      {low ? (
-        <span className={`inline-flex items-center gap-1.5 text-xs ${muted}`}>
-          <StatusDot tone="warning" />
-          <ST>{indicador.codigo === "agotado" ? "Agotado" : "Bajo"}</ST>
-        </span>
-      ) : null}
-      <span className={`min-w-[2ch] text-right font-semibold tabular-nums ${primary}`}>{indicador.etiqueta}</span>
     </span>
   );
 }
@@ -110,13 +68,13 @@ export function PointOfSaleStockTable({ products, stockByProductId, stockLoading
                 <tr key={product.id} onClick={openRow ? () => openRow(product) : undefined} className={canEdit ? rowInteractive : ""}>
                   <td className="px-6 py-2">
                     <div className="flex min-w-0 items-center gap-3">
-                      <ProductImage product={product} />
+                      <ProductThumb product={product} />
                       <span className={`min-w-0 font-semibold ${primary}`}><ST>{product.nombre}</ST></span>
                     </div>
                   </td>
                   <td className={`whitespace-nowrap px-4 py-2 ${muted}`}>{product.peso || "—"}</td>
                   <td className="whitespace-nowrap px-4 py-2"><ProductStatus estado={product.estado} /></td>
-                  <td className="px-4 py-2 text-right"><StockCell stockRecord={stockRecord} loading={stockLoading} /></td>
+                  <td className="px-4 py-2 text-right"><StockCell stock={stockRecord?.stock} loading={stockLoading} /></td>
                   <td className="px-4 py-2 pr-6 text-right">{canEdit ? <EditPencil product={product} onEdit={onEdit} /> : null}</td>
                 </tr>
               );
@@ -134,7 +92,7 @@ export function PointOfSaleStockTable({ products, stockByProductId, stockLoading
               onClick={openRow ? () => openRow(product) : undefined}
               className={`flex min-w-0 items-center gap-3 px-4 py-2 ${canEdit ? rowInteractive : ""}`}
             >
-              <ProductImage product={product} />
+              <ProductThumb product={product} />
               <div className="min-w-0 flex-1">
                 <p className={`break-words font-semibold leading-snug ${primary}`}><ST>{product.nombre}</ST></p>
                 <p className={`mt-0.5 flex flex-wrap items-center gap-x-2 text-xs ${muted}`}>
@@ -144,7 +102,7 @@ export function PointOfSaleStockTable({ products, stockByProductId, stockLoading
                 </p>
               </div>
               <div className="shrink-0 text-right text-[length:var(--text-body)]">
-                <StockCell stockRecord={stockRecord} loading={stockLoading} />
+                <StockCell stock={stockRecord?.stock} loading={stockLoading} />
               </div>
               {canEdit ? <EditPencil product={product} onEdit={onEdit} /> : null}
             </li>
