@@ -30,6 +30,7 @@ export function ProductDeactivateConfirm({ producto, busy = false, onCancel, onC
           primaryLabel={busy ? "Desactivando..." : "Desactivar"}
           primaryType="button"
           primaryDisabled={busy}
+          cancelDisabled={busy}
           onPrimary={onConfirm}
           primaryClassName={adminBtnDangerPrimary}
         />

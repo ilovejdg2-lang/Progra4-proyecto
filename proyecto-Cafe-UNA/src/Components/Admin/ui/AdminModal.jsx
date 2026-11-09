@@ -170,6 +170,7 @@ export function AdminModalActions({
   cancelLabel = "Cancelar",
   primaryLabel,
   primaryDisabled = false,
+  cancelDisabled = false,
   primaryType = "submit",
   onPrimary,
   primaryClassName,
@@ -186,7 +187,12 @@ export function AdminModalActions({
     // DOM order is Cancelar then primary: left/right on desktop, primary on top when stacked on mobile.
     return (
       <div className={cn("flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3", className)}>
-        <button type="button" onClick={onCancel} className={cancelClassName || adminBtnCoffeeCancel}>
+        <button
+          type="button"
+          disabled={cancelDisabled}
+          onClick={onCancel}
+          className={cancelClassName || adminBtnCoffeeCancel}
+        >
           {tCancel}
         </button>
         <button

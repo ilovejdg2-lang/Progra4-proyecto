@@ -458,7 +458,7 @@ const AdminInventarioProducto = () => {
           <AdminFilterToolbar
             busqueda={busqueda}
             onBusquedaChange={setBusqueda}
-            placeholder="Buscar por nombre, categoría, estado o peso..."
+            placeholder="Buscar por nombre, descripción o categoría..."
             searchLabel="Buscar producto"
             total={total}
             visibles={visibles}

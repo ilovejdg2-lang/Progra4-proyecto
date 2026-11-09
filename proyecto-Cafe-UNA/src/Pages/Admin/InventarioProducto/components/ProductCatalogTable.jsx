@@ -14,6 +14,11 @@ const muted = "text-[color:var(--admin-text-muted)]";
 const primary = "text-[color:var(--admin-text-primary)]";
 const rowInteractive = "cursor-pointer transition-colors hover:bg-[var(--admin-surface-hover)]";
 
+function ariaSortDe(active, direction) {
+  if (!active) return "none";
+  return direction === "asc" ? "ascending" : "descending";
+}
+
 function SortHeader({ label, active, direction, onClick }) {
   const Icon = active ? (direction === "asc" ? ChevronUp : ChevronDown) : ChevronsUpDown;
   return (
@@ -121,13 +126,13 @@ export function ProductCatalogTable({
 
   return (
     <>
-      <div className="admin-table-shell admin-table-shell--aligned hidden min-w-0 @xl:block">
+      <div className="admin-table-shell admin-table-shell--aligned hidden min-w-0 @3xl:block">
         <table className="w-full text-left text-[length:var(--text-body)]">
           <thead>
             <tr className="border-b border-[var(--admin-border)]">
-              <th scope="col" className="px-6 py-3 font-semibold"><SortHeader {...sortProps("nombre", "Producto")} /></th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold"><SortHeader {...sortProps("precio", "Precio")} /></th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold"><SortHeader {...sortProps("stock", "Stock")} /></th>
+              <th scope="col" aria-sort={ariaSortDe(sort.key === "nombre", sort.dir)} className="px-6 py-3 font-semibold"><SortHeader {...sortProps("nombre", "Producto")} /></th>
+              <th scope="col" aria-sort={ariaSortDe(sort.key === "precio", sort.dir)} className="px-4 py-3 text-right font-semibold"><SortHeader {...sortProps("precio", "Precio")} /></th>
+              <th scope="col" aria-sort={ariaSortDe(sort.key === "stock", sort.dir)} className="px-4 py-3 text-right font-semibold"><SortHeader {...sortProps("stock", "Stock")} /></th>
               <th scope="col" className="px-4 py-3 font-semibold"><ST>Estado</ST></th>
               <th scope="col" className="px-2 py-3 text-center font-semibold"><ST>Destacado</ST></th>
               <th scope="col" className="px-4 py-3 pr-6"><span className="sr-only"><ST>Acciones</ST></span></th>
@@ -171,7 +176,7 @@ export function ProductCatalogTable({
         </table>
       </div>
 
-      <ul className="divide-y divide-[var(--admin-border)] @xl:hidden">
+      <ul className="divide-y divide-[var(--admin-border)] @3xl:hidden">
         {ordenados.map((producto) => {
           const categoria = categoriaDe(producto);
           return (

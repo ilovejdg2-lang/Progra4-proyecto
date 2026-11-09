@@ -1525,7 +1525,7 @@ const DICCIONARIO = {
     "It will no longer be available in the store. You can reactivate it at any time.",
   "Solo destacados": "Featured only",
   "No destacados": "Not featured",
-  "Buscar por nombre, categoría, estado o peso...": "Search by name, category, status or weight...",
+  "Buscar por nombre, descripción o categoría...": "Search by name, description or category...",
 };
 
 function normalizarClave(texto) {

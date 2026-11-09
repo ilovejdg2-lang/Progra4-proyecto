@@ -102,8 +102,7 @@ describe("ProductCatalogTable", () => {
     const { container, onToggleDestacado } = setup({ destacadosEnUso: 3 });
     const table = container.querySelector("table");
     const star = within(table).getByRole("button", { name: "Destacar Té verde en inicio" });
-    expect(star).toBeDisabled();
-    expect(star).toHaveAttribute("title", "Máximo 3 destacados");
+    expect(star).toHaveAttribute("aria-disabled", "true");
     expect(star).toHaveAccessibleDescription("Máximo 3 destacados");
     // A featured product can always be un-featured.
     expect(within(table).getByRole("button", { name: "Quitar Café en grano de destacados" })).toBeEnabled();
@@ -114,8 +113,33 @@ describe("ProductCatalogTable", () => {
     const { container } = setup();
     const table = container.querySelector("table");
     const star = within(table).getByRole("button", { name: "Destacar Miel de abeja en inicio" });
-    expect(star).toBeDisabled();
-    expect(star).toHaveAttribute("title", "No puedes destacar un producto deshabilitado");
+    expect(star).toHaveAttribute("aria-disabled", "true");
+    expect(star).toHaveAccessibleDescription("No puedes destacar un producto deshabilitado");
+  });
+
+  it("explains why a product without stock cannot be featured", () => {
+    const sinStock = { ...te, id: 4, nombre: "Galletas", centralStock: known(0) };
+    const { container } = setup({ productos: [sinStock] });
+    const table = container.querySelector("table");
+    const star = within(table).getByRole("button", { name: "Destacar Galletas en inicio" });
+    expect(star).toHaveAttribute("aria-disabled", "true");
+    expect(star).toHaveAccessibleDescription("No puedes destacar un producto sin stock");
+  });
+
+  it("keeps a blocked star focusable, ignores it and shows the reason on focus and tap", async () => {
+    const user = userEvent.setup();
+    const { container, onToggleDestacado } = setup({ destacadosEnUso: 3 });
+    const table = container.querySelector("table");
+    const star = within(table).getByRole("button", { name: "Destacar Té verde en inicio" });
+    expect(screen.queryByTestId("featured-star-reason")).not.toBeInTheDocument();
+    star.focus();
+    expect(star).toHaveFocus();
+    expect(await screen.findByTestId("featured-star-reason")).toHaveTextContent("Máximo 3 destacados");
+    await user.keyboard("{Escape}");
+    expect(screen.queryByTestId("featured-star-reason")).not.toBeInTheDocument();
+    await user.click(star);
+    expect(screen.getByTestId("featured-star-reason")).toHaveTextContent("Máximo 3 destacados");
+    expect(onToggleDestacado).not.toHaveBeenCalled();
   });
 
   it("marks low stock with an amber word and the existing threshold, never by color alone", () => {
@@ -182,10 +206,43 @@ describe("ProductCatalogTable", () => {
     const table = container.querySelector("table");
     await user.click(within(table).getByRole("button", { name: "Más acciones de Café en grano" }));
     const item = screen.getByRole("menuitem", { name: /Desactivar/ });
-    expect(item).toBeDisabled();
+    expect(item).toHaveAttribute("aria-disabled", "true");
     expect(item).toHaveAccessibleDescription("Quita el destacado antes de desactivarlo");
+    await user.keyboard("{ArrowDown}");
+    expect(item).toHaveFocus();
     await user.click(item);
+    await user.keyboard("{Enter}");
     expect(onToggleEstado).not.toHaveBeenCalled();
+  });
+
+  it("opens the edit drawer from the overflow menu", async () => {
+    const user = userEvent.setup();
+    const { container, onEditar } = setup();
+    const table = container.querySelector("table");
+    await user.click(within(table).getByRole("button", { name: "Más acciones de Té verde" }));
+    await user.click(screen.getByRole("menuitem", { name: "Editar" }));
+    expect(onEditar).toHaveBeenCalledTimes(1);
+    expect(onEditar).toHaveBeenCalledWith(te);
+  });
+
+  it("reflects the sort state in aria-sort and supports descending order", async () => {
+    const user = userEvent.setup();
+    const { container } = setup();
+    const table = container.querySelector("table");
+    const header = (name) => within(table).getByRole("columnheader", { name });
+    const names = () => within(table).getAllByRole("row").slice(1).map((row) => row.querySelector("td").textContent);
+    expect(header(/Producto/)).toHaveAttribute("aria-sort", "ascending");
+    expect(header(/Precio/)).toHaveAttribute("aria-sort", "none");
+    expect(header(/Stock/)).toHaveAttribute("aria-sort", "none");
+    await user.click(within(table).getByRole("button", { name: /Producto/ }));
+    expect(header(/Producto/)).toHaveAttribute("aria-sort", "descending");
+    expect(names()[0]).toMatch(/Té verde/);
+    await user.click(within(table).getByRole("button", { name: /Precio/ }));
+    expect(header(/Producto/)).toHaveAttribute("aria-sort", "none");
+    expect(header(/Precio/)).toHaveAttribute("aria-sort", "ascending");
+    await user.click(within(table).getByRole("button", { name: /Precio/ }));
+    expect(header(/Precio/)).toHaveAttribute("aria-sort", "descending");
+    expect(names()[0]).toMatch(/Café en grano/);
   });
 
   it("hides mutation controls the user is not allowed to use", () => {
