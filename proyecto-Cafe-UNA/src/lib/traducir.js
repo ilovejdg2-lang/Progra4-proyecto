@@ -214,6 +214,8 @@ const DICCIONARIO = {
   "Todas": "All",
   "productos": "products",
   "producto": "product",
+  "producto en stock": "product in stock",
+  "productos en stock": "products in stock",
   "unidades en bodega": "units in stock",
   "unidad en bodega": "unit in stock",
   "Camisa": "Shirt",
@@ -1495,6 +1497,21 @@ const DICCIONARIO = {
   "No se pudo cambiar el estado.": "Could not change the status.",
   "No se pudo cargar el historial.": "Could not load the history.",
   "No se pudieron cargar las solicitudes.": "Could not load the requests.",
+
+  // Admin: Puntos de venta (master-detail)
+  "Administrá ubicaciones y el stock de cada punto.": "Manage locations and the stock of each point.",
+  "Buscar punto de venta": "Search point of sale",
+  "Buscar punto de venta...": "Search point of sale...",
+  "Sin resultados": "No results",
+  "Más acciones de": "More actions for",
+  "Mientras esté inactivo no se podrá consultar ni ajustar su stock. Podés volver a activarlo cuando quieras.":
+    "While inactive, its stock cannot be viewed or adjusted. You can reactivate it at any time.",
+  "Inactivando...": "Deactivating...",
+  "Este punto está inactivo": "This point is inactive",
+  "Activalo desde el menú para consultar o ajustar su stock.": "Activate it from the menu to view or adjust its stock.",
+  "Editar stock de": "Edit stock for",
+  "Bajo": "Low",
+  "Todavía no hay productos en el catálogo.": "There are no products in the catalog yet.",
 };
 
 function normalizarClave(texto) {
