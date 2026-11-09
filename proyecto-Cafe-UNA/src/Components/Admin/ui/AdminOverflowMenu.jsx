@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useId, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { MoreHorizontal } from "lucide-react";
 
@@ -11,7 +11,8 @@ const itemBase = `flex min-h-[var(--control-height)] w-full items-center gap-2.5
 
 /**
  * Overflow ("...") menu for secondary and destructive actions.
- * items: [{ key, label, icon?, onSelect?, to?, params?, tone?: "danger", className?, disabled? }]
+ * items: [{ key, label, icon?, onSelect?, to?, params?, tone?: "danger", className?, disabled?, hint? }]
+ * `hint` explains a disabled item: it renders under the item at full contrast and describes it.
  * Items with `to` render as router links. Escape, outside click, Tab and selecting an
  * item close the menu; Escape and selection return focus to the trigger.
  */
@@ -151,18 +152,28 @@ export function AdminOverflowMenu({ label, items, className = "", align = "right
                 {content}
               </Link>
             ) : (
-              <button
-                key={item.key}
-                ref={ref}
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                disabled={item.disabled}
-                className={cls}
-                onClick={() => select(item)}
-              >
-                {content}
-              </button>
+              <Fragment key={item.key}>
+                <button
+                  ref={ref}
+                  type="button"
+                  role="menuitem"
+                  tabIndex={-1}
+                  disabled={item.disabled}
+                  aria-describedby={item.hint ? `${menuId}-${item.key}-hint` : undefined}
+                  className={cls}
+                  onClick={() => select(item)}
+                >
+                  {content}
+                </button>
+                {item.hint ? (
+                  <p
+                    id={`${menuId}-${item.key}-hint`}
+                    className={`px-3 pb-2 text-xs leading-snug text-[color:var(--admin-text-muted)] ${item.className || ""}`}
+                  >
+                    <ST>{item.hint}</ST>
+                  </p>
+                ) : null}
+              </Fragment>
             );
           })}
         </div>

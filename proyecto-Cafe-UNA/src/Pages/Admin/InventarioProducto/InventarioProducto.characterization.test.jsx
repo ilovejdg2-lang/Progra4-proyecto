@@ -140,9 +140,9 @@ describe('InventarioProducto characterization', () => {
 
     expect(await screen.findAllByText('Café Premium')).toHaveLength(2)
     expect(container.querySelector('table')).toBeInTheDocument()
-    expect(container.querySelector('article')).toBeInTheDocument()
+    expect(container.querySelector('ul > li')).toBeInTheDocument()
 
-    await user.type(screen.getByRole('searchbox', { name: 'Buscar' }), 'Premium')
+    await user.type(screen.getByRole('searchbox', { name: 'Buscar producto' }), 'Premium')
 
     expect(screen.getByText(/Mostrando/)).toHaveTextContent('Mostrando 1 de 2')
     expect(screen.queryByText('Té Verde')).not.toBeInTheDocument()
@@ -181,15 +181,89 @@ describe('InventarioProducto characterization', () => {
 
     expect(await screen.findAllByText('Café Premium')).toHaveLength(2)
     expect(screen.getByText(/catálogo está disponible/)).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Stock' })).toHaveLength(5)
+    expect(screen.getAllByRole('button', { name: /^Ajustar stock de/ })).toHaveLength(2)
 
-    await user.click(screen.getAllByRole('button', { name: 'Stock' })[1])
+    await user.click(screen.getByRole('button', { name: 'Ajustar stock de Café Premium' }))
     const dialog = screen.getByRole('dialog', { name: 'Stock de Bodega Central' })
     await user.type(within(dialog).getByRole('textbox', { name: /^Unidades disponibles/ }), '7')
     await user.click(within(dialog).getByRole('button', { name: 'Guardar stock' }))
 
     await waitFor(() => expect(serviceMocks.actualizarStockCentral).toHaveBeenCalledWith(1, 7))
     expect(hookMocks.stock.retry).toHaveBeenCalled()
+  })
+
+  it('opens the edit drawer from a row click and from the overflow menu', async () => {
+    const user = userEvent.setup()
+    const { container } = renderPage()
+    const table = container.querySelector('table')
+
+    await user.click(within(table).getByText('Té Verde'))
+    expect(screen.getByRole('dialog', { name: 'Editar producto' })).toBeInTheDocument()
+  })
+
+  it('asks for confirmation before deactivating and only then updates the product', async () => {
+    const user = userEvent.setup()
+    const { container } = renderPage()
+    const table = container.querySelector('table')
+
+    await user.click(within(table).getByRole('button', { name: 'Más acciones de Té Verde' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Desactivar' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Desactivar Té Verde' })
+    expect(serviceMocks.actualizarProducto).not.toHaveBeenCalled()
+    await user.click(within(dialog).getByRole('button', { name: 'Desactivar' }))
+
+    await waitFor(() =>
+      expect(serviceMocks.actualizarProducto).toHaveBeenCalledWith(2, expect.objectContaining({ estado: 'Deshabilitado' })),
+    )
+    expect(hookMocks.catalog.retry).toHaveBeenCalled()
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Desactivar Té Verde' })).not.toBeInTheDocument())
+  })
+
+  it('does not deactivate when the confirmation is cancelled', async () => {
+    const user = userEvent.setup()
+    const { container } = renderPage()
+    const table = container.querySelector('table')
+
+    await user.click(within(table).getByRole('button', { name: 'Más acciones de Té Verde' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Desactivar' }))
+    await user.click(within(screen.getByRole('dialog', { name: 'Desactivar Té Verde' })).getByRole('button', { name: 'Cancelar' }))
+
+    expect(serviceMocks.actualizarProducto).not.toHaveBeenCalled()
+    expect(screen.queryByRole('dialog', { name: 'Desactivar Té Verde' })).not.toBeInTheDocument()
+  })
+
+  it('activates an inactive product immediately, without a confirmation dialog', async () => {
+    const user = userEvent.setup()
+    const { container } = renderPage({
+      data: [{ ...products[1], estado: 'Deshabilitado' }],
+    })
+    const table = container.querySelector('table')
+
+    await user.click(within(table).getByRole('button', { name: 'Más acciones de Té Verde' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Activar' }))
+
+    await waitFor(() =>
+      expect(serviceMocks.actualizarProducto).toHaveBeenCalledWith(2, expect.objectContaining({ estado: 'Habilitado' })),
+    )
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('toggles the featured star through the existing handler and keeps the three-product limit', async () => {
+    const user = userEvent.setup()
+    const { container } = renderPage({
+      data: [
+        { ...products[0], esDestacado: true },
+        { ...products[1], stock: 8 },
+      ],
+    })
+    const table = container.querySelector('table')
+
+    await user.click(within(table).getByRole('button', { name: 'Destacar Té Verde en inicio' }))
+    await waitFor(() => expect(serviceMocks.actualizarProducto).toHaveBeenCalledWith(2, { esDestacado: true }))
+
+    await user.click(within(table).getByRole('button', { name: 'Quitar Café Premium de destacados' }))
+    await waitFor(() => expect(serviceMocks.actualizarProducto).toHaveBeenCalledWith(1, { esDestacado: false }))
   })
 
   it('validates required fields and exposes the pending create request state', async () => {

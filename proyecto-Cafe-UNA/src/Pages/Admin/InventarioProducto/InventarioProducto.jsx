@@ -2,14 +2,14 @@ import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
-import { AdminListaToolbar, AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
+import { AdminFilterToolbar } from "../../../Components/Admin/ui/AdminFilterToolbar";
+import { AdminListaVacia } from "../../../Components/Admin/ui/AdminListaToolbar";
 import { AdminPaginacion } from "../../../Components/Admin/ui/AdminPaginacion";
 import { CategoriaNueva, CategoriaOpcionBorrar } from "../../../Components/Admin/ui/CategoriaCampo";
 import { ModalCatalogo } from "../../../Components/Admin/ui/CatalogoPaneles";
-import { ProductActions } from "./components/ProductActions";
 import { CentralStockEditor } from "./components/CentralStockEditor";
 import { ProductCatalogFormDrawer } from "./components/ProductCatalogFormDrawer";
-import { ProductCatalogMobileList } from "./components/ProductCatalogMobileList";
+import { ProductDeactivateConfirm } from "./components/ProductDeactivateConfirm";
 import { ProductCatalogTable } from "./components/ProductCatalogTable";
 import { etiquetaEstadoProducto } from "./components/catalogFormatters";
 import { categoriasUnicas, esCategoriaRaiz, filtrarPorCategoria, TIPO_CATEGORIA_PRODUCTO } from "../../../lib/categorias";
@@ -63,6 +63,8 @@ const AdminInventarioProducto = () => {
   const [modalCategorias, setModalCategorias] = useState(false);
   const [productoEditar, setProductoEditar] = useState(null);
   const [productoStockEditar, setProductoStockEditar] = useState(null);
+  const [productoDesactivar, setProductoDesactivar] = useState(null);
+  const [desactivando, setDesactivando] = useState(false);
   const limpiarPendienteTimerRef = useRef(null);
   const [guardando, setGuardando] = useState(false);
   const [guardandoStock, setGuardandoStock] = useState(false);
@@ -285,6 +287,25 @@ const AdminInventarioProducto = () => {
     }
   };
 
+  // Deactivating asks first; activating is non-destructive and runs immediately.
+  const solicitarToggleEstado = (producto) => {
+    if (puedeInactivar && producto.estado !== "Deshabilitado") {
+      setProductoDesactivar(producto);
+      return;
+    }
+    handleToggleEstado(producto);
+  };
+
+  const confirmarDesactivar = async () => {
+    setDesactivando(true);
+    try {
+      await handleToggleEstado(productoDesactivar);
+    } finally {
+      setDesactivando(false);
+      setProductoDesactivar(null);
+    }
+  };
+
   const handleToggleDestacado = async (producto) => {
     if (!producto.esDestacado) {
       if (contarDestacados(productos) >= MAX_PRODUCTOS_DESTACADOS) {
@@ -346,6 +367,15 @@ const AdminInventarioProducto = () => {
         isSaving={guardando}
       />
 
+      {productoDesactivar ? (
+        <ProductDeactivateConfirm
+          producto={productoDesactivar}
+          busy={desactivando}
+          onCancel={() => setProductoDesactivar(null)}
+          onConfirm={confirmarDesactivar}
+        />
+      ) : null}
+
       <ModalCatalogo
         open={modalCategorias}
         onClose={() => {
@@ -374,7 +404,7 @@ const AdminInventarioProducto = () => {
                 <button
                   type="button"
                   onClick={() => setModalCategorias(true)}
-                  className="w-full rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
+                  className="w-full rounded-full border px-5 py-2 text-sm font-semibold transition sm:w-auto admin-role-quiet"
                 >
                   <ST>Categorías</ST>
                 </button>
@@ -392,20 +422,20 @@ const AdminInventarioProducto = () => {
           )
         }
       />
-      <section className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <section className="@container min-w-0 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)]">
         {cargando ? (
           <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 px-4 py-14 text-center sm:px-6">
             <span className="admin-route-loading__spinner" aria-hidden="true" />
-            <p className="text-sm font-semibold text-slate-600"><ST>Cargando productos...</ST></p>
+            <p className="text-sm font-semibold text-[color:var(--admin-text-muted)]"><ST>Cargando productos...</ST></p>
           </div>
         ) : error ? (
           <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 px-4 py-14 text-center sm:px-6">
-            <p className="max-w-md text-sm font-semibold text-red-600"><ST>{error}</ST></p>
-            <p className="max-w-md text-xs text-slate-500">{contactSupportMessage()}</p>
+            <p className="max-w-md text-sm font-semibold text-[color:var(--admin-status-danger-text)]"><ST>{error}</ST></p>
+            <p className="max-w-md text-xs text-[color:var(--admin-text-muted)]">{contactSupportMessage()}</p>
             <button
               type="button"
               onClick={cargarProductos}
-              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="rounded-full border px-4 py-2 text-sm font-semibold transition admin-role-quiet"
             >
               <ST>Reintentar</ST>
             </button>
@@ -413,22 +443,23 @@ const AdminInventarioProducto = () => {
         ) : (
           <>
         {stockState.error ? (
-          <div className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between sm:px-6" role="status">
+          <div className="flex flex-col gap-2 border-b border-[var(--admin-border)] bg-[var(--admin-surface-subtle)] px-4 py-3 text-sm text-[color:var(--admin-text-primary)] sm:flex-row sm:items-center sm:justify-between sm:px-6" role="status">
             <span><ST>El catálogo está disponible, pero no se pudo cargar el stock de Bodega Central.</ST></span>
             <button
               type="button"
               onClick={stockState.retry}
-              className="min-h-11 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="min-h-11 rounded-full border px-4 py-2 text-xs font-semibold transition admin-role-quiet"
             >
               <ST>Reintentar stock</ST>
             </button>
           </div>
         ) : null}
         {!cargando && !error ? (
-          <AdminListaToolbar
+          <AdminFilterToolbar
             busqueda={busqueda}
             onBusquedaChange={setBusqueda}
-            placeholder={"Buscar por nombre, descripción, categoría, estado o peso..."}
+            placeholder="Buscar por nombre, categoría, estado o peso..."
+            searchLabel="Buscar producto"
             total={total}
             visibles={visibles}
             hayFiltrosActivos={hayFiltrosActivos}
@@ -436,9 +467,10 @@ const AdminInventarioProducto = () => {
             filtros={[
               {
                 id: "categoria",
-                label: "Categoría",
+                ariaLabel: "Categoría",
                 value: valoresFiltro.categoria || "todos",
                 onChange: (valor) => setValorFiltro("categoria", valor),
+                widthClass: "@4xl:w-48",
                 footer: puedeAdministrarCategorias ? (
                   <CategoriaNueva
                     tipo={TIPO_CATEGORIA_PRODUCTO}
@@ -462,8 +494,8 @@ const AdminInventarioProducto = () => {
                         />
                       ) : null
                   : undefined,
-                opciones: [
-                  { value: "todos", label: "Todas" },
+                options: [
+                  { value: "todos", label: "Todas las categorías" },
                   ...categoriasProducto.map((categoria) => {
                     const registro = categoriasApi.find(
                       (item) =>
@@ -482,11 +514,12 @@ const AdminInventarioProducto = () => {
               },
               {
                 id: "estado",
-                label: "Estado",
+                ariaLabel: "Estado",
                 value: valoresFiltro.estado || "todos",
                 onChange: (valor) => setValorFiltro("estado", valor),
-                opciones: [
-                  { value: "todos", label: "Todos" },
+                widthClass: "@4xl:w-40",
+                options: [
+                  { value: "todos", label: "Estado" },
                   { value: "Activo", label: "Activo" },
                   { value: "Inactivo", label: "Inactivo" },
                   { value: "Agotado", label: "Agotado" },
@@ -494,21 +527,23 @@ const AdminInventarioProducto = () => {
               },
               {
                 id: "destacado",
-                label: "Destacado",
+                ariaLabel: "Destacado",
                 value: valoresFiltro.destacado || "todos",
                 onChange: (valor) => setValorFiltro("destacado", valor),
-                opciones: [
-                  { value: "todos", label: "Todos" },
-                  { value: "si", label: "Sí" },
-                  { value: "no", label: "No" },
+                widthClass: "@4xl:w-40",
+                options: [
+                  { value: "todos", label: "Destacado" },
+                  { value: "si", label: "Solo destacados" },
+                  { value: "no", label: "No destacados" },
                 ],
               },
             ]}
           />
         ) : null}
 
+        <div className="border-t border-[var(--admin-border)]">
         {productos.length === 0 ? (
-          <div className="px-4 py-14 text-center text-sm text-slate-500 sm:px-6"><ST>No hay productos registrados.</ST></div>
+          <div className="px-4 py-14 text-center text-sm text-[color:var(--admin-text-muted)] sm:px-6"><ST>No hay productos registrados.</ST></div>
         ) : productosFiltrados.length === 0 ? (
           <AdminListaVacia onLimpiar={limpiar} />
         ) : (
@@ -519,38 +554,13 @@ const AdminInventarioProducto = () => {
               maxDestacados={MAX_PRODUCTOS_DESTACADOS}
               puedeDestacarse={productoPuedeDestacarse}
               stockLoading={stockState.loading}
+              puedeEditar={puedeEditar}
+              puedeInactivar={puedeInactivar}
+              puedeActualizarStock={puedeActualizarStock}
               onToggleDestacado={handleToggleDestacado}
-              renderAcciones={(producto) => (
-                <ProductActions
-                  producto={producto}
-                  puedeEditar={puedeEditar}
-                  puedeInactivar={puedeInactivar}
-                  puedeActualizarStock={puedeActualizarStock}
-                  onEditar={() => setProductoEditar(producto)}
-                  onToggleEstado={() => handleToggleEstado(producto)}
-                  onEditarStock={() => setProductoStockEditar(producto)}
-                />
-              )}
-            />
-            <ProductCatalogMobileList
-              productos={productosPagina}
-              destacadosEnUso={destacadosEnUso}
-              maxDestacados={MAX_PRODUCTOS_DESTACADOS}
-              puedeDestacarse={productoPuedeDestacarse}
-              stockLoading={stockState.loading}
-              onToggleDestacado={handleToggleDestacado}
-              renderAcciones={(producto) => (
-                <ProductActions
-                  producto={producto}
-                  puedeEditar={puedeEditar}
-                  puedeInactivar={puedeInactivar}
-                  puedeActualizarStock={puedeActualizarStock}
-                  variant="mobile"
-                  onEditar={() => setProductoEditar(producto)}
-                  onToggleEstado={() => handleToggleEstado(producto)}
-                  onEditarStock={() => setProductoStockEditar(producto)}
-                />
-              )}
+              onEditar={setProductoEditar}
+              onEditarStock={setProductoStockEditar}
+              onToggleEstado={solicitarToggleEstado}
             />
             {showPagination ? (
               <AdminPaginacion
@@ -563,6 +573,7 @@ const AdminInventarioProducto = () => {
             ) : null}
           </>
         )}
+        </div>
           </>
         )}
       </section>

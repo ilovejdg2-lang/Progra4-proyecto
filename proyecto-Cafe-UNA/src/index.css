@@ -676,53 +676,6 @@ body.admin-route-active #root {
   background: #f8fafc;
 }
 
-/* Catálogo de productos: columnas sin solaparse */
-.admin-table-shell--productos table {
-  table-layout: auto;
-  width: 100%;
-  min-width: 0;
-}
-
-.admin-table-shell--productos thead th {
-  padding: 0.65rem 0.45rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.admin-table-shell--productos thead th:first-child,
-.admin-table-shell--productos tbody td:first-child {
-  padding-left: 0.85rem;
-}
-
-.admin-table-shell--productos thead th:last-child,
-.admin-table-shell--productos tbody td:last-child {
-  padding-right: 0.85rem;
-}
-
-.admin-table-shell--productos tbody td {
-  text-align: center;
-}
-
-.admin-table-shell--productos tbody td:nth-child(2),
-.admin-table-shell--productos tbody td:nth-child(3) {
-  text-align: left;
-}
-
-/* Precio y Stock: numéricos, alineados a la derecha como su encabezado */
-.admin-table-shell--productos tbody td:nth-child(4),
-.admin-table-shell--productos tbody td:nth-child(5) {
-  text-align: right;
-}
-
-.admin-table-shell--productos .ui-switch {
-  justify-content: center;
-}
-
-.admin-table-shell--productos .product-actions {
-  margin-inline: auto;
-}
-
 /* Gestión de usuarios: proporciones y tipografía compacta sin scroll forzado */
 .admin-table-shell--usuarios table {
   table-layout: auto;
