@@ -282,7 +282,9 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
             </p>
             <p className="text-xs text-slate-400 max-w-md mx-auto mb-6">
               <ST>
-                Si se aprueba, se publicará en el catálogo público del repositorio.
+                {esDocumentoEspecifico
+                  ? "El equipo administrativo revisará su solicitud."
+                  : "Si se aprueba, se publicará en el catálogo público del repositorio."}
               </ST>
             </p>
             <button
@@ -475,7 +477,8 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                 />
               </div>
 
-              {/* Pregunta 6: Visibilidad y Acceso (Por defecto Privado) */}
+              {/* Pregunta 6: Visibilidad y Acceso (solo aportes nuevos) */}
+              {!esDocumentoEspecifico && (
               <div className="admin-form-group">
                 <span className="admin-form-label">
                   <ST>Nivel de Visibilidad y Custodia Institucional</ST>
@@ -506,6 +509,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Pregunta 7: Archivo Digital a Enviar */}
               <div className="admin-form-group">
