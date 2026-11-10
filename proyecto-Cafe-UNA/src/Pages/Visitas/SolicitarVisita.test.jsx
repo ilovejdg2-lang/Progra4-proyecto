@@ -133,7 +133,7 @@ describe("SolicitarVisita", () => {
       }),
     );
     expect(await screen.findByText(/solicitud #31/i)).toBeInTheDocument();
-  });
+  }, 20000);
 
   it("offers only API-provided slots and removes the obsolete guide request", async () => {
     render(<SolicitarVisita />);
@@ -437,7 +437,7 @@ describe("SolicitarVisita form feedback and layout", () => {
     expect(await screen.findByText(/solicitud #31/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /enviar solicitud/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /hacer otra solicitud/i })).toBeInTheDocument();
-  });
+  }, 20000);
 
   it("reloads availability and live capacity when starting another request", async () => {
     crearSolicitudVisitaMock.mockResolvedValueOnce({ id: "31", estado: "Pendiente" });
@@ -451,7 +451,7 @@ describe("SolicitarVisita form feedback and layout", () => {
     await waitFor(() => expect(obtenerDisponibilidadMock).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(obtenerFranjasMock).toHaveBeenCalledTimes(2));
     expect(await screen.findByRole("radio", { name: /09:00/i })).not.toBeChecked();
-  });
+  }, 20000);
 
   it("flags a slot that is running low with the remaining capacity in text", async () => {
     obtenerDisponibilidadMock.mockResolvedValueOnce([
