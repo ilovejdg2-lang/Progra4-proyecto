@@ -43,6 +43,8 @@ export function SelectFiltro({
   required = false,
   className = "",
   "aria-label": ariaLabel,
+  "aria-invalid": ariaInvalid,
+  "aria-describedby": ariaDescribedby,
   traducirOpciones = false,
   buscable,
 }) {
@@ -56,6 +58,8 @@ export function SelectFiltro({
       options={opciones}
       disabled={disabled}
       ariaLabel={ariaLabel}
+      ariaInvalid={ariaInvalid}
+      ariaDescribedby={ariaDescribedby}
       className={className}
       buscable={buscable ?? opciones.length > 12}
       traducirOpciones={traducirOpciones}

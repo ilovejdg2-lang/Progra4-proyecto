@@ -1,21 +1,27 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useRouterState } from "@tanstack/react-router";
-import {
-  CalendarDays,
-  CalendarX2,
-  Check,
-  Clock,
-  Package,
-  Phone,
-  UploadCloud,
-} from "lucide-react";
-import { IconoSitio } from "../../Components/IconoSitio/IconoSitio";
+import { Package, UploadCloud, X } from "lucide-react";
 import { format, isBefore, startOfDay } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
 import AvisoSedeFinca from "../../Components/AvisoSedeFinca/AvisoSedeFinca";
 import { NumericInput } from "../../Components/NumericInput/NumericInput";
-import { HOME_SCROLL_SECTIONS } from "../../lib/homeScrollTarget";
+import { PublicPageHeader } from "../../Components/Public/PublicPageHeader";
+import {
+  CalendarPicker,
+  ChoiceCard,
+  ChoiceGroup,
+  Field,
+  FieldError,
+  FormAlert,
+  FormGrid,
+  FormNote,
+  FormPlaceholder,
+  FormSection,
+  FormSuccess,
+  SubmitFooter,
+} from "../../Components/Public/PublicForm";
+import { HOME_SCROLL_SECTIONS, navigateToHomeSection } from "../../lib/homeScrollTarget";
 import PageLoading from "../../Components/PageLoading/PageLoading";
 import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
 import { getActiveSessionUser } from "../../services/sessionService";
@@ -27,7 +33,6 @@ import {
 } from "../../services/donacionesService";
 import { obtenerSeccion } from "../../services/informacionService";
 import { sedeDesdeHomeLocation, SEDE_FINCA_NOMBRE } from "../../lib/sedeFinca";
-import { Calendar } from "@/Components/ui/calendar";
 import { useIdioma } from "../../lib/useIdioma";
 import { queueFocusFormError } from "../../lib/formFocus";
 import { filtrarEnteros } from "../../lib/numericInput";
@@ -56,29 +61,7 @@ import {
   placeholderIdentificacion,
   validarIdentificacion,
 } from "../../lib/identificacionPersona";
-import "../Voluntariado/SolicitarVoluntariado.css";
 import "./SolicitarDonacion.css";
-
-function SectionCard({ lugar, paso, title, hint, children }) {
-  return (
-    <div className="section-card">
-      <div className="section-card__header">
-        <span className="section-card__paso" aria-hidden="true">
-          {paso}
-        </span>
-        <h4>
-          <span className="sr-only">
-            <ST>Paso</ST> {paso}.{" "}
-          </span>
-          {title}
-        </h4>
-        {lugar ? <IconoSitio lugar={lugar} size={20} className="section-card__icon-inline" /> : null}
-        {hint ? <span className="section-card__hint">{hint}</span> : null}
-      </div>
-      <div className="section-card__body">{children}</div>
-    </div>
-  );
-}
 
 /** Respaldo si no carga el catálogo de Ajustes. */
 const ESTADOS_ARTICULOS = [
@@ -220,83 +203,39 @@ export default function SolicitarDonacion() {
   const necesidadInicial = leerNecesidadDesdeUrl(params, search);
 
   const tTitulo = useTraducir("Solicitud de donación");
-  const tSub = useTraducir(
-    "Café UNA recibe únicamente donaciones materiales: bienes, equipos, herramientas e insumos físicos.",
-  );
-  const tDonante = useTraducir("Información del donante");
-  const tQuien = useTraducir("¿Quién realizará la donación?");
-  const tPersona = useTraducir("Persona");
-  const tOrganizacion = useTraducir("Organización");
-  const tNombre = useTraducir("Nombre");
-  const tRazonSocial = useTraducir("Razón social");
-  const tPrimerApellido = useTraducir("Primer apellido");
-  const tSegundoApellido = useTraducir("Segundo apellido");
-  const tPhNombre = useTraducir("Nombre");
-  const tPh1 = useTraducir("1° Apellido");
-  const tPh2 = useTraducir("2° Apellido");
-  const tIdentificacion = useTraducir("Identificación");
-  const tPhId = useTraducir("Cédula, jurídica o pasaporte");
-  const tTipoDocumento = useTraducir("Tipo de identificación");
+  const tSub = useTraducir("Contanos qué querés donar y cómo preferís entregarlo.");
   const tCedula = useTraducir("Cédula");
   const tDimex = useTraducir("DIMEX");
   const tPasaporte = useTraducir("Pasaporte");
-  const tPaisOrigen = useTraducir("País de origen");
   const tElegiPais = useTraducir("Elegí el país");
-  const tCorreo = useTraducir("Correo electrónico");
-  const tTelefono = useTraducir("Teléfono");
-  const tDetalles = useTraducir("Detalles de la donación");
-  const tDetallesHint = useTraducir("Cuéntanos más sobre los artículos que deseas donar.");
-  const tCategoria = useTraducir("Categoría de la donación");
-  const tSeleccione = useTraducir("Seleccione una opción");
-  const tDescripcion = useTraducir("Descripción detallada de los artículos");
-  const tCantidad = useTraducir("Cantidad o volumen estimado");
+  const tPhNombre = useTraducir("Nombre");
+  const tPh1 = useTraducir("1° Apellido");
+  const tPh2 = useTraducir("2° Apellido");
+  const tPhId = useTraducir("Cédula, jurídica o pasaporte");
+  const tRazonSocial = useTraducir("Razón social");
+  const tConsultando = useTraducir("Consultando...");
   const tPhCantidad = useTraducir("3 cajas, 5 unidades");
-  const tEstado = useTraducir("Estado de los artículos");
-  const tFotos = useTraducir("Fotografías de los artículos");
+  const tSeleccione = useTraducir("Elegí una opción");
   const tFotosHint = useTraducir("JPG, PNG o WEBP. Máximo 5 imágenes de 10 MB cada una.");
-  const tFotosCta = useTraducir("Arrastra las fotos aquí o haz clic para seleccionarlas");
-  const tLogistica = useTraducir("Logística de entrega");
-  const tLogisticaHint = useTraducir("Indica cómo te gustaría realizar la entrega de los artículos.");
-  const tMetodo = useTraducir("Método de entrega preferido");
-  const tEntregaTitulo = useTraducir("Lo entregaré personalmente");
-  const tEntregaDesc = useTraducir(
-    `Llevaré los artículos a la ${SEDE_FINCA_NOMBRE}.`,
-  );
-  const tRecoleccionTitulo = useTraducir("Solicito recolección");
+  const tFotosCta = useTraducir("Arrastrá las fotos acá o tocá para elegirlas");
+  const tEntregaDesc = useTraducir(`Llevaré los artículos a la ${SEDE_FINCA_NOMBRE}.`);
   const tRecoleccionDesc = useTraducir("La organización evaluará si puede recoger la donación.");
-  const tHorarios = useTraducir("Horario de recepción");
   const tHorariosHint = useTraducir(
-    `Seleccione un día habilitado y uno de los turnos en los que la ${SEDE_FINCA_NOMBRE} recibe donaciones.`,
+    `Elegí un día habilitado y uno de los turnos en los que la ${SEDE_FINCA_NOMBRE} recibe donaciones.`,
   );
-  const tDiaEntregaEntrega = useTraducir("Día de entrega");
-  const { idioma } = useIdioma();
-  const localeCalendario = idioma === "en" ? enUS : es;
-  const tDeclaracion = useTraducir("Declaración y confirmación");
-  const tDeclaracionHint = useTraducir("Revisa la información y acepta los términos para completar tu solicitud.");
-  const tValor = useTraducir("Valor estimado de la donación");
-  const tFecha = useTraducir("Fecha de la solicitud");
-  const tOrigen = useTraducir(
-    "Certifico que los artículos son de mi propiedad y de origen lícito.",
+  const tRecoleccionAviso = useTraducir(
+    "La solicitud de recolección está sujeta a disponibilidad de personal, vehículo institucional, ubicación, cantidad y características de los artículos. Elegir esta opción no garantiza que la recolección sea aprobada.",
   );
+  const tIntro = useTraducir(
+    "En Café UNA recibimos donaciones de materiales, equipos, herramientas e insumos que puedan contribuir al desarrollo de las actividades del proyecto. Antes de completar la solicitud, revisá las categorías y materiales que necesitamos actualmente.",
+  );
+  const tOrigen = useTraducir("Certifico que los artículos son de mi propiedad y de origen lícito.");
   const tPrivacidad = useTraducir("Acepto la Política de privacidad.");
   const tEnviar = useTraducir("Enviar solicitud");
   const tEnviando = useTraducir("Enviando...");
-  const tLoginBtn = useTraducir("Inicie sesión para enviar");
-
-  const tMaterial = useTraducir("Material o artículo");
-  const tValorHint = useTraducir("Indique el valor aproximado total de los artículos ofrecidos.");
-  const tUbicacion = useTraducir("Ubicación de la donación");
-  const tUbicacionHint = useTraducir("Indique dónde se encuentran físicamente los artículos.");
-  const tProvincia = useTraducir("Provincia");
-  const tCanton = useTraducir("Cantón");
-  const tDistrito = useTraducir("Distrito");
-  const tSeñas = useTraducir("Dirección o señas adicionales");
-  const tRecoleccionAviso = useTraducir(
-    "La solicitud de recolección está sujeta a disponibilidad de personal, vehículo institucional, ubicación, cantidad y características de los artículos. Seleccionar esta opción no garantiza que la recolección sea aprobada.",
-  );
-  const tIntro = useTraducir(
-    "En Café UNA recibimos donaciones de materiales, equipos, herramientas e insumos que puedan contribuir al desarrollo de las actividades del proyecto. Antes de completar la solicitud, revise las categorías y materiales actualmente requeridos.",
-  );
+  const tLoginBtn = useTraducir("Iniciá sesión para enviar");
+  const { idioma } = useIdioma();
+  const localeCalendario = idioma === "en" ? enUS : es;
 
   const [usuario] = useState(() => getActiveSessionUser());
   const [formulario, setFormulario] = useState(() =>
@@ -480,7 +419,7 @@ export default function SolicitarDonacion() {
           primerApellido: "",
           segundoApellido: "",
         }));
-        setAvisoCedula("No se encontraron datos para esta identificación. Complete los datos manualmente.");
+        setAvisoCedula("No se encontraron datos para esta identificación. Completá los datos manualmente.");
         return;
       }
       consultaCedulaRef.current = { digitos, enCurso: false };
@@ -491,7 +430,7 @@ export default function SolicitarDonacion() {
         primerApellido: partes.primerApellido,
         segundoApellido: partes.segundoApellido,
       }));
-      setAvisoCedula("Datos cargados automáticamente. Puede editarlos si es necesario.");
+      setAvisoCedula("Datos cargados automáticamente. Podés editarlos si hace falta.");
       setErrores((prev) => {
         const next = { ...prev };
         delete next.nombre;
@@ -514,8 +453,8 @@ export default function SolicitarDonacion() {
         yaIndicaManual
           ? mensajeBase
           : esConexion
-            ? `${mensajeBase} Mientras tanto, complete los datos manualmente.`
-            : `${mensajeBase} Complete los datos manualmente.`,
+            ? `${mensajeBase} Mientras tanto, completá los datos manualmente.`
+            : `${mensajeBase} Completá los datos manualmente.`,
       );
     } finally {
       setConsultandoCedula(false);
@@ -733,11 +672,11 @@ export default function SolicitarDonacion() {
   const validarFormulario = () => {
     const nuevos = {};
     if (esPersona) {
-      if (!formulario.nombre.trim()) nuevos.nombre = "El nombre es obligatorio";
-      else if (formulario.nombre.trim().length < 2) nuevos.nombre = "Mínimo 2 caracteres";
-      if (!formulario.primerApellido.trim()) nuevos.primerApellido = "El primer apellido es obligatorio";
+      if (!formulario.nombre.trim()) nuevos.nombre = "Ingresá el nombre";
+      else if (formulario.nombre.trim().length < 2) nuevos.nombre = "Escribí al menos 2 caracteres";
+      if (!formulario.primerApellido.trim()) nuevos.primerApellido = "Ingresá el primer apellido";
     } else if (!formulario.nombre.trim()) {
-      nuevos.nombre = "La razón social es obligatoria";
+      nuevos.nombre = "Ingresá la razón social";
     }
     if (esPersona) {
       const errorIdentificacion = validarIdentificacion(tipoDocumento, formulario.identificacion);
@@ -746,45 +685,45 @@ export default function SolicitarDonacion() {
         nuevos.nacionalidad = "Elegí el país de origen del pasaporte.";
       }
     } else if (!formulario.identificacion.trim()) {
-      nuevos.identificacion = "La identificación es obligatoria";
+      nuevos.identificacion = "Ingresá la identificación";
     }
     const correo = formulario.correo.trim();
-    if (!correo) nuevos.correo = "El correo es obligatorio";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) nuevos.correo = "Correo electrónico inválido";
-    if (!formulario.telefono.trim()) nuevos.telefono = "El teléfono es obligatorio";
-    if (!formulario.categoriaId) nuevos.categoriaId = "Seleccione la categoría de la donación";
-    if (!formulario.materialId) nuevos.materialId = "Seleccione el material o artículo";
-    if (!formulario.descripcion.trim()) nuevos.descripcion = "La descripción es obligatoria";
-    if (!formulario.cantidadEstimada.trim()) nuevos.cantidadEstimada = "Indique la cantidad o volumen estimado";
-    if (!formulario.estadoArticulos) nuevos.estadoArticulos = "Seleccione el estado de los artículos";
+    if (!correo) nuevos.correo = "Ingresá el correo electrónico";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) nuevos.correo = "Ingresá un correo electrónico válido";
+    if (!formulario.telefono.trim()) nuevos.telefono = "Ingresá el teléfono";
+    if (!formulario.categoriaId) nuevos.categoriaId = "Elegí la categoría de la donación";
+    if (!formulario.materialId) nuevos.materialId = "Elegí el material o artículo";
+    if (!formulario.descripcion.trim()) nuevos.descripcion = "Describí los artículos que querés donar";
+    if (!formulario.cantidadEstimada.trim()) nuevos.cantidadEstimada = "Indicá la cantidad o volumen estimado";
+    if (!formulario.estadoArticulos) nuevos.estadoArticulos = "Elegí el estado de los artículos";
     const valorNum = Number(String(formulario.valorEstimado).replace(/[^\d.]/g, ""));
     if (!formulario.valorEstimado.trim() || !Number.isFinite(valorNum) || valorNum <= 0) {
-      nuevos.valorEstimado = "Indique un valor estimado mayor a 0";
+      nuevos.valorEstimado = "Indicá un valor estimado mayor a 0";
     }
-    if (fotos.length < 1) nuevos.fotos = "Agregue al menos una fotografía";
+    if (fotos.length < 1) nuevos.fotos = "Agregá al menos una fotografía";
     if (fotos.length > MAX_FOTOS) nuevos.fotos = "Máximo 5 imágenes.";
-    if (!formulario.provincia) nuevos.provincia = "Seleccione la provincia";
-    if (!formulario.canton) nuevos.canton = "Seleccione el cantón";
-    if (!formulario.distrito) nuevos.distrito = "Seleccione el distrito";
-    if (!formulario.direccion.trim()) nuevos.direccion = "Indique la dirección o señas";
-    if (!formulario.metodoEntrega) nuevos.metodoEntrega = "Seleccione el método de entrega";
+    if (!formulario.provincia) nuevos.provincia = "Elegí la provincia";
+    if (!formulario.canton) nuevos.canton = "Elegí el cantón";
+    if (!formulario.distrito) nuevos.distrito = "Elegí el distrito";
+    if (!formulario.direccion.trim()) nuevos.direccion = "Indicá la dirección o señas";
+    if (!formulario.metodoEntrega) nuevos.metodoEntrega = "Elegí el método de entrega";
     if (pideEntrega) {
       if (!formulario.fechaEntrega) {
-        nuevos.fechaEntrega = "Seleccione un día habilitado para entregar la donación";
+        nuevos.fechaEntrega = "Elegí un día habilitado para entregar la donación";
       } else if (!fechasRecepcionMap.has(formulario.fechaEntrega)) {
         nuevos.fechaEntrega = "Esa fecha no está habilitada para recibir donaciones.";
       }
       if (!formulario.horaEntrega) {
-        nuevos.horaEntrega = "Seleccione un horario de recepción";
+        nuevos.horaEntrega = "Elegí un horario de recepción";
       } else if (
         horariosRecepcionParaFecha.length > 0 &&
         !horariosRecepcionParaFecha.includes(formulario.horaEntrega)
       ) {
-        nuevos.horaEntrega = "Seleccione un horario disponible para esa fecha";
+        nuevos.horaEntrega = "Elegí un horario disponible para esa fecha";
       }
     }
-    if (!formulario.declaraOrigen) nuevos.declaraOrigen = "Debe certificar el origen lícito de los artículos";
-    if (!formulario.aceptaPrivacidad) nuevos.aceptaPrivacidad = "Debe aceptar la política de privacidad";
+    if (!formulario.declaraOrigen) nuevos.declaraOrigen = "Certificá el origen lícito de los artículos";
+    if (!formulario.aceptaPrivacidad) nuevos.aceptaPrivacidad = "Aceptá la política de privacidad";
     setErrores(nuevos);
     return nuevos;
   };
@@ -800,10 +739,11 @@ export default function SolicitarDonacion() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const formEl = event.currentTarget;
     if (!usuario) {
       sessionStorage.setItem("postLoginRedirect", DONACION_LOGIN_REDIRECT);
-      setErrorApi("Debe iniciar sesión antes de enviar una solicitud de donación.");
-      queueFocusFormError({ root: event.currentTarget });
+      setErrorApi("Tenés que iniciar sesión antes de enviar una solicitud de donación.");
+      queueFocusFormError({ root: formEl });
       return;
     }
 
@@ -811,7 +751,8 @@ export default function SolicitarDonacion() {
     if (Object.keys(nuevosErrores).length > 0) {
       queueFocusFormError({
         errors: nuevosErrores,
-        root: event.currentTarget,
+        root: formEl,
+        idPrefix: "donacion-",
         fieldOrder: [
           "nombre",
           "primerApellido",
@@ -898,603 +839,640 @@ export default function SolicitarDonacion() {
       setEnviado(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
-      setErrorApi(err instanceof Error ? err.message : "Ocurrió un error al enviar la solicitud. Intente nuevamente.");
-      queueFocusFormError({ root: event.currentTarget });
+      setErrorApi(err instanceof Error ? err.message : "Ocurrió un error al enviar la solicitud. Intentá de nuevo.");
+      queueFocusFormError({ root: formEl });
     } finally {
       setEnviando(false);
     }
   };
+
+  const placeholderCarga = (valor) => (consultandoCedula ? tConsultando : valor);
+  const materialesActivosDe = (item) =>
+    (item.materiales || []).filter((mat) => !mat.estado || mat.estado === "ACTIVA");
 
   return (
     <>
       {showLoading ? <PageLoading message={loadingMessage} /> : null}
       <main
         ref={pageRef}
-        className={`voluntariado-page donacion-page${showPrepaint ? " voluntariado-page--prepaint" : ""}`}
+        className={`pub-page pub-form-page${showPrepaint ? " pub-form-page--prepaint" : ""}`}
         inert={inert}
       >
-        <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.voluntariado} />
-        <section className="voluntariado-section">
-          <div className="voluntariado-header">
-            <h1>{tTitulo}</h1>
-            <p>{tSub}</p>
+        <div className="pub-form-container">
+          <div className="pub-form-back">
+            <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.iniciativas} />
           </div>
+
+          <PublicPageHeader title={tTitulo} lead={tSub} titleId="donacion-titulo" />
 
           {!enviado ? (
             <>
-          <div className="donacion-intro">
-            <div className="donacion-intro__encabezado">
-              <Package size={20} aria-hidden="true" />
-              <h2><ST>¿Qué donaciones recibimos?</ST></h2>
-            </div>
-            <p>{tIntro}</p>
-            {necesidades.length ? (
-              <ul className="donacion-intro__cats">
-                {necesidades.map((item) => (
-                  <li key={item.id}>
-                    <strong><ST>{item.titulo}</ST></strong>
-                    {item.materiales?.length ? (
-                      <span>
-                        <ST>
-                          {(item.materiales || [])
-                            .filter((mat) => !mat.estado || mat.estado === "ACTIVA")
-                            .slice(0, 4)
-                            .map((mat) => mat.nombre)
-                            .join(", ")}
-                        </ST>
-                      </span>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mensaje-info">
-                <ST>Por ahora no hay categorías de donación material activas.</ST>
-              </p>
-            )}
-          </div>
-
-          <form
-              onSubmit={handleSubmit}
-              className="formulario-card"
-              noValidate
-              onFocusCapture={handleFormInteractionCapture}
-              onPointerDownCapture={handleFormInteractionCapture}
-            >
-              <div className="form-secciones">
-                <SectionCard paso={1} lugar="donacion.donante" title={tDonante}>
-                  <div className="campo full tipo-postulacion">
-                    <p className="campo-pregunta">
-                      {tQuien}<span className="req">*</span>
-                    </p>
-                    <div className="tipo-opciones">
-                      <label className="radio-card">
-                        <input
-                          type="radio"
-                          name="tipoDonante"
-                          value="persona"
-                          checked={esPersona}
-                          onChange={() => handleTipoDonante("persona")}
-                        />
-                        <span>{tPersona}</span>
-                      </label>
-                      <label className="radio-card">
-                        <input
-                          type="radio"
-                          name="tipoDonante"
-                          value="organizacion"
-                          checked={!esPersona}
-                          onChange={() => handleTipoDonante("organizacion")}
-                        />
-                        <span>{tOrganizacion}</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Field ids (e.g. donacion-nombre, donacion-identificacion) repeat across the exclusive persona/empresa and cedula/pasaporte branches; only one renders at a time. */}
-                  {esPersona ? (
-                    <>
-                      <div className="form-grid">
-                        <div className="campo">
-                          <label htmlFor="donacion-tipo-documento">
-                            {tTipoDocumento} <span className="req">*</span>
-                          </label>
-                          <SelectFiltro
-                            id="donacion-tipo-documento"
-                            name="tipoDocumento"
-                            value={tipoDocumento}
-                            onChange={handleTipoDocumento}
-                          >
-                            <option value="cedula">{tCedula}</option>
-                            <option value="dimex">{tDimex}</option>
-                            <option value="pasaporte">{tPasaporte}</option>
-                          </SelectFiltro>
-                        </div>
-                        {esPasaporte ? (
-                          <div className="campo">
-                            <label htmlFor="donacion-nacionalidad">
-                              {tPaisOrigen} <span className="req">*</span>
-                            </label>
-                            <SelectFiltro
-                              id="donacion-nacionalidad"
-                              name="nacionalidad"
-                              value={formulario.nacionalidad}
-                              onChange={handleChange}
-                            >
-                              <option value="">{tElegiPais}</option>
-                              {opcionesPais.map((pais) => (
-                                <option key={pais.value} value={pais.value}>{pais.label}</option>
-                              ))}
-                            </SelectFiltro>
-                            {errores.nacionalidad ? (
-                              <span className="mensaje-error"><ST>{errores.nacionalidad}</ST></span>
+              <div className="pub-panel pub-form donacion-intro">
+                <FormSection
+                  title="¿Qué donaciones recibimos?"
+                  hint="Café UNA recibe únicamente donaciones materiales: bienes, equipos, herramientas e insumos físicos."
+                >
+                  <p className="donacion-intro__texto">{tIntro}</p>
+                  {necesidades.length ? (
+                    <ul className="donacion-intro__cats">
+                      {necesidades.map((item) => (
+                        <li key={item.id}>
+                          <Package size={18} aria-hidden="true" />
+                          <div>
+                            <strong><ST>{item.titulo}</ST></strong>
+                            {materialesActivosDe(item).length ? (
+                              <span>
+                                <ST>
+                                  {materialesActivosDe(item)
+                                    .slice(0, 4)
+                                    .map((mat) => mat.nombre)
+                                    .join(", ")}
+                                </ST>
+                              </span>
                             ) : null}
                           </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <FormNote>
+                      <p>
+                        <ST>Por ahora no hay categorías de donación material activas.</ST>
+                      </p>
+                    </FormNote>
+                  )}
+                </FormSection>
+              </div>
+
+              <form
+                onSubmit={handleSubmit}
+                className="pub-panel pub-form"
+                noValidate
+                aria-labelledby="donacion-titulo"
+                onFocusCapture={handleFormInteractionCapture}
+                onPointerDownCapture={handleFormInteractionCapture}
+              >
+                <FormSection title="Datos del donante">
+                  <ChoiceGroup legend="¿Quién realizará la donación?" required columns={2}>
+                    <ChoiceCard
+                      name="tipoDonante"
+                      value="persona"
+                      checked={esPersona}
+                      onChange={() => handleTipoDonante("persona")}
+                      title="Persona"
+                    />
+                    <ChoiceCard
+                      name="tipoDonante"
+                      value="organizacion"
+                      checked={!esPersona}
+                      onChange={() => handleTipoDonante("organizacion")}
+                      title="Organización"
+                    />
+                  </ChoiceGroup>
+
+                  {/* Field ids (donacion-nombre, donacion-identificacion) repeat across the exclusive persona/organización and cédula/pasaporte branches; only one renders at a time. */}
+                  <FormGrid>
+                    {esPersona ? (
+                      <>
+                        <Field id="donacion-tipo-documento" label="Tipo de identificación" required>
+                          {(c) => (
+                            <SelectFiltro
+                              {...c}
+                              name="tipoDocumento"
+                              value={tipoDocumento}
+                              onChange={handleTipoDocumento}
+                            >
+                              <option value="cedula">{tCedula}</option>
+                              <option value="dimex">{tDimex}</option>
+                              <option value="pasaporte">{tPasaporte}</option>
+                            </SelectFiltro>
+                          )}
+                        </Field>
+                        {esPasaporte ? (
+                          <Field
+                            id="donacion-nacionalidad"
+                            label="País de origen"
+                            required
+                            error={errores.nacionalidad}
+                          >
+                            {(c) => (
+                              <SelectFiltro
+                                {...c}
+                                name="nacionalidad"
+                                value={formulario.nacionalidad}
+                                onChange={handleChange}
+                              >
+                                <option value="">{tElegiPais}</option>
+                                {opcionesPais.map((pais) => (
+                                  <option key={pais.value} value={pais.value}>{pais.label}</option>
+                                ))}
+                              </SelectFiltro>
+                            )}
+                          </Field>
                         ) : null}
-                      </div>
-                      <div className="form-grid--4cols">
-                        <div className="campo">
-                          <label htmlFor="donacion-identificacion">
-                            {etiquetaDocumento} <span className="req">*</span>
-                          </label>
-                          {esPasaporte ? (
+                        <Field
+                          id="donacion-identificacion"
+                          label={etiquetaDocumento}
+                          required
+                          error={errores.identificacion}
+                        >
+                          {(c) =>
+                            esPasaporte ? (
+                              <input
+                                {...c}
+                                className="pub-input"
+                                type="text"
+                                name="identificacion"
+                                placeholder={tPhIdentificacion}
+                                value={formulario.identificacion}
+                                onChange={handleChange}
+                                maxLength={LIMITE_IDENTIFICACION.pasaporte}
+                                autoComplete="off"
+                              />
+                            ) : (
+                              <NumericInput
+                                {...c}
+                                className="pub-input"
+                                name="identificacion"
+                                placeholder={tPhIdentificacion}
+                                value={formulario.identificacion}
+                                onChange={handleChange}
+                                onBlur={handleIdentificacionBlur}
+                                maxLength={LIMITE_IDENTIFICACION[tipoDocumento]}
+                                autoComplete="off"
+                              />
+                            )
+                          }
+                        </Field>
+                        <Field id="donacion-nombre" label="Nombre" required error={errores.nombre}>
+                          {(c) => (
                             <input
-                              id="donacion-identificacion"
+                              {...c}
+                              className="pub-input"
+                              type="text"
+                              name="nombre"
+                              placeholder={placeholderCarga(tPhNombre)}
+                              value={formulario.nombre}
+                              onChange={handleChange}
+                              maxLength={80}
+                            />
+                          )}
+                        </Field>
+                        <Field
+                          id="donacion-primerApellido"
+                          label="Primer apellido"
+                          required
+                          error={errores.primerApellido}
+                        >
+                          {(c) => (
+                            <input
+                              {...c}
+                              className="pub-input"
+                              type="text"
+                              name="primerApellido"
+                              placeholder={placeholderCarga(tPh1)}
+                              value={formulario.primerApellido}
+                              onChange={handleChange}
+                              maxLength={80}
+                            />
+                          )}
+                        </Field>
+                        <Field id="donacion-segundoApellido" label="Segundo apellido">
+                          {(c) => (
+                            <input
+                              {...c}
+                              className="pub-input"
+                              type="text"
+                              name="segundoApellido"
+                              placeholder={placeholderCarga(tPh2)}
+                              value={formulario.segundoApellido}
+                              onChange={handleChange}
+                              maxLength={80}
+                            />
+                          )}
+                        </Field>
+                      </>
+                    ) : (
+                      <>
+                        <Field id="donacion-nombre" label="Razón social" required error={errores.nombre}>
+                          {(c) => (
+                            <input
+                              {...c}
+                              className="pub-input"
+                              type="text"
+                              name="nombre"
+                              placeholder={tRazonSocial}
+                              value={formulario.nombre}
+                              onChange={handleChange}
+                              maxLength={160}
+                            />
+                          )}
+                        </Field>
+                        <Field
+                          id="donacion-identificacion"
+                          label="Identificación"
+                          required
+                          error={errores.identificacion}
+                        >
+                          {(c) => (
+                            <input
+                              {...c}
+                              className="pub-input"
                               type="text"
                               name="identificacion"
-                              placeholder={tPhIdentificacion}
+                              placeholder={tPhId}
                               value={formulario.identificacion}
                               onChange={handleChange}
-                              maxLength={LIMITE_IDENTIFICACION.pasaporte}
-                              autoComplete="off"
-                            />
-                          ) : (
-                            <NumericInput
-                              id="donacion-identificacion"
-                              name="identificacion"
-                              placeholder={tPhIdentificacion}
-                              value={formulario.identificacion}
-                              onChange={handleChange}
-                              onBlur={handleIdentificacionBlur}
-                              maxLength={LIMITE_IDENTIFICACION[tipoDocumento]}
+                              maxLength={30}
                               autoComplete="off"
                             />
                           )}
-                          {errores.identificacion ? (
-                            <span className="mensaje-error"><ST>{errores.identificacion}</ST></span>
-                          ) : null}
-                        </div>
-                        <div className="campo">
-                          <label htmlFor="donacion-nombre">
-                            {tNombre} <span className="req">*</span>
-                          </label>
-                          <input
-                            id="donacion-nombre"
-                            type="text"
-                            name="nombre"
-                            placeholder={consultandoCedula ? "Consultando..." : tPhNombre}
-                            value={formulario.nombre}
-                            onChange={handleChange}
-                            maxLength={80}
-                          />
-                          {errores.nombre ? <span className="mensaje-error"><ST>{errores.nombre}</ST></span> : null}
-                        </div>
-                        <div className="campo">
-                          <label htmlFor="donacion-primerApellido">
-                            {tPrimerApellido} <span className="req">*</span>
-                          </label>
-                          <input
-                            id="donacion-primerApellido"
-                            type="text"
-                            name="primerApellido"
-                            placeholder={consultandoCedula ? "Consultando..." : tPh1}
-                            value={formulario.primerApellido}
-                            onChange={handleChange}
-                            maxLength={80}
-                          />
-                          {errores.primerApellido ? (
-                            <span className="mensaje-error"><ST>{errores.primerApellido}</ST></span>
-                          ) : null}
-                        </div>
-                        <div className="campo">
-                          <label htmlFor="donacion-segundoApellido">{tSegundoApellido}</label>
-                          <input
-                            id="donacion-segundoApellido"
-                            type="text"
-                            name="segundoApellido"
-                            placeholder={consultandoCedula ? "Consultando..." : tPh2}
-                            value={formulario.segundoApellido}
-                            onChange={handleChange}
-                            maxLength={80}
-                          />
-                        </div>
-                      </div>
-                      {consultandoCedula ? (
-                        <span className="mensaje-info">Consultando datos de la identificación...</span>
-                      ) : null}
-                      {!consultandoCedula && avisoCedula ? (
-                        <span className={esAvisoCedulaInformativo(avisoCedula) ? "mensaje-info" : "mensaje-error"}>
-                          <ST>{avisoCedula}</ST>
-                        </span>
-                      ) : null}
-                    </>
-                  ) : (
-                    <>
-                      <div className="campo">
-                        <label htmlFor="donacion-nombre">
-                          {tRazonSocial} <span className="req">*</span>
-                        </label>
+                        </Field>
+                      </>
+                    )}
+                    <Field id="donacion-correo" label="Correo electrónico" required error={errores.correo}>
+                      {(c) => (
                         <input
-                          id="donacion-nombre"
-                          type="text"
-                          name="nombre"
-                          placeholder={tRazonSocial}
-                          value={formulario.nombre}
+                          {...c}
+                          className="pub-input"
+                          type="email"
+                          name="correo"
+                          value={formulario.correo}
                           onChange={handleChange}
-                          maxLength={160}
+                          placeholder="ejemplo@correo.com"
                         />
-                        {errores.nombre ? <span className="mensaje-error"><ST>{errores.nombre}</ST></span> : null}
-                      </div>
-                      <div className="campo">
-                        <label htmlFor="donacion-identificacion">
-                          {tIdentificacion} <span className="req">*</span>
-                        </label>
-                        <input
-                          id="donacion-identificacion"
-                          type="text"
-                          name="identificacion"
-                          placeholder={tPhId}
-                          value={formulario.identificacion}
-                          onChange={handleChange}
-                          maxLength={30}
-                          autoComplete="off"
-                        />
-                        {errores.identificacion ? (
-                          <span className="mensaje-error"><ST>{errores.identificacion}</ST></span>
-                        ) : null}
-                      </div>
-                    </>
-                  )}
-
-                  <div className="form-grid">
-                    <div className="campo">
-                      <label htmlFor="donacion-correo">
-                        {tCorreo} <span className="req">*</span>
-                      </label>
-                      <input
-                        id="donacion-correo"
-                        type="email"
-                        name="correo"
-                        value={formulario.correo}
-                        onChange={handleChange}
-                        placeholder="ejemplo@correo.com"
-                      />
-                      {errores.correo ? <span className="mensaje-error"><ST>{errores.correo}</ST></span> : null}
-                    </div>
-                    <div className="campo">
-                      <label htmlFor="donacion-telefono">
-                        {tTelefono} <span className="req">*</span>
-                      </label>
-                      <div className="campo-con-icono">
-                        <Phone size={16} className="campo-con-icono__icono" aria-hidden="true" />
+                      )}
+                    </Field>
+                    <Field id="donacion-telefono" label="Teléfono" required error={errores.telefono}>
+                      {(c) => (
                         <NumericInput
-                          id="donacion-telefono"
+                          {...c}
+                          className="pub-input"
                           name="telefono"
                           placeholder="88888888"
                           maxLength={8}
                           value={formulario.telefono}
                           onChange={handleChange}
                         />
-                      </div>
-                      {errores.telefono ? <span className="mensaje-error"><ST>{errores.telefono}</ST></span> : null}
-                    </div>
-                  </div>
-                </SectionCard>
+                      )}
+                    </Field>
+                  </FormGrid>
 
-                <SectionCard paso={2} lugar="donacion.detalles" title={tDetalles} hint={tDetallesHint}>
-                  <div className="campo">
-                    <label htmlFor="donacion-categoriaId">
-                      {tCategoria} <span className="req">*</span>
-                    </label>
-                    <SelectFiltro id="donacion-categoriaId" name="categoriaId" value={formulario.categoriaId} onChange={handleChange}>
-                      <option value="">{tSeleccione}</option>
-                      {necesidades.map((item) => (
-                        <option key={item.id} value={String(item.id)}>
-                          {item.titulo}
-                        </option>
-                      ))}
-                    </SelectFiltro>
-                    {errores.categoriaId ? <span className="mensaje-error"><ST>{errores.categoriaId}</ST></span> : null}
-                  </div>
-                  <div className="campo">
-                    <label htmlFor="donacion-materialId">
-                      {tMaterial} <span className="req">*</span>
-                    </label>
-                    <SelectFiltro
-                      id="donacion-materialId"
-                      name="materialId"
-                      value={formulario.materialId}
-                      onChange={handleChange}
-                      disabled={!formulario.categoriaId}
-                    >
-                      <option value="">{tSeleccione}</option>
-                      {materialesCategoria.map((item) => (
-                        <option key={item.id} value={String(item.id)}>
-                          {item.nombre}
-                        </option>
-                      ))}
-                    </SelectFiltro>
-                    {errores.materialId ? <span className="mensaje-error"><ST>{errores.materialId}</ST></span> : null}
-                  </div>
-                  <div className="campo">
-                    <label htmlFor="donacion-descripcion">
-                      {tDescripcion} <span className="req">*</span>
-                    </label>
-                    <textarea
-                      id="donacion-descripcion"
-                      name="descripcion"
-                      rows={4}
-                      value={formulario.descripcion}
-                      onChange={handleChange}
-                      maxLength={MAX_DESCRIPCION}
-                    />
-                    <div className="contador-caracteres">
-                      {formulario.descripcion.length}/{MAX_DESCRIPCION}
+                  {esPersona ? (
+                    <div aria-live="polite">
+                      {consultandoCedula ? (
+                        <p className="pub-form-status">
+                          <ST>Consultando datos de la identificación...</ST>
+                        </p>
+                      ) : avisoCedula ? (
+                        <p
+                          className={`pub-form-status ${
+                            esAvisoCedulaInformativo(avisoCedula)
+                              ? "pub-form-status--ok"
+                              : "pub-form-status--problem"
+                          }`}
+                        >
+                          <ST>{avisoCedula}</ST>
+                        </p>
+                      ) : null}
                     </div>
-                    {errores.descripcion ? <span className="mensaje-error"><ST>{errores.descripcion}</ST></span> : null}
-                  </div>
-                  <div className="form-grid">
-                    <div className="campo">
-                      <label htmlFor="donacion-cantidadEstimada">
-                        {tCantidad} <span className="req">*</span>
-                      </label>
-                      <input
-                        id="donacion-cantidadEstimada"
-                        type="text"
-                        name="cantidadEstimada"
-                        value={formulario.cantidadEstimada}
-                        onChange={handleChange}
-                        placeholder={tPhCantidad}
-                        maxLength={120}
-                      />
-                      {errores.cantidadEstimada ? <span className="mensaje-error"><ST>{errores.cantidadEstimada}</ST></span> : null}
-                    </div>
-                    <div className="campo">
-                      <label htmlFor="donacion-estadoArticulos">
-                        {tEstado} <span className="req">*</span>
-                      </label>
-                      <SelectFiltro id="donacion-estadoArticulos" name="estadoArticulos" value={formulario.estadoArticulos} onChange={handleChange}>
-                        <option value="">{tSeleccione}</option>
-                        {estadosArticulos.map((estado) => (
-                          <option key={estado} value={estado}>
-                            {estado}
-                          </option>
-                        ))}
-                      </SelectFiltro>
-                      {errores.estadoArticulos ? <span className="mensaje-error"><ST>{errores.estadoArticulos}</ST></span> : null}
-                    </div>
-                  </div>
-                  <div className="campo">
-                    <label htmlFor="donacion-valorEstimado">
-                      {tValor} <span className="req">*</span>
-                    </label>
-                    <div className="campo-prefijo">
-                      <span className="campo-prefijo__simbolo">₡</span>
-                      <input
-                        id="donacion-valorEstimado"
-                        type="text"
-                        name="valorEstimado"
-                        value={formulario.valorEstimado}
-                        onChange={handleChange}
-                        inputMode="decimal"
-                      />
-                    </div>
-                    <span className="mensaje-info">{tValorHint}</span>
-                    {errores.valorEstimado ? <span className="mensaje-error"><ST>{errores.valorEstimado}</ST></span> : null}
-                  </div>
-                  <div className="campo">
-                    <label htmlFor="donacion-fotos">
-                      {tFotos} <span className="req">*</span>
-                    </label>
-                    <div
-                      className={`donacion-dropzone${dropActivo ? " donacion-dropzone--activa" : ""}`}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => fileInputRef.current?.click()}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") fileInputRef.current?.click();
-                      }}
-                      onDragOver={(event) => {
-                        event.preventDefault();
-                        setDropActivo(true);
-                      }}
-                      onDragLeave={() => setDropActivo(false)}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        setDropActivo(false);
-                        agregarFotos(event.dataTransfer.files);
-                      }}
-                    >
-                      <UploadCloud size={28} aria-hidden="true" />
-                      <p>{tFotosCta}</p>
-                      <small>{tFotosHint}</small>
-                    </div>
-                    <input
-                      id="donacion-fotos"
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      multiple
-                      hidden
-                      onChange={(event) => {
-                        agregarFotos(event.target.files);
-                        event.target.value = "";
-                      }}
-                    />
-                    {fotos.length ? (
-                      <div className="donacion-fotos">
-                        {fotos.map((foto, index) => (
-                          <div key={foto.id} className="donacion-fotos__item">
-                            <button
-                              type="button"
-                              className="donacion-fotos__ver"
-                              onClick={() => setFotoVista(index)}
-                              aria-label="Ver imagen más grande"
-                            >
-                              <img src={foto.preview} alt="" />
-                            </button>
-                            <button
-                              type="button"
-                              className="donacion-fotos__quitar"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                quitarFoto(foto.id);
-                              }}
-                              aria-label="Quitar imagen"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : null}
-                    {errores.fotos ? <span className="mensaje-error"><ST>{errores.fotos}</ST></span> : null}
-                  </div>
-                </SectionCard>
-
-                <SectionCard paso={3} lugar="donacion.ubicacion" title={tUbicacion} hint={tUbicacionHint}>
-                  <div className="form-grid">
-                    <div className="campo">
-                      <label htmlFor="donacion-provincia">
-                        {tProvincia} <span className="req">*</span>
-                      </label>
-                      <SelectFiltro id="donacion-provincia" name="provincia" value={formulario.provincia} onChange={handleChange}>
-                        <option value="">{tSeleccione}</option>
-                        {PROVINCIAS_CR.map((provincia) => (
-                          <option key={provincia} value={provincia}>{provincia}</option>
-                        ))}
-                      </SelectFiltro>
-                      {errores.provincia ? <span className="mensaje-error"><ST>{errores.provincia}</ST></span> : null}
-                    </div>
-                    <div className="campo">
-                      <label htmlFor="donacion-canton">
-                        {tCanton} <span className="req">*</span>
-                      </label>
-                      <SelectFiltro id="donacion-canton" name="canton" value={formulario.canton} onChange={handleChange} disabled={!formulario.provincia}>
-                        <option value="">{tSeleccione}</option>
-                        {cantonesDisponibles.map((canton) => (
-                          <option key={canton} value={canton}>{canton}</option>
-                        ))}
-                      </SelectFiltro>
-                      {errores.canton ? <span className="mensaje-error"><ST>{errores.canton}</ST></span> : null}
-                    </div>
-                    <div className="campo">
-                      <label htmlFor="donacion-distrito">
-                        {tDistrito} <span className="req">*</span>
-                      </label>
-                      <SelectFiltro id="donacion-distrito" name="distrito" value={formulario.distrito} onChange={handleChange} disabled={!formulario.canton}>
-                        <option value="">{tSeleccione}</option>
-                        {distritosDisponibles.map((distrito) => (
-                          <option key={distrito} value={distrito}>{distrito}</option>
-                        ))}
-                      </SelectFiltro>
-                      {errores.distrito ? <span className="mensaje-error"><ST>{errores.distrito}</ST></span> : null}
-                    </div>
-                  </div>
-                  <div className="campo">
-                    <label htmlFor="donacion-direccion">
-                      {tSeñas} <span className="req">*</span>
-                    </label>
-                    <textarea
-                      id="donacion-direccion"
-                      name="direccion"
-                      rows={3}
-                      value={formulario.direccion}
-                      onChange={handleChange}
-                      maxLength={500}
-                    />
-                    {errores.direccion ? <span className="mensaje-error"><ST>{errores.direccion}</ST></span> : null}
-                  </div>
-                </SectionCard>
-
-                <SectionCard paso={4} lugar="donacion.logistica" title={tLogistica} hint={tLogisticaHint}>
-                  <div className="campo">
-                    <p className="campo-pregunta">
-                      {tMetodo} <span className="req">*</span>
-                    </p>
-                    <div className="donacion-entrega">
-                      <label className="donacion-entrega__card">
-                        <input
-                          type="radio"
-                          name="metodoEntrega"
-                          value="entrega"
-                          checked={formulario.metodoEntrega === "entrega"}
-                          onChange={handleChange}
-                        />
-                        <span>
-                          <strong>{tEntregaTitulo}</strong>
-                          <span>{tEntregaDesc}</span>
-                        </span>
-                      </label>
-                      <label className="donacion-entrega__card">
-                        <input
-                          type="radio"
-                          name="metodoEntrega"
-                          value="recoleccion"
-                          checked={formulario.metodoEntrega === "recoleccion"}
-                          onChange={handleChange}
-                        />
-                        <span>
-                          <strong>{tRecoleccionTitulo}</strong>
-                          <span>{tRecoleccionDesc}</span>
-                        </span>
-                      </label>
-                    </div>
-                    {errores.metodoEntrega ? <span className="mensaje-error"><ST>{errores.metodoEntrega}</ST></span> : null}
-                  </div>
-                  {pideRecoleccion ? (
-                    <p className="donacion-aviso-recoleccion">{tRecoleccionAviso}</p>
                   ) : null}
+                </FormSection>
+
+                <FormSection title="Detalles de la donación" hint="Contanos sobre los artículos que querés donar.">
+                  <FormGrid>
+                    <Field
+                      id="donacion-categoriaId"
+                      label="Categoría de la donación"
+                      required
+                      error={errores.categoriaId}
+                    >
+                      {(c) => (
+                        <SelectFiltro {...c} name="categoriaId" value={formulario.categoriaId} onChange={handleChange}>
+                          <option value="">{tSeleccione}</option>
+                          {necesidades.map((item) => (
+                            <option key={item.id} value={String(item.id)}>
+                              {item.titulo}
+                            </option>
+                          ))}
+                        </SelectFiltro>
+                      )}
+                    </Field>
+                    <Field
+                      id="donacion-materialId"
+                      label="Material o artículo"
+                      required
+                      error={errores.materialId}
+                    >
+                      {(c) => (
+                        <SelectFiltro
+                          {...c}
+                          name="materialId"
+                          value={formulario.materialId}
+                          onChange={handleChange}
+                          disabled={!formulario.categoriaId}
+                        >
+                          <option value="">{tSeleccione}</option>
+                          {materialesCategoria.map((item) => (
+                            <option key={item.id} value={String(item.id)}>
+                              {item.nombre}
+                            </option>
+                          ))}
+                        </SelectFiltro>
+                      )}
+                    </Field>
+                  </FormGrid>
+
+                  <Field
+                    id="donacion-descripcion"
+                    label="Descripción detallada de los artículos"
+                    required
+                    error={errores.descripcion}
+                  >
+                    {(c) => (
+                      <>
+                        <textarea
+                          {...c}
+                          className="pub-textarea"
+                          name="descripcion"
+                          rows={4}
+                          value={formulario.descripcion}
+                          onChange={handleChange}
+                          maxLength={MAX_DESCRIPCION}
+                        />
+                        <p className="pub-field__counter">
+                          {formulario.descripcion.length}/{MAX_DESCRIPCION}
+                        </p>
+                      </>
+                    )}
+                  </Field>
+
+                  <FormGrid>
+                    <Field
+                      id="donacion-cantidadEstimada"
+                      label="Cantidad o volumen estimado"
+                      required
+                      error={errores.cantidadEstimada}
+                    >
+                      {(c) => (
+                        <input
+                          {...c}
+                          className="pub-input"
+                          type="text"
+                          name="cantidadEstimada"
+                          value={formulario.cantidadEstimada}
+                          onChange={handleChange}
+                          placeholder={tPhCantidad}
+                          maxLength={120}
+                        />
+                      )}
+                    </Field>
+                    <Field
+                      id="donacion-estadoArticulos"
+                      label="Estado de los artículos"
+                      required
+                      error={errores.estadoArticulos}
+                    >
+                      {(c) => (
+                        <SelectFiltro
+                          {...c}
+                          name="estadoArticulos"
+                          value={formulario.estadoArticulos}
+                          onChange={handleChange}
+                        >
+                          <option value="">{tSeleccione}</option>
+                          {estadosArticulos.map((estado) => (
+                            <option key={estado} value={estado}>
+                              {estado}
+                            </option>
+                          ))}
+                        </SelectFiltro>
+                      )}
+                    </Field>
+                    <Field
+                      id="donacion-valorEstimado"
+                      label="Valor estimado de la donación"
+                      required
+                      hint="Indicá el valor aproximado total de los artículos que ofrecés."
+                      error={errores.valorEstimado}
+                      wide
+                    >
+                      {(c) => (
+                        <div className="pub-input-affix">
+                          <span className="pub-input-affix__symbol" aria-hidden="true">₡</span>
+                          <input
+                            {...c}
+                            className="pub-input"
+                            type="text"
+                            name="valorEstimado"
+                            value={formulario.valorEstimado}
+                            onChange={handleChange}
+                            inputMode="decimal"
+                          />
+                        </div>
+                      )}
+                    </Field>
+                  </FormGrid>
+
+                  <Field
+                    id="donacion-fotos"
+                    label="Fotografías de los artículos"
+                    required
+                    hint={tFotosHint}
+                    error={errores.fotos}
+                  >
+                    {(c) => (
+                      <>
+                        <div
+                          className={`pub-dropzone${dropActivo ? " pub-dropzone--dragging" : ""}`}
+                          role="button"
+                          tabIndex={0}
+                          data-error-field="fotos"
+                          aria-invalid={c["aria-invalid"]}
+                          aria-describedby={c["aria-describedby"]}
+                          onClick={() => fileInputRef.current?.click()}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              fileInputRef.current?.click();
+                            }
+                          }}
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                            setDropActivo(true);
+                          }}
+                          onDragLeave={() => setDropActivo(false)}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            setDropActivo(false);
+                            agregarFotos(event.dataTransfer.files);
+                          }}
+                        >
+                          <UploadCloud size={24} aria-hidden="true" />
+                          <span className="pub-dropzone__title">{tFotosCta}</span>
+                        </div>
+                        <input
+                          id={c.id}
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          multiple
+                          hidden
+                          onChange={(event) => {
+                            agregarFotos(event.target.files);
+                            event.target.value = "";
+                          }}
+                        />
+                        {fotos.length ? (
+                          <ul className="donacion-fotos">
+                            {fotos.map((foto, index) => (
+                              <li key={foto.id} className="donacion-fotos__item">
+                                <button
+                                  type="button"
+                                  className="donacion-fotos__ver"
+                                  onClick={() => setFotoVista(index)}
+                                  aria-label="Ver imagen más grande"
+                                >
+                                  <img src={foto.preview} alt="" />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="donacion-fotos__quitar"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    quitarFoto(foto.id);
+                                  }}
+                                  aria-label="Quitar imagen"
+                                >
+                                  <X size={16} aria-hidden="true" />
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </>
+                    )}
+                  </Field>
+                </FormSection>
+
+                <FormSection title="Ubicación de la donación" hint="Indicá dónde se encuentran físicamente los artículos.">
+                  <FormGrid cols={3}>
+                    <Field id="donacion-provincia" label="Provincia" required error={errores.provincia}>
+                      {(c) => (
+                        <SelectFiltro {...c} name="provincia" value={formulario.provincia} onChange={handleChange}>
+                          <option value="">{tSeleccione}</option>
+                          {PROVINCIAS_CR.map((provincia) => (
+                            <option key={provincia} value={provincia}>{provincia}</option>
+                          ))}
+                        </SelectFiltro>
+                      )}
+                    </Field>
+                    <Field id="donacion-canton" label="Cantón" required error={errores.canton}>
+                      {(c) => (
+                        <SelectFiltro
+                          {...c}
+                          name="canton"
+                          value={formulario.canton}
+                          onChange={handleChange}
+                          disabled={!formulario.provincia}
+                        >
+                          <option value="">{tSeleccione}</option>
+                          {cantonesDisponibles.map((canton) => (
+                            <option key={canton} value={canton}>{canton}</option>
+                          ))}
+                        </SelectFiltro>
+                      )}
+                    </Field>
+                    <Field id="donacion-distrito" label="Distrito" required error={errores.distrito}>
+                      {(c) => (
+                        <SelectFiltro
+                          {...c}
+                          name="distrito"
+                          value={formulario.distrito}
+                          onChange={handleChange}
+                          disabled={!formulario.canton}
+                        >
+                          <option value="">{tSeleccione}</option>
+                          {distritosDisponibles.map((distrito) => (
+                            <option key={distrito} value={distrito}>{distrito}</option>
+                          ))}
+                        </SelectFiltro>
+                      )}
+                    </Field>
+                  </FormGrid>
+                  <Field
+                    id="donacion-direccion"
+                    label="Dirección o señas adicionales"
+                    required
+                    error={errores.direccion}
+                  >
+                    {(c) => (
+                      <textarea
+                        {...c}
+                        className="pub-textarea"
+                        name="direccion"
+                        rows={3}
+                        value={formulario.direccion}
+                        onChange={handleChange}
+                        maxLength={500}
+                      />
+                    )}
+                  </Field>
+                </FormSection>
+
+                <FormSection title="Logística de entrega" hint="Indicá cómo preferís entregar los artículos.">
+                  <ChoiceGroup
+                    legend="Método de entrega preferido"
+                    required
+                    columns={2}
+                    error={errores.metodoEntrega}
+                  >
+                    <ChoiceCard
+                      name="metodoEntrega"
+                      value="entrega"
+                      checked={formulario.metodoEntrega === "entrega"}
+                      onChange={handleChange}
+                      title="Lo entregaré personalmente"
+                      description={tEntregaDesc}
+                    />
+                    <ChoiceCard
+                      name="metodoEntrega"
+                      value="recoleccion"
+                      checked={formulario.metodoEntrega === "recoleccion"}
+                      onChange={handleChange}
+                      title="Solicito recolección"
+                      description={tRecoleccionDesc}
+                    />
+                  </ChoiceGroup>
+
+                  {pideRecoleccion ? (
+                    <FormNote>
+                      <p>{tRecoleccionAviso}</p>
+                    </FormNote>
+                  ) : null}
+
                   {pideEntrega ? (
                     <>
+                      <FormNote>
+                        <p>{tHorariosHint}</p>
+                      </FormNote>
+
                       {cargandoFechasRecepcion ? (
-                        <div className="voluntariado-aviso-bloque">
-                          <div className="size-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mb-2" />
-                          <p className="voluntariado-aviso-bloque__texto">
-                            <ST>Consultando fechas de recepción disponibles...</ST>
-                          </p>
-                        </div>
+                        <FormPlaceholder loading title="Consultando fechas de recepción disponibles..." />
                       ) : fechasRecepcionDates.length === 0 ? (
-                        <div className="voluntariado-aviso-bloque">
-                          <CalendarX2 className="voluntariado-aviso-bloque__icono size-8 text-amber-500" />
-                          <p className="voluntariado-aviso-bloque__titulo text-amber-900">
-                            <ST>Sin fechas de recepción configuradas</ST>
-                          </p>
-                          <p className="voluntariado-aviso-bloque__texto text-amber-700">
-                            <ST>Por ahora no hay días habilitados para entregar donaciones en la Finca Experimental Santa Lucía. Puede solicitar recolección o consultar más adelante.</ST>
-                          </p>
-                        </div>
+                        <FormPlaceholder title="Sin fechas de recepción configuradas">
+                          Por ahora no hay días habilitados para entregar donaciones en la Finca Experimental Santa Lucía. Podés solicitar recolección o consultar más adelante.
+                        </FormPlaceholder>
                       ) : (
-                        <div className="campo full flex flex-col items-center">
-                          <span id="donacion-dia-entrega" className="campo__label self-start">
-                            {tDiaEntregaEntrega}{" "}
-                            <span className="req">*</span>
+                        <div className="pub-field">
+                          <span id="donacion-dia-entrega" className="pub-field__label">
+                            <ST>Día de entrega</ST>
+                            <span className="pub-field__req" aria-hidden="true"> *</span>
                           </span>
-                          {fechaEntregaSeleccionada ? (
-                            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-900 bg-white px-5 py-2 shadow-xs">
-                              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                                <ST>FECHA SELECCIONADA:</ST>
-                              </span>
-                              <span className="text-xs font-bold text-slate-950 capitalize">
-                                {format(fechaEntregaSeleccionada, "EEEE, dd 'de' MMMM 'de' yyyy", {
-                                  locale: localeCalendario,
-                                })}
-                              </span>
-                            </div>
-                          ) : null}
-                          <div className="flex justify-center my-1 w-full" role="group" aria-labelledby="donacion-dia-entrega">
-                            <Calendar
-                              mode="single"
+                          <div>
+                            <CalendarPicker
+                              id="donacion-fechaEntrega"
+                              label="Calendario de fechas de recepción"
                               selected={fechaEntregaSeleccionada || undefined}
                               onSelect={(date) => {
                                 const iso = date ? format(date, "yyyy-MM-dd") : "";
@@ -1508,170 +1486,140 @@ export default function SolicitarDonacion() {
                               }}
                               disabled={isFechaRecepcionDisabled}
                               locale={localeCalendario}
-                              modifiers={{ habilitado: fechasRecepcionDates }}
-                              modifiersClassNames={{ habilitado: "rdp-day-habilitado" }}
-                              captionLayout="dropdown"
+                              enabledDates={fechasRecepcionDates}
+                              legend="Fecha disponible para recibir donaciones"
+                              invalid={Boolean(errores.fechaEntrega)}
+                              describedBy={errores.fechaEntrega ? "donacion-fecha-error" : undefined}
                             />
                           </div>
-                          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-600 mt-4 pt-2">
-                            <div className="flex items-center gap-2">
-                              <span className="inline-flex size-5 items-center justify-center rounded-full border-2 border-slate-950 bg-white font-bold text-slate-950 text-[11px]">
-                                15
-                              </span>
-                              <span><ST>Fecha disponible para recibir donaciones</ST></span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="inline-flex size-5 items-center justify-center text-slate-400 opacity-40 text-[11px]">
-                                15
-                              </span>
-                              <span><ST>Fecha no disponible</ST></span>
-                            </div>
-                          </div>
-                          {errores.fechaEntrega ? (
-                            <span className="mensaje-error text-center block w-full mt-2">
-                              <ST>{errores.fechaEntrega}</ST>
-                            </span>
-                          ) : null}
+                          <FieldError id="donacion-fecha-error">{errores.fechaEntrega}</FieldError>
                         </div>
                       )}
 
                       {!formulario.fechaEntrega ? (
-                        <div className="voluntariado-aviso-bloque mt-4">
-                          <CalendarDays className="voluntariado-aviso-bloque__icono size-8" />
-                          <p className="voluntariado-aviso-bloque__titulo">
-                            <ST>Seleccione una fecha en el calendario</ST>
-                          </p>
-                          <p className="voluntariado-aviso-bloque__texto">
-                            <ST>Al elegir un día habilitado se mostrarán los horarios de recepción de ese día.</ST>
-                          </p>
-                        </div>
+                        <FormPlaceholder title="Elegí una fecha en el calendario">
+                          Al elegir un día habilitado vas a ver los horarios de recepción de ese día.
+                        </FormPlaceholder>
+                      ) : horariosRecepcionParaFecha.length === 0 ? (
+                        <FormPlaceholder title="Sin horarios para esta fecha">
+                          Elegí otro día habilitado para ver los horarios de recepción.
+                        </FormPlaceholder>
                       ) : (
-                        <div className="campo full mt-4">
-                          <p className="text-xs font-semibold text-slate-700 mb-3">
-                            {tHorarios} <span className="req">*</span>
-                          </p>
-                          <div className="opciones-disponibilidad-grid">
-                            {horariosRecepcionParaFecha.map((horarioStr) => {
-                              const esActivo = formulario.horaEntrega === horarioStr;
-                              return (
-                                <label
-                                  key={horarioStr}
-                                  className={`opcion-disponibilidad-card ${
-                                    esActivo ? "opcion-disponibilidad-card--activa" : ""
-                                  }`}
-                                >
-                                  <input
-                                    type="radio"
-                                    name="horaEntrega"
-                                    value={horarioStr}
-                                    checked={esActivo}
-                                    onChange={() => {
-                                      setFormulario((prev) => ({ ...prev, horaEntrega: horarioStr }));
-                                      limpiarError("horaEntrega");
-                                    }}
-                                  />
-                                  <div className="opcion-disponibilidad__header">
-                                    <span className="opcion-disponibilidad__titulo">
-                                      {horarioStr}
-                                    </span>
-                                    <span className="opcion-disponibilidad__radio-dot" />
-                                  </div>
-                                  <span className="opcion-disponibilidad__horario">
-                                    <Clock size={14} />
-                                    {horarioStr}
-                                  </span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                          {errores.horaEntrega ? (
-                            <span className="mensaje-error mt-2 block">
-                              <ST>{errores.horaEntrega}</ST>
-                            </span>
-                          ) : null}
-                        </div>
+                        <ChoiceGroup
+                          legend="Horario de recepción"
+                          required
+                          slots
+                          error={errores.horaEntrega}
+                        >
+                          {horariosRecepcionParaFecha.map((horarioStr) => (
+                            <ChoiceCard
+                              key={horarioStr}
+                              variant="slot"
+                              name="horaEntrega"
+                              value={horarioStr}
+                              checked={formulario.horaEntrega === horarioStr}
+                              onChange={() => {
+                                setFormulario((prev) => ({ ...prev, horaEntrega: horarioStr }));
+                                limpiarError("horaEntrega");
+                              }}
+                              title={horarioStr}
+                            />
+                          ))}
+                        </ChoiceGroup>
                       )}
-                      <span className="mensaje-info">{tHorariosHint}</span>
                     </>
                   ) : null}
-                </SectionCard>
+                </FormSection>
 
-                <SectionCard paso={5} lugar="donacion.declaracion" title={tDeclaracion} hint={tDeclaracionHint}>
-                  <div className="campo">
-                    <label htmlFor="donacion-fechaSolicitud">{tFecha}</label>
-                    <input
-                      id="donacion-fechaSolicitud"
-                      type="date"
-                      name="fechaSolicitud"
-                      value={formulario.fechaSolicitud}
-                      readOnly
-                      disabled
-                      className="donacion-fecha-fija"
-                    />
-                  </div>
-                  <div className="donacion-checks">
-                    <label>
-                      <input
+                <FormSection
+                  title="Declaración y confirmación"
+                  hint="Revisá la información y aceptá los términos para completar tu solicitud."
+                >
+                  <FormGrid>
+                    <Field id="donacion-fechaSolicitud" label="Fecha de la solicitud">
+                      {(c) => (
+                        <input
+                          {...c}
+                          className="pub-input"
+                          type="date"
+                          name="fechaSolicitud"
+                          value={formulario.fechaSolicitud}
+                          readOnly
+                          disabled
+                        />
+                      )}
+                    </Field>
+                  </FormGrid>
+                  <ChoiceGroup label="Declaraciones" type="checkbox" columns={1}>
+                    <div className="donacion-declaracion">
+                      <ChoiceCard
                         type="checkbox"
                         name="declaraOrigen"
                         checked={formulario.declaraOrigen}
                         onChange={handleChange}
+                        title={
+                          <>
+                            {tOrigen}
+                            <span className="pub-field__req" aria-hidden="true"> *</span>
+                          </>
+                        }
+                        aria-invalid={errores.declaraOrigen ? "true" : undefined}
+                        aria-describedby={errores.declaraOrigen ? "donacion-declaraOrigen-error" : undefined}
                       />
-                      <span>
-                        {tOrigen} <span className="req">*</span>
-                      </span>
-                    </label>
-                    {errores.declaraOrigen ? <span className="mensaje-error"><ST>{errores.declaraOrigen}</ST></span> : null}
-                    <label>
-                      <input
+                      <FieldError id="donacion-declaraOrigen-error">{errores.declaraOrigen}</FieldError>
+                    </div>
+                    <div className="donacion-declaracion">
+                      <ChoiceCard
                         type="checkbox"
                         name="aceptaPrivacidad"
                         checked={formulario.aceptaPrivacidad}
                         onChange={handleChange}
+                        title={
+                          <>
+                            {tPrivacidad}
+                            <span className="pub-field__req" aria-hidden="true"> *</span>
+                          </>
+                        }
+                        aria-invalid={errores.aceptaPrivacidad ? "true" : undefined}
+                        aria-describedby={
+                          errores.aceptaPrivacidad ? "donacion-aceptaPrivacidad-error" : undefined
+                        }
                       />
-                      <span>
-                        {tPrivacidad} <span className="req">*</span>
-                      </span>
-                    </label>
-                    {errores.aceptaPrivacidad ? <span className="mensaje-error"><ST>{errores.aceptaPrivacidad}</ST></span> : null}
-                  </div>
-                </SectionCard>
-              </div>
+                      <FieldError id="donacion-aceptaPrivacidad-error">{errores.aceptaPrivacidad}</FieldError>
+                    </div>
+                  </ChoiceGroup>
+                </FormSection>
 
-              {errorApi ? <p className="form-error" role="alert" data-form-error><ST>{errorApi}</ST></p> : null}
+                <AvisoSedeFinca sede={sedeFinca} contexto="donacion" />
 
+                <FormAlert>{errorApi}</FormAlert>
 
-              <AvisoSedeFinca sede={sedeFinca} contexto="donacion" />
-
-              <div className="acciones-formulario">
-                <button
-                  type="submit"
-                  className="btn-enviar"
-                  disabled={enviando || !usuario}
-                >
-                  {enviando ? tEnviando : !usuario ? tLoginBtn : tEnviar}
-                </button>
-              </div>
-            </form>
-
+                <SubmitFooter
+                  label={!usuario ? tLoginBtn : tEnviar}
+                  busyLabel={tEnviando}
+                  busy={enviando}
+                  disabled={!usuario}
+                />
+              </form>
             </>
           ) : (
-            <div className="confirmacion">
-              <div className="confirmacion__icono">
-                <Check size={28} strokeWidth={2.2} aria-hidden="true" />
-              </div>
-              <h2><ST>Solicitud enviada correctamente</ST></h2>
-              <p>
-                <ST>
-                  Recibimos tu solicitud de donación en estado Pendiente. El equipo de Café UNA la revisará y te notificará el resultado por correo electrónico.
-                </ST>
-              </p>
-              <button type="button" className="btn-enviar" onClick={() => setEnviado(false)}>
-                <ST>Realizar otra solicitud</ST>
+            <FormSuccess
+              title="Solicitud enviada"
+              summary="Recibimos tu solicitud de donación en estado Pendiente. El equipo de Café UNA la va a revisar y te avisamos el resultado por correo electrónico."
+            >
+              <button type="button" className="pub-btn pub-btn--primary" onClick={() => setEnviado(false)}>
+                <ST>Hacer otra solicitud</ST>
               </button>
-            </div>
+              <button
+                type="button"
+                className="pub-btn pub-btn--secondary"
+                onClick={() => navigateToHomeSection(navigate, HOME_SCROLL_SECTIONS.iniciativas)}
+              >
+                <ST>Volver al inicio</ST>
+              </button>
+            </FormSuccess>
           )}
-        </section>
+        </div>
       </main>
       <ImageLightbox
         images={fotos.map((foto) => foto.preview)}

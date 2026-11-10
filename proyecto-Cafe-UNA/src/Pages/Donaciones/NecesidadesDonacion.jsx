@@ -1,28 +1,40 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { AlertTriangle } from "lucide-react";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
+import { PublicPageHeader } from "../../Components/Public/PublicPageHeader";
 import { HOME_SCROLL_SECTIONS } from "../../lib/homeScrollTarget";
 import PageLoading from "../../Components/PageLoading/PageLoading";
 import { obtenerNecesidadesPublicas } from "../../services/donacionesService";
 import { ST } from "../../Components/T/ST";
+import { useTraducir } from "../../hooks/useTraducir";
+import { usePublicPageLoadingGate } from "../../hooks/usePublicPageLoadingGate";
 import "./NecesidadesDonacion.css";
 
-function clasePrioridad(prioridad) {
-  if (prioridad === "ALTA") return "necesidad-card__prioridad--alta";
-  if (prioridad === "MEDIA") return "necesidad-card__prioridad--media";
-  return "necesidad-card__prioridad--baja";
+const PRIORIDADES = {
+  ALTA: { clave: "alta", texto: "Prioridad alta" },
+  MEDIA: { clave: "media", texto: "Prioridad media" },
+};
+
+function prioridadDe(valor) {
+  return PRIORIDADES[valor] || { clave: "baja", texto: "Prioridad baja" };
 }
 
-function etiquetaPrioridad(prioridad) {
-  if (prioridad === "ALTA") return "Alta";
-  if (prioridad === "MEDIA") return "Media";
-  return "Baja";
+function materialesActivos(item) {
+  return (item.materiales || [])
+    .filter((mat) => !mat.estado || mat.estado === "ACTIVA")
+    .map((mat) => mat.nombre)
+    .join(", ");
 }
 
 export default function NecesidadesDonacion() {
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
+  const tTitulo = useTraducir("Lo que necesitamos");
+  const tLead = useTraducir(
+    "Si podés aportar alguno de estos materiales, elegí la necesidad y completá la donación.",
+  );
 
   const load = useCallback(async () => {
     setStatus("loading");
@@ -46,60 +58,94 @@ export default function NecesidadesDonacion() {
     load();
   }, [load]);
 
-  if (status === "loading") {
-    return <PageLoading message="Cargando necesidades..." />;
-  }
+  // The gate also releases the route loading lock; without it the route loader never goes away.
+  const showLoadingGate = usePublicPageLoadingGate("donaciones", status !== "loading");
+  if (showLoadingGate) return <PageLoading message="Cargando necesidades..." />;
 
   return (
-    <main className="necesidades-page site-canvas">
-      <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.voluntariado} />
-      <header className="necesidades-page__header">
-        <h1 className="necesidades-page__title"><ST>Necesidades de donación</ST></h1>
-        <p className="necesidades-page__lead">
-          <ST>Estas son las necesidades materiales activas del proyecto. Si podés aportar, registrá tu donación.</ST>
-        </p>
-      </header>
+    <main className="pub-page necesidades-page">
+      <div className="pub-form-container">
+        <div className="pub-form-back">
+          <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.iniciativas} />
+        </div>
 
-      {status === "error" ? (
-        <p className="necesidades-page__error">{error}</p>
-      ) : items.length === 0 ? (
-        <p className="necesidades-page__vacio">
-          <ST>Por ahora no hay necesidades activas.</ST>
-        </p>
-      ) : (
-        <ul className="necesidades-grid">
-          {items.map((item) => (
-            <li key={item.id} className="necesidad-card">
-              <span className={`necesidad-card__prioridad ${clasePrioridad(item.prioridad)}`}>
-                <ST>Prioridad {etiquetaPrioridad(item.prioridad)}</ST>
-              </span>
-              <h2 className="necesidad-card__titulo"><ST>{item.titulo}</ST></h2>
-              <p className="necesidad-card__texto"><ST>{item.descripcion}</ST></p>
-              {item.materiales?.length ? (
-                <p className="necesidad-card__meta">
-                  <ST>Materiales aceptados</ST>:{" "}
-                  {item.materiales
-                    .filter((mat) => !mat.estado || mat.estado === "ACTIVA")
-                    .map((mat) => mat.nombre)
-                    .join(", ")}
-                </p>
-              ) : null}
-              {item.cantidadRequerida ? (
-                <p className="necesidad-card__meta">
-                  <ST>Cantidad requerida</ST>: {item.cantidadRequerida}
-                </p>
-              ) : null}
-              <Link
-                to="/donaciones/necesidades/$necesidadId/donar"
-                params={{ necesidadId: String(item.id) }}
-                className="necesidad-card__cta"
-              >
-                <ST>Quiero donar este material</ST>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+        <PublicPageHeader
+          title={tTitulo}
+          lead={tLead}
+          actions={
+            <Link to="/donaciones/solicitar" className="pub-btn pub-btn--primary">
+              <ST>Donar otro material</ST>
+            </Link>
+          }
+        />
+
+        {status === "error" ? (
+          <div className="pub-panel necesidades-estado" role="alert">
+            <AlertTriangle size={24} aria-hidden="true" />
+            <p className="necesidades-estado__titulo">
+              <ST>{error}</ST>
+            </p>
+            <button type="button" className="pub-btn pub-btn--secondary" onClick={load}>
+              <ST>Reintentar</ST>
+            </button>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="pub-panel necesidades-estado">
+            <p className="necesidades-estado__titulo">
+              <ST>Por ahora no hay necesidades activas.</ST>
+            </p>
+            <p className="necesidades-estado__texto">
+              <ST>Si querés ofrecer un material igual, podés enviarnos tu donación.</ST>
+            </p>
+          </div>
+        ) : (
+          <ul className="pub-panel necesidades-lista">
+            {items.map((item) => {
+              const prioridad = prioridadDe(item.prioridad);
+              const materiales = materialesActivos(item);
+              return (
+                <li key={item.id} className="necesidad-fila">
+                  <div className="necesidad-fila__texto">
+                    <h2 className="necesidad-fila__titulo">
+                      <ST>{item.titulo}</ST>
+                    </h2>
+                    <p className="necesidad-fila__prioridad">
+                      <span
+                        className={`necesidad-fila__punto necesidad-fila__punto--${prioridad.clave}`}
+                        aria-hidden="true"
+                      />
+                      <ST>{prioridad.texto}</ST>
+                    </p>
+                    {item.descripcion ? (
+                      <p className="necesidad-fila__meta">
+                        <ST>{item.descripcion}</ST>
+                      </p>
+                    ) : null}
+                    {materiales ? (
+                      <p className="necesidad-fila__meta">
+                        <ST>Materiales aceptados</ST>: <ST>{materiales}</ST>
+                      </p>
+                    ) : null}
+                    {item.cantidadRequerida ? (
+                      <p className="necesidad-fila__meta">
+                        <ST>Cantidad requerida</ST>: {item.cantidadRequerida}
+                      </p>
+                    ) : null}
+                  </div>
+                  <Link
+                    to="/donaciones/necesidades/$necesidadId/donar"
+                    params={{ necesidadId: String(item.id) }}
+                    className="pub-btn pub-btn--secondary necesidad-fila__accion"
+                  >
+                    <ST>Quiero donar</ST>
+                    <span className="pub-visually-hidden">: {item.titulo}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </main>
   );
 }

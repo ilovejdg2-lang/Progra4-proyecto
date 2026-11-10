@@ -434,6 +434,8 @@ The public site is redesigned page by page under one system, "Café de origen, i
 | Quiet button border | `--pub-line-strong` | `#b9aaa0` |
 | Input border (3:1 or better) | `--pub-input-border` | `#8a7b72` |
 | Page / surface | `--pub-canvas` / `--pub-surface` | `#fbf9f6` / `#ffffff` |
+| Error (7:1 on white) | `--pub-danger` | `#9b2c2c` |
+| Warm amber (low capacity dot, over-capacity alert only) | `--pub-warning` / `-bg` / `-line` / `-text` | `#b45309` / `#fdf5e4` / `#e6c88a` / `#6b3d06` |
 
 ### Page background (one switch)
 
@@ -489,12 +491,29 @@ Divided `<ul>` inside one `pub-panel`, no card grid. Row = 40x52 file-type tile 
 - Fields are grouped in `fieldset`/`legend` (`pub-fieldset`), sentence-case 15px labels, `*` for required, "(opcional)" for optional, 44px pill inputs with `--pub-input-border`, 16px radius textareas. Hints are 14px muted text.
 - Notes (for example visibility) use `pub-note`: `--pub-coffee-soft` box with a drawn icon. No emoji or glyph icons.
 
+### Request forms (voluntariado, visitas, donaciones)
+
+Shared building blocks live in `src/Components/Public/PublicForm.jsx`, styled by `src/styles/publicForm.css` (loaded from `index.css`, everything scoped to `.pub-form` or a `pub-*` class). Page-only styles stay next to each page (`SolicitarVisita.css`, `SolicitarDonacion.css`, `NecesidadesDonacion.css`).
+
+- **Page**: `<main class="pub-page pub-form-page">` > `pub-form-container` (868px; `--wide` 1080px for Visitas) > `BackToHomeLink` (home key `HOME_SCROLL_SECTIONS.iniciativas`) > `PublicPageHeader` (serif title, one muted line) > one white `pub-panel pub-form`.
+- **Sections**: `FormSection` = plain sentence-case title (18px, 600, Geist, no numbers, no black circles), optional muted hint, 1px divider between sections. No nested cards.
+- **Fields**: `Field` renders a 15px/600 label above the control with a coffee `*`, 13px muted help text and a 13px danger message. Its render-prop passes `id`, `aria-required`, `aria-invalid` and `aria-describedby` to the control. Controls are 46px pills (`pub-input`, shared `SelectFiltro` trigger) and 16px-radius `pub-textarea`; errors use a 1.5px `--pub-danger` border. Two columns from 640px (`FormGrid`, `cols={3}` from 800px), one on phones. Keep `queueFocusFormError` and the field maps.
+- **Choice cards**: `ChoiceGroup` + `ChoiceCard` are real radio or checkbox inputs inside labels: 1px `--pub-line` border, 14px radius, selected = `--pub-coffee-soft` fill + coffee border, focus-visible ring, disabled = dashed border, muted, reason in text. `variant="slot"` and `slots` give time-slot rows.
+- **Capacity**: `describirCupo` (`src/lib/formatoFormulario.js`) returns the text ("N cupos disponibles de M", "Quedan N cupos de M", "Cupo agotado"); `CupoTexto` draws the dot (coffee, amber only for low capacity, grey when sold out).
+- **Calendar**: `CalendarPicker` wraps the shadcn Calendar in a white bordered box; available days are coffee-soft with a coffee border, the selected day is coffee with white text, a legend explains both, and the chosen date is written in sentence case ("Sábado 14 de noviembre").
+- **Notes**: `FormNote` is a coffee-soft box with a drawn icon; `tone="warning"` is the warm amber box with `role="alert"` (over-capacity warning, no dates for a type). `FormPlaceholder` is a dashed empty or loading line.
+- **Submit footer**: `SubmitFooter` puts "Los campos con * son obligatorios." on the left and a coffee primary on the right (full width on phones) with a `pub-spinner` while sending. `FormAlert` is the danger banner above it. Login gating stays in each page.
+- **Success**: `FormSuccess` = coffee-soft circle with a check, serif title, summary line, primary and secondary actions. Visitas keeps the "Solicitud #id" text in the summary.
+- **Copy**: voseo everywhere (never usted or tuteo); strings go through `<ST>`, `t()` or `useTraducir` with EN entries in `src/lib/traducir.js`.
+- **Legacy**: `SolicitarVoluntariado.css` (slate tokens, black buttons) is no longer imported by these forms. It remains only for the producer proposal form and two admin screens until those are migrated.
+
 ### Migration status
 
 | Page | Status |
 |---|---|
 | Repositorio (page, submission dialog, viewer) | **Implemented** |
-| Formularios (voluntariado, visitas, donaciones, propuestas) | Pending (1) |
+| Formularios de solicitud (voluntariado, visitas, donaciones) and Necesidades | **Implemented** |
+| Formulario de propuestas de productores | Pending (1) |
 | Productores / Sobre nosotros | Pending (2) |
 | Área del cliente | Pending (3) |
 | Inicio / Checkout | Pending (4) |
