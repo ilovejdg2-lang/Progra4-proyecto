@@ -13,7 +13,7 @@
   max-width: 1120px;
   margin: 0 auto;
   padding: clamp(2.5rem, 6vw, 5rem) clamp(1.25rem, 4vw, 2.5rem) clamp(3.5rem, 8vw, 6rem);
-  background: #fafafa;
+  background: var(--pub-page-bg, #fafafa);
   color: #2a1612;
 }
 
@@ -499,10 +499,10 @@
   margin: 0;
   color: #111;
   font-size: clamp(1.85rem, 4vw, 3.4rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 0.98;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-transform: none;
 }
 
 .about-narrative__copy > p:not(.about-narrative__eyebrow) {

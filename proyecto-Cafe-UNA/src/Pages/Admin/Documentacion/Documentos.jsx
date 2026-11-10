@@ -62,6 +62,7 @@ import { useTraducir } from "../../../hooks/useTraducir";
 import { VisualizarDocumentoModal } from "../../Repositorio/VisualizarDocumentoModal";
 import "../../Voluntariado/SolicitarVoluntariado.css";
 import "./Documentos.css";
+import "./DocumentosLegacy.css";
 
 const FORM_DOCUMENTO_INICIAL = {
   titulo: "",

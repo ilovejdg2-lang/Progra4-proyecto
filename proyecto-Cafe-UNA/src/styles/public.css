@@ -22,7 +22,7 @@
 #center.site-main:has(.about-page),
 #center.site-main:has(.products-page),
 #center.site-main:has(.voluntariado-page) {
-  background: #fafafa;
+  background: var(--pub-page-bg, #fafafa);
   place-items: stretch;
   align-items: stretch;
 }

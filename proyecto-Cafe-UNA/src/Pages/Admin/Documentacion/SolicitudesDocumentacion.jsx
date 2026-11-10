@@ -38,6 +38,7 @@ import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import "../../Voluntariado/SolicitarVoluntariado.css";
 import "./Documentos.css";
+import "./DocumentosLegacy.css";
 
 export default function SolicitudesDocumentacion() {
   const modalTitleId = useId();

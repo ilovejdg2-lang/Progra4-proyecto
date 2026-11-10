@@ -12,7 +12,7 @@
   max-width: 1180px;
   margin: 0 auto;
   padding: clamp(2rem, 5vw, 4rem) clamp(1.25rem, 4vw, 2.5rem) clamp(3.5rem, 8vw, 6rem);
-  background: #fafafa;
+  background: var(--pub-page-bg, #fafafa);
   color: var(--historia-tinta);
 }
 
@@ -172,7 +172,7 @@
   height: 1rem;
   border: 3px solid var(--historia-acento);
   border-radius: 50%;
-  background: #fafafa;
+  background: var(--pub-page-bg, #fafafa);
 }
 
 .historia-linea__anio {
