@@ -21,6 +21,9 @@ function opcionesDesdeHijos(children, acumuladas = []) {
       });
       return;
     }
+    if (hijo.type === "optgroup") {
+      acumuladas.push({ heading: true, value: `__grupo:${hijo.props.label}`, label: hijo.props.label });
+    }
     if (hijo.type === Fragment || hijo.type === "optgroup") {
       opcionesDesdeHijos(hijo.props.children, acumuladas);
     }
