@@ -1,248 +1,166 @@
 import { useState, useId } from "react";
 import { createPortal } from "react-dom";
-import {
-  Download,
-  ExternalLink,
-  FileArchive,
-  FileCode,
-  FileSpreadsheet,
-  FileText,
-  Lock,
-  Maximize2,
-  Minimize2,
-  X,
-} from "lucide-react";
-import {
-  descargarArchivo,
-  obtenerUrlVisualizarDocumento,
-} from "../../services/documentosService";
+import { Download, ExternalLink, Lock, Maximize2, Minimize2, X } from "lucide-react";
+import { descargarArchivo, obtenerUrlVisualizarDocumento } from "../../services/documentosService";
 import { ModalDialog } from "../../Components/ui/ModalDialog";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import { useTraducir } from "../../hooks/useTraducir";
 import { ST } from "../../Components/T/ST";
-import "./Repositorio.css";
+import { etiquetaTipoArchivo } from "./repositorioLogic";
+import "./VisualizarDocumentoModal.css";
 
-function resolverIconoArchivo(nombre = "", mimeType = "") {
-  const ext = (nombre.split(".").pop() || "").toLowerCase();
-  const mime = (mimeType || "").toLowerCase();
-
-  if (ext === "pdf" || mime.includes("pdf")) {
-    return { icon: FileText, colorClass: "icon--pdf", label: "PDF" };
-  }
-  if (["xls", "xlsx", "csv"].includes(ext) || mime.includes("sheet") || mime.includes("excel")) {
-    return { icon: FileSpreadsheet, colorClass: "icon--excel", label: "Excel" };
-  }
-  if (["doc", "docx"].includes(ext) || mime.includes("word") || mime.includes("officedocument")) {
-    return { icon: FileText, colorClass: "icon--word", label: "Word" };
-  }
-  if (["zip", "rar", "7z", "tar", "gz"].includes(ext) || mime.includes("zip") || mime.includes("compressed")) {
-    return { icon: FileArchive, colorClass: "icon--archive", label: "Comprimido" };
-  }
-  return { icon: FileCode, colorClass: "icon--default", label: ext.toUpperCase() || "Archivo" };
-}
-
-function formatearTamano(bytes = 0) {
-  const b = Number(bytes);
-  if (!b || isNaN(b)) return "0 KB";
-  if (b < 1024) return `${b} B`;
-  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
-  return `${(b / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-export function VisualizarDocumentoModal({ documento, onClose }) {
+/**
+ * Viewer shared by the public Repositorio and the admin document screens.
+ * `onSolicitarAcceso` (public only): when the document is private, the primary action
+ * asks for access instead of downloading.
+ */
+export function VisualizarDocumentoModal({ documento, onClose, onSolicitarAcceso }) {
   const modalTitleId = useId();
   const [pantallaCompleta, setPantallaCompleta] = useState(false);
   const [descargando, setDescargando] = useState(false);
   const [errorCarga, setErrorCarga] = useState(false);
+  const [errorDescarga, setErrorDescarga] = useState("");
+
+  const tCerrar = useTraducir("Cerrar visor");
+  const tCompleta = useTraducir("Pantalla completa");
+  const tRestaurar = useTraducir("Restaurar tamaño");
 
   useBodyScrollLock(Boolean(documento));
-
 
   if (!documento) return null;
 
   const urlVisualizar = obtenerUrlVisualizarDocumento(documento.id);
   const ext = (documento.nombreOriginal?.split(".").pop() || "").toLowerCase();
   const mime = (documento.mimeType || "").toLowerCase();
-
   const esPdf = ext === "pdf" || mime.includes("pdf");
   const esImagen = ["jpg", "jpeg", "png", "webp", "gif", "svg"].includes(ext) || mime.startsWith("image/");
-  const iconInfo = resolverIconoArchivo(documento.nombreOriginal, documento.mimeType);
-  const IconDoc = iconInfo.icon;
+  const etiquetaTipo = etiquetaTipoArchivo(documento);
+  const requiereSolicitud = Boolean(documento.esPrivado && onSolicitarAcceso);
 
-  const handleDescargar = async () => {
+  const accionPrincipal = async () => {
+    if (requiereSolicitud) {
+      onSolicitarAcceso(documento);
+      return;
+    }
     try {
       setDescargando(true);
+      setErrorDescarga("");
       await descargarArchivo(documento.id, documento.nombreOriginal || `${documento.titulo}.pdf`);
     } catch (err) {
-      alert(err?.message || "No se pudo descargar el archivo.");
+      setErrorDescarga(err?.message || "No se pudo descargar el archivo.");
     } finally {
       setDescargando(false);
     }
   };
 
-  const handleAbrirNuevaPestana = () => {
-    window.open(urlVisualizar, "_blank", "noopener,noreferrer");
-  };
+  const abrirNuevaPestana = () => window.open(urlVisualizar, "_blank", "noopener,noreferrer");
+
+  const textoPrincipal = requiereSolicitud ? (
+    <ST>Solicitar acceso</ST>
+  ) : descargando ? (
+    <ST>Descargando...</ST>
+  ) : (
+    <ST>Descargar</ST>
+  );
+
+  const acciones = (
+    <>
+      <button type="button" className="pub-btn pub-btn--secondary" onClick={abrirNuevaPestana}>
+        <ExternalLink size={16} aria-hidden="true" />
+        <ST>Abrir en pestaña nueva</ST>
+      </button>
+      <button type="button" className="pub-btn pub-btn--primary" onClick={accionPrincipal} disabled={descargando}>
+        {requiereSolicitud ? <Lock size={16} aria-hidden="true" /> : <Download size={16} aria-hidden="true" />}
+        {textoPrincipal}
+      </button>
+    </>
+  );
+
+  const sinVistaPrevia = (
+    <div className="viewer-fallback">
+      <span className="viewer-fallback__tile" aria-hidden="true">
+        {etiquetaTipo}
+      </span>
+      <h3 className="viewer-fallback__name">{documento.nombreOriginal || documento.titulo}</h3>
+      <p>
+        <ST>
+          {errorCarga
+            ? "No se pudo cargar la vista previa del documento. Puedes descargarlo para verlo en tu equipo."
+            : "Este formato no se puede previsualizar en el navegador. Puedes descargarlo para verlo en tu equipo."}
+        </ST>
+      </p>
+    </div>
+  );
+
+  const meta = [documento.categoria, documento.version ? `v${documento.version}` : ""].filter(Boolean);
 
   return createPortal(
-    <ModalDialog
-      className="repositorio-modal-overlay"
-      labelledBy={modalTitleId}
-      onClose={onClose}
-    >
+    <ModalDialog className="pub-dialog-overlay" labelledBy={modalTitleId} onClose={onClose}>
       <div
-        className={`repositorio-viewer-container ${pantallaCompleta ? "repositorio-viewer--fullscreen" : ""}`}
+        className={`pub-dialog pub-dialog--wide${pantallaCompleta ? " pub-dialog--full" : ""}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header del Visor */}
-        <div className="repositorio-viewer-header">
-          <div className="repositorio-viewer-header__info">
-            <div className={`doc-cell-icon ${iconInfo.colorClass}`}>
-              <IconDoc size={20} />
-            </div>
-            <div className="repositorio-viewer-header__texts">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="badge-categoria-cell">
-                  {documento.categoria || "General"}
-                  {documento.subcategoria ? ` / ${documento.subcategoria}` : ""}
+        <div className="pub-dialog__header viewer-header">
+          <div className="viewer-header__text">
+            <h2 id={modalTitleId} className="pub-serif-title pub-dialog__title viewer-header__title">
+              {documento.titulo}
+            </h2>
+            <p className="pub-dialog__lead">
+              {documento.esPrivado ? (
+                <span className="viewer-private">
+                  <Lock size={13} aria-hidden="true" />
+                  <ST>Privado</ST>
+                  {" · "}
                 </span>
-                {documento.esPrivado && (
-                  <span className="badge-priv-cell badge-priv-cell--priv">
-                    <Lock size={12} />
-                    <span><ST>Privado</ST></span>
-                  </span>
-                )}
-                <span className="text-xs text-slate-400">
-                  v{documento.version || "1.0"}
-                </span>
-              </div>
-              <h3 id={modalTitleId} className="repositorio-viewer-title" title={documento.titulo}>
-                {documento.titulo}
-              </h3>
-            </div>
+              ) : null}
+              {meta.join(" · ")}
+            </p>
           </div>
-
-          <div className="repositorio-viewer-actions">
+          <div className="viewer-header__actions">
+            <span className="viewer-header__buttons">{acciones}</span>
             <button
               type="button"
-              className="btn-visor-action"
-              title="Abrir en pestaña nueva"
-              onClick={handleAbrirNuevaPestana}
-            >
-              <ExternalLink size={16} />
-              <span className="hidden sm:inline"><ST>Nueva pestaña</ST></span>
-            </button>
-
-            <button
-              type="button"
-              className="btn-visor-action btn-visor-action--primary"
-              title="Descargar archivo"
-              onClick={handleDescargar}
-              disabled={descargando}
-            >
-              <Download size={16} />
-              <span>{descargando ? <ST>Descargando...</ST> : <ST>Descargar</ST>}</span>
-            </button>
-
-            <button
-              type="button"
-              className="btn-visor-action btn-visor-action--icon-only"
-              title={pantallaCompleta ? "Restaurar tamaño" : "Pantalla completa"}
+              className="pub-dialog-close viewer-header__fullscreen"
+              aria-label={pantallaCompleta ? tRestaurar : tCompleta}
               onClick={() => setPantallaCompleta((prev) => !prev)}
             >
-              {pantallaCompleta ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              {pantallaCompleta ? <Minimize2 size={18} aria-hidden="true" /> : <Maximize2 size={18} aria-hidden="true" />}
             </button>
-
-            <button
-              type="button"
-              className="repositorio-modal-close"
-              title="Cerrar visor"
-              onClick={onClose}
-            >
-              <X size={20} />
+            <button type="button" className="pub-dialog-close" aria-label={tCerrar} onClick={onClose}>
+              <X size={20} aria-hidden="true" />
             </button>
           </div>
         </div>
 
-        {/* Cuerpo del Visor */}
-        <div className="repositorio-viewer-body">
-          {errorCarga ? (
-            <div className="repositorio-viewer-fallback">
-              <div className={`repositorio-viewer-fallback__icon ${iconInfo.colorClass}`}>
-                <IconDoc size={56} />
-              </div>
-              <h4>{documento.nombreOriginal || documento.titulo}</h4>
-              <p>
-                <ST>
-                  No se pudo cargar la vista previa interactiva del documento. Puede descargarlo directamente para examinarlo en su equipo.
-                </ST>
-              </p>
-              <div className="flex gap-3 mt-4">
-                <button
-                  type="button"
-                  className="repositorio-btn-primary"
-                  onClick={handleDescargar}
-                  disabled={descargando}
-                >
-                  <Download size={16} />
-                  <span><ST>Descargar archivo ahora</ST></span>
-                </button>
-                <button
-                  type="button"
-                  className="repositorio-btn-secondary"
-                  onClick={handleAbrirNuevaPestana}
-                >
-                  <ExternalLink size={16} />
-                  <span><ST>Abrir en nueva pestaña</ST></span>
-                </button>
-              </div>
+        {errorDescarga ? (
+          <div className="viewer-error">
+            <div className="pub-alert" role="alert">
+              <ST>{errorDescarga}</ST>
             </div>
+          </div>
+        ) : null}
+
+        <div className="viewer-body">
+          {errorCarga ? (
+            sinVistaPrevia
           ) : esPdf ? (
             <iframe
               src={urlVisualizar}
               title={documento.titulo}
-              className="repositorio-viewer-iframe"
+              className="viewer-frame"
               onError={() => setErrorCarga(true)}
             />
           ) : esImagen ? (
-            <div className="repositorio-viewer-image-wrap">
+            <div className="viewer-image-wrap">
               <img
                 src={urlVisualizar}
                 alt={documento.titulo}
-                className="repositorio-viewer-img"
+                className="viewer-image"
                 onError={() => setErrorCarga(true)}
               />
             </div>
           ) : (
-            <div className="repositorio-viewer-fallback">
-              <div className={`repositorio-viewer-fallback__icon ${iconInfo.colorClass}`}>
-                <IconDoc size={56} />
-              </div>
-              <h4>{documento.nombreOriginal || documento.titulo}</h4>
-              <p>
-                <ST>
-                  Este formato de archivo ({iconInfo.label}) no admite previsualización interactiva dentro del navegador. Puede descargarlo directamente en su equipo para examinarlo.
-                </ST>
-              </p>
-              <div className="flex gap-3 mt-4">
-                <button
-                  type="button"
-                  className="repositorio-btn-primary"
-                  onClick={handleDescargar}
-                  disabled={descargando}
-                >
-                  <Download size={16} />
-                  <span><ST>Descargar archivo ahora</ST></span>
-                </button>
-                <button
-                  type="button"
-                  className="repositorio-btn-secondary"
-                  onClick={handleAbrirNuevaPestana}
-                >
-                  <ExternalLink size={16} />
-                  <span><ST>Intentar abrir externamente</ST></span>
-                </button>
-              </div>
-            </div>
+            sinVistaPrevia
           )}
         </div>
       </div>
