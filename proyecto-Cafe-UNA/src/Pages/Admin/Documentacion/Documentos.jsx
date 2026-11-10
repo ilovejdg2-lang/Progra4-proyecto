@@ -50,12 +50,13 @@ import {
   eliminarCategoriaDocumento,
   eliminarDocumentoAdmin,
   exportarCatalogoDocumentosCsv,
-  obtenerCategoriasDocumentos,
+  obtenerCategoriasDocumentosAdmin,
   obtenerDocumentosAdmin,
   obtenerEstadisticasDocumentosAdmin,
 } from "../../../services/documentosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
+import { esCategoriaAdministrativa, opcionesCategoriaDocumento } from "../../../lib/categorias";
 import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { VisualizarDocumentoModal } from "../../Repositorio/VisualizarDocumentoModal";
@@ -128,6 +129,11 @@ export default function AdminDocumentos() {
   // Filtros de Documentos
   const [filtroBuscar, setFiltroBuscar] = useState("");
   const tPhBuscar = useTraducir("Buscar documento...");
+  const etiquetasCategoria = {
+    vacio: useTraducir("Seleccione una categoría"),
+    publica: useTraducir("Repositorio público"),
+    administrativa: useTraducir("Administrativas"),
+  };
   const [filtroCategoria, setFiltroCategoria] = useState("");
   const [filtroPrivacidad, setFiltroPrivacidad] = useState("");
   const [filtroActivo, setFiltroActivo] = useState("");
@@ -145,6 +151,7 @@ export default function AdminDocumentos() {
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
   const [catNombre, setCatNombre] = useState("");
   const [catPadre, setCatPadre] = useState("");
+  const [catAudiencia, setCatAudiencia] = useState("publica");
   const [guardandoCat, setGuardandoCat] = useState(false);
   const [errorCat, setErrorCat] = useState("");
 
@@ -212,7 +219,7 @@ export default function AdminDocumentos() {
           esPrivado: filtroPrivacidad,
           activo: filtroActivo,
         }),
-        obtenerCategoriasDocumentos().catch(() => []),
+        obtenerCategoriasDocumentosAdmin().catch(() => []),
         obtenerEstadisticasDocumentosAdmin().catch(() => null),
       ]);
       setDocumentos(docs);
@@ -306,7 +313,7 @@ export default function AdminDocumentos() {
       fd.append("descripcion", formDoc.descripcion.trim());
       fd.append("categoria", formDoc.categoria.trim());
       fd.append("subcategoria", formDoc.subcategoria.trim());
-      fd.append("esPrivado", String(formDoc.esPrivado));
+      fd.append("esPrivado", String(esPrivadoEfectivo));
       fd.append("autor", formDoc.autor.trim());
       fd.append("version", formDoc.version.trim());
       fd.append("palabrasClave", formDoc.palabrasClave.trim());
@@ -392,9 +399,11 @@ export default function AdminDocumentos() {
       await crearCategoriaDocumento({
         nombre: catNombre.trim(),
         padre: catPadre.trim(),
+        audiencia: catAudiencia,
       });
       setCatNombre("");
       setCatPadre("");
+      setCatAudiencia("publica");
       setModalCatAbierto(false);
       setMensajeExito("Categoría creada con éxito.");
       await cargarDatos();
@@ -425,6 +434,15 @@ export default function AdminDocumentos() {
       alert(err?.message || "No se pudo eliminar la categoría.");
     }
   };
+
+  const categoriaAdministrativa = useMemo(
+    () =>
+      esCategoriaAdministrativa(
+        categorias.find((c) => !(c.padre || c.Padre) && (c.nombre || c.Nombre) === formDoc.categoria),
+      ),
+    [formDoc.categoria, categorias],
+  );
+  const esPrivadoEfectivo = categoriaAdministrativa || formDoc.esPrivado;
 
   const subcategoriasDisponibles = useMemo(() => {
     if (!formDoc.categoria) return [];
@@ -729,6 +747,11 @@ export default function AdminDocumentos() {
                               {doc.categoria}
                               {doc.subcategoria ? ` / ${doc.subcategoria}` : ""}
                             </span>
+                            {doc.audiencia ? (
+                              <span className="doc-cell-audiencia">
+                                {doc.audiencia === "administrativa" ? <ST>Administrativo</ST> : <ST>Público</ST>}
+                              </span>
+                            ) : null}
                           </td>
                           <td>
                             {doc.esPrivado ? (
@@ -1015,6 +1038,7 @@ export default function AdminDocumentos() {
                     <SelectFiltro
                       id="doc-form-cat"
                       required
+                      options={opcionesCategoriaDocumento(categorias, etiquetasCategoria)}
                       className="admin-form-select"
                       value={formDoc.categoria}
                       onChange={(e) =>
@@ -1024,20 +1048,7 @@ export default function AdminDocumentos() {
                           subcategoria: "",
                         })
                       }
-                    >
-                      <option value="">Seleccione una categoría</option>
-                      {categorias
-                        .filter((c) => !(c.padre || c.Padre))
-                        .map((c) => {
-                          const nombre = c.nombre || c.Nombre || "";
-                          const id = c.id || c.Id || nombre;
-                          return (
-                            <option key={id} value={nombre}>
-                              {nombre}
-                            </option>
-                          );
-                        })}
-                    </SelectFiltro>
+                    />
                   </div>
 
                   <div className="admin-form-group">
@@ -1103,13 +1114,20 @@ export default function AdminDocumentos() {
                   <span className="admin-form-label">
                     <ST>¿Cuál es el nivel de visibilidad y acceso?</ST>
                   </span>
-                  <p className="admin-form-helper"><ST>Defina si el archivo podrá descargarse libremente o requerirá autorización.</ST></p>
+                  <p className="admin-form-helper">
+                    {categoriaAdministrativa ? (
+                      <ST>Los documentos administrativos siempre son privados.</ST>
+                    ) : (
+                      <ST>Defina si el archivo podrá descargarse libremente o requerirá autorización.</ST>
+                    )}
+                  </p>
                   <div className="admin-form-privacy-options">
-                    <label className={`admin-form-radio-card ${!formDoc.esPrivado ? "is-selected" : ""}`}>
+                    <label className={`admin-form-radio-card ${!esPrivadoEfectivo ? "is-selected" : ""}`}>
                       <input
                         type="radio"
                         name="privacidadDoc"
-                        checked={!formDoc.esPrivado}
+                        checked={!esPrivadoEfectivo}
+                        disabled={categoriaAdministrativa}
                         onChange={() => setFormDoc({ ...formDoc, esPrivado: false })}
                       />
                       <div className="radio-content">
@@ -1123,11 +1141,11 @@ export default function AdminDocumentos() {
                       </div>
                     </label>
 
-                    <label className={`admin-form-radio-card ${formDoc.esPrivado ? "is-selected" : ""}`}>
+                    <label className={`admin-form-radio-card ${esPrivadoEfectivo ? "is-selected" : ""}`}>
                       <input
                         type="radio"
                         name="privacidadDoc"
-                        checked={formDoc.esPrivado}
+                        checked={esPrivadoEfectivo}
                         onChange={() => setFormDoc({ ...formDoc, esPrivado: true })}
                       />
                       <div className="radio-content">
@@ -1290,6 +1308,23 @@ export default function AdminDocumentos() {
                     placeholder="Ej. Tesis de Grado"
                     value={catNombre}
                     onChange={(e) => setCatNombre(e.target.value)}
+                  />
+                </div>
+
+                <div className="admin-form-group">
+                  <label htmlFor="cat-audiencia" className="admin-form-label">
+                    <ST>¿A qué sección pertenece?</ST>
+                  </label>
+                  <SelectFiltro
+                    id="cat-audiencia"
+                    className="admin-form-select"
+                    traducirOpciones
+                    value={catAudiencia}
+                    onChange={(e) => setCatAudiencia(e.target.value)}
+                    options={[
+                      { value: "publica", label: "Repositorio público" },
+                      { value: "administrativa", label: "Administrativa" },
+                    ]}
                   />
                 </div>
 

@@ -43,12 +43,13 @@ import {
   eliminarCategoriaDocumento,
   eliminarDocumentoAdmin,
   exportarCatalogoDocumentosCsv,
-  obtenerCategoriasDocumentos,
+  obtenerCategoriasDocumentosAdmin,
   obtenerDocumentosAdmin,
   obtenerEstadisticasDocumentosAdmin,
 } from "../../../services/documentosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
+import { opcionesCategoriaDocumento } from "../../../lib/categorias";
 import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { VisualizarDocumentoModal } from "../../Repositorio/VisualizarDocumentoModal";
@@ -122,6 +123,11 @@ export default function DocumentacionAdministrativa() {
   // Filtros
   const [filtroBuscar, setFiltroBuscar] = useState("");
   const tPhBuscar = useTraducir("Buscar documento privado...");
+  const etiquetasCategoria = {
+    vacio: useTraducir("Seleccione una categoría"),
+    publica: useTraducir("Repositorio público"),
+    administrativa: useTraducir("Administrativas"),
+  };
   const [filtroCategoria, setFiltroCategoria] = useState("");
   const [filtroActivo, setFiltroActivo] = useState("");
 
@@ -138,6 +144,7 @@ export default function DocumentacionAdministrativa() {
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
   const [catNombre, setCatNombre] = useState("");
   const [catPadre, setCatPadre] = useState("");
+  const [catAudiencia, setCatAudiencia] = useState("administrativa");
   const [guardandoCat, setGuardandoCat] = useState(false);
   const [errorCat, setErrorCat] = useState("");
 
@@ -200,7 +207,7 @@ export default function DocumentacionAdministrativa() {
           esPrivado: "true", // Restringido a documentación privada/administrativa
           activo: filtroActivo,
         }),
-        obtenerCategoriasDocumentos().catch(() => []),
+        obtenerCategoriasDocumentosAdmin().catch(() => []),
         obtenerEstadisticasDocumentosAdmin().catch(() => null),
       ]);
       setDocumentos(docs);
@@ -375,9 +382,11 @@ export default function DocumentacionAdministrativa() {
       await crearCategoriaDocumento({
         nombre: catNombre.trim(),
         padre: catPadre.trim(),
+        audiencia: catAudiencia,
       });
       setCatNombre("");
       setCatPadre("");
+      setCatAudiencia("administrativa");
       setModalCatAbierto(false);
       setMensajeExito("Categoría administrativa creada con éxito.");
       await cargarDatos();
@@ -713,6 +722,11 @@ export default function DocumentacionAdministrativa() {
                               {doc.categoria}
                               {doc.subcategoria ? ` / ${doc.subcategoria}` : ""}
                             </span>
+                            {doc.audiencia ? (
+                              <span className="doc-cell-audiencia">
+                                {doc.audiencia === "administrativa" ? <ST>Administrativo</ST> : <ST>Público</ST>}
+                              </span>
+                            ) : null}
                           </td>
                           <td>
                             <span className="badge-priv-cell badge-priv-cell--priv">
@@ -986,6 +1000,7 @@ export default function DocumentacionAdministrativa() {
                     <SelectFiltro
                       id="admin-doc-cat"
                       required
+                      options={opcionesCategoriaDocumento(categorias, etiquetasCategoria)}
                       className="admin-form-select"
                       value={formDoc.categoria}
                       onChange={(e) =>
@@ -995,20 +1010,7 @@ export default function DocumentacionAdministrativa() {
                           subcategoria: "",
                         })
                       }
-                    >
-                      <option value="">Seleccione una categoría</option>
-                      {categorias
-                        .filter((c) => !(c.padre || c.Padre))
-                        .map((c) => {
-                          const nombre = c.nombre || c.Nombre || "";
-                          const id = c.id || c.Id || nombre;
-                          return (
-                            <option key={id} value={nombre}>
-                              {nombre}
-                            </option>
-                          );
-                        })}
-                    </SelectFiltro>
+                    />
                   </div>
 
                   <div className="admin-form-group">
@@ -1236,6 +1238,23 @@ export default function DocumentacionAdministrativa() {
                     placeholder="Ej. Actas de Junta Directiva"
                     value={catNombre}
                     onChange={(e) => setCatNombre(e.target.value)}
+                  />
+                </div>
+
+                <div className="admin-form-group">
+                  <label htmlFor="cat-audiencia-admin" className="admin-form-label">
+                    <ST>¿A qué sección pertenece?</ST>
+                  </label>
+                  <SelectFiltro
+                    id="cat-audiencia-admin"
+                    className="admin-form-select"
+                    traducirOpciones
+                    value={catAudiencia}
+                    onChange={(e) => setCatAudiencia(e.target.value)}
+                    options={[
+                      { value: "administrativa", label: "Administrativa" },
+                      { value: "publica", label: "Repositorio público" },
+                    ]}
                   />
                 </div>
 

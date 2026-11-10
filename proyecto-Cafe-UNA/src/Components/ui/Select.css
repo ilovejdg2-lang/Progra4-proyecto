@@ -93,6 +93,13 @@
   min-width: 0;
 }
 
+.ui-select__group {
+  padding: 0.55rem 0.75rem 0.25rem;
+  color: rgb(100 116 139);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .ui-select__option {
   display: flex;
   min-width: 0;
@@ -200,6 +207,10 @@ html.admin-theme-dark body.admin-route-active .ui-select__menu:not(.ui-select__m
 
 html.admin-theme-dark body.admin-route-active .ui-select__menu:not(.ui-select__menu--claro) .ui-select__option {
   color: #e2e8f0;
+}
+
+html.admin-theme-dark body.admin-route-active .ui-select__menu:not(.ui-select__menu--claro) .ui-select__group {
+  color: #94a3b8;
 }
 
 html.admin-theme-dark body.admin-route-active .ui-select__menu:not(.ui-select__menu--claro) .ui-select__option:hover {
