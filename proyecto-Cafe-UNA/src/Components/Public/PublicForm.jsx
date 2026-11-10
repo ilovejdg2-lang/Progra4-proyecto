@@ -1,8 +1,9 @@
-import { useEffect, useId, useRef } from "react";
+import { createContext, useContext, useEffect, useId, useRef } from "react";
 import { AlertTriangle, Check, Info } from "lucide-react";
 import { Calendar } from "@/Components/ui/calendar";
 import { ST } from "../T/ST";
 import { useIdioma } from "../../lib/useIdioma";
+import { useTraducir } from "../../hooks/useTraducir";
 import { formatearFechaLarga } from "../../lib/formatoFormulario";
 
 /**
@@ -83,16 +84,36 @@ export function FieldError({ id, children }) {
   );
 }
 
-/** Fieldset with a visible legend for radio or checkbox groups. */
-export function ChoiceGroup({ legend, label, required = false, error, hint, children, columns = 2, slots = false, id }) {
+const ChoiceGroupContext = createContext({ invalid: false, describedBy: undefined });
+
+/**
+ * Fieldset with a visible legend for radio or checkbox groups. Radio groups get
+ * role=radiogroup, aria-required and aria-invalid/aria-describedby on every radio.
+ */
+export function ChoiceGroup({
+  legend,
+  label,
+  required = false,
+  error,
+  hint,
+  children,
+  columns = 2,
+  slots = false,
+  type = "radio",
+  id,
+}) {
   const generatedId = useId();
   const groupId = id || generatedId;
   const errorId = error ? `${groupId}-error` : undefined;
+  const tLabel = useTraducir(label || "");
+  const esRadio = type === "radio";
   return (
     <fieldset
       className={`pub-choice-group${error ? " pub-field--invalid" : ""}`}
+      role={esRadio ? "radiogroup" : undefined}
+      aria-required={esRadio && required ? "true" : undefined}
       aria-describedby={errorId}
-      aria-label={legend ? undefined : label}
+      aria-label={legend ? undefined : tLabel || undefined}
       id={groupId}
     >
       {legend ? (
@@ -106,7 +127,9 @@ export function ChoiceGroup({ legend, label, required = false, error, hint, chil
           <Texto>{hint}</Texto>
         </p>
       ) : null}
-      <div className={`pub-choice-list pub-choice-list--${slots ? "slots" : columns}`}>{children}</div>
+      <ChoiceGroupContext.Provider value={{ invalid: Boolean(error), describedBy: errorId }}>
+        <div className={`pub-choice-list pub-choice-list--${slots ? "slots" : columns}`}>{children}</div>
+      </ChoiceGroupContext.Provider>
       <FieldError id={errorId}>{error}</FieldError>
     </fieldset>
   );
@@ -127,9 +150,18 @@ export function ChoiceCard({
   className = "",
   ...inputProps
 }) {
+  const grupo = useContext(ChoiceGroupContext);
+  const marcaGrupo = type === "radio" && grupo.invalid;
   return (
     <label className={`pub-choice pub-choice--${variant}${className ? ` ${className}` : ""}`}>
-      <input type={type} className="pub-choice__input" disabled={disabled} {...inputProps} />
+      <input
+        type={type}
+        className="pub-choice__input"
+        disabled={disabled}
+        aria-invalid={marcaGrupo ? "true" : undefined}
+        aria-describedby={marcaGrupo ? grupo.describedBy : undefined}
+        {...inputProps}
+      />
       <span className="pub-choice__body">
         <span className="pub-choice__title">
           <Texto>{title}</Texto>
@@ -254,6 +286,8 @@ export function FormSuccess({ title, summary, children }) {
  * Wraps the shadcn Calendar; `enabledDates` get the coffee-soft "available" style.
  */
 export function CalendarPicker({
+  id,
+  label = "Calendario de fechas disponibles",
   selected,
   onSelect,
   disabled,
@@ -265,8 +299,9 @@ export function CalendarPicker({
 }) {
   const { idioma } = useIdioma();
   const fechaLarga = formatearFechaLarga(selected, idioma);
+  const tLabel = useTraducir(label);
   return (
-    <div className="pub-calendar" aria-invalid={invalid ? "true" : undefined} aria-describedby={describedBy}>
+    <div className="pub-calendar" id={id} role="group" aria-label={tLabel} aria-invalid={invalid ? "true" : undefined} aria-describedby={describedBy}>
       <p className="pub-calendar__selected" aria-live="polite">
         {fechaLarga ? (
           <>

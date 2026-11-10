@@ -1726,7 +1726,7 @@ const DICCIONARIO = {
   "Por ahora no hay días habilitados para entregar donaciones en la Finca Experimental Santa Lucía. Podés solicitar recolección o consultar más adelante.": "There are no enabled days to deliver donations at the Santa Lucía Experimental Farm right now. You can request a pickup or check back later.",
   "Revisá la información y aceptá los términos para completar tu solicitud.": "Review the information and accept the terms to complete your request.",
   "Declaraciones": "Declarations",
-  "Recibimos tu solicitud de donación en estado Pendiente. El equipo de Café UNA la va a revisar y te avisa el resultado por correo electrónico.": "We received your donation request with Pending status. The Café UNA team will review it and let you know the result by email.",
+  "Recibimos tu solicitud de donación en estado Pendiente. El equipo de Café UNA la va a revisar y te avisamos el resultado por correo electrónico.": "We received your donation request with Pending status. The Café UNA team will review it and let you know the result by email.",
   "Ingresá la razón social": "Enter the company name",
   "Ingresá un correo electrónico válido": "Enter a valid email address",
   "Elegí la categoría de la donación": "Choose the donation category",
@@ -1752,6 +1752,8 @@ const DICCIONARIO = {
   "Prioridad alta": "High priority",
   "Prioridad media": "Medium priority",
   "Prioridad baja": "Low priority",
+  "Calendario de fechas disponibles": "Calendar of available dates",
+  "Calendario de fechas de recepción": "Calendar of reception dates",
   "Si querés ofrecer un material igual, podés enviarnos tu donación.": "If you want to offer a material anyway, you can send us your donation.",
 };
 

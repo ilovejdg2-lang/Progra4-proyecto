@@ -638,7 +638,6 @@ function SolicitarVoluntariado() {
 
   const VOLUNTARIADO_FIELD_MAP = {
     tipo: "tipoVoluntariado",
-    fechaVoluntariado: "fechaVoluntariado",
   };
 
   const resetFormulario = () => {
@@ -653,10 +652,11 @@ function SolicitarVoluntariado() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const formEl = e.currentTarget;
     if (!usuario) {
       sessionStorage.setItem("postLoginRedirect", VOLUNTARIADO_LOGIN_REDIRECT);
       setErrorApi("Tenés que iniciar sesión antes de enviar una solicitud de voluntariado.");
-      queueFocusFormError({ root: e.currentTarget });
+      queueFocusFormError({ root: formEl });
       return;
     }
 
@@ -664,8 +664,9 @@ function SolicitarVoluntariado() {
     if (Object.keys(nuevosErrores).length > 0) {
       queueFocusFormError({
         errors: nuevosErrores,
-        root: e.currentTarget,
+        root: formEl,
         fieldMap: VOLUNTARIADO_FIELD_MAP,
+        idPrefix: "voluntariado-",
         fieldOrder: [
           "identificacion",
           "nacionalidad",
@@ -690,7 +691,7 @@ function SolicitarVoluntariado() {
       setAvisoCedula("Ingresá tu nombre o verificá la identificación.");
       queueFocusFormError({
         errors: { nombre: true, identificacion: true },
-        root: e.currentTarget,
+        root: formEl,
       });
       return;
     }
@@ -746,7 +747,7 @@ function SolicitarVoluntariado() {
         err?.message ||
         "Ocurrió un error al enviar la solicitud. Intentá de nuevo.";
       setErrorApi(msg);
-      queueFocusFormError({ root: e.currentTarget });
+      queueFocusFormError({ root: formEl });
     } finally {
       setEnviando(false);
     }
@@ -1051,6 +1052,7 @@ function SolicitarVoluntariado() {
                         <input
                           {...c}
                           className="pub-visually-hidden"
+                          name="documentoGrupo"
                           type="file"
                           accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
                           onChange={handleDocumentoChange}
@@ -1162,6 +1164,8 @@ function SolicitarVoluntariado() {
                 ) : (
                   <>
                     <CalendarPicker
+                      id="voluntariado-fechaVoluntariado"
+                      label="Calendario de fechas disponibles"
                       selected={fechaSeleccionada}
                       onSelect={handleSelectFecha}
                       disabled={isDateDisabled}

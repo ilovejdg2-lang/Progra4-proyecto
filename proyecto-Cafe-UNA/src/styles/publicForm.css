@@ -674,7 +674,7 @@
 }
 
 .pub-form .shadcn-calendar {
-  max-width: 336px !important;
+  max-width: 356px !important;
   padding: 16px !important;
   background-color: var(--pub-surface) !important;
   border: 1px solid var(--pub-line) !important;
@@ -704,20 +704,36 @@
   color: var(--pub-ink) !important;
 }
 
+.pub-form .shadcn-calendar .rdp-month_caption {
+  height: 44px !important;
+}
+
+.pub-form .shadcn-calendar .rdp-button_previous,
+.pub-form .shadcn-calendar .rdp-button_next {
+  top: 0 !important;
+  width: 44px !important;
+  height: 44px !important;
+}
+
+.pub-form .shadcn-calendar .rdp-dropdown_root {
+  min-height: 44px;
+  padding: 2px 8px !important;
+}
+
 .pub-form .shadcn-calendar .rdp-weekday {
-  width: 40px !important;
+  width: 44px !important;
   height: 28px !important;
   color: var(--pub-text-muted) !important;
 }
 
 .pub-form .shadcn-calendar .rdp-day {
-  width: 40px !important;
-  height: 40px !important;
+  width: 44px !important;
+  height: 44px !important;
 }
 
 .pub-form .shadcn-calendar .rdp-day_button {
-  width: 38px !important;
-  height: 38px !important;
+  width: 42px !important;
+  height: 42px !important;
   font-size: 15px !important;
   color: var(--pub-ink) !important;
 }

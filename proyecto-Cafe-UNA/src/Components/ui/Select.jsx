@@ -41,7 +41,6 @@ export function UiSelect({
   ariaLabel,
   ariaInvalid,
   ariaDescribedby,
-  ariaRequired,
   className = "",
   footer = null,
   renderOptionEnd,
@@ -165,7 +164,6 @@ export function UiSelect({
         aria-label={ariaLabel}
         aria-invalid={ariaInvalid}
         aria-describedby={ariaDescribedby}
-        aria-required={ariaRequired}
         aria-expanded={open}
         aria-haspopup="listbox"
         className="ui-select__trigger"

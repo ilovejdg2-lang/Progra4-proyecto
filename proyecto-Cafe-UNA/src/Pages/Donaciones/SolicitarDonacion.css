@@ -118,6 +118,13 @@
   border-radius: 50%;
 }
 
+/* 28px circle with a 44px hit area */
+.donacion-fotos__quitar::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+}
+
 .donacion-fotos__quitar:hover {
   background: var(--pub-coffee-soft);
 }

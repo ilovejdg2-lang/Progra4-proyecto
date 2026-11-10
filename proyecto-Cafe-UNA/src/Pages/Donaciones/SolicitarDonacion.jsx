@@ -739,10 +739,11 @@ export default function SolicitarDonacion() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const formEl = event.currentTarget;
     if (!usuario) {
       sessionStorage.setItem("postLoginRedirect", DONACION_LOGIN_REDIRECT);
       setErrorApi("Tenés que iniciar sesión antes de enviar una solicitud de donación.");
-      queueFocusFormError({ root: event.currentTarget });
+      queueFocusFormError({ root: formEl });
       return;
     }
 
@@ -750,7 +751,8 @@ export default function SolicitarDonacion() {
     if (Object.keys(nuevosErrores).length > 0) {
       queueFocusFormError({
         errors: nuevosErrores,
-        root: event.currentTarget,
+        root: formEl,
+        idPrefix: "donacion-",
         fieldOrder: [
           "nombre",
           "primerApellido",
@@ -838,7 +840,7 @@ export default function SolicitarDonacion() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       setErrorApi(err instanceof Error ? err.message : "Ocurrió un error al enviar la solicitud. Intentá de nuevo.");
-      queueFocusFormError({ root: event.currentTarget });
+      queueFocusFormError({ root: formEl });
     } finally {
       setEnviando(false);
     }
@@ -1467,8 +1469,10 @@ export default function SolicitarDonacion() {
                             <ST>Día de entrega</ST>
                             <span className="pub-field__req" aria-hidden="true"> *</span>
                           </span>
-                          <div role="group" aria-labelledby="donacion-dia-entrega">
+                          <div>
                             <CalendarPicker
+                              id="donacion-fechaEntrega"
+                              label="Calendario de fechas de recepción"
                               selected={fechaEntregaSeleccionada || undefined}
                               onSelect={(date) => {
                                 const iso = date ? format(date, "yyyy-MM-dd") : "";
@@ -1546,7 +1550,7 @@ export default function SolicitarDonacion() {
                       )}
                     </Field>
                   </FormGrid>
-                  <ChoiceGroup label="Declaraciones" columns={1}>
+                  <ChoiceGroup label="Declaraciones" type="checkbox" columns={1}>
                     <div className="donacion-declaracion">
                       <ChoiceCard
                         type="checkbox"
@@ -1601,7 +1605,7 @@ export default function SolicitarDonacion() {
           ) : (
             <FormSuccess
               title="Solicitud enviada"
-              summary="Recibimos tu solicitud de donación en estado Pendiente. El equipo de Café UNA la va a revisar y te avisa el resultado por correo electrónico."
+              summary="Recibimos tu solicitud de donación en estado Pendiente. El equipo de Café UNA la va a revisar y te avisamos el resultado por correo electrónico."
             >
               <button type="button" className="pub-btn pub-btn--primary" onClick={() => setEnviado(false)}>
                 <ST>Hacer otra solicitud</ST>
