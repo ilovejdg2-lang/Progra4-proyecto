@@ -12,7 +12,7 @@
 
 .mapa-productores__titulo {
   margin: 0 0 0.35rem;
-  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-family: var(--pub-font-display);
   font-size: var(--text-subtitle);
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -397,4 +397,9 @@
     width: 100%;
     height: 8.5rem;
   }
+}
+
+/* Leaflet trae su propia fuente (Helvetica); el mapa sigue la tipografía del sitio. */
+.leaflet-container {
+  font-family: var(--sans);
 }
