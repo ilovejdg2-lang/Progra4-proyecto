@@ -604,7 +604,11 @@ export function normalizarCategoriaDoc(item) {
   const tipo = String(item.tipo ?? item.Tipo ?? "documento").trim().toLowerCase();
   const padre = String(item.padre ?? item.Padre ?? "").trim();
   const usos = Number(item.usos ?? item.Usos ?? 0) || 0;
+  const audiencia =
+    String(item.audiencia ?? item.Audiencia ?? "").toLowerCase() ||
+    (tipo === "documento_admin" ? "administrativa" : "publica");
   return {
+    audiencia,
     id,
     Id: id,
     nombre,
@@ -625,6 +629,14 @@ export async function obtenerCategoriasDocumentos() {
   const data = await request(`${BASE_URL}/categorias`);
   const lista = normalizarLista(data);
   return lista.map(normalizarCategoriaDoc).filter((c) => c && c.nombre);
+}
+
+/**
+ * Categorías para pantallas de administración: públicas y administrativas (requiere sesión)
+ */
+export async function obtenerCategoriasDocumentosAdmin() {
+  const data = await request(`${BASE_URL}/admin/categorias`);
+  return normalizarLista(data).map(normalizarCategoriaDoc).filter((c) => c && c.nombre);
 }
 
 /**
@@ -847,13 +859,14 @@ export async function atenderSolicitudDocumentoAdmin(id, decision) {
 /**
  * Categorías de repositorio
  */
-export async function crearCategoriaDocumento({ nombre, padre = "" }) {
+export async function crearCategoriaDocumento({ nombre, padre = "", audiencia = "publica" }) {
   cache.clear();
   const res = await apiRequest(CATEGORIAS_URL, {
     method: "POST",
     data: {
       nombre,
       tipo: "documento",
+      audiencia,
       padre: padre || "",
     },
     errorPrefix: "Error al crear categoría de documento",
