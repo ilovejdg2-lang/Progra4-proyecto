@@ -1,6 +1,6 @@
 .site-main:has(.products-page),
 #center.site-main:has(.products-page) {
-  background: #ffffff;
+  background: var(--pub-page-bg, #ffffff);
 }
 
 .products-page {
@@ -11,7 +11,7 @@
   flex-direction: column;
   gap: 1.4rem;
   width: 100%;
-  background: #ffffff;
+  background: var(--pub-page-bg, #ffffff);
 }
 
 .products-page > .page-back-link {

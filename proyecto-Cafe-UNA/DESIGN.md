@@ -435,6 +435,16 @@ The public site is redesigned page by page under one system, "Café de origen, i
 | Input border (3:1 or better) | `--pub-input-border` | `#8a7b72` |
 | Page / surface | `--pub-canvas` / `--pub-surface` | `#fbf9f6` / `#ffffff` |
 
+### Page background (one switch)
+
+The shared public layout (`.site-shell`: Navbar + `#center.site-main` + Footer, covering every public page that is not chromeless) paints `var(--pub-page-bg)`. It is set in `src/styles/publicSystem.css`:
+
+```css
+--pub-page-bg: var(--pub-canvas); /* change to #ffffff to revert the site to white */
+```
+
+Cards, panels, inputs, dialogs and the navbar stay white. Admin, perfil, login/registro and checkout are outside this layout and unaffected.
+
 ### Type
 
 - Geist for all UI. Source Serif 4 (self-hosted with `@fontsource-variable/source-serif-4`; the Netlify CSP blocks Google Fonts) only for page titles and section or dialog titles: weight 600, letter-spacing `-0.02em`, class `pub-serif-title`.

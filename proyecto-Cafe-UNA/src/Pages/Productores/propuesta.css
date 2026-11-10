@@ -443,7 +443,7 @@ a.btn-enviar {
 }
 
 .propuesta-page {
-  background: #fafafa;
+  background: var(--pub-page-bg, #fafafa);
   min-height: 100vh;
   padding: 24px 16px 64px;
   color: #0f172a;
@@ -552,7 +552,7 @@ a.btn-enviar {
 }
 
 .productores-directorio {
-  background: #fff;
+  background: var(--pub-page-bg, #fff);
   color: #1c1917;
   min-height: 100vh;
   padding: 0 0 96px;

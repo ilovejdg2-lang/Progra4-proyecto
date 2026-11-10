@@ -1,6 +1,6 @@
 .site-main:has(.product-detail-page),
 #center.site-main:has(.product-detail-page) {
-  background: #faf8f6;
+  background: var(--pub-page-bg, #faf8f6);
 }
 
 .product-detail-page {

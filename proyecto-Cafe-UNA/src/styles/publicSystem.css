@@ -16,6 +16,8 @@
   --pub-line-strong: #b9aaa0;
   --pub-input-border: #8a7b72;
   --pub-canvas: #fbf9f6;
+  /* ONE switch for the public site background: set to #ffffff to go back to white */
+  --pub-page-bg: var(--pub-canvas);
   --pub-surface: #ffffff;
   --pub-danger: #9b2c2c;
   --pub-serif: "Source Serif 4 Variable", Georgia, "Times New Roman", serif;
@@ -24,7 +26,7 @@
 }
 
 .pub-page {
-  background: var(--pub-canvas);
+  background: var(--pub-page-bg);
   color: var(--pub-text);
   min-height: 100vh;
   padding-bottom: 64px;
@@ -238,4 +240,10 @@ textarea.pub-textarea {
   .pub-page-header__actions > .pub-btn {
     width: 100%;
   }
+}
+
+/* Background of the shared public layout (Navbar + #center + Footer). Chromeless pages are not included. */
+.site-shell,
+.site-shell > .site-main {
+  background: var(--pub-page-bg);
 }
