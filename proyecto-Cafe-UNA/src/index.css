@@ -4,6 +4,7 @@
 @import "@fontsource-variable/geist/wght.css";
 @import "./styles/public.css";
 @import "./styles/publicSystem.css";
+@import "./styles/publicDialog.css";
 @import "./styles/siteCanvas.css";
 @import "./styles/adminDark.css";
 
