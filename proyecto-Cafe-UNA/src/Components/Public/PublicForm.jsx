@@ -85,7 +85,7 @@ export function FieldError({ id, children }) {
 }
 
 /** Fieldset with a visible legend for radio or checkbox groups. */
-export function ChoiceGroup({ legend, required = false, error, hint, children, columns = 2, id }) {
+export function ChoiceGroup({ legend, label, required = false, error, hint, children, columns = 2, slots = false, id }) {
   const generatedId = useId();
   const groupId = id || generatedId;
   const errorId = error ? `${groupId}-error` : undefined;
@@ -93,6 +93,7 @@ export function ChoiceGroup({ legend, required = false, error, hint, children, c
     <fieldset
       className={`pub-choice-group${error ? " pub-field--invalid" : ""}`}
       aria-describedby={errorId}
+      aria-label={legend ? undefined : label}
       id={groupId}
     >
       {legend ? (
@@ -106,7 +107,7 @@ export function ChoiceGroup({ legend, required = false, error, hint, children, c
           <Texto>{hint}</Texto>
         </p>
       ) : null}
-      <div className={`pub-choice-list pub-choice-list--${columns}`}>{children}</div>
+      <div className={`pub-choice-list pub-choice-list--${slots ? "slots" : columns}`}>{children}</div>
       <FieldError id={errorId}>{error}</FieldError>
     </fieldset>
   );

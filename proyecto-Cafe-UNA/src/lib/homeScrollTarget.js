@@ -9,6 +9,7 @@ export const HOME_SCROLL_SECTIONS = {
   about: 'sobre-nosotros',
   products: 'productos',
   voluntariado: 'iniciativas',
+  iniciativas: 'iniciativas',
 };
 
 const HOME_SECTION_IDS = new Set(Object.values(HOME_SCROLL_SECTIONS));

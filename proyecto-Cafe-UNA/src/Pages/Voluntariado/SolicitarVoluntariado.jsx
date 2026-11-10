@@ -1,23 +1,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  AlertCircle,
-  CalendarDays,
-  CalendarX2,
-  Check,
-  Clock,
-  FileText,
-  Sprout,
-  Trash2,
-  UploadCloud,
-} from "lucide-react";
-import { IconoSitio } from "../../Components/IconoSitio/IconoSitio";
-import { format, isBefore, startOfDay } from "date-fns";
+import { FileText, Trash2, UploadCloud } from "lucide-react";
+import { format } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
 import AvisoSedeFinca from "../../Components/AvisoSedeFinca/AvisoSedeFinca";
 import { NumericInput } from "../../Components/NumericInput/NumericInput";
-import { HOME_SCROLL_SECTIONS } from "../../lib/homeScrollTarget";
+import { PublicPageHeader } from "../../Components/Public/PublicPageHeader";
+import {
+  CalendarPicker,
+  ChoiceCard,
+  ChoiceGroup,
+  CupoTexto,
+  Field,
+  FieldError,
+  FormAlert,
+  FormGrid,
+  FormNote,
+  FormPlaceholder,
+  FormSection,
+  FormSuccess,
+  SubmitFooter,
+} from "../../Components/Public/PublicForm";
+import { HOME_SCROLL_SECTIONS, navigateToHomeSection } from "../../lib/homeScrollTarget";
 import PageLoading from "../../Components/PageLoading/PageLoading";
 import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
 import { sedeDesdeHomeLocation } from "../../lib/sedeFinca";
@@ -36,7 +41,6 @@ import {
   HORARIOS_PREDETERMINADOS,
   TIPOS_VOLUNTARIADO,
 } from "../../lib/voluntariadoCatalogo";
-import { Calendar } from "@/Components/ui/calendar";
 import { queueFocusFormError } from "../../lib/formFocus";
 import { filtrarEnteros } from "../../lib/numericInput";
 import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../lib/correo";
@@ -57,32 +61,6 @@ import {
 } from "../../lib/identificacionPersona";
 import { ST } from "../../Components/T/ST";
 import { SelectFiltro } from "../../Components/ui/SelectFiltro";
-import "./SolicitarVoluntariado.css";
-
-function SectionCard({ lugar, paso, title, hint, children }) {
-  return (
-    <div className="section-card">
-      <div className="section-card__header">
-        {paso != null ? (
-          <span className="section-card__paso" aria-hidden="true">
-            {paso}
-          </span>
-        ) : null}
-        <h4>
-          {paso != null ? (
-            <span className="sr-only">
-              <ST>Paso</ST> {paso}.{" "}
-            </span>
-          ) : null}
-          {title}
-        </h4>
-        {lugar ? <IconoSitio lugar={lugar} size={20} className="section-card__icon-inline" /> : null}
-        {hint ? <span className="section-card__hint">{hint}</span> : null}
-      </div>
-      <div className="section-card__body">{children}</div>
-    </div>
-  );
-}
 
 const FORM_INICIAL = {
   modalidad: "individual",
@@ -146,60 +124,27 @@ function SolicitarVoluntariado() {
   const { idioma } = useIdioma();
   const locale = idioma === "en" ? enUS : es;
 
-  const tTitulo = useTraducir("Únete a nuestras iniciativas");
+  const tTitulo = useTraducir("Sumate a nuestras iniciativas");
   const tSub = useTraducir(
-    "Complete el siguiente formulario para aplicar al área de voluntariado de su interés.",
+    "Elegí cómo querés participar, las fechas que te sirven y te confirmamos por correo.",
   );
-  const tComo = useTraducir("¿Cómo desea participar?");
-  const tIndividual = useTraducir("Individual");
-  const tGrupal = useTraducir("Grupal");
-
-  const tInfoPersonal = useTraducir("Información personal del solicitante");
-  const tInfoPersonalHint = useTraducir("Datos personales y de contacto del voluntario");
-  const tInfoResponsable = useTraducir("Información del responsable del grupo");
-  const tInfoResponsableHint = useTraducir("Datos personales y de contacto de la persona a cargo de la coordinación del grupo");
-
-  const tTipoDocumento = useTraducir("Tipo de identificación");
   const tTipoOtro = useTraducir("Otro tipo de voluntariado");
   const tCedula = useTraducir("Cédula");
   const tDimex = useTraducir("DIMEX");
   const tPasaporte = useTraducir("Pasaporte");
-  const tPaisOrigen = useTraducir("País de origen");
   const tElegiPais = useTraducir("Elegí el país");
-  const tNombre = useTraducir("Nombre");
-  const tPrimerApellido = useTraducir("Primer apellido");
-  const tSegundoApellido = useTraducir("Segundo apellido");
   const tPhNombre = useTraducir("Nombre");
   const tPh1 = useTraducir("1° Apellido");
   const tPh2 = useTraducir("2° Apellido");
-  const tInstitucion = useTraducir("Institución educativa");
-  const tPais = useTraducir("País de residencia");
   const tPhInstitucion = useTraducir("Ej. Universidad Nacional");
   const tPhPais = useTraducir("Ej. Costa Rica");
-  const tContacto = useTraducir("Contacto del solicitante");
-  const tContactoResp = useTraducir("Contacto del responsable del grupo");
-  const tCorreo = useTraducir("Correo electrónico");
-  const tTelefono = useTraducir("Número de teléfono");
-
-  const tPaso1 = useTraducir("1. Tipo de voluntariado");
-  const tPaso1Hint = useTraducir("Seleccione el área o modalidad de voluntariado en la que desea participar");
-
-  const tPaso2 = useTraducir("2. Fechas disponibles");
-  const tPaso2Hint = useTraducir("Seleccione una de las fechas habilitadas en el calendario para este voluntariado");
-
-  const tPaso3 = useTraducir("3. Horario disponible");
-  const tPaso3Hint = useTraducir("Seleccione el horario o turno configurado para la fecha elegida");
-
-
-  const tEnviar = useTraducir("Enviar Solicitud");
-  const tEnviando = useTraducir("Enviando...");
-  const tLoginBtn = useTraducir("Inicie sesión para enviar");
-
-  const tInfoGrupo = useTraducir("Información del grupo");
-  const tInfoGrupoHint = useTraducir("Datos de los participantes que asistirán al voluntariado");
-  const tCantParticipantes = useTraducir("Cantidad de participantes");
   const tPhCantidad = useTraducir("Ej. 15");
-  const tDocIntegrantes = useTraducir("Lista de integrantes del grupo");
+  const tPhOtro = useTraducir("Contanos en qué tipo de voluntariado querés participar");
+  const tConsultando = useTraducir("Consultando...");
+  const tEnviar = useTraducir("Enviar solicitud");
+  const tEnviando = useTraducir("Enviando...");
+  const tLoginBtn = useTraducir("Iniciá sesión para enviar");
+  const tQuitar = useTraducir("Quitar archivo");
 
   const [usuario] = useState(() => obtenerUsuarioActual());
   const [formulario, setFormulario] = useState(() => crearFormularioInicial(obtenerUsuarioActual()));
@@ -237,9 +182,6 @@ function SolicitarVoluntariado() {
   const etiquetaDocumento = tipoDocumento === "dimex" ? tDimex : esPasaporte ? tPasaporte : tCedula;
   const opcionesPais = useMemo(() => obtenerOpcionesPaises(idioma), [idioma]);
   const consultaCedulaRef = useRef({ digitos: "", enCurso: false });
-  const pasos = esGrupal
-    ? { personal: 1, contacto: 2, grupo: 3, tipo: 4, fecha: 5, horario: 6 }
-    : { personal: 1, contacto: 2, tipo: 3, fecha: 4, horario: 5 };
 
   // Cargar configuración de zona horaria del servidor
   useEffect(() => {
@@ -395,7 +337,7 @@ function SolicitarVoluntariado() {
           primerApellido: "",
           segundoApellido: "",
         }));
-        setAvisoCedula("No se encontraron datos para esta identificación. Complete los datos manualmente.");
+        setAvisoCedula("No se encontraron datos para esta identificación. Completá los datos manualmente.");
         return;
       }
 
@@ -407,7 +349,7 @@ function SolicitarVoluntariado() {
         primerApellido,
         segundoApellido,
       }));
-      setAvisoCedula("Datos cargados automáticamente. Puede editarlos si es necesario.");
+      setAvisoCedula("Datos cargados automáticamente. Podés editarlos si hace falta.");
       setErrores((prev) => {
         if (!prev.nombre && !prev.identificacion && !prev.primerApellido) return prev;
         const next = { ...prev };
@@ -431,8 +373,8 @@ function SolicitarVoluntariado() {
         yaIndicaManual
           ? mensajeBase
           : esConexion
-          ? `${mensajeBase} Mientras tanto, complete los datos manualmente.`
-          : `${mensajeBase} Complete los datos manualmente.`
+          ? `${mensajeBase} Mientras tanto, completá los datos manualmente.`
+          : `${mensajeBase} Completá los datos manualmente.`
       );
     } finally {
       setConsultandoCedula(false);
@@ -503,12 +445,13 @@ function SolicitarVoluntariado() {
 
   const handleDocumentoChange = (e) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
       setErrores((prev) => ({
         ...prev,
-        documentoGrupo: "El archivo excede el tamaño máximo permitido (10 MB)",
+        documentoGrupo: "El archivo pesa más de 10 MB",
       }));
       return;
     }
@@ -624,11 +567,11 @@ function SolicitarVoluntariado() {
     const nuevosErrores = {};
 
     const nombre = formulario.nombre?.trim();
-    if (!nombre) nuevosErrores.nombre = "El nombre es obligatorio";
-    else if (nombre.length < 2) nuevosErrores.nombre = "Mínimo 2 caracteres";
+    if (!nombre) nuevosErrores.nombre = "Ingresá el nombre";
+    else if (nombre.length < 2) nuevosErrores.nombre = "Escribí al menos 2 caracteres";
 
     const primerApellido = formulario.primerApellido?.trim();
-    if (!primerApellido) nuevosErrores.primerApellido = "El primer apellido es obligatorio";
+    if (!primerApellido) nuevosErrores.primerApellido = "Ingresá el primer apellido";
 
     const errorIdentificacion = validarIdentificacion(tipoDocumento, formulario.identificacion);
     if (errorIdentificacion) nuevosErrores.identificacion = errorIdentificacion;
@@ -637,55 +580,55 @@ function SolicitarVoluntariado() {
     }
 
     if (!formulario.institucion?.trim()) {
-      nuevosErrores.institucion = "Ingrese la institución educativa";
+      nuevosErrores.institucion = "Ingresá la institución educativa";
     }
 
     if (!formulario.pais?.trim()) {
-      nuevosErrores.pais = "Ingrese el país de procedencia";
+      nuevosErrores.pais = "Ingresá el país de residencia";
     }
 
     const correo = formulario.correo?.trim();
-    if (!correo) nuevosErrores.correo = "El correo es obligatorio";
+    if (!correo) nuevosErrores.correo = "Ingresá el correo electrónico";
     else if (!esCorreoValido(correo)) {
       nuevosErrores.correo = MENSAJE_CORREO_INVALIDO;
     }
 
     const telefono = formulario.telefono?.trim();
-    if (!telefono) nuevosErrores.telefono = "El teléfono es obligatorio";
+    if (!telefono) nuevosErrores.telefono = "Ingresá el teléfono";
 
     // Validar Tipo de Voluntariado (Paso 1)
     if (!formulario.tipo) {
-      nuevosErrores.tipo = "Seleccione el tipo de voluntariado";
+      nuevosErrores.tipo = "Elegí el tipo de voluntariado";
     } else if (esTipoOtro && !formulario.tipoOtro?.trim()) {
-      nuevosErrores.tipoOtro = "Especifique el tipo de voluntariado";
+      nuevosErrores.tipoOtro = "Contanos cuál es el tipo de voluntariado";
     } else if (fechasDisponibles.length === 0 && !cargandoFechas) {
-      nuevosErrores.tipo = "El tipo de voluntariado seleccionado no tiene fechas disponibles para postular";
+      nuevosErrores.tipo = "El tipo de voluntariado que elegiste no tiene fechas disponibles";
     }
 
     // Validar Fecha (Paso 2)
     if (!formulario.fechaVoluntariado) {
-      nuevosErrores.fechaVoluntariado = "Seleccione una fecha disponible en el calendario";
+      nuevosErrores.fechaVoluntariado = "Elegí una fecha disponible en el calendario";
     } else if (formulario.fechaVoluntariado < hoyIso) {
-      nuevosErrores.fechaVoluntariado = "No se permiten fechas pasadas. Seleccione una fecha vigente.";
+      nuevosErrores.fechaVoluntariado = "No se permiten fechas pasadas. Elegí una fecha vigente.";
     } else if (!fechasHabilitadasMap.has(formulario.fechaVoluntariado)) {
-      nuevosErrores.fechaVoluntariado = "La fecha seleccionada no está habilitada para este tipo de voluntariado";
+      nuevosErrores.fechaVoluntariado = "La fecha que elegiste no está habilitada para este tipo de voluntariado";
     }
 
     // Validar Horario (Paso 3)
     if (!formulario.disponibilidad) {
-      nuevosErrores.disponibilidad = "Seleccione un horario disponible para la fecha seleccionada";
+      nuevosErrores.disponibilidad = "Elegí un horario disponible para la fecha elegida";
     }
 
     if (esGrupal) {
       const cantidad = Number(formulario.cantidadParticipantes);
       if (!formulario.cantidadParticipantes || cantidad < 2) {
-        nuevosErrores.cantidadParticipantes = "Ingrese la cantidad (mínimo 2)";
+        nuevosErrores.cantidadParticipantes = "Ingresá la cantidad (mínimo 2)";
       } else if (cantidad > 50) {
         nuevosErrores.cantidadParticipantes = "Máximo 50 participantes";
       }
 
       if (!documentoGrupo) {
-        nuevosErrores.documentoGrupo = "Debe subir un documento con los nombres de las personas del grupo";
+        nuevosErrores.documentoGrupo = "Subí un documento con los nombres de las personas del grupo";
       }
     }
 
@@ -712,7 +655,7 @@ function SolicitarVoluntariado() {
     e.preventDefault();
     if (!usuario) {
       sessionStorage.setItem("postLoginRedirect", VOLUNTARIADO_LOGIN_REDIRECT);
-      setErrorApi("Debe iniciar sesión antes de enviar una solicitud de voluntariado.");
+      setErrorApi("Tenés que iniciar sesión antes de enviar una solicitud de voluntariado.");
       queueFocusFormError({ root: e.currentTarget });
       return;
     }
@@ -744,7 +687,7 @@ function SolicitarVoluntariado() {
     }
 
     if (!esPasaporte && !formulario.nombre?.trim()) {
-      setAvisoCedula("Ingrese su nombre o verifique la identificación.");
+      setAvisoCedula("Ingresá tu nombre o verificá la identificación.");
       queueFocusFormError({
         errors: { nombre: true, identificacion: true },
         root: e.currentTarget,
@@ -801,7 +744,7 @@ function SolicitarVoluntariado() {
       const msg =
         err?.response?.data?.message ||
         err?.message ||
-        "Ocurrió un error al enviar la solicitud. Intente nuevamente.";
+        "Ocurrió un error al enviar la solicitud. Intentá de nuevo.";
       setErrorApi(msg);
       queueFocusFormError({ root: e.currentTarget });
     } finally {
@@ -813,90 +756,82 @@ function SolicitarVoluntariado() {
     formulario.tipo &&
     getCantidadFechas(resumenTipos, formulario.tipo, fechasDisponibles) > 0;
 
+  const placeholderCarga = (valor) => (consultandoCedula ? tConsultando : valor);
+
   return (
     <>
       {showLoading ? <PageLoading message={loadingMessage} /> : null}
       <main
         ref={pageRef}
-        className={`voluntariado-page${showPrepaint ? " voluntariado-page--prepaint" : ""}`}
+        className={`pub-page pub-form-page${showPrepaint ? " pub-form-page--prepaint" : ""}`}
         inert={inert}
       >
-        <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.voluntariado} />
-
-        <section id="voluntariado" className="voluntariado-section">
-          <div className="voluntariado-header">
-            <h1>{tTitulo}</h1>
-            <p>{tSub}</p>
+        <div className="pub-form-container">
+          <div className="pub-form-back">
+            <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.iniciativas} />
           </div>
+
+          <PublicPageHeader title={tTitulo} lead={tSub} titleId="voluntariado-titulo" />
 
           {!enviado ? (
             <form
               onSubmit={handleSubmit}
-              className="formulario-card"
+              className="pub-panel pub-form"
               noValidate
+              aria-labelledby="voluntariado-titulo"
               onFocusCapture={handleFormInteractionCapture}
               onPointerDownCapture={handleFormInteractionCapture}
             >
-              {/* Selección de Modalidad */}
-              <div className="campo full tipo-postulacion">
-                <p className="campo-pregunta">
-                  {tComo}<span className="req">*</span>
-                </p>
-                <div className="tipo-opciones">
-                  <label className="radio-card">
-                    <input
-                      type="radio"
-                      name="modalidad"
-                      value="individual"
-                      checked={formulario.modalidad === "individual"}
-                      onChange={() => handleModalidad("individual")}
-                    />
-                    <span>{tIndividual}</span>
-                  </label>
-                  <label className="radio-card">
-                    <input
-                      type="radio"
-                      name="modalidad"
-                      value="grupal"
-                      checked={formulario.modalidad === "grupal"}
-                      onChange={() => handleModalidad("grupal")}
-                    />
-                    <span>{tGrupal}</span>
-                  </label>
-                </div>
-              </div>
+              <FormSection title="¿Cómo querés participar?">
+                <ChoiceGroup label="Modalidad de participación" required columns={2}>
+                  <ChoiceCard
+                    name="modalidad"
+                    value="individual"
+                    checked={formulario.modalidad === "individual"}
+                    onChange={() => handleModalidad("individual")}
+                    title="Individual"
+                    description="Participás por tu cuenta."
+                  />
+                  <ChoiceCard
+                    name="modalidad"
+                    value="grupal"
+                    checked={formulario.modalidad === "grupal"}
+                    onChange={() => handleModalidad("grupal")}
+                    title="Grupal"
+                    description="Venís con un grupo y subís la lista de integrantes."
+                  />
+                </ChoiceGroup>
+              </FormSection>
 
-              <div className="form-secciones">
-                <SectionCard
-                  paso={pasos.personal}
-                  lugar="voluntariado.personal"
-                  title={esGrupal ? tInfoResponsable : tInfoPersonal}
-                  hint={esGrupal ? tInfoResponsableHint : tInfoPersonalHint}
-                >
-                  <div className="form-grid">
-                    <div className="campo">
-                      <label htmlFor="voluntariado-tipo-documento">
-                        {tTipoDocumento}<span className="req">*</span>
-                      </label>
-                      <SelectFiltro
-                        id="voluntariado-tipo-documento"
-                        name="tipoDocumento"
-                        value={tipoDocumento}
-                        onChange={handleTipoDocumento}
-                      >
+              <FormSection
+                title={esGrupal ? "Datos del responsable del grupo" : "Tus datos"}
+                hint={
+                  esGrupal
+                    ? "La persona que coordina al grupo y recibe nuestras respuestas."
+                    : "Los usamos para contactarte y confirmar tu solicitud."
+                }
+              >
+                <FormGrid>
+                  <Field id="voluntariado-tipo-documento" label="Tipo de identificación" required>
+                    {(c) => (
+                      <SelectFiltro {...c} name="tipoDocumento" value={tipoDocumento} onChange={handleTipoDocumento}>
                         <option value="cedula">{tCedula}</option>
                         <option value="dimex">{tDimex}</option>
                         <option value="pasaporte">{tPasaporte}</option>
                       </SelectFiltro>
-                    </div>
+                    )}
+                  </Field>
 
-                    {esPasaporte ? (
-                      <div className="campo">
-                        <label htmlFor="voluntariado-nacionalidad">
-                          {tPaisOrigen}<span className="req">*</span>
-                        </label>
+                  {esPasaporte ? (
+                    <Field
+                      id="voluntariado-nacionalidad"
+                      label="País de origen"
+                      required
+                      error={errores.nacionalidad}
+                    >
+                      {(c) => (
                         <SelectFiltro
-                          id="voluntariado-nacionalidad"
+                          {...c}
                           name="nacionalidad"
                           value={formulario.nacionalidad}
                           onChange={handleChange}
@@ -906,22 +841,21 @@ function SolicitarVoluntariado() {
                             <option key={pais.value} value={pais.value}>{pais.label}</option>
                           ))}
                         </SelectFiltro>
-                        {errores.nacionalidad && (
-                          <span className="mensaje-error"><ST>{errores.nacionalidad}</ST></span>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
+                      )}
+                    </Field>
+                  ) : null}
 
-                  <div className="form-grid--4cols">
-                    <div className="campo">
-                      <label htmlFor="voluntariado-identificacion">
-                        {etiquetaDocumento} <span className="req">*</span>
-                      </label>
-                      {/* Both inputs share one id: only one of them renders at a time. */}
-                      {esPasaporte ? (
+                  <Field
+                    id="voluntariado-identificacion"
+                    label={etiquetaDocumento}
+                    required
+                    error={errores.identificacion}
+                  >
+                    {(c) =>
+                      esPasaporte ? (
                         <input
-                          id="voluntariado-identificacion"
+                          {...c}
+                          className="pub-input"
                           type="text"
                           name="identificacion"
                           placeholder={tPhIdentificacion}
@@ -932,7 +866,8 @@ function SolicitarVoluntariado() {
                         />
                       ) : (
                         <NumericInput
-                          id="voluntariado-identificacion"
+                          {...c}
+                          className="pub-input"
                           name="identificacion"
                           placeholder={tPhIdentificacion}
                           value={formulario.identificacion}
@@ -941,74 +876,70 @@ function SolicitarVoluntariado() {
                           maxLength={LIMITE_IDENTIFICACION[tipoDocumento]}
                           autoComplete="off"
                         />
-                      )}
-                    </div>
+                      )
+                    }
+                  </Field>
 
-                    <div className="campo">
-                      <label htmlFor="voluntariado-nombre">
-                        {tNombre} <span className="req">*</span>
-                      </label>
+                  <Field id="voluntariado-nombre" label="Nombre" required error={errores.nombre}>
+                    {(c) => (
                       <input
-                        id="voluntariado-nombre"
+                        {...c}
+                        className="pub-input"
                         type="text"
                         name="nombre"
-                        placeholder={consultandoCedula ? "Consultando..." : tPhNombre}
+                        placeholder={placeholderCarga(tPhNombre)}
                         value={formulario.nombre}
                         onChange={handleChange}
                         maxLength={80}
                       />
-                    </div>
+                    )}
+                  </Field>
 
-                    <div className="campo">
-                      <label htmlFor="voluntariado-primerApellido">
-                        {tPrimerApellido} <span className="req">*</span>
-                      </label>
+                  <Field
+                    id="voluntariado-primerApellido"
+                    label="Primer apellido"
+                    required
+                    error={errores.primerApellido}
+                  >
+                    {(c) => (
                       <input
-                        id="voluntariado-primerApellido"
+                        {...c}
+                        className="pub-input"
                         type="text"
                         name="primerApellido"
-                        placeholder={consultandoCedula ? "Consultando..." : tPh1}
+                        placeholder={placeholderCarga(tPh1)}
                         value={formulario.primerApellido}
                         onChange={handleChange}
                         maxLength={80}
                       />
-                    </div>
+                    )}
+                  </Field>
 
-                    <div className="campo">
-                      <label htmlFor="voluntariado-segundoApellido">{tSegundoApellido}</label>
+                  <Field id="voluntariado-segundoApellido" label="Segundo apellido">
+                    {(c) => (
                       <input
-                        id="voluntariado-segundoApellido"
+                        {...c}
+                        className="pub-input"
                         type="text"
                         name="segundoApellido"
-                        placeholder={consultandoCedula ? "Consultando..." : tPh2}
+                        placeholder={placeholderCarga(tPh2)}
                         value={formulario.segundoApellido}
                         onChange={handleChange}
                         maxLength={80}
                       />
-                    </div>
-                  </div>
+                    )}
+                  </Field>
 
-                  {consultandoCedula && (
-                    <span className="mensaje-info">Consultando datos de la identificación...</span>
-                  )}
-                  {!consultandoCedula && avisoCedula && (
-                    <span className={esAvisoCedulaInformativo(avisoCedula) ? "mensaje-info" : "mensaje-error"}>
-                      <ST>{avisoCedula}</ST>
-                    </span>
-                  )}
-                  {(errores.identificacion || errores.nombre || errores.primerApellido) && (
-                    <span className="mensaje-error">
-                      <ST>{errores.identificacion || errores.nombre || errores.primerApellido}</ST>
-                    </span>
-                  )}
-
-                  <div className="form-grid">
-                    <div className="campo">
-                      <label htmlFor="voluntariado-institucion">
-                        {tInstitucion}<span className="req">*</span>
-                      </label>
+                  <Field
+                    id="voluntariado-institucion"
+                    label="Institución educativa"
+                    required
+                    error={errores.institucion}
+                  >
+                    {(c) => (
                       <input
-                        id="voluntariado-institucion"
+                        {...c}
+                        className="pub-input"
                         type="text"
                         name="institucion"
                         placeholder={tPhInstitucion}
@@ -1016,17 +947,14 @@ function SolicitarVoluntariado() {
                         onChange={handleChange}
                         maxLength={120}
                       />
-                      {errores.institucion && (
-                        <span className="mensaje-error"><ST>{errores.institucion}</ST></span>
-                      )}
-                    </div>
+                    )}
+                  </Field>
 
-                    <div className="campo">
-                      <label htmlFor="voluntariado-pais">
-                        {tPais}<span className="req">*</span>
-                      </label>
+                  <Field id="voluntariado-pais" label="País de residencia" required error={errores.pais}>
+                    {(c) => (
                       <input
-                        id="voluntariado-pais"
+                        {...c}
+                        className="pub-input"
                         type="text"
                         name="pais"
                         placeholder={tPhPais}
@@ -1034,23 +962,14 @@ function SolicitarVoluntariado() {
                         onChange={handleChange}
                         readOnly={!esPasaporte}
                       />
-                      {errores.pais && <span className="mensaje-error"><ST>{errores.pais}</ST></span>}
-                    </div>
-                  </div>
-                </SectionCard>
+                    )}
+                  </Field>
 
-                <SectionCard
-                  paso={pasos.contacto}
-                  lugar="voluntariado.contacto"
-                  title={esGrupal ? tContactoResp : tContacto}
-                >
-                  <div className="form-grid">
-                    <div className="campo">
-                      <label htmlFor="voluntariado-correo">
-                        {tCorreo}<span className="req">*</span>
-                      </label>
+                  <Field id="voluntariado-correo" label="Correo electrónico" required error={errores.correo}>
+                    {(c) => (
                       <input
-                        id="voluntariado-correo"
+                        {...c}
+                        className="pub-input"
                         type="email"
                         inputMode="email"
                         autoComplete="email"
@@ -1059,384 +978,269 @@ function SolicitarVoluntariado() {
                         value={formulario.correo}
                         onChange={handleChange}
                       />
-                      {errores.correo && <span className="mensaje-error"><ST>{errores.correo}</ST></span>}
-                    </div>
+                    )}
+                  </Field>
 
-                    <div className="campo">
-                      <label htmlFor="voluntariado-telefono">
-                        {tTelefono}<span className="req">*</span>
-                      </label>
+                  <Field id="voluntariado-telefono" label="Número de teléfono" required error={errores.telefono}>
+                    {(c) => (
                       <NumericInput
-                        id="voluntariado-telefono"
+                        {...c}
+                        className="pub-input"
                         name="telefono"
                         placeholder="88888888"
                         maxLength={8}
                         value={formulario.telefono}
                         onChange={handleChange}
                       />
-                      {errores.telefono && (
-                        <span className="mensaje-error"><ST>{errores.telefono}</ST></span>
-                      )}
-                    </div>
-                  </div>
-                </SectionCard>
+                    )}
+                  </Field>
+                </FormGrid>
 
-                {esGrupal && (
-                  <SectionCard
-                    paso={pasos.grupo}
-                    lugar="voluntariado.grupo"
-                    title={tInfoGrupo}
-                    hint={tInfoGrupoHint}
-                  >
-                    <div className="form-grid">
-                      <div className="campo">
-                        <label htmlFor="voluntariado-cantidadParticipantes">
-                          {tCantParticipantes} <span className="req">*</span>
-                        </label>
+                <div aria-live="polite">
+                  {consultandoCedula ? (
+                    <p className="pub-form-status">
+                      <ST>Consultando datos de la identificación...</ST>
+                    </p>
+                  ) : avisoCedula ? (
+                    <p
+                      className={`pub-form-status ${
+                        esAvisoCedulaInformativo(avisoCedula) ? "pub-form-status--ok" : "pub-form-status--problem"
+                      }`}
+                    >
+                      <ST>{avisoCedula}</ST>
+                    </p>
+                  ) : null}
+                </div>
+              </FormSection>
+
+              {esGrupal ? (
+                <FormSection
+                  title="Información del grupo"
+                  hint="Cuántas personas participan y quiénes son."
+                >
+                  <FormGrid>
+                    <Field
+                      id="voluntariado-cantidadParticipantes"
+                      label="Cantidad de participantes"
+                      required
+                      hint="Entre 2 y 50 personas."
+                      error={errores.cantidadParticipantes}
+                    >
+                      {(c) => (
                         <NumericInput
-                          id="voluntariado-cantidadParticipantes"
+                          {...c}
+                          className="pub-input"
                           name="cantidadParticipantes"
                           placeholder={tPhCantidad}
                           value={formulario.cantidadParticipantes}
                           onChange={handleChange}
                         />
-                        {errores.cantidadParticipantes && (
-                          <span className="mensaje-error"><ST>{errores.cantidadParticipantes}</ST></span>
-                        )}
-                      </div>
-                    </div>
+                      )}
+                    </Field>
+                  </FormGrid>
 
-                    <div className="campo full mt-4">
-                      <label htmlFor="voluntariado-documento-grupo">
-                        {tDocIntegrantes} <span className="req">*</span>
-                      </label>
-                      <div className="documento-upload-wrapper">
-                        {!documentoGrupo ? (
-                          <label className="documento-upload-dropzone">
-                            <input
-                              id="voluntariado-documento-grupo"
-                              type="file"
-                              accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
-                              onChange={handleDocumentoChange}
-                            />
-                            <div className="documento-upload-dropzone__icon">
-                              <UploadCloud size={22} />
-                            </div>
-                            <span className="documento-upload-dropzone__texto">
-                              <ST>Haga clic aquí para subir la lista de integrantes</ST>
-                            </span>
-                            <span className="documento-upload-dropzone__hint">
-                              <ST>Archivos soportados: PDF, Word (.docx), Excel (.xlsx), CSV o texto (.txt) (máx. 10 MB)</ST>
-                            </span>
-                          </label>
-                        ) : (
-                          <div className="documento-preview-card">
-                            <div className="documento-preview__info">
-                              <FileText className="documento-preview__icon size-5" />
-                              <div>
-                                <p className="documento-preview__nombre">{documentoGrupo.name}</p>
-                                <p className="documento-preview__tamano">
-                                  {(documentoGrupo.size / 1024 / 1024).toFixed(2)} MB
-                                </p>
-                              </div>
+                  <Field
+                    id="voluntariado-documento-grupo"
+                    label="Lista de integrantes del grupo"
+                    required
+                    hint="PDF, Word, Excel, CSV o texto. Máximo 10 MB."
+                    error={errores.documentoGrupo}
+                  >
+                    {(c) => (
+                      <>
+                        <input
+                          {...c}
+                          className="pub-visually-hidden"
+                          type="file"
+                          accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
+                          onChange={handleDocumentoChange}
+                        />
+                        {documentoGrupo ? (
+                          <div className="pub-file">
+                            <FileText size={24} aria-hidden="true" />
+                            <div className="pub-file__text">
+                              <span className="pub-file__name">{documentoGrupo.name}</span>
+                              <span className="pub-file__size">
+                                {(documentoGrupo.size / 1024 / 1024).toFixed(2)} MB
+                              </span>
                             </div>
                             <button
                               type="button"
                               onClick={handleRemoverDocumento}
-                              className="documento-preview__eliminar"
-                              title="Eliminar archivo"
+                              className="pub-btn pub-btn--secondary pub-btn--icon"
+                              aria-label={`${tQuitar}: ${documentoGrupo.name}`}
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={18} aria-hidden="true" />
                             </button>
                           </div>
-                        )}
-                        {errores.documentoGrupo && (
-                          <span className="mensaje-error"><ST>{errores.documentoGrupo}</ST></span>
-                        )}
-                      </div>
-                    </div>
-                  </SectionCard>
-                )}
-
-                <SectionCard
-                  paso={pasos.tipo}
-                  lugar="voluntariado.tipo"
-                  title={tPaso1}
-                  hint={tPaso1Hint}
-                >
-                  <div className="opciones-radio-lista">
-                    {TIPOS_VOLUNTARIADO.map((tipo) => {
-                      const count = getCantidadFechas(
-                        resumenTipos,
-                        tipo,
-                        formulario.tipo === tipo ? fechasDisponibles : []
-                      );
-                      const tieneFechas = count > 0;
-                      const esSeleccionado = formulario.tipo === tipo;
-
-                      return (
-                        <label
-                          key={tipo}
-                          className={`opcion-radio ${
-                            esSeleccionado ? "opcion-radio--activa" : ""
-                          } ${!tieneFechas ? "opcion-radio--sin-fechas" : ""}`}
-                        >
-                          <input
-                            type="radio"
-                            name="tipoVoluntariado"
-                            value={tipo}
-                            checked={esSeleccionado}
-                            onChange={() => handleTipoVoluntariado(tipo)}
-                          />
-                          <span className="opcion-radio__indicador" />
-                          <div className="opcion-radio__meta">
-                            <span className="font-semibold text-slate-900">
-                              <ST>{tipo}</ST>
+                        ) : (
+                          <label htmlFor={c.id} className="pub-dropzone">
+                            <UploadCloud size={24} aria-hidden="true" />
+                            <span className="pub-dropzone__title">
+                              <ST>Tocá acá para subir la lista de integrantes</ST>
                             </span>
-                            {tieneFechas ? (
-                              <span className="opcion-radio__badge-disponible">
-                                <CalendarDays className="size-3" />
-                                <span>{count} <ST>{count === 1 ? "fecha disponible" : "fechas disponibles"}</ST></span>
-                              </span>
-                            ) : (
-                              <span className="opcion-radio__badge-nodisponible">
-                                <CalendarX2 className="size-3" />
-                                <span><ST>Sin fechas disponibles</ST></span>
-                              </span>
-                            )}
-                          </div>
-                        </label>
-                      );
-                    })}
-                  </div>
+                          </label>
+                        )}
+                      </>
+                    )}
+                  </Field>
+                </FormSection>
+              ) : null}
 
-                  {esTipoOtro && (
-                    <div className="campo tipo-otro mt-3">
+              <FormSection title="Tipo de voluntariado" hint="Elegí el área en la que querés participar.">
+                <ChoiceGroup label="Tipo de voluntariado" required columns={2} error={errores.tipo}>
+                  {TIPOS_VOLUNTARIADO.map((tipo) => {
+                    const count = getCantidadFechas(
+                      resumenTipos,
+                      tipo,
+                      formulario.tipo === tipo ? fechasDisponibles : []
+                    );
+                    return (
+                      <ChoiceCard
+                        key={tipo}
+                        name="tipoVoluntariado"
+                        value={tipo}
+                        checked={formulario.tipo === tipo}
+                        onChange={() => handleTipoVoluntariado(tipo)}
+                        title={tipo}
+                        meta={
+                          <CupoTexto
+                            estado={count > 0 ? "disponible" : "agotado"}
+                            texto={
+                              count > 0
+                                ? `${count} ${count === 1 ? "fecha disponible" : "fechas disponibles"}`
+                                : "Sin fechas disponibles"
+                            }
+                          />
+                        }
+                      />
+                    );
+                  })}
+                </ChoiceGroup>
+
+                {esTipoOtro ? (
+                  <Field
+                    id="voluntariado-tipo-otro"
+                    label={tTipoOtro}
+                    required
+                    error={errores.tipoOtro}
+                  >
+                    {(c) => (
                       <input
+                        {...c}
+                        className="pub-input"
                         type="text"
                         name="tipoOtro"
-                        aria-label={tTipoOtro}
-                        placeholder="Describa el tipo de voluntariado en el que desea participar"
+                        placeholder={tPhOtro}
                         value={formulario.tipoOtro}
                         onChange={handleChange}
                       />
-                      {errores.tipoOtro && (
-                        <span className="mensaje-error"><ST>{errores.tipoOtro}</ST></span>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </Field>
+                ) : null}
 
-                  {formulario.tipo && !tipoSeleccionadoTieneFechas && !cargandoFechas && (
-                    <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-800 flex items-start gap-2">
-                      <AlertCircle className="size-4 text-amber-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-bold">
-                          <ST>No hay fechas habilitadas para este tipo de voluntariado actualmente.</ST>
-                        </p>
-                        <p className="mt-0.5 text-amber-700">
-                          <ST>Por favor seleccione otra modalidad con fechas disponibles o consulte más adelante.</ST>
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                {formulario.tipo && !tipoSeleccionadoTieneFechas && !cargandoFechas ? (
+                  <FormNote tone="warning" title="No hay fechas habilitadas para este tipo de voluntariado.">
+                    <p>
+                      <ST>Elegí otro tipo con fechas disponibles o volvé a consultar más adelante.</ST>
+                    </p>
+                  </FormNote>
+                ) : null}
+              </FormSection>
 
-                  {errores.tipo && <span className="mensaje-error mt-2 block"><ST>{errores.tipo}</ST></span>}
-                </SectionCard>
+              <FormSection title="Fecha" hint="Elegí uno de los días habilitados para este tipo de voluntariado.">
+                {!formulario.tipo ? (
+                  <FormPlaceholder title="Elegí primero el tipo de voluntariado">
+                    El calendario muestra solo las fechas habilitadas para el tipo que elijas.
+                  </FormPlaceholder>
+                ) : cargandoFechas ? (
+                  <FormPlaceholder loading title={`Consultando fechas disponibles para ${formulario.tipo}...`} />
+                ) : !tipoSeleccionadoTieneFechas ? (
+                  <FormPlaceholder title="Sin fechas configuradas">
+                    {`Por ahora no hay fechas disponibles para "${formulario.tipo}". No se puede enviar la solicitud para esta opción.`}
+                  </FormPlaceholder>
+                ) : (
+                  <>
+                    <CalendarPicker
+                      selected={fechaSeleccionada}
+                      onSelect={handleSelectFecha}
+                      disabled={isDateDisabled}
+                      locale={locale}
+                      enabledDates={fechasHabilitadasDates}
+                      legend={`Fecha disponible para ${formulario.tipo}`}
+                      invalid={Boolean(errores.fechaVoluntariado)}
+                      describedBy={errores.fechaVoluntariado ? "voluntariado-fecha-error" : undefined}
+                    />
+                    <FieldError id="voluntariado-fecha-error">{errores.fechaVoluntariado}</FieldError>
+                  </>
+                )}
+              </FormSection>
 
-                <SectionCard
-                  paso={pasos.fecha}
-                  lugar="voluntariado.fechas"
-                  title={tPaso2}
-                  hint={tPaso2Hint}
-                >
-                  {!formulario.tipo ? (
-                    <div className="voluntariado-aviso-bloque">
-                      <Sprout className="voluntariado-aviso-bloque__icono size-8" />
-                      <p className="voluntariado-aviso-bloque__titulo">
-                        <ST>Seleccione primero el tipo de voluntariado</ST>
-                      </p>
-                      <p className="voluntariado-aviso-bloque__texto">
-                        <ST>El calendario se habilitará automáticamente presentando única y exclusivamente las fechas disponibles configuradas para la modalidad seleccionada.</ST>
-                      </p>
-                    </div>
-                  ) : cargandoFechas ? (
-                    <div className="voluntariado-aviso-bloque">
-                      <div className="size-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mb-2" />
-                      <p className="voluntariado-aviso-bloque__texto">
-                        <ST>Consultando fechas disponibles para {formulario.tipo}...</ST>
-                      </p>
-                    </div>
-                  ) : !tipoSeleccionadoTieneFechas ? (
-                    <div className="voluntariado-aviso-bloque">
-                      <CalendarX2 className="voluntariado-aviso-bloque__icono size-8 text-amber-500" />
-                      <p className="voluntariado-aviso-bloque__titulo text-amber-900">
-                        <ST>Sin fechas configuradas</ST>
-                      </p>
-                      <p className="voluntariado-aviso-bloque__texto text-amber-700">
-                        <ST>Actualmente no hay fechas disponibles para "{formulario.tipo}". No es posible seleccionar fechas ni enviar solicitudes para esta opción.</ST>
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="campo full flex flex-col items-center">
-                      {fechaSeleccionada && (
-                        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-900 bg-white px-5 py-2 shadow-xs">
-                          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                            <ST>FECHA SELECCIONADA:</ST>
-                          </span>
-                          <span className="text-xs font-bold text-slate-950 capitalize">
-                            {format(fechaSeleccionada, "EEEE, dd 'de' MMMM 'de' yyyy", { locale })}
-                          </span>
-                        </div>
-                      )}
-
-                      <div className="flex justify-center my-1 w-full">
-                        <Calendar
-                          mode="single"
-                          selected={fechaSeleccionada}
-                          onSelect={handleSelectFecha}
-                          disabled={isDateDisabled}
-                          locale={locale}
-                          modifiers={{
-                            habilitado: fechasHabilitadasDates,
-                          }}
-                          modifiersClassNames={{
-                            habilitado: "rdp-day-habilitado",
-                          }}
-                          captionLayout="dropdown"
-                        />
-                      </div>
-
-                      <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-600 mt-4 pt-2">
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex size-5 items-center justify-center rounded-full border-2 border-slate-950 bg-white font-bold text-slate-950 text-[11px]">
-                            15
-                          </span>
-                          <span><ST>Fecha disponible para {formulario.tipo}</ST></span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex size-5 items-center justify-center text-slate-400 opacity-40 text-[11px]">
-                            15
-                          </span>
-                          <span><ST>Fecha no disponible</ST></span>
-                        </div>
-                      </div>
-
-                      {errores.fechaVoluntariado && (
-                        <span className="mensaje-error text-center block w-full mt-2">
-                          <ST>{errores.fechaVoluntariado}</ST>
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </SectionCard>
-
-                <SectionCard
-                  paso={pasos.horario}
-                  lugar="voluntariado.horario"
-                  title={tPaso3}
-                  hint={tPaso3Hint}
-                >
-                  {!formulario.tipo ? (
-                    <div className="voluntariado-aviso-bloque">
-                      <Clock className="voluntariado-aviso-bloque__icono size-8" />
-                      <p className="voluntariado-aviso-bloque__titulo">
-                        <ST>Paso pendiente: Seleccione tipo de voluntariado</ST>
-                      </p>
-                      <p className="voluntariado-aviso-bloque__texto">
-                        <ST>Debe completar los pasos anteriores para visualizar los horarios.</ST>
-                      </p>
-                    </div>
-                  ) : !formulario.fechaVoluntariado ? (
-                    <div className="voluntariado-aviso-bloque">
-                      <CalendarDays className="voluntariado-aviso-bloque__icono size-8" />
-                      <p className="voluntariado-aviso-bloque__titulo">
-                        <ST>Seleccione una fecha en el calendario</ST>
-                      </p>
-                      <p className="voluntariado-aviso-bloque__texto">
-                        <ST>Al seleccionar un día habilitado, se cargarán exclusivamente los horarios o turnos disponibles para esa fecha.</ST>
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="campo full">
-                      <p className="text-xs font-semibold text-slate-700 mb-3">
-                        <ST>Horarios disponibles para el día</ST>{" "}
-                        <strong>
-                          {fechaSeleccionada ? format(fechaSeleccionada, "dd 'de' MMMM", { locale }) : formulario.fechaVoluntariado}
-                        </strong>:
-                      </p>
-
-                      <div className="opciones-disponibilidad-grid">
-                        {horariosDisponiblesParaFecha.map((horarioStr) => {
-                          const esActivo = formulario.disponibilidad === horarioStr;
-                          return (
-                            <label
-                              key={horarioStr}
-                              className={`opcion-disponibilidad-card ${
-                                esActivo ? "opcion-disponibilidad-card--activa" : ""
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                name="disponibilidad"
-                                value={horarioStr}
-                                checked={esActivo}
-                                onChange={() => handleDisponibilidad(horarioStr)}
-                              />
-                              <div className="opcion-disponibilidad__header">
-                                <span className="opcion-disponibilidad__titulo">
-                                  {horarioStr}
-                                </span>
-                                <span className="opcion-disponibilidad__radio-dot" />
-                              </div>
-                              <span className="opcion-disponibilidad__horario">
-                                <Clock size={14} />
-                                {horarioStr}
-                              </span>
-                            </label>
-                          );
-                        })}
-                      </div>
-
-                      {errores.disponibilidad && (
-                        <span className="mensaje-error mt-2 block">
-                          <ST>{errores.disponibilidad}</ST>
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </SectionCard>
-              </div>
-
-              {errorApi && <p className="form-error" role="alert" data-form-error><ST>{errorApi}</ST></p>}
-
+              <FormSection title="Horario" hint="Elegí el turno disponible para el día que seleccionaste.">
+                {!formulario.tipo ? (
+                  <FormPlaceholder title="Elegí primero el tipo de voluntariado">
+                    Después de elegir la fecha vas a ver los turnos disponibles.
+                  </FormPlaceholder>
+                ) : !formulario.fechaVoluntariado ? (
+                  <FormPlaceholder title="Elegí una fecha en el calendario">
+                    Al elegir un día habilitado vas a ver los turnos de esa fecha.
+                  </FormPlaceholder>
+                ) : (
+                  <ChoiceGroup
+                    legend={
+                      fechaSeleccionada
+                        ? `Turnos para el ${format(fechaSeleccionada, "d 'de' MMMM", { locale })}`
+                        : `Turnos para el ${formulario.fechaVoluntariado}`
+                    }
+                    required
+                    error={errores.disponibilidad}
+                    columns={1}
+                    slots
+                  >
+                    {horariosDisponiblesParaFecha.map((horarioStr) => (
+                      <ChoiceCard
+                        key={horarioStr}
+                        variant="slot"
+                        name="disponibilidad"
+                        value={horarioStr}
+                        checked={formulario.disponibilidad === horarioStr}
+                        onChange={() => handleDisponibilidad(horarioStr)}
+                        title={horarioStr}
+                      />
+                    ))}
+                  </ChoiceGroup>
+                )}
+              </FormSection>
 
               <AvisoSedeFinca sede={sedeFinca} contexto="voluntariado" />
 
-              <div className="acciones-formulario">
-                <button
-                  type="submit"
-                  className="btn-enviar"
-                  disabled={enviando || !usuario || (!tipoSeleccionadoTieneFechas && Boolean(formulario.tipo))}
-                >
-                  {enviando ? tEnviando : !usuario ? tLoginBtn : tEnviar}
-                </button>
-              </div>
+              <FormAlert>{errorApi}</FormAlert>
+
+              <SubmitFooter
+                label={!usuario ? tLoginBtn : tEnviar}
+                busyLabel={tEnviando}
+                busy={enviando}
+                disabled={!usuario || (!tipoSeleccionadoTieneFechas && Boolean(formulario.tipo))}
+              />
             </form>
           ) : (
-            <div className="confirmacion">
-              <div className="confirmacion__icono">
-                <Check size={28} strokeWidth={2.2} aria-hidden="true" />
-              </div>
-              <h2><ST>Solicitud enviada correctamente</ST></h2>
-              <p>
-                <ST>Tu solicitud de voluntariado fue recibida y está siendo revisada por el equipo de Café UNA. Recibirás información en tu correo electrónico.</ST>
-              </p>
-              <button type="button" className="btn-enviar" onClick={() => setEnviado(false)}>
-                <ST>Realizar otra solicitud</ST>
+            <FormSuccess
+              title="Solicitud enviada"
+              summary="Recibimos tu solicitud de voluntariado. El equipo de Café UNA la va a revisar y te avisamos por correo electrónico."
+            >
+              <button type="button" className="pub-btn pub-btn--primary" onClick={() => setEnviado(false)}>
+                <ST>Hacer otra solicitud</ST>
               </button>
-            </div>
+              <button
+                type="button"
+                className="pub-btn pub-btn--secondary"
+                onClick={() => navigateToHomeSection(navigate, HOME_SCROLL_SECTIONS.iniciativas)}
+              >
+                <ST>Volver al inicio</ST>
+              </button>
+            </FormSuccess>
           )}
-        </section>
+        </div>
       </main>
     </>
   );

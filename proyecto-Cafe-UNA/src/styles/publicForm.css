@@ -776,6 +776,11 @@
   text-underline-offset: 3px;
 }
 
+.pub-form .pub-dropzone:has(input:focus-visible) {
+  outline: 2px solid var(--pub-coffee);
+  outline-offset: 2px;
+}
+
 .pub-form .pub-dropzone small {
   font-size: 13px;
 }
