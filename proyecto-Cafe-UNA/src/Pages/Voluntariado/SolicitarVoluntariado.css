@@ -81,19 +81,6 @@
   border: 0;
 }
 
-.badge--voluntariado {
-  display: inline-flex;
-  align-items: center;
-  background: var(--fondo-soft);
-  border: 1px solid var(--borde-input);
-  color: var(--texto-principal);
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 14px;
-}
-
 .voluntariado-header h1 {
   font-size: clamp(26px, 3.5vw, 36px);
   line-height: 1.2;
@@ -615,264 +602,21 @@
   }
 }
 
-/* =========================
-   DATE PICKER SHADCN (INLINE & CENTRADO)
-========================= */
-
-.calendario-fijo-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 100%;
-  border: 1px solid var(--borde-input);
-  background: transparent;
-  border-radius: var(--radius-ui);
-  padding: clamp(12px, 3vw, 20px);
-  gap: 16px;
-  transition: border-color 0.2s ease;
-  overflow: visible;
-}
-
-.calendario-fijo-wrapper--error {
-  border-color: var(--error);
-}
-
 /* Badge de Resumen Superior */
-.calendario-resumen-fechas {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: stretch;
-  gap: 10px;
-  width: 100%;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--fondo-soft);
-}
-
-.fecha-badge {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.2rem;
-  min-width: 0;
-  background: var(--fondo-soft);
-  border: 1px solid var(--borde-input);
-  padding: 0.55rem 0.85rem;
-  border-radius: var(--radius-ui, 16px);
-  overflow: visible;
-}
-
-.fecha-badge--inicio,
-.fecha-badge--fin {
-  background: #f1f5f9;
-  border-color: #e2e8f0;
-}
-
-.fecha-badge__label {
-  font-size: var(--text-body);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--texto-secundario);
-  line-height: 1.2;
-}
-
-.fecha-badge__valor {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: var(--control-height);
-  font-size: var(--text-body);
-  font-weight: 600;
-  color: var(--texto-principal);
-  line-height: 1.25;
-}
-
-.fecha-badge__valor svg {
-  flex: 0 0 auto;
-  width: 1rem;
-  height: 1rem;
-  color: #64748b;
-}
-
-.fecha-badge__flecha {
-  align-self: center;
-  color: var(--texto-secundario);
-  flex: 0 0 auto;
-}
-
-.calendario-fijo-contenedor {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.calendario-fijo-contenedor .rdp,
-.calendario-fijo-contenedor .calendar-shadcn-custom {
-  max-width: 100%;
-}
-
-.calendario-fijo-contenedor .rdp-months {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-@media (max-width: 767px) {
-  .calendario-resumen-fechas {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .fecha-badge__flecha {
-    display: none;
-  }
-
-  .fecha-badge {
-    padding: 0.5rem 0.7rem;
-  }
-
-  .fecha-badge__label {
-    font-size: var(--text-body);
-    letter-spacing: 0.02em;
-  }
-
-  .fecha-badge__valor {
-    min-height: 0;
-    gap: 0.35rem;
-  }
-
-  .calendario-fijo-contenedor .rdp-month,
-  .calendario-fijo-contenedor .rdp-months {
-    width: 100%;
-  }
-
-  .calendario-fijo-contenedor .rdp-table {
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
-/* =========================
-   ESTILOS DÍAS / RANGOS EN NEGRO
-========================= */
-
-.calendar-shadcn-custom {
-  margin: 0 auto;
-  --rdp-accent-color: var(--negro-principal);
-  --rdp-accent-background-color: #f1f5f9;
-  --rdp-range_middle-background-color: #f1f5f9;
-  --rdp-range_middle-color: var(--negro-principal);
-  --rdp-range_start-color: #ffffff;
-  --rdp-range_end-color: #ffffff;
-  --rdp-range_start-background: var(--negro-principal);
-  --rdp-range_end-background: var(--negro-principal);
-  --rdp-selected-border: 2px solid var(--negro-principal);
-}
 
 /* Clases personalizadas vía classNames */
-.calendar-shadcn-custom .rdp-selected-custom,
-.calendar-shadcn-custom .rdp-range-start-custom,
-.calendar-shadcn-custom .rdp-range-end-custom {
-  background-color: var(--negro-principal) !important;
-  color: #ffffff !important;
-  font-weight: 700 !important;
-  border-radius: 8px !important;
-}
-
-.calendar-shadcn-custom .rdp-range-middle-custom {
-  background-color: #f1f5f9 !important;
-  color: var(--negro-principal) !important;
-  border-radius: 0 !important;
-  font-weight: 500;
-}
 
 /* Extremos del rango (v10) */
-.calendar-shadcn-custom .rdp-range_start,
-.calendar-shadcn-custom .rdp-range_end,
-.calendar-shadcn-custom .rdp-selected:not(.rdp-range_middle) {
-  background-color: var(--negro-principal) !important;
-  color: #ffffff !important;
-  font-weight: 700 !important;
-  border-radius: 8px !important;
-}
 
 /* Días intermedios del rango (v10) */
-.calendar-shadcn-custom .rdp-range_middle {
-  background-color: #f1f5f9 !important;
-  color: var(--negro-principal) !important;
-  border-radius: 0 !important;
-  font-weight: 500;
-}
 
 /* Compatibilidad con clases v9 */
-.calendar-shadcn-custom .rdp-day_range_start,
-.calendar-shadcn-custom .rdp-day_range_end,
-.calendar-shadcn-custom .rdp-day_selected:not(.rdp-day_range_middle) {
-  background-color: var(--negro-principal) !important;
-  color: #ffffff !important;
-  font-weight: 700 !important;
-  border-radius: 8px !important;
-}
-
-.calendar-shadcn-custom .rdp-day_range_middle {
-  background-color: #f1f5f9 !important;
-  color: var(--negro-principal) !important;
-  border-radius: 0 !important;
-  font-weight: 500;
-}
 
 /* Hover de días */
-.calendar-shadcn-custom .rdp-day_button:hover:not(.rdp-range_start):not(.rdp-range_end),
-.calendar-shadcn-custom .rdp-button:hover:not(.rdp-day_range_start):not(.rdp-day_range_end) {
-  background-color: #e2e8f0 !important;
-  border-radius: 8px;
-  color: var(--negro-principal);
-}
 
 /* Navegación y chevrons */
-.calendar-shadcn-custom .rdp-chevron {
-  fill: var(--negro-principal);
-}
-
-.calendar-shadcn-custom .rdp-button_previous:hover,
-.calendar-shadcn-custom .rdp-button_next:hover,
-.calendar-shadcn-custom .rdp-nav_button:hover {
-  background-color: #e2e8f0 !important;
-  color: var(--negro-principal);
-}
 
 /* Ajustes visuales de cabecera */
-.calendar-shadcn-custom .rdp-caption_label,
-.calendar-shadcn-custom .rdp-month_caption {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--negro-principal);
-  text-transform: capitalize;
-}
-
-.calendar-shadcn-custom .rdp-head_cell,
-.calendar-shadcn-custom .rdp-weekday {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--texto-secundario);
-  text-transform: uppercase;
-}
-
-.calendar-shadcn-custom .rdp-disabled .rdp-day_button {
-  color: #cbd5e1 !important;
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.calendar-shadcn-custom .rdp-disabled .rdp-day_button:hover {
-  background-color: transparent !important;
-}
 
 /* =======================================================
    OPCIONES FORMALES DE DISPONIBILIDAD (MAÑANA, TARDE, MIXTA)
@@ -1090,33 +834,6 @@
   align-items: center;
   width: 100%;
   gap: 16px;
-}
-
-.calendario-fecha-badge-seleccionada {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 18px;
-  background: #ffffff;
-  border: 1.5px solid var(--negro-principal);
-  border-radius: 999px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-  margin-bottom: 8px;
-}
-
-.calendario-fecha-badge__label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--texto-secundario);
-}
-
-.calendario-fecha-badge__valor {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--negro-principal);
-  text-transform: capitalize;
 }
 
 /* =======================================================
@@ -1398,5 +1115,4 @@
     transform: scale(1);
   }
 }
-
 
