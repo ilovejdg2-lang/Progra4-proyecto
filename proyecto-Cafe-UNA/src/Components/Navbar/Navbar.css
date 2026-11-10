@@ -139,7 +139,7 @@
   list-style: none;
   font-family: var(--sans);
   font-size: var(--text-body);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .navbar__menu a,
@@ -148,7 +148,7 @@
   font-family: inherit;
   font-size: inherit;
   font-weight: inherit;
-  font-variation-settings: "wght" 600;
+  font-variation-settings: "wght" 500;
   font-synthesis: none;
   color: #3f352b;
   text-decoration: none;
@@ -181,8 +181,8 @@
   color: #3f352b;
   font-family: var(--sans);
   font-size: var(--text-body);
-  font-weight: 600;
-  font-variation-settings: "wght" 600;
+  font-weight: 500;
+  font-variation-settings: "wght" 500;
   font-synthesis: none;
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -280,8 +280,8 @@
   color: #2a1612 !important;
   font-family: var(--sans) !important;
   font-size: var(--text-body) !important;
-  font-weight: 600 !important;
-  font-variation-settings: "wght" 600 !important;
+  font-weight: 500 !important;
+  font-variation-settings: "wght" 500 !important;
   font-synthesis: none;
   letter-spacing: 0.01em;
   line-height: var(--control-height);
@@ -319,7 +319,7 @@
   color: #2a1d14;
   font: inherit;
   font-size: 1.08rem;
-  font-weight: 700;
+  font-weight: 500;
   text-align: left;
   white-space: nowrap;
   cursor: pointer;
@@ -360,8 +360,8 @@
   color: #5c5148;
   font-family: var(--sans);
   font-size: var(--text-body);
-  font-weight: 600;
-  font-variation-settings: "wght" 600;
+  font-weight: 500;
+  font-variation-settings: "wght" 500;
   font-synthesis: none;
   text-decoration: none;
 }
@@ -1051,7 +1051,7 @@
 
 .navbar__mobile-link-label {
   font-size: 1.08rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.35;
   color: inherit;
 }
@@ -1072,11 +1072,11 @@
 .navbar__mobile-link.is-active {
   background: transparent;
   color: #8c3d1f;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .navbar__mobile-link.is-active .navbar__mobile-link-label {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 
