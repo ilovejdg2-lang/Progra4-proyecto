@@ -45,17 +45,36 @@ export function filtrosActivos(filtros) {
 }
 
 /**
- * Returns the first validation message (empty string when the form is valid).
+ * First validation problem as `{ campo, mensaje }`, or null when the form is valid.
  * `esSolicitud` is the access-request mode; otherwise it is a new contribution.
  */
-export function validarEnvio(valores, { esSolicitud }) {
-  if (!String(valores.titulo || "").trim()) return "Indica el título o tema del documento.";
-  if (!esSolicitud && !String(valores.categoria || "").trim()) return "Elige el tema del documento.";
-  if (!esSolicitud && !valores.archivo) return "Adjunta el archivo del documento.";
-  if (!String(valores.nombre || "").trim()) return "Ingresa tu nombre completo.";
-  if (!esCorreoValido(valores.correo)) return MENSAJE_CORREO_INVALIDO;
-  if (esSolicitud && !String(valores.motivo || "").trim()) return "Cuéntanos para qué lo necesitas.";
-  return "";
+export function errorEnvio(valores, { esSolicitud }) {
+  if (!String(valores.titulo || "").trim()) return { campo: "titulo", mensaje: "Indicá el título o tema del documento." };
+  if (!esSolicitud && !String(valores.categoria || "").trim()) return { campo: "categoria", mensaje: "Elegí el tema del documento." };
+  if (!esSolicitud && !valores.archivo) return { campo: "archivo", mensaje: "Adjuntá el archivo del documento." };
+  if (!String(valores.nombre || "").trim()) return { campo: "nombre", mensaje: "Ingresá tu nombre completo." };
+  if (!esCorreoValido(valores.correo)) return { campo: "correo", mensaje: MENSAJE_CORREO_INVALIDO };
+  if (esSolicitud && !String(valores.motivo || "").trim()) return { campo: "motivo", mensaje: "Contanos para qué lo necesitás." };
+  return null;
+}
+
+/** Same check as errorEnvio, as a plain message (empty string when valid). */
+export function validarEnvio(valores, opciones) {
+  return errorEnvio(valores, opciones)?.mensaje ?? "";
+}
+
+export const EXTENSIONES_PERMITIDAS = [
+  "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv", "zip", "rar", "7z", "jpg", "jpeg", "png",
+];
+
+export function extensionPermitida(nombre = "") {
+  const partes = String(nombre).toLowerCase().split(".");
+  return partes.length > 1 && EXTENSIONES_PERMITIDAS.includes(partes.pop());
+}
+
+/** Keeps a page number from the URL inside 1..totalPaginas. */
+export function clampPagina(pagina, totalPaginas) {
+  return Math.min(Math.max(1, Number(pagina) || 1), Math.max(1, Number(totalPaginas) || 1));
 }
 
 /** Page numbers around the current one, with "…" gaps: 1 … 4 5 6 … 9. */

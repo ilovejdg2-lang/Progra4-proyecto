@@ -8,10 +8,19 @@ import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { limpiarCorreo } from "../../lib/correo";
 import { ST } from "../../Components/T/ST";
 import { useTraducir } from "../../hooks/useTraducir";
-import { validarEnvio } from "./repositorioLogic";
+import { errorEnvio, extensionPermitida } from "./repositorioLogic";
 
 const TAMANO_MAXIMO = 30 * 1024 * 1024;
-const TIPOS_ACEPTADOS = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.jpg,.png";
+const ID_CAMPO = {
+  titulo: "sol-doc-titulo",
+  categoria: "sol-doc-tema",
+  archivo: "sol-doc-dropzone",
+  nombre: "sol-remitente-nombre",
+  correo: "sol-remitente-correo",
+  motivo: "sol-doc-motivo",
+};
+const ID_ERROR = "sol-error";
+const TIPOS_ACEPTADOS = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.7z,.jpg,.jpeg,.png";
 
 function formatearTamano(bytes = 0) {
   const b = Number(bytes);
@@ -49,14 +58,15 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
   const esSolicitud = Boolean(documento && (documento.id || documento.titulo));
   const tituloId = useId();
   const fileInputRef = useRef(null);
+  const exitoRef = useRef(null);
 
   const tPhTitulo = useTraducir("Ej. Estudio de microcuencas y rendimiento cafetalero");
   const tPhAutor = useTraducir("Ej. Universidad Nacional / investigador");
   const tPhPalabras = useTraducir("caficultura, calidad, suelo");
   const tPhNombre = useTraducir("Ej. Carlos Rodríguez");
   const tPhInstitucion = useTraducir("Ej. cooperativa o universidad");
-  const tPhMotivo = useTraducir("Cuéntanos brevemente el uso que le darás");
-  const tSeleccione = useTraducir("Selecciona un tema");
+  const tPhMotivo = useTraducir("Contanos brevemente el uso que le vas a dar");
+  const tSeleccione = useTraducir("Seleccioná un tema");
   const tCerrar = useTraducir("Cerrar");
   const tQuitar = useTraducir("Quitar archivo");
 
@@ -73,6 +83,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
   const [arrastrando, setArrastrando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
+  const [campoError, setCampoError] = useState("");
   const [completado, setCompletado] = useState(false);
 
   useBodyScrollLock(true);
@@ -97,14 +108,32 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
     [categorias],
   );
 
+  useEffect(() => {
+    if (completado) exitoRef.current?.focus();
+  }, [completado]);
+
+  const fallar = (campo, mensaje) => {
+    setError(mensaje);
+    setCampoError(campo);
+    if (campo) document.getElementById(ID_CAMPO[campo])?.focus();
+  };
+
+  const propsError = (campo) =>
+    campoError === campo ? { "aria-invalid": "true", "aria-describedby": ID_ERROR } : {};
+
   const procesarArchivo = (file) => {
     if (!file) return;
+    if (!extensionPermitida(file.name)) {
+      fallar("archivo", "Ese tipo de archivo no se acepta. Usá PDF, Word, Excel, ZIP o imagen.");
+      return;
+    }
     if (file.size > TAMANO_MAXIMO) {
-      setError("El archivo supera el tamaño máximo permitido (30 MB).");
+      fallar("archivo", "El archivo supera el tamaño máximo permitido (30 MB).");
       return;
     }
     setArchivo(file);
     setError("");
+    setCampoError("");
   };
 
   const quitarArchivo = (e) => {
@@ -118,14 +147,15 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
   const enviar = async (e) => {
     e.preventDefault();
     setError("");
+    setCampoError("");
 
     const tituloFinal = esSolicitud ? documento?.titulo || "Documento institucional" : titulo.trim();
-    const mensaje = validarEnvio(
+    const problema = errorEnvio(
       { titulo: tituloFinal, categoria, nombre, correo, archivo, motivo },
       { esSolicitud },
     );
-    if (mensaje) {
-      setError(mensaje);
+    if (problema) {
+      fallar(problema.campo, problema.mensaje);
       return;
     }
 
@@ -154,9 +184,9 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
       console.error("Error al enviar documento:", err);
       const msg = err?.message || "";
       if (msg.includes("violates not-null constraint") || msg.includes("DocumentoId")) {
-        setError("Error en los datos de la solicitud. Verifica el formulario e intenta nuevamente.");
+        setError("Error en los datos de la solicitud. Verificá el formulario e intentá nuevamente.");
       } else {
-        setError(msg || "No se pudo enviar. Intenta nuevamente.");
+        setError(msg || "No se pudo enviar. Intentá nuevamente.");
       }
     } finally {
       setEnviando(false);
@@ -165,7 +195,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
 
   const tituloModal = esSolicitud ? "Solicitar acceso" : "Enviar un documento";
   const lead = esSolicitud
-    ? "Cuéntanos quién eres y para qué lo necesitas. El equipo revisa cada solicitud."
+    ? "Contanos quién sos y para qué lo necesitás. El equipo revisa cada solicitud."
     : "El equipo revisa cada aporte antes de publicarlo en el repositorio.";
 
   return createPortal(
@@ -196,7 +226,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
             <div className="pub-dialog__body">
               <div className="pub-success" role="status">
                 <CheckCircle2 size={40} aria-hidden="true" />
-                <h3 className="pub-serif-title pub-dialog__title">
+                <h3 ref={exitoRef} tabIndex={-1} className="pub-serif-title pub-dialog__title">
                   <ST>{esSolicitud ? "Solicitud enviada" : "Documento enviado"}</ST>
                 </h3>
                 <p>
@@ -231,6 +261,8 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                     required
                     aria-required="true"
                     disabled={esSolicitud}
+                    autoFocus={!esSolicitud}
+                    {...propsError("titulo")}
                     placeholder={tPhTitulo}
                     value={titulo}
                     onChange={(e) => setTitulo(e.target.value)}
@@ -269,6 +301,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                         required
                         aria-required="true"
                         value={categoria}
+                        {...propsError("categoria")}
                         onChange={(e) => setCategoria(e.target.value)}
                       >
                         <option value="">{tSeleccione}</option>
@@ -314,8 +347,10 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                         <div
                           className={`pub-dropzone${arrastrando ? " pub-dropzone--dragging" : ""}`}
                           role="button"
+                          id="sol-doc-dropzone"
                           tabIndex={0}
                           aria-labelledby="sol-doc-archivo-label"
+                          {...propsError("archivo")}
                           onClick={abrirSelector}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
@@ -336,7 +371,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                         >
                           <Upload size={24} aria-hidden="true" />
                           <span className="pub-dropzone__title">
-                            <ST>Haz clic o arrastra el archivo aquí</ST>
+                            <ST>Hacé clic o arrastrá el archivo aquí</ST>
                           </span>
                           <span>
                             <ST>PDF, Word, Excel, ZIP o imagen · hasta 30 MB</ST>
@@ -363,6 +398,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                       id="sol-doc-motivo"
                       className="pub-textarea"
                       rows={3}
+                      {...propsError("motivo")}
                       required
                       aria-required="true"
                       placeholder={tPhMotivo}
@@ -386,6 +422,8 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                       required
                       aria-required="true"
                       autoComplete="name"
+                      autoFocus={esSolicitud}
+                      {...propsError("nombre")}
                       placeholder={tPhNombre}
                       value={nombre}
                       onChange={(e) => setNombre(e.target.value)}
@@ -399,6 +437,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                       required
                       aria-required="true"
                       autoComplete="email"
+                      {...propsError("correo")}
                       placeholder="carlos@ejemplo.com"
                       value={correo}
                       onChange={(e) => setCorreo(limpiarCorreo(e.target.value))}
@@ -430,7 +469,7 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
 
             {error ? (
               <div className="pub-dialog__error">
-                <div className="pub-alert" role="alert">
+                <div className="pub-alert" role="alert" id={ID_ERROR}>
                   <ST>{error}</ST>
                 </div>
               </div>

@@ -85,8 +85,8 @@ export function VisualizarDocumentoModal({ documento, onClose, onSolicitarAcceso
       <p>
         <ST>
           {errorCarga
-            ? "No se pudo cargar la vista previa del documento. Puedes descargarlo para verlo en tu equipo."
-            : "Este formato no se puede previsualizar en el navegador. Puedes descargarlo para verlo en tu equipo."}
+            ? "No se pudo cargar la vista previa del documento. Podés descargarlo para verlo en tu equipo."
+            : "Este formato no se puede previsualizar en el navegador. Podés descargarlo para verlo en tu equipo."}
         </ST>
       </p>
     </div>
@@ -102,7 +102,7 @@ export function VisualizarDocumentoModal({ documento, onClose, onSolicitarAcceso
       >
         <div className="pub-dialog__header viewer-header">
           <div className="viewer-header__text">
-            <h2 id={modalTitleId} className="pub-serif-title pub-dialog__title viewer-header__title">
+            <h2 id={modalTitleId} className="pub-serif-title pub-dialog__title viewer-header__title" title={documento.titulo}>
               {documento.titulo}
             </h2>
             <p className="pub-dialog__lead">

@@ -82,4 +82,42 @@ describe("SolicitarDocumentoModal", () => {
     expect(fd.get("documentoId")).toBe("9");
     expect(fd.get("motivo")).toBe("Estudio de suelos");
   });
+
+  it("focuses the first field on open and marks the first invalid field on error", async () => {
+    const user = userEvent.setup();
+    render(<SolicitarDocumentoModal onClose={() => {}} />);
+
+    expect(screen.getByLabelText(/Título o tema/)).toHaveFocus();
+
+    await user.click(screen.getByRole("button", { name: "Enviar documento" }));
+    const titulo = screen.getByLabelText(/Título o tema/);
+    expect(titulo).toHaveAttribute("aria-invalid", "true");
+    expect(titulo).toHaveAttribute("aria-describedby", "sol-error");
+    expect(titulo).toHaveFocus();
+  });
+
+  it("rejects a dropped file with a disallowed extension", async () => {
+    const { container } = render(<SolicitarDocumentoModal onClose={() => {}} />);
+    const zona = container.ownerDocument.querySelector("#sol-doc-dropzone");
+    const archivo = new File(["x"], "virus.exe");
+    const { fireEvent } = await import("@testing-library/react");
+    fireEvent.drop(zona, { dataTransfer: { files: [archivo] } });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("tipo de archivo");
+    expect(zona).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("moves focus to the success heading after sending", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<SolicitarDocumentoModal onClose={() => {}} />);
+    await screen.findByRole("option", { name: "Investigaciones" });
+    await user.type(screen.getByLabelText(/Título o tema/), "Guía");
+    await user.selectOptions(screen.getByLabelText(/Tema/), "Investigaciones");
+    await user.upload(container.ownerDocument.querySelector("#sol-doc-archivo"), new File(["x"], "a.pdf"));
+    await user.type(screen.getByLabelText(/Nombre completo/), "Ana");
+    await user.type(screen.getByLabelText(/Correo electrónico/), "ana@una.cr");
+    await user.click(screen.getByRole("button", { name: "Enviar documento" }));
+
+    expect(await screen.findByRole("heading", { name: "Documento enviado" })).toHaveFocus();
+  });
 });

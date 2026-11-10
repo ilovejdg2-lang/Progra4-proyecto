@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   categoriasConConteo,
+  clampPagina,
+  errorEnvio,
   etiquetaTipoArchivo,
+  extensionPermitida,
   filtrosActivos,
   metaDocumento,
   normalizarOrden,
@@ -120,5 +123,39 @@ describe("obtenerNumerosPagina", () => {
     expect(obtenerNumerosPagina(5, 9)).toEqual([1, "...", 4, 5, 6, "...", 9]);
     expect(obtenerNumerosPagina(1, 9)).toEqual([1, 2, "...", 9]);
     expect(obtenerNumerosPagina(9, 9)).toEqual([1, "...", 8, 9]);
+  });
+});
+
+describe("clampPagina", () => {
+  it("never goes below 1 or above the last page", () => {
+    expect(clampPagina(0, 5)).toBe(1);
+    expect(clampPagina(-3, 5)).toBe(1);
+    expect(clampPagina(9, 5)).toBe(5);
+    expect(clampPagina(3, 5)).toBe(3);
+    expect(clampPagina(2, 0)).toBe(1);
+  });
+});
+
+describe("extensionPermitida", () => {
+  it.each(["a.pdf", "a.DOCX", "a.jpeg", "a.7z", "a.png"])("accepts %s", (n) => {
+    expect(extensionPermitida(n)).toBe(true);
+  });
+  it.each(["a.exe", "a", "a.js"])("rejects %s", (n) => {
+    expect(extensionPermitida(n)).toBe(false);
+  });
+});
+
+describe("errorEnvio", () => {
+  it("names the first invalid field", () => {
+    const base = { titulo: "", categoria: "", nombre: "", correo: "", archivo: null };
+    expect(errorEnvio(base, { esSolicitud: false }).campo).toBe("titulo");
+    expect(errorEnvio({ ...base, titulo: "x" }, { esSolicitud: false }).campo).toBe("categoria");
+    expect(errorEnvio({ ...base, titulo: "x", categoria: "c" }, { esSolicitud: false }).campo).toBe("archivo");
+    expect(errorEnvio({ ...base, titulo: "x", categoria: "c", archivo: {} }, { esSolicitud: false }).campo).toBe("nombre");
+    expect(errorEnvio({ ...base, titulo: "x", nombre: "n", correo: "z" }, { esSolicitud: true }).campo).toBe("correo");
+    expect(errorEnvio({ titulo: "x", nombre: "n", correo: "a@b.co", motivo: "" }, { esSolicitud: true }).campo).toBe("motivo");
+  });
+  it("returns null when valid", () => {
+    expect(errorEnvio({ titulo: "x", categoria: "c", archivo: {}, nombre: "n", correo: "a@b.co" }, { esSolicitud: false })).toBeNull();
   });
 });
