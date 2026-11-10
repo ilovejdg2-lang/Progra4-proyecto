@@ -58,12 +58,14 @@ export function UiSelect({
   const generatedId = useId();
   const triggerId = id || generatedId;
   const tPlaceholderBusqueda = useTraducir(placeholderBusqueda);
-  const opciones = normalizarOpciones(options);
+  const todas = normalizarOpciones(options);
+  // Los encabezados de grupo (`heading: true`) se muestran pero no se pueden elegir.
+  const opciones = todas.filter((opcion) => !opcion.heading);
   const actual = opciones.find((opcion) => opcion.value === value) ?? opciones[0];
   const filtro = buscable ? claveBusqueda(busqueda.trim()) : "";
   const opcionesVisibles = filtro
     ? opciones.filter((opcion) => claveBusqueda(opcion.label).includes(filtro))
-    : opciones;
+    : todas;
 
   useEffect(() => {
     if (open && buscable) searchRef.current?.focus();
@@ -191,9 +193,9 @@ export function UiSelect({
                     value={busqueda}
                     onChange={(event) => setBusqueda(event.target.value)}
                     onKeyDown={(event) => {
-                      if (event.key === "Enter" && opcionesVisibles.length > 0) {
+                      if (event.key === "Enter" && opcionesVisibles.some((o) => !o.heading)) {
                         event.preventDefault();
-                        elegir(opcionesVisibles[0]);
+                        elegir(opcionesVisibles.find((o) => !o.heading));
                       }
                     }}
                     placeholder={tPlaceholderBusqueda}
@@ -203,7 +205,11 @@ export function UiSelect({
                 </div>
               ) : null}
               <ul className="ui-select__options" role="listbox" aria-labelledby={triggerId}>
-                {opcionesVisibles.map((opcion) => (
+                {opcionesVisibles.map((opcion) => opcion.heading ? (
+                  <li key={String(opcion.value)} role="presentation" className="ui-select__group">
+                    <EtiquetaOpcion texto={opcion.label} traducir={traducirOpciones} />
+                  </li>
+                ) : (
                   <li key={String(opcion.value)} className="ui-select__option-row">
                     <span
                       role="option"
