@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  audienciaCategoriaNueva,
+  audienciaDocumento,
   esCategoriaAdministrativa,
   opcionesCategoriaDocumento,
 } from "./categorias";
@@ -34,5 +36,30 @@ describe("categorias de documentos por audiencia", () => {
   it("omits an empty group heading", () => {
     const opciones = opcionesCategoriaDocumento([cats[0]], etiquetas);
     expect(opciones.some((o) => o.heading && o.label === "Administrativas")).toBe(false);
+  });
+});
+
+describe("audienciaDocumento", () => {
+  it("prefers the audience sent by the listing", () => {
+    expect(audienciaDocumento({ categoria: "Tesis", audiencia: "administrativa" }, cats)).toBe("administrativa");
+  });
+
+  it("falls back to the audience of the document category", () => {
+    expect(audienciaDocumento({ categoria: "MINUTAS" }, cats)).toBe("administrativa");
+    expect(audienciaDocumento({ categoria: "Tesis" }, cats)).toBe("publica");
+  });
+
+  it("returns empty when it cannot be determined", () => {
+    expect(audienciaDocumento({ categoria: "Otra" }, cats)).toBe("");
+  });
+});
+
+describe("audienciaCategoriaNueva", () => {
+  it("inherits the parent audience when a parent is chosen", () => {
+    expect(audienciaCategoriaNueva("MINUTAS", "publica", cats)).toBe("administrativa");
+  });
+
+  it("uses the chosen audience for root categories", () => {
+    expect(audienciaCategoriaNueva("", "administrativa", cats)).toBe("administrativa");
   });
 });

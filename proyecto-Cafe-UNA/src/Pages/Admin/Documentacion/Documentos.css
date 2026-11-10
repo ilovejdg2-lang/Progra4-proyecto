@@ -412,8 +412,8 @@
 
 .doc-cell-audiencia {
   display: block;
-  font-size: 0.6875rem;
-  color: #64748b;
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
   margin-top: 2px;
 }
 
@@ -941,7 +941,6 @@ html.admin-theme-dark body.admin-route-active .admin-cat-banner h4 {
 
 html.admin-theme-dark body.admin-route-active .kpi-lbl,
 html.admin-theme-dark body.admin-route-active .doc-cell-sub,
-html.admin-theme-dark body.admin-route-active .doc-cell-audiencia,
 html.admin-theme-dark body.admin-route-active .doc-size-text,
 html.admin-theme-dark body.admin-route-active .admin-docs-empty,
 html.admin-theme-dark body.admin-route-active .admin-docs-loading,

@@ -72,6 +72,7 @@ export function normalizarDoc(d) {
     descripcion: d.descripcion ?? d.Descripcion ?? "",
     categoria: d.categoria ?? d.Categoria ?? "General",
     subcategoria: d.subcategoria ?? d.Subcategoria ?? "",
+    audiencia: String(d.audiencia ?? d.Audiencia ?? "").toLowerCase(),
     nombreOriginal: repararNombreArchivo(d.nombreOriginal ?? d.NombreOriginal ?? d.nombreArchivo ?? d.NombreArchivo ?? ""),
     mimeType: d.mimeType ?? d.MimeType ?? "application/pdf",
     tamanoBytes: Number(d.tamanoBytes ?? d.TamanoBytes ?? 0),

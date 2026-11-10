@@ -56,7 +56,7 @@ import {
 } from "../../../services/documentosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
-import { esCategoriaAdministrativa, opcionesCategoriaDocumento } from "../../../lib/categorias";
+import { audienciaCategoriaNueva, audienciaDocumento, esCategoriaAdministrativa, opcionesCategoriaDocumento } from "../../../lib/categorias";
 import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { VisualizarDocumentoModal } from "../../Repositorio/VisualizarDocumentoModal";
@@ -399,7 +399,7 @@ export default function AdminDocumentos() {
       await crearCategoriaDocumento({
         nombre: catNombre.trim(),
         padre: catPadre.trim(),
-        audiencia: catAudiencia,
+        audiencia: audienciaCategoriaNueva(catPadre, catAudiencia, categorias),
       });
       setCatNombre("");
       setCatPadre("");
@@ -747,9 +747,9 @@ export default function AdminDocumentos() {
                               {doc.categoria}
                               {doc.subcategoria ? ` / ${doc.subcategoria}` : ""}
                             </span>
-                            {doc.audiencia ? (
+                            {audienciaDocumento(doc, categorias) ? (
                               <span className="doc-cell-audiencia">
-                                {doc.audiencia === "administrativa" ? <ST>Administrativo</ST> : <ST>Público</ST>}
+                                {audienciaDocumento(doc, categorias) === "administrativa" ? <ST>Administrativo</ST> : <ST>Público</ST>}
                               </span>
                             ) : null}
                           </td>
@@ -1046,6 +1046,11 @@ export default function AdminDocumentos() {
                           ...formDoc,
                           categoria: e.target.value,
                           subcategoria: "",
+                          esPrivado:
+                            formDoc.esPrivado ||
+                            esCategoriaAdministrativa(
+                              categorias.find((c) => !(c.padre || c.Padre) && (c.nombre || c.Nombre) === e.target.value),
+                            ),
                         })
                       }
                     />
@@ -1319,13 +1324,17 @@ export default function AdminDocumentos() {
                     id="cat-audiencia"
                     className="admin-form-select"
                     traducirOpciones
-                    value={catAudiencia}
+                    value={audienciaCategoriaNueva(catPadre, catAudiencia, categorias)}
+                    disabled={Boolean(catPadre)}
                     onChange={(e) => setCatAudiencia(e.target.value)}
                     options={[
                       { value: "publica", label: "Repositorio público" },
-                      { value: "administrativa", label: "Administrativa" },
+                      { value: "administrativa", label: "Administrativa (privada)" },
                     ]}
                   />
+                  {catPadre ? (
+                    <p className="admin-form-helper"><ST>Una subcategoría usa la sección de su categoría padre.</ST></p>
+                  ) : null}
                 </div>
 
                 <div className="admin-form-group">

@@ -53,3 +53,19 @@ export function opcionesCategoriaDocumento(categorias, etiquetas) {
     ...grupo("administrativa", raices.filter(esCategoriaAdministrativa)),
   ];
 }
+
+/** Audiencia de un documento: la del listado o, si falta, la de su categoría raíz. */
+export function audienciaDocumento(doc, categorias) {
+  if (doc?.audiencia) return doc.audiencia;
+  const nombre = nombreCategoria(doc?.categoria);
+  const cat = (categorias || []).find((c) => nombreCategoria(c.nombre ?? c.Nombre) === nombre);
+  return cat?.audiencia || "";
+}
+
+/** Una subcategoría hereda la audiencia de su padre; una raíz usa la elegida. */
+export function audienciaCategoriaNueva(padre, elegida, categorias) {
+  const nombre = nombreCategoria(padre);
+  if (!nombre) return elegida;
+  const cat = (categorias || []).find((c) => nombreCategoria(c.nombre ?? c.Nombre) === nombre);
+  return cat?.audiencia || elegida;
+}

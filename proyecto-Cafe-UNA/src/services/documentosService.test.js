@@ -6,6 +6,7 @@ vi.mock("./apiClient", () => ({ apiRequest: (...args) => apiRequestMock(...args)
 import {
   crearCategoriaDocumento,
   normalizarCategoriaDoc,
+  normalizarDoc,
   obtenerCategoriasDocumentosAdmin,
   obtenerDocumentoDetalle,
   obtenerDocumentosPublicos,
@@ -121,5 +122,12 @@ describe("documentosService - audiencia de categorías", () => {
     apiRequestMock.mockResolvedValue({ id: 3, nombre: "Tesis" });
     await crearCategoriaDocumento({ nombre: "Tesis" });
     expect(apiRequestMock.mock.calls[0][1].data.audiencia).toBe("publica");
+  });
+});
+
+describe("documentosService - audiencia de documentos", () => {
+  it("maps audiencia from the admin listing row", () => {
+    expect(normalizarDoc({ id: 1, titulo: "A", Audiencia: "Administrativa" }).audiencia).toBe("administrativa");
+    expect(normalizarDoc({ id: 2, titulo: "B" }).audiencia).toBe("");
   });
 });

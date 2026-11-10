@@ -49,7 +49,7 @@ import {
 } from "../../../services/documentosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
-import { opcionesCategoriaDocumento } from "../../../lib/categorias";
+import { audienciaCategoriaNueva, audienciaDocumento, opcionesCategoriaDocumento } from "../../../lib/categorias";
 import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { VisualizarDocumentoModal } from "../../Repositorio/VisualizarDocumentoModal";
@@ -382,7 +382,7 @@ export default function DocumentacionAdministrativa() {
       await crearCategoriaDocumento({
         nombre: catNombre.trim(),
         padre: catPadre.trim(),
-        audiencia: catAudiencia,
+        audiencia: audienciaCategoriaNueva(catPadre, catAudiencia, categorias),
       });
       setCatNombre("");
       setCatPadre("");
@@ -722,9 +722,9 @@ export default function DocumentacionAdministrativa() {
                               {doc.categoria}
                               {doc.subcategoria ? ` / ${doc.subcategoria}` : ""}
                             </span>
-                            {doc.audiencia ? (
+                            {audienciaDocumento(doc, categorias) ? (
                               <span className="doc-cell-audiencia">
-                                {doc.audiencia === "administrativa" ? <ST>Administrativo</ST> : <ST>Público</ST>}
+                                {audienciaDocumento(doc, categorias) === "administrativa" ? <ST>Administrativo</ST> : <ST>Público</ST>}
                               </span>
                             ) : null}
                           </td>
@@ -1249,13 +1249,17 @@ export default function DocumentacionAdministrativa() {
                     id="cat-audiencia-admin"
                     className="admin-form-select"
                     traducirOpciones
-                    value={catAudiencia}
+                    value={audienciaCategoriaNueva(catPadre, catAudiencia, categorias)}
+                    disabled={Boolean(catPadre)}
                     onChange={(e) => setCatAudiencia(e.target.value)}
                     options={[
-                      { value: "administrativa", label: "Administrativa" },
+                      { value: "administrativa", label: "Administrativa (privada)" },
                       { value: "publica", label: "Repositorio público" },
                     ]}
                   />
+                  {catPadre ? (
+                    <p className="admin-form-helper"><ST>Una subcategoría usa la sección de su categoría padre.</ST></p>
+                  ) : null}
                 </div>
 
                 <div className="admin-form-group">
