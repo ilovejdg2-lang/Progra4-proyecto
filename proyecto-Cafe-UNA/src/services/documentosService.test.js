@@ -131,3 +131,32 @@ describe("documentosService - audiencia de documentos", () => {
     expect(normalizarDoc({ id: 2, titulo: "B" }).audiencia).toBe("");
   });
 });
+
+describe("documentosService - orden en el fallback cliente", () => {
+  const docs = [
+    { id: "1", titulo: "Beneficio húmedo", descargasCount: 3, createdAt: "2026-01-10T00:00:00Z" },
+    { id: "2", titulo: "Análisis de suelos", descargasCount: 40, createdAt: "2026-03-01T00:00:00Z" },
+    { id: "3", titulo: "Cosecha selectiva", descargasCount: 12, createdAt: "2025-06-01T00:00:00Z" },
+  ];
+
+  beforeEach(() => {
+    apiRequestMock.mockReset();
+    apiRequestMock.mockImplementation(async (url) => (String(url).includes("/categorias") ? [] : docs));
+  });
+
+  const ids = async (orden) => (await obtenerDocumentosPublicos({ orden })).items.map((d) => d.id);
+
+  it("sorts newest first by default and for 'recientes'", async () => {
+    expect(await ids("recientes")).toEqual(["2", "1", "3"]);
+    expect(await ids(undefined)).toEqual(["2", "1", "3"]);
+  });
+
+  it("sorts by downloads for the backend value 'descargas'", async () => {
+    expect(await ids("descargas")).toEqual(["2", "3", "1"]);
+  });
+
+  it("sorts alphabetically for 'az' and 'za' ignoring accents", async () => {
+    expect(await ids("az")).toEqual(["2", "1", "3"]);
+    expect(await ids("za")).toEqual(["3", "1", "2"]);
+  });
+});
