@@ -80,6 +80,7 @@ const DEFAULT_BANNERS = [
  *   root?: Element | Document | { current?: Element | null },
  *   fieldMap?: Record<string, string>,
  *   fieldOrder?: string[],
+ *   idPrefix?: string,
  *   bannerSelectors?: string[],
  * }} [options]
  */
@@ -88,6 +89,7 @@ export function focusFormError({
   root,
   fieldMap = {},
   fieldOrder,
+  idPrefix = "",
   bannerSelectors = DEFAULT_BANNERS,
 } = {}) {
   const scope = resolveRoot(root);
@@ -97,12 +99,17 @@ export function focusFormError({
       ? fieldOrder.filter((key) => Boolean(errors[key]))
       : Object.keys(errors).filter((key) => Boolean(errors[key]));
 
-    for (const key of keys) {
+    // Only the first invalid key may take the focus; if it cannot be found we fall back
+    // to the first aria-invalid element instead of jumping past it to a later field.
+    const key = keys[0];
+    if (key) {
       const name = fieldMap[key] || key;
       const escaped = cssEscape(name);
+      const prefixed = idPrefix ? cssEscape(`${idPrefix}${name}`) : "";
       const el =
         queryIn(scope, `[name="${escaped}"]`) ||
         queryIn(scope, `#${escaped}`) ||
+        (prefixed && queryIn(scope, `#${prefixed}`)) ||
         queryIn(scope, `[data-error-field="${escaped}"]`) ||
         queryIn(document, `[name="${escaped}"]`) ||
         queryIn(document, `#${escaped}`);

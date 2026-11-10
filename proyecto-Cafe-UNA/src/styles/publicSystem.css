@@ -20,6 +20,11 @@
   --pub-page-bg: var(--pub-canvas);
   --pub-surface: #ffffff;
   --pub-danger: #9b2c2c;
+  /* Warm amber: low-capacity dots and over-capacity alerts only (dot 4.9:1, text 8:1 on its own background) */
+  --pub-warning: #b45309;
+  --pub-warning-bg: #fdf5e4;
+  --pub-warning-line: #e6c88a;
+  --pub-warning-text: #6b3d06;
   /* ONE switch for public page and section titles: set to var(--sans) to go back to Geist */
   --pub-font-display: "Source Serif 4 Variable", Georgia, "Times New Roman", serif;
   --pub-serif: var(--pub-font-display);
