@@ -119,3 +119,50 @@ describe("UiSelect open state", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("UiSelect group headings", () => {
+  function renderGrouped(onChange = () => {}, buscable = false) {
+    render(
+      <UiSelect
+        id="grouped"
+        ariaLabel="Categoría"
+        value="a"
+        onChange={onChange}
+        buscable={buscable}
+        traducirOpciones={false}
+        options={[
+          { heading: true, value: "__g1", label: "Grupo uno" },
+          { value: "a", label: "Rojo" },
+          { heading: true, value: "__g2", label: "Grupo dos" },
+          { value: "b", label: "Azul" },
+        ]}
+      />,
+    );
+    return screen.getByRole("button", { name: "Categoría" });
+  }
+
+  it("shows headings without exposing them as options", async () => {
+    await userEvent.click(renderGrouped());
+
+    expect(screen.getByText("Grupo uno")).toBeInTheDocument();
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Rojo", "Azul"]);
+  });
+
+  it("does not select a heading when it is clicked", async () => {
+    const onChange = vi.fn();
+    await userEvent.click(renderGrouped(onChange));
+
+    await userEvent.click(screen.getByText("Grupo dos"));
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("skips headings when Enter is pressed in the search box", async () => {
+    const onChange = vi.fn();
+    await userEvent.click(renderGrouped(onChange, true));
+
+    await userEvent.type(screen.getByRole("searchbox"), "{Enter}");
+
+    expect(onChange).toHaveBeenCalledWith("a");
+  });
+});

@@ -453,7 +453,7 @@ export default function SolicitudesDocumentacion() {
                     <span>Aporte de archivo adjunto</span>
                   </div>
                   <span>
-                    El usuario envió el archivo <strong>{solicitudSeleccionada.NombreOriginal || solicitudSeleccionada.nombreOriginal}</strong>. Al aprobar la solicitud, el documento se registrará en el repositorio en modo <strong>Privado</strong> por defecto para custodia y control institucional, sin exponerse en la página principal.
+                    El usuario envió el archivo <strong>{solicitudSeleccionada.NombreOriginal || solicitudSeleccionada.nombreOriginal}</strong>. {(solicitudSeleccionada.DocumentoId || solicitudSeleccionada.documentoId) ? <>Al aprobar la solicitud, el archivo se registrará en modo <strong>Privado</strong>.</> : <>Al aprobar la solicitud, el documento se publicará en el <strong>catálogo público</strong> del repositorio.</>}
                   </span>
                 </div>
               ) : tipoAccion === "aprobar" ? (

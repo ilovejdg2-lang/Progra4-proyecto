@@ -36,3 +36,36 @@ export function etiquetaCategoriaProducto(producto) {
   if (categoria && subcategoria) return `${categoria} · ${subcategoria}`;
   return categoria || subcategoria || "";
 }
+
+export function esCategoriaAdministrativa(item) {
+  return item?.audiencia === "administrativa";
+}
+
+/** Opciones de select para categorías raíz de documentos, en dos grupos: repositorio público y administrativas. */
+export function opcionesCategoriaDocumento(categorias, etiquetas) {
+  const raices = (categorias || []).filter(esCategoriaRaiz);
+  const opcion = (c) => ({ value: nombreCategoria(c.nombre ?? c.Nombre), label: nombreCategoria(c.nombre ?? c.Nombre) });
+  const grupo = (clave, lista) =>
+    lista.length ? [{ heading: true, value: `__${clave}`, label: etiquetas[clave] }, ...lista.map(opcion)] : [];
+  return [
+    { value: "", label: etiquetas.vacio },
+    ...grupo("publica", raices.filter((c) => !esCategoriaAdministrativa(c))),
+    ...grupo("administrativa", raices.filter(esCategoriaAdministrativa)),
+  ];
+}
+
+/** Audiencia de un documento: la del listado o, si falta, la de su categoría raíz. */
+export function audienciaDocumento(doc, categorias) {
+  if (doc?.audiencia) return doc.audiencia;
+  const nombre = nombreCategoria(doc?.categoria);
+  const cat = (categorias || []).find((c) => nombreCategoria(c.nombre ?? c.Nombre) === nombre);
+  return cat?.audiencia || "";
+}
+
+/** Una subcategoría hereda la audiencia de su padre; una raíz usa la elegida. */
+export function audienciaCategoriaNueva(padre, elegida, categorias) {
+  const nombre = nombreCategoria(padre);
+  if (!nombre) return elegida;
+  const cat = (categorias || []).find((c) => nombreCategoria(c.nombre ?? c.Nombre) === nombre);
+  return cat?.audiencia || elegida;
+}

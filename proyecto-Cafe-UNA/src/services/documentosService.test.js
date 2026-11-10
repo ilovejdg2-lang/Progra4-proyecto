@@ -4,7 +4,10 @@ const apiRequestMock = vi.fn();
 vi.mock("./apiClient", () => ({ apiRequest: (...args) => apiRequestMock(...args) }));
 
 import {
+  crearCategoriaDocumento,
   normalizarCategoriaDoc,
+  normalizarDoc,
+  obtenerCategoriasDocumentosAdmin,
   obtenerDocumentoDetalle,
   obtenerDocumentosPublicos,
   registrarVistaDocumento,
@@ -88,5 +91,43 @@ describe("documentosService - Biblioteca Digital", () => {
       expect.stringContaining("/documentos/5/vista"),
       expect.objectContaining({ method: "POST" }),
     );
+  });
+});
+
+describe("documentosService - audiencia de categorías", () => {
+  beforeEach(() => {
+    apiRequestMock.mockReset();
+  });
+
+  it("derives audiencia from the category tipo when the API omits it", () => {
+    expect(normalizarCategoriaDoc({ Nombre: "MINUTAS", Tipo: "documento_admin" }).audiencia).toBe("administrativa");
+    expect(normalizarCategoriaDoc({ Nombre: "Tesis", Tipo: "documento" }).audiencia).toBe("publica");
+    expect(normalizarCategoriaDoc({ Nombre: "X", Tipo: "documento", audiencia: "administrativa" }).audiencia).toBe("administrativa");
+  });
+
+  it("loads admin screens categories from the admin endpoint", async () => {
+    apiRequestMock.mockResolvedValue([{ id: 1, nombre: "MINUTAS", tipo: "documento_admin", audiencia: "administrativa" }]);
+    const cats = await obtenerCategoriasDocumentosAdmin();
+    expect(apiRequestMock.mock.calls[0][0]).toMatch(/\/documentos\/admin\/categorias$/);
+    expect(cats[0]).toMatchObject({ nombre: "MINUTAS", audiencia: "administrativa" });
+  });
+
+  it("sends the audience when creating a document category", async () => {
+    apiRequestMock.mockResolvedValue({ id: 2, nombre: "Actas", tipo: "documento", audiencia: "administrativa" });
+    await crearCategoriaDocumento({ nombre: "Actas", audiencia: "administrativa" });
+    expect(apiRequestMock.mock.calls[0][1].data).toEqual({ nombre: "Actas", tipo: "documento", audiencia: "administrativa", padre: "" });
+  });
+
+  it("defaults the created category audience to public", async () => {
+    apiRequestMock.mockResolvedValue({ id: 3, nombre: "Tesis" });
+    await crearCategoriaDocumento({ nombre: "Tesis" });
+    expect(apiRequestMock.mock.calls[0][1].data.audiencia).toBe("publica");
+  });
+});
+
+describe("documentosService - audiencia de documentos", () => {
+  it("maps audiencia from the admin listing row", () => {
+    expect(normalizarDoc({ id: 1, titulo: "A", Audiencia: "Administrativa" }).audiencia).toBe("administrativa");
+    expect(normalizarDoc({ id: 2, titulo: "B" }).audiencia).toBe("");
   });
 });
