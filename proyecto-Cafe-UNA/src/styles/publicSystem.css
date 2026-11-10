@@ -20,7 +20,9 @@
   --pub-page-bg: var(--pub-canvas);
   --pub-surface: #ffffff;
   --pub-danger: #9b2c2c;
-  --pub-serif: "Source Serif 4 Variable", Georgia, "Times New Roman", serif;
+  /* ONE switch for public page and section titles: set to var(--sans) to go back to Geist */
+  --pub-font-display: "Source Serif 4 Variable", Georgia, "Times New Roman", serif;
+  --pub-serif: var(--pub-font-display);
   --pub-radius: 16px;
   --pub-control: 44px;
 }
@@ -246,4 +248,12 @@ textarea.pub-textarea {
 .site-shell,
 .site-shell > .site-main {
   background: var(--pub-page-bg);
+}
+
+/* Page (h1) and section (h2) titles of the shared public layout use the display face.
+   Navbar, footer and small uppercase kickers keep Geist. Classes that set their own font are handled in each page stylesheet. */
+.site-shell :is(h1, h2):not(.navbar *, footer *, .product-detail-page__related-header *) {
+  font-family: var(--pub-font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
 }

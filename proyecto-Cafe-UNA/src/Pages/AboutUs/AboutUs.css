@@ -499,10 +499,10 @@
   margin: 0;
   color: #111;
   font-size: clamp(1.85rem, 4vw, 3.4rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 0.98;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-transform: none;
 }
 
 .about-narrative__copy > p:not(.about-narrative__eyebrow) {

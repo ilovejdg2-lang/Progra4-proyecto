@@ -443,6 +443,14 @@ The shared public layout (`.site-shell`: Navbar + `#center.site-main` + Footer, 
 --pub-page-bg: var(--pub-canvas); /* change to #ffffff to revert the site to white */
 ```
 
+### Title font (one switch)
+
+Page (`h1`) and section (`h2`) titles inside `.site-shell` use `var(--pub-font-display)`, weight 600, letter-spacing -0.015em (navbar, footer and small uppercase kickers keep Geist). Revert by editing the token in `src/styles/publicSystem.css`:
+
+```css
+--pub-font-display: var(--sans); /* currently "Source Serif 4 Variable", Georgia, serif */
+```
+
 Cards, panels, inputs, dialogs and the navbar stay white. Admin, perfil, login/registro and checkout are outside this layout and unaffected.
 
 ### Type
