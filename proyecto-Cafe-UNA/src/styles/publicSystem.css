@@ -169,14 +169,21 @@
   color: var(--pub-text-muted);
 }
 
-.pub-input::selection,
-.pub-textarea::selection {
-  background: var(--pub-coffee-soft);
+/* Selection tint, scoped to the public pages: ink text on it is 5.5:1, the tint is 3.2:1 on white */
+.pub-page ::selection,
+.pub-dialog ::selection {
+  background: #a98574;
+  color: var(--pub-ink);
 }
 
-::selection {
-  background: var(--pub-coffee-soft);
-  color: var(--pub-ink);
+/* index.css forces input/select radius with !important; these win by specificity */
+input.pub-input:not([type="checkbox"]):not([type="radio"]),
+select.pub-select {
+  border-radius: 999px !important;
+}
+
+textarea.pub-textarea {
+  border-radius: var(--pub-radius) !important;
 }
 
 .pub-alert {

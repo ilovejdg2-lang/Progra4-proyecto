@@ -8,7 +8,7 @@ export function PublicPageHeader({ title, lead, actions = null, titleId }) {
   const generatedId = useId();
   const id = titleId || generatedId;
   return (
-    <header className="pub-page-header" aria-labelledby={id}>
+    <header className="pub-page-header">
       <div className="pub-page-header__text">
         <h1 id={id} className="pub-serif-title pub-page-header__title">
           {title}
