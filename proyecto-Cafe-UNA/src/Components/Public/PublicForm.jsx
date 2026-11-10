@@ -4,11 +4,10 @@ import { Calendar } from "@/Components/ui/calendar";
 import { ST } from "../T/ST";
 import { useIdioma } from "../../lib/useIdioma";
 import { formatearFechaLarga } from "../../lib/formatoFormulario";
-import "../../styles/publicForm.css";
 
 /**
  * Building blocks shared by the public request forms (voluntariado, visitas, donaciones).
- * Styles live in styles/publicForm.css and build on the --pub-* tokens of publicSystem.css.
+ * Styles live in styles/publicForm.css (imported by index.css) and build on the --pub-* tokens of publicSystem.css.
  * Text props are plain Spanish strings (or nodes): the components wrap them in <ST>.
  */
 
