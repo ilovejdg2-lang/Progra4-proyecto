@@ -39,6 +39,9 @@ export function UiSelect({
   options = [],
   disabled = false,
   ariaLabel,
+  ariaInvalid,
+  ariaDescribedby,
+  ariaRequired,
   className = "",
   footer = null,
   renderOptionEnd,
@@ -160,6 +163,9 @@ export function UiSelect({
         id={triggerId}
         disabled={disabled}
         aria-label={ariaLabel}
+        aria-invalid={ariaInvalid}
+        aria-describedby={ariaDescribedby}
+        aria-required={ariaRequired}
         aria-expanded={open}
         aria-haspopup="listbox"
         className="ui-select__trigger"
@@ -168,7 +174,7 @@ export function UiSelect({
           setBusqueda("");
           // A modal <dialog> sits in the top layer, so the menu must live inside it to stay visible.
           setMenuHost(rootRef.current?.closest("dialog") ?? null);
-          setMenuClaro(Boolean(rootRef.current?.closest(".voluntariado-page, .formulario-card, .campo")));
+          setMenuClaro(Boolean(rootRef.current?.closest(".voluntariado-page, .formulario-card, .campo, .pub-form")));
           setOpen((actualOpen) => !actualOpen);
         }}
       >

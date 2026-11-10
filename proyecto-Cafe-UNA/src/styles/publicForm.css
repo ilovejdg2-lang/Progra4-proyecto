@@ -1,0 +1,787 @@
+/*
+ * Public request forms (voluntariado, visitas, donaciones) on top of the public system.
+ * Tokens (--pub-*) come from styles/publicSystem.css; components live in Components/Public/PublicForm.jsx.
+ * Everything is scoped to .pub-form or a pub-* class so admin styles are untouched.
+ */
+
+.pub-form-page--prepaint {
+  visibility: hidden;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.pub-form-container {
+  max-width: 868px;
+  margin: 0 auto;
+  padding-inline: 16px;
+}
+
+.pub-form-container--wide {
+  max-width: 1080px;
+}
+
+@media (min-width: 640px) {
+  .pub-form-container {
+    padding-inline: 24px;
+  }
+}
+
+.pub-form-back {
+  padding-top: 16px;
+}
+
+/* ---------- Panel and sections ---------- */
+
+.pub-form {
+  overflow: visible;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.pub-form-section {
+  padding: 28px 32px;
+}
+
+.pub-form-section + .pub-form-section {
+  border-top: 1px solid var(--pub-line);
+}
+
+.pub-form-section__head {
+  margin-bottom: 20px;
+}
+
+.pub-form .pub-form-section h2.pub-form-section__title {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: var(--pub-ink);
+}
+
+.pub-form-section__hint {
+  margin: 4px 0 0;
+  max-width: 62ch;
+  font-size: 15px;
+  color: var(--pub-text-muted);
+}
+
+.pub-form-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (max-width: 639px) {
+  .pub-form-section {
+    padding: 24px 16px;
+  }
+}
+
+/* ---------- Grid ---------- */
+
+.pub-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px 16px;
+}
+
+@media (min-width: 640px) {
+  .pub-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pub-form-grid .pub-field--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 800px) {
+  .pub-form-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Fields ---------- */
+
+.pub-form .pub-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pub-form .pub-field__label {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--pub-ink);
+}
+
+.pub-form .pub-field__req {
+  color: var(--pub-coffee);
+}
+
+.pub-form .pub-field__hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--pub-text-muted);
+}
+
+.pub-form .pub-field__error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--pub-danger);
+}
+
+.pub-form .pub-input,
+.pub-form .ui-select__trigger {
+  min-height: 46px;
+  height: 46px;
+}
+
+.pub-form .pub-textarea {
+  min-height: 112px;
+  height: auto;
+}
+
+.pub-form .pub-input:focus-visible,
+.pub-form .pub-textarea:focus-visible,
+.pub-form .ui-select__trigger:focus-visible {
+  outline: 2px solid var(--pub-coffee);
+  outline-offset: 2px;
+  border-color: var(--pub-coffee);
+}
+
+.pub-form .pub-input[readonly]:not(:disabled) {
+  color: var(--pub-text-muted);
+  background-color: var(--pub-coffee-soft);
+}
+
+.pub-form .pub-input:disabled,
+.pub-form .pub-textarea:disabled {
+  color: var(--pub-text-muted);
+  background-color: var(--pub-coffee-soft);
+  cursor: not-allowed;
+}
+
+/* The shared select trigger takes the public pill look, beating the slate defaults of ui/Select.css */
+.pub-form .ui-select__trigger,
+.pub-form .ui-select__trigger:hover,
+.pub-form .ui-select__trigger[aria-expanded="true"] {
+  padding: 0 16px;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--pub-ink);
+  background: var(--pub-surface);
+  border: 1px solid var(--pub-input-border);
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+.pub-form .ui-select__trigger:disabled {
+  color: var(--pub-text-muted);
+  background: var(--pub-coffee-soft);
+  opacity: 1;
+}
+
+.pub-form .ui-select__chevron {
+  color: var(--pub-text-muted);
+}
+
+.pub-form .pub-input[aria-invalid="true"],
+.pub-form .pub-textarea[aria-invalid="true"],
+.pub-form .pub-field--invalid .ui-select__trigger,
+.pub-form .pub-field--invalid .ui-select__trigger:hover {
+  border: 1.5px solid var(--pub-danger);
+}
+
+.pub-form .pub-input-affix {
+  position: relative;
+}
+
+.pub-form .pub-input-affix__symbol {
+  position: absolute;
+  inset-block: 0;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  color: var(--pub-text-muted);
+  pointer-events: none;
+}
+
+.pub-form .pub-input-affix .pub-input {
+  padding-left: 38px;
+}
+
+.pub-form .pub-field__counter {
+  align-self: flex-end;
+  margin: 0;
+  font-size: 13px;
+  color: var(--pub-text-muted);
+}
+
+/* ---------- Choice cards ---------- */
+
+.pub-form .pub-choice-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pub-form .pub-choice-group > legend {
+  float: left;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.pub-form .pub-choice-group > legend + * {
+  clear: both;
+}
+
+.pub-choice-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 560px) {
+  .pub-choice-list--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pub-choice-list--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.pub-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 56px;
+  padding: 14px 16px;
+  color: var(--pub-ink);
+  background: var(--pub-surface);
+  border: 1px solid var(--pub-line);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.pub-choice:hover {
+  border-color: var(--pub-line-strong);
+}
+
+.pub-choice__input {
+  appearance: none;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  background: var(--pub-surface);
+  border: 1.5px solid var(--pub-input-border);
+  border-radius: 50%;
+  cursor: inherit;
+}
+
+.pub-choice__input[type="checkbox"] {
+  border-radius: 6px;
+}
+
+.pub-choice__input:checked {
+  background-color: var(--pub-coffee);
+  border-color: var(--pub-coffee);
+  box-shadow: inset 0 0 0 4px var(--pub-surface);
+}
+
+.pub-choice__input[type="checkbox"]:checked {
+  box-shadow: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+  background-size: 14px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.pub-choice__input:focus-visible {
+  outline: none;
+}
+
+.pub-choice:has(.pub-choice__input:checked) {
+  background: var(--pub-coffee-soft);
+  border-color: var(--pub-coffee);
+}
+
+.pub-choice:has(.pub-choice__input:focus-visible) {
+  outline: 2px solid var(--pub-coffee);
+  outline-offset: 2px;
+}
+
+.pub-choice:has(.pub-choice__input:disabled) {
+  color: var(--pub-text-muted);
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--pub-line-strong);
+  cursor: not-allowed;
+}
+
+.pub-choice:has(.pub-choice__input:disabled) .pub-choice__title {
+  color: var(--pub-text-muted);
+}
+
+.pub-choice__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pub-choice__title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--pub-ink);
+}
+
+.pub-choice__desc {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--pub-text-muted);
+}
+
+.pub-choice-list--slots {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+}
+
+.pub-cupo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--pub-text-muted);
+}
+
+.pub-cupo__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pub-coffee);
+}
+
+.pub-cupo--bajo .pub-cupo__dot {
+  background: var(--pub-warning);
+}
+
+.pub-cupo--agotado .pub-cupo__dot {
+  background: var(--pub-line-strong);
+}
+
+/* ---------- Notes, placeholders, alert ---------- */
+
+.pub-form-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--pub-text-muted);
+  background: var(--pub-coffee-soft);
+  border-radius: var(--pub-radius);
+}
+
+.pub-form-note > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--pub-coffee);
+}
+
+.pub-form-note__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pub-form-note__text > * {
+  margin: 0;
+}
+
+.pub-form-note strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--pub-ink);
+}
+
+.pub-form-note a {
+  color: var(--pub-coffee);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+.pub-form-note--warning {
+  color: var(--pub-warning-text);
+  background: var(--pub-warning-bg);
+  border: 1px solid var(--pub-warning-line);
+}
+
+.pub-form-note--warning > svg {
+  color: var(--pub-warning);
+}
+
+.pub-form-note--warning strong {
+  color: var(--pub-warning-text);
+}
+
+.pub-form-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--pub-text-muted);
+  border: 1px dashed var(--pub-line-strong);
+  border-radius: 14px;
+}
+
+.pub-form-placeholder > * {
+  margin: 0;
+}
+
+.pub-form-placeholder__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--pub-ink);
+}
+
+.pub-form-placeholder__text {
+  max-width: 52ch;
+  font-size: 14px;
+}
+
+.pub-form .pub-form__alert {
+  margin: 0 32px 20px;
+}
+
+.pub-form .pub-form__alert > svg {
+  flex: none;
+}
+
+.pub-form-status {
+  margin: 0;
+  font-size: 13px;
+  color: var(--pub-text-muted);
+}
+
+.pub-form-status--ok {
+  color: var(--pub-coffee);
+}
+
+.pub-form-status--problem {
+  color: var(--pub-danger);
+}
+
+/* Sede notice (AvisoSedeFinca) sits inside the panel, inset like the sections */
+.pub-form .aviso-sede-finca {
+  width: auto;
+  margin: 0 32px 24px;
+}
+
+@media (max-width: 639px) {
+  .pub-form .pub-form__alert,
+  .pub-form .aviso-sede-finca {
+    margin-inline: 16px;
+  }
+}
+
+/* ---------- Footer ---------- */
+
+.pub-form__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 32px;
+  border-top: 1px solid var(--pub-line);
+}
+
+.pub-form__required-note {
+  margin: 0;
+  font-size: 14px;
+  color: var(--pub-text-muted);
+}
+
+.pub-form__submit {
+  min-width: 200px;
+}
+
+@media (max-width: 639px) {
+  .pub-form__footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    padding: 16px;
+  }
+
+  .pub-form__required-note {
+    text-align: center;
+  }
+
+  .pub-form__submit {
+    width: 100%;
+  }
+}
+
+/* ---------- Success ---------- */
+
+.pub-form-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 620px;
+  margin: 8px auto 0;
+  padding: 40px 32px;
+  text-align: center;
+}
+
+.pub-form-success__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  color: var(--pub-coffee);
+  background: var(--pub-coffee-soft);
+  border-radius: 50%;
+}
+
+.pub-form-success__title {
+  margin: 8px 0 0;
+  font-size: clamp(1.6rem, 2vw + 1rem, 2rem);
+  line-height: 1.15;
+}
+
+.pub-form-success__title:focus-visible {
+  outline: 2px solid var(--pub-coffee);
+  outline-offset: 4px;
+}
+
+.pub-form-success__summary {
+  max-width: 46ch;
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--pub-text-muted);
+}
+
+.pub-form-success__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+@media (max-width: 639px) {
+  .pub-form-success {
+    padding: 32px 16px;
+  }
+
+  .pub-form-success__actions,
+  .pub-form-success__actions > .pub-btn {
+    width: 100%;
+  }
+
+  .pub-form-success__actions {
+    flex-direction: column;
+  }
+}
+
+/* ---------- Calendar ---------- */
+
+.pub-calendar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.pub-calendar__selected {
+  margin: 0;
+  font-size: 15px;
+  color: var(--pub-text-muted);
+  text-align: center;
+}
+
+.pub-calendar__selected strong {
+  font-weight: 600;
+  color: var(--pub-ink);
+}
+
+.pub-calendar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--pub-text-muted);
+}
+
+.pub-calendar__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pub-calendar__swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+  border-radius: 50%;
+}
+
+.pub-calendar__swatch--on {
+  font-weight: 600;
+  color: var(--pub-ink);
+  background: var(--pub-coffee-soft);
+  border: 1.5px solid var(--pub-coffee);
+}
+
+.pub-calendar__swatch--off {
+  color: var(--pub-text-muted);
+  opacity: 0.55;
+}
+
+.pub-form .shadcn-calendar {
+  max-width: 336px !important;
+  padding: 16px !important;
+  background-color: var(--pub-surface) !important;
+  border: 1px solid var(--pub-line) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+
+.pub-form .shadcn-calendar .rdp-root {
+  --rdp-accent-color: var(--pub-coffee);
+  --rdp-accent-background-color: var(--pub-coffee-soft);
+}
+
+.pub-form .shadcn-calendar .rdp-month_caption,
+.pub-form .shadcn-calendar .rdp-dropdown_root {
+  color: var(--pub-ink) !important;
+}
+
+.pub-form .shadcn-calendar .rdp-dropdown_root:hover,
+.pub-form .shadcn-calendar .rdp-button_previous:hover:not(:disabled),
+.pub-form .shadcn-calendar .rdp-button_next:hover:not(:disabled) {
+  background: var(--pub-coffee-soft) !important;
+  color: var(--pub-ink) !important;
+}
+
+.pub-form .shadcn-calendar .rdp-button_previous,
+.pub-form .shadcn-calendar .rdp-button_next {
+  color: var(--pub-ink) !important;
+}
+
+.pub-form .shadcn-calendar .rdp-weekday {
+  width: 40px !important;
+  height: 28px !important;
+  color: var(--pub-text-muted) !important;
+}
+
+.pub-form .shadcn-calendar .rdp-day {
+  width: 40px !important;
+  height: 40px !important;
+}
+
+.pub-form .shadcn-calendar .rdp-day_button {
+  width: 38px !important;
+  height: 38px !important;
+  font-size: 15px !important;
+  color: var(--pub-ink) !important;
+}
+
+.pub-form .shadcn-calendar .rdp-day_button:hover:not(:disabled) {
+  background-color: var(--pub-coffee-soft) !important;
+}
+
+.pub-form .shadcn-calendar .rdp-outside .rdp-day_button {
+  color: var(--pub-text-muted) !important;
+}
+
+.pub-form .shadcn-calendar .rdp-disabled .rdp-day_button,
+.pub-form .shadcn-calendar .rdp-day_button:disabled {
+  color: var(--pub-text-muted) !important;
+  opacity: 0.45 !important;
+}
+
+.pub-form .shadcn-calendar .rdp-day-habilitado .rdp-day_button,
+.pub-form .shadcn-calendar .rdp-day_button.rdp-day-habilitado {
+  font-weight: 600 !important;
+  color: var(--pub-ink) !important;
+  background-color: var(--pub-coffee-soft) !important;
+  border: 1.5px solid var(--pub-coffee) !important;
+  box-shadow: none !important;
+}
+
+.pub-form .shadcn-calendar .rdp-day-habilitado .rdp-day_button:hover:not(:disabled) {
+  background-color: #ecdfd9 !important;
+  border-color: var(--pub-coffee) !important;
+}
+
+.pub-form .shadcn-calendar .rdp-selected .rdp-day_button,
+.pub-form .shadcn-calendar .rdp-day_button[aria-selected="true"],
+.pub-form .shadcn-calendar .rdp-selected .rdp-day-habilitado .rdp-day_button,
+.pub-form .shadcn-calendar .rdp-selected.rdp-day-habilitado .rdp-day_button {
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  background-color: var(--pub-coffee) !important;
+  border: 1.5px solid var(--pub-coffee) !important;
+  box-shadow: none !important;
+}
+
+.pub-form .shadcn-calendar .rdp-selected .rdp-day_button:hover {
+  background-color: var(--pub-coffee-hover) !important;
+  color: #ffffff !important;
+}
+
+.pub-form .shadcn-calendar .rdp-focused:not(.rdp-selected) .rdp-day_button {
+  outline: 2px solid var(--pub-coffee) !important;
+  outline-offset: 2px !important;
+}
+
+.pub-form .shadcn-calendar .rdp-today:not(.rdp-selected) .rdp-day_button {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.pub-form .pub-dropzone small {
+  font-size: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pub-choice {
+    transition: none;
+  }
+}
