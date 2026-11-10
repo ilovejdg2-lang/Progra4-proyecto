@@ -541,26 +541,22 @@ export async function obtenerDocumentosPublicos(filtros = {}) {
     }
   }
 
-  // Orden
-  if (filtros.orden) {
-    if (filtros.orden === "antiguos") {
-      filtrados.sort(
-        (a, b) =>
-          new Date(a.fechaPublicacion || 0) - new Date(b.fechaPublicacion || 0),
-      );
-    } else if (filtros.orden === "populares") {
-      filtrados.sort((a, b) => b.descargasCount - a.descargasCount);
-    } else if (filtros.orden === "titulo_asc") {
-      filtrados.sort((a, b) => (a.titulo || "").localeCompare(b.titulo || ""));
-    } else if (filtros.orden === "titulo_desc") {
-      filtrados.sort((a, b) => (b.titulo || "").localeCompare(a.titulo || ""));
-    } else {
-      filtrados.sort(
-        (a, b) =>
-          new Date(b.fechaPublicacion || 0) - new Date(a.fechaPublicacion || 0),
-      );
-    }
-  }
+  // Orden: acepta los valores del backend (recientes, antiguos, descargas, az, za)
+  // y los alias anteriores (populares, titulo_asc, titulo_desc). Sin valor, recientes.
+  const porTitulo = (a, b) =>
+    (a.titulo || "").localeCompare(b.titulo || "", "es", { sensitivity: "base" });
+  const porFecha = (a, b) =>
+    new Date(b.fechaPublicacion || 0) - new Date(a.fechaPublicacion || 0);
+  const comparadores = {
+    antiguos: (a, b) => porFecha(b, a),
+    descargas: (a, b) => b.descargasCount - a.descargasCount,
+    populares: (a, b) => b.descargasCount - a.descargasCount,
+    az: porTitulo,
+    titulo_asc: porTitulo,
+    za: (a, b) => porTitulo(b, a),
+    titulo_desc: (a, b) => porTitulo(b, a),
+  };
+  filtrados.sort(comparadores[filtros.orden] || porFecha);
 
   const limite = parseInt(filtros.limite || "12", 10) || 12;
   const pagina = parseInt(filtros.pagina || "1", 10) || 1;

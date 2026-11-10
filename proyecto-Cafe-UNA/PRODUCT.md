@@ -48,7 +48,7 @@ Desktop-first administrative workstation environment (with responsive mobile sup
 
 - **Name**: Café UNA (Universidad Nacional).
 - **Brand Identity**: Warm, grounded coffee institution combined with structured, professional administrative tooling.
-- **Public Surface Isolation**: Public storefront visuals and global styles must remain completely untouched during admin redesign work.
+- **Public Surface Isolation**: Public pages are being redesigned page by page under the public system documented in `DESIGN.md` ("Public site"). Admin stays isolated: admin work never changes public visuals, and public work never changes admin tokens or the existing `:root` values.
 
 ## Evidence on Hand
 

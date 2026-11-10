@@ -1,0 +1,135 @@
+/*
+ * Styles the admin documentation screens still rely on. They used to come from the
+ * public Repositorio stylesheet, which was replaced by the public design system.
+ */
+
+.icon--pdf { color: #ef4444; }
+.icon--word { color: #2563eb; }
+.icon--excel { color: #10b981; }
+.icon--image { color: #8b5cf6; }
+.icon--archive { color: #f59e0b; }
+.icon--default { color: #64748b; }
+
+.repositorio-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+  animation: biblioFadeIn 0.15s ease-out;
+}
+
+@keyframes biblioFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes biblioScaleUp {
+  from {
+    transform: scale(0.97);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.repositorio-modal-container {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  isolation: isolate;
+  animation: biblioScaleUp 0.15s ease-out;
+}
+
+.repositorio-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 1rem;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.badge--repositorio-modal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: #0f172a;
+  background: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 999px;
+  margin-bottom: 0.35rem;
+}
+
+.repositorio-modal-header h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.repositorio-modal-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.repositorio-modal-close {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.repositorio-modal-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.spinner-sm {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: biblioSpin 0.7s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@keyframes biblioSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

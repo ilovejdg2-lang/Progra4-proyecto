@@ -1,102 +1,57 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { ST } from "../../../Components/T/ST";
+import { useTraducir } from "../../../hooks/useTraducir";
+import { obtenerNumerosPagina } from "../repositorioLogic";
 
-export function Pagination({
-  paginaActual = 1,
-  totalPaginas = 1,
-  onCambiarPagina,
-}) {
+export function Pagination({ paginaActual = 1, totalPaginas = 1, onCambiarPagina }) {
+  const tNav = useTraducir("Paginación de resultados");
+  const tAnterior = useTraducir("Página anterior");
+  const tSiguiente = useTraducir("Página siguiente");
+  const tPagina = useTraducir("Página");
+
   if (totalPaginas <= 1) return null;
 
-  // Generar lista de números de páginas con elipsis
-  const obtenerNumeros = () => {
-    const delta = 1;
-    const range = [];
-    const rangeWithDots = [];
-
-    for (
-      let i = Math.max(2, paginaActual - delta);
-      i <= Math.min(totalPaginas - 1, paginaActual + delta);
-      i++
-    ) {
-      range.push(i);
-    }
-
-    if (paginaActual - delta > 2) {
-      rangeWithDots.push(1, "...");
-    } else {
-      rangeWithDots.push(1);
-    }
-
-    rangeWithDots.push(...range);
-
-    if (paginaActual + delta < totalPaginas - 1) {
-      rangeWithDots.push("...", totalPaginas);
-    } else if (totalPaginas > 1) {
-      rangeWithDots.push(totalPaginas);
-    }
-
-    return rangeWithDots;
-  };
-
-  const paginas = obtenerNumeros();
-
   return (
-    <nav className="biblio-pagination no-print" aria-label="Paginación de resultados">
-      {/* Botón Anterior */}
+    <nav className="repo-pagination" aria-label={tNav}>
       <button
         type="button"
-        className="biblio-pagination__btn"
+        className="repo-page-btn"
         disabled={paginaActual <= 1}
         onClick={() => onCambiarPagina(paginaActual - 1)}
-        aria-label="Página anterior"
+        aria-label={tAnterior}
       >
-        <ChevronLeft size={16} />
-        <span className="desktop-only">
-          <ST>Anterior</ST>
-        </span>
+        <ChevronLeft size={18} aria-hidden="true" />
       </button>
 
-      {/* Números de página */}
-      <div className="biblio-pagination__pages">
-        {paginas.map((p, index) => {
-          if (p === "...") {
-            return (
-              <span key={`dots-${index}`} className="biblio-pagination__dots">
-                ...
-              </span>
-            );
-          }
+      <ul className="repo-pagination__pages">
+        {obtenerNumerosPagina(paginaActual, totalPaginas).map((p, index) =>
+          p === "..." ? (
+            <li key={`gap-${index}`} className="repo-pagination__gap" aria-hidden="true">
+              …
+            </li>
+          ) : (
+            <li key={p}>
+              <button
+                type="button"
+                className={`repo-page-btn${p === paginaActual ? " repo-page-btn--active" : ""}`}
+                onClick={() => onCambiarPagina(p)}
+                aria-current={p === paginaActual ? "page" : undefined}
+                aria-label={`${tPagina} ${p}`}
+              >
+                {p}
+              </button>
+            </li>
+          ),
+        )}
+      </ul>
 
-          const esActiva = p === paginaActual;
-          return (
-            <button
-              key={p}
-              type="button"
-              className={`biblio-pagination__num ${
-                esActiva ? "biblio-pagination__num--active" : ""
-              }`}
-              onClick={() => onCambiarPagina(p)}
-              aria-current={esActiva ? "page" : undefined}
-            >
-              {p}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Botón Siguiente */}
       <button
         type="button"
-        className="biblio-pagination__btn"
+        className="repo-page-btn"
         disabled={paginaActual >= totalPaginas}
         onClick={() => onCambiarPagina(paginaActual + 1)}
-        aria-label="Página siguiente"
+        aria-label={tSiguiente}
       >
-        <span className="desktop-only">
-          <ST>Siguiente</ST>
-        </span>
-        <ChevronRight size={16} />
+        <ChevronRight size={18} aria-hidden="true" />
       </button>
     </nav>
   );

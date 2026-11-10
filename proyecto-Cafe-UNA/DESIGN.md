@@ -416,3 +416,87 @@ Code: `src/Pages/Admin/Usuarios/Usuarios.jsx`, shell `.admin-table-shell--usuari
 | `AdminSeccionCard`, `AdminModal` black defaults, `InformacionPaginaPrincipal` image badge, Sidebar scrim | **Left on purpose** | Shared defaults or non-control surfaces |
 | Remaining hardcoded Tailwind color utilities and `adminDark.css` `!important` overrides | **Legacy, to migrate** | Move to `--admin-*` tokens |
 | Other admin pages (toolbars, `AdminPaginacion`, old cards) | **Not yet reviewed** | Follow this file when touched |
+
+## Public site
+
+The public site is redesigned page by page under one system, "Café de origen, institucional". It is separate from the admin system above: tokens are prefixed `--pub-*` and live in `src/styles/publicSystem.css` (dialogs and form pieces in `src/styles/publicDialog.css`). Admin tokens and existing `:root` values are never changed.
+
+### Tokens
+
+| Role | Token | Value |
+|---|---|---|
+| Titles | `--pub-ink` | `#2a1612` |
+| Body text | `--pub-text` | `#2a1612` |
+| Muted text (6.4:1 on canvas) | `--pub-text-muted` | `#6b5a52` |
+| Action color (the only one) | `--pub-coffee` / `--pub-coffee-hover` | `#5c4038` / `#452e27` |
+| Selected fill | `--pub-coffee-soft` | `#f6efec` |
+| Borders | `--pub-line` | `#e9e2da` |
+| Quiet button border | `--pub-line-strong` | `#b9aaa0` |
+| Input border (3:1 or better) | `--pub-input-border` | `#8a7b72` |
+| Page / surface | `--pub-canvas` / `--pub-surface` | `#fbf9f6` / `#ffffff` |
+
+### Page background (one switch)
+
+The shared public layout (`.site-shell`: Navbar + `#center.site-main` + Footer, covering every public page that is not chromeless) paints `var(--pub-page-bg)`. It is set in `src/styles/publicSystem.css`:
+
+```css
+--pub-page-bg: var(--pub-canvas); /* change to #ffffff to revert the site to white */
+```
+
+### Title font (one switch)
+
+Page (`h1`) and section (`h2`) titles inside `.site-shell` use `var(--pub-font-display)`, weight 600, letter-spacing -0.015em (navbar, footer and small uppercase kickers keep Geist). Revert by editing the token in `src/styles/publicSystem.css`:
+
+```css
+--pub-font-display: var(--sans); /* currently "Source Serif 4 Variable", Georgia, serif */
+```
+
+Cards, panels, inputs, dialogs and the navbar stay white. Admin, perfil, login/registro and checkout are outside this layout and unaffected.
+
+### Type
+
+- Geist for all UI. Source Serif 4 (self-hosted with `@fontsource-variable/source-serif-4`; the Netlify CSP blocks Google Fonts) only for page titles and section or dialog titles: weight 600, letter-spacing `-0.02em`, class `pub-serif-title`.
+- Sentence case everywhere. No uppercase letter-spaced kickers or eyebrows.
+
+### Buttons
+
+Three levels, all pills of 44px or more (`pub-btn`):
+
+- `pub-btn--primary`: coffee fill, white text. One per page.
+- `pub-btn--secondary`: white, 1px `--pub-line-strong` border, ink text.
+- `pub-btn--link`: coffee underlined text.
+- `pub-btn--icon` makes a secondary button a 44px square-hit icon button; it needs an `aria-label`.
+
+No black or slate-900 buttons on public pages. `index.css` forces the pill radius on any class containing `btn` and a 16px radius on classes containing `card`, `panel` or `modal`; use those names on purpose and avoid new `!important`.
+
+### Layout and containers
+
+- `pub-container`: max-width 1200px, 24px side padding (16px on phones). `pub-page`: canvas background.
+- Cards and panels (`pub-panel`): white, 1px `--pub-line` border, 16px radius, no heavy shadow.
+- Two-column pages use `flex-wrap` (sidebar about 230px, content `flex: 999 1 560px; min-width: 0`) instead of breakpoints.
+
+### PublicPageHeader
+
+`src/Components/Public/PublicPageHeader.jsx`: serif `h1`, one muted line, optional actions slot, 1px bottom divider. On phones the actions stack full width.
+
+### List row
+
+Divided `<ul>` inside one `pub-panel`, no card grid. Row = 40x52 file-type tile (`--pub-coffee-soft`, label PDF/DOC/XLS/IMG/ZIP, `aria-hidden`), 17px semibold title that opens the item, one muted meta line with middle dots (missing parts omitted), then a secondary "Ver" pill and an icon-only action. On phones only the icon action stays. Reference: `src/Pages/Repositorio/components/DocumentoFila.jsx`.
+
+### Dialogs and forms
+
+- Native `ModalDialog` with `className="pub-dialog-overlay"` and a `pub-dialog` box: white, 640px max, header with serif title + muted line + 44px close button, footer with secondary action left and primary right. On phones the dialog is a bottom sheet and the footer stacks with the primary on top.
+- Fields are grouped in `fieldset`/`legend` (`pub-fieldset`), sentence-case 15px labels, `*` for required, "(opcional)" for optional, 44px pill inputs with `--pub-input-border`, 16px radius textareas. Hints are 14px muted text.
+- Notes (for example visibility) use `pub-note`: `--pub-coffee-soft` box with a drawn icon. No emoji or glyph icons.
+
+### Migration status
+
+| Page | Status |
+|---|---|
+| Repositorio (page, submission dialog, viewer) | **Implemented** |
+| Formularios (voluntariado, visitas, donaciones, propuestas) | Pending (1) |
+| Productores / Sobre nosotros | Pending (2) |
+| Área del cliente | Pending (3) |
+| Inicio / Checkout | Pending (4) |
+
+The document viewer (`VisualizarDocumentoModal`) is also used by the admin document screens, so it follows the public system there too.

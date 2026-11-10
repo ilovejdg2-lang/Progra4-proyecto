@@ -443,7 +443,7 @@ a.btn-enviar {
 }
 
 .propuesta-page {
-  background: #fafafa;
+  background: var(--pub-page-bg, #fafafa);
   min-height: 100vh;
   padding: 24px 16px 64px;
   color: #0f172a;
@@ -552,7 +552,7 @@ a.btn-enviar {
 }
 
 .productores-directorio {
-  background: #fff;
+  background: var(--pub-page-bg, #fff);
   color: #1c1917;
   min-height: 100vh;
   padding: 0 0 96px;
@@ -654,7 +654,7 @@ a.btn-enviar {
 }
 
 .productores-hero__title {
-  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-family: var(--pub-font-display);
   font-size: clamp(1.65rem, 2.4vw, 2.05rem);
   font-weight: 800;
   line-height: 1.15;
@@ -853,7 +853,7 @@ a.btn-enviar {
 }
 
 .productores-directorio__title {
-  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-family: var(--pub-font-display);
   font-size: var(--text-title);
   font-weight: 800;
   letter-spacing: -0.025em;
@@ -929,7 +929,7 @@ a.btn-enviar {
 
 .productores-directorio__listado-titulo {
   margin: 0;
-  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-family: var(--pub-font-display);
   font-size: var(--text-subtitle);
   font-weight: 700;
   letter-spacing: -0.02em;

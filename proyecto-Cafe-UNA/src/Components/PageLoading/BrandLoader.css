@@ -48,7 +48,7 @@
 .brand-loader__wordmark {
   margin: 0;
   color: #4d2b1f;
-  font-family: var(--serif, Georgia, "Times New Roman", serif);
+  font-family: var(--pub-font-display);
   font-size: clamp(1.65rem, 5vw, 2.15rem);
   font-weight: 700;
   letter-spacing: -0.03em;
