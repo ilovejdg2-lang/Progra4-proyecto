@@ -111,13 +111,6 @@ const ORDEN_CAMPOS = [
   "disponibilidadVisitaId",
 ];
 
-/** Selects have no `name` attribute, so the focus helper finds them by id. */
-const CAMPOS_POR_ID = {
-  encargadoNacionalidad: "visita-encargadoNacionalidad",
-  provincia: "visita-provincia",
-  canton: "visita-canton",
-};
-
 function partesNombreCedula(datos) {
   return {
     nombre: String(datos?.nombre || datos?.Nombre || "").trim(),
@@ -388,6 +381,7 @@ export default function SolicitarVisita() {
   const [availabilityStatus, setAvailabilityStatus] = useState("loading");
   const [availabilityError, setAvailabilityError] = useState("");
   const [fechaSeleccionada, setFechaSeleccionada] = useState(null);
+  const [recargaDisponibilidad, setRecargaDisponibilidad] = useState(0);
 
   const consultaCedulaRef = useRef({ digitos: "", enCurso: false });
   const [consultandoCedula, setConsultandoCedula] = useState(false);
@@ -572,7 +566,7 @@ export default function SolicitarVisita() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [recargaDisponibilidad]);
 
   const limpiarError = (campo) => {
     setErrores((prev) => {
@@ -732,7 +726,7 @@ export default function SolicitarVisita() {
         errors: nuevosErrores,
         root: formEl,
         fieldOrder: ORDEN_CAMPOS,
-        fieldMap: CAMPOS_POR_ID,
+        idPrefix: "visita-",
       });
       return;
     }
@@ -784,6 +778,11 @@ export default function SolicitarVisita() {
     setAvisoCedula(null);
     consultaCedulaRef.current = { digitos: "", enCurso: false };
     setForm({ ...INITIAL_FORM, encargadoEmail: session?.email || "" });
+    // The group just sent used up capacity: forget the stale slots and load them again
+    setFechaSeleccionada(null);
+    setFranjasFecha([]);
+    setAvailabilityStatus("loading");
+    setRecargaDisponibilidad((n) => n + 1);
   };
 
   const sinFechas = availabilityStatus === "success" && fechasHabilitadasDates.length === 0;
@@ -811,7 +810,7 @@ export default function SolicitarVisita() {
           {success ? (
             <FormSuccess
               title="Solicitud enviada"
-              summary={`Solicitud #${success.id} enviada en estado ${success.estado}. Te avisamos por correo electrónico cuando la revisemos.`}
+              summary={`Solicitud #${success.id} enviada en estado ${success.estado}. El equipo de Café UNA la va a revisar y te avisamos por correo electrónico.`}
             >
               <button type="button" className="pub-btn pub-btn--primary" onClick={reiniciarFormulario}>
                 <ST>Hacer otra solicitud</ST>
@@ -1184,6 +1183,8 @@ export default function SolicitarVisita() {
                   ) : (
                     <div className="visita-fecha">
                       <CalendarPicker
+                        id="visita-fecha"
+                        label="Calendario de fechas disponibles"
                         selected={fechaSeleccionada}
                         onSelect={handleSelectFecha}
                         disabled={isDateDisabled}
@@ -1266,7 +1267,7 @@ export default function SolicitarVisita() {
                   title="Necesidades del grupo"
                   hint="Contanos si necesitan algo especial para la visita."
                 >
-                  <ChoiceGroup label="Necesidades del grupo" columns={2}>
+                  <ChoiceGroup label="Necesidades del grupo" type="checkbox" columns={2}>
                     <ChoiceCard
                       type="checkbox"
                       name="requiereAccesibilidad"

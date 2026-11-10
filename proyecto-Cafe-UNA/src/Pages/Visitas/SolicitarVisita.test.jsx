@@ -439,6 +439,20 @@ describe("SolicitarVisita form feedback and layout", () => {
     expect(screen.getByRole("button", { name: /hacer otra solicitud/i })).toBeInTheDocument();
   });
 
+  it("reloads availability and live capacity when starting another request", async () => {
+    crearSolicitudVisitaMock.mockResolvedValueOnce({ id: "31", estado: "Pendiente" });
+    render(<SolicitarVisita />);
+
+    await completarFormulario();
+    await waitFor(() => expect(obtenerFranjasMock).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole("button", { name: /enviar solicitud/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /hacer otra solicitud/i }));
+
+    await waitFor(() => expect(obtenerDisponibilidadMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(obtenerFranjasMock).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole("radio", { name: /09:00/i })).not.toBeChecked();
+  });
+
   it("flags a slot that is running low with the remaining capacity in text", async () => {
     obtenerDisponibilidadMock.mockResolvedValueOnce([
       {

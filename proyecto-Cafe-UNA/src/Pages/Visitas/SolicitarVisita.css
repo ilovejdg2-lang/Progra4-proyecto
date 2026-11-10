@@ -86,7 +86,7 @@
 
 @media (min-width: 860px) {
   .visita-fecha {
-    grid-template-columns: 336px minmax(0, 1fr);
+    grid-template-columns: 356px minmax(0, 1fr);
     align-items: start;
   }
 }
