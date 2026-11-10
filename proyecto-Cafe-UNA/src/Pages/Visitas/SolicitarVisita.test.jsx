@@ -333,3 +333,139 @@ describe("SolicitarVisita", () => {
     expect(screen.getByText(/cupo agotado/i)).toBeInTheDocument();
   });
 });
+
+describe("SolicitarVisita form feedback and layout", () => {
+  beforeEach(() => {
+    mockSessionUser = { id: 7, email: "test@ejemplo.com", roles: ["Cliente"] };
+    crearSolicitudVisitaMock.mockReset();
+    obtenerDisponibilidadMock.mockReset().mockResolvedValue([
+      {
+        id: "12",
+        fecha: "2099-12-31",
+        horaInicio: "09:00:00",
+        horaFin: "10:00:00",
+        habilitada: true,
+        capacidadMaxima: 30,
+        cupoRestante: 26,
+        agotada: false,
+      },
+    ]);
+    obtenerFranjasMock.mockReset().mockResolvedValue([]);
+    consultarCedulaMock.mockReset();
+    navigateMock.mockReset();
+    sessionStorage.clear();
+  });
+
+  async function completarFormulario() {
+    fireEvent.change(screen.getByLabelText(/^identificación/i), { target: { value: "1-1111-1111" } });
+    await waitFor(() => expect(consultarCedulaMock).toHaveBeenCalledWith("111111111"));
+    fireEvent.change(screen.getByLabelText(/^nombre \*/i), { target: { value: "Ana" } });
+    fireEvent.change(screen.getByLabelText(/^primer apellido/i), { target: { value: "López" } });
+    fireEvent.change(screen.getByLabelText(/^correo electrónico/i), { target: { value: "ana@ejemplo.com" } });
+    fireEvent.change(screen.getByLabelText(/^teléfono/i), { target: { value: "8888-7777" } });
+    elegirOpcion(/^provincia \*/i, "Heredia");
+    elegirOpcion(/^cantón \*/i, "Barva");
+    fireEvent.change(screen.getByLabelText(/cantidad de visitantes/i), { target: { value: "4" } });
+    fireEvent.change(screen.getByLabelText(/tipo de grupo/i), { target: { value: "Universidad" } });
+    fireEvent.click(await screen.findByRole("radio", { name: /09:00/i }));
+    fireEvent.change(screen.getByLabelText(/motivo de la visita/i), { target: { value: "Académica" } });
+  }
+
+  it("marks each missing field with its own linked message and keeps a single banner", async () => {
+    render(<SolicitarVisita />);
+    await screen.findByRole("radio", { name: /09:00/i });
+
+    fireEvent.click(screen.getByRole("button", { name: /enviar solicitud/i }));
+
+    const nombre = screen.getByLabelText(/^nombre \*/i);
+    expect(nombre).toHaveAttribute("aria-invalid", "true");
+    expect(document.getElementById(nombre.getAttribute("aria-describedby"))).toHaveTextContent(
+      /ingresá el nombre/i,
+    );
+    expect(screen.getByLabelText(/cantidad de visitantes/i)).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText(/motivo de la visita/i)).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+  });
+
+  it("clears the error of a field as soon as the person fixes it", async () => {
+    render(<SolicitarVisita />);
+
+    fireEvent.click(screen.getByRole("button", { name: /enviar solicitud/i }));
+    const nombre = await screen.findByLabelText(/^nombre \*/i);
+    expect(nombre).toHaveAttribute("aria-invalid", "true");
+
+    fireEvent.change(nombre, { target: { value: "Ana" } });
+
+    expect(screen.getByLabelText(/^nombre \*/i)).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("explains an invalid email on the email field", () => {
+    render(<SolicitarVisita />);
+
+    fireEvent.change(screen.getByLabelText(/^correo electrónico/i), { target: { value: "ana@" } });
+    fireEvent.click(screen.getByRole("button", { name: /enviar solicitud/i }));
+
+    const correo = screen.getByLabelText(/^correo electrónico/i);
+    expect(correo).toHaveAttribute("aria-invalid", "true");
+    expect(document.getElementById(correo.getAttribute("aria-describedby"))).toHaveTextContent(/correo/i);
+  });
+
+  it("puts the recommendations before the first data section", () => {
+    render(<SolicitarVisita />);
+
+    const recomendaciones = screen.getByText(/recomendaciones para la visita/i);
+    const primerCampo = screen.getByLabelText(/^tipo de identificación/i);
+
+    expect(
+      recomendaciones.compareDocumentPosition(primerCampo) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("offers a way back to the home page", () => {
+    render(<SolicitarVisita />);
+
+    expect(screen.getByRole("link", { name: /volver al inicio/i })).toBeInTheDocument();
+  });
+
+  it("replaces the form with the success screen and keeps the request number", async () => {
+    crearSolicitudVisitaMock.mockResolvedValueOnce({ id: "31", estado: "Pendiente" });
+    render(<SolicitarVisita />);
+
+    await completarFormulario();
+    fireEvent.click(screen.getByRole("button", { name: /enviar solicitud/i }));
+
+    expect(await screen.findByText(/solicitud #31/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /enviar solicitud/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /hacer otra solicitud/i })).toBeInTheDocument();
+  });
+
+  it("flags a slot that is running low with the remaining capacity in text", async () => {
+    obtenerDisponibilidadMock.mockResolvedValueOnce([
+      {
+        id: "slot-bajo",
+        fecha: "2099-12-31",
+        horaInicio: "09:00:00",
+        horaFin: "10:00:00",
+        habilitada: true,
+        capacidadMaxima: 30,
+        cupoRestante: 3,
+        agotada: false,
+      },
+    ]);
+    render(<SolicitarVisita />);
+
+    await screen.findByRole("radio", { name: /09:00/i });
+
+    expect(screen.getByText(/quedan 3 cupos de 30/i)).toBeInTheDocument();
+  });
+
+  it("warns with an alert when the group is larger than the remaining capacity", async () => {
+    render(<SolicitarVisita />);
+
+    await screen.findByRole("radio", { name: /09:00/i });
+    fireEvent.click(screen.getByRole("radio", { name: /09:00/i }));
+    fireEvent.change(screen.getByLabelText(/cantidad de visitantes/i), { target: { value: "40" } });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/supera el cupo restante/i);
+  });
+});

@@ -4,31 +4,43 @@ import { useNavigate } from "@tanstack/react-router";
 import { format, isBefore, startOfDay } from "date-fns";
 import { enUS, es } from "date-fns/locale";
 import {
-  AlertTriangle,
   Bug,
-  CalendarCheck2,
-  CalendarX2,
   Car,
-  CheckCircle2,
-  Clock,
   Download,
   Droplets,
-  FileDown,
   Footprints,
   Info,
-  ShieldCheck,
+  Shirt,
+  Users,
   X,
 } from "lucide-react";
-import { IconoSitio } from "../../Components/IconoSitio/IconoSitio";
 
-import { Calendar } from "@/Components/ui/calendar";
 import { SelectFiltro } from "../../Components/ui/SelectFiltro";
 import { ST } from "../../Components/T/ST";
 import { useTraducir } from "../../hooks/useTraducir";
 import { useIdioma } from "../../lib/useIdioma";
 import PageLoading from "../../Components/PageLoading/PageLoading";
 import AvisoSedeFinca from "../../Components/AvisoSedeFinca/AvisoSedeFinca";
+import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
+import { PublicPageHeader } from "../../Components/Public/PublicPageHeader";
+import {
+  CalendarPicker,
+  ChoiceCard,
+  ChoiceGroup,
+  CupoTexto,
+  Field,
+  FormAlert,
+  FormGrid,
+  FormNote,
+  FormPlaceholder,
+  FormSection,
+  FormSuccess,
+  SubmitFooter,
+} from "../../Components/Public/PublicForm";
 import { usePaintPublicPage } from "../../hooks/usePaintPublicPage";
+import { HOME_SCROLL_SECTIONS, navigateToHomeSection } from "../../lib/homeScrollTarget";
+import { describirCupo } from "../../lib/formatoFormulario";
+import { queueFocusFormError } from "../../lib/formFocus";
 import { PROVINCIAS_CR, cantonesDeProvincia } from "../../lib/costaRicaDivisiones";
 import {
   digitosConsultables,
@@ -52,9 +64,12 @@ import {
   obtenerFranjasHorariasPorFecha,
   obtenerUrlInstructivoPdf,
 } from "../../services/visitasService";
-import "../Voluntariado/SolicitarVoluntariado.css";
+import "./SolicitarVisita.css";
 
 const VISITA_LOGIN_REDIRECT = "/visitas/solicitar";
+const NOMBRE_PDF_INSTRUCTIVO = "instructivo_recomendaciones_visitas_cafe_una.pdf";
+const MENSAJE_FALTAN_CAMPOS = "Completá los campos obligatorios antes de enviar la solicitud.";
+const MENSAJE_REVISAR_CAMPOS = "Revisá los campos marcados antes de enviar la solicitud.";
 
 const INITIAL_FORM = {
   encargadoTipoIdentificacion: "cedula",
@@ -79,44 +94,36 @@ const INITIAL_FORM = {
   observaciones: "",
 };
 
+/** Order in which the first invalid field receives focus. */
+const ORDEN_CAMPOS = [
+  "encargadoIdentificacion",
+  "encargadoNacionalidad",
+  "encargadoNombre",
+  "encargadoPrimerApellido",
+  "encargadoEmail",
+  "encargadoTelefono",
+  "paisProcedencia",
+  "provincia",
+  "canton",
+  "cantidadVisitantes",
+  "tipoGrupo",
+  "motivoVisita",
+  "disponibilidadVisitaId",
+];
+
+/** Selects have no `name` attribute, so the focus helper finds them by id. */
+const CAMPOS_POR_ID = {
+  encargadoNacionalidad: "visita-encargadoNacionalidad",
+  provincia: "visita-provincia",
+  canton: "visita-canton",
+};
+
 function partesNombreCedula(datos) {
   return {
     nombre: String(datos?.nombre || datos?.Nombre || "").trim(),
     primerApellido: String(datos?.primerApellido || datos?.PrimerApellido || "").trim(),
     segundoApellido: String(datos?.segundoApellido || datos?.SegundoApellido || "").trim(),
   };
-}
-
-function Field({ label, children }) {
-  return (
-    <label className="campo">
-      <ST>{label}</ST>
-      {children}
-    </label>
-  );
-}
-
-function SectionCard({ lugar, paso, title, hint, children }) {
-  return (
-    <section className="section-card">
-      <div className="section-card__header">
-        {paso != null ? (
-          <span className="section-card__paso" aria-hidden="true">
-            {paso}
-          </span>
-        ) : null}
-        <h4>
-          {paso != null ? (
-            <span className="sr-only">Paso {paso}. </span>
-          ) : null}
-          <ST>{title}</ST>
-        </h4>
-        {lugar ? <IconoSitio lugar={lugar} className="section-card__icon-inline" size={20} /> : null}
-        {hint ? <span className="section-card__hint"><ST>{hint}</ST></span> : null}
-      </div>
-      <div className="section-card__body">{children}</div>
-    </section>
-  );
 }
 
 function parseIsoLocal(isoStr) {
@@ -126,18 +133,246 @@ function parseIsoLocal(isoStr) {
   return new Date(y, m - 1, d);
 }
 
+function esAvisoCedulaInformativo(mensaje) {
+  return /cargad[oa]s?\s+autom[aá]ticamente/i.test(mensaje);
+}
+
+function validarSolicitud({ form, esPasaporte, tipoDocumento, selectedSlot, cantidadNum, cupoRestante }) {
+  const errores = {};
+  if (!form.encargadoIdentificacion.trim()) {
+    errores.encargadoIdentificacion = "Ingresá la identificación";
+  } else {
+    const errorIdentificacion = validarIdentificacion(tipoDocumento, form.encargadoIdentificacion);
+    if (errorIdentificacion) errores.encargadoIdentificacion = errorIdentificacion;
+  }
+  if (esPasaporte && !form.encargadoNacionalidad) {
+    errores.encargadoNacionalidad = "Elegí el país de origen del pasaporte.";
+  }
+  if (!form.encargadoNombre.trim()) errores.encargadoNombre = "Ingresá el nombre";
+  if (!form.encargadoPrimerApellido.trim()) errores.encargadoPrimerApellido = "Ingresá el primer apellido";
+  if (!form.encargadoEmail.trim()) errores.encargadoEmail = "Ingresá el correo electrónico";
+  else if (!esCorreoValido(form.encargadoEmail)) errores.encargadoEmail = MENSAJE_CORREO_INVALIDO;
+  if (!form.encargadoTelefono.trim()) errores.encargadoTelefono = "Ingresá el teléfono";
+
+  if (form.tipoVisitante === "Nacional") {
+    if (!form.provincia.trim()) errores.provincia = "Elegí la provincia";
+    if (!form.canton.trim()) errores.canton = "Elegí el cantón";
+  } else {
+    if (!form.paisProcedencia.trim()) errores.paisProcedencia = "Ingresá el país de procedencia del grupo";
+    if (!form.provincia.trim()) errores.provincia = "Ingresá la provincia o estado";
+    if (!form.canton.trim()) errores.canton = "Ingresá la ciudad";
+  }
+
+  if (!form.cantidadVisitantes) errores.cantidadVisitantes = "Ingresá la cantidad de visitantes";
+  else if (Number(form.cantidadVisitantes) < 2) {
+    errores.cantidadVisitantes = "Las visitas grupales requieren al menos 2 personas.";
+  }
+  if (!form.tipoGrupo.trim()) errores.tipoGrupo = "Ingresá el tipo de grupo";
+  if (!form.motivoVisita.trim()) errores.motivoVisita = "Ingresá el motivo de la visita";
+
+  if (!form.disponibilidadVisitaId) errores.disponibilidadVisitaId = "Elegí un horario con cupo";
+  else if (selectedSlot?.agotada) {
+    errores.disponibilidadVisitaId = "Ese horario se quedó sin cupo. Elegí otro.";
+  }
+
+  if (
+    !errores.cantidadVisitantes &&
+    selectedSlot &&
+    selectedSlot.cupoRestante !== undefined &&
+    cantidadNum > cupoRestante
+  ) {
+    errores.cantidadVisitantes = `La cantidad de visitantes (${cantidadNum}) supera el cupo disponible (${cupoRestante} personas) para este horario.`;
+  }
+  return errores;
+}
+
+/** "Antes de venir": what the group should know, grouped and scannable. Details stay in the dialog. */
+function RecomendacionesVisita({ urlInstructivoPdf, onVerDetalle }) {
+  return (
+    <div className="pub-panel pub-form visita-antes">
+      <FormSection title="Recomendaciones para la visita" hint="Antes de venir, esto es lo que conviene saber.">
+        <div className="visita-antes__grupos">
+          <section className="visita-antes__grupo">
+            <h3 className="visita-antes__grupo-titulo">
+              <ST>Qué llevar</ST>
+            </h3>
+            <ul className="visita-antes__lista">
+              <li className="visita-antes__item">
+                <Footprints size={20} aria-hidden="true" />
+                <div>
+                  <p className="visita-antes__titulo"><ST>Calzado cerrado obligatorio</ST></p>
+                  <p className="visita-antes__desc">
+                    <ST>Uso indispensable de calzado cerrado o botas con suela antideslizante para caminar por senderos agrícolas.</ST>
+                  </p>
+                </div>
+              </li>
+              <li className="visita-antes__item">
+                <Droplets size={20} aria-hidden="true" />
+                <div>
+                  <p className="visita-antes__titulo"><ST>Hidratación continua</ST></p>
+                  <p className="visita-antes__desc">
+                    <ST>Llevá botella o termo reutilizable con agua potable para el recorrido.</ST>
+                  </p>
+                </div>
+              </li>
+              <li className="visita-antes__item">
+                <Shirt size={20} aria-hidden="true" />
+                <div>
+                  <p className="visita-antes__titulo"><ST>Vestimenta y protección</ST></p>
+                  <p className="visita-antes__desc">
+                    <ST>Usá vestimenta cómoda, repelente y protección solar para actividades en campo abierto.</ST>
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </section>
+
+          <section className="visita-antes__grupo">
+            <h3 className="visita-antes__grupo-titulo">
+              <ST>Durante la visita</ST>
+            </h3>
+            <ul className="visita-antes__lista">
+              <li className="visita-antes__item">
+                <Users size={20} aria-hidden="true" />
+                <div>
+                  <p className="visita-antes__titulo"><ST>Te acompaña personal del proyecto</ST></p>
+                  <p className="visita-antes__desc">
+                    <ST>Todas las visitas son recibidas o acompañadas por personal del proyecto.</ST>
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </section>
+
+          <section className="visita-antes__grupo">
+            <h3 className="visita-antes__grupo-titulo">
+              <ST>Al llegar</ST>
+            </h3>
+            <ul className="visita-antes__lista">
+              <li className="visita-antes__item">
+                <Car size={20} aria-hidden="true" />
+                <div>
+                  <p className="visita-antes__titulo"><ST>Zonas de parqueo</ST></p>
+                  <p className="visita-antes__desc">
+                    <ST>Estacionamiento gratuito y vigilado para vehículos particulares, con área reservada para el desembarque y parqueo de autobuses o microbuses.</ST>
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </section>
+        </div>
+
+        <div className="visita-antes__acciones">
+          <a
+            href={urlInstructivoPdf}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pub-btn pub-btn--secondary"
+            download={NOMBRE_PDF_INSTRUCTIVO}
+          >
+            <Download size={18} aria-hidden="true" />
+            <ST>Descargar instructivo en PDF</ST>
+          </a>
+          <button type="button" onClick={onVerDetalle} className="pub-btn pub-btn--link">
+            <Info size={18} aria-hidden="true" />
+            <ST>Ver recomendaciones detalladas</ST>
+          </button>
+        </div>
+      </FormSection>
+    </div>
+  );
+}
+
+function InstructivoDialog({ urlInstructivoPdf, onClose }) {
+  const tCerrarVentana = useTraducir("Cerrar ventana");
+  return (
+    <ModalDialog className="pub-dialog-overlay" labelledBy="modal-recomendaciones-titulo" onClose={onClose}>
+      <div className="pub-dialog" onClick={(e) => e.stopPropagation()}>
+        <div className="pub-dialog__header">
+          <div>
+            <h2 id="modal-recomendaciones-titulo" className="pub-serif-title pub-dialog__title">
+              <ST>Instructivo de recomendaciones y seguridad</ST>
+            </h2>
+            <p className="pub-dialog__lead">
+              <ST>Finca Experimental Santa Lucía - Café UNA. Para que tu experiencia sea memorable y segura, te solicitamos cumplir con las siguientes directrices durante la visita.</ST>
+            </p>
+          </div>
+          <button type="button" className="pub-dialog-close" onClick={onClose} aria-label={tCerrarVentana}>
+            <X size={20} aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="pub-dialog__body">
+          <div className="visita-instructivo__punto">
+            <Footprints size={20} aria-hidden="true" />
+            <div>
+              <h3><ST>Calzado cerrado obligatorio</ST></h3>
+              <p>
+                <ST>Es indispensable utilizar tenis deportivas, botas de senderismo o botas con buen agarre. Por normativas de prevención, no se admiten sandalias ni calzado abierto en los senderos.</ST>
+              </p>
+            </div>
+          </div>
+          <div className="visita-instructivo__punto">
+            <Droplets size={20} aria-hidden="true" />
+            <div>
+              <h3><ST>Hidratación y vestimenta cómoda</ST></h3>
+              <p>
+                <ST>Usá vestimenta cómoda y apropiada para recorridos al aire libre bajo el sol. Sugerimos pantalón largo ligero. La finca dispone de tomas de agua potable para rellenar botellas reutilizables.</ST>
+              </p>
+            </div>
+          </div>
+          <div className="visita-instructivo__punto">
+            <Bug size={20} aria-hidden="true" />
+            <div>
+              <h3><ST>Repelente contra insectos y protección solar</ST></h3>
+              <p>
+                <ST>Llevá repelente si visitarán zonas con vegetación densa o cafetales. Considerá protección solar, sombrero o gorra y gafas oscuras durante las horas de mayor radiación.</ST>
+              </p>
+            </div>
+          </div>
+          <div className="visita-instructivo__punto">
+            <Car size={20} aria-hidden="true" />
+            <div>
+              <h3><ST>Zonas de parqueo y acceso</ST></h3>
+              <p>
+                <ST>Disponemos de estacionamiento gratuito vigilado para automóviles y área reservada para el desembarque y parqueo de autobuses o microbuses.</ST>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="pub-dialog__footer">
+          <a
+            href={urlInstructivoPdf}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pub-btn pub-btn--secondary"
+            download={NOMBRE_PDF_INSTRUCTIVO}
+          >
+            <Download size={18} aria-hidden="true" />
+            <ST>Descargar PDF</ST>
+          </a>
+          <button type="button" onClick={onClose} className="pub-btn pub-btn--primary">
+            <ST>Entendido, cerrar</ST>
+          </button>
+        </div>
+      </div>
+    </ModalDialog>
+  );
+}
+
 export default function SolicitarVisita() {
   const navigate = useNavigate();
   const { idioma } = useIdioma();
   const localeFecha = idioma === "en" ? enUS : es;
   const tPhPais = useTraducir("País de procedencia");
-  const tPhProvincia = useTraducir("Provincia o Estado");
+  const tPhProvincia = useTraducir("Provincia o estado");
   const tPhCiudad = useTraducir("Ciudad");
   const tPhTipoGrupo = useTraducir("Universidad, empresa, asociación…");
-  const tCerrarVentana = useTraducir("Cerrar ventana");
   const tElegirProvincia = useTraducir("Seleccioná una provincia");
   const tElegirCanton = useTraducir("Seleccioná un cantón");
   const tPrimeroProvincia = useTraducir("Primero seleccioná una provincia");
+  const tElegiPais = useTraducir("Elegí el país");
   const session = getActiveSessionUser();
   const isAuthenticated = Boolean(session?.token || session?.id);
 
@@ -146,6 +381,7 @@ export default function SolicitarVisita() {
     encargadoEmail: session?.email || "",
   }));
   const [error, setError] = useState("");
+  const [errores, setErrores] = useState({});
   const [success, setSuccess] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [availability, setAvailability] = useState([]);
@@ -186,7 +422,7 @@ export default function SolicitarVisita() {
     };
   }, []);
 
-  // Mapeo de fechas habilitadas para visitas (YYYY-MM-DD -> array de slots)
+  // Enabled dates (YYYY-MM-DD -> slots)
   const fechasHabilitadasMap = useMemo(() => {
     const map = new Map();
     for (const slot of availability) {
@@ -199,7 +435,6 @@ export default function SolicitarVisita() {
     return map;
   }, [availability]);
 
-  // Fechas habilitadas para el modifier del Calendar
   const fechasHabilitadasDates = useMemo(() => {
     const list = [];
     for (const [iso] of fechasHabilitadasMap) {
@@ -209,7 +444,6 @@ export default function SolicitarVisita() {
     return list;
   }, [fechasHabilitadasMap]);
 
-  // Función para deshabilitar días en el calendario
   const isDateDisabled = useCallback(
     (date) => {
       const hoy = startOfDay(new Date());
@@ -235,12 +469,9 @@ export default function SolicitarVisita() {
     return "/visitas/solicitudes/instructivo-pdf";
   }, []);
 
-  // Consulta dinámica de franjas y aforo en tiempo real al seleccionar fecha
+  // Live capacity of the slots of the chosen date
   useEffect(() => {
-    if (!fechaSeleccionada) {
-      setFranjasFecha([]);
-      return;
-    }
+    if (!fechaSeleccionada) return;
     const iso = format(fechaSeleccionada, "yyyy-MM-dd");
     let active = true;
     setFranjasFecha([]);
@@ -323,11 +554,10 @@ export default function SolicitarVisita() {
         setAvailability(slots);
         setAvailabilityStatus("success");
 
-        // Si hay fechas habilitadas, preseleccionar la primera fecha disponible
+        // Preselect the first enabled date
         const habilitados = slots.filter((s) => s.habilitada);
         if (habilitados.length > 0) {
-          const primerIso = habilitados[0].fecha;
-          const parsed = parseIsoLocal(primerIso);
+          const parsed = parseIsoLocal(habilitados[0].fecha);
           if (parsed) {
             setFechaSeleccionada(parsed);
           }
@@ -344,11 +574,20 @@ export default function SolicitarVisita() {
     };
   }, []);
 
+  const limpiarError = (campo) => {
+    setErrores((prev) => {
+      if (!prev[campo]) return prev;
+      const next = { ...prev };
+      delete next[campo];
+      return next;
+    });
+  };
+
   const handleSelectFecha = (date) => {
     if (!date) return;
     setFechaSeleccionada(date);
     const iso = format(date, "yyyy-MM-dd");
-    // Si el turno actual no pertenece a la fecha seleccionada, reiniciar
+    // A slot from another date no longer applies
     setForm((current) => {
       const currentSlot = availability.find((s) => s.id === current.disponibilidadVisitaId);
       if (currentSlot && currentSlot.fecha === iso) return current;
@@ -370,7 +609,7 @@ export default function SolicitarVisita() {
       const partes = partesNombreCedula(datos);
       if (!partes.nombre && !partes.primerApellido) {
         consultaCedulaRef.current = { digitos: "", enCurso: false };
-        setAvisoCedula("No se encontraron datos para esta identificación. Complete los datos manualmente.");
+        setAvisoCedula("No se encontraron datos para esta identificación. Completá los datos manualmente.");
         return;
       }
       consultaCedulaRef.current = { digitos, enCurso: false };
@@ -380,7 +619,14 @@ export default function SolicitarVisita() {
         encargadoPrimerApellido: partes.primerApellido,
         encargadoSegundoApellido: partes.segundoApellido,
       }));
-      setAvisoCedula("Datos cargados automáticamente. Puede editarlos si es necesario.");
+      setErrores((prev) => {
+        const next = { ...prev };
+        delete next.encargadoNombre;
+        delete next.encargadoPrimerApellido;
+        delete next.encargadoIdentificacion;
+        return next;
+      });
+      setAvisoCedula("Datos cargados automáticamente. Podés editarlos si hace falta.");
     } catch (cedulaError) {
       consultaCedulaRef.current = { digitos: "", enCurso: false };
       const mensajeBase = cedulaError?.message?.trim() || "No se pudo consultar la identificación.";
@@ -391,8 +637,8 @@ export default function SolicitarVisita() {
         yaIndicaManual
           ? mensajeBase
           : esConexion
-            ? `${mensajeBase} Mientras tanto, complete los datos manualmente.`
-            : `${mensajeBase} Complete los datos manualmente.`,
+            ? `${mensajeBase} Mientras tanto, completá los datos manualmente.`
+            : `${mensajeBase} Completá los datos manualmente.`,
       );
     } finally {
       setConsultandoCedula(false);
@@ -445,10 +691,12 @@ export default function SolicitarVisita() {
       if (name === "tipoVisitante") {
         next.provincia = "";
         next.canton = "";
-        next.paisProcedencia = value === "Nacional" ? "" : "";
+        next.paisProcedencia = "";
       }
       return next;
     });
+    limpiarError(name);
+    if (name === "cantidadVisitantes") limpiarError("disponibilidadVisitaId");
 
     if (name === "encargadoIdentificacion" || name === "encargadoTipoIdentificacion") {
       consultaCedulaRef.current = { digitos: "", enCurso: false };
@@ -458,6 +706,7 @@ export default function SolicitarVisita() {
 
   const submit = async (event) => {
     event.preventDefault();
+    const formEl = event.currentTarget;
     setError("");
     setSuccess(null);
 
@@ -466,75 +715,25 @@ export default function SolicitarVisita() {
       return;
     }
 
-    if (
-      !form.encargadoIdentificacion.trim() ||
-      !form.encargadoNombre.trim() ||
-      !form.encargadoPrimerApellido.trim() ||
-      !form.encargadoEmail.trim() ||
-      !form.encargadoTelefono.trim()
-    ) {
-      setError("Completá los campos obligatorios antes de enviar la solicitud.");
-      return;
-    }
-
-    if (!esCorreoValido(form.encargadoEmail)) {
-      setError(MENSAJE_CORREO_INVALIDO);
-      return;
-    }
-
-    const errorIdentificacion = validarIdentificacion(tipoDocumento, form.encargadoIdentificacion);
-    if (errorIdentificacion) {
-      setError(errorIdentificacion);
-      return;
-    }
-    if (esPasaporte && !form.encargadoNacionalidad) {
-      setError("Elegí el país de origen del pasaporte.");
-      return;
-    }
-
-    if (form.tipoVisitante === "Nacional") {
-      if (!form.provincia.trim() || !form.canton.trim()) {
-        setError("Completá los campos obligatorios antes de enviar la solicitud.");
-        return;
-      }
-    } else {
-      if (!form.paisProcedencia.trim()) {
-        setError("Indicá el país de procedencia del grupo internacional.");
-        return;
-      }
-      if (!form.provincia.trim() || !form.canton.trim()) {
-        setError("Completá los campos obligatorios antes de enviar la solicitud.");
-        return;
-      }
-    }
-
-    if (!form.cantidadVisitantes || Number(form.cantidadVisitantes) < 2) {
-      setError("Las visitas grupales requieren al menos 2 personas.");
-      return;
-    }
-
-    if (
-      !form.tipoGrupo.trim() ||
-      !form.disponibilidadVisitaId ||
-      !form.motivoVisita.trim()
-    ) {
-      setError("Completá los campos obligatorios antes de enviar la solicitud.");
-      return;
-    }
-
-    if (selectedSlot && selectedSlot.agotada) {
-      setError("La franja horaria seleccionada se encuentra agotada. Por favor seleccioná otro horario.");
-      return;
-    }
-
-    if (
-      selectedSlot &&
-      selectedSlot.cupoRestante !== undefined &&
-      cantidadNum > cupoRestanteSeleccionado
-    ) {
-      setError(
-        `La cantidad de visitantes (${cantidadNum}) supera el cupo disponible (${cupoRestanteSeleccionado} personas) para este horario.`,
-      );
+    const nuevosErrores = validarSolicitud({
+      form,
+      esPasaporte,
+      tipoDocumento,
+      selectedSlot,
+      cantidadNum,
+      cupoRestante: cupoRestanteSeleccionado,
+    });
+    setErrores(nuevosErrores);
+    const claves = Object.keys(nuevosErrores);
+    if (claves.length > 0) {
+      const faltan = claves.some((clave) => /^(Ingresá|Elegí) /.test(nuevosErrores[clave]));
+      setError(faltan ? MENSAJE_FALTAN_CAMPOS : MENSAJE_REVISAR_CAMPOS);
+      queueFocusFormError({
+        errors: nuevosErrores,
+        root: formEl,
+        fieldOrder: ORDEN_CAMPOS,
+        fieldMap: CAMPOS_POR_ID,
+      });
       return;
     }
 
@@ -572,354 +771,446 @@ export default function SolicitarVisita() {
       }
     } catch (requestError) {
       setError(requestError?.message || "No se pudo enviar la solicitud de visita.");
+      queueFocusFormError({ root: formEl });
     } finally {
       setSubmitting(false);
     }
   };
 
+  const reiniciarFormulario = () => {
+    setSuccess(null);
+    setError("");
+    setErrores({});
+    setAvisoCedula(null);
+    consultaCedulaRef.current = { digitos: "", enCurso: false };
+    setForm({ ...INITIAL_FORM, encargadoEmail: session?.email || "" });
+  };
+
+  const sinFechas = availabilityStatus === "success" && fechasHabilitadasDates.length === 0;
+  const esInternacional = form.tipoVisitante === "Internacional";
+
   return (
     <>
       {showLoading ? <PageLoading message={loadingMessage} /> : null}
       <main
-        className={`voluntariado-page${showPrepaint ? " voluntariado-page--prepaint" : ""}`}
+        className={`pub-page pub-form-page${showPrepaint ? " pub-form-page--prepaint" : ""}`}
         inert={inert}
         ref={pageRef}
       >
-        <section className="voluntariado-section">
-          <header className="voluntariado-header">
-            <h1><ST>Solicitud de visitas grupales</ST></h1>
-            <p>
-              <ST>
-                Completá la información del grupo y elegí uno de los horarios habilitados por la administración.
-                La solicitud quedará pendiente de revisión.
-              </ST>
-            </p>
-          </header>
+        <div className="pub-form-container pub-form-container--wide">
+          <div className="pub-form-back">
+            <BackToHomeLink homeSection={HOME_SCROLL_SECTIONS.iniciativas} />
+          </div>
 
-          <form
-            className="formulario-card"
-            onSubmit={submit}
-            onFocusCapture={handleFormInteractionCapture}
-            onPointerDownCapture={handleFormInteractionCapture}
-            noValidate
-          >
-            <div className="form-secciones">
-              <SectionCard
-                paso={1}
-                lugar="visitas.encargado"
-                title="Información del encargado"
-                hint="Datos de la persona responsable de coordinar la visita."
+          <PublicPageHeader
+            title="Solicitud de visitas grupales"
+            lead="Completá los datos del grupo y elegí un horario con cupo."
+            titleId="visita-titulo"
+          />
+
+          {success ? (
+            <FormSuccess
+              title="Solicitud enviada"
+              summary={`Solicitud #${success.id} enviada en estado ${success.estado}. Te avisamos por correo electrónico cuando la revisemos.`}
+            >
+              <button type="button" className="pub-btn pub-btn--primary" onClick={reiniciarFormulario}>
+                <ST>Hacer otra solicitud</ST>
+              </button>
+              <button
+                type="button"
+                className="pub-btn pub-btn--secondary"
+                onClick={() => navigateToHomeSection(navigate, HOME_SCROLL_SECTIONS.iniciativas)}
               >
-                <div className="form-grid">
-                  <Field label="Tipo de identificación *">
-                    <SelectFiltro
-                      name="encargadoTipoIdentificacion"
-                      value={tipoDocumento}
-                      onChange={update}
-                      traducirOpciones
-                    >
-                      {TIPOS_IDENTIFICACION.map((tipo) => (
-                        <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
-                      ))}
-                    </SelectFiltro>
-                  </Field>
-                  {esPasaporte ? (
-                    <Field label="País de origen *">
-                      <SelectFiltro
-                        name="encargadoNacionalidad"
-                        value={form.encargadoNacionalidad}
-                        onChange={update}
-                      >
-                        <option value="">Elegí el país</option>
-                        {opcionesPais.map((pais) => (
-                          <option key={pais.value} value={pais.value}>{pais.label}</option>
-                        ))}
-                      </SelectFiltro>
+                <ST>Volver al inicio</ST>
+              </button>
+            </FormSuccess>
+          ) : (
+            <>
+              <RecomendacionesVisita
+                urlInstructivoPdf={urlInstructivoPdf}
+                onVerDetalle={() => setModalRecomendacionesAbierto(true)}
+              />
+
+              {modalRecomendacionesAbierto ? (
+                <InstructivoDialog
+                  urlInstructivoPdf={urlInstructivoPdf}
+                  onClose={() => setModalRecomendacionesAbierto(false)}
+                />
+              ) : null}
+
+              <form
+                className="pub-panel pub-form visita-form"
+                onSubmit={submit}
+                onFocusCapture={handleFormInteractionCapture}
+                onPointerDownCapture={handleFormInteractionCapture}
+                aria-labelledby="visita-titulo"
+                noValidate
+              >
+                <FormSection
+                  title="Datos del encargado"
+                  hint="La persona responsable de coordinar la visita."
+                >
+                  <FormGrid cols={3}>
+                    <Field id="visita-encargadoTipoIdentificacion" label="Tipo de identificación" required>
+                      {(c) => (
+                        <SelectFiltro
+                          {...c}
+                          name="encargadoTipoIdentificacion"
+                          value={tipoDocumento}
+                          onChange={update}
+                          traducirOpciones
+                        >
+                          {TIPOS_IDENTIFICACION.map((tipo) => (
+                            <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                          ))}
+                        </SelectFiltro>
+                      )}
                     </Field>
-                  ) : null}
-                  <Field label="Identificación *">
-                    <input
-                      name="encargadoIdentificacion"
-                      value={form.encargadoIdentificacion}
-                      onChange={update}
-                      onBlur={handleIdentificacionBlur}
-                      inputMode={esPasaporte ? "text" : "numeric"}
-                      autoComplete="off"
-                      placeholder={tPhIdentificacion}
-                    />
-                    {consultandoCedula ? (
-                      <span className="text-xs text-slate-500 mt-1 block"><ST>Consultando identificación…</ST></span>
+                    {esPasaporte ? (
+                      <Field
+                        id="visita-encargadoNacionalidad"
+                        label="País de origen"
+                        required
+                        error={errores.encargadoNacionalidad}
+                      >
+                        {(c) => (
+                          <SelectFiltro
+                            {...c}
+                            name="encargadoNacionalidad"
+                            value={form.encargadoNacionalidad}
+                            onChange={update}
+                          >
+                            <option value="">{tElegiPais}</option>
+                            {opcionesPais.map((pais) => (
+                              <option key={pais.value} value={pais.value}>{pais.label}</option>
+                            ))}
+                          </SelectFiltro>
+                        )}
+                      </Field>
                     ) : null}
-                    {avisoCedula ? (
-                      <span
-                        className={`text-xs mt-1 block ${
-                          avisoCedula.includes("automáticamente") ? "text-emerald-700" : "text-amber-700"
+                    <Field
+                      id="visita-encargadoIdentificacion"
+                      label="Identificación"
+                      required
+                      error={errores.encargadoIdentificacion}
+                    >
+                      {(c) => (
+                        <input
+                          {...c}
+                          className="pub-input"
+                          name="encargadoIdentificacion"
+                          value={form.encargadoIdentificacion}
+                          onChange={update}
+                          onBlur={handleIdentificacionBlur}
+                          inputMode={esPasaporte ? "text" : "numeric"}
+                          autoComplete="off"
+                          placeholder={tPhIdentificacion}
+                        />
+                      )}
+                    </Field>
+                    <Field
+                      id="visita-encargadoNombre"
+                      label="Nombre"
+                      required
+                      error={errores.encargadoNombre}
+                    >
+                      {(c) => (
+                        <input
+                          {...c}
+                          className="pub-input"
+                          name="encargadoNombre"
+                          value={form.encargadoNombre}
+                          onChange={update}
+                        />
+                      )}
+                    </Field>
+                    <Field
+                      id="visita-encargadoPrimerApellido"
+                      label="Primer apellido"
+                      required
+                      error={errores.encargadoPrimerApellido}
+                    >
+                      {(c) => (
+                        <input
+                          {...c}
+                          className="pub-input"
+                          name="encargadoPrimerApellido"
+                          value={form.encargadoPrimerApellido}
+                          onChange={update}
+                        />
+                      )}
+                    </Field>
+                    <Field id="visita-encargadoSegundoApellido" label="Segundo apellido">
+                      {(c) => (
+                        <input
+                          {...c}
+                          className="pub-input"
+                          name="encargadoSegundoApellido"
+                          value={form.encargadoSegundoApellido}
+                          onChange={update}
+                        />
+                      )}
+                    </Field>
+                    <Field
+                      id="visita-encargadoEmail"
+                      label="Correo electrónico"
+                      required
+                      error={errores.encargadoEmail}
+                    >
+                      {(c) => (
+                        <input
+                          {...c}
+                          className="pub-input"
+                          type="email"
+                          inputMode="email"
+                          name="encargadoEmail"
+                          value={form.encargadoEmail}
+                          onChange={update}
+                        />
+                      )}
+                    </Field>
+                    <Field
+                      id="visita-encargadoTelefono"
+                      label="Teléfono"
+                      required
+                      error={errores.encargadoTelefono}
+                    >
+                      {(c) => (
+                        <NumericInput
+                          {...c}
+                          className="pub-input"
+                          name="encargadoTelefono"
+                          value={form.encargadoTelefono}
+                          onChange={update}
+                          maxLength={15}
+                        />
+                      )}
+                    </Field>
+                    <Field id="visita-encargadoInstitucion" label="Institución">
+                      {(c) => (
+                        <input
+                          {...c}
+                          className="pub-input"
+                          name="encargadoInstitucion"
+                          value={form.encargadoInstitucion}
+                          onChange={update}
+                        />
+                      )}
+                    </Field>
+                  </FormGrid>
+                  <div aria-live="polite">
+                    {consultandoCedula ? (
+                      <p className="pub-form-status"><ST>Consultando identificación…</ST></p>
+                    ) : avisoCedula ? (
+                      <p
+                        className={`pub-form-status ${
+                          esAvisoCedulaInformativo(avisoCedula) ? "pub-form-status--ok" : "pub-form-status--problem"
                         }`}
                       >
                         <ST>{avisoCedula}</ST>
-                      </span>
+                      </p>
                     ) : null}
-                  </Field>
-                  <Field label="Nombre *">
-                    <input
-                      name="encargadoNombre"
-                      value={form.encargadoNombre}
-                      onChange={update}
-                    />
-                  </Field>
-                  <Field label="Primer Apellido *">
-                    <input
-                      name="encargadoPrimerApellido"
-                      value={form.encargadoPrimerApellido}
-                      onChange={update}
-                    />
-                  </Field>
-                  <Field label="Segundo Apellido">
-                    <input
-                      name="encargadoSegundoApellido"
-                      value={form.encargadoSegundoApellido}
-                      onChange={update}
-                    />
-                  </Field>
-                  <Field label="Correo electrónico *">
-                    <input
-                      type="email"
-                      inputMode="email"
-                      name="encargadoEmail"
-                      value={form.encargadoEmail}
-                      onChange={update}
-                    />
-                  </Field>
-                  <Field label="Teléfono *">
-                    <NumericInput
-                      name="encargadoTelefono"
-                      value={form.encargadoTelefono}
-                      onChange={update}
-                      maxLength={15}
-                    />
-                  </Field>
-                  <Field label="Institución">
-                    <input
-                      name="encargadoInstitucion"
-                      value={form.encargadoInstitucion}
-                      onChange={update}
-                    />
-                  </Field>
-                </div>
-              </SectionCard>
+                  </div>
+                </FormSection>
 
-              <SectionCard
-                paso={2}
-                lugar="visitas.grupo"
-                title="Información del grupo"
-                hint="Las visitas grupales requieren al menos dos personas."
-              >
-                <div className="form-grid">
-                  <Field label="Tipo de visitante *">
-                    <SelectFiltro name="tipoVisitante" value={form.tipoVisitante} onChange={update} traducirOpciones>
-                      <option value="Nacional">Nacional</option>
-                      <option value="Internacional">Internacional</option>
-                    </SelectFiltro>
-                  </Field>
-
-                  {form.tipoVisitante === "Internacional" ? (
-                    <>
-                      <Field label="País de procedencia *">
-                        <input
-                          name="paisProcedencia"
-                          value={form.paisProcedencia}
-                          onChange={update}
-                          placeholder={tPhPais}
-                        />
-                      </Field>
-                      <Field label="Provincia o Estado *">
-                        <input
-                          name="provincia"
-                          value={form.provincia}
-                          onChange={update}
-                          placeholder={tPhProvincia}
-                        />
-                      </Field>
-                      <Field label="Ciudad *">
-                        <input
-                          name="canton"
-                          value={form.canton}
-                          onChange={update}
-                          placeholder={tPhCiudad}
-                        />
-                      </Field>
-                    </>
-                  ) : (
-                    <>
-                      <Field label="Provincia *">
-                        <SelectFiltro name="provincia" value={form.provincia} onChange={update}>
-                          <option value="">{tElegirProvincia}</option>
-                          {PROVINCIAS_CR.map((prov) => (
-                            <option key={prov} value={prov}>
-                              {prov}
-                            </option>
-                          ))}
-                        </SelectFiltro>
-                      </Field>
-                      <Field label="Cantón *">
+                <FormSection
+                  title="Datos del grupo"
+                  hint="Las visitas grupales requieren al menos dos personas."
+                >
+                  <FormGrid cols={3}>
+                    <Field id="visita-tipoVisitante" label="Tipo de visitante" required>
+                      {(c) => (
                         <SelectFiltro
-                          name="canton"
-                          value={form.canton}
+                          {...c}
+                          name="tipoVisitante"
+                          value={form.tipoVisitante}
                           onChange={update}
-                          disabled={!form.provincia}
+                          traducirOpciones
                         >
-                          <option value="">
-                            {form.provincia ? tElegirCanton : tPrimeroProvincia}
-                          </option>
-                          {cantonesDeProvincia(form.provincia).map((can) => (
-                            <option key={can} value={can}>
-                              {can}
-                            </option>
-                          ))}
+                          <option value="Nacional">Nacional</option>
+                          <option value="Internacional">Internacional</option>
                         </SelectFiltro>
-                      </Field>
-                    </>
-                  )}
+                      )}
+                    </Field>
 
-                  <Field label="Cantidad de visitantes *">
-                    <NumericInput
-                      name="cantidadVisitantes"
-                      value={form.cantidadVisitantes}
-                      onChange={update}
-                      maxLength={4}
-                    />
-                  </Field>
-                  <Field label="Tipo de grupo *">
-                    <input
-                      name="tipoGrupo"
-                      value={form.tipoGrupo}
-                      onChange={update}
-                      placeholder={tPhTipoGrupo}
-                    />
-                  </Field>
-                  <Field label="Motivo de la visita *">
-                    <input
-                      name="motivoVisita"
-                      value={form.motivoVisita}
-                      onChange={update}
-                    />
-                  </Field>
-                </div>
-              </SectionCard>
-
-              {/* Sección de Horarios Homologada a Voluntariado */}
-              <SectionCard
-                paso={3}
-                lugar="visitas.fecha"
-                title="Fecha y horario disponibles *"
-                hint="Seleccioná un día habilitado en el calendario y luego el turno de tu preferencia."
-              >
-                {availabilityStatus === "loading" ? (
-                  <div className="voluntariado-aviso-bloque">
-                    <div className="size-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mb-2" />
-                    <p className="voluntariado-aviso-bloque__texto">
-                      <ST>Cargando fechas y horarios disponibles…</ST>
-                    </p>
-                  </div>
-                ) : availabilityStatus === "error" ? (
-                  <p className="mensaje-error text-center" role="alert">
-                    <ST>{availabilityError || "No se pudieron cargar los horarios disponibles."}</ST>
-                  </p>
-                ) : fechasHabilitadasDates.length === 0 ? (
-                  <div className="voluntariado-aviso-bloque">
-                    <CalendarX2 className="voluntariado-aviso-bloque__icono size-8 text-amber-500" />
-                    <p className="voluntariado-aviso-bloque__titulo text-amber-900">
-                      <ST>No hay fechas y horarios habilitados</ST>
-                    </p>
-                    <p className="voluntariado-aviso-bloque__texto text-amber-700">
-                      <ST>Actualmente no hay fechas habilitadas para visitas grupales. Por favor consultá más adelante.</ST>
-                    </p>
-                  </div>
-                ) : (
-                  <div className="campo full flex flex-col items-center">
-                    {fechaSeleccionada && (
-                      <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-900 bg-white px-5 py-2 shadow-xs">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                          <ST>FECHA SELECCIONADA:</ST>
-                        </span>
-                        <span className="text-xs font-bold text-slate-950 capitalize">
-                          {format(fechaSeleccionada, idioma === "en" ? "EEEE, MMMM dd, yyyy" : "EEEE, dd 'de' MMMM 'de' yyyy", { locale: localeFecha })}
-                        </span>
-                      </div>
+                    {esInternacional ? (
+                      <>
+                        <Field
+                          id="visita-paisProcedencia"
+                          label="País de procedencia"
+                          required
+                          error={errores.paisProcedencia}
+                        >
+                          {(c) => (
+                            <input
+                              {...c}
+                              className="pub-input"
+                              name="paisProcedencia"
+                              value={form.paisProcedencia}
+                              onChange={update}
+                              placeholder={tPhPais}
+                            />
+                          )}
+                        </Field>
+                        <Field
+                          id="visita-provincia"
+                          label="Provincia o estado"
+                          required
+                          error={errores.provincia}
+                        >
+                          {(c) => (
+                            <input
+                              {...c}
+                              className="pub-input"
+                              name="provincia"
+                              value={form.provincia}
+                              onChange={update}
+                              placeholder={tPhProvincia}
+                            />
+                          )}
+                        </Field>
+                        <Field id="visita-canton" label="Ciudad" required error={errores.canton}>
+                          {(c) => (
+                            <input
+                              {...c}
+                              className="pub-input"
+                              name="canton"
+                              value={form.canton}
+                              onChange={update}
+                              placeholder={tPhCiudad}
+                            />
+                          )}
+                        </Field>
+                      </>
+                    ) : (
+                      <>
+                        <Field id="visita-provincia" label="Provincia" required error={errores.provincia}>
+                          {(c) => (
+                            <SelectFiltro {...c} name="provincia" value={form.provincia} onChange={update}>
+                              <option value="">{tElegirProvincia}</option>
+                              {PROVINCIAS_CR.map((prov) => (
+                                <option key={prov} value={prov}>
+                                  {prov}
+                                </option>
+                              ))}
+                            </SelectFiltro>
+                          )}
+                        </Field>
+                        <Field id="visita-canton" label="Cantón" required error={errores.canton}>
+                          {(c) => (
+                            <SelectFiltro
+                              {...c}
+                              name="canton"
+                              value={form.canton}
+                              onChange={update}
+                              disabled={!form.provincia}
+                            >
+                              <option value="">
+                                {form.provincia ? tElegirCanton : tPrimeroProvincia}
+                              </option>
+                              {cantonesDeProvincia(form.provincia).map((can) => (
+                                <option key={can} value={can}>
+                                  {can}
+                                </option>
+                              ))}
+                            </SelectFiltro>
+                          )}
+                        </Field>
+                      </>
                     )}
 
-                    <div className="flex justify-center my-1 w-full">
-                      <Calendar
-                        mode="single"
+                    <Field
+                      id="visita-cantidadVisitantes"
+                      label="Cantidad de visitantes"
+                      required
+                      error={errores.cantidadVisitantes}
+                    >
+                      {(c) => (
+                        <NumericInput
+                          {...c}
+                          className="pub-input"
+                          name="cantidadVisitantes"
+                          value={form.cantidadVisitantes}
+                          onChange={update}
+                          maxLength={4}
+                        />
+                      )}
+                    </Field>
+                    <Field id="visita-tipoGrupo" label="Tipo de grupo" required error={errores.tipoGrupo}>
+                      {(c) => (
+                        <input
+                          {...c}
+                          className="pub-input"
+                          name="tipoGrupo"
+                          value={form.tipoGrupo}
+                          onChange={update}
+                          placeholder={tPhTipoGrupo}
+                        />
+                      )}
+                    </Field>
+                    <Field
+                      id="visita-motivoVisita"
+                      label="Motivo de la visita"
+                      required
+                      error={errores.motivoVisita}
+                    >
+                      {(c) => (
+                        <input
+                          {...c}
+                          className="pub-input"
+                          name="motivoVisita"
+                          value={form.motivoVisita}
+                          onChange={update}
+                        />
+                      )}
+                    </Field>
+                  </FormGrid>
+                </FormSection>
+
+                <FormSection
+                  title="Fecha y horario"
+                  hint="Elegí un día habilitado en el calendario y después el turno que prefieras."
+                >
+                  {availabilityStatus === "loading" ? (
+                    <FormPlaceholder loading title="Cargando fechas y horarios disponibles…" />
+                  ) : availabilityStatus === "error" ? (
+                    <p className="pub-alert" role="alert">
+                      <ST>{availabilityError || "No se pudieron cargar los horarios disponibles."}</ST>
+                    </p>
+                  ) : sinFechas ? (
+                    <FormPlaceholder title="No hay fechas y horarios habilitados">
+                      Por ahora no hay fechas habilitadas para visitas grupales. Consultá más adelante.
+                    </FormPlaceholder>
+                  ) : (
+                    <div className="visita-fecha">
+                      <CalendarPicker
                         selected={fechaSeleccionada}
                         onSelect={handleSelectFecha}
                         disabled={isDateDisabled}
                         locale={localeFecha}
-                        modifiers={{
-                          habilitado: fechasHabilitadasDates,
-                        }}
-                        modifiersClassNames={{
-                          habilitado: "rdp-day-habilitado",
-                        }}
-                        captionLayout="dropdown"
+                        enabledDates={fechasHabilitadasDates}
+                        legend="Fecha disponible para visitas"
                       />
-                    </div>
 
-                    <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-600 mt-4 pt-2">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex size-5 items-center justify-center rounded-full border-2 border-slate-950 bg-white font-bold text-slate-950 text-[11px]">
-                          15
-                        </span>
-                        <span><ST>Fecha disponible para visitas</ST></span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex size-5 items-center justify-center text-slate-400 opacity-40 text-[11px]">
-                          15
-                        </span>
-                        <span><ST>Fecha no disponible</ST></span>
-                      </div>
-                    </div>
-
-                    <div className="w-full mt-6 pt-6 border-t border-slate-200">
-                      {!fechaSeleccionada ? (
-                        <div className="voluntariado-aviso-bloque">
-                          <Clock className="voluntariado-aviso-bloque__icono size-8 text-slate-400" />
-                          <p className="voluntariado-aviso-bloque__titulo text-slate-800">
-                            <ST>Seleccioná una fecha en el calendario</ST>
-                          </p>
-                          <p className="voluntariado-aviso-bloque__texto text-slate-600">
-                            <ST>Al seleccionar un día habilitado, se consultarán y cargarán los turnos u horarios disponibles para esa fecha.</ST>
-                          </p>
-                        </div>
-                      ) : cargandoFranjas && slotsActuales.length === 0 ? (
-                        <div className="voluntariado-aviso-bloque">
-                          <div className="size-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mb-2" />
-                          <p className="voluntariado-aviso-bloque__texto">
-                            <ST>Consultando bloques horarios y aforo disponible…</ST>
-                          </p>
-                        </div>
-                      ) : slotsActuales.length === 0 ? (
-                        <div className="voluntariado-aviso-bloque">
-                          <CalendarX2 className="voluntariado-aviso-bloque__icono size-8 text-amber-500" />
-                          <p className="voluntariado-aviso-bloque__titulo text-amber-900">
-                            <ST>Sin turnos para esta fecha</ST>
-                          </p>
-                          <p className="voluntariado-aviso-bloque__texto text-amber-700">
-                            <ST>No hay turnos disponibles para el día seleccionado.</ST>
-                          </p>
-                        </div>
-                      ) : (
-                        <div>
-                          <p className="text-xs font-semibold text-slate-700 mb-3">
-                            <ST>Horarios disponibles para el</ST>{" "}
-                            <strong>
-                              {format(fechaSeleccionada, idioma === "en" ? "MMMM dd" : "dd 'de' MMMM", { locale: localeFecha })}
-                            </strong>:
-                          </p>
-
-                          <div className="opciones-disponibilidad-grid">
+                      <div className="visita-fecha__horarios">
+                        {!fechaSeleccionada ? (
+                          <FormPlaceholder title="Elegí una fecha en el calendario">
+                            Al elegir un día habilitado vas a ver los horarios y los cupos de esa fecha.
+                          </FormPlaceholder>
+                        ) : cargandoFranjas && slotsActuales.length === 0 ? (
+                          <FormPlaceholder loading title="Consultando bloques horarios y aforo disponible…" />
+                        ) : slotsActuales.length === 0 ? (
+                          <FormPlaceholder title="Sin turnos para esta fecha">
+                            No hay turnos disponibles para el día elegido.
+                          </FormPlaceholder>
+                        ) : (
+                          <ChoiceGroup
+                            legend="Horarios disponibles"
+                            required
+                            slots
+                            error={errores.disponibilidadVisitaId}
+                          >
                             {slotsActuales.map((slot) => {
-                              const esActivo = form.disponibilidadVisitaId === slot.id;
                               const inicio12 =
                                 slot.horaInicioFormato ||
                                 (slot.horaInicio ? formatearHora12(slot.horaInicio) : "");
@@ -930,328 +1221,95 @@ export default function SolicitarVisita() {
                                 slot.franja ||
                                 (inicio12 && fin12 ? `${inicio12} - ${fin12}` : "") ||
                                 `${slot.horaInicio?.slice(0, 5)} – ${slot.horaFin?.slice(0, 5)}`;
-                              const capacidadMaxima = slot.capacidadMaxima ?? 30;
-                              const cupoRestante = slot.cupoRestante ?? capacidadMaxima;
-                              const estaAgotada = Boolean(slot.agotada || cupoRestante <= 0);
-
+                              const cupo = describirCupo({
+                                cupoRestante: slot.cupoRestante,
+                                capacidadMaxima: slot.capacidadMaxima,
+                                agotada: slot.agotada,
+                              });
                               return (
-                                <label
+                                <ChoiceCard
                                   key={slot.id}
-                                  className={`opcion-disponibilidad-card ${
-                                    esActivo ? "opcion-disponibilidad-card--activa" : ""
-                                  } ${estaAgotada ? "opcion-disponibilidad-card--agotada" : ""}`}
-                                >
-                                  <input
-                                    type="radio"
-                                    name="disponibilidadVisitaId"
-                                    value={slot.id}
-                                    checked={esActivo}
-                                    disabled={estaAgotada}
-                                    aria-label={`Horario ${slot.horaInicio?.slice(0, 5) || ""} ${franja}`}
-                                    onChange={() => {
-                                      if (estaAgotada) return;
-                                      setForm((prev) => ({
-                                        ...prev,
-                                        disponibilidadVisitaId: slot.id,
-                                      }));
-                                    }}
-                                  />
-                                  <div className="opcion-disponibilidad__header">
-                                    <span className="opcion-disponibilidad__titulo font-bold text-slate-950">
-                                      {franja}
-                                    </span>
-                                    <span className="opcion-disponibilidad__radio-dot" />
-                                  </div>
-                                  <span className="opcion-disponibilidad__horario">
-                                    <Clock size={14} />
-                                    {franja}
-                                  </span>
-
-                                  {/* Badge de aforo y cupo restante */}
-                                  <div>
-                                    {estaAgotada ? (
-                                      <span className="opcion-disponibilidad__cupo-badge opcion-disponibilidad__cupo-badge--agotado">
-                                        <ST>Cupo agotado (0 cupos disponibles)</ST>
-                                      </span>
-                                    ) : cupoRestante <= 5 ? (
-                                      <span className="opcion-disponibilidad__cupo-badge opcion-disponibilidad__cupo-badge--bajo">
-                                        <ST>{`¡Últimos ${cupoRestante} cupos! (de ${capacidadMaxima})`}</ST>
-                                      </span>
-                                    ) : (
-                                      <span className="opcion-disponibilidad__cupo-badge opcion-disponibilidad__cupo-badge--disponible">
-                                        <ST>{`${cupoRestante} cupos disponibles (de ${capacidadMaxima})`}</ST>
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  {slot.nota ? (
-                                    <span className="text-xs text-slate-500 mt-1 block">
-                                      <ST>{slot.nota}</ST>
-                                    </span>
-                                  ) : null}
-                                </label>
+                                  variant="slot"
+                                  name="disponibilidadVisitaId"
+                                  value={slot.id}
+                                  checked={form.disponibilidadVisitaId === slot.id}
+                                  disabled={cupo.estado === "agotado"}
+                                  aria-label={`Horario ${slot.horaInicio?.slice(0, 5) || ""} ${franja}`}
+                                  onChange={() => {
+                                    setForm((prev) => ({ ...prev, disponibilidadVisitaId: slot.id }));
+                                    limpiarError("disponibilidadVisitaId");
+                                  }}
+                                  title={franja}
+                                  description={slot.nota}
+                                  meta={<CupoTexto estado={cupo.estado} texto={cupo.texto} />}
+                                />
                               );
                             })}
-                          </div>
+                          </ChoiceGroup>
+                        )}
 
-                          {cupoExcedido ? (
-                            <div className="mt-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900" role="alert">
-                              <AlertTriangle size={16} className="text-amber-600 shrink-0" />
+                        {cupoExcedido ? (
+                          <FormNote tone="warning">
+                            <p>
                               <ST>
-                                {`Atención: La cantidad solicitada (${cantidadNum} personas) supera el cupo restante (${cupoRestanteSeleccionado} personas) de este horario.`}
+                                {`Atención: la cantidad solicitada (${cantidadNum} personas) supera el cupo restante (${cupoRestanteSeleccionado} personas) de este horario.`}
                               </ST>
-                            </div>
-                          ) : null}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </SectionCard>
-
-              <SectionCard
-                paso={4}
-                lugar="visitas.necesidades"
-                title="Necesidades y recomendaciones"
-                hint="Todas las visitas serán recibidas o acompañadas por personal del proyecto."
-              >
-                <fieldset className="grid gap-3 sm:grid-cols-2">
-                  <legend className="mb-3 text-sm font-semibold text-slate-700"><ST>Necesidades del grupo</ST></legend>
-                  {[
-                    ["requiereAccesibilidad", "Requerimientos de accesibilidad"],
-                    ["requiereParqueoBus", "Parqueo"],
-                  ].map(([name, label]) => (
-                    <label className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-3 text-sm font-medium" key={name}>
-                      <input type="checkbox" name={name} checked={form[name]} onChange={update} /> <ST>{label}</ST>
-                    </label>
-                  ))}
-                </fieldset>
-
-                {/* Tarjeta de recomendaciones generales */}
-                <div className="tarjeta-recomendaciones my-2">
-                  <div className="tarjeta-recomendaciones__header">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <ShieldCheck className="text-emerald-700" size={22} />
-                        <p className="font-bold text-slate-900 text-sm sm:text-base">
-                          <ST>Recomendaciones para la visita</ST>
-                        </p>
-                      </div>
-                      <p className="text-xs text-slate-600 mt-0.5">
-                        <ST>Lineamientos obligatorios y sugerencias para un recorrido seguro en la finca experimental.</ST>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="tarjeta-recomendaciones__grid">
-                    <div className="recomendacion-item">
-                      <div className="recomendacion-item__icon-wrapper">
-                        <Footprints size={20} className="text-emerald-700" />
-                      </div>
-                      <div>
-                        <p className="recomendacion-item__titulo"><ST>Calzado cerrado obligatorio</ST></p>
-                        <p className="recomendacion-item__desc">
-                          <ST>Uso indispensable de calzado cerrado o botas con suela antideslizante para caminar por senderos agrícolas.</ST>
-                        </p>
+                            </p>
+                          </FormNote>
+                        ) : null}
                       </div>
                     </div>
+                  )}
+                </FormSection>
 
-                    <div className="recomendacion-item">
-                      <div className="recomendacion-item__icon-wrapper">
-                        <Droplets size={20} className="text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="recomendacion-item__titulo"><ST>Hidratación continua</ST></p>
-                        <p className="recomendacion-item__desc">
-                          <ST>Llevá botella o termo reutilizable con agua potable para el recorrido.</ST>
-                        </p>
-                      </div>
-                    </div>
+                <FormSection
+                  title="Necesidades del grupo"
+                  hint="Contanos si necesitan algo especial para la visita."
+                >
+                  <ChoiceGroup label="Necesidades del grupo" columns={2}>
+                    <ChoiceCard
+                      type="checkbox"
+                      name="requiereAccesibilidad"
+                      checked={form.requiereAccesibilidad}
+                      onChange={update}
+                      title="Requerimientos de accesibilidad"
+                    />
+                    <ChoiceCard
+                      type="checkbox"
+                      name="requiereParqueoBus"
+                      checked={form.requiereParqueoBus}
+                      onChange={update}
+                      title="Parqueo"
+                    />
+                  </ChoiceGroup>
+                  <Field id="visita-observaciones" label="Observaciones">
+                    {(c) => (
+                      <textarea
+                        {...c}
+                        className="pub-textarea"
+                        name="observaciones"
+                        rows={4}
+                        value={form.observaciones}
+                        onChange={update}
+                      />
+                    )}
+                  </Field>
+                </FormSection>
 
-                    <div className="recomendacion-item">
-                      <div className="recomendacion-item__icon-wrapper">
-                        <Bug size={20} className="text-amber-700" />
-                      </div>
-                      <div>
-                        <p className="recomendacion-item__titulo"><ST>Vestimenta y protección</ST></p>
-                        <p className="recomendacion-item__desc">
-                          <ST>Usá vestimenta cómoda, repelente y protección solar para actividades en campo abierto.</ST>
-                        </p>
-                      </div>
-                    </div>
+                <AvisoSedeFinca sede={sedeFinca} contexto="visita" />
 
-                    <div className="recomendacion-item">
-                      <div className="recomendacion-item__icon-wrapper">
-                        <Car size={20} className="text-slate-800" />
-                      </div>
-                      <div>
-                        <p className="recomendacion-item__titulo"><ST>Zonas de parqueo</ST></p>
-                        <p className="recomendacion-item__desc">
-                          <ST>Estacionamiento vigilado para vehículos particulares y espacio reservado para buses o microbuses.</ST>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                <FormAlert>{error}</FormAlert>
 
-                  <div className="tarjeta-recomendaciones__footer">
-                    <a
-                      href={urlInstructivoPdf}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-descargar-instructivo"
-                      download="instructivo_recomendaciones_visitas_cafe_una.pdf"
-                    >
-                      <Download size={16} aria-hidden="true" />
-                      <ST>Descargar instructivo en PDF</ST>
-                    </a>
-
-                    <button
-                      type="button"
-                      onClick={() => setModalRecomendacionesAbierto(true)}
-                      className="btn-modal-instructivo"
-                    >
-                      <Info size={16} aria-hidden="true" />
-                      <ST>Ver recomendaciones detalladas</ST>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Modal interactivo con recomendaciones completas */}
-                {modalRecomendacionesAbierto && (
-                  <ModalDialog
-                    className="modal-overlay-recomendaciones"
-                    labelledBy="modal-recomendaciones-titulo"
-                    onClose={() => setModalRecomendacionesAbierto(false)}
-                  >
-                    <div
-                      className="modal-content-recomendaciones"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck className="text-emerald-700" size={24} />
-                          <h3 id="modal-recomendaciones-titulo" className="text-lg font-bold text-slate-900">
-                            <ST>Instructivo de Recomendaciones y Seguridad</ST>
-                          </h3>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setModalRecomendacionesAbierto(false)}
-                          className="rounded-full p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-                          aria-label={tCerrarVentana}
-                        >
-                          <X size={20} />
-                        </button>
-                      </div>
-
-                      <div className="space-y-4 text-sm text-slate-700">
-                        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-950">
-                          <p className="font-semibold text-xs uppercase tracking-wider text-emerald-800 mb-1">
-                            Finca Experimental Santa Lucía - Café UNA
-                          </p>
-                          <p className="text-xs">
-                            <ST>Para que tu experiencia sea memorable y segura, te solicitamos cumplir con las siguientes directrices durante la visita:</ST>
-                          </p>
-                        </div>
-
-                        <div>
-                          <h4 className="font-bold text-slate-900 flex items-center gap-2">
-                            <Footprints size={16} className="text-emerald-700" />
-                            <ST>1. Calzado cerrado obligatorio</ST>
-                          </h4>
-                          <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                            <ST>Es indispensable utilizar tenis deportivas, botas de senderismo o botas con buen agarre. Por normativas de prevención, no se admiten sandalias ni calzado abierto en los senderos.</ST>
-                          </p>
-                        </div>
-
-                        <div>
-                          <h4 className="font-bold text-slate-900 flex items-center gap-2">
-                            <Droplets size={16} className="text-blue-600" />
-                            <ST>2. Hidratación y vestimenta cómoda</ST>
-                          </h4>
-                          <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                            <ST>Usá vestimenta cómoda y apropiada para recorridos al aire libre bajo el sol. Sugerimos pantalón largo ligero. La finca dispone de tomas de agua potable para rellenar botellas reutilizables.</ST>
-                          </p>
-                        </div>
-
-                        <div>
-                          <h4 className="font-bold text-slate-900 flex items-center gap-2">
-                            <Bug size={16} className="text-amber-700" />
-                            <ST>3. Repelente contra insectos y protección solar</ST>
-                          </h4>
-                          <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                            <ST>Llevá repelente si visitarán zonas con vegetación densa o cafetales. Considerá protección solar, sombrero o gorra y gafas oscuras durante las horas de mayor radiación.</ST>
-                          </p>
-                        </div>
-
-                        <div>
-                          <h4 className="font-bold text-slate-900 flex items-center gap-2">
-                            <Car size={16} className="text-slate-800" />
-                            <ST>4. Zonas de parqueo y acceso</ST>
-                          </h4>
-                          <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                            <ST>Disponemos de estacionamiento gratuito vigilado para automóviles y área reservada para el desembarque y parqueo de autobuses o microbuses.</ST>
-                          </p>
-                        </div>
-
-                        <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-                          <a
-                            href={urlInstructivoPdf}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn-descargar-instructivo text-xs py-2 px-4"
-                            download="instructivo_recomendaciones_visitas_cafe_una.pdf"
-                          >
-                            <Download size={14} /> <ST>Descargar PDF</ST>
-                          </a>
-                          <button
-                            type="button"
-                            onClick={() => setModalRecomendacionesAbierto(false)}
-                            className="btn-modal-instructivo text-xs py-2 px-4"
-                          >
-                            <ST>Entendido, cerrar</ST>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </ModalDialog>
-                )}
-
-                <Field label="Observaciones">
-                  <textarea name="observaciones" value={form.observaciones} onChange={update} />
-                </Field>
-              </SectionCard>
-            </div>
-
-            {error ? (
-              <p className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800" role="alert">
-                <ST>{error}</ST>
-              </p>
-            ) : null}
-            {success ? (
-              <p className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900" role="status">
-                <CheckCircle2 aria-hidden="true" /> <ST>{`Solicitud #${success.id} enviada en estado ${success.estado}.`}</ST>
-              </p>
-            ) : null}
-
-
-            <AvisoSedeFinca sede={sedeFinca} contexto="visita" />
-
-            <div className="acciones-formulario">
-              <button
-                className="btn-enviar"
-                disabled={
-                  submitting ||
-                  availabilityStatus === "error" ||
-                  (availabilityStatus === "success" && fechasHabilitadasDates.length === 0)
-                }
-                type="submit"
-              >
-                <ST>{submitting ? "Enviando…" : "Enviar solicitud"}</ST>
-              </button>
-            </div>
-          </form>
-        </section>
+                <SubmitFooter
+                  label="Enviar solicitud"
+                  busyLabel="Enviando…"
+                  busy={submitting}
+                  disabled={availabilityStatus === "error" || sinFechas}
+                />
+              </form>
+            </>
+          )}
+        </div>
       </main>
     </>
   );

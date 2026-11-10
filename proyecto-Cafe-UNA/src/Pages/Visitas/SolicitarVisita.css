@@ -1,0 +1,122 @@
+/* Visitas form: the "before you come" panel, the calendar + slots layout and the instructivo dialog. */
+
+.visita-antes {
+  margin-bottom: 24px;
+}
+
+.visita-antes__grupos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 900px) {
+  .visita-antes__grupos {
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 32px;
+  }
+}
+
+.visita-antes__grupo-titulo {
+  margin: 0 0 12px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--pub-ink);
+}
+
+.visita-antes__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.visita-antes__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.visita-antes__item > svg,
+.visita-instructivo__punto > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--pub-coffee);
+}
+
+.visita-antes__titulo {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--pub-ink);
+}
+
+.visita-antes__desc {
+  margin: 2px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--pub-text-muted);
+}
+
+.visita-antes__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--pub-line);
+}
+
+@media (max-width: 639px) {
+  .visita-antes__acciones .pub-btn--secondary {
+    width: 100%;
+  }
+}
+
+/* Calendar on the left, slots on the right from 860px */
+.visita-fecha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 860px) {
+  .visita-fecha {
+    grid-template-columns: 336px minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.visita-fecha__horarios {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Instructivo dialog */
+.visita-instructivo__punto {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.visita-instructivo__punto h3 {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--pub-ink);
+}
+
+.visita-instructivo__punto p {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--pub-text-muted);
+}

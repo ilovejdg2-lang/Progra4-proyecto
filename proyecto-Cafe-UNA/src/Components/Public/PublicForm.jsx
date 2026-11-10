@@ -232,7 +232,7 @@ export function SubmitFooter({ label, busyLabel, busy = false, disabled = false 
 export function FormSuccess({ title, summary, children }) {
   const titleRef = useRef(null);
   useEffect(() => {
-    titleRef.current?.focus({ preventScroll: true });
+    titleRef.current?.focus();
   }, []);
   return (
     <div className="pub-panel pub-form-success" role="status">
