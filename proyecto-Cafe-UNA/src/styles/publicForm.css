@@ -732,8 +732,8 @@
 }
 
 .pub-form .shadcn-calendar .rdp-day_button {
-  width: 42px !important;
-  height: 42px !important;
+  width: 44px !important;
+  height: 44px !important;
   font-size: 15px !important;
   color: var(--pub-ink) !important;
 }

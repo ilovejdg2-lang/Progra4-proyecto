@@ -8,6 +8,7 @@ import PageLoading from "../../Components/PageLoading/PageLoading";
 import { obtenerNecesidadesPublicas } from "../../services/donacionesService";
 import { ST } from "../../Components/T/ST";
 import { useTraducir } from "../../hooks/useTraducir";
+import { usePublicPageLoadingGate } from "../../hooks/usePublicPageLoadingGate";
 import "./NecesidadesDonacion.css";
 
 const PRIORIDADES = {
@@ -57,9 +58,9 @@ export default function NecesidadesDonacion() {
     load();
   }, [load]);
 
-  if (status === "loading") {
-    return <PageLoading message="Cargando necesidades..." />;
-  }
+  // The gate also releases the route loading lock; without it the route loader never goes away.
+  const showLoadingGate = usePublicPageLoadingGate("donaciones", status !== "loading");
+  if (showLoadingGate) return <PageLoading message="Cargando necesidades..." />;
 
   return (
     <main className="pub-page necesidades-page">
