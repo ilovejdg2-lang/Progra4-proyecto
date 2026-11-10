@@ -5,11 +5,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const obtenerDocumentosPublicos = vi.fn();
 const registrarVistaDocumento = vi.fn(() => Promise.resolve());
 const descargarArchivo = vi.fn(() => Promise.resolve());
+const obtenerDocumentoDetalle = vi.fn();
 
 vi.mock("../../services/documentosService", () => ({
   obtenerDocumentosPublicos: (...args) => obtenerDocumentosPublicos(...args),
   registrarVistaDocumento: (...args) => registrarVistaDocumento(...args),
   descargarArchivo: (...args) => descargarArchivo(...args),
+  obtenerDocumentoDetalle: (...args) => obtenerDocumentoDetalle(...args),
+  normalizarDoc: (d) => d,
   obtenerCategoriasDocumentos: () => Promise.resolve([]),
   obtenerUrlVisualizarDocumento: (id) => `/visor/${id}`,
   solicitarAccesoDocumento: vi.fn(),
@@ -40,6 +43,7 @@ describe("Repositorio page", () => {
     obtenerDocumentosPublicos.mockReset();
     obtenerDocumentosPublicos.mockResolvedValue(respuesta());
     registrarVistaDocumento.mockClear();
+    obtenerDocumentoDetalle.mockReset();
     window.history.replaceState(null, "", "/repositorio");
   });
 
@@ -133,5 +137,49 @@ describe("Repositorio page", () => {
 
     expect(descargarArchivo).not.toHaveBeenCalled();
     expect(await screen.findByRole("heading", { name: "Solicitar acceso" })).toBeInTheDocument();
+  });
+
+  it("fetches a ?docId= document that is not in the list and opens it when public", async () => {
+    obtenerDocumentoDetalle.mockResolvedValue({ documento: { id: "77", titulo: "Fuera de página", esPrivado: false } });
+    window.history.replaceState(null, "", "/repositorio?docId=77");
+    render(<Repositorio />);
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(obtenerDocumentoDetalle).toHaveBeenCalledWith("77");
+    expect(registrarVistaDocumento).toHaveBeenCalledWith("77");
+  });
+
+  it("drops an unusable ?docId= from the URL", async () => {
+    obtenerDocumentoDetalle.mockRejectedValue(new Error("404"));
+    window.history.replaceState(null, "", "/repositorio?docId=99");
+    render(<Repositorio />);
+
+    await waitFor(() => expect(window.location.search).not.toContain("docId"));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("moves an out-of-range page to the last page instead of showing the empty state", async () => {
+    obtenerDocumentosPublicos.mockImplementation(async ({ pagina }) =>
+      pagina > 2 ? respuesta([], { total: 24, totalPaginas: 2 }) : respuesta(docs, { total: 24, totalPaginas: 2 }),
+    );
+    window.history.replaceState(null, "", "/repositorio?pagina=9");
+    render(<Repositorio />);
+
+    expect(await screen.findByRole("button", { name: "Guía de poda" })).toBeInTheDocument();
+    expect(obtenerDocumentosPublicos).toHaveBeenLastCalledWith(expect.objectContaining({ pagina: 2 }));
+    expect(screen.queryByText(/No encontramos|Todavía no hay/)).toBeNull();
+  });
+
+  it("clears the list when loading fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const user = userEvent.setup();
+    render(<Repositorio />);
+    await screen.findByRole("button", { name: "Guía de poda" });
+
+    obtenerDocumentosPublicos.mockRejectedValueOnce(new Error("boom"));
+    await user.click(screen.getByRole("radio", { name: "Más descargados" }));
+
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Guía de poda" })).toBeNull();
   });
 });

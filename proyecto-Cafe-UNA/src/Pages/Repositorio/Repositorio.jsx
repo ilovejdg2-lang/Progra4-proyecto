@@ -5,6 +5,8 @@ import PageLoading from "../../Components/PageLoading/PageLoading";
 import { PublicPageHeader } from "../../Components/Public/PublicPageHeader";
 import {
   descargarArchivo,
+  normalizarDoc,
+  obtenerDocumentoDetalle,
   obtenerDocumentosPublicos,
   registrarVistaDocumento,
 } from "../../services/documentosService";
@@ -18,7 +20,7 @@ import { BarraHerramientas } from "./components/BarraHerramientas";
 import { CategoriasLista } from "./components/CategoriasLista";
 import { DocumentoFila, FilasEsqueleto } from "./components/DocumentoFila";
 import { Pagination } from "./components/Pagination";
-import { categoriasConConteo, filtrosActivos, normalizarOrden } from "./repositorioLogic";
+import { categoriasConConteo, clampPagina, filtrosActivos, normalizarOrden } from "./repositorioLogic";
 import "./Repositorio.css";
 
 const LIMITE = 12;
@@ -31,7 +33,7 @@ function leerFiltrosUrl() {
     buscar: params.get("buscar") || "",
     categoria: params.get("categoria") || "todas",
     orden: normalizarOrden(params.get("orden")),
-    pagina: parseInt(params.get("pagina") || "1", 10) || 1,
+    pagina: Math.max(1, parseInt(params.get("pagina") || "1", 10) || 1),
   };
 }
 
@@ -110,6 +112,7 @@ export default function Repositorio() {
 
   useEffect(() => {
     let cancelada = false;
+    let redirigida = false;
     const cargar = async () => {
       try {
         setCargando(true);
@@ -122,27 +125,47 @@ export default function Repositorio() {
           limite: LIMITE,
         });
         if (cancelada) return;
+
+        // A page past the end (stale URL) goes to the last page instead of showing an empty list.
+        const ultima = clampPagina(filtros.pagina, payload.totalPaginas);
+        if (ultima !== filtros.pagina) {
+          redirigida = true;
+          fijarFiltros({ ...filtrosRef.current, pagina: ultima });
+          return;
+        }
+
         setDocumentos(payload.items || []);
         setTotalResultados(payload.total || 0);
         setTotalPaginas(payload.totalPaginas || 1);
         if (payload.facetas) setCategorias(categoriasConConteo(payload.facetas));
 
-        // ?docId= deep link: open the viewer once its document shows up in the list.
+        // ?docId= deep link: open the viewer from the list, or fetch the document by id.
         const docId = new URLSearchParams(window.location.search).get("docId");
         if (docId && docIdAtendido.current !== docId) {
+          docIdAtendido.current = docId;
           const encontrado = (payload.items || []).find((d) => String(d.id) === String(docId));
           if (encontrado) {
-            docIdAtendido.current = docId;
             abrirVisor(encontrado);
+          } else {
+            obtenerDocumentoDetalle(docId)
+              .then((detalle) => {
+                const doc = normalizarDoc(detalle?.documento);
+                if (!cancelada && doc && (!doc.esPrivado || esAdmin)) abrirVisor(doc);
+                else quitarDocIdUrl();
+              })
+              .catch(quitarDocIdUrl);
           }
         }
       } catch (err) {
         if (!cancelada) {
           console.error("Error al cargar el repositorio:", err);
-          setError("No se pudieron cargar los documentos. Intenta de nuevo en unos minutos.");
+          setDocumentos([]);
+          setTotalResultados(0);
+          setTotalPaginas(1);
+          setError("No se pudieron cargar los documentos. Intentá de nuevo en unos minutos.");
         }
       } finally {
-        if (!cancelada) {
+        if (!cancelada && !redirigida) {
           setCargando(false);
           setInicialCargado(true);
         }
@@ -152,7 +175,7 @@ export default function Repositorio() {
     return () => {
       cancelada = true;
     };
-  }, [filtros.categoria, filtros.buscar, filtros.orden, filtros.pagina, reintento, abrirVisor]);
+  }, [filtros.categoria, filtros.buscar, filtros.orden, filtros.pagina, reintento, abrirVisor, fijarFiltros, esAdmin]);
 
   const cambiarFiltro = useCallback(
     (cambios) => fijarFiltros({ ...filtrosRef.current, ...cambios, pagina: 1 }),
@@ -193,7 +216,7 @@ export default function Repositorio() {
     } catch (err) {
       console.error("Error al descargar:", err);
       if (doc.esPrivado) setDocumentoSolicitar(doc);
-      else setAvisoDescarga(err?.message || "No se pudo descargar el archivo. Intenta de nuevo.");
+      else setAvisoDescarga(err?.message || "No se pudo descargar el archivo. Intentá de nuevo.");
     }
   };
 
@@ -263,8 +286,15 @@ export default function Repositorio() {
             ) : null}
 
             <section className="pub-panel repo-panel" aria-busy={cargando}>
+              <h2 className="pub-visually-hidden">
+                <ST>Documentos</ST>
+              </h2>
               <p className="repo-count" aria-live="polite">
-                {totalResultados} <ST>{totalResultados === 1 ? "documento" : "documentos"}</ST>
+                {cargando ? null : (
+                  <>
+                    {totalResultados} <ST>{totalResultados === 1 ? "documento" : "documentos"}</ST>
+                  </>
+                )}
               </p>
 
               {cargando ? (

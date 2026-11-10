@@ -70,12 +70,15 @@ function OrdenSegmentado({ orden, onCambiar }) {
 }
 
 function SelectorMovil({ etiqueta, valor, onCambiar, opciones }) {
+  const tEtiqueta = useTraducir(etiqueta);
   return (
-    <label className="repo-pill-select">
-      <span className="repo-pill-select__prefix">
-        <ST>{etiqueta}</ST>:
-      </span>
-      <select className="repo-pill-select__control" value={valor} onChange={(e) => onCambiar(e.target.value)}>
+    <div className="repo-pill-select">
+      <select
+        className="repo-pill-select__control"
+        aria-label={tEtiqueta}
+        value={valor}
+        onChange={(e) => onCambiar(e.target.value)}
+      >
         {opciones.map((op) => (
           <option key={op.valor} value={op.valor}>
             {op.etiqueta}
@@ -83,7 +86,7 @@ function SelectorMovil({ etiqueta, valor, onCambiar, opciones }) {
         ))}
       </select>
       <ChevronDown size={16} className="repo-pill-select__chevron" aria-hidden="true" />
-    </label>
+    </div>
   );
 }
 
