@@ -1,14 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Download,
-  Eye,
-  FileText,
-  FolderOpen,
-  Info,
-  Sparkles,
-} from "lucide-react";
+import { Info, Upload } from "lucide-react";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
 import PageLoading from "../../Components/PageLoading/PageLoading";
+import { PublicPageHeader } from "../../Components/Public/PublicPageHeader";
 import {
   descargarArchivo,
   obtenerDocumentosPublicos,
@@ -17,178 +11,135 @@ import {
 import { getActiveSessionUser } from "../../services/sessionService";
 import { SolicitarDocumentoModal } from "./SolicitarDocumentoModal";
 import { VisualizarDocumentoModal } from "./VisualizarDocumentoModal";
-import { usePersistedBoolean } from "../../hooks/usePersistedBoolean";
-import { usePersistedIdSet } from "../../hooks/usePersistedIdSet";
 import { usePublicPageLoadingGate } from "../../hooks/usePublicPageLoadingGate";
+import { useTraducir } from "../../hooks/useTraducir";
 import { ST } from "../../Components/T/ST";
-
-// Componentes del nuevo layout de biblioteca digital
-import { Sidebar } from "./components/Sidebar";
-import { ResultsToolbar } from "./components/ResultsToolbar";
-import { ActiveFilterChips } from "./components/ActiveFilterChips";
-import { DocumentGrid } from "./components/DocumentGrid";
-import { DocumentList } from "./components/DocumentList";
+import { BarraHerramientas } from "./components/BarraHerramientas";
+import { CategoriasLista } from "./components/CategoriasLista";
+import { DocumentoFila, FilasEsqueleto } from "./components/DocumentoFila";
 import { Pagination } from "./components/Pagination";
-
-import "../Voluntariado/SolicitarVoluntariado.css";
+import { categoriasConConteo, filtrosActivos, normalizarOrden } from "./repositorioLogic";
 import "./Repositorio.css";
 
-// Helper para leer query params actuales de la URL
-function parseUrlFilters() {
-  if (typeof window === "undefined") return {};
+const LIMITE = 12;
+const FILTROS_VACIOS = { buscar: "", categoria: "todas", orden: "recientes", pagina: 1 };
+
+function leerFiltrosUrl() {
+  if (typeof window === "undefined") return { ...FILTROS_VACIOS };
   const params = new URLSearchParams(window.location.search);
   return {
     buscar: params.get("buscar") || "",
     categoria: params.get("categoria") || "todas",
-    subcategoria: params.get("subcategoria") || "",
-    anioDesde: params.get("anioDesde") || "",
-    anioHasta: params.get("anioHasta") || "",
-    autor: params.get("autor") || "",
-    tipoArchivo: params.get("tipoArchivo") || "todos",
-    idioma: params.get("idioma") || "todos",
-    etiquetas: params.get("etiquetas") || "",
-    accesoRapido: params.get("accesoRapido") || "todos",
-    orden: params.get("orden") || "recientes",
-    vista: params.get("vista") || "grid",
-    miBiblioteca: params.get("miBiblioteca") || "",
+    orden: normalizarOrden(params.get("orden")),
     pagina: parseInt(params.get("pagina") || "1", 10) || 1,
   };
 }
 
+/** Writes buscar/categoria/orden/pagina to the URL, keeping any other param (docId). */
+function escribirFiltrosUrl(filtros) {
+  if (typeof window === "undefined") return;
+  const params = new URLSearchParams(window.location.search);
+  ["buscar", "categoria", "orden", "pagina"].forEach((clave) => params.delete(clave));
+  const buscar = String(filtros.buscar || "").trim();
+  if (buscar) params.set("buscar", buscar);
+  if (filtros.categoria && filtros.categoria !== "todas") params.set("categoria", filtros.categoria);
+  if (filtros.orden && filtros.orden !== "recientes") params.set("orden", filtros.orden);
+  if (filtros.pagina > 1) params.set("pagina", String(filtros.pagina));
+  const query = params.toString();
+  window.history.replaceState(null, "", query ? `${window.location.pathname}?${query}` : window.location.pathname);
+}
+
+function quitarDocIdUrl() {
+  if (typeof window === "undefined") return;
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has("docId")) return;
+  params.delete("docId");
+  const query = params.toString();
+  window.history.replaceState(null, "", query ? `${window.location.pathname}?${query}` : window.location.pathname);
+}
+
 export default function Repositorio() {
   const user = getActiveSessionUser();
+  const tLead = useTraducir("Investigaciones, guías, tesis y noticias sobre el café, de libre consulta y descarga.");
+  const tTitulo = useTraducir("Repositorio");
 
-  // Regla estricta: Solo roles superAdmin o administrativos ven documentos privados
   const esAdmin = useMemo(() => {
     if (!user) return false;
     const roles = Array.isArray(user.roles) ? user.roles : [user.role || user.rol];
-    return roles.some((r) =>
-      ["admin", "superadmin"].includes(String(r || "").toLowerCase()),
-    );
+    return roles.some((r) => ["admin", "superadmin"].includes(String(r || "").toLowerCase()));
   }, [user]);
 
-  // Estado sincronizado con URL
-  const [filtros, setFiltros] = useState(parseUrlFilters);
+  const [filtros, setFiltros] = useState(leerFiltrosUrl);
   const filtrosRef = useRef(filtros);
   const fijarFiltros = useCallback((siguientes) => {
     filtrosRef.current = siguientes;
     setFiltros(siguientes);
+    escribirFiltrosUrl(siguientes);
   }, []);
 
-  // Datos del catálogo
   const [documentos, setDocumentos] = useState([]);
-  const [facetas, setFacetas] = useState({
-    categorias: [],
-    subcategorias: [],
-    anios: [],
-    tiposArchivo: [],
-    idiomas: [],
-    autores: [],
-    etiquetas: [],
-    accesosRapidos: { todos: 0, novedades: 0, populares: 0, destacados: 0 },
-  });
-  const [estadisticas, setEstadisticas] = useState({
-    totalDocumentos: 0,
-    totalCategorias: 0,
-    totalDescargas: 0,
-    totalVistas: 0,
-  });
-
+  const [categorias, setCategorias] = useState([]);
   const [totalResultados, setTotalResultados] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [cargando, setCargando] = useState(true);
   const [inicialCargado, setInicialCargado] = useState(false);
   const [error, setError] = useState("");
+  const [avisoDescarga, setAvisoDescarga] = useState("");
+  const [reintento, setReintento] = useState(0);
 
-  // Estado del layout
-  const [vistaCuadricula, setVistaCuadricula] = useState(() => filtros.vista !== "list");
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [sidebarColapsado, setSidebarColapsado] = usePersistedBoolean("biblio_sidebar_collapsed", false);
-
-  // Modales
   const [documentoSolicitar, setDocumentoSolicitar] = useState(null);
   const [documentoVisualizar, setDocumentoVisualizar] = useState(null);
+  const docIdAtendido = useRef(null);
 
-  // Persistencia de favoritos, leer más tarde e historial
-  const { ids: favoritosIds, toggle: toggleFavorito } = usePersistedIdSet("biblio_favoritos_ids");
-  const { ids: leerTardeIds, toggle: toggleLeerTarde } = usePersistedIdSet("biblio_leertarde_ids");
-  const { ids: historialIds, add: agregarHistorial } = usePersistedIdSet("biblio_historial_ids");
-
-  // Actualizar URL cuando cambian los filtros (history replaceState sin recargar página ni alterar posición de scroll)
-  const sincronizarUrl = useCallback((nuevosFiltros) => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams();
-    Object.entries(nuevosFiltros).forEach(([clave, valor]) => {
-      const v = String(valor ?? "").trim();
-      if (
-        v &&
-        !(clave === "categoria" && v === "todas") &&
-        !(clave === "tipoArchivo" && v === "todos") &&
-        !(clave === "idioma" && v === "todos") &&
-        !(clave === "accesoRapido" && v === "todos") &&
-        !(clave === "miBiblioteca" && v === "") &&
-        !(clave === "orden" && v === "recientes") &&
-        !(clave === "vista" && v === "grid") &&
-        !(clave === "pagina" && v === "1")
-      ) {
-        params.set(clave, v);
-      }
-    });
-
-    const queryString = params.toString();
-    const nuevaUrl = queryString
-      ? `${window.location.pathname}?${queryString}`
-      : window.location.pathname;
-
-    window.history.replaceState(nuevosFiltros, "", nuevaUrl);
+  // Back/forward restores the filters from the URL.
+  useEffect(() => {
+    const alRetroceder = () => {
+      const url = leerFiltrosUrl();
+      filtrosRef.current = url;
+      setFiltros(url);
+    };
+    window.addEventListener("popstate", alRetroceder);
+    return () => window.removeEventListener("popstate", alRetroceder);
   }, []);
 
-  // Escuchar cambios de historial (atrás / adelante)
-  useEffect(() => {
-    const handlePopState = () => {
-      const parsed = parseUrlFilters();
-      fijarFiltros(parsed);
-      setVistaCuadricula(parsed.vista !== "list");
-    };
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [fijarFiltros]);
+  // Every way of opening the viewer counts one view.
+  const abrirVisor = useCallback((doc) => {
+    setDocumentoVisualizar(doc);
+    void registrarVistaDocumento(doc.id).catch(() => {});
+  }, []);
 
-  // Consultar catálogo en backend con cancelación de peticiones obsoletas
   useEffect(() => {
     let cancelada = false;
-    const cargarCatalogo = async () => {
+    const cargar = async () => {
       try {
         setCargando(true);
         setError("");
-
         const payload = await obtenerDocumentosPublicos({
           categoria: filtros.categoria === "todas" ? "" : filtros.categoria,
-          subcategoria: filtros.subcategoria,
           buscar: filtros.buscar,
           orden: filtros.orden,
-          anioDesde: filtros.anioDesde,
-          anioHasta: filtros.anioHasta,
-          autor: filtros.autor,
-          tipoArchivo: filtros.tipoArchivo,
-          idioma: filtros.idioma,
-          etiquetas: filtros.etiquetas,
-          accesoRapido: filtros.accesoRapido,
           pagina: filtros.pagina,
-          limite: 12,
+          limite: LIMITE,
         });
-
         if (cancelada) return;
-
         setDocumentos(payload.items || []);
         setTotalResultados(payload.total || 0);
         setTotalPaginas(payload.totalPaginas || 1);
-        if (payload.facetas) setFacetas(payload.facetas);
-        if (payload.estadisticas) setEstadisticas(payload.estadisticas);
+        if (payload.facetas) setCategorias(categoriasConConteo(payload.facetas));
+
+        // ?docId= deep link: open the viewer once its document shows up in the list.
+        const docId = new URLSearchParams(window.location.search).get("docId");
+        if (docId && docIdAtendido.current !== docId) {
+          const encontrado = (payload.items || []).find((d) => String(d.id) === String(docId));
+          if (encontrado) {
+            docIdAtendido.current = docId;
+            abrirVisor(encontrado);
+          }
+        }
       } catch (err) {
         if (!cancelada) {
-          console.error("Error al cargar biblioteca digital:", err);
-          setError("No se pudieron cargar los documentos. Intente más tarde.");
+          console.error("Error al cargar el repositorio:", err);
+          setError("No se pudieron cargar los documentos. Intenta de nuevo en unos minutos.");
         }
       } finally {
         if (!cancelada) {
@@ -197,419 +148,183 @@ export default function Repositorio() {
         }
       }
     };
-
-    cargarCatalogo();
+    cargar();
     return () => {
       cancelada = true;
     };
-  }, [
-    filtros.categoria,
-    filtros.subcategoria,
-    filtros.buscar,
-    filtros.orden,
-    filtros.anioDesde,
-    filtros.anioHasta,
-    filtros.autor,
-    filtros.tipoArchivo,
-    filtros.idioma,
-    filtros.etiquetas,
-    filtros.accesoRapido,
-    filtros.pagina,
-  ]);
+  }, [filtros.categoria, filtros.buscar, filtros.orden, filtros.pagina, reintento, abrirVisor]);
 
-  // Manejador genérico para cambiar un filtro
-  const handleCambiarFiltro = useCallback(
-    (clave, valor) => {
-      const next = { ...filtrosRef.current, [clave]: valor, pagina: 1 };
-      fijarFiltros(next);
-      sincronizarUrl(next);
-    },
-    [fijarFiltros, sincronizarUrl],
+  const cambiarFiltro = useCallback(
+    (cambios) => fijarFiltros({ ...filtrosRef.current, ...cambios, pagina: 1 }),
+    [fijarFiltros],
   );
+  const buscarTexto = useCallback((texto) => cambiarFiltro({ buscar: texto }), [cambiarFiltro]);
+  const limpiar = useCallback(() => fijarFiltros({ ...FILTROS_VACIOS, orden: filtrosRef.current.orden }), [fijarFiltros]);
 
-  // Manejador para cambiar múltiples filtros atómicamente (ej. categoría y subcategoría a la vez)
-  const handleCambiarFiltros = useCallback(
-    (cambios) => {
-      const next = { ...filtrosRef.current, ...cambios, pagina: 1 };
-      fijarFiltros(next);
-      sincronizarUrl(next);
-    },
-    [fijarFiltros, sincronizarUrl],
-  );
-
-  // Manejador de búsqueda
-  const handleBuscar = useCallback(
-    (termino) => {
-      handleCambiarFiltro("buscar", termino);
-    },
-    [handleCambiarFiltro],
-  );
-
-  // Manejador de cambio de página
-  const handleCambiarPagina = useCallback(
-    (nuevaPagina) => {
-      const next = { ...filtrosRef.current, pagina: nuevaPagina };
-      fijarFiltros(next);
-      sincronizarUrl(next);
-      // Desplazamiento suave solo si el usuario se encuentra debajo de la barra de herramientas
-      const toolbar = document.querySelector(".biblio-toolbar");
-      if (toolbar) {
-        const rect = toolbar.getBoundingClientRect();
-        if (rect.top < 0) {
-          toolbar.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
+  const cambiarPagina = useCallback(
+    (pagina) => {
+      fijarFiltros({ ...filtrosRef.current, pagina });
+      const barra = document.querySelector(".repo-toolbar");
+      if (barra && barra.getBoundingClientRect().top < 0) {
+        barra.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     },
-    [fijarFiltros, sincronizarUrl],
+    [fijarFiltros],
   );
 
-  // Alternar vista cuadrícula / lista
-  const handleToggleVista = useCallback(
-    (cuadricula) => {
-      setVistaCuadricula(cuadricula);
-      const next = { ...filtrosRef.current, vista: cuadricula ? "grid" : "list" };
-      fijarFiltros(next);
-      sincronizarUrl(next);
-    },
-    [fijarFiltros, sincronizarUrl],
-  );
+  const cerrarVisor = () => {
+    setDocumentoVisualizar(null);
+    quitarDocIdUrl();
+  };
 
-  // Limpiar todos los filtros
-  const handleLimpiarTodos = useCallback(() => {
-    const limpios = {
-      buscar: "",
-      categoria: "todas",
-      subcategoria: "",
-      anioDesde: "",
-      anioHasta: "",
-      autor: "",
-      tipoArchivo: "todos",
-      idioma: "todos",
-      visibilidad: "todas",
-      etiquetas: "",
-      accesoRapido: "todos",
-      orden: "recientes",
-      vista: vistaCuadricula ? "grid" : "list",
-      pagina: 1,
-    };
-    fijarFiltros(limpios);
-    sincronizarUrl(limpios);
-  }, [fijarFiltros, sincronizarUrl, vistaCuadricula]);
-
-  // Alternar colapso de sidebar en escritorio
-  const handleToggleColapso = () => setSidebarColapsado((prev) => !prev);
-
-  // Descarga de archivo
-  const handleDescargar = async (doc) => {
+  const descargar = async (doc) => {
+    setAvisoDescarga("");
     if (doc.esPrivado && !esAdmin) {
       setDocumentoSolicitar(doc);
       return;
     }
-
     try {
       await descargarArchivo(doc.id, doc.nombreOriginal || `${doc.titulo}.pdf`);
-      // Incrementar descargas localmente
       setDocumentos((prev) =>
         prev.map((item) =>
-          item.id === doc.id
-            ? { ...item, descargasCount: (item.descargasCount || 0) + 1 }
-            : item,
+          item.id === doc.id ? { ...item, descargasCount: (item.descargasCount || 0) + 1 } : item,
         ),
       );
-      setEstadisticas((prev) => ({
-        ...prev,
-        totalDescargas: (prev.totalDescargas || 0) + 1,
-      }));
     } catch (err) {
       console.error("Error al descargar:", err);
-      if (doc.esPrivado) {
-        setDocumentoSolicitar(doc);
-      } else {
-        alert(err?.message || "Ocurrió un error al descargar el archivo.");
-      }
+      if (doc.esPrivado) setDocumentoSolicitar(doc);
+      else setAvisoDescarga(err?.message || "No se pudo descargar el archivo. Intenta de nuevo.");
     }
   };
 
-  // Visualizar documento y registrar vista
-  const handleVisualizar = (doc) => {
-    setDocumentoVisualizar(doc);
-    // Registrar vista en backend e historial local
-    void registrarVistaDocumento(doc.id).catch(() => {});
-    agregarHistorial(doc.id);
-    setDocumentos((prev) =>
-      prev.map((item) =>
-        item.id === doc.id
-          ? { ...item, vistasCount: (item.vistasCount || 0) + 1 }
-          : item,
-      ),
-    );
-  };
-
-  // Abrir automáticamente el visor si viene docId en la URL
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const docId = params.get("docId");
-    if (docId && documentos.length > 0) {
-      const encontrado = documentos.find((d) => String(d.id) === String(docId));
-      if (encontrado) {
-        const timer = setTimeout(() => {
-          setDocumentoVisualizar((prev) => (prev?.id === encontrado.id ? prev : encontrado));
-        }, 50);
-        return () => clearTimeout(timer);
-      }
-    }
-    return undefined;
-  }, [documentos]);
-
-  // Documentos filtrados según Mi Biblioteca si está activo
-  const documentosMostrados = useMemo(() => {
-    if (!filtros.miBiblioteca) return documentos;
-    if (filtros.miBiblioteca === "favoritos") {
-      return documentos.filter((d) => favoritosIds.has(String(d.id)));
-    }
-    if (filtros.miBiblioteca === "leer_mas_tarde") {
-      return documentos.filter((d) => leerTardeIds.has(String(d.id)));
-    }
-    if (filtros.miBiblioteca === "historial") {
-      return documentos.filter((d) => historialIds.has(String(d.id)));
-    }
-    return documentos;
-  }, [documentos, filtros.miBiblioteca, favoritosIds, leerTardeIds, historialIds]);
-
-  const totalCalculado = filtros.miBiblioteca
-    ? documentosMostrados.length
-    : totalResultados;
-
-  // Gate de carga pública: solo para la carga inicial de la página
   const showLoadingGate = usePublicPageLoadingGate("repositorio", inicialCargado);
-  if (showLoadingGate) {
-    return <PageLoading message="Cargando biblioteca digital..." />;
-  }
+  if (showLoadingGate) return <PageLoading message="Cargando biblioteca digital..." />;
+
+  const totalTodas = categorias.reduce((suma, c) => suma + c.count, 0);
+  const hayFiltros = filtrosActivos(filtros);
 
   return (
-    <div className="biblio-page">
-      {/* Botón Volver al inicio */}
-      <div className="biblio-back-container no-print">
-        <BackToHomeLink />
-      </div>
-
-      {/* Encabezado y Estadísticas Calculadas (Estilo Institucional / Administrativo) */}
-      <section className="biblio-header-section" aria-labelledby="biblio-title">
-        <div className="biblio-header-content">
-          <div className="biblio-header-top">
-            <div>
-              <div className="badge--admin-docs">
-                <Sparkles size={13} className="text-amber-500 mr-1" />
-                <span>
-                  <ST>Repositorio Institucional & Biblioteca Digital</ST>
-                </span>
-              </div>
-              <h1 id="biblio-title" className="admin-docs-title">
-                <ST>Biblioteca Digital Café-UNA</ST>
-              </h1>
-              <p className="admin-docs-subtitle">
-                <ST>
-                  Consulta, descarga e investiga informes oficiales, manuales de producción, guías
-                  técnicas y normativas del Proyecto Café-UNA.
-                </ST>
-              </p>
-            </div>
-          </div>
-
-          {/* Franja de estadísticas / KPIs calculadas desde la base de datos */}
-          <div className="admin-docs-kpi-grid biblio-kpi-grid" role="region" aria-label="Estadísticas de la biblioteca">
-            <div className="admin-docs-kpi-card">
-              <span className="kpi-icon kpi-icon--blue">
-                <FileText size={20} />
-              </span>
-              <div className="kpi-info">
-                <span className="kpi-num">{estadisticas.totalDocumentos || 0}</span>
-                <span className="kpi-lbl">
-                  <ST>Documentos</ST>
-                </span>
-              </div>
-            </div>
-
-            <div className="admin-docs-kpi-card">
-              <span className="kpi-icon kpi-icon--emerald">
-                <FolderOpen size={20} />
-              </span>
-              <div className="kpi-info">
-                <span className="kpi-num">{estadisticas.totalCategorias || 4}</span>
-                <span className="kpi-lbl">
-                  <ST>Categorías temáticas</ST>
-                </span>
-              </div>
-            </div>
-
-            <div className="admin-docs-kpi-card">
-              <span className="kpi-icon kpi-icon--amber">
-                <Download size={20} />
-              </span>
-              <div className="kpi-info">
-                <span className="kpi-num">{estadisticas.totalDescargas || 0}</span>
-                <span className="kpi-lbl">
-                  <ST>Descargas totales</ST>
-                </span>
-              </div>
-            </div>
-
-            <div className="admin-docs-kpi-card">
-              <span className="kpi-icon kpi-icon--purple">
-                <Eye size={20} />
-              </span>
-              <div className="kpi-info">
-                <span className="kpi-num">{estadisticas.totalVistas || 0}</span>
-                <span className="kpi-lbl">
-                  <ST>Visualizaciones</ST>
-                </span>
-              </div>
-            </div>
-          </div>
+    <div className="pub-page repo-page">
+      <div className="pub-container">
+        <div className="repo-back no-print">
+          <BackToHomeLink />
         </div>
-      </section>
 
-      {/* Contenedor Principal: Layout de Dos Columnas (Sidebar + Contenido) */}
-      <div className="biblio-layout-container">
-        {/* Sidebar de navegación y filtros */}
-        <Sidebar
-          filtros={filtros}
-          facetas={facetas}
-          estadisticas={estadisticas}
-          usuario={user}
-          esAdmin={esAdmin}
-          totalResultados={totalCalculado}
-          favoritosCount={favoritosIds.size}
-          leerTardeCount={leerTardeIds.size}
-          historialCount={historialIds.size}
-          onBuscar={handleBuscar}
-          onCambiarFiltro={handleCambiarFiltro}
-          onCambiarFiltros={handleCambiarFiltros}
-          onLimpiarFiltros={handleLimpiarTodos}
-          onAbrirSolicitarModal={() => setDocumentoSolicitar({})}
-          mobileOpen={mobileDrawerOpen}
-          onCloseMobile={() => setMobileDrawerOpen(false)}
-          sidebarColapsado={sidebarColapsado}
-          onToggleColapso={handleToggleColapso}
+        <PublicPageHeader
+          title={tTitulo}
+          lead={tLead}
+          actions={
+            <button type="button" className="pub-btn pub-btn--primary" onClick={() => setDocumentoSolicitar({})}>
+              <Upload size={18} aria-hidden="true" />
+              <ST>Enviar documento</ST>
+            </button>
+          }
         />
 
-        {/* Área de Contenido Principal */}
-        <main
-          className={`biblio-main-content ${
-            sidebarColapsado ? "biblio-main-content--expanded" : ""
-          }`}
-          aria-hidden={mobileDrawerOpen}
-          style={mobileDrawerOpen ? { pointerEvents: "none", userSelect: "none" } : undefined}
-        >
-          {/* Barra superior de herramientas y orden */}
-          <ResultsToolbar
-            totalResultados={totalCalculado}
-            paginaActual={filtros.pagina}
-            limitePorPagina={12}
-            orden={filtros.orden}
-            onCambiarOrden={(ord) => handleCambiarFiltro("orden", ord)}
-            vistaCuadricula={vistaCuadricula}
-            onToggleVista={handleToggleVista}
-            onAbrirFiltrosMobile={() => setMobileDrawerOpen(true)}
-            sidebarColapsado={sidebarColapsado}
-            onToggleColapso={handleToggleColapso}
-            filtrosActivosCount={
-              (filtros.buscar ? 1 : 0) +
-              (filtros.categoria !== "todas" ? 1 : 0) +
-              (filtros.subcategoria ? 1 : 0) +
-              (filtros.anioDesde || filtros.anioHasta ? 1 : 0) +
-              (filtros.tipoArchivo !== "todos" ? 1 : 0) +
-              (filtros.autor ? 1 : 0) +
-              (filtros.idioma !== "todos" ? 1 : 0) +
-              (esAdmin && filtros.visibilidad !== "todas" ? 1 : 0) +
-              (filtros.accesoRapido !== "todos" ? 1 : 0) +
-              (filtros.miBiblioteca ? 1 : 0)
-            }
-          />
+        <BarraHerramientas
+          buscar={filtros.buscar}
+          orden={filtros.orden}
+          categoria={filtros.categoria}
+          categorias={categorias}
+          onBuscar={buscarTexto}
+          onOrden={(orden) => cambiarFiltro({ orden })}
+          onCategoria={(categoria) => cambiarFiltro({ categoria })}
+        />
 
-          {/* Chips de filtros activos removibles */}
-          <ActiveFilterChips
-            filtros={filtros}
-            onEliminarFiltro={handleCambiarFiltro}
-            onLimpiarTodos={handleLimpiarTodos}
-          />
-
-          {/* Mensaje de error si falla */}
-          {error && (
-            <div className="biblio-error-banner" role="alert">
-              <Info size={18} />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Resultados: Cuadrícula o Lista */}
-          {vistaCuadricula ? (
-            <DocumentGrid
-              documentos={documentosMostrados}
-              cargando={cargando}
-              terminoBusqueda={filtros.buscar}
-              esAdmin={esAdmin}
-              usuario={user}
-              favoritosIds={favoritosIds}
-              onVisualizar={handleVisualizar}
-              onDescargar={handleDescargar}
-              onVerDetalle={(doc) => setDocumentoVisualizar(doc)}
-              onToggleFavorito={(doc) => toggleFavorito(doc.id)}
-              onToggleLeerTarde={(doc) => toggleLeerTarde(doc.id)}
-              onFiltrarEtiqueta={(tag) => handleCambiarFiltro("etiquetas", tag)}
-              onLimpiarFiltros={handleLimpiarTodos}
+        <div className="repo-columns">
+          <aside className="repo-sidebar repo-only-desktop">
+            <CategoriasLista
+              categorias={categorias}
+              total={totalTodas}
+              seleccionada={filtros.categoria}
+              onSeleccionar={(categoria) => cambiarFiltro({ categoria })}
             />
-          ) : (
-            <DocumentList
-              documentos={documentosMostrados}
-              cargando={cargando}
-              terminoBusqueda={filtros.buscar}
-              esAdmin={esAdmin}
-              usuario={user}
-              favoritosIds={favoritosIds}
-              onVisualizar={handleVisualizar}
-              onDescargar={handleDescargar}
-              onVerDetalle={(doc) => setDocumentoVisualizar(doc)}
-              onToggleFavorito={(doc) => toggleFavorito(doc.id)}
-              onToggleLeerTarde={(doc) => toggleLeerTarde(doc.id)}
-              onFiltrarEtiqueta={(tag) => handleCambiarFiltro("etiquetas", tag)}
-              onLimpiarFiltros={handleLimpiarTodos}
-            />
-          )}
+          </aside>
 
-          {/* Paginación */}
-          <Pagination
-            paginaActual={filtros.pagina}
-            totalPaginas={totalPaginas}
-            onCambiarPagina={handleCambiarPagina}
-          />
-        </main>
+          <main className="repo-content">
+            {error ? (
+              <div className="pub-alert" role="alert">
+                <Info size={18} aria-hidden="true" />
+                <span>
+                  <ST>{error}</ST>
+                </span>
+                <button type="button" className="pub-btn pub-btn--link" onClick={() => setReintento((n) => n + 1)}>
+                  <ST>Reintentar</ST>
+                </button>
+              </div>
+            ) : null}
+            {avisoDescarga ? (
+              <div className="pub-alert" role="alert">
+                <Info size={18} aria-hidden="true" />
+                <span>
+                  <ST>{avisoDescarga}</ST>
+                </span>
+              </div>
+            ) : null}
+
+            <section className="pub-panel repo-panel" aria-busy={cargando}>
+              <p className="repo-count" aria-live="polite">
+                {totalResultados} <ST>{totalResultados === 1 ? "documento" : "documentos"}</ST>
+              </p>
+
+              {cargando ? (
+                <FilasEsqueleto />
+              ) : documentos.length > 0 ? (
+                <ul className="repo-list">
+                  {documentos.map((doc) => (
+                    <DocumentoFila
+                      key={doc.id}
+                      doc={doc}
+                      esAdmin={esAdmin}
+                      onVer={abrirVisor}
+                      onDescargar={descargar}
+                    />
+                  ))}
+                </ul>
+              ) : error ? null : (
+                <div className="repo-empty">
+                  <p>
+                    <ST>
+                      {hayFiltros
+                        ? "No encontramos documentos con esa búsqueda."
+                        : "Todavía no hay documentos publicados."}
+                    </ST>
+                  </p>
+                  {hayFiltros ? (
+                    <button type="button" className="pub-btn pub-btn--link" onClick={limpiar}>
+                      <ST>Limpiar búsqueda</ST>
+                    </button>
+                  ) : null}
+                </div>
+              )}
+            </section>
+
+            <Pagination paginaActual={filtros.pagina} totalPaginas={totalPaginas} onCambiarPagina={cambiarPagina} />
+          </main>
+        </div>
       </div>
 
-      {/* Modal de Solicitud / Propuesta de Documento */}
-      {documentoSolicitar && (
+      {documentoSolicitar ? (
         <SolicitarDocumentoModal
-          documento={documentoSolicitar?.id ? documentoSolicitar : null}
+          documento={documentoSolicitar.id ? documentoSolicitar : null}
           onClose={() => setDocumentoSolicitar(null)}
-          onExito={() => {
-            setDocumentoSolicitar(null);
-            alert("Su solicitud o propuesta de archivo fue enviada con éxito.");
-          }}
         />
-      )}
+      ) : null}
 
-      {/* Modal de Visualización en línea */}
-      {documentoVisualizar && (
+      {documentoVisualizar ? (
         <VisualizarDocumentoModal
           documento={documentoVisualizar}
-          onClose={() => setDocumentoVisualizar(null)}
-          onSolicitarAcceso={(doc) => {
-            setDocumentoVisualizar(null);
-            setDocumentoSolicitar(doc);
-          }}
+          onClose={cerrarVisor}
+          onSolicitarAcceso={
+            esAdmin
+              ? undefined
+              : (doc) => {
+                  cerrarVisor();
+                  setDocumentoSolicitar(doc);
+                }
+          }
         />
-      )}
+      ) : null}
     </div>
   );
 }

@@ -54,6 +54,7 @@ import { ST } from "../../../Components/T/ST";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { VisualizarDocumentoModal } from "../../Repositorio/VisualizarDocumentoModal";
 import "./Documentos.css";
+import "./DocumentosLegacy.css";
 
 const FORM_DOC_ADMIN_INICIAL = {
   titulo: "",
