@@ -174,7 +174,7 @@ describe("SolicitarVisita", () => {
     const inputNombre = screen.getByLabelText(/^nombre \*/i);
     fireEvent.focus(inputNombre);
 
-    expect(sessionStorage.getItem("postLoginRedirect")).toBe("/visitas/solicitar");
+    expect(sessionStorage.getItem("postLoginRedirect")).toBe("/visitas");
     expect(navigateMock).toHaveBeenCalledWith({ to: "/login" });
   });
 
@@ -268,6 +268,10 @@ describe("SolicitarVisita", () => {
     expect(screen.getByText(/hidratación continua/i)).toBeInTheDocument();
     expect(screen.getByText(/vestimenta y protección/i)).toBeInTheDocument();
     expect(screen.getByText(/zonas de parqueo/i)).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /kit básico de agrónomo/i })).toHaveAttribute(
+      "src",
+      "/visitas/kit-basico-agronomo.jpg",
+    );
 
     const pdfLink = screen.getByRole("link", { name: /descargar instructivo en pdf/i });
     expect(pdfLink).toHaveAttribute("href", "/visitas/solicitudes/instructivo-pdf");
@@ -277,6 +281,7 @@ describe("SolicitarVisita", () => {
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText(/instructivo de recomendaciones y seguridad/i)).toBeInTheDocument();
+    expect(screen.getAllByRole("img", { name: /kit básico de agrónomo/i }).length).toBeGreaterThan(0);
 
     const closeButton = screen.getByRole("button", { name: /entendido, cerrar/i });
     fireEvent.click(closeButton);

@@ -71,16 +71,16 @@ const HORARIOS_VOLUNTARIADO = [
 ];
 
 const accionBtnBase =
-  "inline-flex items-center justify-center gap-1.5 rounded-full border text-[11px] font-semibold leading-none whitespace-nowrap transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
+  "inline-flex h-[var(--control-height)] min-w-0 items-center justify-center gap-1.5 rounded-full border px-3 text-[length:var(--text-body)] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1";
 
 const btnNegro =
-  "inline-flex items-center justify-center rounded-full border px-5 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60 admin-role-primary";
+  "inline-flex h-[var(--control-height)] min-w-0 items-center justify-center rounded-full border px-5 text-[length:var(--text-body)] font-bold transition disabled:cursor-not-allowed disabled:opacity-60 admin-role-primary";
 
 const btnCancelarGris =
-  "inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex h-[var(--control-height)] min-w-0 items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-[length:var(--text-body)] font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60";
 
 const inputModalCls =
-  "rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-normal text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
+  "box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full border border-slate-200 bg-slate-50 px-3 text-[length:var(--text-body)] font-normal text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-0";
 
 const colorEstado = {
   Pendiente: "text-amber-600",
@@ -338,7 +338,7 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
     };
   }, [solicitud, idioma]);
 
-  const btnEstadoBase = `${accionBtnBase} px-3 py-2 disabled:cursor-not-allowed disabled:opacity-50`;
+  const btnEstadoBase = `${accionBtnBase} w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto`;
   const btnRevision = `${btnEstadoBase} border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-300`;
   const btnAprobar = `${btnEstadoBase} admin-role-positive`;
   const btnRechazar = `${btnEstadoBase} admin-role-danger`;
@@ -367,25 +367,25 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
 
   return createPortal(
     <ModalDialog className="admin-modal-root" label={t("Ver solicitud")} onClose={onCerrar}>
-      <div className="relative z-10 max-h-[92dvh] w-full max-w-xl overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-950"><ST>Ver solicitud</ST></h2>
-            <p className="text-sm text-slate-500">
+      <div className="relative z-10 flex max-h-[92dvh] w-full min-w-0 max-w-xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 sm:px-6 sm:py-4">
+          <div className="min-w-0">
+            <h2 className="text-[length:var(--text-subtitle)] font-semibold text-slate-950"><ST>Ver solicitud</ST></h2>
+            <p className="break-words text-[length:var(--text-body)] text-slate-500">
               <ST>Solicitud</ST> #{solicitud.id} · <ST>Recibida el</ST> {solicitud.fechaSolicitud || t("sin fecha")}
             </p>
           </div>
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            className="shrink-0 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
             aria-label={t("Cerrar")}
           >
             <X className="size-5" />
           </button>
         </div>
 
-        <div className="max-h-[68vh] overflow-y-auto px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">
           <header className="mb-6 flex items-center gap-4 border-b border-slate-100 pb-5">
             <div className="grid size-14 shrink-0 place-items-center rounded-full bg-slate-950 text-base font-bold text-white">
               {getInitials(solicitud.nombre)}
@@ -490,8 +490,8 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
           </section>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-          <div className="flex flex-wrap gap-2">
+        <div className="min-w-0 max-w-full shrink-0 space-y-2 border-t border-slate-200 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-4 sm:pt-4">
+          <div className="grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
             <button type="button" disabled={guardando} onClick={() => cambiarEstado("En revisi\u00f3n")} className={btnRevision}>
               <ST>{"Marcar en revisi\u00f3n"}</ST>
             </button>
@@ -502,11 +502,11 @@ function ModalDetalle({ solicitud, onGuardar, onCerrar }) {
               <ST>Rechazar</ST>
             </button>
           </div>
-          <div className="flex flex-row flex-wrap justify-end gap-2">
-            <button type="button" disabled={guardando} onClick={() => guardarCambios()} className={btnNegro}>
+          <div className="grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-row sm:justify-end">
+            <button type="button" disabled={guardando} onClick={() => guardarCambios()} className={`${btnNegro} w-full sm:w-auto`}>
               {guardando ? t("Guardando...") : t("Guardar observaciones")}
             </button>
-            <button type="button" onClick={onCerrar} className={btnCancelarGris}>
+            <button type="button" onClick={onCerrar} className={`${btnCancelarGris} w-full sm:w-auto`}>
               <ST>Cerrar</ST>
             </button>
           </div>

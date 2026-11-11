@@ -45,14 +45,20 @@ export function buildIniciativasCards(tarjetas = []) {
     let ruta = tarjeta.ruta || "";
     if (clave === "donaciones") {
       const actual = String(ruta).trim();
-      if (!actual || actual.startsWith("/donaciones/necesidades")) {
-        ruta = "/donaciones/solicitar";
+      if (!actual || actual === "/donaciones/solicitar" || actual.startsWith("/donaciones/necesidades")) {
+        ruta = "/donaciones";
       }
     }
     if (clave === "visitas") {
       const actual = String(ruta).trim();
-      if (!actual || actual === "/visitas" || actual.startsWith("/visitas")) {
-        ruta = "/visitas/solicitar";
+      if (!actual || actual === "/visitas/solicitar" || actual.startsWith("/visitas")) {
+        ruta = "/visitas";
+      }
+    }
+    if (clave === "voluntariado") {
+      const actual = String(ruta).trim();
+      if (!actual || actual === "/voluntariado/solicitar" || actual.startsWith("/voluntariado")) {
+        ruta = "/voluntariado";
       }
     }
 

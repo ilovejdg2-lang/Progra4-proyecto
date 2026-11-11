@@ -884,6 +884,12 @@ const DICCIONARIO = {
   "Ventas asociadas a este punto de venta, incluyendo compras web y presenciales.":
     "Sales linked to this point of sale, including web and in-person purchases.",
   "Comprobante de pago": "Payment receipt",
+  "SINPE Móvil": "SINPE Móvil",
+  "Pagá a este número.": "Pay this number.",
+  "Copiar número": "Copy number",
+  "Número copiado": "Number copied",
+  "Teléfono / SINPE Móvil": "Phone / SINPE Móvil",
+  "Se muestra en el pie de página y en el pago del pedido.": "Shown in the footer and on the order payment.",
   "Cargando comprobante...": "Loading receipt...",
   "Tipo de cliente": "Customer type",
   "Persona jurídica": "Legal entity",

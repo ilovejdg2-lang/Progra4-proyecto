@@ -275,6 +275,17 @@ export async function actualizarEstadoSolicitudDonacion(id, estado, motivoRechaz
 
 const FECHAS_RECEPCION_BASE = `${BASE}/fechas-recepcion`;
 
+export async function obtenerConfigFechasRecepcion() {
+  try {
+    return await apiRequest(`${FECHAS_RECEPCION_BASE}/config`, {
+      skipAuth: true,
+      errorPrefix: "Error al consultar la configuración de fechas",
+    });
+  } catch {
+    return null;
+  }
+}
+
 export async function obtenerFechasRecepcionDisponibles(desde, hasta) {
   const params = new URLSearchParams();
   if (desde) params.set("desde", desde);

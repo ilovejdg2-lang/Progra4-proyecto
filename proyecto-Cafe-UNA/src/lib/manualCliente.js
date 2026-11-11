@@ -50,7 +50,7 @@ export const SECCIONES_MANUAL_CLIENTE = [
     id: "voluntariado",
     titulo: "Solicitar voluntariado",
     grupo: "Formularios",
-    ruta: "/voluntariado/solicitar",
+    ruta: "/voluntariado",
     resumen: "Formulario para ofrecerte como voluntaria o voluntario en la finca.",
     pasos: [
       "En el menú Formularios elegí Voluntariado.",
@@ -62,7 +62,7 @@ export const SECCIONES_MANUAL_CLIENTE = [
     id: "visitas",
     titulo: "Solicitar una visita grupal",
     grupo: "Formularios",
-    ruta: "/visitas/solicitar",
+    ruta: "/visitas",
     resumen: "Para escuelas, universidades, empresas u otros grupos que quieren visitar la finca.",
     pasos: [
       "En el menú Formularios elegí Visitas.",

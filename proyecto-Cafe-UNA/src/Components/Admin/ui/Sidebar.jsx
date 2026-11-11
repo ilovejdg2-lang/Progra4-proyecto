@@ -99,7 +99,7 @@ export function Sidebar({
   ...props
 }) {
   const { open, openMobile, setOpenMobile, state } = useSidebar();
-  const position = side === "right" ? "right-0 border-l" : "left-0 border-r";
+  const position = side === "right" ? "right-0" : "left-0";
   const isIcon = collapsible === "icon";
   const isOffcanvas = collapsible === "offcanvas";
 
@@ -110,7 +110,7 @@ export function Sidebar({
         data-collapsible={collapsible}
         style={{ borderRadius: 0, ...props.style }}
         className={cn(
-          "admin-sidebar group/sidebar fixed inset-y-0 z-30 hidden flex-col border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm transition-[width,transform] duration-200 md:flex !rounded-none",
+          "admin-sidebar group/sidebar fixed inset-y-0 z-30 hidden flex-col bg-[var(--admin-surface)] text-[var(--admin-text-primary)] transition-[width,transform] duration-200 md:flex !rounded-none",
           position,
           isIcon && (open ? "w-64" : "w-16"),
           isOffcanvas && "w-64",
@@ -158,7 +158,7 @@ export function Sidebar({
         <aside
           style={{ borderRadius: 0 }}
           className={cn(
-            "absolute inset-y-0 z-10 flex w-72 max-w-[85vw] flex-col border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-xl transition-transform duration-300 ease-out !rounded-none",
+            "absolute inset-y-0 z-10 flex w-72 max-w-[85vw] flex-col bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-xl transition-transform duration-300 ease-out !rounded-none",
             position,
             openMobile
               ? "translate-x-0"
@@ -226,7 +226,7 @@ export function SidebarHeader({ className, ...props }) {
   return (
     <div
       className={cn(
-        "border-b border-[var(--admin-border)] p-4 transition-[padding] group-data-[state=collapsed]/sidebar:flex group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-2",
+        "p-4 transition-[padding] group-data-[state=collapsed]/sidebar:flex group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-2",
         className,
       )}
       {...props}
@@ -272,7 +272,7 @@ export function SidebarFooter({ className, ...props }) {
   return (
     <div
       className={cn(
-        "border-t border-[var(--admin-border)] p-2 group-data-[state=collapsed]/sidebar:px-1",
+        "p-2 group-data-[state=collapsed]/sidebar:px-1",
         className,
       )}
       {...props}

@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Banknote,
   Calendar,
+  CalendarDays,
+  ClipboardList,
   Clock,
   Download,
   Eye,
@@ -49,8 +52,10 @@ import {
 } from "../../../lib/exportarDonacionesPdf";
 import { ST } from "../../../Components/T/ST";
 import { ImageLightbox } from "../../../Components/ImageLightbox/ImageLightbox";
+import { tabDeSearch } from "../../../Components/Admin/adminBreadcrumbItems";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
+import { GestionFechasDonaciones } from "./FechasRecepcion";
 
 const ESTADOS = ["Pendiente", "Aceptada", "Rechazada"];
 
@@ -489,6 +494,8 @@ function ModalDetalle({ solicitud, puedeResolver, onResolver, onDescargarFicha, 
 }
 
 export default function AdminSolicitudesDonacion() {
+  const navigate = useNavigate();
+  const search = useRouterState({ select: (state) => state.location.search });
   const actor = (() => {
     try {
       return getActiveSessionUser();
@@ -504,7 +511,11 @@ export default function AdminSolicitudesDonacion() {
     tienePermiso(roles, "administrar_solicitudes_donaciones") ||
     tienePermiso(roles, "actualizar_solicitud_donaciones");
   const puedeEditarEstadosArticulo = tienePermiso(roles, "administrar_roles_permisos");
+  const esSuperAdmin = tienePermiso(roles, "administrar_roles_permisos");
 
+  const [tabActiva, setTabActiva] = useState(() =>
+    tabDeSearch(search) === "fechas" ? "fechas" : "solicitudes",
+  );
   const [modalEstados, setModalEstados] = useState(false);
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState(() => (puedeVer ? "loading" : "idle"));
@@ -512,6 +523,20 @@ export default function AdminSolicitudesDonacion() {
   const [viendo, setViendo] = useState(null);
   const [exportando, setExportando] = useState(false);
   const [recargaTick, setRecargaTick] = useState(0);
+
+  useEffect(() => {
+    const next = tabDeSearch(search) === "fechas" ? "fechas" : "solicitudes";
+    setTabActiva((prev) => (prev === next ? prev : next));
+  }, [search]);
+
+  const cambiarTab = (nuevaTab) => {
+    setTabActiva(nuevaTab);
+    navigate({
+      to: "/admin/donaciones/solicitudes",
+      search: nuevaTab === "fechas" ? { tab: "fechas" } : {},
+      replace: true,
+    });
+  };
 
   const recargar = () => {
     if (!puedeVer) return;
@@ -838,6 +863,37 @@ export default function AdminSolicitudesDonacion() {
         placeholder="Ej. Como nuevo"
       />
       <div className="space-y-6">
+        <div className="flex border-b border-slate-200 gap-2">
+          <button
+            type="button"
+            onClick={() => cambiarTab("solicitudes")}
+            className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition ${
+              tabActiva === "solicitudes"
+                ? "border-slate-950 text-slate-950"
+                : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
+            }`}
+          >
+            <ClipboardList className="size-4" />
+            <span><ST>Solicitudes registradas</ST></span>
+          </button>
+          <button
+            type="button"
+            onClick={() => cambiarTab("fechas")}
+            className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition ${
+              tabActiva === "fechas"
+                ? "border-slate-950 text-slate-950"
+                : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
+            }`}
+          >
+            <CalendarDays className="size-4" />
+            <span><ST>Gestión de fechas de donaciones</ST></span>
+          </button>
+        </div>
+
+        {tabActiva === "fechas" ? (
+          <GestionFechasDonaciones esSuperAdmin={esSuperAdmin} />
+        ) : (
+        <>
         {/* Cabecera con Métricas y Acciones */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -1086,6 +1142,8 @@ export default function AdminSolicitudesDonacion() {
             )}
           </section>
         ) : null}
+        </>
+        )}
       </div>
 
       {viendo ? (

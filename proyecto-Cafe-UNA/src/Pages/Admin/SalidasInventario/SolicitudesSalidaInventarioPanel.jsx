@@ -120,24 +120,24 @@ export function SolicitudesSalidaInventarioPanel({ productos = EMPTY_ARRAY, pued
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 max-w-full space-y-6 overflow-x-clip">
       {puedeSolicitar ? (
-        <section aria-labelledby="solicitud-salida-title" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950">
-          <div className="mb-5 border-b border-slate-100 pb-4 dark:border-slate-800">
-            <h2 id="solicitud-salida-title" className="text-lg font-semibold text-slate-950 dark:text-white">Solicitar donación o regalía</h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">La solicitud reserva las cantidades mientras SuperAdmin la revisa. El inventario físico solo cambia al aprobarla.</p>
+        <section aria-labelledby="solicitud-salida-title" className="min-w-0 max-w-full overflow-x-clip rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950">
+          <div className="mb-4 border-b border-slate-100 pb-3 sm:mb-5 sm:pb-4 dark:border-slate-800">
+            <h2 id="solicitud-salida-title" className="text-[length:var(--text-subtitle)] font-semibold text-slate-950 dark:text-white">Solicitar donación o regalía</h2>
+            <p className="mt-1 text-[length:var(--text-body)] text-slate-600 dark:text-slate-300">La solicitud reserva las cantidades mientras SuperAdmin la revisa. El inventario físico solo cambia al aprobarla.</p>
           </div>
           <SolicitudSalidaInventarioForm productos={productos} onSubmit={enviarSolicitud} isSubmitting={isSaving} />
         </section>
       ) : null}
 
-      <section aria-labelledby="solicitudes-salida-list-title" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950">
-        <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-          <div>
-            <h2 id="solicitudes-salida-list-title" className="text-lg font-semibold text-slate-950 dark:text-white">Solicitudes de salidas no comerciales</h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Historial y estado de revisión de donaciones y regalías.</p>
+      <section aria-labelledby="solicitudes-salida-list-title" className="min-w-0 max-w-full overflow-x-clip rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950">
+        <div className="mb-4 flex min-w-0 flex-col gap-3 border-b border-slate-100 pb-3 sm:mb-5 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:pb-4 dark:border-slate-800">
+          <div className="min-w-0">
+            <h2 id="solicitudes-salida-list-title" className="text-[length:var(--text-subtitle)] font-semibold text-slate-950 dark:text-white">Solicitudes de salidas no comerciales</h2>
+            <p className="mt-1 text-[length:var(--text-body)] text-slate-600 dark:text-slate-300">Historial y estado de revisión de donaciones y regalías.</p>
           </div>
-          <button type="button" onClick={cargarSolicitudes} disabled={isLoading} className="min-h-10 rounded-full border border-slate-300 px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-900">Actualizar</button>
+          <button type="button" onClick={cargarSolicitudes} disabled={isLoading} className="inline-flex h-[var(--control-height)] w-full shrink-0 items-center justify-center rounded-full border border-slate-300 px-4 text-[length:var(--text-body)] font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60 sm:w-auto dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-900">Actualizar</button>
         </div>
 
         {error ? <p role="alert" className="mb-4 rounded-lg bg-rose-50 p-3 text-sm text-rose-800 dark:bg-rose-950/40 dark:text-rose-200">{error}</p> : null}
@@ -153,13 +153,13 @@ export function SolicitudesSalidaInventarioPanel({ productos = EMPTY_ARRAY, pued
             const historial = valor(solicitud, "Historial", "historial") || [];
             const pendiente = estado.toLowerCase() === "pendiente";
             return (
-              <article id={`solicitud-${id}`} key={id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-semibold text-slate-950 dark:text-white">{String(valor(solicitud, "Tipo", "tipo")).toLowerCase() === "regalia" ? "Regalía" : "Donación"} · {String(valor(solicitud, "Destinatario", "destinatario"))}</h3>
-                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Fecha de salida: {formatearFecha(valor(solicitud, "FechaSalida", "fechaSalida"))} · Responsable: {String(valor(solicitud, "ResponsableNombre", "responsableNombre", "responsable"))}</p>
+              <article id={`solicitud-${id}`} key={id} className="min-w-0 max-w-full overflow-x-clip rounded-xl border border-slate-200 p-3 sm:p-4 dark:border-slate-700">
+                <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <h3 className="break-words font-semibold text-slate-950 dark:text-white">{String(valor(solicitud, "Tipo", "tipo")).toLowerCase() === "regalia" ? "Regalía" : "Donación"} · {String(valor(solicitud, "Destinatario", "destinatario"))}</h3>
+                    <p className="mt-1 break-words text-[length:var(--text-body)] text-slate-600 dark:text-slate-300">Fecha de salida: {formatearFecha(valor(solicitud, "FechaSalida", "fechaSalida"))} · Responsable: {String(valor(solicitud, "ResponsableNombre", "responsableNombre", "responsable"))}</p>
                   </div>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-800 dark:bg-slate-800 dark:text-slate-100">{textoEstado(estado)}</span>
+                  <span className="w-fit shrink-0 rounded-full bg-slate-100 px-3 py-1 text-[length:var(--text-body)] font-semibold text-slate-800 dark:bg-slate-800 dark:text-slate-100">{textoEstado(estado)}</span>
                 </div>
 
                 <ul className="mt-3 space-y-1 text-sm text-slate-700 dark:text-slate-200">

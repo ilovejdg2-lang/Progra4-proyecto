@@ -811,6 +811,64 @@ body.checkout-route-active {
   background: #22c55e;
 }
 
+.checkout-sinpe {
+  margin: 0 0 1.1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  background: #f7f3ee;
+}
+
+.checkout-sinpe__label {
+  margin: 0;
+  color: #1c1614;
+  font-size: var(--text-body);
+  font-weight: 800;
+}
+
+.checkout-sinpe__hint {
+  margin: 0.2rem 0 0.7rem;
+  color: #8a7b72;
+  font-size: var(--text-body);
+  line-height: 1.4;
+}
+
+.checkout-sinpe__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.checkout-sinpe__numero {
+  min-width: 0;
+  color: #1c1614;
+  font-size: var(--text-subtitle);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+}
+
+.checkout-sinpe__copiar {
+  display: inline-flex;
+  min-height: var(--control-height);
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 1rem;
+  border: 1px solid #e4d8cc;
+  border-radius: 999px;
+  background: #fff;
+  color: #2c211c;
+  font-size: var(--text-body);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.checkout-sinpe__copiar:hover {
+  background: #faf6f1;
+}
+
 .checkout-comprobante {
   margin: 0.15rem 0 1.1rem;
 }

@@ -1,5 +1,5 @@
 # Café UNA — sitio Netlify (usar con Base directory = proyecto-Cafe-UNA)
-# Sitio activo: https://cafeunaing.netlify.app
+# Dominio canónico: https://cafeuna.app
 # También hay netlify.toml en la raíz del monorepo por si Netlify construye desde ahí.
 
 [build]
@@ -12,7 +12,14 @@
 
 # El proxy /api/* se genera en public/_redirects durante npm run build (scripts/generate-redirects.mjs)
 
-# React Router / TanStack Router — SPA fallback (debe ir al final)
+# Dominio anterior → canónico
+[[redirects]]
+  from = "https://cafeunaing.netlify.app/*"
+  to = "https://cafeuna.app/:splat"
+  status = 301
+  force = true
+
+# TanStack Router — SPA fallback (debe ir al final; estáticos como /robots.txt y /sitemap.xml se sirven antes)
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -64,3 +71,10 @@
   for = "/robots.txt"
   [headers.values]
     Cache-Control = "public, max-age=86400"
+    Content-Type = "text/plain; charset=utf-8"
+
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+    Content-Type = "application/xml; charset=utf-8"

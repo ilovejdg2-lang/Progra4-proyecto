@@ -327,6 +327,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .auditoria-filter-label {
@@ -368,6 +371,11 @@
 
 .auditoria-date-input {
   cursor: text;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* Active Chips */
