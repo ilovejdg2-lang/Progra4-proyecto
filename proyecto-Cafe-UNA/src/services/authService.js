@@ -1,6 +1,14 @@
 import { apiRequest } from "./apiClient";
 import { decodeJwtPayload } from "../lib/jwt";
 import { tienePermiso } from "../lib/permisos";
+import {
+  REGISTRO_CLIENTE_INTENT_KEY,
+  POST_LOGIN_REDIRECT_KEY,
+  REGISTRO_CLIENTE_CORREO_KEY,
+  limpiarEstadoCompraSesion,
+} from "./compraSesionStorage";
+
+export { limpiarEstadoCompraSesion };
 
 const AUTH_BASE_URL = `${import.meta.env.BACKEND_URL}/auth`;
 
@@ -52,10 +60,6 @@ export function puedeComprar(user) {
   return tienePermiso(user?.roles, "comprar_productos");
 }
 
-const REGISTRO_CLIENTE_INTENT_KEY = "registroClienteDesdeCheckout";
-const POST_LOGIN_REDIRECT_KEY = "postLoginRedirect";
-const REGISTRO_CLIENTE_CORREO_KEY = "registroClienteCorreo";
-
 /** Marca que la persona llegó al registro porque quiere pagar el carrito. */
 export function marcarIntentRegistroCliente() {
   try {
@@ -74,20 +78,6 @@ export function puedeAbrirRegistroCliente() {
     /* ignore */
   }
   return false;
-}
-
-/**
- * Limpia redirects e intents de compra/registro al cerrar sesión o cambiar de cuenta.
- * Evita que la siguiente persona herede /checkout o el formulario de cliente.
- */
-export function limpiarEstadoCompraSesion() {
-  try {
-    sessionStorage.removeItem(REGISTRO_CLIENTE_INTENT_KEY);
-    sessionStorage.removeItem(REGISTRO_CLIENTE_CORREO_KEY);
-    sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
-  } catch {
-    /* ignore */
-  }
 }
 
 export function limpiarIntentRegistroCliente() {
