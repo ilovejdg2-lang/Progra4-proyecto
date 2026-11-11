@@ -24,6 +24,7 @@ import { clearHomePageLoading, setHomePageLoading } from "./lib/homePageLoading"
 import { beginRouteLoading, endRouteLoading } from "./lib/routeLoadingLock";
 import { getSiteBootMessage } from "./lib/siteBootLoading";
 import { ADMIN_THEME_CHANGED_EVENT, applyAdminDocumentTheme } from "./lib/adminTheme";
+import { claimWindowRole } from "./lib/siteWindows";
 
 const AboutUs = lazy(() => import("./Pages/AboutUs/AboutUs"));
 const Equipo = lazy(() => import("./Pages/AboutUs/Equipo"));
@@ -185,12 +186,12 @@ const rootRoute = createRootRoute({
             isCheckoutRoute;
         const loadingKey = isHomeRoute ? 'home' : cacheKey || pathname;
 
+        const loadingMode = isAdminRoute ? 'admin' : isHomeRoute ? 'home' : 'site';
+
         // Durante el render: activar overlay antes del paint (evita blanco).
+        // pathnameHint evita que el mensaje quede pegado a la ruta anterior.
         if (typeof document !== 'undefined' && !isPageInstantReady(loadingKey)) {
-            beginRouteLoading(
-                loadingKey,
-                isAdminRoute ? 'admin' : isHomeRoute ? 'home' : 'site',
-            );
+            beginRouteLoading(loadingKey, loadingMode, pathname);
         }
 
         useLayoutEffect(() => {
@@ -200,13 +201,13 @@ const rootRoute = createRootRoute({
                 return;
             }
 
-            const mode = isAdminRoute ? 'admin' : isHomeRoute ? 'home' : 'site';
-            beginRouteLoading(loadingKey, mode);
+            beginRouteLoading(loadingKey, loadingMode, pathname);
             if (isHomeRoute) setHomePageLoading(true);
             else clearHomePageLoading();
-        }, [loadingKey, isAdminRoute, isHomeRoute]);
+        }, [loadingKey, loadingMode, isHomeRoute, pathname]);
 
         useEffect(() => {
+            claimWindowRole(isAdminRoute ? "admin" : "site");
             document.body.classList.toggle("admin-route-active", isAdminRoute);
             document.body.classList.toggle(
                 "perfil-route-active",
@@ -467,7 +468,7 @@ const productsRoute = createRoute({
 })
 const productDetailRoute = createRoute({
     getParentRoute: () => rootRoute,
-    path: "/productos/$productId",
+    path: "/productos/$productSlug",
     component: ProductDetail,
 })
 const checkoutRoute = createRoute({

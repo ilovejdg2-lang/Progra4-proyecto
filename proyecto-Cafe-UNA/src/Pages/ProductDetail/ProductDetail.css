@@ -32,32 +32,6 @@
   color: #2c211c;
 }
 
-.product-detail-page__crumb {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.35rem;
-  color: #9a8c82;
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-.product-detail-page__crumb a {
-  color: #9a8c82;
-  text-decoration: none;
-}
-
-.product-detail-page__crumb a:hover {
-  color: #2c211c;
-}
-
-.product-detail-page__crumb strong {
-  color: #6d432c;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
 .product-detail-page__layout {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(240px, 0.78fr);

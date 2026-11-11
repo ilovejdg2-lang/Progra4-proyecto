@@ -1,4 +1,5 @@
 import { invalidateAllPageCaches } from "../lib/pageDataCache";
+import { encontrarProductoPorSlug } from "../lib/productoSlug";
 import { apiRequest } from "./apiClient";
 
 const BASE_URL = `${import.meta.env.BACKEND_URL}/productos`;
@@ -392,6 +393,11 @@ export async function obtenerStockPorUbicacion(locationCode) {
 export async function obtenerProductoPorId(id) {
   const productos = await obtenerProductos();
   return productos.find((producto) => String(producto.id) === String(id)) ?? null;
+}
+
+export async function obtenerProductoPorSlug(slug) {
+  const productos = await obtenerProductos();
+  return encontrarProductoPorSlug(productos, slug);
 }
 
 export async function obtenerDisponibilidadPuntosVenta(productIds = []) {

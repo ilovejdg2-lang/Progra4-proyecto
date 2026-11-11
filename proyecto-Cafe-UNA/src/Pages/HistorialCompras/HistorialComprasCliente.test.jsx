@@ -80,7 +80,7 @@ describe("HistorialComprasContent", () => {
       impuestos: 650,
       ubicacionNombre: "FUNDA-UNA",
       ubicacionDireccion: "Avenida 2 y Calle 9, Heredia",
-      items: [{ nombre: "Café de prueba", cantidad: 1, precioUnitario: 5650, subtotal: 5650 }],
+      items: [{ nombre: "Café en grano", cantidad: 1, precioUnitario: 5650, subtotal: 5650 }],
     });
     render(<HistorialComprasContent />);
 
@@ -89,7 +89,7 @@ describe("HistorialComprasContent", () => {
     expect(await screen.findByText("FUNDA-UNA")).toBeInTheDocument();
     expect(screen.getByText("Avenida 2 y Calle 9, Heredia")).toBeInTheDocument();
     expect(screen.getByText("Dirección de retiro")).toBeInTheDocument();
-    expect(screen.getByText("Café de prueba")).toBeInTheDocument();
+    expect(screen.getByText("Café en grano")).toBeInTheDocument();
     expect(screen.getByText("Rastreo del pedido")).toBeInTheDocument();
     expect(screen.getByText("Tu pedido está en procesamiento.")).toBeInTheDocument();
     expect(await screen.findByRole("link", { name: "contacto@cafeuna.cr" })).toHaveAttribute(

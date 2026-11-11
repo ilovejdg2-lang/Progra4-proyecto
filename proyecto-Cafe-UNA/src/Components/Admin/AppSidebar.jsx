@@ -33,6 +33,7 @@ import {
   Shield,
   ShieldCheck,
   HandCoins,
+  Home,
   Sprout,
   LifeBuoy,
   ListChecks,
@@ -181,6 +182,7 @@ export function AppSidebar() {
   const tBuscarMenu = useTraducir("Buscar en el menú");
   const tLimpiarBusqueda = useTraducir("Limpiar búsqueda");
   const enlacesBuscables = [
+    { to: "/admin", etiqueta: "Inicio", grupo: "Inicio", icono: Home, ver: true },
     { to: "/admin/informacion-pagina-principal", etiqueta: "Información página principal", grupo: "Configuración general del sitio", icono: Info, ver: puedeCms },
     { to: "/admin/sobre-nosotros", etiqueta: "Historia", grupo: "Sobre nosotros", icono: Landmark, ver: puedeCms },
     { to: "/admin/historia-completa", etiqueta: "Historia completa", grupo: "Sobre nosotros", icono: ScrollText, ver: puedeCms },
@@ -548,6 +550,24 @@ export function AppSidebar() {
           </SidebarGroup>
         ) : null}
         <div className={consulta ? "hidden" : "contents"}>
+        <SidebarGroup>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link
+                  to="/admin"
+                  activeOptions={{ exact: true }}
+                  activeProps={linkActivo}
+                  onClick={closeMobileSidebar}
+                >
+                  <Home />
+                  <span><ST>Inicio</ST></span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+
         {puedeVerCmsGrupo ? (
         <Collapsible.Root
           open={generalOpen}

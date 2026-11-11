@@ -28,7 +28,7 @@ describe("comprasService", () => {
         Subtotal: 1000,
         Impuestos: 130,
         Total: 1130,
-        MetodoPago: "Tarjeta",
+        MetodoPago: "Comprobante",
         Estado: "Pagado",
         Items: [{ Nombre: "Café", Cantidad: 2, PrecioUnitario: 565, Subtotal: 1130 }],
       }),

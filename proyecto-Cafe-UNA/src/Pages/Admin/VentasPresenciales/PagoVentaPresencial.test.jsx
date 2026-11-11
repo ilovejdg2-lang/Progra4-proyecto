@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { PagoVentaPresencial } from "./PagoVentaPresencial";
 
-const METODOS = ["Efectivo", "efectivo", "Tarjeta", "SINPE Móvil", "Transferencia"];
+const METODOS = ["Efectivo", "efectivo", "SINPE Móvil", "Transferencia"];
 
 function Harness({ total = 3000, metodoInicial = "Efectivo" }) {
   const [metodo, setMetodo] = useState(metodoInicial);
@@ -32,11 +32,12 @@ describe("PagoVentaPresencial", () => {
     const opciones = screen.getAllByRole("option").map((opcion) => opcion.textContent);
     expect(opciones).toEqual([
       "Efectivo",
-      "Tarjeta de débito / crédito",
       "SINPE Móvil",
       "Transferencia bancaria",
     ]);
     expect(opciones).not.toContain("Comprobante");
+    expect(opciones).not.toContain("Tarjeta");
+    expect(opciones).not.toContain("Tarjeta de débito / crédito");
   });
 
   it("calcula vuelto cero cuando el efectivo es exacto", () => {

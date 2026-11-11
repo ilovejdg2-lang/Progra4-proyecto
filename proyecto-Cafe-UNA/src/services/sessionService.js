@@ -1,5 +1,6 @@
 import { getTokenExpirationMs } from "../lib/jwt";
 import { textoUi } from "../lib/textoVisible";
+import { limpiarEstadoCompraSesion } from "./authService";
 
 const USER_STORAGE_KEY = 'user';
 const SESSION_DURATION_MS = 60 * 60 * 1000;
@@ -34,6 +35,7 @@ export function clearSession() {
   loggingOut = true;
   localStorage.removeItem(USER_STORAGE_KEY);
   lastTouchAt = 0;
+  limpiarEstadoCompraSesion();
   notifySessionChange();
 }
 

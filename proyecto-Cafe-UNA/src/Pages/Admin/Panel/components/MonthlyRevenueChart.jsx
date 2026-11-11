@@ -74,13 +74,13 @@ export function MonthlyRevenueChart({
         />
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
+      <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-2.5">
         {PUNTOS_INGRESOS.map((punto) => (
           <button
             key={punto.id}
             type="button"
             onClick={() => onFiltroChange(punto.id)}
-            className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+            className={`inline-flex h-[var(--control-height)] items-center rounded-full px-4 text-[length:var(--text-body)] font-semibold transition ${
               filtro === punto.id
                 ? "bg-[#7a1f2b] text-white"
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
@@ -92,7 +92,7 @@ export function MonthlyRevenueChart({
       </div>
 
       {pico && picoEtiqueta ? (
-        <p className="mt-3 inline-flex rounded-lg bg-[#7a1f2b] px-2.5 py-1 text-[11px] font-semibold text-white">
+        <p className="mt-4 inline-flex max-w-full items-center rounded-lg bg-[#7a1f2b] px-3 py-2 text-[length:var(--text-body)] font-semibold text-white">
           {picoEtiqueta} · {formatCRC(pico.total)}
         </p>
       ) : null}

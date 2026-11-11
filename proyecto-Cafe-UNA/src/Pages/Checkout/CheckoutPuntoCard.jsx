@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { ExternalLink, MapPin, Package, Store } from "lucide-react";
 
+import { ImageLightbox } from "../../Components/ImageLightbox/ImageLightbox";
 import { ST } from "../../Components/T/ST";
+import { useTraducir } from "../../hooks/useTraducir";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { esUrlGoogleMaps } from "../../lib/puntoVentaPresentacion";
 
@@ -14,7 +17,10 @@ export function CheckoutPuntoCard({
   etiquetaUnidades,
   etiquetaUnidadesEnStock,
 }) {
+  const [fotoAbierta, setFotoAbierta] = useState(false);
+  const tAmpliar = useTraducir("Ver imagen completa");
   const mapsUrl = esUrlGoogleMaps(punto.mapsUrl) ? String(punto.mapsUrl).trim() : "";
+  const fotoUrl = punto.imagenUrl ? normalizeImageUrl(punto.imagenUrl) : "";
   const elegir = () => {
     if (!punto.cubrePedido) return;
     onSelect(punto.code);
@@ -29,7 +35,7 @@ export function CheckoutPuntoCard({
       tabIndex={punto.cubrePedido ? 0 : -1}
       className={`checkout-pos__card${seleccionado ? " is-selected" : ""}${punto.cubrePedido ? "" : " is-disabled"}`}
       onClick={(event) => {
-        if (event.target.closest("a")) return;
+        if (event.target.closest("a, button")) return;
         elegir();
       }}
       onKeyDown={(event) => {
@@ -42,8 +48,15 @@ export function CheckoutPuntoCard({
     >
       <span className="checkout-pos__lead">
         <span className="checkout-pos__radio" aria-hidden="true" />
-        {punto.imagenUrl ? (
-          <img className="checkout-pos__photo" src={normalizeImageUrl(punto.imagenUrl)} alt="" />
+        {fotoUrl ? (
+          <button
+            type="button"
+            className="checkout-pos__photo-btn"
+            onClick={() => setFotoAbierta(true)}
+            aria-label={tAmpliar}
+          >
+            <img className="checkout-pos__photo" src={fotoUrl} alt="" />
+          </button>
         ) : (
           <span className="checkout-pos__photo checkout-pos__photo--empty" aria-hidden="true">
             <Store size={22} />
@@ -88,6 +101,14 @@ export function CheckoutPuntoCard({
           </ul>
         ) : null}
       </span>
+      {fotoUrl ? (
+        <ImageLightbox
+          images={[fotoUrl]}
+          index={fotoAbierta ? 0 : -1}
+          onClose={() => setFotoAbierta(false)}
+          alt={punto.name || ""}
+        />
+      ) : null}
     </div>
   );
 }
