@@ -1,4 +1,3 @@
-import { invalidateAllPageCaches } from "./pageDataCache";
 import { traducirSync } from "./traducir";
 
 const STORAGE_KEY = "cafe-una-idioma";
@@ -28,11 +27,7 @@ export function guardarIdioma(idioma) {
   if (typeof document !== "undefined") {
     document.documentElement.lang = lang === "en" ? "en" : "es-CR";
   }
-  try {
-    invalidateAllPageCaches();
-  } catch {
-    /* ignore */
-  }
+  // La traducción ES→EN es solo en el cliente; no invalidar cachés de página.
   window.dispatchEvent(new CustomEvent(IDIOMA_CHANGED_EVENT, { detail: { idioma: lang } }));
   return lang;
 }

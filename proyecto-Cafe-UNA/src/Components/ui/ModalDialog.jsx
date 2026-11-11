@@ -60,6 +60,10 @@ export function ModalDialog({
         opener.current = [focusedAtMount, document.activeElement].find(usable) ?? null;
       }
       dialog.showModal();
+      // Side drawers start off-screen; native focus-scroll fights the slide-in animation.
+      if (panel) {
+        dialog.focus({ preventScroll: true });
+      }
     }
     if (!open && dialog.open) {
       dialog.close();
@@ -71,7 +75,7 @@ export function ModalDialog({
         restoreFocus();
       }
     };
-  }, [open, focusedAtMount]);
+  }, [open, focusedAtMount, panel]);
 
   return (
     <dialog

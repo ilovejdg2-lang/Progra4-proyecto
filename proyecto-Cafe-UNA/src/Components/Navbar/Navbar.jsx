@@ -11,8 +11,10 @@ import { metaCarrito } from './metaCarrito';
 import { obtenerEnlaces, obtenerFooter, obtenerNavbar } from '../../services/informacionService';
 import { IconoSitio } from '../IconoSitio/IconoSitio';
 import { lugarIconoMenu } from '../../lib/iconosSitio';
-import { normalizeImageUrl } from '../../lib/imageUtils';
+import { getImageObjectPosition, normalizeImageUrl } from '../../lib/imageUtils';
+import { inicialDeNombre } from '../../lib/inicialDeNombre';
 import { useHomeBrandNavigation } from '../../hooks/useHomeBrandNavigation';
+import { openOrFocusAdminPanel } from '../../lib/siteWindows';
 import { readPageCache } from '../../lib/pageDataCache';
 import { obtenerSolicitudes, obtenerSolicitudesDeUsuario } from '../../services/voluntariadoService';
 import { obtenerVentasParaNotificaciones } from '../../services/comprasService';
@@ -301,6 +303,11 @@ const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [avatarRoto, setAvatarRoto] = useState(false);
+
+    useEffect(() => {
+      setAvatarRoto(false);
+    }, [user?.fotoPerfilUrl, user?.FotoPerfilUrl]);
     const [showCartDropdown, setShowCartDropdown] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showAboutMenu, setShowAboutMenu] = useState(false);
@@ -611,7 +618,7 @@ const Navbar = () => {
             window.removeEventListener('resize', updateNavbarHeight);
             resizeObserver?.disconnect();
         };
-    }, [pathname, isScrolled, cartItems, showCartDropdown, showDropdown, isMobileMenuOpen]);
+    }, [pathname, isScrolled, cartItems, showDropdown, isMobileMenuOpen]);
 
     const closeCartPanel = useCallback(() => {
         if (!showCartDropdown || isCartClosing) {
@@ -622,7 +629,7 @@ const Navbar = () => {
         cartCloseTimerRef.current = window.setTimeout(() => {
             setShowCartDropdown(false);
             setIsCartClosing(false);
-        }, 240);
+        }, 220);
     }, [showCartDropdown, isCartClosing]);
 
     useEffect(() => {
@@ -630,31 +637,19 @@ const Navbar = () => {
             return undefined;
         }
 
+        // Solo overflow: el sitio ya reserva el scrollbar con scrollbar-gutter.
+        // No tocar padding ni navbar.right — eso hacía saltar el icono del carrito.
         const html = document.documentElement;
         const body = document.body;
-        const navbar = navbarRef.current;
-        const scrollbarWidth = Math.max(0, window.innerWidth - html.clientWidth);
         const previousHtmlOverflow = html.style.overflow;
         const previousBodyOverflow = body.style.overflow;
-        const previousBodyPaddingRight = body.style.paddingRight;
-        const previousNavbarRight = navbar?.style.right ?? "";
 
         html.style.overflow = "hidden";
         body.style.overflow = "hidden";
-        if (scrollbarWidth > 0) {
-            body.style.paddingRight = `${scrollbarWidth}px`;
-            if (navbar) {
-                navbar.style.right = `${scrollbarWidth}px`;
-            }
-        }
 
         return () => {
             html.style.overflow = previousHtmlOverflow;
             body.style.overflow = previousBodyOverflow;
-            body.style.paddingRight = previousBodyPaddingRight;
-            if (navbar) {
-                navbar.style.right = previousNavbarRight;
-            }
         };
     }, [showCartDropdown]);
 
@@ -743,6 +738,11 @@ const Navbar = () => {
     const cartIva = cartItems.reduce((acc, item) => acc + ((getUnitPriceWithIva(item) - getUnitPriceWithoutIva(item)) * getQuantity(item)), 0);
     const cartTotal = cartItems.reduce((acc, item) => acc + (getUnitPriceWithIva(item) * getQuantity(item)), 0);
     const userDisplayName = user?.username?.includes('@') ? user?.name : user?.username || user?.name;
+    const userAvatarUrl = normalizeImageUrl(
+      user?.fotoPerfilUrl || user?.FotoPerfilUrl || '',
+      { width: 96 },
+    );
+    const userAvatarInicial = inicialDeNombre(userDisplayName || user?.email || user?.correo);
     const solicitudesPendientes = solicitudes.filter(isSolicitudPendiente);
     const solicitudesPendientesCount = solicitudesPendientes.length;
     const donacionesPendientes = solicitudesDonacion.filter(isSolicitudPendiente);
@@ -996,11 +996,11 @@ const Navbar = () => {
     const handleCheckoutClick = (event) => {
         event.preventDefault();
         setShowCartDropdown(false);
-        sessionStorage.setItem('postLoginRedirect', '/checkout');
         if (puedeComprar(user)) {
             navigate({ to: '/checkout' });
             return;
         }
+        sessionStorage.setItem('postLoginRedirect', '/checkout');
         marcarIntentRegistroCliente();
         if (!user) {
             navigate({ to: '/login' });
@@ -1618,9 +1618,20 @@ const Navbar = () => {
                           aria-hidden={!showDropdown}
                         >
                           <div className="dropdown__user">
-                            <span className="dropdown__avatar" aria-hidden="true">
-                              <User size={18} strokeWidth={2.1} />
-                            </span>
+                            {userAvatarUrl && !avatarRoto ? (
+                              <img
+                                key={userAvatarUrl}
+                                className="dropdown__avatar dropdown__avatar--photo"
+                                src={userAvatarUrl}
+                                alt=""
+                                style={{ objectPosition: getImageObjectPosition(user?.fotoPerfilPosicion) }}
+                                onError={() => setAvatarRoto(true)}
+                              />
+                            ) : (
+                              <span className="dropdown__avatar" aria-hidden="true">
+                                {userAvatarInicial}
+                              </span>
+                            )}
                             <div className="dropdown__user-copy">
                               <p className="dropdown__name">{userDisplayName}</p>
                               <p className="dropdown__email" title={user?.email || user?.correo || ''}>
@@ -1648,11 +1659,13 @@ const Navbar = () => {
                                 return (
                                   <Link
                                     to="/admin"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
                                     className="dropdown__item"
                                     role="menuitem"
-                                    onClick={() => setShowDropdown(false)}
+                                    onClick={(event) => {
+                                      event.preventDefault();
+                                      setShowDropdown(false);
+                                      openOrFocusAdminPanel("/admin");
+                                    }}
                                   >
                                     <LayoutDashboard size={16} strokeWidth={2.1} aria-hidden="true" />
                                     {tPanelAdmin}

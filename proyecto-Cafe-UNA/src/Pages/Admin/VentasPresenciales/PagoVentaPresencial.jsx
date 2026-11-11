@@ -6,7 +6,6 @@ import { t } from "../../../lib/t";
 import { calcularVuelto, esEfectivo, opcionesMetodoPago } from "../../../lib/pagoPresencial";
 
 const ETIQUETAS_METODO_PAGO = {
-  Tarjeta: "Tarjeta de débito / crédito",
   Transferencia: "Transferencia bancaria",
 };
 

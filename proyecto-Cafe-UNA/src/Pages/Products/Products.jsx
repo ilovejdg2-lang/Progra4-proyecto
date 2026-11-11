@@ -29,6 +29,7 @@ import { useCachedPublicPage } from '../../hooks/useCachedPublicPage';
 import { addProductToCart, pulseButton } from '../../lib/cartStorage';
 import { fetchProductsPageData } from '../../lib/productsPageData';
 import { obtenerCategorias } from '../../services/categoriasService';
+import { slugDeProducto } from '../../lib/productoSlug';
 import { calcularPrecioConIVA, obtenerDisponibilidadPuntosVenta } from '../../services/productosService';
 import { clasificarDisponibilidad } from '../../lib/productoDisponibilidad';
 import { useTraducir, useTraducirLista } from '../../hooks/useTraducir';
@@ -456,8 +457,8 @@ const Products = () => {
                     key={product.id}
                   >
                     <Link
-                      to="/productos/$productId"
-                      params={{ productId: String(product.id) }}
+                      to="/productos/$productSlug"
+                      params={{ productSlug: slugDeProducto(product, visibleProducts) }}
                       className="products-page__card-hit"
                     >
                       <span className="sr-only">{`Ver detalles de ${nombreUi}`}</span>
@@ -491,8 +492,8 @@ const Products = () => {
 
                     <div className="products-page__card-actions">
                       <Link
-                        to="/productos/$productId"
-                        params={{ productId: String(product.id) }}
+                        to="/productos/$productSlug"
+                        params={{ productSlug: slugDeProducto(product, visibleProducts) }}
                         className="products-page__details-btn"
                       >
                         {tDetalles}

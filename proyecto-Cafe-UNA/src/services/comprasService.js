@@ -38,7 +38,7 @@ export function normalizarCompra(compra) {
     subtotal: Number(firstDefined(compra, ["subtotal", "Subtotal"]) || 0),
     impuestos: Number(firstDefined(compra, ["impuestos", "Impuestos", "iva", "Iva"]) || 0),
     total: Number(firstDefined(compra, ["total", "Total"]) || 0),
-    metodoPago: String(firstDefined(compra, ["metodoPago", "MetodoPago", "metodo"]) || "Tarjeta"),
+    metodoPago: String(firstDefined(compra, ["metodoPago", "MetodoPago", "metodo"]) || "Comprobante"),
     estado,
     facturaId: firstDefined(compra, ["facturaId", "FacturaId"]) || null,
     editable: Boolean(

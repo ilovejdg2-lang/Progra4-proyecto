@@ -8,7 +8,7 @@ import {
   redondearColones,
 } from "./pagoPresencial";
 
-const METODOS = ["Efectivo", "Tarjeta", "SINPE Móvil", "Transferencia"];
+const METODOS = ["Efectivo", "SINPE Móvil", "Transferencia"];
 
 describe("pago presencial", () => {
   it("redondea al colón", () => {
@@ -32,17 +32,17 @@ describe("pago presencial", () => {
   });
 
   it("arma una opción por cada método habilitado, sin duplicados ni nombres de más", () => {
-    expect(deduplicarMetodos(["Efectivo", "efectivo", "Tarjeta", "Comprobante"])).toEqual([
+    expect(deduplicarMetodos(["Efectivo", "efectivo", "SINPE Móvil", "Comprobante"])).toEqual([
       "Efectivo",
-      "Tarjeta",
+      "SINPE Móvil",
       "Comprobante",
     ]);
     expect(opcionesMetodoPago(
-      ["Efectivo", "efectivo", "Tarjeta", "Transferencia"],
-      { Tarjeta: "Tarjeta de débito / crédito", Transferencia: "Transferencia bancaria" },
+      ["Efectivo", "efectivo", "SINPE Móvil", "Transferencia"],
+      { Transferencia: "Transferencia bancaria" },
     )).toEqual([
       { value: "Efectivo", label: "Efectivo" },
-      { value: "Tarjeta", label: "Tarjeta de débito / crédito" },
+      { value: "SINPE Móvil", label: "SINPE Móvil" },
       { value: "Transferencia", label: "Transferencia bancaria" },
     ]);
     expect(METODOS.filter(esEfectivo)).toEqual(["Efectivo"]);

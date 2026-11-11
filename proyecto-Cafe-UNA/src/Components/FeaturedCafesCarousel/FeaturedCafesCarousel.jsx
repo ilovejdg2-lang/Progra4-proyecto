@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { imagenPrincipalProducto } from "../../lib/productoImagenes";
 import { normalizeImageUrl } from "../../lib/imageUtils";
+import { slugDeProducto } from "../../lib/productoSlug";
 import { calcularPrecioConIVA } from "../../services/productosService";
 import { useTraducir } from "../../hooks/useTraducir";
 import { ST } from "../T/ST";
@@ -93,8 +94,8 @@ export default function FeaturedCafesCarousel({ products = EMPTY_ARRAY }) {
             >
               {producto.id ? (
                 <Link
-                  to="/productos/$productId"
-                  params={{ productId: String(producto.id) }}
+                  to="/productos/$productSlug"
+                  params={{ productSlug: slugDeProducto(producto, products) }}
                   className="featured-cafes__link"
                   tabIndex={posicion === "hidden" ? -1 : undefined}
                 >

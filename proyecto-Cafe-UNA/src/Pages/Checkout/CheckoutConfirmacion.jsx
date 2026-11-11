@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { Copy } from "lucide-react";
 import { useTraducir } from "../../hooks/useTraducir";
 import { t } from "../../lib/t";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { LOGO_OSCURO_FALLBACK } from "../../lib/brandLogoCache";
 import { LOGO_CAFE_UNA_JPEG_BASE64 } from "../../lib/logoCafeUnaBase64";
 import { presentarCompra } from "../../lib/resumenCompraPdf";
+import { referenciaSinpeCompra } from "../../lib/referenciaSinpe";
 import { HorarioCompra } from "../ProductDetail/HorarioCompra";
 
 const formatCRC = (amount) => {
@@ -14,9 +16,33 @@ const formatCRC = (amount) => {
 
 const VALORES_TRADUCIBLES = new Set(["Estado", "Método de pago"]);
 
+async function copiarTexto(valor) {
+  const texto = String(valor || "").trim();
+  if (!texto) return false;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(texto);
+      return true;
+    }
+  } catch {
+    /* fallback abajo */
+  }
+  const area = document.createElement("textarea");
+  area.value = texto;
+  area.setAttribute("readonly", "");
+  area.style.position = "fixed";
+  area.style.left = "-9999px";
+  document.body.appendChild(area);
+  area.select();
+  const ok = document.execCommand("copy");
+  document.body.removeChild(area);
+  return ok;
+}
+
 export function CheckoutConfirmacion({
   compra,
   logoUrl,
+  sinpe = "",
   descargando = false,
   onDescargar,
   onRastrear,
@@ -40,12 +66,28 @@ export function CheckoutConfirmacion({
   const tRastrearPedido = useTraducir("Rastrear pedido");
   const tVolverInicio = useTraducir("Volver al inicio");
   const tSeguir = useTraducir("Seguir comprando");
+  const tSinpe = useTraducir("SINPE Móvil");
+  const tSinpeHint = useTraducir("Pagá a este número.");
+  const tDetalleSinpe = useTraducir("Detalle para el SINPE Móvil");
+  const tDetalleSinpeHint = useTraducir(
+    "En el detalle del SINPE Móvil poné exactamente este código para identificar tu compra:",
+  );
+  const tCopiarNumero = useTraducir("Copiar número");
+  const tCopiarDetalle = useTraducir("Copiar detalle");
+  const tCopiado = useTraducir("Copiado");
 
   const vista = presentarCompra(compra);
+  const referenciaSinpe = referenciaSinpeCompra(compra);
   const [logoFallido, setLogoFallido] = useState(false);
+  const [copiado, setCopiado] = useState("");
   const logoSrc = logoFallido
     ? `data:image/jpeg;base64,${LOGO_CAFE_UNA_JPEG_BASE64}`
     : normalizeImageUrl(logoUrl || LOGO_OSCURO_FALLBACK, { width: 480 });
+
+  const marcarCopiado = (clave) => {
+    setCopiado(clave);
+    window.setTimeout(() => setCopiado(""), 2000);
+  };
 
   return (
     <main className="checkout-page checkout-page--confirmed">
@@ -62,6 +104,49 @@ export function CheckoutConfirmacion({
           <h2>{tGracias}</h2>
           <p>{tPedidoPendiente}</p>
         </div>
+
+        {sinpe || referenciaSinpe ? (
+          <div className="checkout-sinpe checkout-sinpe--confirmacion">
+            {sinpe ? (
+              <>
+                <p className="checkout-sinpe__label">{tSinpe}</p>
+                <p className="checkout-sinpe__hint">{tSinpeHint}</p>
+                <div className="checkout-sinpe__row">
+                  <strong className="checkout-sinpe__numero">{sinpe}</strong>
+                  <button
+                    type="button"
+                    className="checkout-sinpe__copiar"
+                    onClick={async () => {
+                      if (await copiarTexto(sinpe)) marcarCopiado("sinpe");
+                    }}
+                  >
+                    <Copy size={16} strokeWidth={2.2} aria-hidden="true" />
+                    <span>{copiado === "sinpe" ? tCopiado : tCopiarNumero}</span>
+                  </button>
+                </div>
+              </>
+            ) : null}
+            {referenciaSinpe ? (
+              <>
+                <p className="checkout-sinpe__label">{tDetalleSinpe}</p>
+                <p className="checkout-sinpe__hint">{tDetalleSinpeHint}</p>
+                <div className="checkout-sinpe__row">
+                  <strong className="checkout-sinpe__numero">{referenciaSinpe}</strong>
+                  <button
+                    type="button"
+                    className="checkout-sinpe__copiar"
+                    onClick={async () => {
+                      if (await copiarTexto(referenciaSinpe)) marcarCopiado("ref");
+                    }}
+                  >
+                    <Copy size={16} strokeWidth={2.2} aria-hidden="true" />
+                    <span>{copiado === "ref" ? tCopiado : tCopiarDetalle}</span>
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
+        ) : null}
 
         <article className="checkout-receipt" aria-label={tResumenCompra}>
           <h3>{tResumenCompra}</h3>

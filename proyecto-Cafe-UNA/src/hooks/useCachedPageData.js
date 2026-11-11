@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { readPageCache, readStalePageCache, writePageCache } from "../lib/pageDataCache";
-import { IDIOMA_CHANGED_EVENT } from "../lib/idioma";
 
 /**
  * Carga datos de página con caché de sesión.
- * Al cambiar idioma, vuelve a pedir datos frescos (incluye campos *En).
+ * El cambio de idioma no refetch: la traducción ES→EN es solo en el cliente.
  */
 export function useCachedPageData(cacheKey, fetcher) {
   const cachedInitial = useRef(readPageCache(cacheKey) ?? readStalePageCache(cacheKey));
@@ -85,15 +84,6 @@ export function useCachedPageData(cacheKey, fetcher) {
       activo = false;
     };
   }, [cacheKey, fetcher, applyFresh]);
-
-  useEffect(() => {
-    const onIdioma = () => {
-      hadFreshCache.current = false;
-      void reload();
-    };
-    window.addEventListener(IDIOMA_CHANGED_EVENT, onIdioma);
-    return () => window.removeEventListener(IDIOMA_CHANGED_EVENT, onIdioma);
-  }, [reload]);
 
   return { data, status, error, reload };
 }

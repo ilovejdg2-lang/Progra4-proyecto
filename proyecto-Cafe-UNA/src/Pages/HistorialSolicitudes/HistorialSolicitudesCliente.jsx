@@ -17,6 +17,10 @@ import {
 } from "../../services/solicitudesService";
 import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
 import { RUTA_SOLICITUDES_ADMIN, RUTA_SOLICITUDES_CLIENTE } from "../../lib/rutasSolicitudes";
+import {
+  enlaceDetalleSolicitud,
+  OPCIONES_TIPO,
+} from "./historialSolicitudes";
 
 function formatFecha(fecha) {
   if (!fecha) return null;
@@ -61,13 +65,6 @@ const INITIAL_FILTERS = {
   estado: "todos",
 };
 
-const OPCIONES_TIPO = [
-  { value: "todos", label: "Todos" },
-  { value: "voluntariado", label: "Voluntariado" },
-  { value: "donacion", label: "Donación" },
-  { value: "visita", label: "Visita grupal" },
-];
-
 const OPCIONES_ESTADO = [
   { value: "todos", label: "Todos" },
   { value: "Pendiente", label: "Pendiente" },
@@ -106,6 +103,13 @@ const CAMPOS_DETALLE = [
   ["horaPreferida", "Hora preferida"],
   ["motivoVisita", "Motivo"],
   ["motivoOtro", "Motivo (otro)"],
+  ["motivo", "Motivo"],
+  ["categoria", "Categoría"],
+  ["subcategoria", "Subcategoría"],
+  ["direccion", "Dirección"],
+  ["provincia", "Provincia"],
+  ["canton", "Cantón"],
+  ["distrito", "Distrito"],
 ];
 
 /**
@@ -256,7 +260,7 @@ export function HistorialSolicitudesContent({ variant = "standalone" }) {
             <ST>Mis solicitudes</ST>
           </h1>
           <p className="mt-1 text-[var(--text-body)] text-slate-500">
-            <ST>Consultá el estado de tus formularios: voluntariado, donaciones y visitas.</ST>
+            <ST>Consultá el estado de tus formularios: voluntariado, donaciones, visitas, propuestas y documentación.</ST>
           </p>
         </header>
 
@@ -296,36 +300,50 @@ export function HistorialSolicitudesContent({ variant = "standalone" }) {
         ) : null}
 
         <ul className="grid gap-3">
-          {items.map((item) => (
-            <li
-              key={item.id}
-              className="rounded-2xl border border-slate-200 bg-white p-4"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0 space-y-1">
-                  <p className="text-[var(--text-subtitle)] font-semibold text-slate-950">
-                    <ST>{item.titulo}</ST>
-                  </p>
-                  <p className="text-[var(--text-body)] text-slate-600">
-                    <ST>{item.tipoEtiqueta}</ST>
-                    {" · #"}
-                    {item.identificador}
-                    {" · "}
-                    {formatFecha(item.fechaEnvio) || tSinFecha}
-                  </p>
-                  <EstadoTexto estado={item.estado} />
+          {items.map((item) => {
+            const enlace = enlaceDetalleSolicitud(item);
+            return (
+              <li
+                key={item.id}
+                className="rounded-2xl border border-slate-200 bg-white p-4"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 space-y-1">
+                    <p className="text-[var(--text-subtitle)] font-semibold text-slate-950">
+                      <ST>{item.titulo}</ST>
+                    </p>
+                    <p className="text-[var(--text-body)] text-slate-600">
+                      <ST>{item.tipoEtiqueta}</ST>
+                      {" · #"}
+                      {item.identificador}
+                      {" · "}
+                      {formatFecha(item.fechaEnvio) || tSinFecha}
+                    </p>
+                    <EstadoTexto estado={item.estado} />
+                  </div>
+                  {enlace ? (
+                    <Link
+                      to={enlace.to}
+                      params={enlace.params}
+                      className="inline-flex min-h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-200 px-4 text-[var(--text-body)] font-semibold text-slate-800"
+                    >
+                      <Eye className="size-4" />
+                      <ST>Ver detalle</ST>
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => abrirDetalle(item)}
+                      className="inline-flex min-h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-200 px-4 text-[var(--text-body)] font-semibold text-slate-800"
+                    >
+                      <Eye className="size-4" />
+                      <ST>Ver detalle</ST>
+                    </button>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => abrirDetalle(item)}
-                  className="inline-flex min-h-[var(--control-height)] items-center gap-2 rounded-full border border-slate-200 px-4 text-[var(--text-body)] font-semibold text-slate-800"
-                >
-                  <Eye className="size-4" />
-                  <ST>Ver detalle</ST>
-                </button>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
 
         {detalle ? (

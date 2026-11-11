@@ -8,8 +8,9 @@ import { addProductToCart, pulseButton } from '../../lib/cartStorage';
 import { getLoadingMessageForCacheKey } from '../../lib/pageLoadingMessages';
 import { etiquetaCategoriaProducto } from '../../lib/categorias';
 import { imagenPrincipalProducto, parsearImagenesProducto } from '../../lib/productoImagenes';
-import { calcularPrecioConIVA, obtenerDisponibilidadPuntosVenta, obtenerProductoPorId, obtenerProductos } from '../../services/productosService';
+import { calcularPrecioConIVA, obtenerDisponibilidadPuntosVenta, obtenerProductos } from '../../services/productosService';
 import { clasificarDisponibilidad } from '../../lib/productoDisponibilidad';
+import { encontrarProductoPorSlug, slugDeProducto } from '../../lib/productoSlug';
 import { useTraducir, useTraducirLista, useTraducirObjeto } from '../../hooks/useTraducir';
 import { ST } from '../../Components/T/ST';
 import { ImageLightbox } from '../../Components/ImageLightbox/ImageLightbox';
@@ -23,8 +24,9 @@ const CAMPOS_PRODUCTO = ['nombre', 'descripcion', 'categoria', 'subcategoria'];
 
 const ProductDetail = () => {
   const navigate = useNavigate();
-  const { productId } = useParams({ strict: false });
+  const { productSlug } = useParams({ strict: false });
   const [product, setProduct] = useState(null);
+  const [catalogo, setCatalogo] = useState([]);
   const [relacionados, setRelacionados] = useState([]);
   const [loadError, setLoadError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -44,8 +46,6 @@ const ProductDetail = () => {
   const tCategoria = useTraducir('Categoría');
   const tSubcategoria = useTraducir('Subcategoría');
   const tPrecioSin = useTraducir('Precio (sin IVA)');
-  const tInicio = useTraducir('Inicio');
-  const tProductos = useTraducir('Productos');
   const tTambien = useTraducir('También te puede gustar');
   const tVerCat = useTraducir('Ver catálogo');
   const tUnidades = useTraducir('unidades');
@@ -58,7 +58,6 @@ const ProductDetail = () => {
   const relacionadosUi = useTraducirLista(relacionados, ['nombre']);
   const display = product ? (productoUi || product) : null;
 
-  const numericId = Number(productId);
   const isReady = !loading;
   const showLoading = usePublicPageLoadingGate('product-detail', isReady);
   const loadingMessage = getLoadingMessageForCacheKey('product-detail');
@@ -67,7 +66,8 @@ const ProductDetail = () => {
     let active = true;
 
     const loadProduct = async () => {
-      if (!Number.isFinite(numericId)) {
+      const slug = String(productSlug || '').trim();
+      if (!slug) {
         if (active) {
           setLoadError('Producto no encontrado.');
           setLoading(false);
@@ -78,24 +78,33 @@ const ProductDetail = () => {
       try {
         setLoading(true);
         setLoadError('');
-        const [data, catalogo] = await Promise.all([
-          obtenerProductoPorId(numericId),
-          obtenerProductos().catch(() => []),
-        ]);
-
+        const lista = await obtenerProductos().catch(() => []);
         if (!active) return;
+
+        const data = encontrarProductoPorSlug(lista, slug);
+        setCatalogo(Array.isArray(lista) ? lista : []);
 
         if (!data || data.estado === 'Deshabilitado') {
           setProduct(null);
           setRelacionados([]);
           setLoadError('Producto no encontrado o no disponible.');
         } else {
+          const slugCanonico = slugDeProducto(data, lista);
+          if (slugCanonico && slugCanonico !== slug) {
+            navigate({
+              to: '/productos/$productSlug',
+              params: { productSlug: slugCanonico },
+              replace: true,
+            });
+            return;
+          }
+
           setProduct(data);
           setQuantity(1);
           setFotoActiva(0);
           setLightboxAbierto(false);
           setRelacionados(
-            (Array.isArray(catalogo) ? catalogo : [])
+            (Array.isArray(lista) ? lista : [])
               .filter((item) => String(item.id) !== String(data.id) && item.estado !== 'Deshabilitado' && imagenPrincipalProducto(item))
               .slice(0, 4),
           );
@@ -124,7 +133,7 @@ const ProductDetail = () => {
     return () => {
       active = false;
     };
-  }, [numericId]);
+  }, [navigate, productSlug]);
 
   const fotos = useMemo(() => parsearImagenesProducto(product), [product]);
   const fotoActual = fotos[fotoActiva] || fotos[0] || '';
@@ -178,21 +187,6 @@ const ProductDetail = () => {
             <ArrowLeft size={16} aria-hidden="true" />
             {tVolver}
           </Link>
-          {product && display ? (
-            <nav className="product-detail-page__crumb" aria-label="breadcrumb">
-              <Link to="/">{tInicio}</Link>
-              <span aria-hidden="true">/</span>
-              <Link to="/productos">{tProductos}</Link>
-              {display.categoria ? (
-                <>
-                  <span aria-hidden="true">/</span>
-                  <span>{display.categoria}</span>
-                </>
-              ) : null}
-              <span aria-hidden="true">/</span>
-              <strong>{display.nombre}</strong>
-            </nav>
-          ) : null}
         </div>
 
         {!product && !loading ? (
@@ -402,8 +396,8 @@ const ProductDetail = () => {
                 {(relacionadosUi || relacionados).map((item) => (
                   <Link
                     key={item.id}
-                    to="/productos/$productId"
-                    params={{ productId: String(item.id) }}
+                    to="/productos/$productSlug"
+                    params={{ productSlug: slugDeProducto(item, catalogo) }}
                     className="product-detail-page__related-card"
                   >
                     <img src={imagenPrincipalProducto(item)} alt="" />

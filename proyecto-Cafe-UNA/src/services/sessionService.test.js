@@ -26,4 +26,14 @@ describe("private image session lifecycle", () => {
     expect(listener).toHaveBeenCalledOnce();
     expect(getActiveSessionUser()).toBeNull();
   });
+
+  it("clears leftover checkout redirects so the next account is not sent to checkout or client form", () => {
+    sessionStorage.setItem("postLoginRedirect", "/checkout");
+    sessionStorage.setItem("registroClienteDesdeCheckout", "1");
+    sessionStorage.setItem("registroClienteCorreo", "otra@cuenta.test");
+    clearSession();
+    expect(sessionStorage.getItem("postLoginRedirect")).toBeNull();
+    expect(sessionStorage.getItem("registroClienteDesdeCheckout")).toBeNull();
+    expect(sessionStorage.getItem("registroClienteCorreo")).toBeNull();
+  });
 });

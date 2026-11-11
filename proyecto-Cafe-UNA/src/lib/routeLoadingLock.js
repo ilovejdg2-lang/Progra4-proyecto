@@ -7,6 +7,7 @@ import {
   getSiteBootMessage,
   hideInitialLoader,
 } from './siteBootLoading';
+import { getLoadingMessageForCacheKey } from './pageLoadingMessages';
 import { normalizePathname } from './paths';
 
 let activeKey = null;
@@ -22,6 +23,17 @@ function resolveLockKey(key) {
     return key;
   }
   return getRouteCacheKey(key) || key;
+}
+
+function resolveLoadingMessage(key, resolved, pathnameHint) {
+  // Preferir el pathname del router (destino real), no window.location.
+  if (typeof pathnameHint === 'string' && pathnameHint) {
+    return getSiteBootMessage(pathnameHint);
+  }
+  if (typeof key === 'string' && key.startsWith('/')) {
+    return getSiteBootMessage(key);
+  }
+  return getLoadingMessageForCacheKey(resolved);
 }
 
 function applyModeClasses(mode) {
@@ -43,7 +55,7 @@ function applyModeClasses(mode) {
 }
 
 /** Activa el overlay de ruta antes del paint (nunca pantalla en blanco). */
-export function beginRouteLoading(key, mode = 'site') {
+export function beginRouteLoading(key, mode = 'site', pathnameHint) {
   const resolved = resolveLockKey(key);
   if (!resolved) return;
   if (isPageInstantReady(resolved)) {
@@ -53,11 +65,7 @@ export function beginRouteLoading(key, mode = 'site') {
   activeKey = resolved;
   activeMode = mode;
 
-  const pathname =
-    typeof key === 'string' && key.startsWith('/')
-      ? key
-      : normalizePathname();
-  ensureInitialLoaderVisible(getSiteBootMessage(pathname), {
+  ensureInitialLoaderVisible(resolveLoadingMessage(key, resolved, pathnameHint), {
     admin: mode === 'admin',
   });
   applyModeClasses(mode);

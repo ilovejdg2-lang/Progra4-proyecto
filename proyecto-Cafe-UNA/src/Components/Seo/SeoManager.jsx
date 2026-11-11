@@ -8,7 +8,7 @@ import {
   toAbsoluteAssetUrl,
 } from "../../lib/seo";
 import { imagenPrincipalProducto } from "../../lib/productoImagenes";
-import { obtenerProductoPorId } from "../../services/productosService";
+import { obtenerProductoPorSlug } from "../../services/productosService";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 
 /**
@@ -22,7 +22,7 @@ export function SeoManager() {
 
   useEffect(() => {
     let cancelled = false;
-    const productId = matchProductDetailPath(pathname);
+    const productSlug = matchProductDetailPath(pathname);
 
     const applyBase = () => {
       if (cancelled) return;
@@ -31,13 +31,13 @@ export function SeoManager() {
 
     applyBase();
 
-    if (!productId) return () => {
+    if (!productSlug) return () => {
       cancelled = true;
     };
 
     void (async () => {
       try {
-        const product = await obtenerProductoPorId(productId);
+        const product = await obtenerProductoPorSlug(productSlug);
         if (cancelled || !product || product.estado === "Deshabilitado") return;
 
         const nombre = String(product.nombre || "").trim() || "Producto";
