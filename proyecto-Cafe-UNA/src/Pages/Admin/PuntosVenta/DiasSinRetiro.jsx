@@ -6,7 +6,9 @@ import { Trash2 } from "lucide-react";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { ST } from "../../../Components/T/ST";
 import { AdminPageHeader } from "../../../Components/Admin/ui/AdminPageHeader";
+import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
+import { useTraducir } from "../../../hooks/useTraducir";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
 import {
   eliminarCierreCompra,
@@ -54,6 +56,7 @@ export default function AdminDiasSinRetiro() {
   const [fecha, setFecha] = useState("");
   const [motivo, setMotivo] = useState("");
   const [ubicacionId, setUbicacionId] = useState("");
+  const tAplicaA = useTraducir("Aplica a");
 
   const { showLoading, loadingMessage } = useAdminPageGate(
     "/admin/puntos-venta/dias-sin-retiro",
@@ -67,6 +70,17 @@ export default function AdminDiasSinRetiro() {
     }
     return map;
   }, [puntos]);
+
+  const opcionesAlcance = useMemo(
+    () => [
+      { value: "", label: "Todos los puntos de venta" },
+      ...puntos.map((punto) => ({
+        value: String(punto.id),
+        label: punto.name || punto.code || String(punto.id),
+      })),
+    ],
+    [puntos],
+  );
 
   const cargar = useCallback(async () => {
     if (!puede) {
@@ -167,16 +181,13 @@ export default function AdminDiasSinRetiro() {
             </label>
             <label className="flex min-w-0 max-w-full flex-col gap-1.5 overflow-hidden text-sm font-medium text-slate-800 dark:text-slate-100">
               <ST>Aplica a</ST>
-              <select
+              <SelectFiltro
+                aria-label={tAplicaA}
                 value={ubicacionId}
                 onChange={(event) => setUbicacionId(event.target.value)}
-                className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-xl border border-slate-200 bg-white px-3 text-[length:var(--text-body)] font-normal dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-              >
-                <option value=""><ST>Todos los puntos de venta</ST></option>
-                {puntos.map((punto) => (
-                  <option key={punto.id} value={punto.id}>{punto.name}</option>
-                ))}
-              </select>
+                options={opcionesAlcance}
+                traducirOpciones
+              />
             </label>
             <label className="flex min-w-0 max-w-full flex-col gap-1.5 overflow-hidden text-sm font-medium text-slate-800 lg:col-span-2 dark:text-slate-100">
               <ST>Motivo</ST>

@@ -46,6 +46,7 @@ import { textoUi } from "../../lib/textoVisible";
 const linkActivo = {
   className: "text-slate-950",
 };
+const linkActivoExact = { exact: true };
 
 export function ClienteSidebar() {
   const user = useSessionUser();
@@ -170,7 +171,7 @@ export function ClienteSidebar() {
                   <SidebarMenuButton asChild>
                     <Link
                       to="/perfil"
-                      activeOptions={{ exact: true }}
+                      activeOptions={linkActivoExact}
                       activeProps={linkActivo}
                       onClick={closeMobileSidebar}
                     >
@@ -185,7 +186,7 @@ export function ClienteSidebar() {
               {puedeMisCompras ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <Link to="/perfil/compras" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                    <Link to="/perfil/compras" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                       <ShoppingBag />
                       <span>
                         <ST>Mis compras</ST>
@@ -199,6 +200,7 @@ export function ClienteSidebar() {
                   <SidebarMenuButton asChild>
                     <Link
                       to="/perfil/solicitudes"
+                      activeOptions={linkActivoExact}
                       activeProps={linkActivo}
                       onClick={closeMobileSidebar}
                     >
@@ -215,6 +217,7 @@ export function ClienteSidebar() {
                   <SidebarMenuButton asChild>
                     <Link
                       to="/perfil/propuestas"
+                      activeOptions={linkActivoExact}
                       activeProps={linkActivo}
                       onClick={closeMobileSidebar}
                     >
@@ -228,7 +231,7 @@ export function ClienteSidebar() {
               ) : null}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/perfil/manual" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                  <Link to="/perfil/manual" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                     <LifeBuoy />
                     <span>
                       <ST>Ayuda</ST>
@@ -279,7 +282,7 @@ export function ClienteSidebar() {
           <DropdownMenuContent side="top" align="end" className="z-[100] w-56">
             {puedePerfil ? (
               <DropdownMenuItem asChild>
-                <Link to="/perfil" className="cursor-pointer" activeProps={linkActivo}>
+                <Link to="/perfil" className="cursor-pointer" activeOptions={linkActivoExact} activeProps={linkActivo}>
                   <UserRound className="size-4" />
                   <span>
                     <ST>Mi perfil</ST>
@@ -289,7 +292,7 @@ export function ClienteSidebar() {
             ) : null}
             {puedeMisCompras ? (
               <DropdownMenuItem asChild>
-                <Link to="/perfil/compras" className="cursor-pointer" activeProps={linkActivo}>
+                <Link to="/perfil/compras" className="cursor-pointer" activeOptions={linkActivoExact} activeProps={linkActivo}>
                   <ShoppingBag className="size-4" />
                   <span>
                     <ST>Mis compras</ST>
@@ -299,7 +302,7 @@ export function ClienteSidebar() {
             ) : null}
             {puedeMisSolicitudes ? (
               <DropdownMenuItem asChild>
-                <Link to="/perfil/solicitudes" className="cursor-pointer" activeProps={linkActivo}>
+                <Link to="/perfil/solicitudes" className="cursor-pointer" activeOptions={linkActivoExact} activeProps={linkActivo}>
                   <ClipboardList className="size-4" />
                   <span>
                     <ST>Mis solicitudes</ST>

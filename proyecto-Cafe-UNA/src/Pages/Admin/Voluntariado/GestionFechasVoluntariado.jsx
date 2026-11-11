@@ -661,16 +661,16 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
   return (
     <div className="space-y-6">
       {/* Encabezado principal */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <CalendarDays className="size-6 text-slate-900" />
-              <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+          <div className="min-w-0">
+            <div className="flex items-start gap-2">
+              <CalendarDays className="mt-0.5 size-5 shrink-0 text-slate-900" aria-hidden="true" />
+              <h1 className="text-[length:var(--text-title)] font-bold tracking-tight text-slate-950">
                 <ST>{tTitulo}</ST>
               </h1>
             </div>
-            <p className="mt-1 max-w-3xl text-slate-600">
+            <p className="mt-2 max-w-3xl text-[length:var(--text-body)] text-slate-600">
               <ST>{tSub}</ST>
             </p>
           </div>
@@ -679,20 +679,27 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
             type="button"
             onClick={cargarFechas}
             disabled={cargando}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 self-start"
+            className="admin-role-quiet inline-flex h-[var(--control-height)] shrink-0 items-center justify-center gap-2 self-start rounded-xl border px-4 text-[length:var(--text-body)] font-semibold transition disabled:opacity-50"
           >
-            <RefreshCw className={`size-4 ${cargando ? "animate-spin" : ""}`} />
+            <RefreshCw className={`size-4 ${cargando ? "animate-spin" : ""}`} aria-hidden="true" />
             <ST>Actualizar datos</ST>
           </button>
         </div>
 
         {/* Selector de Tipo de Voluntariado */}
-        <div className="mt-6 pt-6 border-t border-slate-100">
-          <span id="gestion-fechas-tipo-label" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+        <div className="mt-5 border-t border-slate-100 pt-5">
+          <span
+            id="gestion-fechas-tipo-label"
+            className="mb-3 block text-[length:var(--text-body)] font-semibold text-slate-600"
+          >
             <ST>Seleccione el tipo de voluntariado a configurar:</ST>
           </span>
 
-          <div className="flex flex-wrap gap-2" role="group" aria-labelledby="gestion-fechas-tipo-label">
+          <div
+            className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3"
+            role="group"
+            aria-labelledby="gestion-fechas-tipo-label"
+          >
             {TIPOS_VOLUNTARIADO.map((tipo) => {
               const esActivo = tipo === tipoSeleccionado;
               const cantidad = getCantidadFechas(
@@ -706,20 +713,23 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                   key={tipo}
                   type="button"
                   onClick={() => handleCambiarTipo(tipo)}
-                  className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition border ${
+                  aria-pressed={esActivo}
+                  className={`inline-flex h-[var(--control-height)] min-w-0 items-center justify-between gap-2 rounded-xl border px-3.5 text-[length:var(--text-body)] font-semibold transition ${
                     esActivo
                       ? "admin-role-selected"
                       : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                   }`}
                 >
-                  <span><ST>{tipo}</ST></span>
+                  <span className="min-w-0 truncate text-left">
+                    <ST>{tipo}</ST>
+                  </span>
                   <span
-                    className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold ${
+                    className={`inline-flex shrink-0 items-center justify-center rounded-full px-2.5 py-0.5 text-[length:var(--text-body)] font-semibold ${
                       esActivo
-                        ? "bg-white/20 text-white"
+                        ? "bg-[var(--admin-accent-coffee)] text-[var(--admin-on-accent-coffee)]"
                         : cantidad > 0
-                        ? "bg-slate-100 text-slate-800"
-                        : "bg-slate-100 text-slate-400"
+                          ? "bg-slate-100 text-slate-800"
+                          : "bg-slate-100 text-slate-500"
                     }`}
                   >
                     {cantidad} {cantidad === 1 ? "fecha" : "fechas"}
@@ -731,26 +741,31 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
         </div>
 
         {/* Resumen rápido del tipo seleccionado y zona horaria */}
-        <div className="mt-5 flex flex-wrap items-center gap-4 rounded-lg bg-slate-50 p-3 text-sm text-slate-700 border border-slate-100">
-          <div className="flex items-center gap-2">
-            <Tag className="size-4 text-slate-600" />
-            <span className="font-semibold text-slate-900">
-              <ST>Tipo actual:</ST> <span className="underline decoration-slate-400 font-bold">{tipoSeleccionado}</span>
+        <div className="mt-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[length:var(--text-body)] text-slate-700 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <Tag className="size-4 shrink-0 text-slate-600" aria-hidden="true" />
+            <span className="min-w-0">
+              <ST>Tipo actual:</ST>{" "}
+              <strong className="font-semibold text-slate-900">{tipoSeleccionado}</strong>
             </span>
           </div>
-          <div className="flex items-center gap-1.5 ml-2">
-            <span className="inline-block size-3.5 rounded-full border-2 border-slate-950 bg-white" />
-            <span>
+          <div className="flex min-w-0 items-center gap-2">
+            <span
+              className="inline-block size-3.5 shrink-0 rounded-full border-2 border-slate-900 bg-white"
+              aria-hidden="true"
+            />
+            <span className="min-w-0">
               <strong>{totalHabilitadasMes}</strong>{" "}
               <ST>días habilitados en</ST>{" "}
               <span className="capitalize">{format(mesActual, "MMMM yyyy", { locale })}</span>
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 ml-auto">
-            <Clock className="size-3.5" />
-            <span>
-              <ST>Zona:</ST> <span className="font-mono font-medium">{zonaHoraria}</span>
-              {" · "}<ST>Hoy:</ST> <span className="font-mono font-bold text-slate-800">{hoyIso}</span>
+          <div className="flex min-w-0 items-center gap-2 text-slate-600 sm:col-span-2 lg:col-span-1">
+            <Clock className="size-4 shrink-0" aria-hidden="true" />
+            <span className="min-w-0">
+              <ST>Zona:</ST> <span className="font-medium">{zonaHoraria}</span>
+              {" · "}
+              <ST>Hoy:</ST> <span className="font-semibold text-slate-800">{hoyIso}</span>
             </span>
           </div>
         </div>
@@ -857,29 +872,25 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
 
               {/* Indicador de estado y botón de activación rápida */}
               <div
-                className={`rounded-xl border p-4 flex items-center justify-between ${
+                className={`flex flex-wrap items-center gap-3 rounded-xl border p-4 ${
                   estaHabilitadaSeleccionada
                     ? "admin-role-selected"
                     : "border-slate-200 bg-slate-50 text-slate-700"
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-[min(100%,14rem)] flex-1 items-center gap-3">
                   {estaHabilitadaSeleccionada ? (
-                    <CalendarCheck2 className="size-6 text-white" />
+                    <CalendarCheck2 className="size-6 shrink-0 text-[var(--admin-accent-coffee)]" aria-hidden="true" />
                   ) : (
-                    <CalendarX2 className="size-6 text-slate-400" />
+                    <CalendarX2 className="size-6 shrink-0 text-[var(--admin-text-decorative)]" aria-hidden="true" />
                   )}
-                  <div>
-                    <p className="font-bold text-sm">
+                  <div className="min-w-0">
+                    <p className="font-bold leading-snug text-[length:var(--text-subtitle)]">
                       {estaHabilitadaSeleccionada
                         ? <ST>Fecha Habilitada</ST>
                         : <ST>Fecha No Habilitada</ST>}
                     </p>
-                    <p
-                      className={`text-xs ${
-                        estaHabilitadaSeleccionada ? "text-slate-200" : "text-slate-500"
-                      }`}
-                    >
+                    <p className="mt-0.5 leading-snug text-[length:var(--text-body)] text-[var(--admin-text-muted)]">
                       {estaHabilitadaSeleccionada
                         ? <ST>Disponible para solicitar este voluntariado</ST>
                         : <ST>Bloqueada para este voluntariado</ST>}
@@ -891,11 +902,11 @@ export function GestionFechasVoluntariado({ esSuperAdmin = false }) {
                   type="button"
                   onClick={handleToggleEstado}
                   disabled={guardando || esFechaPasada}
-                  className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition ${
+                  className={`ml-auto inline-flex h-[var(--control-height)] shrink-0 items-center justify-center whitespace-nowrap rounded-full px-4 text-[length:var(--text-body)] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus-ring)] disabled:cursor-not-allowed disabled:opacity-50 ${
                     estaHabilitadaSeleccionada
-                      ? "bg-white text-slate-950 hover:bg-slate-100"
+                      ? "border border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]"
                       : "admin-role-primary"
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  }`}
                 >
                   {guardando
                     ? "..."

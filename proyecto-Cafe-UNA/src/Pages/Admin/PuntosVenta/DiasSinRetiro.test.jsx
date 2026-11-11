@@ -46,10 +46,12 @@ describe("AdminDiasSinRetiro", () => {
   });
 
   it("muestra el editor vacío cuando no hay fechas", async () => {
+    const user = userEvent.setup();
     render(<AdminDiasSinRetiro />);
 
     expect(await screen.findByRole("heading", { name: "Días sin retiro" })).toBeTruthy();
     expect(screen.getByText("No hay fechas registradas.")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Aplica a" }));
     expect(screen.getByRole("option", { name: "Heredia" })).toBeTruthy();
     expect(screen.queryByRole("option", { name: "Bodega Central" })).toBeNull();
   });

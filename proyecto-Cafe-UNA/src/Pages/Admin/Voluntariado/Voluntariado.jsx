@@ -52,7 +52,10 @@ import {
   MAX_PALABRAS_TITULO,
 } from "../../../lib/formLimits";
 import { ST } from "../../../Components/T/ST";
-import { tabDeSearch } from "../../../Components/Admin/adminBreadcrumbItems";
+import {
+  RUTA_VOLUNTARIADO_FECHAS,
+  tabAdminDesdeRuta,
+} from "../../../Components/Admin/adminBreadcrumbItems";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
@@ -778,6 +781,7 @@ function ModalEditar({ solicitud, onGuardar, onCerrar }) {
 
 const AdminVoluntariado = () => {
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const search = useRouterState({ select: (state) => state.location.search });
   const actor = (() => {
     try {
@@ -948,19 +952,25 @@ const AdminVoluntariado = () => {
   ];
 
   const [tabActiva, setTabActiva] = useState(() =>
-    tabDeSearch(search) === "fechas" ? "fechas" : "solicitudes",
+    tabAdminDesdeRuta(pathname, search) === "fechas" ? "fechas" : "solicitudes",
   );
 
   useEffect(() => {
-    const next = tabDeSearch(search) === "fechas" ? "fechas" : "solicitudes";
+    if (tabAdminDesdeRuta(pathname, search) !== "fechas") return;
+    if (String(pathname || "").replace(/\/+$/, "") === RUTA_VOLUNTARIADO_FECHAS) return;
+    navigate({ to: RUTA_VOLUNTARIADO_FECHAS, replace: true });
+  }, [navigate, pathname, search]);
+
+  useEffect(() => {
+    const next =
+      tabAdminDesdeRuta(pathname, search) === "fechas" ? "fechas" : "solicitudes";
     setTabActiva((prev) => (prev === next ? prev : next));
-  }, [search]);
+  }, [pathname, search]);
 
   const cambiarTab = (nuevaTab) => {
     setTabActiva(nuevaTab);
     navigate({
-      to: "/admin/voluntariado",
-      search: nuevaTab === "fechas" ? { tab: "fechas" } : {},
+      to: nuevaTab === "fechas" ? RUTA_VOLUNTARIADO_FECHAS : "/admin/voluntariado",
       replace: true,
     });
   };

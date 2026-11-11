@@ -4,6 +4,7 @@ import { CheckCircle2, FileText, Lock, Upload, X } from "lucide-react";
 import { obtenerCategoriasDocumentos, solicitarAccesoDocumento } from "../../services/documentosService";
 import { getActiveSessionUser } from "../../services/sessionService";
 import { ModalDialog } from "../../Components/ui/ModalDialog";
+import { SelectFiltro } from "../../Components/ui/SelectFiltro";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { limpiarCorreo } from "../../lib/correo";
 import { ST } from "../../Components/T/ST";
@@ -295,22 +296,22 @@ export function SolicitarDocumentoModal({ documento = null, onClose, onSuccess }
                     </div>
 
                     <Campo id="sol-doc-tema" etiqueta="Tema" requerido>
-                      <select
+                      <SelectFiltro
                         id="sol-doc-tema"
                         className="pub-select"
                         required
-                        aria-required="true"
                         value={categoria}
                         {...propsError("categoria")}
                         onChange={(e) => setCategoria(e.target.value)}
-                      >
-                        <option value="">{tSeleccione}</option>
-                        {temas.map((c) => (
-                          <option key={c.id || c.nombre} value={c.nombre}>
-                            {c.nombre}
-                          </option>
-                        ))}
-                      </select>
+                        traducirOpciones={false}
+                        options={[
+                          { value: "", label: tSeleccione },
+                          ...temas.map((c) => ({
+                            value: c.nombre,
+                            label: c.nombre,
+                          })),
+                        ]}
+                      />
                     </Campo>
 
                     <div className="pub-field">

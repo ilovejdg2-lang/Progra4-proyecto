@@ -19,6 +19,7 @@ import {
   normalizarStockPorUbicacion,
   normalizarStockCentral,
   normalizarUbicacion,
+  invalidarStockDeUbicacion,
   obtenerStockPorUbicacion,
   obtenerUbicaciones,
   validarCodigoUbicacion,
@@ -195,6 +196,22 @@ describe("productosService contract", () => {
     expect(apiRequestMock).toHaveBeenCalledTimes(1);
     expect(apiRequestMock.mock.calls[0][1]).toMatchObject({ errorPrefix: "Error en inventario" });
     expect(apiRequestMock.mock.calls[0][1]).not.toHaveProperty("skipAuth", true);
+  });
+
+  it("refetches location stock after a sale invalidates the 30 minute cache", async () => {
+    apiRequestMock
+      .mockResolvedValueOnce([{ productId: "4", locationCode: "POS_EDITORIAL", stock: 8, provisioned: true }])
+      .mockResolvedValueOnce([{ productId: "4", locationCode: "POS_EDITORIAL", stock: 5, provisioned: true }]);
+
+    const antes = await obtenerStockPorUbicacion("POS_EDITORIAL");
+    const cacheado = await obtenerStockPorUbicacion("POS_EDITORIAL");
+    invalidarStockDeUbicacion("POS_EDITORIAL");
+    const despues = await obtenerStockPorUbicacion("POS_EDITORIAL");
+
+    expect(cacheado).toBe(antes);
+    expect(antes[0].stock).toBe(8);
+    expect(despues[0].stock).toBe(5);
+    expect(apiRequestMock).toHaveBeenCalledTimes(2);
   });
 
   it("reads bulk stock by location and isolates the cache", async () => {

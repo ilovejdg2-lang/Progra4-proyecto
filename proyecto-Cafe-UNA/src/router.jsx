@@ -401,6 +401,11 @@ const adminVoluntariadoRoute = createRoute({
     path: "/admin/voluntariado",
     component: AdminVoluntariado,
 })
+const adminVoluntariadoFechasRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/voluntariado/fechas",
+    component: AdminVoluntariado,
+})
 const adminUsuariosRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/usuarios",
@@ -501,6 +506,11 @@ const adminVisitasRoute = createRoute({
     path: "/admin/visitas",
     component: AdminVisitas,
 })
+const adminVisitasFechasRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/visitas/fechas",
+    component: AdminVisitas,
+})
 const donacionesRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/donaciones",
@@ -534,9 +544,7 @@ const adminSolicitudesDonacionRoute = createRoute({
 const adminFechasRecepcionDonacionRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/donaciones/fechas-recepcion",
-    component: () => (
-        <Navigate to="/admin/donaciones/solicitudes" search={{ tab: "fechas" }} replace />
-    ),
+    component: AdminSolicitudesDonacion,
 })
 const perfilRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -677,7 +685,9 @@ const routeTree= rootRoute.addChildren([
     adminHistorialVentasPuntoRoute,
     adminHistorialMovimientosRoute,
     adminVoluntariadoRoute,
+    adminVoluntariadoFechasRoute,
     adminVisitasRoute,
+    adminVisitasFechasRoute,
     adminNecesidadesDonacionRoute,
     adminSolicitudesDonacionRoute,
     adminFechasRecepcionDonacionRoute,

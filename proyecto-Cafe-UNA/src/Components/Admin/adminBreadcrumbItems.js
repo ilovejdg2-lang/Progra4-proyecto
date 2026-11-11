@@ -10,6 +10,22 @@ export function tabDeSearch(search) {
   return null;
 }
 
+/** Tab admin por ruta limpia (`.../fechas`) o query legado `?tab=fechas`. */
+export function tabAdminDesdeRuta(pathname, search) {
+  const path = String(pathname || "").replace(/\/+$/, "");
+  if (
+    path.endsWith("/fechas") ||
+    path.endsWith("/fechas-recepcion")
+  ) {
+    return "fechas";
+  }
+  return tabDeSearch(search) === "fechas" ? "fechas" : null;
+}
+
+export const RUTA_VOLUNTARIADO_FECHAS = "/admin/voluntariado/fechas";
+export const RUTA_VISITAS_FECHAS = "/admin/visitas/fechas";
+export const RUTA_DONACIONES_FECHAS = "/admin/donaciones/fechas-recepcion";
+
 function crumb(label, to, search, detail) {
   const item = { label };
   if (to) item.to = to;
@@ -24,7 +40,7 @@ function crumb(label, to, search, detail) {
  */
 export function getAdminBreadcrumbItems(pathname, search) {
   const path = String(pathname || "").replace(/\/+$/, "") || "/";
-  const tab = tabDeSearch(search);
+  const tab = tabAdminDesdeRuta(path, search);
   const admin = crumb("Admin", "/admin");
   const cms = crumb("Configuración general del sitio");
   const inventario = crumb("Manejo de inventario");
@@ -82,28 +98,33 @@ export function getAdminBreadcrumbItems(pathname, search) {
       crumb("Solicitudes de donación", "/admin/donaciones/solicitudes"),
       crumb("Fechas disponibles"),
     ],
+    "/admin/donaciones/solicitudes": [admin, donaciones, crumb("Solicitudes de donación")],
+    "/admin/voluntariado": [admin, crumb("Voluntariado")],
+    "/admin/voluntariado/fechas": [
+      admin,
+      crumb("Voluntariado", "/admin/voluntariado"),
+      crumb("Fechas disponibles"),
+    ],
+    "/admin/visitas": [admin, crumb("Visitas grupales")],
+    "/admin/visitas/fechas": [
+      admin,
+      crumb("Visitas grupales", "/admin/visitas"),
+      crumb("Gestión de fechas de visitas"),
+    ],
   };
 
-  if (path === "/admin/donaciones/solicitudes") {
-    if (tab === "fechas") {
-      return [
-        admin,
-        donaciones,
-        crumb("Solicitudes de donación", "/admin/donaciones/solicitudes"),
-        crumb("Fechas disponibles"),
-      ];
-    }
-    return [admin, donaciones, crumb("Solicitudes de donación")];
+  // Compatibilidad con URLs viejas `?tab=fechas`.
+  if (path === "/admin/donaciones/solicitudes" && tab === "fechas") {
+    return exactas["/admin/donaciones/fechas-recepcion"];
+  }
+  if (path === "/admin/voluntariado" && tab === "fechas") {
+    return exactas["/admin/voluntariado/fechas"];
+  }
+  if (path === "/admin/visitas" && tab === "fechas") {
+    return exactas["/admin/visitas/fechas"];
   }
 
   if (exactas[path]) return exactas[path];
-
-  if (path === "/admin/voluntariado") {
-    if (tab === "fechas") {
-      return [admin, crumb("Voluntariado", "/admin/voluntariado"), crumb("Fechas disponibles")];
-    }
-    return [admin, crumb("Voluntariado")];
-  }
 
   if (path.startsWith("/admin/propuestas/")) {
     return [admin, crumb("Propuestas de productores", "/admin/propuestas"), crumb("Detalle")];
@@ -111,13 +132,6 @@ export function getAdminBreadcrumbItems(pathname, search) {
 
   if (path.startsWith("/admin/mis-propuestas/")) {
     return [admin, crumb("Mis propuestas", "/admin/mis-propuestas"), crumb("Detalle")];
-  }
-
-  if (path === "/admin/visitas") {
-    if (tab === "fechas") {
-      return [admin, crumb("Visitas grupales", "/admin/visitas"), crumb("Gestión de fechas de visitas")];
-    }
-    return [admin, crumb("Visitas grupales")];
   }
 
   const ventasPunto = path.match(/^\/admin\/puntos-venta\/([^/]+)\/ventas$/);

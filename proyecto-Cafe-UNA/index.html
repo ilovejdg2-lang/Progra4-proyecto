@@ -9,8 +9,11 @@
       name="description"
       content="Descubre Café UNA, una plataforma dedicada al café, los productores y los productos de Costa Rica. Explora nuestro catálogo y conoce nuestras iniciativas."
     />
-    <meta name="robots" content="index,follow" />
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+    <meta name="googlebot" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
     <link rel="canonical" href="https://cafeuna.app/" />
+    <link rel="alternate" hreflang="es-CR" href="https://cafeuna.app/" />
+    <link rel="alternate" hreflang="x-default" href="https://cafeuna.app/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Café UNA" />
     <meta property="og:locale" content="es_CR" />
@@ -30,6 +33,46 @@
     <meta name="twitter:image" content="https://cafeuna.app/logo.webp" />
     <link rel="icon" type="image/png" href="/logoblancoyrojo.png" />
     <link rel="apple-touch-icon" href="/logoblancoyrojo.png" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://cafeuna.app/#organization",
+            "name": "Café UNA",
+            "alternateName": ["Cafe UNA", "Café UNA Costa Rica"],
+            "url": "https://cafeuna.app/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://cafeuna.app/logo.webp"
+            },
+            "description": "Descubre Café UNA, una plataforma dedicada al café, los productores y los productos de Costa Rica. Explora nuestro catálogo y conoce nuestras iniciativas.",
+            "areaServed": { "@type": "Country", "name": "Costa Rica" }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://cafeuna.app/#website",
+            "name": "Café UNA",
+            "alternateName": "Cafe UNA",
+            "url": "https://cafeuna.app/",
+            "inLanguage": "es-CR",
+            "publisher": { "@id": "https://cafeuna.app/#organization" },
+            "description": "Descubre Café UNA, una plataforma dedicada al café, los productores y los productos de Costa Rica. Explora nuestro catálogo y conoce nuestras iniciativas."
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://cafeuna.app/#webpage",
+            "url": "https://cafeuna.app/",
+            "name": "Café UNA | Café, productores y productos de Costa Rica",
+            "isPartOf": { "@id": "https://cafeuna.app/#website" },
+            "about": { "@id": "https://cafeuna.app/#organization" },
+            "inLanguage": "es-CR",
+            "description": "Descubre Café UNA, una plataforma dedicada al café, los productores y los productos de Costa Rica. Explora nuestro catálogo y conoce nuestras iniciativas."
+          }
+        ]
+      }
+    </script>
     <script>
       (function () {
         var path = location.pathname;
@@ -355,6 +398,21 @@
         } catch (e) {}
       })();
     </script>
+    <noscript>
+      <main>
+        <h1>Café UNA</h1>
+        <p>
+          Descubre Café UNA, una plataforma dedicada al café, los productores y los productos de
+          Costa Rica. Explora nuestro catálogo y conoce nuestras iniciativas.
+        </p>
+        <ul>
+          <li><a href="https://cafeuna.app/">Inicio</a></li>
+          <li><a href="https://cafeuna.app/productos">Productos</a></li>
+          <li><a href="https://cafeuna.app/AboutUs">Sobre nosotros</a></li>
+          <li><a href="https://cafeuna.app/productores">Productores</a></li>
+        </ul>
+      </main>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

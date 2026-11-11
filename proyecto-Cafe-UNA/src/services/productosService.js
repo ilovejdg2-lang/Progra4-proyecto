@@ -20,6 +20,7 @@ let ubicacionesCache = { expiresAt: 0, data: null };
 let ubicacionesInflight = null;
 const stockPorUbicacionCache = new Map();
 const stockPorUbicacionInflight = new Map();
+const stockPorUbicacionEpoch = new Map();
 
 const LOCATION_CODE_PATTERN = /^[A-Z][A-Z0-9_]{1,48}$/;
 
@@ -57,6 +58,16 @@ export function limpiarInventarioUbicacionCache() {
   ubicacionesInflight = null;
   stockPorUbicacionCache.clear();
   stockPorUbicacionInflight.clear();
+  stockPorUbicacionEpoch.clear();
+}
+
+/** La venta presencial no puede seguir mostrando el stock cacheado hasta 30 minutos. */
+export function invalidarStockDeUbicacion(locationCode) {
+  const codigo = String(locationCode || "").trim().toUpperCase();
+  if (!codigo) return;
+  stockPorUbicacionCache.delete(codigo);
+  stockPorUbicacionInflight.delete(codigo);
+  stockPorUbicacionEpoch.set(codigo, (stockPorUbicacionEpoch.get(codigo) || 0) + 1);
 }
 
 async function request(url, options = {}) {
@@ -192,31 +203,32 @@ function normalizarRespuestaAjusteStock(data, fallback) {
 }
 
 export function normalizarStockPorUbicacion(stock) {
-  const productId = firstDefined(stock, ["productId", "ProductId", "id", "Id", "ID"]);
+  const productId = firstDefined(stock, ["productId", "ProductId", "productoId", "ProductoId", "id", "Id", "ID"]);
   const rawLocationCode = firstDefined(stock, ["locationCode", "LocationCode", "code", "Code", "codigo", "Codigo"]);
   if (!hasIdentity(productId) || !hasIdentity(rawLocationCode)) return null;
-  const locationCode = String(rawLocationCode).trim();
+  const locationCode = String(rawLocationCode).trim().toUpperCase();
   if (!validarCodigoUbicacion(locationCode)) return null;
   const rawStock = firstDefined(stock, ["stock", "Stock"]);
-  const normalizedStock = rawStock === undefined || rawStock === null ? null : rawStock;
+  const parsedStock = rawStock === undefined || rawStock === null ? null : Number(rawStock);
   const rawReservedStock = firstDefined(stock, ["reservedStock", "ReservedStock", "stockReservado", "StockReservado"]);
-  const normalizedReservedStock = rawReservedStock === undefined || rawReservedStock === null
+  const parsedReserved = rawReservedStock === undefined || rawReservedStock === null
     ? null
-    : rawReservedStock;
-  const reservedStock = validarStockPorUbicacion(normalizedReservedStock)
-    ? normalizedReservedStock
-    : null;
-  const normalizedOnHandStock = validarStockPorUbicacion(normalizedStock)
-    ? normalizedStock
-    : null;
+    : Number(rawReservedStock);
+  const reservedStock = validarStockPorUbicacion(parsedReserved) ? parsedReserved : null;
+  const normalizedOnHandStock = validarStockPorUbicacion(parsedStock) ? parsedStock : null;
+  const rawAvailable = firstDefined(stock, ["availableStock", "AvailableStock", "disponible", "Disponible"]);
+  const parsedAvailable = rawAvailable === undefined || rawAvailable === null ? null : Number(rawAvailable);
+  const availableStock = validarStockPorUbicacion(parsedAvailable)
+    ? parsedAvailable
+    : normalizedOnHandStock !== null && reservedStock !== null
+      ? Math.max(0, normalizedOnHandStock - reservedStock)
+      : null;
   return {
     productId: String(productId),
     locationCode,
     stock: normalizedOnHandStock,
     reservedStock,
-    availableStock: normalizedOnHandStock !== null && reservedStock !== null
-      ? Math.max(0, normalizedOnHandStock - reservedStock)
-      : null,
+    availableStock,
     provisioned: toBoolean(firstDefined(stock, ["provisioned", "Provisioned"])),
   };
 }
@@ -367,26 +379,30 @@ export async function obtenerUbicaciones() {
 
 export async function obtenerStockPorUbicacion(locationCode) {
   if (!validarCodigoUbicacion(locationCode)) throw new Error("El código de ubicación no es válido.");
+  const codigo = String(locationCode).trim().toUpperCase();
   const now = Date.now();
-  const cached = stockPorUbicacionCache.get(locationCode);
+  const cached = stockPorUbicacionCache.get(codigo);
   if (cached?.expiresAt > now) return cached.data;
-  stockPorUbicacionCache.delete(locationCode);
-  if (stockPorUbicacionInflight.has(locationCode)) return stockPorUbicacionInflight.get(locationCode);
-  const url = `${INVENTORY_BASE_URL}/stock?locationCode=${encodeURIComponent(locationCode)}`;
+  stockPorUbicacionCache.delete(codigo);
+  if (stockPorUbicacionInflight.has(codigo)) return stockPorUbicacionInflight.get(codigo);
+  const url = `${INVENTORY_BASE_URL}/stock?locationCode=${encodeURIComponent(codigo)}`;
+  const epoch = stockPorUbicacionEpoch.get(codigo) || 0;
   const inflight = inventoryRequest(url)
     .then((data) => {
       const normalized = responseList(data)
         .map(normalizarStockPorUbicacion)
-        .filter((item) => item?.locationCode === locationCode);
-      stockPorUbicacionCache.set(locationCode, { expiresAt: Date.now() + CACHE_TTL_MS, data: normalized });
-      stockPorUbicacionInflight.delete(locationCode);
+        .filter((item) => item?.locationCode === codigo);
+      if ((stockPorUbicacionEpoch.get(codigo) || 0) === epoch) {
+        stockPorUbicacionCache.set(codigo, { expiresAt: Date.now() + CACHE_TTL_MS, data: normalized });
+      }
+      stockPorUbicacionInflight.delete(codigo);
       return normalized;
     })
     .catch((error) => {
-      stockPorUbicacionInflight.delete(locationCode);
+      stockPorUbicacionInflight.delete(codigo);
       throw error;
     });
-  stockPorUbicacionInflight.set(locationCode, inflight);
+  stockPorUbicacionInflight.set(codigo, inflight);
   return inflight;
 }
 

@@ -13,16 +13,28 @@ import { CheckoutPuntoCard } from './CheckoutPuntoCard';
 import './Checkout.css';
 import { calcularPrecioConIVA, obtenerDisponibilidadPuntosVenta } from '../../services/productosService';
 import { obtenerFooter, obtenerNavbar } from '../../services/informacionService';
-import { registrarCompra } from '../../services/comprasService';
-import { getActiveSessionUser } from '../../services/sessionService';
+import {
+  adjuntarComprobanteCompra,
+  iniciarCompra,
+} from '../../services/comprasService';
+import {
+  getActiveSessionUser,
+  SESSION_UPDATED_EVENT,
+} from '../../services/sessionService';
+import {
+  guardarBorradorCompraId,
+  leerBorradorCompraId,
+  limpiarBorradorCompraId,
+} from '../../services/compraSesionStorage';
 import { marcarIntentRegistroCliente, puedeComprar } from '../../services/authService';
 import { clearCart, getStoredCart } from '../../lib/cartStorage';
-import { confirmarCompraEnBackend, validarComprobante } from './checkoutValidation';
+import { validarComprobante } from './checkoutValidation';
 import { CheckoutConfirmacion } from './CheckoutConfirmacion';
 import { CheckoutPuntoDetalle } from './CheckoutPuntoDetalle';
 import { rutaMisCompras } from '../HistorialCompras/rutasCompras';
 import { cargarLogoWebpParaPdf, descargarArchivo } from '../../lib/exportarHistorialMovimientos';
 import { LOGO_OSCURO_FALLBACK } from '../../lib/brandLogoCache';
+import { referenciaSinpeCompra } from '../../lib/referenciaSinpe';
 import {
   construirPdfResumenCompra,
   nombreArchivoResumenCompra,
@@ -55,6 +67,13 @@ const Checkout = () => {
   const [logoUrl, setLogoUrl] = useState('');
   const [sinpe, setSinpe] = useState('');
   const [sinpeCopiado, setSinpeCopiado] = useState(false);
+  const [detalleCopiado, setDetalleCopiado] = useState(false);
+  const [compraIniciada, setCompraIniciada] = useState(() => {
+    const id = leerBorradorCompraId();
+    return id ? { id } : null;
+  });
+  const [iniciandoCompra, setIniciandoCompra] = useState(false);
+  const [sessionTick, setSessionTick] = useState(0);
   const [compraConfirmada, setCompraConfirmada] = useState(null);
   const [descargandoPdf, setDescargandoPdf] = useState(false);
 
@@ -86,11 +105,15 @@ const Checkout = () => {
   const tComprobante = useTraducir('Comprobante de pago');
   const tSinpe = useTraducir('SINPE Móvil');
   const tSinpeHint = useTraducir('Pagá a este número.');
-  const tSinpeDetalle = useTraducir(
-    'En el detalle del SINPE Móvil poné cafeuna seguido del número de tu compra (ejemplo: cafeuna1234). Al confirmar el pedido te mostramos tu código exacto.',
-  );
   const tCopiarSinpe = useTraducir('Copiar número');
   const tSinpeCopiado = useTraducir('Número copiado');
+  const tDetalleSinpe = useTraducir('Detalle');
+  const tDetalleSinpeHint = useTraducir(
+    'Copiá este detalle y pegalo en el SINPE. Después subí el comprobante.',
+  );
+  const tCopiarDetalle = useTraducir('Copiar');
+  const tDetalleCopiado = useTraducir('Copiado');
+  const tGenerandoDetalle = useTraducir('Generando detalle de pago...');
   const tComprobanteCta = useTraducir('Arrastrá o seleccioná una imagen del comprobante');
   const tComprobanteHint = useTraducir('JPG, PNG o WEBP. Máximo 10 MB.');
   const tQuitarImagen = useTraducir('Quitar imagen');
@@ -131,6 +154,16 @@ const Checkout = () => {
     const onCartUpdated = () => setCartItems(getStoredCart());
     window.addEventListener('cart-updated', onCartUpdated);
     return () => window.removeEventListener('cart-updated', onCartUpdated);
+  }, []);
+
+  useEffect(() => {
+    const onSessionUpdated = () => setSessionTick((n) => n + 1);
+    window.addEventListener(SESSION_UPDATED_EVENT, onSessionUpdated);
+    window.addEventListener('storage', onSessionUpdated);
+    return () => {
+      window.removeEventListener(SESSION_UPDATED_EVENT, onSessionUpdated);
+      window.removeEventListener('storage', onSessionUpdated);
+    };
   }, []);
 
   useEffect(() => {
@@ -186,12 +219,86 @@ const Checkout = () => {
     [puntosVenta, stockPorProducto, cartItems],
   );
   const puntoElegido = puntosConDisponibilidad.find((punto) => punto.code === ubicacionCodigo) || null;
+  const firmaCarrito = useMemo(
+    () =>
+      cartItems
+        .map((item) => `${item.id}:${getQuantity(item)}`)
+        .sort()
+        .join('|'),
+    [cartItems],
+  );
+  const referenciaSinpe = referenciaSinpeCompra(compraIniciada);
 
   useEffect(() => {
     if (!ubicacionCodigo) return;
     const actual = puntosConDisponibilidad.find((punto) => punto.code === ubicacionCodigo);
     if (actual && !actual.cubrePedido) setUbicacionCodigo('');
   }, [puntosConDisponibilidad, ubicacionCodigo]);
+
+  useEffect(() => {
+    if (paid) return undefined;
+    // Sin punto o carrito no se actualiza el borrador, pero el id ya mostrado se conserva.
+    if (!ubicacionCodigo || !puntoElegido?.id || !puntoElegido.cubrePedido || cartItems.length === 0) {
+      return undefined;
+    }
+    const usuario = getCurrentUser();
+    if (!usuario || !canCompletePurchase(usuario)) {
+      return undefined;
+    }
+
+    let activo = true;
+    const timer = window.setTimeout(() => {
+      setIniciandoCompra(true);
+      setPaymentError(null);
+      const compraIdEstable = compraIniciada?.id || leerBorradorCompraId();
+      const payload = {
+        compraId: compraIdEstable || undefined,
+        clienteNombre: usuario?.name || usuario?.username || usuario?.email || 'Cliente',
+        clienteCorreo: usuario?.email || usuario?.correo || '',
+        items: cartItems.map((item) => ({
+          id: item.id,
+          nombre: item.nombre || item.name || 'Producto',
+          cantidad: getQuantity(item),
+        })),
+        metodoPago: 'Comprobante',
+        ubicacionCodigo,
+        ubicacionId: puntoElegido.id,
+      };
+      iniciarCompra(payload)
+        .then((compra) => {
+          if (!activo) return;
+          setCompraIniciada(compra);
+          guardarBorradorCompraId(compra?.id);
+        })
+        .catch((error) => {
+          if (!activo) return;
+          const status = error?.cause?.response?.status;
+          if (status === 401) {
+            sessionStorage.setItem('postLoginRedirect', '/checkout');
+            marcarIntentRegistroCliente();
+            navigate({ to: '/login' });
+            return;
+          }
+          if (status === 403) {
+            sessionStorage.setItem('postLoginRedirect', '/checkout');
+            marcarIntentRegistroCliente();
+            navigate({ to: '/registro' });
+            return;
+          }
+          setPaymentError(error?.message || 'No se pudo generar el detalle de pago.');
+        })
+        .finally(() => {
+          if (activo) setIniciandoCompra(false);
+        });
+    }, 350);
+
+    return () => {
+      activo = false;
+      window.clearTimeout(timer);
+    };
+    // cartItems se usa dentro; firmaCarrito cubre cambios de contenido.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paid, ubicacionCodigo, puntoElegido?.id, puntoElegido?.cubrePedido, firmaCarrito, navigate, sessionTick]);
 
   const totalConIva = useMemo(
     () => cartItems.reduce((acc, item) => acc + (getUnitPriceWithIva(item) * getQuantity(item)), 0),
@@ -207,28 +314,39 @@ const Checkout = () => {
     navigate({ to: '/productos' });
   };
 
-  const copiarSinpe = async () => {
-    if (!sinpe) return;
+  const copiarTextoPlano = async (valor) => {
+    const texto = String(valor || '').trim();
+    if (!texto) return false;
     try {
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(sinpe);
-      } else {
-        throw new Error('clipboard');
+        await navigator.clipboard.writeText(texto);
+        return true;
       }
     } catch {
-      const area = document.createElement('textarea');
-      area.value = sinpe;
-      area.setAttribute('readonly', '');
-      area.style.position = 'fixed';
-      area.style.left = '-9999px';
-      document.body.appendChild(area);
-      area.select();
-      const ok = document.execCommand('copy');
-      area.remove();
-      if (!ok) return;
+      /* fallback abajo */
     }
+    const area = document.createElement('textarea');
+    area.value = texto;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.left = '-9999px';
+    document.body.appendChild(area);
+    area.select();
+    const ok = document.execCommand('copy');
+    area.remove();
+    return ok;
+  };
+
+  const copiarSinpe = async () => {
+    if (!(await copiarTextoPlano(sinpe))) return;
     setSinpeCopiado(true);
     window.setTimeout(() => setSinpeCopiado(false), 2000);
+  };
+
+  const copiarDetalleSinpe = async () => {
+    if (!(await copiarTextoPlano(referenciaSinpe))) return;
+    setDetalleCopiado(true);
+    window.setTimeout(() => setDetalleCopiado(false), 2000);
   };
 
   const handleDescargarResumen = async () => {
@@ -349,6 +467,11 @@ const Checkout = () => {
       return;
     }
 
+    if (!referenciaSinpe || !compraIniciada?.id) {
+      setPaymentError('Esperá a que se genere el detalle de pago antes de finalizar.');
+      return;
+    }
+
     if (!ensureCanPurchase()) {
       return;
     }
@@ -360,26 +483,9 @@ const Checkout = () => {
       handleValidateCartItems(cartItems);
 
       const usuario = getCurrentUser();
-      const payload = {
-        clienteNombre: usuario?.name || usuario?.username || usuario?.email || "Cliente",
-        clienteCorreo: usuario?.email || usuario?.correo || "",
-        items: cartItems.map((item) => ({
-          id: item.id,
-          nombre: item.nombre || item.name || "Producto",
-          cantidad: getQuantity(item),
-        })),
-        metodoPago: "Comprobante",
-        ubicacionCodigo,
-        ubicacionId: punto.id,
-      };
-
       let compra = null;
       try {
-        compra = await confirmarCompraEnBackend({
-          registrarCompraFn: registrarCompra,
-          payload,
-          archivo: comprobante.file,
-        });
+        compra = await adjuntarComprobanteCompra(compraIniciada.id, comprobante.file);
       } catch (error) {
         const status = error?.cause?.response?.status;
         if (status === 401) {
@@ -395,31 +501,59 @@ const Checkout = () => {
 
       clearCart();
       quitarComprobante();
+      limpiarBorradorCompraId();
+      setCompraIniciada(null);
       window.dispatchEvent(new CustomEvent('order-confirmed', { detail: { total: totalConIva } }));
       setCompraConfirmada({
-        id: compra?.id ?? null,
-        numero: compra?.numero || '',
-        fecha: compra?.fecha || new Date().toISOString(),
+        id: compra?.id ?? compraIniciada.id,
+        numero: compra?.numero || compraIniciada.numero || '',
+        fecha: compra?.fecha || compraIniciada.fecha || new Date().toISOString(),
         estado: compra?.estado || 'Pendiente',
-        clienteNombre: compra?.clienteNombre || payload.clienteNombre,
-        clienteCorreo: compra?.clienteCorreo || payload.clienteCorreo,
-        metodoPago: compra?.metodoPago || 'Comprobante',
-        ubicacionId: compra?.ubicacionId || punto.id,
-        ubicacionNombre: compra?.ubicacionNombre || punto.name,
-        ubicacionCodigo: compra?.ubicacionCodigo || punto.code,
-        ubicacionDireccion: compra?.ubicacionDireccion || punto.direccion || "",
-        subtotal: Number.isFinite(Number(compra?.subtotal)) ? Number(compra.subtotal) : subtotalSinIva,
-        impuestos: Number.isFinite(Number(compra?.impuestos)) ? Number(compra.impuestos) : ivaTotal,
-        total: Number.isFinite(Number(compra?.total)) ? Number(compra.total) : totalConIva,
-        cliente: compra?.cliente || null,
+        clienteNombre:
+          compra?.clienteNombre ||
+          compraIniciada.clienteNombre ||
+          usuario?.name ||
+          usuario?.username ||
+          usuario?.email ||
+          'Cliente',
+        clienteCorreo:
+          compra?.clienteCorreo ||
+          compraIniciada.clienteCorreo ||
+          usuario?.email ||
+          usuario?.correo ||
+          '',
+        metodoPago: compra?.metodoPago || compraIniciada.metodoPago || 'Comprobante',
+        ubicacionId: compra?.ubicacionId || compraIniciada.ubicacionId || punto.id,
+        ubicacionNombre: compra?.ubicacionNombre || compraIniciada.ubicacionNombre || punto.name,
+        ubicacionCodigo: compra?.ubicacionCodigo || compraIniciada.ubicacionCodigo || punto.code,
+        ubicacionDireccion:
+          compra?.ubicacionDireccion || compraIniciada.ubicacionDireccion || punto.direccion || '',
+        subtotal: Number.isFinite(Number(compra?.subtotal))
+          ? Number(compra.subtotal)
+          : Number.isFinite(Number(compraIniciada.subtotal))
+            ? Number(compraIniciada.subtotal)
+            : subtotalSinIva,
+        impuestos: Number.isFinite(Number(compra?.impuestos))
+          ? Number(compra.impuestos)
+          : Number.isFinite(Number(compraIniciada.impuestos))
+            ? Number(compraIniciada.impuestos)
+            : ivaTotal,
+        total: Number.isFinite(Number(compra?.total))
+          ? Number(compra.total)
+          : Number.isFinite(Number(compraIniciada.total))
+            ? Number(compraIniciada.total)
+            : totalConIva,
+        cliente: compra?.cliente || compraIniciada.cliente || null,
         items: compra?.items?.length
           ? compra.items
-          : cartItems.map((item) => ({
-              nombre: item.nombre || item.name || 'Producto',
-              cantidad: getQuantity(item),
-              precioUnitario: getUnitPriceWithIva(item),
-              subtotal: getUnitPriceWithIva(item) * getQuantity(item),
-            })),
+          : compraIniciada.items?.length
+            ? compraIniciada.items
+            : cartItems.map((item) => ({
+                nombre: item.nombre || item.name || 'Producto',
+                cantidad: getQuantity(item),
+                precioUnitario: getUnitPriceWithIva(item),
+                subtotal: getUnitPriceWithIva(item) * getQuantity(item),
+              })),
       });
       setPaid(true);
     } catch (error) {
@@ -555,18 +689,41 @@ const Checkout = () => {
               </div>
             </div>
 
-            {sinpe ? (
+            {sinpe || referenciaSinpe || iniciandoCompra ? (
               <div className="checkout-sinpe">
-                <p className="checkout-sinpe__label">{tSinpe}</p>
-                <p className="checkout-sinpe__hint">{tSinpeHint}</p>
-                <div className="checkout-sinpe__row">
-                  <strong className="checkout-sinpe__numero">{sinpe}</strong>
-                  <button type="button" className="checkout-sinpe__copiar" onClick={copiarSinpe}>
-                    <Copy size={16} strokeWidth={2.2} aria-hidden="true" />
-                    <span>{sinpeCopiado ? tSinpeCopiado : tCopiarSinpe}</span>
-                  </button>
-                </div>
-                <p className="checkout-sinpe__detalle">{tSinpeDetalle}</p>
+                {sinpe ? (
+                  <>
+                    <p className="checkout-sinpe__label">{tSinpe}</p>
+                    <p className="checkout-sinpe__hint">{tSinpeHint}</p>
+                    <div className="checkout-sinpe__row">
+                      <strong className="checkout-sinpe__numero">{sinpe}</strong>
+                      <button type="button" className="checkout-sinpe__copiar" onClick={copiarSinpe}>
+                        <Copy size={16} strokeWidth={2.2} aria-hidden="true" />
+                        <span>{sinpeCopiado ? tSinpeCopiado : tCopiarSinpe}</span>
+                      </button>
+                    </div>
+                  </>
+                ) : null}
+                {iniciandoCompra && !referenciaSinpe ? (
+                  <p className="checkout-sinpe__hint">{tGenerandoDetalle}</p>
+                ) : null}
+                {referenciaSinpe ? (
+                  <>
+                    <p className="checkout-sinpe__label">{tDetalleSinpe}</p>
+                    <p className="checkout-sinpe__hint">{tDetalleSinpeHint}</p>
+                    <div className="checkout-sinpe__row">
+                      <strong className="checkout-sinpe__numero">{referenciaSinpe}</strong>
+                      <button
+                        type="button"
+                        className="checkout-sinpe__copiar"
+                        onClick={copiarDetalleSinpe}
+                      >
+                        <Copy size={16} strokeWidth={2.2} aria-hidden="true" />
+                        <span>{detalleCopiado ? tDetalleCopiado : tCopiarDetalle}</span>
+                      </button>
+                    </div>
+                  </>
+                ) : null}
               </div>
             ) : null}
 
@@ -631,7 +788,12 @@ const Checkout = () => {
             </div>
 
             <div className="checkout-page__actions">
-              <button className="checkout-page__pay" type="button" onClick={handlePay} disabled={processingPayment}>
+              <button
+                className="checkout-page__pay"
+                type="button"
+                onClick={handlePay}
+                disabled={processingPayment || iniciandoCompra || !referenciaSinpe}
+              >
                 <Store size={18} strokeWidth={2.3} aria-hidden="true" className="checkout-page__button-icon" />
                 <span className="checkout-page__pay-label">
                   {processingPayment ? tProcesando : tFinalizar}
