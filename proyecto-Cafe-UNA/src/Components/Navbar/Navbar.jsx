@@ -304,10 +304,6 @@ const Navbar = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const [avatarRoto, setAvatarRoto] = useState(false);
-
-    useEffect(() => {
-      setAvatarRoto(false);
-    }, [user?.fotoPerfilUrl, user?.FotoPerfilUrl]);
     const [showCartDropdown, setShowCartDropdown] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showAboutMenu, setShowAboutMenu] = useState(false);
@@ -332,6 +328,11 @@ const Navbar = () => {
     const [logoClaroUrl, setLogoClaroUrl] = useState(cachedLogos.logoClaroUrl);
     const [facebookUrl, setFacebookUrl] = useState(cachedSocial.facebookUrl);
     const [instagramUrl, setInstagramUrl] = useState(cachedSocial.instagramUrl);
+
+    useEffect(() => {
+      setAvatarRoto(false);
+    }, [user?.fotoPerfilUrl, user?.FotoPerfilUrl]);
+
     const cartContainerRef = useRef(null);
     const notificationsRef = useRef(null);
     const userMenuRef = useRef(null);
