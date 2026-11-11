@@ -1,6 +1,6 @@
 import { getTokenExpirationMs } from "../lib/jwt";
 import { textoUi } from "../lib/textoVisible";
-import { limpiarEstadoCompraSesion } from "./authService";
+import { limpiarEstadoCompraSesion } from "./compraSesionStorage";
 
 const USER_STORAGE_KEY = 'user';
 const SESSION_DURATION_MS = 60 * 60 * 1000;

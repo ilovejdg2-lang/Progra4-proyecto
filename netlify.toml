@@ -19,11 +19,28 @@
   status = 301
   force = true
 
+# Chunks Vite faltantes: 404 real (no SPA → HTML con MIME incorrecto + cache immutable)
+[[redirects]]
+  from = "/assets/*"
+  to = "/404.html"
+  status = 404
+
 # SPA fallback (TanStack Router)
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/404.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    Content-Type = "text/html; charset=UTF-8"
 
 [[headers]]
   for = "/*"

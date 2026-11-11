@@ -11,6 +11,37 @@ import { obtenerNavbar } from './services/informacionService'
 import { guardarIdioma, obtenerIdioma } from './lib/idioma'
 import { iniciarSincronizacionCarrito } from './lib/cartSync'
 
+// Tras un deploy, chunks viejos 404: recargar una vez para tomar el index nuevo.
+const CHUNK_RELOAD_KEY = "cafe-una-chunk-reload";
+function recargarSiChunkObsoleto() {
+  try {
+    if (sessionStorage.getItem(CHUNK_RELOAD_KEY) === "1") return;
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, "1");
+  } catch {
+    /* sessionStorage no disponible */
+  }
+  window.location.reload();
+}
+window.addEventListener("vite:preloadError", (event) => {
+  event.preventDefault();
+  recargarSiChunkObsoleto();
+});
+window.addEventListener("unhandledrejection", (event) => {
+  const msg = String(event?.reason?.message || event?.reason || "");
+  if (!/Failed to fetch dynamically imported module|Loading chunk|Importing a module script failed/i.test(msg)) {
+    return;
+  }
+  event.preventDefault();
+  recargarSiChunkObsoleto();
+});
+window.addEventListener("load", () => {
+  try {
+    sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+  } catch {
+    /* ignore */
+  }
+});
+
 // Calienta el logo del navbar para loaders (caché localStorage).
 void obtenerNavbar().catch(() => {})
 
