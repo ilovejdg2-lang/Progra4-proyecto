@@ -19,11 +19,30 @@
   status = 301
   force = true
 
+# Chunks Vite faltantes (deploy nuevo / pestaña vieja): 404 real, NO index.html.
+# Sin esto, el SPA fallback sirve HTML con MIME text/html y Cache-Control immutable
+# de /assets/*, y el navegador queda roto hasta limpia de caché.
+[[redirects]]
+  from = "/assets/*"
+  to = "/404.html"
+  status = 404
+
 # TanStack Router — SPA fallback (debe ir al final; estáticos como /robots.txt y /sitemap.xml se sirven antes)
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/404.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    Content-Type = "text/html; charset=UTF-8"
 
 [[headers]]
   for = "/*"
