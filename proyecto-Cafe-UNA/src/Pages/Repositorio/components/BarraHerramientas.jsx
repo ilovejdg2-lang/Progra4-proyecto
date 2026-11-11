@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { ST } from "../../../Components/T/ST";
+import { UiSelect } from "../../../Components/ui/Select";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { ORDENES } from "../repositorioLogic";
 
@@ -73,19 +74,14 @@ function SelectorMovil({ etiqueta, valor, onCambiar, opciones }) {
   const tEtiqueta = useTraducir(etiqueta);
   return (
     <div className="repo-pill-select">
-      <select
-        className="repo-pill-select__control"
-        aria-label={tEtiqueta}
+      <UiSelect
+        ariaLabel={tEtiqueta}
         value={valor}
-        onChange={(e) => onCambiar(e.target.value)}
-      >
-        {opciones.map((op) => (
-          <option key={op.valor} value={op.valor}>
-            {op.etiqueta}
-          </option>
-        ))}
-      </select>
-      <ChevronDown size={16} className="repo-pill-select__chevron" aria-hidden="true" />
+        onChange={onCambiar}
+        options={opciones.map((op) => ({ value: op.valor, label: op.etiqueta }))}
+        traducirOpciones={false}
+        className="repo-pill-select__ui"
+      />
     </div>
   );
 }

@@ -410,18 +410,18 @@ body.checkout-route-active {
   background: #2c211c;
 }
 
-.checkout-pos__photo-btn {
+button.checkout-pos__photo-btn {
   display: block;
   width: 8.75rem;
-  height: 100%;
+  height: 6.55rem;
   min-height: 6.55rem;
   padding: 0;
   border: 0;
-  border-radius: 12px;
-  background: transparent;
+  border-radius: 12px !important;
+  background: #f3ece4;
   cursor: zoom-in;
   flex: none;
-  align-self: stretch;
+  align-self: center;
   overflow: hidden;
 }
 
@@ -483,6 +483,7 @@ body.checkout-route-active {
 
 .checkout-pos__address span {
   min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .checkout-pos__maps {
@@ -661,8 +662,9 @@ body.checkout-route-active {
   overflow: hidden;
 }
 
-.checkout-pos-detail__hero-btn {
-  border-radius: 14px;
+button.checkout-pos-detail__hero-btn,
+button.checkout-pos-detail__thumb-btn {
+  border-radius: 14px !important;
 }
 
 .checkout-pos-detail__thumb-btn {
@@ -734,6 +736,7 @@ body.checkout-route-active {
   color: #6f625a;
   font-size: 0.8rem;
   line-height: 1.45;
+  overflow-wrap: break-word;
 }
 
 .checkout-pos-detail__value a {
@@ -1167,18 +1170,28 @@ body.checkout-route-active {
 
 @container (max-width: 520px) {
   .checkout-pos__card {
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 0.7rem;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    row-gap: 0.65rem;
     min-height: 0;
     padding: 0.8rem;
   }
 
-  .checkout-pos__photo-btn,
+  .checkout-pos-detail__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .checkout-pos-detail__hero {
+    height: 10rem;
+  }
+
+  button.checkout-pos__photo-btn,
   .checkout-pos__photo,
   .checkout-pos__photo--empty {
     width: 6.5rem;
     height: 4.5rem;
     min-height: 0;
+    border-radius: 12px !important;
   }
 
   .checkout-pos__card-body {
@@ -1186,6 +1199,7 @@ body.checkout-route-active {
   }
 
   .checkout-pos__aside {
+    grid-column: 1 / -1;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
@@ -1200,8 +1214,19 @@ body.checkout-route-active {
   }
 
   .checkout-pos__units {
-    width: auto;
-    max-width: 9rem;
+    width: max-content;
+    max-width: 100%;
+    grid-template-columns: 15px max-content;
+  }
+}
+
+@container (max-width: 280px) {
+  .checkout-pos__card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .checkout-pos__aside {
+    grid-column: auto;
   }
 }
 

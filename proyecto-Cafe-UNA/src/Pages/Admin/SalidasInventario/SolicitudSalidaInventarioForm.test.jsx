@@ -1,12 +1,27 @@
-import { render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
+vi.mock("../../../Components/ui/SelectFiltro", () => ({
+  SelectFiltro: ({ children, options, ...props }) => {
+    delete props.traducirOpciones;
+    return (
+      <select {...props}>
+        {options
+          ? options.map((opcion) => (
+              <option key={String(opcion.value)} value={opcion.value}>
+                {opcion.label}
+              </option>
+            ))
+          : children}
+      </select>
+    );
+  },
+}));
 
 import { SolicitudSalidaInventarioForm } from "./SolicitudSalidaInventarioForm";
 
 describe("SolicitudSalidaInventarioForm", () => {
   it("submits a dated multi-item donation request with recipient and responsible person", async () => {
-    const user = userEvent.setup();
     const onSubmit = vi.fn();
     render(
       <SolicitudSalidaInventarioForm
@@ -18,21 +33,20 @@ describe("SolicitudSalidaInventarioForm", () => {
       />,
     );
 
-    await user.selectOptions(screen.getByRole("combobox", { name: "Tipo de salida" }), "donacion");
-    await user.type(screen.getByRole("textbox", { name: "Destinatario" }), "Fundación Café UNA");
-    await user.type(screen.getByRole("textbox", { name: "Responsable" }), "Ana Solís");
-    await user.clear(screen.getByLabelText("Fecha de salida"));
-    await user.type(screen.getByLabelText("Fecha de salida"), "2026-10-27");
+    fireEvent.change(screen.getByRole("combobox", { name: "Tipo de salida" }), { target: { value: "donacion" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Destinatario" }), { target: { value: "Fundación Café UNA" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Responsable" }), { target: { value: "Ana Solís" } });
+    fireEvent.change(screen.getByLabelText("Fecha de salida"), { target: { value: "2026-10-27" } });
 
     const firstItem = screen.getByRole("group", { name: "Artículo 1" });
-    await user.selectOptions(within(firstItem).getByRole("combobox", { name: "Producto" }), "101");
-    await user.type(within(firstItem).getByRole("spinbutton", { name: "Cantidad" }), "2");
-    await user.click(screen.getByRole("button", { name: "Agregar artículo" }));
+    fireEvent.change(within(firstItem).getByRole("combobox", { name: "Producto" }), { target: { value: "101" } });
+    fireEvent.change(within(firstItem).getByRole("spinbutton", { name: "Cantidad" }), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Agregar artículo" }));
 
     const secondItem = screen.getByRole("group", { name: "Artículo 2" });
-    await user.selectOptions(within(secondItem).getByRole("combobox", { name: "Producto" }), "102");
-    await user.type(within(secondItem).getByRole("spinbutton", { name: "Cantidad" }), "1");
-    await user.click(screen.getByRole("button", { name: "Enviar solicitud" }));
+    fireEvent.change(within(secondItem).getByRole("combobox", { name: "Producto" }), { target: { value: "102" } });
+    fireEvent.change(within(secondItem).getByRole("spinbutton", { name: "Cantidad" }), { target: { value: "1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar solicitud" }));
 
     expect(onSubmit).toHaveBeenCalledWith({
       tipo: "donacion",
@@ -46,15 +60,14 @@ describe("SolicitudSalidaInventarioForm", () => {
     });
   });
 
-  it("keeps the remaining row's input node and typed value when another row is removed", async () => {
-    const user = userEvent.setup();
+  it("keeps the remaining row's input node and typed value when another row is removed", () => {
     render(<SolicitudSalidaInventarioForm productos={[{ id: "101", nombre: "Café de altura", stock: 8 }]} />);
-    await user.click(screen.getByRole("button", { name: "Agregar artículo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Agregar artículo" }));
     const [first, second] = screen.getAllByRole("spinbutton", { name: "Cantidad" });
-    await user.type(first, "3");
-    await user.type(second, "7");
+    fireEvent.change(first, { target: { value: "3" } });
+    fireEvent.change(second, { target: { value: "7" } });
 
-    await user.click(within(screen.getByRole("group", { name: "Artículo 1" })).getByRole("button", { name: "Quitar" }));
+    fireEvent.click(within(screen.getByRole("group", { name: "Artículo 1" })).getByRole("button", { name: "Quitar" }));
 
     const [remaining] = screen.getAllByRole("spinbutton", { name: "Cantidad" });
     expect(screen.getAllByRole("spinbutton", { name: "Cantidad" })).toHaveLength(1);

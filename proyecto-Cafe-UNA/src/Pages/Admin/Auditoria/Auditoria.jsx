@@ -253,7 +253,9 @@ function AdminAuditoria() {
       desde: filtrosApi.desde,
       hasta: filtrosApi.hasta,
     });
-    return Array.isArray(data) ? data.map(mapRegistro) : [];
+    return Array.isArray(data)
+      ? data.map(mapRegistro).filter((item) => item.idUsuario != null)
+      : [];
   };
 
   useEffect(() => {

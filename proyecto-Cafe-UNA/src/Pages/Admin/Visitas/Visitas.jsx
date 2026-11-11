@@ -35,7 +35,10 @@ import { AdminModal } from "../../../Components/Admin/ui/AdminModal";
 import { ST } from "../../../Components/T/ST";
 import { NumericInput } from "../../../Components/NumericInput/NumericInput";
 import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
-import { tabDeSearch } from "../../../Components/Admin/adminBreadcrumbItems";
+import {
+  RUTA_VISITAS_FECHAS,
+  tabAdminDesdeRuta,
+} from "../../../Components/Admin/adminBreadcrumbItems";
 import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
 import { filtrarEnteros } from "../../../lib/numericInput";
 import { useAdminListaFiltros } from "../../../hooks/useAdminListaFiltros";
@@ -457,6 +460,7 @@ function ModalEditarVisita({ solicitud, onGuardar, onCerrar }) {
 
 export default function AdminVisitas() {
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const search = useRouterState({ select: (state) => state.location.search });
   const user = getActiveSessionUser();
   const roles = rolesDeUsuario(user);
@@ -464,13 +468,20 @@ export default function AdminVisitas() {
   const esSuperAdmin = roles.includes("SuperAdmin") || tienePermiso(roles, "inactivar_visitas") || canManage;
 
   const [tabActiva, setTabActiva] = useState(() =>
-    tabDeSearch(search) === "fechas" ? "fechas" : "solicitudes",
+    tabAdminDesdeRuta(pathname, search) === "fechas" ? "fechas" : "solicitudes",
   );
 
   useEffect(() => {
-    const next = tabDeSearch(search) === "fechas" ? "fechas" : "solicitudes";
+    if (tabAdminDesdeRuta(pathname, search) !== "fechas") return;
+    if (String(pathname || "").replace(/\/+$/, "") === RUTA_VISITAS_FECHAS) return;
+    navigate({ to: RUTA_VISITAS_FECHAS, replace: true });
+  }, [navigate, pathname, search]);
+
+  useEffect(() => {
+    const next =
+      tabAdminDesdeRuta(pathname, search) === "fechas" ? "fechas" : "solicitudes";
     setTabActiva((prev) => (prev === next ? prev : next));
-  }, [search]);
+  }, [pathname, search]);
 
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -535,8 +546,7 @@ export default function AdminVisitas() {
   const cambiarTab = (nuevaTab) => {
     setTabActiva(nuevaTab);
     navigate({
-      to: "/admin/visitas",
-      search: nuevaTab === "fechas" ? { tab: "fechas" } : {},
+      to: nuevaTab === "fechas" ? RUTA_VISITAS_FECHAS : "/admin/visitas",
       replace: true,
     });
   };

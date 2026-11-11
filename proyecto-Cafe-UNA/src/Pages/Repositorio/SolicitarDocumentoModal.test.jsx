@@ -14,6 +14,20 @@ vi.mock("../../services/documentosService", () => ({
   solicitarAccesoDocumento: (...args) => solicitarAccesoDocumento(...args),
 }));
 vi.mock("../../services/sessionService", () => ({ getActiveSessionUser: () => null }));
+vi.mock("../../Components/ui/SelectFiltro", () => ({
+  SelectFiltro: ({ children, options, ...props }) => {
+    delete props.traducirOpciones;
+    return (
+      <select {...props}>
+        {options
+          ? options.map((opcion) => (
+              <option key={String(opcion.value)} value={opcion.value}>{opcion.label}</option>
+            ))
+          : children}
+      </select>
+    );
+  },
+}));
 
 import { SolicitarDocumentoModal } from "./SolicitarDocumentoModal";
 

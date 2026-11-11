@@ -66,6 +66,7 @@ export function normalizarVentaPresencial(raw) {
       return valor == null || valor === "" ? null : Number(valor);
     })(),
     correoEnviado: Boolean(firstDefined(raw, ["correoEnviado", "CorreoEnviado"])),
+    correoMensaje: String(firstDefined(raw, ["correoMensaje", "CorreoMensaje"]) || ""),
     items: items.length > 0 ? items : (raw.productoId ? [{
       productoId: String(raw.productoId),
       productoNombre: String(raw.productoNombre || ""),

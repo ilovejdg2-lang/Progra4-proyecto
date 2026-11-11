@@ -10,7 +10,6 @@ import { PerfilClienteLayout } from "../../Components/Perfil/PerfilClienteLayout
 import { PublicPageGate } from "../../Components/PublicPageGate/PublicPageGate";
 import { ST } from "../../Components/T/ST";
 import { usePublicPageLoadingGate } from "../../hooks/usePublicPageLoadingGate";
-import { HorarioCompra } from "../ProductDetail/HorarioCompra";
 import { useTraducir } from "../../hooks/useTraducir";
 import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
 import { t } from "../../lib/t";
@@ -19,6 +18,7 @@ import { obtenerCompraPorId, obtenerMisCompras } from "../../services/comprasSer
 import { obtenerFooter } from "../../services/informacionService";
 import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
 
+import { HorarioRetiroPedido } from "./HorarioRetiroPedido";
 import { RUTA_COMPRAS_ADMIN, RUTA_COMPRAS_CLIENTE } from "./rutasCompras";
 
 const FORMATO_CRC = new Intl.NumberFormat("es-CR", {
@@ -110,7 +110,14 @@ function mensajeRastreo(estadoRaw) {
 }
 
 /** Stepper visual solo en el detalle: Procesando → Enviado → Entregado (X si Rechazado/Devolución). */
-function RastreoPedido({ estado, correoContacto = "", telefonoContacto = "" }) {
+function RastreoPedido({
+  estado,
+  correoContacto = "",
+  telefonoContacto = "",
+  ubicacionId = null,
+  ubicacionNombre = "",
+  ubicacionHorario = "",
+}) {
   const actual = String(estado || "Pendiente").trim();
   const rechazado = actual === "Rechazado";
   const devolucion = actual === "Devolucion";
@@ -216,6 +223,13 @@ function RastreoPedido({ estado, correoContacto = "", telefonoContacto = "" }) {
           ) : null}
           .
         </p>
+      ) : null}
+      {actual === "Aceptado" ? (
+        <HorarioRetiroPedido
+          ubicacionId={ubicacionId}
+          ubicacionNombre={ubicacionNombre}
+          horario={ubicacionHorario}
+        />
       ) : null}
     </div>
   );
@@ -668,14 +682,10 @@ export function HistorialComprasContent({ variant = "standalone" }) {
                 estado={detalle.estado}
                 correoContacto={correoContacto}
                 telefonoContacto={telefonoContacto}
+                ubicacionId={detalle.ubicacionId}
+                ubicacionNombre={detalle.ubicacionNombre}
+                ubicacionHorario={detalle.ubicacionHorario}
               />
-              {detalle.estado === "Aceptado" && detalle.ubicacionId ? (
-                <HorarioCompra
-                  ubicacionId={detalle.ubicacionId}
-                  titulo="Fechas sin retiro de pedidos"
-                  variante="tarjeta"
-                />
-              ) : null}
               <ul className="mt-4 text-[var(--text-body)]">
                 {(detalle.items || []).map((item, index) => (
                   <li key={`${item.nombre}-${index}`} className="border-b border-slate-100 py-2">

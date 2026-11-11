@@ -10,11 +10,27 @@ const router = vi.hoisted(() => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ to, activeProps, children, ...props }) => (
-    <a href={to} {...props} {...activeProps}>
-      {children}
-    </a>
-  ),
+  Link: ({ to, search, activeOptions, activeProps, children, ...props }) => {
+    const query =
+      search && typeof search === "object" && Object.keys(search).length > 0
+        ? `?${new URLSearchParams(
+            Object.entries(search)
+              .filter(([, value]) => value != null && value !== "")
+              .map(([key, value]) => [key, String(value)]),
+          ).toString()}`
+        : "";
+    return (
+      <a
+        href={`${to}${query}`}
+        data-active-exact={activeOptions?.exact ? "true" : "false"}
+        data-active-search={JSON.stringify(search ?? null)}
+        {...props}
+        {...activeProps}
+      >
+        {children}
+      </a>
+    );
+  },
   useNavigate: () => vi.fn(),
   useRouterState: router.useRouterState,
 }));
@@ -87,7 +103,12 @@ describe("AppSidebar", () => {
         removeItem: vi.fn(),
       },
     });
-    router.useRouterState.mockReturnValue("/admin/puntos-venta");
+    router.useRouterState.mockImplementation(({ select } = {}) => {
+      const state = {
+        location: { pathname: "/admin/puntos-venta", search: {} },
+      };
+      return typeof select === "function" ? select(state) : state;
+    });
     permissions.rolesDeUsuario.mockReturnValue(["SuperAdmin"]);
     permissions.tienePermiso.mockReturnValue(true);
   });
@@ -136,16 +157,43 @@ describe("AppSidebar", () => {
       "/admin/donaciones/solicitudes",
     );
     expect(screen.getAllByRole("link", { name: /^Fechas disponibles$/i }).some((el) =>
-      el.getAttribute("href")?.includes("/admin/donaciones/solicitudes"),
+      el.getAttribute("href") === "/admin/donaciones/fechas-recepcion",
     )).toBe(true);
     expect(screen.getAllByRole("link", { name: /^Mi perfil$/i })[0]).toHaveAttribute(
       "href",
       "/admin/perfil",
     );
-    expect(screen.getAllByRole("link", { name: /^Mis compras$/i })[0]).toHaveAttribute(
-      "href",
-      "/admin/mis-compras",
+  });
+
+  it("uses exact path routes for fechas and parent/child inventory links", () => {
+    render(
+      <SidebarProvider>
+        <AppSidebar />
+      </SidebarProvider>,
     );
+
+    const solicitudes = screen.getAllByRole("link", {
+      name: /Solicitudes de donación/i,
+    })[0];
+    const fechasDonacion = screen
+      .getAllByRole("link", { name: /^Fechas disponibles$/i })
+      .find((el) => el.getAttribute("href") === "/admin/donaciones/fechas-recepcion");
+    const fechasVoluntariado = screen
+      .getAllByRole("link", { name: /^Fechas disponibles$/i })
+      .find((el) => el.getAttribute("href") === "/admin/voluntariado/fechas");
+    const fechasVisitas = screen
+      .getAllByRole("link", { name: /^Fechas disponibles$/i })
+      .find((el) => el.getAttribute("href") === "/admin/visitas/fechas");
+    const puntosVenta = screen.getAllByRole("link", { name: /Puntos de venta/i })[0];
+    const diasSinRetiro = screen.getAllByRole("link", { name: /Días sin retiro/i })[0];
+
+    expect(solicitudes).toHaveAttribute("href", "/admin/donaciones/solicitudes");
+    expect(solicitudes).toHaveAttribute("data-active-exact", "true");
+    expect(fechasDonacion).toHaveAttribute("data-active-exact", "true");
+    expect(fechasVoluntariado).toBeTruthy();
+    expect(fechasVisitas).toBeTruthy();
+    expect(puntosVenta).toHaveAttribute("data-active-exact", "true");
+    expect(diasSinRetiro).toHaveAttribute("data-active-exact", "true");
   });
 
   it("does not expose inventory navigation without permission", () => {

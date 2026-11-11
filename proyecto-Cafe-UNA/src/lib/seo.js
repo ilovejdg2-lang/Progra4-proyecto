@@ -217,12 +217,17 @@ function ensureMeta(attr, key, content) {
   el.setAttribute("content", content);
 }
 
-function ensureLink(rel, href) {
+function ensureLink(rel, href, attrs = {}) {
   if (typeof document === "undefined") return;
-  let el = document.head.querySelector(`link[rel="${rel}"]`);
+  const hreflang = attrs.hreflang ? String(attrs.hreflang) : "";
+  const selector = hreflang
+    ? `link[rel="${rel}"][hreflang="${hreflang}"]`
+    : `link[rel="${rel}"]:not([hreflang])`;
+  let el = document.head.querySelector(selector);
   if (!el) {
     el = document.createElement("link");
     el.setAttribute("rel", rel);
+    if (hreflang) el.setAttribute("hreflang", hreflang);
     document.head.appendChild(el);
   }
   el.setAttribute("href", href);
@@ -249,9 +254,15 @@ export function buildOrganizationJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": `${SITE_ORIGIN}/#organization`,
     name: SITE_NAME,
+    alternateName: ["Cafe UNA", "Café UNA Costa Rica"],
     url: SITE_ORIGIN,
-    logo: DEFAULT_OG_IMAGE,
+    logo: {
+      "@type": "ImageObject",
+      url: DEFAULT_OG_IMAGE,
+    },
+    description: HOME_DESCRIPTION,
     areaServed: {
       "@type": "Country",
       name: "Costa Rica",
@@ -263,8 +274,27 @@ export function buildWebSiteJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": `${SITE_ORIGIN}/#website`,
     name: SITE_NAME,
+    alternateName: "Cafe UNA",
     url: SITE_ORIGIN,
+    inLanguage: "es-CR",
+    publisher: { "@id": `${SITE_ORIGIN}/#organization` },
+    description: HOME_DESCRIPTION,
+  };
+}
+
+export function buildWebPageJsonLd(seo) {
+  if (!seo?.canonical) return null;
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${seo.canonical}#webpage`,
+    url: seo.canonical,
+    name: seo.title,
+    description: seo.description,
+    isPartOf: { "@id": `${SITE_ORIGIN}/#website` },
+    about: { "@id": `${SITE_ORIGIN}/#organization` },
     inLanguage: "es-CR",
   };
 }
@@ -308,9 +338,14 @@ export function applyDocumentSeo(seo, { jsonLd } = {}) {
 
   document.title = seo.title;
   ensureMeta("name", "description", seo.description);
-  ensureMeta("name", "robots", seo.robots);
-  ensureMeta("name", "googlebot", seo.robots);
+  const robotsContent = /noindex/i.test(seo.robots)
+    ? seo.robots
+    : `${seo.robots}, max-image-preview:large, max-snippet:-1, max-video-preview:-1`;
+  ensureMeta("name", "robots", robotsContent);
+  ensureMeta("name", "googlebot", robotsContent);
   ensureLink("canonical", seo.canonical);
+  ensureLink("alternate", seo.canonical, { hreflang: "es-CR" });
+  ensureLink("alternate", seo.canonical, { hreflang: "x-default" });
 
   ensureMeta("property", "og:type", seo.ogType || "website");
   ensureMeta("property", "og:site_name", seo.siteName || SITE_NAME);
@@ -329,9 +364,11 @@ export function applyDocumentSeo(seo, { jsonLd } = {}) {
   else if (seo.canonicalPath === "/") {
     ensureJsonLd("organization", buildOrganizationJsonLd());
     ensureJsonLd("website", buildWebSiteJsonLd());
+    ensureJsonLd("webpage", buildWebPageJsonLd(seo));
   } else {
     ensureJsonLd("organization", null);
     ensureJsonLd("website", null);
+    ensureJsonLd("webpage", null);
   }
 
   if (jsonLd?.product) ensureJsonLd("product", jsonLd.product);

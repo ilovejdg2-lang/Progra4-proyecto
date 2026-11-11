@@ -52,7 +52,10 @@ import {
 } from "../../../lib/exportarDonacionesPdf";
 import { ST } from "../../../Components/T/ST";
 import { ImageLightbox } from "../../../Components/ImageLightbox/ImageLightbox";
-import { tabDeSearch } from "../../../Components/Admin/adminBreadcrumbItems";
+import {
+  RUTA_DONACIONES_FECHAS,
+  tabAdminDesdeRuta,
+} from "../../../Components/Admin/adminBreadcrumbItems";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { t } from "../../../lib/t";
 import { GestionFechasDonaciones } from "./FechasRecepcion";
@@ -495,6 +498,7 @@ function ModalDetalle({ solicitud, puedeResolver, onResolver, onDescargarFicha, 
 
 export default function AdminSolicitudesDonacion() {
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const search = useRouterState({ select: (state) => state.location.search });
   const actor = (() => {
     try {
@@ -514,7 +518,7 @@ export default function AdminSolicitudesDonacion() {
   const esSuperAdmin = tienePermiso(roles, "administrar_roles_permisos");
 
   const [tabActiva, setTabActiva] = useState(() =>
-    tabDeSearch(search) === "fechas" ? "fechas" : "solicitudes",
+    tabAdminDesdeRuta(pathname, search) === "fechas" ? "fechas" : "solicitudes",
   );
   const [modalEstados, setModalEstados] = useState(false);
   const [items, setItems] = useState([]);
@@ -525,15 +529,24 @@ export default function AdminSolicitudesDonacion() {
   const [recargaTick, setRecargaTick] = useState(0);
 
   useEffect(() => {
-    const next = tabDeSearch(search) === "fechas" ? "fechas" : "solicitudes";
+    if (tabAdminDesdeRuta(pathname, search) !== "fechas") return;
+    if (String(pathname || "").replace(/\/+$/, "") === RUTA_DONACIONES_FECHAS) return;
+    navigate({ to: RUTA_DONACIONES_FECHAS, replace: true });
+  }, [navigate, pathname, search]);
+
+  useEffect(() => {
+    const next =
+      tabAdminDesdeRuta(pathname, search) === "fechas" ? "fechas" : "solicitudes";
     setTabActiva((prev) => (prev === next ? prev : next));
-  }, [search]);
+  }, [pathname, search]);
 
   const cambiarTab = (nuevaTab) => {
     setTabActiva(nuevaTab);
     navigate({
-      to: "/admin/donaciones/solicitudes",
-      search: nuevaTab === "fechas" ? { tab: "fechas" } : {},
+      to:
+        nuevaTab === "fechas"
+          ? RUTA_DONACIONES_FECHAS
+          : "/admin/donaciones/solicitudes",
       replace: true,
     });
   };

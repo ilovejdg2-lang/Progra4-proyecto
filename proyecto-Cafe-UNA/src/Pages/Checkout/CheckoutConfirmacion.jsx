@@ -68,12 +68,9 @@ export function CheckoutConfirmacion({
   const tSeguir = useTraducir("Seguir comprando");
   const tSinpe = useTraducir("SINPE Móvil");
   const tSinpeHint = useTraducir("Pagá a este número.");
-  const tDetalleSinpe = useTraducir("Detalle para el SINPE Móvil");
-  const tDetalleSinpeHint = useTraducir(
-    "En el detalle del SINPE Móvil poné exactamente este código para identificar tu compra:",
-  );
+  const tDetalleSinpe = useTraducir("Detalle");
   const tCopiarNumero = useTraducir("Copiar número");
-  const tCopiarDetalle = useTraducir("Copiar detalle");
+  const tCopiarDetalle = useTraducir("Copiar");
   const tCopiado = useTraducir("Copiado");
 
   const vista = presentarCompra(compra);
@@ -129,7 +126,6 @@ export function CheckoutConfirmacion({
             {referenciaSinpe ? (
               <>
                 <p className="checkout-sinpe__label">{tDetalleSinpe}</p>
-                <p className="checkout-sinpe__hint">{tDetalleSinpeHint}</p>
                 <div className="checkout-sinpe__row">
                   <strong className="checkout-sinpe__numero">{referenciaSinpe}</strong>
                   <button
