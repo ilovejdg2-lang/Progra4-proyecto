@@ -194,7 +194,7 @@ export function ActivoFormModal({ open, inicial, onClose, onSave, isSaving, erro
   };
 
   const fieldClass =
-    "min-h-[var(--control-height)] rounded-full border border-slate-200 bg-slate-50 px-3 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white";
+    "box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full border border-slate-200 bg-slate-50 px-3 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white";
 
   return (
     <AdminModal open onClose={onClose} maxWidth="max-w-xl" labelledBy="activo-fijo-modal-title">

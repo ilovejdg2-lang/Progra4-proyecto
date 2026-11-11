@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ModalDialog } from "../../Components/ui/ModalDialog";
 import { useNavigate } from "@tanstack/react-router";
-import { format, isBefore, startOfDay } from "date-fns";
+import { format } from "date-fns";
 import { enUS, es } from "date-fns/locale";
 import {
   Bug,
@@ -50,6 +50,7 @@ import {
   TIPOS_IDENTIFICACION,
   validarIdentificacion,
 } from "../../lib/identificacionPersona";
+import { obtenerHoyIso, ZONA_HORARIA_PREDETERMINADA } from "../../lib/zonaHoraria";
 import { obtenerOpcionesPaises } from "../../lib/paises";
 import { esCorreoValido, limpiarCorreo, MENSAJE_CORREO_INVALIDO } from "../../lib/correo";
 import { NumericInput } from "../../Components/NumericInput/NumericInput";
@@ -66,8 +67,9 @@ import {
 } from "../../services/visitasService";
 import "./SolicitarVisita.css";
 
-const VISITA_LOGIN_REDIRECT = "/visitas/solicitar";
+const VISITA_LOGIN_REDIRECT = "/visitas";
 const NOMBRE_PDF_INSTRUCTIVO = "instructivo_recomendaciones_visitas_cafe_una.pdf";
+const IMAGEN_INSTRUCTIVO = "/visitas/kit-basico-agronomo.jpg";
 const MENSAJE_FALTAN_CAMPOS = "Completá los campos obligatorios antes de enviar la solicitud.";
 const MENSAJE_REVISAR_CAMPOS = "Revisá los campos marcados antes de enviar la solicitud.";
 
@@ -255,6 +257,20 @@ function RecomendacionesVisita({ urlInstructivoPdf, onVerDetalle }) {
           </section>
         </div>
 
+        <figure className="visita-antes__instructivo">
+          <button type="button" className="visita-antes__instructivo-btn" onClick={onVerDetalle}>
+            <img
+              src={IMAGEN_INSTRUCTIVO}
+              alt="Kit básico de agrónomo: botella de agua, botas, repelente, sombrero, bloqueador solar y cuchilla de bolsa"
+              className="visita-antes__instructivo-img"
+              loading="lazy"
+            />
+          </button>
+          <figcaption className="visita-antes__instructivo-cap">
+            <ST>Instructivo y recomendaciones generales de visita</ST>
+          </figcaption>
+        </figure>
+
         <div className="visita-antes__acciones">
           <a
             href={urlInstructivoPdf}
@@ -296,6 +312,17 @@ function InstructivoDialog({ urlInstructivoPdf, onClose }) {
         </div>
 
         <div className="pub-dialog__body">
+          <figure className="visita-instructivo__figura">
+            <img
+              src={IMAGEN_INSTRUCTIVO}
+              alt="Kit básico de agrónomo: botella de agua, botas, repelente, sombrero, bloqueador solar y cuchilla de bolsa"
+              className="visita-instructivo__imagen"
+            />
+            <figcaption className="visita-instructivo__caption">
+              <ST>Kit básico de agrónomo — Instructivo y recomendaciones generales de visita</ST>
+            </figcaption>
+          </figure>
+
           <div className="visita-instructivo__punto">
             <Footprints size={20} aria-hidden="true" />
             <div>
@@ -382,6 +409,8 @@ export default function SolicitarVisita() {
   const [availabilityError, setAvailabilityError] = useState("");
   const [fechaSeleccionada, setFechaSeleccionada] = useState(null);
   const [recargaDisponibilidad, setRecargaDisponibilidad] = useState(0);
+  const [zonaHoraria] = useState(ZONA_HORARIA_PREDETERMINADA);
+  const hoyIso = useMemo(() => obtenerHoyIso(zonaHoraria), [zonaHoraria]);
 
   const consultaCedulaRef = useRef({ digitos: "", enCurso: false });
   const [consultandoCedula, setConsultandoCedula] = useState(false);
@@ -440,12 +469,11 @@ export default function SolicitarVisita() {
 
   const isDateDisabled = useCallback(
     (date) => {
-      const hoy = startOfDay(new Date());
-      if (isBefore(startOfDay(date), hoy)) return true;
       const iso = format(date, "yyyy-MM-dd");
+      if (iso < hoyIso) return true;
       return !fechasHabilitadasMap.has(iso);
     },
-    [fechasHabilitadasMap],
+    [fechasHabilitadasMap, hoyIso],
   );
 
   const [modalRecomendacionesAbierto, setModalRecomendacionesAbierto] = useState(false);

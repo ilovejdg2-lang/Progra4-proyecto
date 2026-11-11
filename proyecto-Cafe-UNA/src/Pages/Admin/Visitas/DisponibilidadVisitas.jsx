@@ -175,13 +175,13 @@ export function DisponibilidadVisitas() {
           <h2 className="font-bold" id="visita-horario-modal">{editing ? "Editar horario" : "Nuevo horario"}</h2>
         </AdminModalHeader>
         <AdminModalBody>
-          <div className="grid gap-4">
-            <label className="grid gap-1 text-sm font-semibold">Fecha<input aria-label="Fecha" className="min-h-10 rounded-xl border border-slate-300 px-3" type="date" value={form.fecha} onChange={(event) => setForm((current) => ({ ...current, fecha: event.target.value }))} /></label>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm font-semibold">Hora de inicio<input className="min-h-10 rounded-xl border border-slate-300 px-3" type="time" value={form.horaInicio} onChange={(event) => setForm((current) => ({ ...current, horaInicio: event.target.value }))} /></label>
-              <label className="grid gap-1 text-sm font-semibold">Hora de finalización<input className="min-h-10 rounded-xl border border-slate-300 px-3" type="time" value={form.horaFin} onChange={(event) => setForm((current) => ({ ...current, horaFin: event.target.value }))} /></label>
+          <div className="grid min-w-0 gap-4 overflow-x-clip">
+            <label className="grid min-w-0 gap-1 overflow-hidden text-sm font-semibold">Fecha<input aria-label="Fecha" className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-xl border border-slate-300 px-3 text-[length:var(--text-body)]" type="date" value={form.fecha} onChange={(event) => setForm((current) => ({ ...current, fecha: event.target.value }))} /></label>
+            <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="grid min-w-0 gap-1 overflow-hidden text-sm font-semibold">Hora de inicio<input className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-xl border border-slate-300 px-3 text-[length:var(--text-body)]" type="time" value={form.horaInicio} onChange={(event) => setForm((current) => ({ ...current, horaInicio: event.target.value }))} /></label>
+              <label className="grid min-w-0 gap-1 overflow-hidden text-sm font-semibold">Hora de finalización<input className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-xl border border-slate-300 px-3 text-[length:var(--text-body)]" type="time" value={form.horaFin} onChange={(event) => setForm((current) => ({ ...current, horaFin: event.target.value }))} /></label>
             </div>
-            <label className="grid gap-1 text-sm font-semibold">Indicación para visitantes<textarea className="min-h-24 rounded-xl border border-slate-300 px-3 py-2" maxLength={500} value={form.nota} onChange={(event) => setForm((current) => ({ ...current, nota: event.target.value }))} /></label>
+            <label className="grid min-w-0 gap-1 overflow-hidden text-sm font-semibold">Indicación para visitantes<textarea className="box-border min-h-24 w-full min-w-0 max-w-full rounded-xl border border-slate-300 px-3 py-2 text-[length:var(--text-body)]" maxLength={500} value={form.nota} onChange={(event) => setForm((current) => ({ ...current, nota: event.target.value }))} /></label>
             <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.habilitada} onChange={(event) => setForm((current) => ({ ...current, habilitada: event.target.checked }))} /> Horario habilitado</label>
             {formError ? <p className="text-sm text-rose-700" role="alert">{formError}</p> : null}
           </div>

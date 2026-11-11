@@ -7,7 +7,7 @@ const EMPTY_ARRAY = [];
 
 const claseEtiqueta = "block text-[length:var(--text-body)] font-semibold text-slate-800 dark:text-slate-100";
 const claseCampo =
-  "h-[var(--control-height)] w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
+  "box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-[length:var(--text-body)] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
 const claseAyuda = "text-[length:var(--text-body)] text-slate-500";
 
 const MOTIVOS_CANONICOS = ["Venta", "Traslado", "Ajuste por merma"];
@@ -110,9 +110,9 @@ export function SalidaInventarioForm({
   };
 
   return (
-    <form noValidate onSubmit={handleSubmit} className="space-y-5">
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div className="space-y-2">
+    <form noValidate onSubmit={handleSubmit} className="min-w-0 max-w-full space-y-4 overflow-x-clip sm:space-y-5">
+      <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+        <div className="min-w-0 space-y-2 overflow-hidden">
           <label htmlFor="salida-producto" className={claseEtiqueta}><ST>Producto</ST></label>
           <SelectFiltro
             id="salida-producto"
@@ -134,7 +134,7 @@ export function SalidaInventarioForm({
           ) : null}
         </div>
 
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2 overflow-hidden">
           <label htmlFor="salida-motivo" className={claseEtiqueta}><ST>Motivo de salida</ST></label>
           <SelectFiltro
             id="salida-motivo"
@@ -154,7 +154,7 @@ export function SalidaInventarioForm({
           </SelectFiltro>
         </div>
 
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2 overflow-hidden">
           <label htmlFor="salida-cantidad" className={claseEtiqueta}><ST>Cantidad</ST></label>
           <NumericInput
             id="salida-cantidad"
@@ -171,7 +171,7 @@ export function SalidaInventarioForm({
         </div>
 
         {requiereDestinatario ? (
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2 overflow-hidden">
             <label htmlFor="salida-destinatario" className={claseEtiqueta}><ST>Destinatario</ST></label>
             <input
               id="salida-destinatario"
@@ -187,13 +187,13 @@ export function SalidaInventarioForm({
         ) : null}
       </div>
 
-      {error ? <p className="rounded-2xl bg-red-50 px-4 py-3 text-[length:var(--text-body)] text-red-800 dark:bg-red-950/40 dark:text-red-200" role="alert"><ST>{error}</ST></p> : null}
+      {error ? <p className="break-words rounded-2xl bg-red-50 px-4 py-3 text-[length:var(--text-body)] text-red-800 dark:bg-red-950/40 dark:text-red-200" role="alert"><ST>{error}</ST></p> : null}
 
-      <div className="flex flex-col-reverse gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-end dark:border-slate-700">
+      <div className="flex min-w-0 flex-col-reverse gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-end dark:border-slate-700">
         <button
           type="submit"
           disabled={isSubmitting || productosElegibles.length === 0 || motivosDisponibles.length === 0}
-          className="inline-flex h-[var(--control-height)] items-center justify-center rounded-full px-5 text-[length:var(--text-body)] font-semibold transition focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60 admin-role-primary"
+          className="inline-flex h-[var(--control-height)] w-full items-center justify-center rounded-full px-5 text-[length:var(--text-body)] font-semibold transition focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto admin-role-primary"
         >
           <ST>{isSubmitting ? "Registrando…" : "Registrar salida"}</ST>
         </button>

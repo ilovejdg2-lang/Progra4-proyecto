@@ -152,9 +152,9 @@ export default function AdminDiasSinRetiro() {
             description={<ST>Registrá feriados u otras fechas en las que no se recogerán pedidos. Si no hay fechas, el checkout no muestra este aviso.</ST>}
           />
 
-          <form onSubmit={agregar} className="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 dark:border-slate-700 dark:bg-slate-900">
-          <div className="grid max-w-3xl grid-cols-1 gap-3 lg:grid-cols-2">
-            <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">
+          <form onSubmit={agregar} className="min-w-0 max-w-full overflow-x-clip rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 dark:border-slate-700 dark:bg-slate-900">
+          <div className="grid w-full min-w-0 max-w-3xl grid-cols-1 gap-3 lg:grid-cols-2">
+            <label className="flex min-w-0 max-w-full flex-col gap-1.5 overflow-hidden text-sm font-medium text-slate-800 dark:text-slate-100">
               <ST>Fecha</ST>
               <input
                 type="date"
@@ -162,15 +162,15 @@ export default function AdminDiasSinRetiro() {
                 value={fecha}
                 onChange={(event) => setFecha(event.target.value)}
                 required
-                className="box-border h-11 w-full min-w-0 max-w-full rounded-xl border border-slate-200 bg-white px-3 text-base font-normal dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-xl border border-slate-200 bg-white px-3 text-[length:var(--text-body)] font-normal dark:border-slate-700 dark:bg-slate-950 dark:text-white"
               />
             </label>
-            <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">
+            <label className="flex min-w-0 max-w-full flex-col gap-1.5 overflow-hidden text-sm font-medium text-slate-800 dark:text-slate-100">
               <ST>Aplica a</ST>
               <select
                 value={ubicacionId}
                 onChange={(event) => setUbicacionId(event.target.value)}
-                className="box-border h-11 w-full min-w-0 max-w-full rounded-xl border border-slate-200 bg-white px-3 text-base font-normal dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-xl border border-slate-200 bg-white px-3 text-[length:var(--text-body)] font-normal dark:border-slate-700 dark:bg-slate-950 dark:text-white"
               >
                 <option value=""><ST>Todos los puntos de venta</ST></option>
                 {puntos.map((punto) => (
@@ -178,7 +178,7 @@ export default function AdminDiasSinRetiro() {
                 ))}
               </select>
             </label>
-            <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-800 lg:col-span-2 dark:text-slate-100">
+            <label className="flex min-w-0 max-w-full flex-col gap-1.5 overflow-hidden text-sm font-medium text-slate-800 lg:col-span-2 dark:text-slate-100">
               <ST>Motivo</ST>
               <input
                 type="text"
@@ -186,14 +186,14 @@ export default function AdminDiasSinRetiro() {
                 value={motivo}
                 onChange={(event) => setMotivo(event.target.value)}
                 placeholder="Ej. Feriado nacional"
-                className="box-border h-11 w-full min-w-0 max-w-full rounded-xl border border-slate-200 bg-white px-3 text-base font-normal dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-xl border border-slate-200 bg-white px-3 text-[length:var(--text-body)] font-normal dark:border-slate-700 dark:bg-slate-950 dark:text-white"
               />
             </label>
-            <div className="min-w-0 lg:col-span-2">
+            <div className="min-w-0 max-w-full lg:col-span-2">
               <button
                 type="submit"
                 disabled={guardando}
-                className="h-11 w-full rounded-xl px-4 text-sm font-semibold disabled:opacity-60 lg:w-auto admin-role-primary"
+                className="h-[var(--control-height)] w-full rounded-xl px-4 text-[length:var(--text-body)] font-semibold disabled:opacity-60 lg:w-auto admin-role-primary"
               >
                 <ST>Agregar fecha</ST>
               </button>

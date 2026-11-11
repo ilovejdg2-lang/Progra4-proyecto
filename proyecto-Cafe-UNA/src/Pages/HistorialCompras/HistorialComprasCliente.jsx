@@ -438,11 +438,11 @@ export function HistorialComprasContent({ variant = "standalone" }) {
           })}
         </nav>
 
-        <section className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-3">
-          <label className="grid gap-1 text-[var(--text-body)]">
+        <section className="grid min-w-0 max-w-full grid-cols-1 gap-3 overflow-x-clip rounded-2xl border border-slate-200 bg-white p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-3">
+          <label className="grid min-w-0 gap-1 overflow-hidden text-[length:var(--text-body)]">
             <span className="font-medium text-slate-700"><ST>Número</ST></span>
             <input
-              className="min-h-11 rounded-full border border-slate-200 px-3 text-[var(--text-body)]"
+              className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full border border-slate-200 px-3 text-[length:var(--text-body)]"
               value={filtros.numero}
               onChange={(e) => {
                 setPage(1);
@@ -450,11 +450,11 @@ export function HistorialComprasContent({ variant = "standalone" }) {
               }}
             />
           </label>
-          <label className="grid gap-1 text-[var(--text-body)]">
+          <label className="grid min-w-0 gap-1 overflow-hidden text-[length:var(--text-body)]">
             <span className="font-medium text-slate-700"><ST>Desde</ST></span>
             <input
               type="date"
-              className="min-h-11 rounded-full border border-slate-200 px-3 text-[var(--text-body)]"
+              className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full border border-slate-200 px-3 text-[length:var(--text-body)]"
               value={filtros.desde}
               onChange={(e) => {
                 setPage(1);
@@ -462,11 +462,11 @@ export function HistorialComprasContent({ variant = "standalone" }) {
               }}
             />
           </label>
-          <label className="grid gap-1 text-[var(--text-body)]">
+          <label className="grid min-w-0 gap-1 overflow-hidden text-[length:var(--text-body)]">
             <span className="font-medium text-slate-700"><ST>Hasta</ST></span>
             <input
               type="date"
-              className="min-h-11 rounded-full border border-slate-200 px-3 text-[var(--text-body)]"
+              className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full border border-slate-200 px-3 text-[length:var(--text-body)]"
               value={filtros.hasta}
               onChange={(e) => {
                 setPage(1);
@@ -474,11 +474,11 @@ export function HistorialComprasContent({ variant = "standalone" }) {
               }}
             />
           </label>
-          <label className="grid gap-1 text-[var(--text-body)]">
+          <label className="grid min-w-0 gap-1 overflow-hidden text-[length:var(--text-body)]">
             <span className="font-medium text-slate-700"><ST>Monto mínimo</ST></span>
             <NumericInput
               decimal
-              className="min-h-11 rounded-full border border-slate-200 px-3 text-[var(--text-body)]"
+              className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full border border-slate-200 px-3 text-[length:var(--text-body)]"
               value={filtros.montoMin}
               onChange={(e) => {
                 setPage(1);
@@ -486,11 +486,11 @@ export function HistorialComprasContent({ variant = "standalone" }) {
               }}
             />
           </label>
-          <label className="grid gap-1 text-[var(--text-body)]">
+          <label className="grid min-w-0 gap-1 overflow-hidden text-[length:var(--text-body)]">
             <span className="font-medium text-slate-700"><ST>Monto máximo</ST></span>
             <NumericInput
               decimal
-              className="min-h-11 rounded-full border border-slate-200 px-3 text-[var(--text-body)]"
+              className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-full border border-slate-200 px-3 text-[length:var(--text-body)]"
               value={filtros.montoMax}
               onChange={(e) => {
                 setPage(1);
@@ -498,7 +498,7 @@ export function HistorialComprasContent({ variant = "standalone" }) {
               }}
             />
           </label>
-          <div className="grid gap-1 text-[var(--text-body)]">
+          <div className="grid min-w-0 gap-1 text-[length:var(--text-body)]">
             <span className="invisible font-medium" aria-hidden="true"><ST>Restablecer filtros</ST></span>
             <button
               type="button"
@@ -506,7 +506,7 @@ export function HistorialComprasContent({ variant = "standalone" }) {
                 setPage(1);
                 setFiltros({ ...INITIAL_FILTERS });
               }}
-              className="min-h-11 rounded-full border border-slate-300 px-4 text-[var(--text-body)] font-semibold text-slate-700"
+              className="box-border inline-flex h-[var(--control-height)] w-full items-center justify-center rounded-full border border-slate-300 px-4 text-[length:var(--text-body)] font-semibold text-slate-700"
             >
               <ST>Restablecer filtros</ST>
             </button>

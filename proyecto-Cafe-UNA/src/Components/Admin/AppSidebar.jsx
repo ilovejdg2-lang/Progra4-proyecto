@@ -202,7 +202,8 @@ export function AppSidebar() {
     { to: "/admin/visitas", search: { tab: "fechas" }, etiqueta: "Fechas disponibles", grupo: "Visitas grupales", icono: CalendarDays, ver: puedeVisitas },
     { to: "/admin/donaciones/necesidades", etiqueta: "Necesidades de donación", grupo: "Donaciones", icono: HandCoins, ver: puedeDonacionesNecesidades },
     { to: "/admin/donaciones/solicitudes", etiqueta: "Solicitudes de donación", grupo: "Donaciones", icono: HandCoins, ver: puedeDonacionesSolicitudes },
-    { to: "/admin/donaciones/fechas-recepcion", etiqueta: "Fechas de recepción", grupo: "Donaciones", icono: CalendarClock, ver: puedeDonacionesSolicitudes },
+    { to: "/admin/donaciones/solicitudes", search: { tab: "fechas" }, etiqueta: "Fechas disponibles", grupo: "Donaciones", icono: CalendarDays, ver: puedeDonacionesSolicitudes },
+    { to: "/admin/propuestas", etiqueta: "Propuestas de productores", grupo: "Productores", icono: Sprout, ver: puedePropuestas },
     { to: "/admin/documentacion", etiqueta: "Documentos", grupo: "Documentación", icono: BookOpenText, ver: puedeDocumentacionDocumentos },
     { to: "/admin/documentacion/solicitudes", etiqueta: "Solicitudes", grupo: "Documentación", icono: ScrollText, ver: puedeDocumentacionSolicitudes },
     { to: "/admin/documentacion/administrativa", etiqueta: "Documentación Administrativa", grupo: "Documentación", icono: ShieldCheck, ver: puedeDocumentacionAdministrativa },
@@ -211,7 +212,6 @@ export function AppSidebar() {
     { to: "/admin/ajustes/permisos", etiqueta: "Permisos", grupo: "Ajustes del sistema", icono: Shield, ver: puedeAjustes },
     { to: "/admin/ajustes/catalogos", etiqueta: "Catálogos", grupo: "Ajustes del sistema", icono: ListChecks, ver: puedeAjustes },
     { to: "/admin/ajustes/manual", etiqueta: "Ayuda", grupo: "Ajustes del sistema", extra: "manual guía help guide", icono: LifeBuoy, ver: true },
-    { to: "/admin/propuestas", etiqueta: "Propuestas de productores", grupo: "Productores", icono: Sprout, ver: puedePropuestas },
     { to: "/admin/auditoria", etiqueta: "Auditoría", grupo: "Auditoría", icono: ScrollText, ver: puedeAuditoria },
     { to: "/admin/perfil", etiqueta: "Mi perfil", grupo: "Mi cuenta", icono: UserRound, ver: puedePerfil },
     { to: "/admin/mis-compras", etiqueta: "Mis compras", grupo: "Mi cuenta", icono: ShoppingBag, ver: puedeMisCompras },
@@ -898,9 +898,14 @@ export function AppSidebar() {
                   {puedeDonacionesSolicitudes ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/donaciones/fechas-recepcion" activeProps={linkActivo} onClick={closeMobileSidebar}>
-                        <CalendarClock />
-                        <span><ST>Fechas de recepción</ST></span>
+                      <Link
+                        to="/admin/donaciones/solicitudes"
+                        search={{ tab: "fechas" }}
+                        activeProps={linkActivo}
+                        onClick={closeMobileSidebar}
+                      >
+                        <CalendarDays />
+                        <span><ST>Fechas disponibles</ST></span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
@@ -910,6 +915,21 @@ export function AppSidebar() {
             </Collapsible.Content>
           </SidebarGroup>
         </Collapsible.Root>
+        ) : null}
+
+        {puedePropuestas ? (
+        <SidebarGroup>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link to="/admin/propuestas" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                  <Sprout />
+                  <span><ST>Propuestas de productores</ST></span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
         ) : null}
 
         {puedeDocumentacion ? (
@@ -1041,16 +1061,6 @@ export function AppSidebar() {
                 </Collapsible.Content>
               </SidebarMenuItem>
             </Collapsible.Root>
-            {puedePropuestas ? (
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link to="/admin/propuestas" activeProps={linkActivo} onClick={closeMobileSidebar}>
-                  <Sprout />
-                  <span><ST>Propuestas de productores</ST></span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            ) : null}
             {puedeAuditoria ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>

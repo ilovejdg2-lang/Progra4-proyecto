@@ -86,7 +86,7 @@ export function EquipoSection({ equipo }) {
           <h2>{tCierreTitulo}</h2>
           <p>{tCierreTexto}</p>
         </div>
-        <Link to="/voluntariado/solicitar" className="about-equipo__cierre-enlace">
+        <Link to="/voluntariado" className="about-equipo__cierre-enlace">
           {tCierreEnlace}
           <ArrowRight size={18} strokeWidth={2.4} aria-hidden="true" />
         </Link>

@@ -26,7 +26,7 @@ export function guardarIdioma(idioma) {
     /* ignore */
   }
   if (typeof document !== "undefined") {
-    document.documentElement.lang = lang === "en" ? "en" : "es";
+    document.documentElement.lang = lang === "en" ? "en" : "es-CR";
   }
   try {
     invalidateAllPageCaches();

@@ -5,6 +5,7 @@ import {
   iniciarSesion,
   mapAuthenticatedUser,
   registrarUsuario,
+  resolverRedirectTrasLogin,
   verificarRegistro,
   solicitarRecuperacion,
   restablecerPassword,
@@ -241,9 +242,9 @@ const Login = () => {
 
       const authenticatedUser = mapAuthenticatedUser(token);
       saveAuthenticatedUser(authenticatedUser);
-      let redirectTo = sessionStorage.getItem('postLoginRedirect') || '/';
+      const redirectPreferido = sessionStorage.getItem('postLoginRedirect') || '/';
       sessionStorage.removeItem('postLoginRedirect');
-      window.location.href = redirectTo;
+      window.location.href = resolverRedirectTrasLogin(authenticatedUser, redirectPreferido);
     } catch (err) {
       setFormError(sanitizeUserFacingError(err.message || 'Ocurri\u00f3 un error al iniciar sesi\u00f3n.'));
       queueFocusFormError({ root: e.currentTarget.closest('.login-card') || document });

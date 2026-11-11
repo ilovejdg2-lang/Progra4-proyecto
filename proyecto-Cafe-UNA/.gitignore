@@ -15,6 +15,7 @@ dist-ssr
 !.env.example
 public/_redirects
 *.local
+tools/responsive-audit-out/
 
 # Editor directories and files
 .vscode/*

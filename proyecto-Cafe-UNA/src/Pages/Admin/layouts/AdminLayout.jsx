@@ -41,7 +41,7 @@ function AdminMain({ children }) {
       inert={bloquearMain || undefined}
       aria-hidden={bloquearMain || undefined}
     >
-      <header className="sticky top-0 z-[80] flex h-14 items-center gap-3 border-b border-[var(--admin-border)] bg-[var(--admin-surface)] px-4">
+      <header className="sticky top-0 z-[80] flex h-14 items-center gap-3 bg-[var(--admin-surface)] px-4">
         <SidebarTrigger />
         <AdminBreadcrumb />
         <div className="ml-auto flex items-center gap-2">

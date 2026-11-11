@@ -679,8 +679,8 @@ export function PerfilContent({ variant = "standalone" }) {
           <div className="perfil-hero__banner perfil-hero__banner--placeholder" aria-hidden="true" />
           )}
           <span className="perfil-hero__change">
-            <Camera size={18} />
-            {tCambiarBanner}
+            <Camera size={18} aria-hidden="true" />
+            <span className="perfil-hero__change-label">{tCambiarBanner}</span>
           </span>
         </button>
         <div className="perfil-hero__overlay" />

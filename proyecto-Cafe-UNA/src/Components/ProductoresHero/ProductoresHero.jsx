@@ -9,6 +9,21 @@ import { useSessionUser } from "../../hooks/useSessionUser";
 import { rutaMisPropuestas } from "../../lib/rutasPropuestas";
 import "./ProductoresHero.css";
 
+const TOPE_UBICACIONES_EXTRA = 5;
+
+/** + (productores mostrados − 1), con tope de +5. Con uno o ninguno no hay extras. */
+export function cantidadUbicacionesExtra(total) {
+  const cantidad = Number(total);
+  if (!Number.isFinite(cantidad) || cantidad <= 1) return 0;
+  return Math.min(TOPE_UBICACIONES_EXTRA, cantidad - 1);
+}
+
+/** El CMS puede traer "+5 Ubicaciones activas"; el número se calcula aparte. */
+export function etiquetaUbicacionesHero(textoCms, respaldo) {
+  const limpio = String(textoCms || "").trim().replace(/^\+\s*\d+\s*/, "").trim();
+  return limpio || respaldo;
+}
+
 function AccionHeroBoton({ to, className, children, onClick }) {
   if (!to) return null;
 
@@ -65,7 +80,13 @@ export default function ProductoresHero({ className = "", customData = null }) {
         if (activo && info) setHeroInfo(info);
       })
       .catch(() => {});
+    return () => {
+      activo = false;
+    };
+  }, [customData]);
 
+  useEffect(() => {
+    let activo = true;
     obtenerProductoresPublicos()
       .then((items) => {
         if (activo && Array.isArray(items)) {
@@ -73,11 +94,10 @@ export default function ProductoresHero({ className = "", customData = null }) {
         }
       })
       .catch(() => {});
-
     return () => {
       activo = false;
     };
-  }, [customData]);
+  }, []);
 
   const abrirMisPropuestas = (event) => {
     if (usuario) return;
@@ -100,9 +120,12 @@ export default function ProductoresHero({ className = "", customData = null }) {
   const tertiaryText = (esEn ? heroInfo.tertiaryButtonTextEn : null) || heroInfo.tertiaryButtonText || DEFAULT_PRODUCTORES_HERO.tertiaryButtonText;
   const tertiaryUrl = heroInfo.tertiaryButtonUrl || DEFAULT_PRODUCTORES_HERO.tertiaryButtonUrl;
 
-  const ubicacionesCount = productoresCount > 0 ? `+${productoresCount}` : "+30";
-  const defaultFooterText = `${ubicacionesCount} ${esEn ? "Active locations" : "Ubicaciones activas"}`;
-  const footerText = (esEn ? heroInfo.footerTextEn : null) || heroInfo.footerText || defaultFooterText;
+  const etiquetaUbicaciones = etiquetaUbicacionesHero(
+    (esEn ? heroInfo.footerTextEn : null) || heroInfo.footerText,
+    esEn ? "Active locations" : "Ubicaciones activas",
+  );
+  const ubicacionesExtra = cantidadUbicacionesExtra(productoresCount);
+  const footerText = ubicacionesExtra > 0 ? `+${ubicacionesExtra} ${etiquetaUbicaciones}` : "";
   const fondoImagen = heroInfo.image || DEFAULT_PRODUCTORES_HERO.image;
 
   return (

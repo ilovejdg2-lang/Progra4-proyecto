@@ -414,6 +414,33 @@ body.admin-route-active select {
   letter-spacing: -0.008em;
 }
 
+/*
+ * Safari/iOS: date/time nativos reportan un min-content grande y rompen grids/flex
+ * aunque el padre tenga w-full. Forzar shrink + box-border en todo el sitio.
+ */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+@supports (-webkit-touch-callout: none) {
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="week"] {
+    /* WebKit iOS ignora a veces min-width:0 en controles nativos */
+    -webkit-min-width: 0;
+  }
+}
+
 html.admin-modal-open,
 html.admin-modal-open body,
 html.admin-modal-open body.admin-route-active,

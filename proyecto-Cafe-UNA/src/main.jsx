@@ -20,12 +20,12 @@ iniciarSincronizacionCarrito()
 void (() => {
   try {
     if (localStorage.getItem('cafe-una-idioma')) {
-      document.documentElement.lang = obtenerIdioma() === 'en' ? 'en' : 'es'
+      document.documentElement.lang = obtenerIdioma() === 'en' ? 'en' : 'es-CR'
       return
     }
     guardarIdioma('es')
   } catch {
-    document.documentElement.lang = 'es'
+    document.documentElement.lang = 'es-CR'
   }
 })()
 

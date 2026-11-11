@@ -117,7 +117,7 @@ function getCantidadFechas(resumen, tipo, fechasActivas = []) {
   return 0;
 }
 
-const VOLUNTARIADO_LOGIN_REDIRECT = "/voluntariado/solicitar";
+const VOLUNTARIADO_LOGIN_REDIRECT = "/voluntariado";
 
 function SolicitarVoluntariado() {
   const navigate = useNavigate();

@@ -28,7 +28,7 @@ export function getRouteCacheKey(pathname = normalizePathname()) {
 function resolveKey(pathnameOrKey) {
   if (!pathnameOrKey) return null;
   if (pathnameOrKey.startsWith('/')) {
-    return getRouteCacheKey(pathnameOrKey);
+    return getRouteCacheKey(pathnameOrKey) || normalizePathname(pathnameOrKey);
   }
   return pathnameOrKey;
 }

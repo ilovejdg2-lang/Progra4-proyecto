@@ -76,9 +76,25 @@ export function getAdminBreadcrumbItems(pathname, search) {
     "/admin/documentacion/solicitudes": [admin, crumb("Documentación", "/admin/documentacion"), crumb("Solicitudes de documentación")],
     "/admin/documentacion/administrativa": [admin, crumb("Documentación", "/admin/documentacion"), crumb("Documentación Administrativa")],
     "/admin/donaciones/necesidades": [admin, donaciones, crumb("Necesidades de donación")],
-    "/admin/donaciones/solicitudes": [admin, donaciones, crumb("Solicitudes de donación")],
-    "/admin/donaciones/fechas-recepcion": [admin, donaciones, crumb("Fechas de recepción")],
+    "/admin/donaciones/fechas-recepcion": [
+      admin,
+      donaciones,
+      crumb("Solicitudes de donación", "/admin/donaciones/solicitudes"),
+      crumb("Fechas disponibles"),
+    ],
   };
+
+  if (path === "/admin/donaciones/solicitudes") {
+    if (tab === "fechas") {
+      return [
+        admin,
+        donaciones,
+        crumb("Solicitudes de donación", "/admin/donaciones/solicitudes"),
+        crumb("Fechas disponibles"),
+      ];
+    }
+    return [admin, donaciones, crumb("Solicitudes de donación")];
+  }
 
   if (exactas[path]) return exactas[path];
 

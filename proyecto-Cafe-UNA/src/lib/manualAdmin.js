@@ -186,7 +186,7 @@ export const SECCIONES_MANUAL = [
     pasos: [
       "Necesidades: creá cada necesidad con su prioridad y los materiales que se aceptan.",
       "Solicitudes: revisá lo que la persona quiere donar, cómo lo entrega y cambiá el estado.",
-      "Fechas de recepción: indicá qué días se reciben donaciones.",
+      "Fechas disponibles: indicá qué días se reciben donaciones.",
     ],
     consejos: ["Los estados de los artículos que ve la persona donante se editan con el botón Estados de artículos en Solicitudes de donación."],
   },

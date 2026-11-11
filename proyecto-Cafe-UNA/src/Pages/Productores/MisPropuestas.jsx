@@ -122,7 +122,7 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
     setError("");
     try {
       const items = await obtenerMisPropuestas();
-      setLista(items);
+      setLista((Array.isArray(items) ? items : []).filter((item) => item?.estado !== "Eliminada"));
     } catch (err) {
       setError(err?.message || "No se pudieron cargar tus propuestas.");
     } finally {
@@ -249,9 +249,9 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
       <ul className="grid gap-3">
         {visibles.map((item) => (
           <li key={item.id} className="rounded-2xl border border-slate-200 bg-white p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 flex-1 space-y-1.5">
-                <p className="text-[var(--text-subtitle)] font-semibold text-slate-950">{item.nombre}</p>
+                <p className="break-words text-[var(--text-subtitle)] font-semibold text-slate-950">{item.nombre}</p>
                 <p className="text-[var(--text-body)] text-slate-600">
                   #{item.id}
                   {" · "}
@@ -273,20 +273,20 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
                   ) : null}
                 </div>
                 {item.estado === "Rechazada" && item.motivoRechazo ? (
-                  <p className="text-sm text-slate-600">
+                  <p className="break-words text-sm text-slate-600">
                     <span className="font-semibold text-slate-800"><ST>Motivo:</ST> </span>
                     {item.motivoRechazo}
                   </p>
                 ) : null}
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
                 <button
                   type="button"
                   onClick={() => abrir(item.id)}
-                  className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-800 transition hover:bg-slate-50"
+                  className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 text-[length:var(--text-body)] font-semibold text-slate-800 transition hover:bg-slate-50"
                 >
-                  <Eye className="size-3.5" />
+                  <Eye className="size-3.5 shrink-0" aria-hidden="true" />
                   <ST>Ver detalle</ST>
                 </button>
 
@@ -295,17 +295,17 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
                     <button
                       type="button"
                       onClick={() => setModalEditar({ open: true, propuesta: item, esSolicitud: false })}
-                      className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-800 transition hover:bg-slate-50"
+                      className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 text-[length:var(--text-body)] font-semibold text-slate-800 transition hover:bg-slate-50"
                     >
-                      <Pencil className="size-3.5" />
+                      <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
                       <ST>Editar</ST>
                     </button>
                     <button
                       type="button"
                       onClick={() => setModalEliminar({ open: true, propuesta: item, esSolicitudBaja: false })}
-                      className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-rose-200 bg-white px-3.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+                      className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-rose-200 bg-white px-3.5 text-[length:var(--text-body)] font-semibold text-rose-700 transition hover:bg-rose-50"
                     >
-                      <Trash2 className="size-3.5" />
+                      <Trash2 className="size-3.5 shrink-0" aria-hidden="true" />
                       <ST>Eliminar</ST>
                     </button>
                   </>
@@ -317,9 +317,9 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
                       <button
                         type="button"
                         onClick={() => setModalEditar({ open: true, propuesta: item, esSolicitud: true })}
-                        className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3.5 text-xs font-semibold text-sky-800 transition hover:bg-sky-100"
+                        className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3.5 text-[length:var(--text-body)] font-semibold text-sky-800 transition hover:bg-sky-100"
                       >
-                        <Pencil className="size-3.5" />
+                        <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
                         <ST>Solicitar edición</ST>
                       </button>
                     ) : (
@@ -327,9 +327,9 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
                         type="button"
                         disabled={accionEnCurso === `cancelar-edicion-${item.id}`}
                         onClick={() => handleCancelarEdicion(item.id)}
-                        className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                        className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 text-[length:var(--text-body)] font-semibold text-slate-600 transition hover:bg-slate-50"
                       >
-                        <XCircle className="size-3.5" />
+                        <XCircle className="size-3.5 shrink-0" aria-hidden="true" />
                         <ST>Cancelar edición</ST>
                       </button>
                     )}
@@ -338,9 +338,9 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
                       <button
                         type="button"
                         onClick={() => setModalEliminar({ open: true, propuesta: item, esSolicitudBaja: true })}
-                        className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3.5 text-xs font-semibold text-rose-800 transition hover:bg-rose-100"
+                        className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3.5 text-[length:var(--text-body)] font-semibold text-rose-800 transition hover:bg-rose-100"
                       >
-                        <Trash2 className="size-3.5" />
+                        <Trash2 className="size-3.5 shrink-0" aria-hidden="true" />
                         <ST>Solicitar baja</ST>
                       </button>
                     ) : (
@@ -348,9 +348,9 @@ export function MisPropuestasContent({ variant = "cliente", propuestaId = "" }) 
                         type="button"
                         disabled={accionEnCurso === `cancelar-baja-${item.id}`}
                         onClick={() => handleCancelarBaja(item.id)}
-                        className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                        className="inline-flex min-h-[var(--control-height)] items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 text-[length:var(--text-body)] font-semibold text-slate-600 transition hover:bg-slate-50"
                       >
-                        <XCircle className="size-3.5" />
+                        <XCircle className="size-3.5 shrink-0" aria-hidden="true" />
                         <ST>Cancelar baja</ST>
                       </button>
                     )}

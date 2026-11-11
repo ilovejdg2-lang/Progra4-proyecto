@@ -55,6 +55,8 @@ import {
   obtenerProductoresHero,
 } from "../../../services/informacionService";
 import { getActiveSessionUser } from "../../../services/sessionService";
+import { obtenerProductoresPublicos } from "../../../services/propuestasProductoresService";
+import { cantidadUbicacionesExtra, etiquetaUbicacionesHero } from "../../../Components/ProductoresHero/ProductoresHero";
 import { tienePermiso } from "../../../lib/permisos";
 import { esCorreoValido, MENSAJE_CORREO_INVALIDO } from "../../../lib/correo";
 import {
@@ -692,6 +694,24 @@ export function ModalSeccionInicio({ clave, config, data, tarjetasInicio = EMPTY
 
 function PreviewProductoresHeroLive({ form }) {
   const previewImage = form.image || DEFAULT_PRODUCTORES_HERO.image;
+  const [totalProductores, setTotalProductores] = useState(0);
+
+  useEffect(() => {
+    let activo = true;
+    obtenerProductoresPublicos()
+      .then((items) => {
+        if (activo && Array.isArray(items)) setTotalProductores(items.length);
+      })
+      .catch(() => {});
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  const ubicacionesExtra = cantidadUbicacionesExtra(totalProductores);
+  const etiquetaUbicaciones = etiquetaUbicacionesHero(form.footerText, "Ubicaciones activas");
+  const footerUbicaciones = ubicacionesExtra > 0 ? `+${ubicacionesExtra} ${etiquetaUbicaciones}` : "";
+
   return (
     <div className="relative h-[420px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-[#dce5df] flex items-center justify-center p-3">
       <div
@@ -728,10 +748,10 @@ function PreviewProductoresHeroLive({ form }) {
             </span>
           ) : null}
         </div>
-        {form.footerText ? (
+        {footerUbicaciones ? (
           <div className="mt-4 pt-2.5 border-t border-slate-100 flex items-center gap-1.5 text-[10px] font-semibold text-slate-600">
             <MapPin className="size-3 text-slate-500" />
-            <span>{form.footerText}</span>
+            <span>{footerUbicaciones}</span>
           </div>
         ) : null}
       </div>
@@ -820,7 +840,7 @@ export function ModalProductoresHero({ data, onCerrar, onGuardar, guardando }) {
               value={form.footerText}
               onChange={cambiarCampo}
               maxPalabras={MAX_PALABRAS_ETIQUETA}
-              hint="Ejemplo: +30 Ubicaciones activas"
+              hint="Solo el texto. El +N sale de los productores activos aprobados que se muestran: cantidad menos 1, y si son más de 5 se queda en +5."
             />
           </AdminFieldset>
 
@@ -1005,7 +1025,7 @@ export function ModalTarjetasInicio({ tarjetas, onCerrar, onGuardar, guardando }
                     name={`ruta-${index}`}
                     value={tarjeta.ruta}
                     onChange={(event) => cambiarCampo(index, "ruta", event.target.value)}
-                    placeholder={tarjeta.clave === "donaciones" ? "/donaciones/solicitar" : "/voluntariado/solicitar"}
+                    placeholder={tarjeta.clave === "donaciones" ? "/donaciones" : "/voluntariado"}
                     hint={"Ruta interna del botón."}
                     sinLimite
                   />
@@ -1254,11 +1274,12 @@ function ModalFooter({ footer, enlaces = EMPTY_ARRAY, onCerrar, onGuardar, guard
           <AdminFieldset legend={tContacto} className="items-start sm:grid-cols-2">
             <CampoConIcono lugar="footer.telefono" iconos={iconos}>
               <CampoTexto
-                label={"Teléfono"}
+                label={"Teléfono / SINPE Móvil"}
                 name="telefono"
                 value={form.telefono}
                 onChange={cambiarCampo}
                 placeholder="88888888"
+                hint={"Se muestra en el pie de p\u00e1gina y en el pago del pedido."}
                 soloNumeros
                 maxLength={8}
                 sinLimite
@@ -2104,7 +2125,7 @@ const AdminInformacionPaginaPrincipal = () => {
       { id: "tarjetas-inicio", grupo: "inicio", busqueda: ["Mini formularios", "Inicio", resumenTarjetasInicio] },
       { id: "faq-inicio", grupo: "inicio", busqueda: ["Preguntas frecuentes", "FAQ", "Inicio", faqInicio.map((i) => i.pregunta).join(" ")] },
       { id: "navbar", grupo: "navbar", busqueda: ["Navbar", "Barra de navegaci\u00f3n", resumenNavbar] },
-      { id: "footer", grupo: "footer", busqueda: ["Footer", "Pie de p\u00e1gina", resumenFooter] },
+      { id: "footer", grupo: "footer", busqueda: ["Footer", "Pie de p\u00e1gina", "SINPE", "SINPE M\u00f3vil", "Tel\u00e9fono", resumenFooter] },
       {
         id: "enlaces-navbar",
         grupo: "navbar",

@@ -113,20 +113,24 @@
 
 .perfil-hero__change {
   position: absolute;
-  inset: auto 1rem 1rem auto;
-  z-index: 2;
+  inset: 1rem 1rem auto auto;
+  z-index: 3;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.45rem 0.8rem;
+  max-width: calc(100% - 2rem);
+  min-height: var(--control-height);
+  padding: 0 0.85rem;
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.72);
   color: #fff;
-  font-size: 0.82rem;
+  font-size: var(--text-body);
   font-weight: 600;
+  line-height: 1.2;
   opacity: 0.9;
   transition: opacity 0.2s ease;
   pointer-events: none;
+  white-space: nowrap;
 }
 
 .perfil-hero__banner-btn:hover .perfil-hero__change,
@@ -235,6 +239,7 @@
   flex-wrap: wrap;
   gap: 0.4rem;
   margin-top: 0.75rem;
+  max-width: 100%;
 }
 
 .perfil-hero__role {
@@ -879,9 +884,14 @@
   }
 
   .perfil-hero__change {
-    inset: auto 0.75rem 0.75rem auto;
-    font-size: 0.75rem;
-    padding: 0.4rem 0.65rem;
+    inset: 0.75rem 0.75rem auto auto;
+    max-width: calc(100% - 1.5rem);
+    padding: 0 0.75rem;
+  }
+
+  .perfil-hero__change-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .perfil-card {
