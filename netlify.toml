@@ -1,5 +1,5 @@
 # Café UNA — Netlify (monorepo)
-# Sitio activo: https://cafeunaing.netlify.app
+# Dominio canónico: https://cafeuna.app
 # El frontend vive en proyecto-Cafe-UNA/; este archivo evita el 404
 # cuando Netlify construye desde la raíz del repo.
 
@@ -11,6 +11,13 @@
 [build.environment]
   NODE_VERSION = "20"
   # BACKEND_URL: Site configuration → Environment variables (URL del API + /api)
+
+# Dominio anterior → canónico
+[[redirects]]
+  from = "https://cafeunaing.netlify.app/*"
+  to = "https://cafeuna.app/:splat"
+  status = 301
+  force = true
 
 # SPA fallback (TanStack Router)
 [[redirects]]
@@ -54,3 +61,10 @@
   for = "/robots.txt"
   [headers.values]
     Cache-Control = "public, max-age=86400"
+    Content-Type = "text/plain; charset=utf-8"
+
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+    Content-Type = "application/xml; charset=utf-8"

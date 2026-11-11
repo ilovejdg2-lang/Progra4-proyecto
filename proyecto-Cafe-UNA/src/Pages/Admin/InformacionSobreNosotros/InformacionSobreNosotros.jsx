@@ -10,7 +10,7 @@ import {
   AdminEditorConPreview,
   PreviewTextoInstitucionalLive,
 } from "../../../Components/Admin/ui/AdminCmsPreview";
-import { AdminSeccionCard } from "../../../Components/Admin/ui/AdminSeccionCard";
+import { AdminSeccionFila } from "../../../Components/Admin/ui/AdminSeccionFila";
 import { CategoriaCampo, CategoriaNueva, CategoriaOpcionBorrar } from "../../../Components/Admin/ui/CategoriaCampo";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
@@ -73,24 +73,18 @@ const infoInicial = {
 
 const estilos = {
   historia: {
-    borde: "border-amber-700",
     icono: "text-amber-700",
     etiqueta: "Historia",
-    resumen: "Resumen institucional de nuestra historia.",
     Icon: BookOpenText,
   },
   mission: {
-    borde: "border-amber-700",
     icono: "text-amber-700",
     etiqueta: "Misi\u00f3n",
-    resumen: "Texto institucional de misi\u00f3n.",
     Icon: Target,
   },
   vision: {
-    borde: "border-amber-700",
     icono: "text-amber-700",
     etiqueta: "Visi\u00f3n",
-    resumen: "Texto institucional de visi\u00f3n.",
     Icon: Eye,
   },
 };
@@ -733,6 +727,27 @@ const AdminInformacionSobreNosotros = () => {
     [seccionesFiltradas],
   );
 
+  const filasHistoria = useMemo(() => {
+    const orden = [
+      { id: "historia", data: info.historia },
+      { id: "mission", data: info.mission },
+      { id: "vision", data: info.vision },
+    ];
+    return orden
+      .filter((item) => idsVisibles.has(item.id))
+      .map((item, indice) => {
+        const estilo = estilos[item.id];
+        return {
+          id: item.id,
+          numero: indice + 1,
+          nombre: estilo.etiqueta,
+          resumen: item.data?.title || item.data?.description || "",
+          icono: estilo.Icon,
+          imagen: item.data?.image || "",
+        };
+      });
+  }, [idsVisibles, info]);
+
   useEffect(() => {
     if (data) {
       setInfo(data);
@@ -825,34 +840,24 @@ const AdminInformacionSobreNosotros = () => {
                 onLimpiar={limpiarFiltros}
               />
 
-              {seccionesFiltradas.length === 0 ? (
+              {filasHistoria.length === 0 ? (
                 <AdminListaVacia onLimpiar={limpiarFiltros} />
               ) : (
-                <div className="grid min-w-0 grid-cols-1 gap-3 overflow-x-hidden p-4 sm:grid-cols-2 sm:px-6 sm:pb-6 xl:grid-cols-3">
-                  {idsVisibles.has("historia") ? (
-                    <AdminSeccionCard
-                      etiqueta="Historia"
-                      titulo={info.historia?.title || "Historia"}
-                      icono={BookOpenText}
-                      onEditar={() => setEditandoTexto("historia")}
-                    />
-                  ) : null}
-                  {idsVisibles.has("mission") ? (
-                    <AdminSeccionCard
-                      etiqueta={"Misi\u00f3n"}
-                      titulo={info.mission?.title || "Misi\u00f3n"}
-                      icono={Target}
-                      onEditar={() => setEditandoTexto("mission")}
-                    />
-                  ) : null}
-                  {idsVisibles.has("vision") ? (
-                    <AdminSeccionCard
-                      etiqueta={"Visi\u00f3n"}
-                      titulo={info.vision?.title || "Visi\u00f3n"}
-                      icono={Eye}
-                      onEditar={() => setEditandoTexto("vision")}
-                    />
-                  ) : null}
+                <div className="min-w-0 pb-4">
+                  <ul className="divide-y divide-[var(--admin-border)] border-b border-[var(--admin-border)]">
+                    {filasHistoria.map((fila) => (
+                      <li key={fila.id}>
+                        <AdminSeccionFila
+                          numero={fila.numero}
+                          nombre={fila.nombre}
+                          resumen={fila.resumen}
+                          icono={fila.icono}
+                          imagen={fila.imagen}
+                          onEditar={() => setEditandoTexto(fila.id)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </>

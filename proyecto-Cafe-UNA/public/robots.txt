@@ -1,2 +1,16 @@
+# Café UNA — https://cafeuna.app
 User-agent: *
 Allow: /
+
+# Rutas privadas / de sesión (SPA)
+Disallow: /admin
+Disallow: /admin/
+Disallow: /login
+Disallow: /registro
+Disallow: /verificar-cuenta
+Disallow: /checkout
+Disallow: /perfil
+Disallow: /perfil/
+Disallow: /productores/propuesta
+
+Sitemap: https://cafeuna.app/sitemap.xml

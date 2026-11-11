@@ -63,7 +63,7 @@ export function marcarIntentRegistroCliente() {
   }
 }
 
-/** Solo se permite /registro si viene del checkout o ya empezó verificación. */
+/** Solo se permite /registro si viene del carrito/checkout o ya empezó verificación. */
 export function puedeAbrirRegistroCliente() {
   try {
     if (sessionStorage.getItem(REGISTRO_CLIENTE_INTENT_KEY) === "1") return true;
@@ -80,6 +80,30 @@ export function limpiarIntentRegistroCliente() {
   } catch {
     /* ignore */
   }
+}
+
+/**
+ * Tras login: si vino del carrito y aún no puede comprar, manda a /registro una vez.
+ * Conserva el destino final (checkout) en postLoginRedirect.
+ */
+export function resolverRedirectTrasLogin(user, redirectPreferido = "/") {
+  const destino = redirectPreferido || "/";
+  if (puedeComprar(user)) {
+    limpiarIntentRegistroCliente();
+    return destino;
+  }
+  if (!puedeAbrirRegistroCliente()) return destino;
+  try {
+    if (!sessionStorage.getItem("postLoginRedirect")) {
+      sessionStorage.setItem(
+        "postLoginRedirect",
+        destino === "/registro" ? "/checkout" : destino,
+      );
+    }
+  } catch {
+    /* ignore */
+  }
+  return "/registro";
 }
 
 export async function registrarUsuario(payload) {

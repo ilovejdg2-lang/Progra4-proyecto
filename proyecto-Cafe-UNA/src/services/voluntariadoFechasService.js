@@ -1,34 +1,12 @@
 import { apiRequest } from "./apiClient";
+import {
+  obtenerHoyIso,
+  ZONA_HORARIA_PREDETERMINADA,
+} from "../lib/zonaHoraria";
 
 const BASE_URL = `${import.meta.env.BACKEND_URL}/voluntariado/fechas`;
 
-export const ZONA_HORARIA_PREDETERMINADA = "America/Costa_Rica";
-
-/**
- * Retorna la fecha 'hoy' en formato 'YYYY-MM-DD' según la zona horaria indicada.
- * Usa 'America/Costa_Rica' por defecto para consistencia con el servidor.
- */
-function crearFormatoHoy(timeZone) {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-}
-
-const FORMATO_HOY_PREDETERMINADO = crearFormatoHoy(ZONA_HORARIA_PREDETERMINADA);
-
-export function obtenerHoyIso(timeZone = ZONA_HORARIA_PREDETERMINADA) {
-  if (timeZone === ZONA_HORARIA_PREDETERMINADA) {
-    return FORMATO_HOY_PREDETERMINADO.format(new Date());
-  }
-  try {
-    return crearFormatoHoy(timeZone).format(new Date());
-  } catch {
-    return FORMATO_HOY_PREDETERMINADO.format(new Date());
-  }
-}
+export { obtenerHoyIso, ZONA_HORARIA_PREDETERMINADA };
 
 /**
  * Obtener configuración de zona horaria y fecha hoy vigente del servidor.

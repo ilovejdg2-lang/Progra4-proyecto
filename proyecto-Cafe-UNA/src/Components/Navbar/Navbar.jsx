@@ -1002,6 +1002,10 @@ const Navbar = () => {
             return;
         }
         marcarIntentRegistroCliente();
+        if (!user) {
+            navigate({ to: '/login' });
+            return;
+        }
         navigate({ to: '/registro' });
     };
 
@@ -1172,7 +1176,7 @@ const Navbar = () => {
                                     aria-hidden={!showFormsMenu}
                                 >
                                     <Link
-                                        to="/voluntariado/solicitar"
+                                        to="/voluntariado"
                                         role="menuitem"
                                         className="navbar__about-item"
                                         activeProps={{ className: "navbar__about-item" }}
@@ -1181,7 +1185,7 @@ const Navbar = () => {
                                         {labelVoluntariado}
                                     </Link>
                                     <Link
-                                        to="/visitas/solicitar"
+                                        to="/visitas"
                                         role="menuitem"
                                         className="navbar__about-item"
                                         activeProps={{ className: "navbar__about-item" }}
@@ -1190,7 +1194,7 @@ const Navbar = () => {
                                         {labelVisitas}
                                     </Link>
                                     <Link
-                                        to="/donaciones/solicitar"
+                                        to="/donaciones"
                                         role="menuitem"
                                         className="navbar__about-item"
                                         activeProps={{ className: "navbar__about-item" }}
@@ -1562,8 +1566,8 @@ const Navbar = () => {
                                                             <Package size={16} />
                                                         </span>
                                                         <div className="notification-item__main">
-                                                            <strong>{item.titulo}</strong>
-                                                            <span>{item.mensaje}</span>
+                                                            <strong><NombreCarrito nombre={item.titulo} /></strong>
+                                                            <span><NombreCarrito nombre={item.mensaje} /></span>
                                                         </div>
                                                     </button>
                                                 ))}
@@ -1584,8 +1588,8 @@ const Navbar = () => {
                                                             <Sprout size={16} />
                                                         </span>
                                                         <div className="notification-item__main">
-                                                            <strong>{item.titulo}</strong>
-                                                            <span>{item.mensaje}</span>
+                                                            <strong><NombreCarrito nombre={item.titulo} /></strong>
+                                                            <span><NombreCarrito nombre={item.mensaje} /></span>
                                                         </div>
                                                     </button>
                                                 ))}
@@ -1835,21 +1839,21 @@ const Navbar = () => {
                                                 {showMobileForms ? (
                                                     <div className="navbar__mobile-about-sub">
                                                         <Link
-                                                            to="/voluntariado/solicitar"
+                                                            to="/voluntariado"
                                                             className={`navbar__mobile-about-item ${voluntariadoActive ? 'is-active' : ''}`}
                                                             onClick={closeMobileMenu}
                                                         >
                                                             {labelVoluntariado}
                                                         </Link>
                                                         <Link
-                                                            to="/visitas/solicitar"
+                                                            to="/visitas"
                                                             className={`navbar__mobile-about-item ${visitasActive ? 'is-active' : ''}`}
                                                             onClick={closeMobileMenu}
                                                         >
                                                             {labelVisitas}
                                                         </Link>
                                                         <Link
-                                                            to="/donaciones/solicitar"
+                                                            to="/donaciones"
                                                             className={`navbar__mobile-about-item ${donacionesActive ? 'is-active' : ''}`}
                                                             onClick={closeMobileMenu}
                                                         >

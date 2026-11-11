@@ -455,7 +455,7 @@ export function GestionFechasVisitas({ esSuperAdmin = false }) {
                 e.preventDefault();
                 guardarSlot();
               }}
-              className="space-y-4"
+              className="min-w-0 max-w-full space-y-4 overflow-x-clip"
             >
               {formError ? (
                 <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800" role="alert">
@@ -463,44 +463,44 @@ export function GestionFechasVisitas({ esSuperAdmin = false }) {
                 </div>
               ) : null}
 
-              <label className="grid gap-1.5 text-sm font-semibold text-slate-700">
+              <label className="grid min-w-0 gap-1.5 overflow-hidden text-sm font-semibold text-slate-700">
                 Fecha *
                 <input
                   type="date"
                   name="fecha"
                   value={form.fecha}
                   onChange={(e) => setForm((c) => ({ ...c, fecha: e.target.value }))}
-                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-950 focus:outline-hidden"
+                  className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-xl border border-slate-300 px-3 text-[length:var(--text-body)] focus:border-slate-950 focus:outline-hidden"
                   required
                 />
               </label>
 
-              <div className="grid grid-cols-2 gap-3">
-                <label className="grid gap-1.5 text-sm font-semibold text-slate-700">
+              <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+                <label className="grid min-w-0 gap-1.5 overflow-hidden text-sm font-semibold text-slate-700">
                   Hora de inicio *
                   <input
                     type="time"
                     name="horaInicio"
                     value={form.horaInicio}
                     onChange={(e) => setForm((c) => ({ ...c, horaInicio: e.target.value }))}
-                    className="rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-950 focus:outline-hidden"
+                    className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-xl border border-slate-300 px-3 text-[length:var(--text-body)] focus:border-slate-950 focus:outline-hidden"
                     required
                   />
                 </label>
-                <label className="grid gap-1.5 text-sm font-semibold text-slate-700">
+                <label className="grid min-w-0 gap-1.5 overflow-hidden text-sm font-semibold text-slate-700">
                   Hora de fin *
                   <input
                     type="time"
                     name="horaFin"
                     value={form.horaFin}
                     onChange={(e) => setForm((c) => ({ ...c, horaFin: e.target.value }))}
-                    className="rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-950 focus:outline-hidden"
+                    className="box-border block h-[var(--control-height)] w-full min-w-0 max-w-full rounded-xl border border-slate-300 px-3 text-[length:var(--text-body)] focus:border-slate-950 focus:outline-hidden"
                     required
                   />
                 </label>
               </div>
 
-              <label className="grid gap-1.5 text-sm font-semibold text-slate-700">
+              <label className="grid min-w-0 gap-1.5 overflow-hidden text-sm font-semibold text-slate-700">
                 Indicaciones o notas (cupos, guía, requerimientos)
                 <textarea
                   name="nota"
@@ -508,7 +508,7 @@ export function GestionFechasVisitas({ esSuperAdmin = false }) {
                   onChange={(e) => setForm((c) => ({ ...c, nota: e.target.value }))}
                   placeholder="Ej: Máximo 30 personas. Reunión en el portón principal."
                   rows={3}
-                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-950 focus:outline-hidden resize-none"
+                  className="box-border w-full min-w-0 max-w-full rounded-xl border border-slate-300 px-3 py-2 text-[length:var(--text-body)] focus:border-slate-950 focus:outline-hidden resize-none"
                 />
               </label>
 

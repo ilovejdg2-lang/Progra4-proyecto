@@ -289,7 +289,15 @@ const Registro = () => {
       return;
     }
     if (!puedeAbrirRegistroCliente()) {
-      navigate({ to: '/checkout' });
+      navigate({ to: '/' });
+      return;
+    }
+    // Primero login; el formulario de cliente solo con sesión iniciada.
+    if (!sessionUser) {
+      if (!sessionStorage.getItem('postLoginRedirect')) {
+        sessionStorage.setItem('postLoginRedirect', '/checkout');
+      }
+      navigate({ to: '/login' });
     }
   }, [sessionUser, navigate]);
 
@@ -562,7 +570,7 @@ const Registro = () => {
     );
   }
 
-  if (!puedeAbrirRegistroCliente()) {
+  if (!sessionUser || !puedeAbrirRegistroCliente()) {
     return null;
   }
 

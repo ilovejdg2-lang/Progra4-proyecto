@@ -15,10 +15,11 @@ import ErrorBoundary from "./Components/ErrorBoundary/ErrorBoundary";
 import Footer from "./Components/Footer/Footer";
 import Navbar from './Components/Navbar/Navbar';
 import PageLoading from "./Components/PageLoading/PageLoading";
+import { SeoManager } from "./Components/Seo/SeoManager";
 import Home from "./Pages/Home/Home";
 import NotFound from "./Pages/NotFound/NotFound";
 import { usePublicPageLoadingGate } from "./hooks/usePublicPageLoadingGate";
-import { getRouteCacheKey, isPageInstantReady } from "./lib/pageSessionState";
+import { getRouteCacheKey, isPageInstantReady, markPageRevealed } from "./lib/pageSessionState";
 import { clearHomePageLoading, setHomePageLoading } from "./lib/homePageLoading";
 import { beginRouteLoading, endRouteLoading } from "./lib/routeLoadingLock";
 import { getSiteBootMessage } from "./lib/siteBootLoading";
@@ -36,7 +37,6 @@ const NecesidadesDonacion = lazy(() => import("./Pages/Donaciones/NecesidadesDon
 const DonarMaterial = lazy(() => import("./Pages/Donaciones/DonarMaterial"));
 const AdminNecesidadesDonacion = lazy(() => import("./Pages/Admin/Donaciones/Necesidades"));
 const AdminSolicitudesDonacion = lazy(() => import("./Pages/Admin/Donaciones/Solicitudes"));
-const AdminFechasRecepcionDonacion = lazy(() => import("./Pages/Admin/Donaciones/FechasRecepcion"));
 const Login = lazy(() => import("./Pages/Login/Login"));
 const Registro = lazy(() => import("./Pages/Registro/Registro"));
 const VerificarCuenta = lazy(() => import("./Pages/Registro/VerificarCuenta"));
@@ -143,9 +143,16 @@ function ChromelessRouteOutlet() {
 }
 
 function NotFoundRouteComponent() {
+    const pathname = useRouterState({
+        select: (state) => state.location.pathname,
+    });
+
     useLayoutEffect(() => {
+        const key = getRouteCacheKey(pathname) || pathname;
+        markPageRevealed(key);
+        endRouteLoading(key);
         endRouteLoading(null);
-    }, []);
+    }, [pathname]);
 
     return <NotFound />;
 }
@@ -238,18 +245,22 @@ const rootRoute = createRootRoute({
 
         if (isAdminRoute || isChromelessRoute) {
             return (
-                <Suspense fallback={
-                    isAdminRoute
-                        ? <AdminRouteLoadingGate />
-                        : <PageLoading message={getRouteLoadingMessage(pathname)} />
-                }>
-                    {isAdminRoute ? <AdminRouteOutlet /> : <ChromelessRouteOutlet />}
-                </Suspense>
+                <>
+                    <SeoManager />
+                    <Suspense fallback={
+                        isAdminRoute
+                            ? <AdminRouteLoadingGate />
+                            : <PageLoading message={getRouteLoadingMessage(pathname)} />
+                    }>
+                        {isAdminRoute ? <AdminRouteOutlet /> : <ChromelessRouteOutlet />}
+                    </Suspense>
+                </>
             );
         }
 
         return (
             <div className="site-shell">
+                <SeoManager />
                 <Navbar />
                 <section
                     id="center"
@@ -464,30 +475,40 @@ const checkoutRoute = createRoute({
     path: "/checkout",
     component: Checkout,
 })
-const voluntariadoSolicitarRoute = createRoute({
+const voluntariadoRoute = createRoute({
     getParentRoute: () => rootRoute,
-    path: "/voluntariado/solicitar",
+    path: "/voluntariado",
     component: SolicitarVoluntariado,
 })
-const visitasSolicitarRoute = createRoute({
+const voluntariadoSolicitarRedirectRoute = createRoute({
     getParentRoute: () => rootRoute,
-    path: "/visitas/solicitar",
-    component: SolicitarVisita,
+    path: "/voluntariado/solicitar",
+    component: () => <Navigate to="/voluntariado" replace />,
 })
-const visitasDirectRoute = createRoute({
+const visitasRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/visitas",
     component: SolicitarVisita,
+})
+const visitasSolicitarRedirectRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/visitas/solicitar",
+    component: () => <Navigate to="/visitas" replace />,
 })
 const adminVisitasRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/visitas",
     component: AdminVisitas,
 })
-const donacionesSolicitarRoute = createRoute({
+const donacionesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/donaciones",
+    component: SolicitarDonacion,
+})
+const donacionesSolicitarRedirectRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/donaciones/solicitar",
-    component: SolicitarDonacion,
+    component: () => <Navigate to="/donaciones" replace />,
 })
 const donacionesNecesidadesRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -512,7 +533,9 @@ const adminSolicitudesDonacionRoute = createRoute({
 const adminFechasRecepcionDonacionRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin/donaciones/fechas-recepcion",
-    component: AdminFechasRecepcionDonacion,
+    component: () => (
+        <Navigate to="/admin/donaciones/solicitudes" search={{ tab: "fechas" }} replace />
+    ),
 })
 const perfilRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -668,10 +691,12 @@ const routeTree= rootRoute.addChildren([
     productsRoute,
     productDetailRoute,
     checkoutRoute,
-    voluntariadoSolicitarRoute,
-    visitasSolicitarRoute,
-    visitasDirectRoute,
-    donacionesSolicitarRoute,
+    voluntariadoRoute,
+    voluntariadoSolicitarRedirectRoute,
+    visitasRoute,
+    visitasSolicitarRedirectRoute,
+    donacionesRoute,
+    donacionesSolicitarRedirectRoute,
     donacionesNecesidadesRoute,
     donarMaterialRoute,
     perfilRoute,

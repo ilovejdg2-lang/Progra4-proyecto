@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, ShoppingCart, Store, UploadCloud } from 'lucide-react';
+import { ArrowLeft, Copy, ShoppingCart, Store, UploadCloud } from 'lucide-react';
 import { PublicPageGate } from '../../Components/PublicPageGate/PublicPageGate';
 import { Switch } from '../../Components/ui/Switch';
 import { usePublicPageLoadingGate } from '../../hooks/usePublicPageLoadingGate';
@@ -12,7 +12,7 @@ import { normalizeImageUrl } from '../../lib/imageUtils';
 import { CheckoutPuntoCard } from './CheckoutPuntoCard';
 import './Checkout.css';
 import { calcularPrecioConIVA, obtenerDisponibilidadPuntosVenta } from '../../services/productosService';
-import { obtenerNavbar } from '../../services/informacionService';
+import { obtenerFooter, obtenerNavbar } from '../../services/informacionService';
 import { registrarCompra } from '../../services/comprasService';
 import { getActiveSessionUser } from '../../services/sessionService';
 import { marcarIntentRegistroCliente, puedeComprar } from '../../services/authService';
@@ -53,6 +53,8 @@ const Checkout = () => {
   const [comprobante, setComprobante] = useState(null);
   const [dropActivo, setDropActivo] = useState(false);
   const [logoUrl, setLogoUrl] = useState('');
+  const [sinpe, setSinpe] = useState('');
+  const [sinpeCopiado, setSinpeCopiado] = useState(false);
   const [compraConfirmada, setCompraConfirmada] = useState(null);
   const [descargandoPdf, setDescargandoPdf] = useState(false);
 
@@ -82,6 +84,10 @@ const Checkout = () => {
   const tUnidadesEnStock = useTraducir('unidades en stock');
   const tSinStockPos = useTraducir('Sin stock suficiente para este pedido');
   const tComprobante = useTraducir('Comprobante de pago');
+  const tSinpe = useTraducir('SINPE Móvil');
+  const tSinpeHint = useTraducir('Pagá a este número.');
+  const tCopiarSinpe = useTraducir('Copiar número');
+  const tSinpeCopiado = useTraducir('Número copiado');
   const tComprobanteCta = useTraducir('Arrastrá o seleccioná una imagen del comprobante');
   const tComprobanteHint = useTraducir('JPG, PNG o WEBP. Máximo 10 MB.');
   const tQuitarImagen = useTraducir('Quitar imagen');
@@ -105,6 +111,12 @@ const Checkout = () => {
       .then((navbar) => {
         if (!activo) return;
         setLogoUrl(typeof navbar?.logoUrl === 'string' ? navbar.logoUrl.trim() : '');
+      })
+      .catch(() => {});
+    obtenerFooter()
+      .then((footer) => {
+        if (!activo) return;
+        setSinpe(String(footer?.telefono ?? footer?.Telefono ?? '').trim());
       })
       .catch(() => {});
     return () => {
@@ -192,6 +204,30 @@ const Checkout = () => {
     navigate({ to: '/productos' });
   };
 
+  const copiarSinpe = async () => {
+    if (!sinpe) return;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(sinpe);
+      } else {
+        throw new Error('clipboard');
+      }
+    } catch {
+      const area = document.createElement('textarea');
+      area.value = sinpe;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.left = '-9999px';
+      document.body.appendChild(area);
+      area.select();
+      const ok = document.execCommand('copy');
+      area.remove();
+      if (!ok) return;
+    }
+    setSinpeCopiado(true);
+    window.setTimeout(() => setSinpeCopiado(false), 2000);
+  };
+
   const handleDescargarResumen = async () => {
     if (!compraConfirmada || descargandoPdf) return;
     setDescargandoPdf(true);
@@ -240,6 +276,7 @@ const Checkout = () => {
 
   const redirectToLoginForPurchase = () => {
     sessionStorage.setItem('postLoginRedirect', '/checkout');
+    marcarIntentRegistroCliente();
     navigate({ to: '/login' });
   };
 
@@ -512,6 +549,20 @@ const Checkout = () => {
                 <strong>{formatCRC(totalConIva)}</strong>
               </div>
             </div>
+
+            {sinpe ? (
+              <div className="checkout-sinpe">
+                <p className="checkout-sinpe__label">{tSinpe}</p>
+                <p className="checkout-sinpe__hint">{tSinpeHint}</p>
+                <div className="checkout-sinpe__row">
+                  <strong className="checkout-sinpe__numero">{sinpe}</strong>
+                  <button type="button" className="checkout-sinpe__copiar" onClick={copiarSinpe}>
+                    <Copy size={16} strokeWidth={2.2} aria-hidden="true" />
+                    <span>{sinpeCopiado ? tSinpeCopiado : tCopiarSinpe}</span>
+                  </button>
+                </div>
+              </div>
+            ) : null}
 
             <div className="checkout-comprobante">
               <p className="checkout-comprobante__label">{tComprobante}</p>

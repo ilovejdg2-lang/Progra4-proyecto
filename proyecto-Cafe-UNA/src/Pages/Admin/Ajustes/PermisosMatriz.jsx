@@ -15,7 +15,7 @@ import { moduloDePermiso } from "./permisosModulos";
 const btnPrimario =
   "inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full px-4 text-[length:var(--text-body)] font-semibold disabled:cursor-not-allowed disabled:opacity-50 admin-role-primary";
 
-function TogglePermiso({ activo, onClick, label }) {
+function TogglePermiso({ activo, onClick, label, className = "" }) {
   return (
     <button
       type="button"
@@ -23,11 +23,11 @@ function TogglePermiso({ activo, onClick, label }) {
       aria-pressed={activo}
       aria-label={label}
       title={activo ? t("Permitido — clic para quitar") : t("Sin permiso — clic para permitir")}
-      className={`mx-auto inline-flex size-[var(--control-height)] items-center justify-center rounded-full border transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 ${
+      className={`inline-flex size-[var(--control-height)] shrink-0 items-center justify-center rounded-full border transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 ${
         activo
           ? "border-emerald-600 bg-emerald-600 text-white shadow-sm hover:bg-emerald-700"
           : "border-slate-200 bg-white text-slate-300 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-400"
-      }`}
+      } ${className}`.trim()}
     >
       {activo ? (
         <Check className="size-5 stroke-[2.5]" aria-hidden />
@@ -95,13 +95,13 @@ export function PermisosMatriz({
   };
 
   return (
-    <section className="overflow-visible rounded-3xl border border-slate-200 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-5 sm:px-6">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex size-10 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+    <section className="min-w-0 max-w-full overflow-x-clip rounded-3xl border border-slate-200 bg-white">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-5 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700">
             <Shield className="size-5" />
           </span>
-          <div>
+          <div className="min-w-0">
             <h2 className="text-[length:var(--text-subtitle)] font-bold text-slate-950">
               <ST>Permisos por rol</ST>
             </h2>
@@ -157,29 +157,32 @@ export function PermisosMatriz({
         />
       ) : (
         <>
-          <div className="grid gap-3 px-4 pb-4 md:hidden">
+          <div className="grid min-w-0 gap-3 px-4 pb-4 md:hidden">
             {pageItems.map((p) => {
               const meta = p.modulo || moduloDePermiso(p);
               if (!meta) return null;
               const Icon = meta.Icon;
               const rolesActivos = new Set(matrizLocal[p.codigo] || []);
               return (
-                <article key={p.codigo} className="rounded-2xl border border-slate-200 p-4">
-                  <div className="flex items-start gap-3">
+                <article key={p.codigo} className="min-w-0 max-w-full rounded-2xl border border-slate-200 p-4">
+                  <div className="flex min-w-0 items-start gap-3">
                     <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700">
                       <Icon className="size-4" />
                     </span>
                     <div className="min-w-0">
-                      <p className="font-semibold text-slate-900"><ST>{p.nombre}</ST></p>
+                      <p className="break-words font-semibold text-slate-900"><ST>{p.nombre}</ST></p>
                       <p className="text-slate-400"><ST>{meta.label}</ST></p>
                     </div>
                   </div>
-                  <div className="mt-3 grid gap-2">
+                  <div className="mt-3 grid min-w-0 gap-2">
                     {(roles || []).map((rol) => {
                       const activo = rolesActivos.has(rol);
                       return (
-                        <div key={`${p.codigo}-${rol}`} className="flex items-center justify-between gap-3">
-                          <span className="text-[length:var(--text-body)] font-semibold text-slate-600">
+                        <div
+                          key={`${p.codigo}-${rol}`}
+                          className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3"
+                        >
+                          <span className="min-w-0 truncate text-[length:var(--text-body)] font-semibold text-slate-600">
                             <ST>{rol}</ST>
                           </span>
                           <TogglePermiso
@@ -195,7 +198,7 @@ export function PermisosMatriz({
               );
             })}
           </div>
-          <div className="hidden overflow-x-auto px-2 pb-4 sm:px-4 md:block">
+          <div className="hidden min-w-0 overflow-x-auto px-2 pb-4 sm:px-4 md:block">
             <table className="min-w-full border-collapse text-left text-[length:var(--text-body)]">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
@@ -245,6 +248,7 @@ export function PermisosMatriz({
                               activo={activo}
                               onClick={() => onToggle(p.codigo, rol)}
                               label={`${p.nombre} — ${rol}`}
+                              className="mx-auto"
                             />
                           </td>
                         );

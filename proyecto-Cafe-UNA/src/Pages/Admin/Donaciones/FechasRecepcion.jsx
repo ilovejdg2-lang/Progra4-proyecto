@@ -17,18 +17,18 @@ import {
 } from "lucide-react";
 
 import { Calendar } from "@/Components/ui/calendar";
-import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { ST } from "../../../Components/T/ST";
-import { useAdminPageGate } from "../../../hooks/useAdminPageGate";
 import { useTraducir } from "../../../hooks/useTraducir";
 import { HORARIOS_RECEPCION_DONACION } from "../../../lib/donacionFechasRecepcion";
 import { rolesDeUsuario, tienePermiso } from "../../../lib/permisos";
 import { useIdioma } from "../../../lib/useIdioma";
+import { obtenerHoyIso, ZONA_HORARIA_PREDETERMINADA } from "../../../lib/zonaHoraria";
 import {
   actualizarFechaRecepcionAdmin,
   eliminarFechaRecepcionAdmin,
   habilitarFechaRecepcionAdmin,
+  obtenerConfigFechasRecepcion,
   obtenerFechasRecepcionAdmin,
 } from "../../../services/donacionesService";
 import { getActiveSessionUser } from "../../../services/sessionService";
@@ -44,22 +44,23 @@ function parseIsoLocal(iso) {
   return Number.isNaN(fecha.getTime()) ? null : fecha;
 }
 
-export default function AdminFechasRecepcionDonacion() {
+export function GestionFechasDonaciones({ esSuperAdmin = false }) {
   const actor = getActiveSessionUser();
   const roles = rolesDeUsuario(actor);
   const puedeVer =
     tienePermiso(roles, "administrar_solicitudes_donaciones") ||
     tienePermiso(roles, "ver_solicitudes_donacion");
-  const puedeEditar = tienePermiso(roles, "administrar_solicitudes_donaciones");
+  const puedeEditar =
+    Boolean(esSuperAdmin) ||
+    tienePermiso(roles, "administrar_solicitudes_donaciones");
   const { idioma } = useIdioma();
   const locale = idioma === "en" ? enUS : es;
-  const tTitulo = useTraducir("Fechas de recepción de donaciones");
+  const tTitulo = useTraducir("Gestión de fechas y horarios de donaciones");
   const tSub = useTraducir(
-    "Configure los días y horarios en los que el centro de acopio puede recibir donaciones entregadas personalmente. La recolección se coordina de forma individual y no usa este calendario.",
+    "Configure la disponibilidad de fechas y horarios para recibir donaciones entregadas personalmente. Los días habilitados se identifican con un círculo negro en el calendario. La recolección se coordina de forma individual y no usa este calendario.",
   );
 
   const [fechas, setFechas] = useState([]);
-  const [status, setStatus] = useState("idle");
   const [cargando, setCargando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState(null);
@@ -69,26 +70,34 @@ export default function AdminFechasRecepcionDonacion() {
   const [horarios, setHorarios] = useState([]);
   const [observaciones, setObservaciones] = useState("");
   const [nuevoHorarioPersonalizado, setNuevoHorarioPersonalizado] = useState("");
-
-  const hoy = startOfDay(new Date());
-  const { showLoading, loadingMessage } = useAdminPageGate(
-    "/admin/donaciones/fechas-recepcion",
-    status !== "idle",
+  const [zonaHoraria, setZonaHoraria] = useState(ZONA_HORARIA_PREDETERMINADA);
+  const hoyIso = useMemo(() => obtenerHoyIso(zonaHoraria), [zonaHoraria]);
+  const hoy = useMemo(
+    () => parseIsoLocal(hoyIso) || startOfDay(new Date()),
+    [hoyIso],
   );
 
+  useEffect(() => {
+    let vivo = true;
+    obtenerConfigFechasRecepcion()
+      .then((config) => {
+        if (!vivo || !config?.zonaHoraria) return;
+        setZonaHoraria(config.zonaHoraria);
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
   const cargarFechas = useCallback(async () => {
-    if (!puedeVer) {
-      setStatus("success");
-      return;
-    }
+    if (!puedeVer) return;
     setCargando(true);
     setError(null);
     try {
       setFechas(await obtenerFechasRecepcionAdmin());
-      setStatus("success");
     } catch (err) {
       setFechas([]);
-      setStatus("error");
       setError(
         err?.response?.data?.message ||
           err?.message ||
@@ -273,26 +282,15 @@ export default function AdminFechasRecepcionDonacion() {
     }
   };
 
-  if (showLoading) {
-    return (
-      <AdminLayout>
-        <AdminPageGate showLoading message={loadingMessage} />
-      </AdminLayout>
-    );
-  }
-
   if (!puedeVer) {
     return (
-      <AdminLayout>
-        <p className="text-slate-600">
-          <ST>No tiene permiso para ver las fechas de recepción de donaciones.</ST>
-        </p>
-      </AdminLayout>
+      <p className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900" role="alert">
+        <ST>No tenés permiso para ver las fechas de donaciones.</ST>
+      </p>
     );
   }
 
   return (
-    <AdminLayout>
       <div className="space-y-6">
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -326,6 +324,14 @@ export default function AdminFechasRecepcionDonacion() {
                 <span className="capitalize">{format(mesActual, "MMMM yyyy", { locale })}</span>
               </span>
             </div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <Clock className="size-3.5" />
+              <span>
+                <ST>Zona:</ST> <span className="font-mono font-medium">{zonaHoraria}</span>
+                {" · "}
+                <ST>Hoy:</ST> <span className="font-mono font-bold text-slate-800">{hoyIso}</span>
+              </span>
+            </div>
             <div className="flex items-center gap-1.5 ml-auto text-xs text-slate-500">
               <Info className="size-4" />
               <span>
@@ -354,7 +360,7 @@ export default function AdminFechasRecepcionDonacion() {
             <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <CalendarDays className="size-5 text-slate-700" />
-                <ST>Disponibilidad de recepción</ST>
+                <ST>Calendario de donaciones</ST>
               </h2>
               <span className="text-xs text-slate-500 font-medium capitalize">
                 {format(mesActual, "MMMM yyyy", { locale })}
@@ -692,6 +698,13 @@ export default function AdminFechasRecepcionDonacion() {
           )}
         </div>
       </div>
+  );
+}
+
+export default function AdminFechasRecepcionDonacion() {
+  return (
+    <AdminLayout>
+      <GestionFechasDonaciones />
     </AdminLayout>
   );
 }

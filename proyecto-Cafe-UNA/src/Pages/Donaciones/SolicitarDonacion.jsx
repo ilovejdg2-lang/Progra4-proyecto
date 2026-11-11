@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useRouterState } from "@tanstack/react-router";
 import { Package, UploadCloud, X } from "lucide-react";
-import { format, isBefore, startOfDay } from "date-fns";
+import { format } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import BackToHomeLink from "../../Components/BackToHomeLink/BackToHomeLink";
 import AvisoSedeFinca from "../../Components/AvisoSedeFinca/AvisoSedeFinca";
@@ -28,6 +28,7 @@ import { getActiveSessionUser } from "../../services/sessionService";
 import { consultarCedulaDetallada } from "../../services/cedulaService";
 import {
   enviarSolicitudDonacion,
+  obtenerConfigFechasRecepcion,
   obtenerFechasRecepcionDisponibles,
   obtenerNecesidadesPublicas,
 } from "../../services/donacionesService";
@@ -61,6 +62,7 @@ import {
   placeholderIdentificacion,
   validarIdentificacion,
 } from "../../lib/identificacionPersona";
+import { obtenerHoyIso, ZONA_HORARIA_PREDETERMINADA } from "../../lib/zonaHoraria";
 import "./SolicitarDonacion.css";
 
 /** Respaldo si no carga el catálogo de Ajustes. */
@@ -75,7 +77,7 @@ const MAX_DESCRIPCION = 500;
 const MAX_FOTOS = 5;
 const MAX_FOTO_BYTES = 10 * 1024 * 1024;
 const TIPOS_FOTO = new Set(["image/jpeg", "image/png", "image/webp"]);
-const DONACION_LOGIN_REDIRECT = "/donaciones/solicitar";
+const DONACION_LOGIN_REDIRECT = "/donaciones";
 
 const FORM_INICIAL = {
   tipoDonante: "persona",
@@ -106,18 +108,6 @@ const FORM_INICIAL = {
   declaraOrigen: false,
   aceptaPrivacidad: false,
 };
-
-function isoLocal(date) {
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function hoyIso() {
-  return isoLocal(new Date());
-}
 
 function parseIsoLocal(valor) {
   if (!valor) return null;
@@ -186,12 +176,12 @@ function leerNecesidadDesdeUrl(params, search) {
   return "";
 }
 
-function crearFormularioInicial(user, necesidadId = "") {
+function crearFormularioInicial(user, necesidadId = "", hoy = obtenerHoyIso()) {
   return {
     ...FORM_INICIAL,
     correo: String(user?.email || user?.correo || "").trim().toLowerCase(),
     categoriaId: necesidadId ? String(necesidadId) : "",
-    fechaSolicitud: hoyIso(),
+    fechaSolicitud: hoy,
   };
 }
 
@@ -251,6 +241,8 @@ export default function SolicitarDonacion() {
   const [avisoCedula, setAvisoCedula] = useState(null);
   const [dropActivo, setDropActivo] = useState(false);
   const [fotoVista, setFotoVista] = useState(null);
+  const [zonaHoraria, setZonaHoraria] = useState(ZONA_HORARIA_PREDETERMINADA);
+  const hoyIso = useMemo(() => obtenerHoyIso(zonaHoraria), [zonaHoraria]);
   const [fechasRecepcion, setFechasRecepcion] = useState([]);
   const [cargandoFechasRecepcion, setCargandoFechasRecepcion] = useState(false);
   const [sedeFinca, setSedeFinca] = useState(() => sedeDesdeHomeLocation(null));
@@ -330,6 +322,25 @@ export default function SolicitarDonacion() {
 
   useEffect(() => {
     let vivo = true;
+    obtenerConfigFechasRecepcion()
+      .then((config) => {
+        if (!vivo || !config?.zonaHoraria) return;
+        setZonaHoraria(config.zonaHoraria);
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setFormulario((prev) =>
+      prev.fechaSolicitud === hoyIso ? prev : { ...prev, fechaSolicitud: hoyIso },
+    );
+  }, [hoyIso]);
+
+  useEffect(() => {
+    let vivo = true;
     setCargandoFechasRecepcion(true);
     obtenerFechasRecepcionDisponibles()
       .then((rows) => {
@@ -360,8 +371,8 @@ export default function SolicitarDonacion() {
   const fechasRecepcionDates = useMemo(() => {
     const list = [];
     for (const [iso] of fechasRecepcionMap) {
-      const [y, m, d] = iso.split("-").map(Number);
-      if (y && m && d) list.push(new Date(y, m - 1, d));
+      const parsed = parseIsoLocal(iso);
+      if (parsed) list.push(parsed);
     }
     return list;
   }, [fechasRecepcionMap]);
@@ -377,10 +388,11 @@ export default function SolicitarDonacion() {
 
   const isFechaRecepcionDisabled = useCallback(
     (date) => {
-      if (isBefore(startOfDay(date), startOfDay(new Date()))) return true;
-      return !fechasRecepcionMap.has(format(date, "yyyy-MM-dd"));
+      const iso = format(date, "yyyy-MM-dd");
+      if (iso < hoyIso) return true;
+      return !fechasRecepcionMap.has(iso);
     },
-    [fechasRecepcionMap],
+    [fechasRecepcionMap, hoyIso],
   );
 
   useEffect(() => {
@@ -710,6 +722,8 @@ export default function SolicitarDonacion() {
     if (pideEntrega) {
       if (!formulario.fechaEntrega) {
         nuevos.fechaEntrega = "Elegí un día habilitado para entregar la donación";
+      } else if (formulario.fechaEntrega < hoyIso) {
+        nuevos.fechaEntrega = "No se permiten fechas pasadas. Elegí una fecha vigente.";
       } else if (!fechasRecepcionMap.has(formulario.fechaEntrega)) {
         nuevos.fechaEntrega = "Esa fecha no está habilitada para recibir donaciones.";
       }
@@ -794,7 +808,7 @@ export default function SolicitarDonacion() {
         materialId: Number(formulario.materialId),
         tipo: tipoFinal,
         descripcion: formulario.descripcion.trim(),
-        fechaPropuesta: pideEntrega ? formulario.fechaEntrega : hoyIso(),
+        fechaPropuesta: pideEntrega ? formulario.fechaEntrega : hoyIso,
         detalles: {
           donanteNombre: nombreCompletoDonante(formulario),
           tipoDonante: formulario.tipoDonante,
@@ -819,7 +833,7 @@ export default function SolicitarDonacion() {
           horarios: formulario.horaEntrega ? [formulario.horaEntrega] : [],
           horaEntrega: formulario.horaEntrega,
           fechaEntrega: formulario.fechaEntrega,
-          fechaSolicitud: hoyIso(),
+          fechaSolicitud: hoyIso,
           valorEstimado: formulario.valorEstimado.trim(),
           fotos: await Promise.all(
             fotos.map(async (item) => ({
@@ -1464,11 +1478,7 @@ export default function SolicitarDonacion() {
                           Por ahora no hay días habilitados para entregar donaciones en la Finca Experimental Santa Lucía. Podés solicitar recolección o consultar más adelante.
                         </FormPlaceholder>
                       ) : (
-                        <div className="pub-field">
-                          <span id="donacion-dia-entrega" className="pub-field__label">
-                            <ST>Día de entrega</ST>
-                            <span className="pub-field__req" aria-hidden="true"> *</span>
-                          </span>
+                        <div className="donacion-fecha">
                           <div>
                             <CalendarPicker
                               id="donacion-fechaEntrega"
@@ -1491,41 +1501,47 @@ export default function SolicitarDonacion() {
                               invalid={Boolean(errores.fechaEntrega)}
                               describedBy={errores.fechaEntrega ? "donacion-fecha-error" : undefined}
                             />
+                            <FieldError id="donacion-fecha-error">{errores.fechaEntrega}</FieldError>
                           </div>
-                          <FieldError id="donacion-fecha-error">{errores.fechaEntrega}</FieldError>
-                        </div>
-                      )}
 
-                      {!formulario.fechaEntrega ? (
-                        <FormPlaceholder title="Elegí una fecha en el calendario">
-                          Al elegir un día habilitado vas a ver los horarios de recepción de ese día.
-                        </FormPlaceholder>
-                      ) : horariosRecepcionParaFecha.length === 0 ? (
-                        <FormPlaceholder title="Sin horarios para esta fecha">
-                          Elegí otro día habilitado para ver los horarios de recepción.
-                        </FormPlaceholder>
-                      ) : (
-                        <ChoiceGroup
-                          legend="Horario de recepción"
-                          required
-                          slots
-                          error={errores.horaEntrega}
-                        >
-                          {horariosRecepcionParaFecha.map((horarioStr) => (
-                            <ChoiceCard
-                              key={horarioStr}
-                              variant="slot"
-                              name="horaEntrega"
-                              value={horarioStr}
-                              checked={formulario.horaEntrega === horarioStr}
-                              onChange={() => {
-                                setFormulario((prev) => ({ ...prev, horaEntrega: horarioStr }));
-                                limpiarError("horaEntrega");
-                              }}
-                              title={horarioStr}
-                            />
-                          ))}
-                        </ChoiceGroup>
+                          <div className="donacion-fecha__horarios">
+                            {!formulario.fechaEntrega ? (
+                              <FormPlaceholder title="Elegí una fecha en el calendario">
+                                Al elegir un día habilitado vas a ver los horarios de recepción de esa fecha.
+                              </FormPlaceholder>
+                            ) : horariosRecepcionParaFecha.length === 0 ? (
+                              <FormPlaceholder title="Sin horarios para esta fecha">
+                                Elegí otro día habilitado para ver los horarios de recepción.
+                              </FormPlaceholder>
+                            ) : (
+                              <ChoiceGroup
+                                legend={
+                                  fechaEntregaSeleccionada
+                                    ? `Horarios para el ${format(fechaEntregaSeleccionada, "d 'de' MMMM", { locale: localeCalendario })}`
+                                    : "Horario de recepción"
+                                }
+                                required
+                                slots
+                                error={errores.horaEntrega}
+                              >
+                                {horariosRecepcionParaFecha.map((horarioStr) => (
+                                  <ChoiceCard
+                                    key={horarioStr}
+                                    variant="slot"
+                                    name="horaEntrega"
+                                    value={horarioStr}
+                                    checked={formulario.horaEntrega === horarioStr}
+                                    onChange={() => {
+                                      setFormulario((prev) => ({ ...prev, horaEntrega: horarioStr }));
+                                      limpiarError("horaEntrega");
+                                    }}
+                                    title={horarioStr}
+                                  />
+                                ))}
+                              </ChoiceGroup>
+                            )}
+                          </div>
+                        </div>
                       )}
                     </>
                   ) : null}
@@ -1535,21 +1551,6 @@ export default function SolicitarDonacion() {
                   title="Declaración y confirmación"
                   hint="Revisá la información y aceptá los términos para completar tu solicitud."
                 >
-                  <FormGrid>
-                    <Field id="donacion-fechaSolicitud" label="Fecha de la solicitud">
-                      {(c) => (
-                        <input
-                          {...c}
-                          className="pub-input"
-                          type="date"
-                          name="fechaSolicitud"
-                          value={formulario.fechaSolicitud}
-                          readOnly
-                          disabled
-                        />
-                      )}
-                    </Field>
-                  </FormGrid>
                   <ChoiceGroup label="Declaraciones" type="checkbox" columns={1}>
                     <div className="donacion-declaracion">
                       <ChoiceCard

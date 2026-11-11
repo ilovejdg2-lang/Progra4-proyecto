@@ -134,3 +134,24 @@
   flex-direction: column;
   gap: 6px;
 }
+
+/* Calendario a la izquierda y horarios a la derecha, igual que visitas */
+.donacion-fecha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 860px) {
+  .donacion-fecha {
+    grid-template-columns: 356px minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.donacion-fecha__horarios {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "dev:mock": "node tools/design-mock/dev.mjs",
-    "build": "node scripts/generate-redirects.mjs && vite build",
+    "build": "node scripts/generate-redirects.mjs && node scripts/generate-sitemap.mjs && vite build",
+    "seo:sitemap": "node scripts/generate-sitemap.mjs",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",

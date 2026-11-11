@@ -48,7 +48,7 @@ import {
   RevisionSolicitudEliminacion,
 } from "./RevisionSolicitudesAdmin";
 
-const ESTADOS = [...ESTADOS_PROPUESTA, "Eliminada"];
+const ESTADOS = [...ESTADOS_PROPUESTA];
 const CONFIRMACIONES = {
   aprobar: {
     titulo: "Confirmar aprobación",
@@ -107,7 +107,6 @@ const colorEstado = {
   "En revisión": "text-sky-600",
   Aprobada: "text-emerald-600",
   Rechazada: "text-rose-600",
-  Eliminada: "text-slate-400",
 };
 
 function BadgeEstado({ estado }) {
@@ -191,7 +190,8 @@ export function PropuestasAdminContent({ propuestaId = "" }) {
     setError("");
     try {
       const respuesta = await obtenerPropuestasAdmin({ page: 1, pageSize: 50 });
-      setItems(Array.isArray(respuesta?.data) ? respuesta.data : []);
+      const filas = Array.isArray(respuesta?.data) ? respuesta.data : [];
+      setItems(filas.filter((item) => item?.estado !== "Eliminada"));
     } catch (err) {
       setItems([]);
       setError(err?.message || "No se pudieron cargar las propuestas.");
