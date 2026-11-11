@@ -1,14 +1,20 @@
+import { useState } from "react";
 import { Clock, ExternalLink, MapPin, Phone, Store } from "lucide-react";
 
+import { ImageLightbox } from "../../Components/ImageLightbox/ImageLightbox";
 import { ST } from "../../Components/T/ST";
+import { useTraducir } from "../../hooks/useTraducir";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 import { esUrlGoogleMaps } from "../../lib/puntoVentaPresentacion";
 import { HorarioCompra } from "../ProductDetail/HorarioCompra";
 
 export function CheckoutPuntoDetalle({ punto }) {
+  const [fotoActiva, setFotoActiva] = useState(-1);
+  const tAmpliar = useTraducir("Ver imagen completa");
   const fotos = [punto.imagenUrl, ...(Array.isArray(punto.imagenes) ? punto.imagenes : [])].filter(Boolean);
-  const principal = fotos[0] || "";
-  const secundarias = fotos.slice(1);
+  const urls = fotos.map((url) => normalizeImageUrl(url));
+  const principal = urls[0] || "";
+  const secundarias = urls.slice(1);
   const mapsUrl = esUrlGoogleMaps(punto.mapsUrl) ? String(punto.mapsUrl).trim() : "";
   const telefono = String(punto.telefono || "").trim();
   const hayDatos = Boolean(punto.direccion || mapsUrl || telefono || punto.horario);
@@ -30,11 +36,26 @@ export function CheckoutPuntoDetalle({ punto }) {
         <div className={`checkout-pos-detail__layout${principal ? "" : " is-text-only"}`}>
           {principal ? (
             <div>
-              <img className="checkout-pos-detail__hero" src={normalizeImageUrl(principal)} alt="" />
+              <button
+                type="button"
+                className="checkout-pos-detail__hero-btn"
+                onClick={() => setFotoActiva(0)}
+                aria-label={tAmpliar}
+              >
+                <img className="checkout-pos-detail__hero" src={principal} alt="" />
+              </button>
               {secundarias.length ? (
                 <div className="checkout-pos-detail__thumbs">
-                  {secundarias.map((url) => (
-                    <img key={url} src={normalizeImageUrl(url)} alt="" />
+                  {secundarias.map((url, i) => (
+                    <button
+                      key={url}
+                      type="button"
+                      className="checkout-pos-detail__thumb-btn"
+                      onClick={() => setFotoActiva(i + 1)}
+                      aria-label={tAmpliar}
+                    >
+                      <img src={url} alt="" />
+                    </button>
                   ))}
                 </div>
               ) : null}
@@ -85,6 +106,13 @@ export function CheckoutPuntoDetalle({ punto }) {
         ubicacionId={punto.id}
         titulo="Fechas sin retiro de pedidos"
         variante="incrustada"
+      />
+      <ImageLightbox
+        images={urls}
+        index={fotoActiva}
+        onClose={() => setFotoActiva(-1)}
+        onIndexChange={setFotoActiva}
+        alt={punto.name || ""}
       />
     </section>
   );

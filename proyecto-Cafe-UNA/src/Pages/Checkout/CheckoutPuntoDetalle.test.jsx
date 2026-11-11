@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../ProductDetail/HorarioCompra", () => ({
@@ -41,6 +42,20 @@ describe("CheckoutPuntoDetalle", () => {
     expect(container.querySelectorAll("img")).toHaveLength(3);
     expect(screen.getByTestId("horario-retiro").textContent).toBe("Fechas sin retiro de pedidos");
     expect(screen.getByTestId("horario-retiro").getAttribute("data-ubicacion")).toBe("2");
+  });
+
+  it("abre la imagen principal en lightbox al dar click", async () => {
+    const user = userEvent.setup();
+    render(<CheckoutPuntoDetalle punto={punto()} />);
+
+    const botones = screen.getAllByRole("button", { name: "Ver imagen completa" });
+    expect(botones).toHaveLength(3);
+    await user.click(botones[0]);
+    expect(screen.getByRole("dialog", { name: "Vista ampliada" })).toBeTruthy();
+    expect(screen.getByAltText("FUNDA-UNA")).toHaveAttribute(
+      "src",
+      "/api/inventario/ubicaciones/imagenes/principal.jpg",
+    );
   });
 
   it("omite la galería y los datos que no existen", () => {

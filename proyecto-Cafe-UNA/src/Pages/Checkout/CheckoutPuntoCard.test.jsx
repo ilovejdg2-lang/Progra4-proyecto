@@ -49,7 +49,7 @@ describe("CheckoutPuntoCard", () => {
     );
   });
 
-  it("selecciona la tarjeta y no la selección al abrir Maps", async () => {
+  it("selecciona la tarjeta y no la selección al abrir Maps ni la foto", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     render(
@@ -68,6 +68,11 @@ describe("CheckoutPuntoCard", () => {
     onSelect.mockClear();
     await user.click(screen.getByRole("link", { name: /ver en maps/i }));
     expect(onSelect).not.toHaveBeenCalled();
+
+    onSelect.mockClear();
+    await user.click(screen.getByRole("button", { name: "Ver imagen completa" }));
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog", { name: "Vista ampliada" })).toBeTruthy();
   });
 
   it("oculta el enlace si la URL no es de Maps y usa el recuadro sin foto", () => {

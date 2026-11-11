@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Eye, PackageCheck, Receipt, RotateCcw, Truck, X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft, Check, Eye, PackageCheck, Receipt, RotateCcw, Truck, X } from "lucide-react";
 
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AdminPageGate } from "../../../Components/AdminPageGate/AdminPageGate";
@@ -314,6 +315,15 @@ export default function HistorialVentas({
     <AdminPageGate showLoading={showLoading} message={loadingMessage}>
       <AdminLayout>
         <div className="space-y-6">
+          {locationCode ? (
+            <Link
+              to="/admin/puntos-venta"
+              className="inline-flex min-h-[var(--control-height)] items-center gap-2 text-[length:var(--text-body)] font-semibold text-[var(--admin-text-muted)] no-underline transition-colors hover:text-[var(--admin-text-primary)]"
+            >
+              <ArrowLeft className="size-4 shrink-0" aria-hidden="true" />
+              <ST>Volver a puntos de venta</ST>
+            </Link>
+          ) : null}
           <AdminPageHeader
             title={
               <ST>

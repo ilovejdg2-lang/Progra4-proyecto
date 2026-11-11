@@ -74,18 +74,21 @@
   margin: 0;
   padding: 0;
   border: 1px solid var(--pub-line);
-  border-radius: 16px;
+  /* Gana al pill global de button { border-radius: 999px !important } */
+  border-radius: 12px !important;
   overflow: hidden;
   background: #fff;
   cursor: zoom-in;
+  aspect-ratio: 1 / 1;
 }
 
 .visita-antes__instructivo-img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   aspect-ratio: 1 / 1;
-  object-fit: cover;
+  object-fit: contain;
+  border-radius: 0;
 }
 
 .visita-antes__instructivo-cap {

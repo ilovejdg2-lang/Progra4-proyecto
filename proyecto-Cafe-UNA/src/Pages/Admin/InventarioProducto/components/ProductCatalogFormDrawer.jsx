@@ -419,7 +419,7 @@ export function ProductCatalogFormDrawer({
               />
             </label>
             </div>
-            <div className="grid gap-4 md:col-span-2 md:grid-cols-2">
+            <div className="grid items-start gap-4 md:col-span-2 md:grid-cols-2">
               <CategoriaCampo
                 tipo={TIPO_CATEGORIA_PRODUCTO}
                 value={form.categoria || ""}

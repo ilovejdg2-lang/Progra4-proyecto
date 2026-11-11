@@ -14,6 +14,7 @@ import { HorarioCompra } from "../ProductDetail/HorarioCompra";
 import { useTraducir } from "../../hooks/useTraducir";
 import { rolesDeUsuario, tienePermiso } from "../../lib/permisos";
 import { t } from "../../lib/t";
+import { referenciaSinpeCompra } from "../../lib/referenciaSinpe";
 import { obtenerCompraPorId, obtenerMisCompras } from "../../services/comprasService";
 import { obtenerFooter } from "../../services/informacionService";
 import { getActiveSessionUser, SESSION_UPDATED_EVENT } from "../../services/sessionService";
@@ -650,6 +651,12 @@ export function HistorialComprasContent({ variant = "standalone" }) {
                   <dt className="shrink-0 text-slate-500"><ST>Método</ST></dt>
                   <dd className="min-w-0 break-words sm:text-right">{detalle.metodoPago}</dd>
                 </div>
+                {referenciaSinpeCompra(detalle) ? (
+                  <div className="flex flex-col gap-0.5 border-b border-slate-100 py-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                    <dt className="shrink-0 text-slate-500"><ST>Detalle SINPE</ST></dt>
+                    <dd className="min-w-0 break-words font-semibold sm:text-right">{referenciaSinpeCompra(detalle)}</dd>
+                  </div>
+                ) : null}
                 <div className="flex flex-col gap-0.5 border-b border-slate-100 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                   <dt className="shrink-0 text-slate-500"><ST>Estado</ST></dt>
                   <dd>

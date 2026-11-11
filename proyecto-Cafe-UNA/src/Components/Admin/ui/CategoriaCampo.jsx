@@ -189,8 +189,8 @@ export function CategoriaCampo({
   }, [registros, extras, value]);
 
   return (
-    <div className="grid gap-2">
-      <div className="grid gap-2 text-sm font-medium text-slate-700">
+    <div className="grid content-start gap-2 self-start">
+      <div className="grid content-start gap-2 text-sm font-medium text-slate-700">
         <ST>{label}</ST>
         <UiSelect
           ariaLabel={label}

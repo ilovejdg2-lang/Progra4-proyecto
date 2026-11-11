@@ -12,6 +12,7 @@ const CACHE_KEY_MESSAGES = {
   visitas: 'Cargando visitas...',
   donaciones: 'Cargando donaciones...',
   productores: 'Cargando productores...',
+  repositorio: 'Cargando biblioteca digital...',
   'perfil-propuestas': 'Cargando propuestas...',
   checkout: 'Cargando checkout...',
   login: 'Cargando...',
@@ -26,7 +27,7 @@ function msg(es) {
 export function getLoadingMessageForCacheKey(cacheKey) {
   if (!cacheKey) return msg('Cargando página...');
   if (cacheKey.startsWith('admin:')) {
-    return getLoadingMessageForPathname(cacheKey.slice('admin:'.length) || '/admin');
+    return msg('Cargando panel administrativo...');
   }
   return msg(CACHE_KEY_MESSAGES[cacheKey] ?? 'Cargando página...');
 }
@@ -46,8 +47,9 @@ export function getLoadingMessageForPathname(pathname = normalizePathname()) {
   }
   if (path.startsWith('/voluntariado')) return msg(CACHE_KEY_MESSAGES.voluntariado);
   if (path.startsWith('/visitas') || path === '/solicitar-visita') return msg(CACHE_KEY_MESSAGES.visitas);
-  if (path.startsWith('/donaciones')) return msg('Cargando donaciones...');
+  if (path.startsWith('/donaciones')) return msg(CACHE_KEY_MESSAGES.donaciones);
   if (path.startsWith('/productores')) return msg(CACHE_KEY_MESSAGES.productores);
+  if (path === '/repositorio' || path === '/documentos') return msg(CACHE_KEY_MESSAGES.repositorio);
   if (path.startsWith('/perfil/propuestas')) return msg(CACHE_KEY_MESSAGES['perfil-propuestas']);
   if (path === '/checkout') return msg(CACHE_KEY_MESSAGES.checkout);
   if (path === '/login') return msg(CACHE_KEY_MESSAGES.login);

@@ -56,8 +56,11 @@ describe("seo helpers", () => {
     expect(resolveSeoForPath("/checkout").robots).toBe("noindex,nofollow");
   });
 
-  it("detects product detail ids", () => {
+  it("detects product detail slugs", () => {
     expect(matchProductDetailPath("/productos/42")).toBe("42");
+    expect(matchProductDetailPath("/productos/cafe-molido-tueste-medio")).toBe(
+      "cafe-molido-tueste-medio",
+    );
     expect(matchProductDetailPath("/productos")).toBeNull();
   });
 
@@ -71,7 +74,7 @@ describe("seo helpers", () => {
 
   it("builds product JSON-LD without inventing prices when missing", () => {
     const json = buildProductJsonLd(
-      { nombre: "Café prueba", descripcion: "Tueste", precioConIVA: 2500 },
+      { nombre: "Café en grano", descripcion: "Tueste", precioConIVA: 2500 },
       `${SITE_ORIGIN}/productos/1`,
     );
     expect(json["@type"]).toBe("Product");

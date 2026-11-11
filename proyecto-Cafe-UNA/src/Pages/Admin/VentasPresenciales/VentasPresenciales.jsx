@@ -67,7 +67,7 @@ function FilaResumen({ etiqueta, children }) {
   );
 }
 
-const METODOS_PAGO_RESPALDO = ["Efectivo", "Tarjeta", "SINPE Móvil", "Transferencia"];
+const METODOS_PAGO_RESPALDO = ["Efectivo", "SINPE Móvil", "Transferencia"];
 
 export default function AdminVentasPresenciales() {
   const user = getActiveSessionUser();

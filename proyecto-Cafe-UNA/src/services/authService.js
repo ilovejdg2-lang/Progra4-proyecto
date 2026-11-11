@@ -53,6 +53,8 @@ export function puedeComprar(user) {
 }
 
 const REGISTRO_CLIENTE_INTENT_KEY = "registroClienteDesdeCheckout";
+const POST_LOGIN_REDIRECT_KEY = "postLoginRedirect";
+const REGISTRO_CLIENTE_CORREO_KEY = "registroClienteCorreo";
 
 /** Marca que la persona llegó al registro porque quiere pagar el carrito. */
 export function marcarIntentRegistroCliente() {
@@ -67,11 +69,25 @@ export function marcarIntentRegistroCliente() {
 export function puedeAbrirRegistroCliente() {
   try {
     if (sessionStorage.getItem(REGISTRO_CLIENTE_INTENT_KEY) === "1") return true;
-    if (sessionStorage.getItem("registroClienteCorreo")) return true;
+    if (sessionStorage.getItem(REGISTRO_CLIENTE_CORREO_KEY)) return true;
   } catch {
     /* ignore */
   }
   return false;
+}
+
+/**
+ * Limpia redirects e intents de compra/registro al cerrar sesión o cambiar de cuenta.
+ * Evita que la siguiente persona herede /checkout o el formulario de cliente.
+ */
+export function limpiarEstadoCompraSesion() {
+  try {
+    sessionStorage.removeItem(REGISTRO_CLIENTE_INTENT_KEY);
+    sessionStorage.removeItem(REGISTRO_CLIENTE_CORREO_KEY);
+    sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
+  } catch {
+    /* ignore */
+  }
 }
 
 export function limpiarIntentRegistroCliente() {
@@ -94,9 +110,9 @@ export function resolverRedirectTrasLogin(user, redirectPreferido = "/") {
   }
   if (!puedeAbrirRegistroCliente()) return destino;
   try {
-    if (!sessionStorage.getItem("postLoginRedirect")) {
+    if (!sessionStorage.getItem(POST_LOGIN_REDIRECT_KEY)) {
       sessionStorage.setItem(
-        "postLoginRedirect",
+        POST_LOGIN_REDIRECT_KEY,
         destino === "/registro" ? "/checkout" : destino,
       );
     }

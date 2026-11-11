@@ -86,6 +86,9 @@ const Checkout = () => {
   const tComprobante = useTraducir('Comprobante de pago');
   const tSinpe = useTraducir('SINPE Móvil');
   const tSinpeHint = useTraducir('Pagá a este número.');
+  const tSinpeDetalle = useTraducir(
+    'En el detalle del SINPE Móvil poné cafeuna seguido del número de tu compra (ejemplo: cafeuna1234). Al confirmar el pedido te mostramos tu código exacto.',
+  );
   const tCopiarSinpe = useTraducir('Copiar número');
   const tSinpeCopiado = useTraducir('Número copiado');
   const tComprobanteCta = useTraducir('Arrastrá o seleccioná una imagen del comprobante');
@@ -394,6 +397,7 @@ const Checkout = () => {
       quitarComprobante();
       window.dispatchEvent(new CustomEvent('order-confirmed', { detail: { total: totalConIva } }));
       setCompraConfirmada({
+        id: compra?.id ?? null,
         numero: compra?.numero || '',
         fecha: compra?.fecha || new Date().toISOString(),
         estado: compra?.estado || 'Pendiente',
@@ -433,6 +437,7 @@ const Checkout = () => {
       <CheckoutConfirmacion
         compra={compraConfirmada}
         logoUrl={logoUrl}
+        sinpe={sinpe}
         descargando={descargandoPdf}
         onDescargar={handleDescargarResumen}
         onRastrear={() => navigate({ to: rutaMisCompras(getCurrentUser()) })}
@@ -561,6 +566,7 @@ const Checkout = () => {
                     <span>{sinpeCopiado ? tSinpeCopiado : tCopiarSinpe}</span>
                   </button>
                 </div>
+                <p className="checkout-sinpe__detalle">{tSinpeDetalle}</p>
               </div>
             ) : null}
 

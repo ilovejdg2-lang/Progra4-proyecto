@@ -1,6 +1,5 @@
 import { guardarIdioma } from "../../lib/idioma";
 import { useIdioma } from "../../lib/useIdioma";
-import { clearInformacionHttpCache } from "../../services/informacionService";
 import "./LanguageSwitcher.css";
 
 /**
@@ -10,11 +9,6 @@ export function LanguageSwitcher({ className = "", compact = false }) {
   const { idioma } = useIdioma();
 
   const elegir = (lang) => {
-    try {
-      clearInformacionHttpCache();
-    } catch {
-      /* ignore */
-    }
     guardarIdioma(lang);
   };
 
