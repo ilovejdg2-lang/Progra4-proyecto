@@ -53,8 +53,38 @@ function escapeXml(value) {
     .replaceAll("'", "&apos;");
 }
 
-function urlEntry(loc) {
-  return `  <url>\n    <loc>${escapeXml(loc)}</loc>\n  </url>`;
+function pathFromLoc(loc) {
+  try {
+    const u = new URL(loc);
+    return u.pathname === "/" ? "/" : u.pathname.replace(/\/$/, "") || "/";
+  } catch {
+    return "/";
+  }
+}
+
+function priorityForPath(path) {
+  if (path === "/") return "1.0";
+  if (path === "/productos" || path.startsWith("/productos/")) return "0.9";
+  if (path === "/AboutUs" || path === "/productores") return "0.8";
+  return "0.7";
+}
+
+function changefreqForPath(path) {
+  if (path === "/") return "daily";
+  if (path === "/productos" || path.startsWith("/productos/")) return "weekly";
+  return "monthly";
+}
+
+function urlEntry(loc, lastmod) {
+  const path = pathFromLoc(loc);
+  return [
+    "  <url>",
+    `    <loc>${escapeXml(loc)}</loc>`,
+    `    <lastmod>${escapeXml(lastmod)}</lastmod>`,
+    `    <changefreq>${changefreqForPath(path)}</changefreq>`,
+    `    <priority>${priorityForPath(path)}</priority>`,
+    "  </url>",
+  ].join("\n");
 }
 
 async function fetchProductPaths(apiBase) {
@@ -102,9 +132,11 @@ for (const path of [...STATIC_PATHS, ...productPaths]) {
   locs.push(loc);
 }
 
+const lastmod = new Date().toISOString().slice(0, 10);
+
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${locs.map(urlEntry).join("\n")}
+${locs.map((loc) => urlEntry(loc, lastmod)).join("\n")}
 </urlset>
 `;
 

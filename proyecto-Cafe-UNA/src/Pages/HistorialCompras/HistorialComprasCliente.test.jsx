@@ -6,13 +6,21 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   obtenerCompraPorId: vi.fn(),
   obtenerMisCompras: vi.fn(),
+  listarCierresCompra: vi.fn(),
+  obtenerReglasHorario: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }) => <a>{children}</a>,
   useNavigate: () => mocks.navigate,
 }));
-vi.mock("lucide-react", () => ({ ArrowLeft: () => null, Eye: () => null, X: () => null }));
+vi.mock("lucide-react", () => ({
+  ArrowLeft: () => null,
+  ChevronDown: () => null,
+  Clock: () => null,
+  Eye: () => null,
+  X: () => null,
+}));
 vi.mock("../../Components/Admin/ui/AdminModal", () => ({
   AdminModal: ({ children }) => <div>{children}</div>,
   AdminModalBody: ({ children }) => <div>{children}</div>,
@@ -29,6 +37,10 @@ vi.mock("../../hooks/useSesionProtegida", () => ({ useSesionProtegida: () => {} 
 vi.mock("../../hooks/useTraducir", () => ({ useTraducir: (text) => text }));
 vi.mock("../../lib/permisos", () => ({ rolesDeUsuario: () => ["Cliente"], tienePermiso: () => true }));
 vi.mock("../../lib/t", () => ({ t: (text) => text }));
+vi.mock("../../services/ajustesService", () => ({
+  listarCierresCompra: (...args) => mocks.listarCierresCompra(...args),
+  obtenerReglasHorario: (...args) => mocks.obtenerReglasHorario(...args),
+}));
 vi.mock("../../services/comprasService", () => ({
   obtenerCompraPorId: (...args) => mocks.obtenerCompraPorId(...args),
   obtenerMisCompras: (...args) => mocks.obtenerMisCompras(...args),
@@ -59,6 +71,12 @@ describe("HistorialComprasContent", () => {
     mocks.navigate.mockReset();
     mocks.obtenerCompraPorId.mockReset();
     mocks.obtenerMisCompras.mockReset();
+    mocks.listarCierresCompra.mockReset();
+    mocks.obtenerReglasHorario.mockReset();
+    mocks.listarCierresCompra.mockResolvedValue([]);
+    mocks.obtenerReglasHorario.mockResolvedValue({
+      mensaje: "Lunes a viernes de 8:00 a. m. a 5:00 p. m. Sábados y domingos no están disponibles.",
+    });
     mocks.getActiveSessionUser.mockImplementation(() => ({ id: "cliente-1", token: "jwt" }));
     mocks.obtenerMisCompras.mockResolvedValue({ data: [compra], totalPages: 1 });
   });
@@ -92,12 +110,44 @@ describe("HistorialComprasContent", () => {
     expect(screen.getByText("Café en grano")).toBeInTheDocument();
     expect(screen.getByText("Rastreo del pedido")).toBeInTheDocument();
     expect(screen.getByText("Tu pedido está en procesamiento.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Horario" })).toBeNull();
     expect(await screen.findByRole("link", { name: "contacto@cafeuna.cr" })).toHaveAttribute(
       "href",
       "mailto:contacto@cafeuna.cr",
     );
     expect(screen.getByText(/Si es incorrecto, comunicate con/i)).toBeInTheDocument();
     expect(mocks.obtenerCompraPorId).toHaveBeenCalledWith("10");
+  });
+
+  it("shows pickup hours and unavailable days once the order is accepted", async () => {
+    mocks.listarCierresCompra.mockResolvedValue([
+      { id: 8, fecha: "2099-04-15", nota: "Feriado nacional", ubicacionId: 4 },
+    ]);
+    mocks.obtenerCompraPorId.mockResolvedValue({
+      ...compra,
+      estado: "Aceptado",
+      metodoPago: "Comprobante",
+      subtotal: 5000,
+      impuestos: 650,
+      ubicacionId: 4,
+      ubicacionNombre: "FUNDA-UNA",
+      ubicacionHorario: "Lunes a viernes de 7:30 a. m. a 5:00 p. m.",
+      items: [],
+    });
+    render(<HistorialComprasContent />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Ver detalle/i }));
+    const horario = await screen.findByRole("button", { name: "Horario" });
+    expect(screen.queryByText("Lunes a viernes de 7:30 a. m. a 5:00 p. m.")).toBeNull();
+
+    fireEvent.click(horario);
+
+    expect(await screen.findByText("Lunes a viernes de 7:30 a. m. a 5:00 p. m.")).toBeInTheDocument();
+    expect(screen.getByText("FUNDA-UNA")).toBeInTheDocument();
+    expect(screen.getByText("Días sin disponibilidad")).toBeInTheDocument();
+    expect(screen.getByText("Feriado nacional")).toBeInTheDocument();
+    expect(screen.getByText(/15 de abril/i)).toBeInTheDocument();
+    expect(mocks.listarCierresCompra).toHaveBeenCalledWith(4);
   });
 
   it("shows rejected tracking with an X in the detail", async () => {

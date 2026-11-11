@@ -89,9 +89,17 @@ describe("seo helpers", () => {
     expect(document.head.querySelector('link[rel="canonical"]')?.href).toBe(
       `${SITE_ORIGIN}/productos`,
     );
-    expect(document.head.querySelector('meta[name="robots"]')?.content).toBe("index,follow");
+    expect(document.head.querySelector('meta[name="robots"]')?.content).toContain("index,follow");
+    expect(document.head.querySelector('meta[name="robots"]')?.content).toContain(
+      "max-image-preview:large",
+    );
     expect(document.head.querySelector('meta[property="og:url"]')?.content).toBe(
       `${SITE_ORIGIN}/productos`,
     );
+  });
+
+  it("keeps noindex without rich-result hints", () => {
+    applyDocumentSeo(resolveSeoForPath("/login"));
+    expect(document.head.querySelector('meta[name="robots"]')?.content).toBe("noindex,nofollow");
   });
 });

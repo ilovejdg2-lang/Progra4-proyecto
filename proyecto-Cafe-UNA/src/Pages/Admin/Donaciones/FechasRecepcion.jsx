@@ -412,27 +412,27 @@ export function GestionFechasDonaciones({ esSuperAdmin = false }) {
                   <p className="text-xs text-slate-500 font-mono mt-0.5">ISO: {isoSeleccionada}</p>
                 </div>
                 <div
-                  className={`rounded-xl border p-4 flex items-center justify-between ${
+                  className={`flex flex-wrap items-center gap-3 rounded-xl border p-4 ${
                     estaHabilitadaSeleccionada
                       ? "admin-role-selected"
                       : "border-slate-200 bg-slate-50 text-slate-700"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-[min(100%,14rem)] flex-1 items-center gap-3">
                     {estaHabilitadaSeleccionada ? (
-                      <CalendarCheck2 className="size-6 text-white" />
+                      <CalendarCheck2 className="size-6 shrink-0 text-[var(--admin-accent-coffee)]" aria-hidden="true" />
                     ) : (
-                      <CalendarX2 className="size-6 text-slate-400" />
+                      <CalendarX2 className="size-6 shrink-0 text-[var(--admin-text-decorative)]" aria-hidden="true" />
                     )}
-                    <div>
-                      <p className="font-bold text-sm">
+                    <div className="min-w-0">
+                      <p className="font-bold leading-snug text-[length:var(--text-subtitle)]">
                         {estaHabilitadaSeleccionada ? (
                           <ST>Fecha Habilitada</ST>
                         ) : (
                           <ST>Fecha No Habilitada</ST>
                         )}
                       </p>
-                      <p className={`text-xs ${estaHabilitadaSeleccionada ? "text-slate-200" : "text-slate-500"}`}>
+                      <p className="mt-0.5 leading-snug text-[length:var(--text-body)] text-[var(--admin-text-muted)]">
                         {estaHabilitadaSeleccionada ? (
                           <ST>Disponible para entregar donaciones</ST>
                         ) : (
@@ -446,11 +446,11 @@ export function GestionFechasDonaciones({ esSuperAdmin = false }) {
                       type="button"
                       onClick={handleToggleEstado}
                       disabled={guardando || esFechaPasada}
-                      className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition ${
+                      className={`ml-auto inline-flex h-[var(--control-height)] shrink-0 items-center justify-center whitespace-nowrap rounded-full px-4 text-[length:var(--text-body)] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus-ring)] disabled:cursor-not-allowed disabled:opacity-50 ${
                         estaHabilitadaSeleccionada
-                          ? "bg-white text-slate-950 hover:bg-slate-100"
+                          ? "border border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]"
                           : "admin-role-primary"
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      }`}
                     >
                       {guardando ? "..." : estaHabilitadaSeleccionada ? <ST>Deshabilitar</ST> : <ST>Habilitar ahora</ST>}
                     </button>

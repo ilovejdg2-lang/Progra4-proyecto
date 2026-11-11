@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { SelectFiltro } from "../../../Components/ui/SelectFiltro";
 import { nuevoUid } from "../../../lib/clientUid";
 
 const inputClass =
@@ -36,6 +37,11 @@ function stockDisponible(producto) {
 function nuevoItem() {
   return { uid: nuevoUid(), productoId: "", cantidad: "" };
 }
+
+const OPCIONES_TIPO = [
+  { value: "donacion", label: "Donación" },
+  { value: "regalia", label: "Regalía" },
+];
 
 export function SolicitudSalidaInventarioForm({ productos = [], onSubmit, isSubmitting = false }) {
   const [tipo, setTipo] = useState("donacion");
@@ -104,10 +110,13 @@ export function SolicitudSalidaInventarioForm({ productos = [], onSubmit, isSubm
       <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <label className={labelClass}>
           Tipo de salida
-          <select aria-label="Tipo de salida" value={tipo} onChange={(event) => setTipo(event.target.value)} className={inputClass}>
-            <option value="donacion">Donación</option>
-            <option value="regalia">Regalía</option>
-          </select>
+          <SelectFiltro
+            aria-label="Tipo de salida"
+            value={tipo}
+            onChange={(event) => setTipo(event.target.value)}
+            options={OPCIONES_TIPO}
+            traducirOpciones
+          />
         </label>
         <label className={labelClass}>
           Fecha de salida
@@ -134,6 +143,12 @@ export function SolicitudSalidaInventarioForm({ productos = [], onSubmit, isSubm
         <legend className="text-[length:var(--text-body)] font-semibold text-slate-900 dark:text-slate-100">Artículos de la solicitud</legend>
         {items.map((item, index) => {
           const selectedIds = new Set(items.filter((_, itemIndex) => itemIndex !== index).map((entry) => entry.productoId));
+          const opciones = [
+            { value: "", label: "Seleccionar producto…" },
+            ...productos
+              .filter((product) => !selectedIds.has(String(product.id)) && (stockDisponible(product) === null || stockDisponible(product) > 0))
+              .map((product) => ({ value: String(product.id), label: product.nombre })),
+          ];
           return (
             <div
               key={item.uid}
@@ -143,12 +158,14 @@ export function SolicitudSalidaInventarioForm({ productos = [], onSubmit, isSubm
             >
               <label className={labelClass}>
                 Producto
-                <select aria-label="Producto" value={item.productoId} onChange={(event) => updateItem(index, { productoId: event.target.value })} className={inputClass} required>
-                  <option value="">Seleccionar producto…</option>
-                  {productos.filter((product) => !selectedIds.has(String(product.id)) && (stockDisponible(product) === null || stockDisponible(product) > 0)).map((product) => (
-                    <option key={product.id} value={String(product.id)}>{product.nombre}</option>
-                  ))}
-                </select>
+                <SelectFiltro
+                  aria-label="Producto"
+                  value={item.productoId}
+                  onChange={(event) => updateItem(index, { productoId: event.target.value })}
+                  options={opciones}
+                  required
+                  traducirOpciones
+                />
               </label>
               <label className={labelClass}>
                 Cantidad

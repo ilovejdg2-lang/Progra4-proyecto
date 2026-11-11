@@ -56,6 +56,7 @@ export function normalizarCompra(compra) {
     ubicacionCodigo: String(firstDefined(compra, ["ubicacionCodigo", "UbicacionCodigo"]) || "") || null,
     ubicacionNombre: String(firstDefined(compra, ["ubicacionNombre", "UbicacionNombre"]) || "") || null,
     ubicacionDireccion: String(firstDefined(compra, ["ubicacionDireccion", "UbicacionDireccion"]) || "").trim() || null,
+    ubicacionHorario: String(firstDefined(compra, ["ubicacionHorario", "UbicacionHorario"]) || "").trim() || null,
     tieneComprobante: Boolean(firstDefined(compra, ["tieneComprobante", "TieneComprobante"])),
     cliente: (() => {
       const raw = firstDefined(compra, ["cliente", "Cliente"]);
@@ -96,14 +97,53 @@ function buildQuery(params = {}) {
   return text ? `?${text}` : "";
 }
 
-export async function registrarCompra(payload, archivo) {
-  const form = new FormData();
+function appendCompraPayload(form, payload) {
   form.append("clienteNombre", payload.clienteNombre || "");
   form.append("clienteCorreo", payload.clienteCorreo || "");
   form.append("metodoPago", payload.metodoPago || "Comprobante");
   form.append("ubicacionCodigo", payload.ubicacionCodigo || payload.ubicacion?.code || "");
   if (payload.ubicacionId != null) form.append("ubicacionId", String(payload.ubicacionId));
   form.append("items", JSON.stringify(payload.items || []));
+}
+
+/** Crea o actualiza el borrador del carrito; reutiliza el mismo id hasta completar la compra. */
+export async function iniciarCompra(payload) {
+  const body = {
+    clienteNombre: payload.clienteNombre || "",
+    clienteCorreo: payload.clienteCorreo || "",
+    metodoPago: payload.metodoPago || "Comprobante",
+    ubicacionCodigo: payload.ubicacionCodigo || payload.ubicacion?.code || "",
+    ubicacionId: payload.ubicacionId ?? undefined,
+    items: payload.items || [],
+  };
+  if (payload.compraId != null && String(payload.compraId).trim() !== "") {
+    body.compraId = Number(payload.compraId) || payload.compraId;
+  }
+  const data = await apiRequest(`${BASE_URL}/iniciar`, {
+    method: "POST",
+    body,
+    errorPrefix: "Error al iniciar la compra",
+  });
+  return normalizarCompra(data);
+}
+
+export async function adjuntarComprobanteCompra(compraId, archivo) {
+  const form = new FormData();
+  form.append("comprobante", archivo);
+  const data = await apiRequest(`${BASE_URL}/${encodeURIComponent(compraId)}/comprobante`, {
+    method: "POST",
+    body: form,
+    errorPrefix: "Error al adjuntar el comprobante",
+  });
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("compras-updated"));
+  }
+  return normalizarCompra(data);
+}
+
+export async function registrarCompra(payload, archivo) {
+  const form = new FormData();
+  appendCompraPayload(form, payload);
   if (archivo) form.append("comprobante", archivo);
   const data = await apiRequest(BASE_URL, {
     method: "POST",

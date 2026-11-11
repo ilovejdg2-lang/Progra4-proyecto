@@ -36,7 +36,7 @@ import { ST } from "../../../Components/T/ST";
 import { AdminPageHeader } from "../../../Components/Admin/ui/AdminPageHeader";
 import { t } from "../../../lib/t";
 import { useIdioma } from "../../../lib/useIdioma";
-import { obtenerCatalogoProductos, obtenerStockPorUbicacion } from "../../../services/productosService";
+import { invalidarStockDeUbicacion, obtenerCatalogoProductos, obtenerStockPorUbicacion } from "../../../services/productosService";
 import { getActiveSessionUser } from "../../../services/sessionService";
 import {
   enviarComprobanteVentaFisica,
@@ -86,6 +86,8 @@ export default function AdminVentasPresenciales() {
   const [puntos, setPuntos] = useState([]);
   const [productos, setProductos] = useState([]);
   const [stockMap, setStockMap] = useState(new Map());
+  const [stockCargando, setStockCargando] = useState(false);
+  const [stockError, setStockError] = useState("");
   const [ubicacionCodigo, setUbicacionCodigo] = useState("");
   const [busquedaProducto, setBusquedaProducto] = useState("");
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("todos");
@@ -100,7 +102,6 @@ export default function AdminVentasPresenciales() {
   const [montoRecibido, setMontoRecibido] = useState("");
   const [clienteNombre, setClienteNombre] = useState("");
   const [clienteCorreo, setClienteCorreo] = useState("");
-  const [enviarCorreo, setEnviarCorreo] = useState(false);
 
   // Estados de proceso y UI
   const [isSaving, setIsSaving] = useState(false);
@@ -173,20 +174,36 @@ export default function AdminVentasPresenciales() {
   useEffect(() => {
     if (!ubicacionCodigo) {
       setStockMap(new Map());
-      return;
+      setStockCargando(false);
+      setStockError("");
+      return undefined;
     }
     let activo = true;
+    setStockCargando(true);
+    setStockError("");
     obtenerStockPorUbicacion(ubicacionCodigo)
       .then((rows) => {
         if (!activo) return;
         const map = new Map();
         (Array.isArray(rows) ? rows : []).forEach((row) => {
-          map.set(String(row.productId ?? row.productoId), Number(row.stock) || 0);
+          const id = String(row.productId ?? row.productoId ?? "").trim();
+          if (!id) return;
+          const bruto = row.availableStock ?? row.stock ?? row.Stock;
+          const unidades = Number(bruto);
+          map.set(id, Number.isFinite(unidades) ? Math.max(0, unidades) : 0);
         });
         setStockMap(map);
+        setStockCargando(false);
       })
-      .catch(() => {
-        if (activo) setStockMap(new Map());
+      .catch((err) => {
+        if (!activo) return;
+        setStockMap(new Map());
+        setStockCargando(false);
+        setStockError(
+          err instanceof Error
+            ? err.message
+            : "No se pudo cargar el stock de este punto de venta.",
+        );
       });
     return () => {
       activo = false;
@@ -308,7 +325,6 @@ export default function AdminVentasPresenciales() {
     setCarrito([]);
     setClienteNombre("");
     setClienteCorreo("");
-    setEnviarCorreo(false);
     setMontoRecibido("");
     setFormError("");
   };
@@ -345,7 +361,7 @@ export default function AdminVentasPresenciales() {
       }
     }
 
-    if (enviarCorreo && !esCorreoValido(clienteCorreo)) {
+    if (clienteCorreo.trim() && !esCorreoValido(clienteCorreo)) {
       setFormError(MENSAJE_CORREO_INVALIDO);
       return;
     }
@@ -375,7 +391,7 @@ export default function AdminVentasPresenciales() {
         montoRecibido: pago ? pago.montoRecibido : undefined,
         clienteNombre: clienteNombre.trim(),
         clienteCorreo: clienteCorreo.trim(),
-        enviarCorreo: Boolean(enviarCorreo && clienteCorreo.trim()),
+        enviarCorreo: esCorreoValido(clienteCorreo),
         total: totalCarrito,
       };
 
@@ -383,10 +399,15 @@ export default function AdminVentasPresenciales() {
 
       // Actualizar stocks en tiempo real
       if (ubicacionCodigo) {
+        invalidarStockDeUbicacion(ubicacionCodigo);
         const rows = await obtenerStockPorUbicacion(ubicacionCodigo);
         const map = new Map();
         (Array.isArray(rows) ? rows : []).forEach((row) => {
-          map.set(String(row.productId ?? row.productoId), Number(row.stock) || 0);
+          const id = String(row.productId ?? row.productoId ?? "").trim();
+          if (!id) return;
+          const bruto = row.availableStock ?? row.stock ?? row.Stock;
+          const unidades = Number(bruto);
+          map.set(id, Number.isFinite(unidades) ? Math.max(0, unidades) : 0);
         });
         setStockMap(map);
       }
@@ -408,11 +429,16 @@ export default function AdminVentasPresenciales() {
         correoEnviado: Boolean(resultado?.correoEnviado),
       };
 
+      const correoTicket = clienteCorreo.trim();
       setResumenVenta(resumen);
-      setCorreoResumenInput(clienteCorreo.trim());
+      setCorreoResumenInput(correoTicket);
       setMensajeCorreoModal({
-        tipo: resultado?.correoEnviado ? "success" : "",
-        texto: resultado?.correoEnviado ? `Comprobante enviado a ${clienteCorreo.trim()}` : "",
+        tipo: resultado?.correoEnviado ? "success" : correoTicket ? "error" : "",
+        texto: resultado?.correoEnviado
+          ? `Comprobante enviado a ${correoTicket}`
+          : correoTicket
+            ? (resultado?.correoMensaje || "No se pudo enviar el comprobante. Podés reintentarlo aquí.")
+            : "",
       });
       setModalResumenOpen(true);
 
@@ -585,6 +611,16 @@ export default function AdminVentasPresenciales() {
             </div>
           ) : null}
 
+          {stockError ? (
+            <div
+              className="border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 flex items-center gap-2 shadow-xs"
+              style={{ borderRadius: "16px" }}
+            >
+              <AlertCircle className="size-5 shrink-0" />
+              <span className="font-medium"><ST>{stockError}</ST></span>
+            </div>
+          ) : null}
+
           {/* Grid principal: Catálogo de productos a la izquierda, Carrito a la derecha */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
             {/* COLUMNA IZQUIERDA: Selector de Productos con Cards Cuadradas de Puntas Redondeadas */}
@@ -640,24 +676,35 @@ export default function AdminVentasPresenciales() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {productosFiltrados.map((prod) => {
                     const pId = String(prod.id);
+                    const stockConocido = Boolean(ubicacionCodigo) && !stockCargando && !stockError;
                     const stockDisp = Number(stockMap.get(pId) ?? 0);
                     const enCarrito = obtenerCantidadEnCarrito(pId);
-                    const sinStock = stockDisp <= 0;
+                    const sinStock = stockConocido && stockDisp <= 0;
+                    const puedeAgregar = Boolean(ubicacionCodigo) && !stockCargando && !sinStock && puedeRegistrar;
                     const precio = Number(prod.precioConIVA ?? prod.precioNormal) || 0;
                     const sku = `CAFE-${pId.padStart(3, "0")}`;
+                    const etiquetaStock = !ubicacionCodigo
+                      ? t("Elegí un punto")
+                      : stockCargando
+                        ? t("Cargando…")
+                        : stockError
+                          ? t("Sin stock")
+                          : sinStock
+                            ? t("Agotado")
+                            : `${stockDisp} ${t("disp.")}`;
 
                     return (
                       <div
                         key={pId}
                         role="button"
-                        tabIndex={sinStock || !puedeRegistrar ? -1 : 0}
+                        tabIndex={puedeAgregar ? 0 : -1}
                         onClick={() => {
-                          if (!sinStock && puedeRegistrar) {
+                          if (puedeAgregar) {
                             agregarAlCarrito(prod);
                           }
                         }}
                         onKeyDown={(e) => {
-                          if ((e.key === "Enter" || e.key === " ") && !sinStock && puedeRegistrar) {
+                          if ((e.key === "Enter" || e.key === " ") && puedeAgregar) {
                             e.preventDefault();
                             agregarAlCarrito(prod);
                           }
@@ -667,7 +714,7 @@ export default function AdminVentasPresenciales() {
                           enCarrito > 0
                             ? "border-2 border-amber-500 bg-amber-50/20 shadow-md dark:border-amber-400 dark:bg-amber-950/40"
                             : "border border-slate-200/90 bg-white hover:border-slate-400 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-500"
-                        } ${sinStock ? "opacity-80 cursor-not-allowed" : "cursor-pointer active:scale-[0.99]"}`}
+                        } ${puedeAgregar ? "cursor-pointer active:scale-[0.99]" : "opacity-80 cursor-not-allowed"}`}
                       >
                         {/* Contenedor de Imagen o Placeholder cuadrado con puntas redondeadas */}
                         <div
@@ -708,14 +755,16 @@ export default function AdminVentasPresenciales() {
 
                           <span
                             className={`text-[length:var(--text-body)] font-semibold ${
-                              sinStock
-                                ? "text-rose-700 dark:text-rose-300"
-                                : stockDisp <= 3
-                                ? "text-amber-800 dark:text-amber-300"
-                                : "text-emerald-800 dark:text-emerald-300"
+                              !stockConocido
+                                ? "text-slate-500 dark:text-slate-400"
+                                : sinStock
+                                  ? "text-rose-700 dark:text-rose-300"
+                                  : stockDisp <= 3
+                                    ? "text-amber-800 dark:text-amber-300"
+                                    : "text-emerald-800 dark:text-emerald-300"
                             }`}
                           >
-                            {sinStock ? t("Agotado") : `${stockDisp} ${t("disp.")}`}
+                            {etiquetaStock}
                           </span>
                         </div>
 
@@ -878,30 +927,13 @@ export default function AdminVentasPresenciales() {
                         id="pos-cliente-correo"
                         type="email"
                         value={clienteCorreo}
-                        onChange={(e) => {
-                          const valor = limpiarCorreo(e.target.value);
-                          setClienteCorreo(valor);
-                          if (esCorreoValido(valor)) {
-                            setEnviarCorreo(true);
-                          }
-                        }}
+                        onChange={(e) => setClienteCorreo(limpiarCorreo(e.target.value))}
                         placeholder="cliente@correo.com"
                         className="h-9 w-full rounded-full border border-slate-200 bg-slate-50 px-3 text-xs text-slate-900 outline-none transition focus:border-black focus:bg-white"
                       />
-
-                      {clienteCorreo.trim() ? (
-                        <label className="flex items-start gap-2 mt-1.5 cursor-pointer text-slate-700 select-none">
-                          <input
-                            type="checkbox"
-                            checked={enviarCorreo}
-                            onChange={(e) => setEnviarCorreo(e.target.checked)}
-                            className="mt-0.5 rounded accent-[var(--admin-accent-coffee)] focus:ring-[var(--admin-focus-ring)] size-3.5 shrink-0"
-                          />
-                          <span className="text-[11px] font-medium leading-snug text-slate-600">
-                            <ST>Enviar comprobante automáticamente al registrar</ST>
-                          </span>
-                        </label>
-                      ) : null}
+                      <p className="text-[length:var(--text-body)] text-slate-500">
+                        <ST>Si escribís un correo, el comprobante se envía al registrar la venta.</ST>
+                      </p>
                     </div>
 
                     {/* Total de la venta */}

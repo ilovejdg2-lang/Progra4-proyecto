@@ -7,7 +7,10 @@ const rutas = [
   ...[...fuente.matchAll(/"(\/admin[^"]*)":/g)].map((m) => m[1]),
   "/admin",
   "/admin/voluntariado",
+  "/admin/voluntariado/fechas",
   "/admin/visitas",
+  "/admin/visitas/fechas",
+  "/admin/donaciones/fechas-recepcion",
   "/admin/propuestas/5",
   "/admin/mis-propuestas/5",
   "/admin/puntos-venta/abc/ventas",
@@ -20,6 +23,20 @@ describe("getAdminBreadcrumbItems", () => {
       const claves = getAdminBreadcrumbItems(ruta, search).map((item) => item.to ?? item.label);
       expect(new Set(claves).size).toBe(claves.length);
     }
+  });
+
+  it("uses clean fechas paths in breadcrumbs", () => {
+    expect(getAdminBreadcrumbItems("/admin/voluntariado/fechas").map((c) => c.label)).toEqual([
+      "Admin",
+      "Voluntariado",
+      "Fechas disponibles",
+    ]);
+    expect(getAdminBreadcrumbItems("/admin/visitas/fechas").map((c) => c.label).at(-1)).toBe(
+      "Gestión de fechas de visitas",
+    );
+    expect(
+      getAdminBreadcrumbItems("/admin/donaciones/fechas-recepcion").map((c) => c.label).at(-1),
+    ).toBe("Fechas disponibles");
   });
 });
 

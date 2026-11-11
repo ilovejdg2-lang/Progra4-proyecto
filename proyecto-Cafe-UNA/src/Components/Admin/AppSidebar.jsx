@@ -99,6 +99,8 @@ const MI_CUENTA_OPEN_KEY = "admin-sidebar-mi-cuenta-open";
 const linkActivo = {
   className: "bg-[var(--admin-surface-hover)] text-[var(--admin-accent-coffee)] font-semibold",
 };
+/** Evita que una ruta padre se marque activa en hijas (p. ej. puntos-venta → días sin retiro). */
+const linkActivoExact = { exact: true };
 
 function claveBusqueda(texto) {
   return String(texto ?? "")
@@ -199,12 +201,12 @@ export function AppSidebar() {
     { to: "/admin/ventas-pendientes", etiqueta: "Ventas pendientes", grupo: "Manejo de inventario", icono: ClipboardCheck, ver: puedeVentas },
     { to: "/admin/historial-ventas", etiqueta: "Historial de ventas", grupo: "Manejo de inventario", icono: Receipt, ver: puedeVentas },
     { to: "/admin/voluntariado", etiqueta: "Voluntariado", grupo: "Voluntariado", icono: HandHeart, ver: puedeVoluntariado },
-    { to: "/admin/voluntariado", search: { tab: "fechas" }, etiqueta: "Fechas disponibles", grupo: "Voluntariado", icono: CalendarDays, ver: puedeVoluntariado },
+    { to: "/admin/voluntariado/fechas", etiqueta: "Fechas disponibles", grupo: "Voluntariado", icono: CalendarDays, ver: puedeVoluntariado },
     { to: "/admin/visitas", etiqueta: "Visitas grupales", grupo: "Visitas grupales", icono: Users, ver: puedeVisitas },
-    { to: "/admin/visitas", search: { tab: "fechas" }, etiqueta: "Fechas disponibles", grupo: "Visitas grupales", icono: CalendarDays, ver: puedeVisitas },
+    { to: "/admin/visitas/fechas", etiqueta: "Fechas disponibles", grupo: "Visitas grupales", icono: CalendarDays, ver: puedeVisitas },
     { to: "/admin/donaciones/necesidades", etiqueta: "Necesidades de donación", grupo: "Donaciones", icono: HandCoins, ver: puedeDonacionesNecesidades },
     { to: "/admin/donaciones/solicitudes", etiqueta: "Solicitudes de donación", grupo: "Donaciones", icono: HandCoins, ver: puedeDonacionesSolicitudes },
-    { to: "/admin/donaciones/solicitudes", search: { tab: "fechas" }, etiqueta: "Fechas disponibles", grupo: "Donaciones", icono: CalendarDays, ver: puedeDonacionesSolicitudes },
+    { to: "/admin/donaciones/fechas-recepcion", etiqueta: "Fechas disponibles", grupo: "Donaciones", icono: CalendarDays, ver: puedeDonacionesSolicitudes },
     { to: "/admin/propuestas", etiqueta: "Propuestas de productores", grupo: "Productores", icono: Sprout, ver: puedePropuestas },
     { to: "/admin/documentacion", etiqueta: "Documentos", grupo: "Documentación", icono: BookOpenText, ver: puedeDocumentacionDocumentos },
     { to: "/admin/documentacion/solicitudes", etiqueta: "Solicitudes", grupo: "Documentación", icono: ScrollText, ver: puedeDocumentacionSolicitudes },
@@ -270,8 +272,10 @@ export function AppSidebar() {
   const isAjustesRoute =
     pathname === "/admin/ajustes" ||
     pathname.startsWith("/admin/ajustes/");
-  const isVoluntariadoRoute = pathname === "/admin/voluntariado";
-  const isVisitasRoute = pathname === "/admin/visitas";
+  const isVoluntariadoRoute =
+    pathname === "/admin/voluntariado" || pathname.startsWith("/admin/voluntariado/");
+  const isVisitasRoute =
+    pathname === "/admin/visitas" || pathname.startsWith("/admin/visitas/");
   const isDonacionesRoute = pathname.startsWith("/admin/donaciones/");
   const isDocumentacionRoute = pathname.startsWith("/admin/documentacion");
   const isMiCuentaRoute =
@@ -528,6 +532,7 @@ export function AppSidebar() {
                         <Link
                           to={enlace.to}
                           search={enlace.search}
+                          activeOptions={linkActivoExact}
                           activeProps={linkActivo}
                           onClick={() => {
                             setBusqueda("");
@@ -556,7 +561,7 @@ export function AppSidebar() {
               <SidebarMenuButton asChild>
                 <Link
                   to="/admin"
-                  activeOptions={{ exact: true }}
+                  activeOptions={linkActivoExact}
                   activeProps={linkActivo}
                   onClick={closeMobileSidebar}
                 >
@@ -588,7 +593,7 @@ export function AppSidebar() {
                   {puedeCms ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/informacion-pagina-principal" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/informacion-pagina-principal" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Info />
                         <span className="truncate"><ST>Información página principal</ST></span>
                       </Link>
@@ -615,7 +620,7 @@ export function AppSidebar() {
                           {puedeCms ? (
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <Link to="/admin/sobre-nosotros" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                              <Link to="/admin/sobre-nosotros" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                                 <Landmark />
                                 <span><ST>Historia</ST></span>
                               </Link>
@@ -625,7 +630,7 @@ export function AppSidebar() {
                           {puedeCms ? (
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <Link to="/admin/historia-completa" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                              <Link to="/admin/historia-completa" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                                 <ScrollText />
                                 <span><ST>Historia completa</ST></span>
                               </Link>
@@ -635,7 +640,7 @@ export function AppSidebar() {
                           {puedeGaleria ? (
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <Link to="/admin/galeria" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                              <Link to="/admin/galeria" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                                 <Image />
                                 <span><ST>Galería</ST></span>
                               </Link>
@@ -645,7 +650,7 @@ export function AppSidebar() {
                           {puedeCms ? (
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <Link to="/admin/equipo" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                              <Link to="/admin/equipo" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                                 <Users />
                                 <span><ST>Equipo</ST></span>
                               </Link>
@@ -684,7 +689,7 @@ export function AppSidebar() {
                   {puedeProductos ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/producto" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/producto" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Box />
                         <span><ST>Producto</ST></span>
                       </Link>
@@ -694,7 +699,7 @@ export function AppSidebar() {
                   {puedePuntosVenta ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/puntos-venta" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/puntos-venta" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Store />
                         <span><ST>Puntos de venta</ST></span>
                       </Link>
@@ -704,7 +709,7 @@ export function AppSidebar() {
                   {puedeInventario ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/puntos-venta/dias-sin-retiro" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/puntos-venta/dias-sin-retiro" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <CalendarClock />
                         <span><ST>Días sin retiro</ST></span>
                       </Link>
@@ -714,7 +719,7 @@ export function AppSidebar() {
                   {puedeActivosFijos ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/activos-fijos" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/activos-fijos" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Wrench />
                         <span><ST>Activos fijos</ST></span>
                       </Link>
@@ -724,7 +729,7 @@ export function AppSidebar() {
                   {puedeDistribucion ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/distribucion" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/distribucion" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Truck />
                         <span><ST>Distribución</ST></span>
                       </Link>
@@ -734,7 +739,7 @@ export function AppSidebar() {
                   {puedeSalidasBodega ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/salidas-inventario" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/salidas-inventario" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <PackageMinus />
                         <span><ST>Salidas de bodega</ST></span>
                       </Link>
@@ -744,7 +749,7 @@ export function AppSidebar() {
                   {puedeInventario ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/historial-movimientos" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/historial-movimientos" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <History />
                         <span><ST>Historial de movimientos</ST></span>
                       </Link>
@@ -754,7 +759,7 @@ export function AppSidebar() {
                   {puedeVentasPresenciales ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/ventas-presenciales" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/ventas-presenciales" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <ShoppingBag />
                         <span><ST>Ventas presenciales</ST></span>
                       </Link>
@@ -764,7 +769,7 @@ export function AppSidebar() {
                   {puedeVentas ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/ventas-pendientes" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/ventas-pendientes" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <ClipboardCheck />
                         <span><ST>Ventas pendientes</ST></span>
                       </Link>
@@ -774,7 +779,7 @@ export function AppSidebar() {
                   {puedeVentas ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/historial-ventas" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/historial-ventas" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Receipt />
                         <span><ST>Historial de ventas</ST></span>
                       </Link>
@@ -807,7 +812,12 @@ export function AppSidebar() {
                 <SidebarMenuSub>
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/voluntariado" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link
+                        to="/admin/voluntariado"
+                        activeOptions={linkActivoExact}
+                        activeProps={linkActivo}
+                        onClick={closeMobileSidebar}
+                      >
                         <HandHeart />
                         <span><ST>Voluntariado</ST></span>
                       </Link>
@@ -816,8 +826,8 @@ export function AppSidebar() {
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
                       <Link
-                        to="/admin/voluntariado"
-                        search={{ tab: "fechas" }}
+                        to="/admin/voluntariado/fechas"
+                        activeOptions={linkActivoExact}
                         activeProps={linkActivo}
                         onClick={closeMobileSidebar}
                       >
@@ -852,7 +862,12 @@ export function AppSidebar() {
                 <SidebarMenuSub>
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/visitas" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link
+                        to="/admin/visitas"
+                        activeOptions={linkActivoExact}
+                        activeProps={linkActivo}
+                        onClick={closeMobileSidebar}
+                      >
                         <Users />
                         <span><ST>Visitas grupales</ST></span>
                       </Link>
@@ -861,8 +876,8 @@ export function AppSidebar() {
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
                       <Link
-                        to="/admin/visitas"
-                        search={{ tab: "fechas" }}
+                        to="/admin/visitas/fechas"
+                        activeOptions={linkActivoExact}
                         activeProps={linkActivo}
                         onClick={closeMobileSidebar}
                       >
@@ -898,7 +913,7 @@ export function AppSidebar() {
                   {puedeDonacionesNecesidades ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/donaciones/necesidades" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/donaciones/necesidades" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <HandCoins />
                         <span><ST>Necesidades de donación</ST></span>
                       </Link>
@@ -908,7 +923,12 @@ export function AppSidebar() {
                   {puedeDonacionesSolicitudes ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/donaciones/solicitudes" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link
+                        to="/admin/donaciones/solicitudes"
+                        activeOptions={linkActivoExact}
+                        activeProps={linkActivo}
+                        onClick={closeMobileSidebar}
+                      >
                         <HandCoins />
                         <span><ST>Solicitudes de donación</ST></span>
                       </Link>
@@ -919,8 +939,8 @@ export function AppSidebar() {
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
                       <Link
-                        to="/admin/donaciones/solicitudes"
-                        search={{ tab: "fechas" }}
+                        to="/admin/donaciones/fechas-recepcion"
+                        activeOptions={linkActivoExact}
                         activeProps={linkActivo}
                         onClick={closeMobileSidebar}
                       >
@@ -942,7 +962,7 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link to="/admin/propuestas" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                <Link to="/admin/propuestas" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                   <Sprout />
                   <span><ST>Propuestas de productores</ST></span>
                 </Link>
@@ -972,7 +992,7 @@ export function AppSidebar() {
                   {puedeDocumentacionDocumentos ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/documentacion" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/documentacion" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <BookOpenText />
                         <span><ST>Documentos</ST></span>
                       </Link>
@@ -982,7 +1002,7 @@ export function AppSidebar() {
                   {puedeDocumentacionSolicitudes ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/documentacion/solicitudes" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/documentacion/solicitudes" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <ScrollText />
                         <span><ST>Solicitudes</ST></span>
                       </Link>
@@ -992,7 +1012,7 @@ export function AppSidebar() {
                   {puedeDocumentacionAdministrativa ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/documentacion/administrativa" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/documentacion/administrativa" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <ShieldCheck />
                         <span><ST>Documentación Administrativa</ST></span>
                       </Link>
@@ -1011,7 +1031,7 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link to="/admin/facturas" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                <Link to="/admin/facturas" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                   <Receipt />
                   <span><ST>Facturación</ST></span>
                 </Link>
@@ -1026,7 +1046,7 @@ export function AppSidebar() {
             {puedeUsuarios ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link to="/admin/usuarios" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                <Link to="/admin/usuarios" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                   <Users />
                   <span><ST>Administrar usuarios</ST></span>
                 </Link>
@@ -1053,7 +1073,7 @@ export function AppSidebar() {
                     <>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild>
-                        <Link to="/admin/ajustes/permisos" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <Link to="/admin/ajustes/permisos" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                           <Shield />
                           <span><ST>Permisos</ST></span>
                         </Link>
@@ -1061,7 +1081,7 @@ export function AppSidebar() {
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild>
-                        <Link to="/admin/ajustes/catalogos" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <Link to="/admin/ajustes/catalogos" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                           <ListChecks />
                           <span><ST>{"Cat\u00e1logos"}</ST></span>
                         </Link>
@@ -1071,7 +1091,7 @@ export function AppSidebar() {
                     ) : null}
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild>
-                        <Link to="/admin/ajustes/manual" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                        <Link to="/admin/ajustes/manual" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                           <LifeBuoy />
                           <span><ST>Ayuda</ST></span>
                         </Link>
@@ -1084,7 +1104,7 @@ export function AppSidebar() {
             {puedeAuditoria ? (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link to="/admin/auditoria" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                <Link to="/admin/auditoria" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                   <ScrollText />
                   <span><ST>{"Auditor\u00eda"}</ST></span>
                 </Link>
@@ -1114,7 +1134,7 @@ export function AppSidebar() {
                   {puedePerfil ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/perfil" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/perfil" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <UserRound />
                         <span><ST>Mi perfil</ST></span>
                       </Link>
@@ -1124,7 +1144,7 @@ export function AppSidebar() {
                   {puedeMisCompras ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/mis-compras" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/mis-compras" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <ShoppingBag />
                         <span><ST>Mis compras</ST></span>
                       </Link>
@@ -1134,7 +1154,7 @@ export function AppSidebar() {
                   {puedeMisSolicitudes ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/mis-solicitudes" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/mis-solicitudes" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <ClipboardList />
                         <span><ST>Mis solicitudes</ST></span>
                       </Link>
@@ -1144,7 +1164,7 @@ export function AppSidebar() {
                   {puedeMisPropuestas ? (
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <Link to="/admin/mis-propuestas" activeProps={linkActivo} onClick={closeMobileSidebar}>
+                      <Link to="/admin/mis-propuestas" activeOptions={linkActivoExact} activeProps={linkActivo} onClick={closeMobileSidebar}>
                         <Sprout />
                         <span><ST>Mis propuestas</ST></span>
                       </Link>
@@ -1201,6 +1221,7 @@ export function AppSidebar() {
                 <Link
                   to="/admin/perfil"
                   className="cursor-pointer rounded-[var(--admin-control-radius)] text-[var(--admin-text-muted)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] data-[highlighted]:bg-[var(--admin-surface-hover)] data-[highlighted]:text-[var(--admin-text-primary)]"
+                  activeOptions={linkActivoExact}
                   activeProps={linkActivo}
                 >
                   <UserRound className="size-4" />
@@ -1213,6 +1234,7 @@ export function AppSidebar() {
                 <Link
                   to="/admin/mis-compras"
                   className="cursor-pointer rounded-[var(--admin-control-radius)] text-[var(--admin-text-muted)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] data-[highlighted]:bg-[var(--admin-surface-hover)] data-[highlighted]:text-[var(--admin-text-primary)]"
+                  activeOptions={linkActivoExact}
                   activeProps={linkActivo}
                 >
                   <ShoppingBag className="size-4" />
@@ -1225,6 +1247,7 @@ export function AppSidebar() {
                 <Link
                   to="/admin/mis-solicitudes"
                   className="cursor-pointer rounded-[var(--admin-control-radius)] text-[var(--admin-text-muted)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] data-[highlighted]:bg-[var(--admin-surface-hover)] data-[highlighted]:text-[var(--admin-text-primary)]"
+                  activeOptions={linkActivoExact}
                   activeProps={linkActivo}
                 >
                   <ClipboardList className="size-4" />
@@ -1237,6 +1260,7 @@ export function AppSidebar() {
                 <Link
                   to="/admin/mis-propuestas"
                   className="cursor-pointer rounded-[var(--admin-control-radius)] text-[var(--admin-text-muted)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] data-[highlighted]:bg-[var(--admin-surface-hover)] data-[highlighted]:text-[var(--admin-text-primary)]"
+                  activeOptions={linkActivoExact}
                   activeProps={linkActivo}
                 >
                   <Sprout className="size-4" />
