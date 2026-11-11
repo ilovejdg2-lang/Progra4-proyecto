@@ -50,13 +50,13 @@ export function MonthlyRevenueChart({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <BarChart3 className="size-4 text-[#7a1f2b]" aria-hidden="true" />
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            <BarChart3 className="size-4 shrink-0 text-[#7a1f2b]" aria-hidden="true" />
+            <h2 className="text-[length:var(--text-subtitle)] font-semibold text-slate-900 dark:text-slate-50">
               <ST>{titulo}</ST>
             </h2>
           </div>
           {subtitulo ? (
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-[length:var(--text-body)] text-slate-500 dark:text-slate-400">
               <ST>{subtitulo}</ST>
             </p>
           ) : null}
@@ -70,17 +70,21 @@ export function MonthlyRevenueChart({
           value={mesValor}
           onChange={(event) => onMesChange(event.target.value)}
           onClick={abrirSelectorMes}
-          className="h-9 min-w-[12.5rem] cursor-pointer rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+          className="h-[var(--control-height)] w-full min-w-0 shrink-0 cursor-pointer rounded-xl border border-slate-200 bg-white px-3 text-[length:var(--text-body)] text-slate-700 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 lg:w-auto lg:min-w-[12.5rem]"
         />
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-2.5">
+      <div
+        className="mt-4 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center sm:gap-3.5"
+        role="group"
+        aria-label="Filtro por punto de venta"
+      >
         {PUNTOS_INGRESOS.map((punto) => (
           <button
             key={punto.id}
             type="button"
             onClick={() => onFiltroChange(punto.id)}
-            className={`inline-flex h-[var(--control-height)] items-center rounded-full px-4 text-[length:var(--text-body)] font-semibold transition ${
+            className={`inline-flex h-[var(--control-height)] w-full items-center justify-center rounded-full px-3 text-[length:var(--text-body)] font-semibold transition sm:w-auto sm:px-4 ${
               filtro === punto.id
                 ? "bg-[#7a1f2b] text-white"
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
@@ -92,27 +96,34 @@ export function MonthlyRevenueChart({
       </div>
 
       {pico && picoEtiqueta ? (
-        <p className="mt-4 inline-flex max-w-full items-center rounded-lg bg-[#7a1f2b] px-3 py-2 text-[length:var(--text-body)] font-semibold text-white">
+        <p className="mt-5 inline-flex max-w-full items-center break-words rounded-lg bg-[#7a1f2b] px-3 py-2 text-[length:var(--text-body)] font-semibold text-white">
           {picoEtiqueta} · {formatCRC(pico.total)}
         </p>
       ) : null}
 
-      <div className="mt-3 h-56 w-full min-w-0">
+      <div className="mt-4 h-60 w-full min-w-0 overflow-hidden sm:h-56">
         {loading ? (
           <div className="h-full animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
         ) : vacio ? (
-          <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-500 dark:border-slate-700">
+          <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-200 px-3 text-center text-[length:var(--text-body)] text-slate-500 dark:border-slate-700">
             <ST>No hay ventas registradas para este período.</ST>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={series} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+            <BarChart data={series} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
               <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="3 3" />
-              <XAxis dataKey="dia" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "#64748b" }} />
+              <XAxis
+                dataKey="dia"
+                tickLine={false}
+                axisLine={false}
+                minTickGap={12}
+                interval="equidistantPreserveStart"
+                tick={{ fontSize: 11, fill: "#64748b" }}
+              />
               <YAxis
                 tickLine={false}
                 axisLine={false}
-                width={78}
+                width={56}
                 tick={{ fontSize: 10, fill: "#64748b" }}
                 tickFormatter={formatoEjeY}
               />
@@ -130,7 +141,7 @@ export function MonthlyRevenueChart({
           </ResponsiveContainer>
         )}
       </div>
-      <p className="mt-1 text-center text-[11px] text-slate-400">
+      <p className="mt-1 text-center text-[length:var(--text-body)] text-slate-400">
         <ST>Día del mes</ST>
       </p>
     </section>
