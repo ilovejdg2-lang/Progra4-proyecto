@@ -19,6 +19,7 @@ import { productoPuedeDestacarse } from '../../lib/productoDisponibilidad';
 import { readPageCache, readStalePageCache } from '../../lib/pageDataCache';
 import FeaturedCafesCarousel from '../../Components/FeaturedCafesCarousel/FeaturedCafesCarousel';
 import ProductoresHero from '../../Components/ProductoresHero/ProductoresHero';
+import WhatsAppFab from '../../Components/WhatsAppFab/WhatsAppFab';
 import { imagenPrincipalProducto } from '../../lib/productoImagenes';
 import { normalizeImageUrl } from '../../lib/imageUtils';
 import { toGoogleMapsEmbedUrl } from '../../lib/googleMaps';
@@ -482,6 +483,8 @@ const Home = () => {
           onClose={() => setModalSolicitudDocumentoAbierto(false)}
         />
       ) : null}
+
+      <WhatsAppFab />
     </>
   );
 };
