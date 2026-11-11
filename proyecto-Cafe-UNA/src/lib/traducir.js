@@ -50,6 +50,9 @@ const DICCIONARIO = {
   "Explorar": "Explore",
   "EXPLORE": "EXPLORE",
   "Contactos": "Contact",
+  "Escribinos por WhatsApp": "Message us on WhatsApp",
+  "¡Hola! Les escribo desde la página de Café UNA. Me gustaría consultarles algo.":
+    "Hi! I'm writing from the Café UNA website. I'd like to ask you something.",
   "Añadido al carrito": "Added to cart",
   "No se pudo agregar": "Could not add",
   "Revisá la disponibilidad.": "Check availability.",
