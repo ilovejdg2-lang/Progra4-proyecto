@@ -433,8 +433,8 @@ export function AdminStockNotificationsBell() {
                           <Package size={16} />
                         </span>
                         <div className="notification-item__main">
-                          <strong>{item.titulo}</strong>
-                          <span>{item.mensaje}</span>
+                          <strong><NombreNotif texto={item.titulo} /></strong>
+                          <span><NombreNotif texto={item.mensaje} /></span>
                         </div>
                       </button>
                     ))}
@@ -455,8 +455,8 @@ export function AdminStockNotificationsBell() {
                           <Sprout size={16} />
                         </span>
                         <div className="notification-item__main">
-                          <strong>{item.titulo}</strong>
-                          <span>{item.mensaje}</span>
+                          <strong><NombreNotif texto={item.titulo} /></strong>
+                          <span><NombreNotif texto={item.mensaje} /></span>
                         </div>
                       </button>
                     ))}

@@ -1566,8 +1566,8 @@ const Navbar = () => {
                                                             <Package size={16} />
                                                         </span>
                                                         <div className="notification-item__main">
-                                                            <strong>{item.titulo}</strong>
-                                                            <span>{item.mensaje}</span>
+                                                            <strong><NombreCarrito nombre={item.titulo} /></strong>
+                                                            <span><NombreCarrito nombre={item.mensaje} /></span>
                                                         </div>
                                                     </button>
                                                 ))}
@@ -1588,8 +1588,8 @@ const Navbar = () => {
                                                             <Sprout size={16} />
                                                         </span>
                                                         <div className="notification-item__main">
-                                                            <strong>{item.titulo}</strong>
-                                                            <span>{item.mensaje}</span>
+                                                            <strong><NombreCarrito nombre={item.titulo} /></strong>
+                                                            <span><NombreCarrito nombre={item.mensaje} /></span>
                                                         </div>
                                                     </button>
                                                 ))}
